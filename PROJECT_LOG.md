@@ -41,6 +41,7 @@ point is to build the table/form/primitives **once** and reuse them.
 | **OS dashboard** | https://counterfoil-frontend.vercel.app/dashboard |
 | **Go / POS** | https://counterfoil-frontend.vercel.app/pos |
 | **Auth / sign-in** | https://counterfoil-frontend.vercel.app/sign-in |
+| **Kitchen sink** (primitives) | https://counterfoil-frontend.vercel.app/kitchen-sink |
 | **GitHub repo** | https://github.com/sajid209-stack/counterfoil-frontend (public) |
 | **Vercel project** | `sajid209-stacks-projects/counterfoil-frontend` |
 
@@ -55,7 +56,8 @@ Deploy at **every** checkpoint — the owner wants to click things.
 - **TypeScript**, `src/` dir, `@/*` import alias
 - **Tailwind v4** (`@theme` syntax — no v3 config file) ✅ confirmed in `package.json`
 - **npm**
-- **lucide-react** — sanctioned icon library (installed in Phase 2, not yet present)
+- **lucide-react** — sanctioned icon library ✅ installed; use at 1.5px stroke / 24 grid
+  (brand icon spec). Primitive layer lives in `src/components/ui/*` (import from `@/components/ui`).
 - **Fonts:** Manrope + DM Mono via `next/font/google` (Phase 2)
 - Deployed on **Vercel**
 
@@ -74,7 +76,7 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **1** | Scaffold · repo · first deploy | ✅ Done |
 | **2** | Design tokens (`/tokens` route) | ✅ Done |
 | **3** | Routing structure + typed data layer (`src/lib/api`, `src/lib/mock`) | ✅ Done |
-| **4** | Primitive component layer (`/kitchen-sink` route) | ⬜ Not started |
+| **4** | Primitive component layer (`/kitchen-sink` route) | ✅ Done |
 | **5** | Products — the reference CRUD screen | ⬜ Not started |
 | **later** | OS: Locations · Counters · Staff · Business Setup · Booking Rules · Pricing · Orders · Dashboard · Sales Reports · Calendar | ⬜ |
 | **later** | Go: PIN login/shift open · POS · Cash payment · Ticket issued · Scan · Scan result · Shift close | ⬜ |
@@ -106,7 +108,15 @@ the **scan result** (readable in <1s at 3m; colour alone is not enough — shape
   a pure backend concern — off the UI's plate. `BookingTypeMeta` dropped.
 - **D7 — guardrail** (2026-07-29): a `PreToolUse` hook in `~/.claude/settings.local.json` hard-
   denies any command touching the other Ternary repos (ternary-website-v3 / -local-dump /
-  -prod-dump / -design-mockups) or running a destructive `gh repo` op. Review via `/hooks`.
+  -prod-dump / -design-mockups) or running a destructive `gh repo` op. The owner now maintains
+  this guardrail themselves; do not modify it.
+- **D8 — semantic colours added** (2026-07-29): the brand palette has no functional status
+  colours, so `--color-success/-warning/-danger/-info` were added to `@theme`. These are NOT
+  brand accents (used only for status pills, destructive actions, inline feedback), so the
+  "one accent per screen" rule still refers to ember alone.
+- **D9 — autonomous build** (2026-07-29): owner asked to stop pausing at checkpoints and build
+  the full scope to best judgment, deploying at each checkpoint. Only pause when genuinely
+  blocked on a decision only they can make.
 
 ---
 

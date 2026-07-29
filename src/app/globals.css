@@ -7,6 +7,15 @@
   --color-ember: #ff6a1f;
   --color-bt-violet: #7c3aed;
 
+  /* ── Functional / semantic colours ─────────────────────────────────────
+     NOT brand accents — these carry state only (status pills, destructive
+     actions, inline feedback). "One accent per screen" still refers to ember;
+     semantic colours are exempt because they encode meaning, not branding. */
+  --color-success: #1a7f4b;
+  --color-warning: #b06a00;
+  --color-danger: #b42318;
+  --color-info: #2563eb;
+
   /* ── Neutral scale — DERIVED / UNCONFIRMED ─────────────────────────────
      The guidelines show these as swatches without published hex values.
      These are a best-guess derivation; correct them from the Figma library

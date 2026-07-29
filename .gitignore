@@ -43,3 +43,5 @@ next-env.d.ts
 # Internal build roadmap — keep out of the public repo (see PROJECT_LOG D3)
 counterfoil_claude_code_prompts.md
 counterfoil_design_tokens.md
+counterfoil_prompt*.md
+Counterfoil Brand Guidelines*.pdf

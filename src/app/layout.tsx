@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope, DM_Mono } from "next/font/google";
+import { ToastProvider } from "@/components/ui";
 import "./globals.css";
 
 // Manrope is a variable font — the full weight axis (300–800) is available
@@ -35,7 +36,9 @@ export default function RootLayout({
       lang="en"
       className={`${manrope.variable} ${dmMono.variable} h-full`}
     >
-      <body className="min-h-full antialiased">{children}</body>
+      <body className="min-h-full antialiased">
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   );
 }
