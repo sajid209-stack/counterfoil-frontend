@@ -1,26 +1,102 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* ── Brand primaries — EXACT from the Counterfoil brand guidelines ────── */
+  --color-ink: #0a0a0a;
+  --color-paper: #f8f7f4;
+  --color-ember: #ff6a1f;
+  --color-bt-violet: #7c3aed;
+
+  /* ── Neutral scale — DERIVED / UNCONFIRMED ─────────────────────────────
+     The guidelines show these as swatches without published hex values.
+     These are a best-guess derivation; correct them from the Figma library
+     before launch. Do not treat as canonical. */
+  --color-neutral-900: #0a0a0a;
+  --color-neutral-800: #1c1c1c;
+  --color-neutral-600: #4a4a48;
+  --color-neutral-400: #8a8985;
+  --color-neutral-200: #d6d4ce;
+  --color-neutral-50: #f8f7f4;
+
+  /* ── Amber scale — DERIVED / UNCONFIRMED (same caveat as the neutrals) ── */
+  --color-amber-950: #451a05;
+  --color-amber-800: #9a3412;
+  --color-amber-700: #c2410c;
+  --color-amber-600: #ff6a1f;
+  --color-amber-400: #fb923c;
+  --color-amber-200: #fed7aa;
+
+  /* ── Type ──────────────────────────────────────────────────────────────
+     DM Mono is not decorative: it carries booking refs, status codes, dates,
+     IDs and BT codes (e.g. CF-2026-008479, CONFIRMED) everywhere. */
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, monospace;
+
+  /* ── Spacing — base 8 ──────────────────────────────────────────────── */
+  --spacing-inline: 4px;
+  --spacing-tight: 8px;
+  --spacing-comfortable: 12px;
+  --spacing-section: 16px;
+  --spacing-major: 24px;
+  --spacing-hero: 48px;
+
+  /* ── Radii — ONLY these four exist in the entire system ──────────────── */
+  --radius-xs: 3px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+
+  /* ── Motion ──────────────────────────────────────────────────────────── */
+  --duration-instant: 0ms;
+  --duration-quick: 120ms;
+  --duration-standard: 200ms;
+  --duration-considered: 320ms;
+  --ease-counterfoil: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Type roles — the five roles from the brand type scale ──────────────
+   Reusable across both surfaces so headings never re-invent weight/tracking. */
+@layer components {
+  .type-display {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  .type-h1 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  .type-h2 {
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.25;
+  }
+
+  .type-body {
+    font-weight: 400;
+    line-height: 1.6;
+  }
+
+  .type-label {
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
 }
