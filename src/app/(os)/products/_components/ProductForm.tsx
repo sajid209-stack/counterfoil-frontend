@@ -20,6 +20,7 @@ import { defaultSchedule, isResourceType, needsSchedule } from "@/lib/schedule";
 import { BookingSetup, type BookingSetupResult } from "./BookingSetup";
 import { ScheduleBuilder } from "./ScheduleBuilder";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
+import { PricingRulesField, type FormPricingRule } from "./PricingRulesField";
 import { ImageUploadField, type FormImage } from "./ImageUploadField";
 
 const majorToMinor = (s: string) => { const n = parseFloat(s); return Number.isFinite(n) ? Math.round(n * 100) : 0; };
@@ -53,6 +54,7 @@ interface FormState {
   maxPerOrder: string;
   minAge: string;
   tiers: FormTier[];
+  pricingRules: FormPricingRule[];
   images: FormImage[];
 }
 
@@ -77,6 +79,7 @@ function fromProduct(p: Product): FormState {
     maxPerOrder: p.maxPerOrder != null ? String(p.maxPerOrder) : "",
     minAge: p.minAge != null ? String(p.minAge) : "",
     tiers: p.tiers.map((t) => ({ id: t.id, name: t.name, price: minorToMajor(t.price), maxPerOrder: t.maxPerOrder != null ? String(t.maxPerOrder) : "", active: t.active })),
+    pricingRules: (p.pricingRules ?? []).map((r) => ({ id: r.id, days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: minorToMajor(r.price) })),
     images: p.images.map((img) => ({ id: img.id, url: img.url, alt: img.alt })),
   };
 }
@@ -151,6 +154,7 @@ export function ProductForm({
       resourceExclusive: state.booking.resource?.exclusive,
       bufferMinutes: state.booking.resource?.bufferMinutes,
       flexibleDurations: state.booking.resource?.flexibleDurations,
+      pricingRules: state.pricingRules.filter((r) => r.price !== "").map((r) => ({ id: r.id ?? `pr_${globalThis.crypto.randomUUID().slice(0, 8)}`, days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: majorToMinor(r.price) })),
     };
     const res = await updateProduct(product.id, input);
     setSaving(false);
@@ -212,7 +216,14 @@ export function ProductForm({
           </div>
         )}
 
-        {tab === "pricing" && <PriceTiersField tiers={state.tiers} onChange={(tiers) => set("tiers", tiers)} errors={errors} currency={currency} />}
+        {tab === "pricing" && (
+          <div className="flex flex-col gap-major">
+            <PriceTiersField tiers={state.tiers} onChange={(tiers) => set("tiers", tiers)} errors={errors} currency={currency} />
+            {needsSchedule(state.booking.bookingType) && (
+              <PricingRulesField rules={state.pricingRules} onChange={(r) => set("pricingRules", r)} currency={currency} basePriceMajor={state.tiers[0]?.price ?? ""} />
+            )}
+          </div>
+        )}
 
         {tab === "where" && (
           <div className="grid gap-section sm:grid-cols-2">

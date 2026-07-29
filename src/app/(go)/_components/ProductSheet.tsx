@@ -6,6 +6,7 @@ import { Button } from "@/components/ui";
 import { getDailyRemaining, getSlots, isOpenOn, type Product } from "@/lib/api";
 import { slotISO } from "@/lib/schedule";
 import { isSlotBased, needsSchedule } from "@/lib/schedule";
+import { resolveProductPrice } from "@/lib/pricing";
 import { formatMoney } from "@/lib/format";
 
 export interface CartEntry {
@@ -107,10 +108,12 @@ export function ProductSheet({
             {slots.map((s) => {
               const left = s.remaining - seatsInCart(product.id, slotISO(date, s.time));
               const full = left <= 0;
+              const price = resolveProductPrice(product, date, s.time, Math.min(...activeTiers.map((t) => t.price)));
               return (
-                <button key={s.time} type="button" disabled={full} onClick={() => setSlotTime(s.time)} className={`flex h-14 flex-col items-center justify-center rounded-sm border text-sm ${full ? "border-neutral-200 bg-neutral-50 text-neutral-400" : slotTime === s.time ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>
+                <button key={s.time} type="button" disabled={full} onClick={() => setSlotTime(s.time)} className={`flex h-16 flex-col items-center justify-center gap-0.5 rounded-sm border text-sm ${full ? "border-neutral-200 bg-neutral-50 text-neutral-400" : slotTime === s.time ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>
                   <span className="font-mono">{s.time}</span>
-                  <span className="text-[10px]">{full ? "FULL" : `${left} left`}</span>
+                  <span className="font-mono text-[11px]">{formatMoney(price, currency)}</span>
+                  <span className="text-[10px] opacity-70">{full ? "FULL" : `${left} left`}</span>
                 </button>
               );
             })}

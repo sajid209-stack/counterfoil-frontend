@@ -131,6 +131,23 @@ export interface ProductImage {
   alt?: string;
 }
 
+/** A time/day price override. Rules are checked top-to-bottom; first match wins. */
+export interface PricingRule {
+  id: ID;
+  days: number[]; // 0–6; empty = any day
+  fromTime: string; // "18:00"
+  toTime: string; // "23:00"
+  price: Minor; // resolved slot price when this rule matches
+}
+
+/** A named section for BT-07 (Stalls / Balcony / VIP) — sections, not seat maps. */
+export interface ProductSection {
+  id: ID;
+  name: string;
+  capacity: number;
+  price: Minor;
+}
+
 export interface PriceTier {
   id: ID;
   name: string; // "Adult", "Child", "Senior"
@@ -183,6 +200,15 @@ export interface Product {
   resourceExclusive?: boolean; // one booking at a time per resource (BT-04) vs shared (BT-05)
   bufferMinutes?: number; // gap between bookings for changeover/cleaning
   flexibleDurations?: number[]; // BT-05 selectable durations, minutes
+  pricingRules?: PricingRule[]; // time/day price overrides, first match wins
+  sections?: ProductSection[]; // BT-07 named sections (Stalls/Balcony/VIP)
+  providerIds?: ID[]; // BT-10 people who deliver this
+  providerNoun?: string; // "Therapist" / "Instructor"
+  providerPickable?: boolean; // BT-10 choose by name vs first-available
+  bundleComponentIds?: ID[]; // BT-08 products combined into this ticket
+  credits?: { count: number; expiryDays: number; productIds: ID[] } | null; // BT-12
+  courseDates?: ISODate[]; // BT-13 session dates
+  waitlistEnabled?: boolean; // BT-11
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

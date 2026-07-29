@@ -19,6 +19,7 @@ import {
 import { defaultSchedule, isDailyCapped, isSlotBased, needsSchedule, slotTimes } from "@/lib/schedule";
 import { BookingSetup, type BookingSetupResult } from "./BookingSetup";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
+import { PricingRulesField, type FormPricingRule } from "./PricingRulesField";
 import { ImageUploadField, type FormImage } from "./ImageUploadField";
 import { ScheduleBuilder } from "./ScheduleBuilder";
 
@@ -51,6 +52,7 @@ export function ProductWizard({
   const [booking, setBooking] = useState<BookingSetupResult | null>(null);
   const [schedule, setSchedule] = useState<ProductSchedule | null>(null);
   const [tiers, setTiers] = useState<FormTier[]>([emptyTier()]);
+  const [pricingRules, setPricingRules] = useState<FormPricingRule[]>([]);
   const [resources, setResources] = useState<Resource[]>(initialResources);
   const [locations, setLocations] = useState<Location[]>(initialLocations);
 
@@ -129,6 +131,7 @@ export function ProductWizard({
       resourceExclusive: booking.resource?.exclusive,
       bufferMinutes: booking.resource?.bufferMinutes,
       flexibleDurations: booking.resource?.flexibleDurations,
+      pricingRules: pricingRules.filter((r) => r.price !== "").map((r) => ({ id: r.id ?? `pr_${globalThis.crypto.randomUUID().slice(0, 8)}`, days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: majorToMinor(r.price) })),
     };
     const res = await createProduct(input);
     setSaving(false);
@@ -177,7 +180,14 @@ export function ProductWizard({
           </div>
         )}
 
-        {step === 2 && <PriceTiersField tiers={tiers} onChange={setTiers} errors={errors} currency={currency} />}
+        {step === 2 && (
+          <div className="flex flex-col gap-major">
+            <PriceTiersField tiers={tiers} onChange={setTiers} errors={errors} currency={currency} />
+            {booking && needsSchedule(booking.bookingType) && (
+              <PricingRulesField rules={pricingRules} onChange={setPricingRules} currency={currency} basePriceMajor={tiers[0]?.price ?? ""} />
+            )}
+          </div>
+        )}
 
         {step === 3 && (
           <div className="grid gap-section sm:grid-cols-2">
