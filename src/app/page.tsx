@@ -1,65 +1,60 @@
-import Image from "next/image";
+import Link from "next/link";
+
+// Root launcher — a surface picker. Not a product screen; just a way into the
+// two surfaces (and auth) so the demo is clickable from "/".
+const SURFACES = [
+  {
+    href: "/dashboard",
+    code: "OS",
+    title: "Operator admin",
+    desc: "Configuration, management, reporting. Desktop, dense.",
+  },
+  {
+    href: "/pos",
+    code: "Go",
+    title: "Front of house",
+    desc: "Point of sale, scanning, shifts. Tablet, touch.",
+  },
+  {
+    href: "/sign-in",
+    code: "Auth",
+    title: "Sign in",
+    desc: "Sign in, sign up, invitation accept.",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="mx-auto flex min-h-full max-w-4xl flex-col justify-center px-section py-hero">
+      <p className="type-label text-[13px] text-ember">Counterfoil</p>
+      <h1 className="type-display mt-tight text-5xl">Two surfaces, one system.</h1>
+      <p className="type-body mt-section max-w-xl text-neutral-600">
+        Operator-owned platform for venues, tours, and attractions. Pick a
+        surface.
+      </p>
+
+      <div className="mt-major grid gap-tight sm:grid-cols-3">
+        {SURFACES.map((s) => (
+          <Link
+            key={s.href}
+            href={s.href}
+            className="group rounded-md border border-neutral-200 bg-white p-section transition-colors duration-quick ease-counterfoil hover:border-ink"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            <span className="font-mono text-xs text-neutral-400">{s.code}</span>
+            <h2 className="type-h2 mt-tight text-lg">{s.title}</h2>
+            <p className="type-body mt-inline text-[13px] text-neutral-600">
+              {s.desc}
+            </p>
+          </Link>
+        ))}
+      </div>
+
+      <Link
+        href="/tokens"
+        className="mt-major font-mono text-xs text-neutral-400 hover:text-ember"
+      >
+        /tokens · design reference
+      </Link>
+    </main>
   );
 }

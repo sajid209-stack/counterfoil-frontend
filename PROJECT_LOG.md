@@ -38,6 +38,9 @@ point is to build the table/form/primitives **once** and reuse them.
 |---|---|
 | **Production (Vercel)** | https://counterfoil-frontend.vercel.app |
 | **Design tokens** | https://counterfoil-frontend.vercel.app/tokens |
+| **OS dashboard** | https://counterfoil-frontend.vercel.app/dashboard |
+| **Go / POS** | https://counterfoil-frontend.vercel.app/pos |
+| **Auth / sign-in** | https://counterfoil-frontend.vercel.app/sign-in |
 | **GitHub repo** | https://github.com/sajid209-stack/counterfoil-frontend (public) |
 | **Vercel project** | `sajid209-stacks-projects/counterfoil-frontend` |
 
@@ -70,7 +73,7 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **0** | Environment check | ✅ Done |
 | **1** | Scaffold · repo · first deploy | ✅ Done |
 | **2** | Design tokens (`/tokens` route) | ✅ Done |
-| **3** | Routing structure + typed data layer (`src/lib/api`, `src/lib/mock`) | ⬜ Not started |
+| **3** | Routing structure + typed data layer (`src/lib/api`, `src/lib/mock`) | ✅ Done |
 | **4** | Primitive component layer (`/kitchen-sink` route) | ⬜ Not started |
 | **5** | Products — the reference CRUD screen | ⬜ Not started |
 | **later** | OS: Locations · Counters · Staff · Business Setup · Booking Rules · Pricing · Orders · Dashboard · Sales Reports · Calendar | ⬜ |
@@ -92,22 +95,32 @@ the **scan result** (readable in <1s at 3m; colour alone is not enough — shape
   (internal build prompts) is **not committed** — this is a public repo.
 - **D4 — public repo** (2026-07-29): per owner. Created + pushed via `gh repo create` using a
   classic PAT with `repo` scope (the fine-grained PAT first supplied could not create repos).
+- **D5 — type contract locked** (2026-07-29): reviewed the draft entity types and locked the
+  final shapes (`src/lib/api/types.ts`). Decisions: one `status: Lifecycle` across entities;
+  `ApiResult<T>` (no silent throws); offset pagination; `Counter.isOpen` moved off to a future
+  Shift entity; `Permission` stays `string[]` until the Roles screen; single `Operator.currency`
+  (BDT). Added `Operator` and `Category` (were referenced but undefined); multi-interval
+  `OpeningHours`; `ProductImage[]` objects; `Staff` gains `invited/suspended` + email-or-phone.
+- **D6 — no BT badge in the UI** (2026-07-29): per owner. `Product.bookingType` stays as a data
+  field (backend needs it) but is never rendered. This makes the BT-02/04/07 numbering conflict
+  a pure backend concern — off the UI's plate. `BookingTypeMeta` dropped.
+- **D7 — guardrail** (2026-07-29): a `PreToolUse` hook in `~/.claude/settings.local.json` hard-
+  denies any command touching the other Ternary repos (ternary-website-v3 / -local-dump /
+  -prod-dump / -design-mockups) or running a destructive `gh repo` op. Review via `/hooks`.
 
 ---
 
 ## 6. Open questions / to settle
 
-- **BT numbering conflict** (settle before the Products BT badge, Phase 5): the brand
-  guidelines and the Jira backlog disagree — **BT-04 and BT-07 are effectively swapped**
-  (guidelines: BT-04 Seated / BT-07 Provider; Jira: BT-04 Resource conflict / BT-07 Seating
-  layout), and **BT-02 is contested** (Timed Slot vs Validity window). Stream 1 scope is
-  BT-01/02/03/06/09, so only BT-02 bites now — but the badge renders in product UI, so a wrong
-  badge could ship unnoticed. **Needs an authoritative source of truth.**
+- **~~BT numbering conflict~~** — RESOLVED for the UI (D6): the BT badge is not rendered, so the
+  brand-vs-Jira disagreement (BT-04/07 swapped, BT-02 contested) no longer affects the frontend.
+  Still a backend concern whenever booking-type behaviour is implemented, but not blocking here.
 - **Derived colour scales are unconfirmed** (Phase 2): only the 3 brand primaries (`ink`,
   `paper`, `ember`, plus `bt-violet`) are exact. The neutral and amber scales are a derivation
-  and must be corrected from the Figma library later — mark them in CSS as unconfirmed.
-- **Type contract review** (Phase 3): the draft entity types become the contract with the
-  backend team. They must be reviewed/approved before screens are built on them.
+  and must be corrected from the Figma library later — marked in CSS as unconfirmed. The brand
+  guidelines PDF is in the project folder if exact values are needed.
+- **~~Type contract review~~** — RESOLVED (D5): the entity types are locked in
+  `src/lib/api/types.ts` and ready to hand to the backend team.
 
 ---
 
