@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button, EmptyState } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getOperator, listLocations, listProducts, type Product } from "@/lib/api";
-import { isSlotBased, needsSchedule, slotISO } from "@/lib/schedule";
+import { getOperator, listLocations, listProducts, listStaff, type Product } from "@/lib/api";
+import { isResourceType, isSlotBased, needsSchedule, slotISO } from "@/lib/schedule";
 import { formatMoney } from "@/lib/format";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 
@@ -17,6 +17,7 @@ export default function PosPage() {
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   const opQ = useApiQuery(() => getOperator(), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 1, filters: { status: "active" } }), []);
+  const teamQ = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
   const [cart, setCart] = useState<CartEntry[]>([]);
   const [sheet, setSheet] = useState<{ product: Product; initial: CartEntry | null } | null>(null);
 
@@ -24,8 +25,8 @@ export default function PosPage() {
   const taxPct = opQ.data?.taxRatePct ?? 0;
   const products = productsQ.data?.data ?? [];
 
-  const entryTotal = (e: CartEntry) => e.items.reduce((s, i) => s + i.unitPrice * i.qty, 0);
-  const entrySeats = (e: CartEntry) => e.items.reduce((s, i) => s + i.qty, 0);
+  const entryTotal = (e: CartEntry) => (e.fixedPrice != null ? e.fixedPrice : e.items.reduce((s, i) => s + i.unitPrice * i.qty, 0));
+  const entrySeats = (e: CartEntry) => (e.fixedPrice != null ? 1 : e.items.reduce((s, i) => s + i.qty, 0));
   const entrySlotISO = (e: CartEntry) =>
     e.slotDate ? (e.slotTime ? slotISO(e.slotDate, e.slotTime) : slotISO(e.slotDate, "10:00")) : undefined;
 
@@ -36,8 +37,12 @@ export default function PosPage() {
 
   const tapProduct = (p: Product) => {
     const activeTiers = p.tiers.filter((t) => t.active);
-    if (!needsSchedule(p.bookingType) && activeTiers.length === 1) {
-      // Zero-friction: straight to cart.
+    const needsSheet =
+      needsSchedule(p.bookingType) || isResourceType(p.bookingType) ||
+      p.bookingType === "BT-10" || p.bookingType === "BT-13" ||
+      (p.sections?.length ?? 0) > 0 || activeTiers.length > 1;
+    if (!needsSheet && activeTiers.length >= 1) {
+      // Zero-friction: straight to cart (open/date-range/bundle/credits, single tier).
       const t = activeTiers[0];
       setCart((c) => [...c, { id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`, productId: p.id, productName: p.name, items: [{ tierId: t.id, tierName: t.name, unitPrice: t.price, qty: 1 }] }]);
       return;
@@ -55,8 +60,16 @@ export default function PosPage() {
   const total = subtotal + tax;
 
   const charge = () => {
-    const lines = cart.flatMap((e) => e.items.map((i) => ({ productId: e.productId, productName: e.productName, tierName: i.tierName, quantity: i.qty, unitPrice: i.unitPrice })));
-    const bookings = cart.filter((e) => e.slotDate).map((e) => ({ productId: e.productId, slotStart: entrySlotISO(e)!, partySize: entrySeats(e) }));
+    const lines = cart.flatMap((e) =>
+      e.items.length
+        ? e.items.map((i) => ({ productId: e.productId, productName: e.productName, tierName: i.tierName, quantity: i.qty, unitPrice: i.unitPrice }))
+        : e.fixedPrice != null
+          ? [{ productId: e.productId, productName: e.productName, tierName: e.resourceLabel ?? e.slotTime ?? "Booking", quantity: 1, unitPrice: e.fixedPrice }]
+          : [],
+    );
+    const bookings = cart
+      .filter((e) => e.slotDate)
+      .map((e) => ({ productId: e.productId, resourceId: e.resourceId ?? null, slotStart: entrySlotISO(e)!, partySize: entrySeats(e) }));
     sessionStorage.setItem("pos_cart", JSON.stringify({ total, taxPct, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, bookings }));
     router.push("/pos/payment");
   };
@@ -98,7 +111,7 @@ export default function PosPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex justify-between text-sm font-medium"><span className="truncate">{e.productName}</span><span className="font-mono">{formatMoney(entryTotal(e), currency)}</span></div>
                     <div className="font-mono text-[11px] text-neutral-400">
-                      {e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · ")}{slotLabel(e)}
+                      {[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.resourceLabel, e.providerLabel].filter(Boolean).join(" · ")}{slotLabel(e)}
                     </div>
                   </div>
                   <button type="button" aria-label="Edit" onClick={() => setSheet({ product: products.find((p) => p.id === e.productId)!, initial: e })} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 active:bg-neutral-200"><Pencil size={15} strokeWidth={1.5} /></button>
@@ -127,6 +140,7 @@ export default function PosPage() {
           seatsInCart={seatsInCart}
           onAdd={upsertEntry}
           onClose={() => setSheet(null)}
+          team={teamQ.data?.data ?? []}
         />
       )}
     </div>

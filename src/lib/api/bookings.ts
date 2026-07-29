@@ -24,7 +24,9 @@ export function createBooking(input: {
   orderId: string;
   productId: string;
   locationId: string;
+  resourceId?: string | null;
   slotStart: string;
+  slotEnd?: string;
   partySize: number;
 }): Promise<ApiResult<Booking>> {
   return resource.create({ ...input, status: "confirmed" });

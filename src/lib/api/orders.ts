@@ -44,7 +44,9 @@ export interface CheckoutLine {
 }
 export interface CheckoutBooking {
   productId: string;
+  resourceId?: string | null;
   slotStart: string; // "2026-07-29T14:00:00+06:00"
+  slotEnd?: string;
   partySize: number;
 }
 export interface CheckoutInput {
@@ -99,7 +101,7 @@ export async function checkout(
 
   // Hold slot / daily capacity for scheduled products.
   for (const b of input.bookings ?? []) {
-    await createBooking({ orderId: order.id, productId: b.productId, locationId: input.locationId, slotStart: b.slotStart, partySize: b.partySize });
+    await createBooking({ orderId: order.id, productId: b.productId, locationId: input.locationId, resourceId: b.resourceId ?? null, slotStart: b.slotStart, slotEnd: b.slotEnd, partySize: b.partySize });
   }
 
   return { ok: true, data: { order, firstTicketCode } };
