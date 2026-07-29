@@ -15,6 +15,7 @@ import type {
   Role,
   Staff,
 } from "@/lib/api/types";
+import { generateSales } from "./generate";
 
 const T = "2026-01-15T10:00:00+06:00"; // stable seed timestamp
 
@@ -409,3 +410,15 @@ export const priceRules: PriceRule[] = [
   { id: "prc_museum_std", name: "Museum standard", productId: "prd_timed_museum", locationId: "loc_museum", channel: "all", kind: "standard", adjustmentPct: 0, status: "active", createdAt: T, updatedAt: T },
   { id: "prc_evening_peak", name: "Evening premium", productId: "prd_evening_pass", locationId: "loc_fort", channel: "counter", kind: "peak", adjustmentPct: 15, status: "inactive", createdAt: T, updatedAt: T },
 ];
+
+// Transactional data — generated deterministically (see generate.ts).
+const sales = generateSales({
+  products,
+  locations,
+  counters,
+  staff,
+  taxRatePct: operator.taxRatePct,
+});
+export const orders = sales.orders;
+export const tickets = sales.tickets;
+export const bookings = sales.bookings;

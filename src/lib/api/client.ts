@@ -41,7 +41,7 @@ export const conflictError = (message: string): ApiError => ({
 });
 
 // ── the mutable mock store (cloned so a session's edits persist) ────────────
-type Row = { id: string; createdAt: string; updatedAt: string };
+type Row = { id: string; createdAt?: string; updatedAt?: string };
 
 const store: Record<string, Row[]> = {
   products: structuredClone(seed.products),
@@ -52,6 +52,9 @@ const store: Record<string, Row[]> = {
   staff: structuredClone(seed.staff),
   bookingRules: structuredClone(seed.bookingRules),
   priceRules: structuredClone(seed.priceRules),
+  orders: structuredClone(seed.orders),
+  tickets: structuredClone(seed.tickets),
+  bookings: structuredClone(seed.bookings),
 };
 
 const nowISO = () => new Date().toISOString();

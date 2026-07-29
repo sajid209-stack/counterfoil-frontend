@@ -228,6 +228,66 @@ export type RolePatch = Partial<RoleInput>;
 export type StaffInput = Omit<Staff, "id" | "createdAt" | "updatedAt" | "lastActiveAt">;
 export type StaffPatch = Partial<StaffInput>;
 
+// ── Orders / payments / tickets / bookings ─────────────────────────────────
+export type OrderStatus = "paid" | "pending" | "partial" | "refunded" | "cancelled";
+
+export interface OrderLine {
+  id: ID;
+  productId: ID;
+  productName: string; // denormalised for display/audit at time of sale
+  tierName: string;
+  quantity: number;
+  unitPrice: Minor;
+}
+
+export interface Payment {
+  id: ID;
+  method: PaymentMethod;
+  amount: Minor;
+  at: ISODateTime;
+}
+
+export interface Order {
+  id: ID;
+  reference: string; // "CF-2026-008479"
+  status: OrderStatus;
+  channel: Channel;
+  locationId: ID;
+  counterId: ID | null;
+  staffId: ID | null;
+  customerName: string | null;
+  lines: OrderLine[];
+  payments: Payment[];
+  subtotal: Minor;
+  tax: Minor;
+  total: Minor;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+
+export type TicketStatus = "issued" | "redeemed" | "void";
+export interface Ticket {
+  id: ID;
+  code: string; // "CF-2026-008479-01"
+  orderId: ID;
+  productId: ID;
+  tierName: string;
+  status: TicketStatus;
+  validFor: ISODate;
+  redeemedAt: ISODateTime | null;
+}
+
+export type BookingStatus = "confirmed" | "cancelled";
+export interface Booking {
+  id: ID;
+  orderId: ID;
+  productId: ID;
+  locationId: ID;
+  slotStart: ISODateTime;
+  partySize: number;
+  status: BookingStatus;
+}
+
 // ── List / pagination / filtering ──────────────────────────────────────────
 export interface ListParams<F = Record<string, unknown>> {
   page?: number; // 1-based

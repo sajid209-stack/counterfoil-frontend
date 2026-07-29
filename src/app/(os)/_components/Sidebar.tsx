@@ -15,9 +15,9 @@ const NAV: { label: string; href: string; ready: boolean }[] = [
   { label: "Roles", href: "/settings/roles", ready: true },
   { label: "Booking Rules", href: "/booking-rules", ready: true },
   { label: "Pricing", href: "/pricing", ready: true },
-  { label: "Orders", href: "/orders", ready: false },
-  { label: "Sales Reports", href: "/reports", ready: false },
-  { label: "Calendar", href: "/calendar", ready: false },
+  { label: "Orders", href: "/orders", ready: true },
+  { label: "Sales Reports", href: "/reports/sales", ready: true },
+  { label: "Calendar", href: "/calendar", ready: true },
   { label: "Business Setup", href: "/settings/business", ready: true },
 ];
 
