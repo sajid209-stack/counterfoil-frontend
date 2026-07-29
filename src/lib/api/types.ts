@@ -228,6 +228,20 @@ export type RolePatch = Partial<RoleInput>;
 export type StaffInput = Omit<Staff, "id" | "createdAt" | "updatedAt" | "lastActiveAt">;
 export type StaffPatch = Partial<StaffInput>;
 
+// ── Devices — tablets paired to a counter ──────────────────────────────────
+export interface Device {
+  id: ID;
+  name: string;
+  counterId: ID | null;
+  pairingCode: string; // shown once at registration
+  status: Lifecycle;
+  lastSeenAt: ISODateTime | null;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+export type DeviceInput = Pick<Device, "name" | "counterId" | "status">;
+export type DevicePatch = Partial<DeviceInput>;
+
 // ── Orders / payments / tickets / bookings ─────────────────────────────────
 export type OrderStatus = "paid" | "pending" | "partial" | "refunded" | "cancelled";
 

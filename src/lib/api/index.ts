@@ -9,6 +9,7 @@ export * from "./roles";
 export * from "./staff";
 export * from "./bookingRules";
 export * from "./priceRules";
+export * from "./devices";
 export * from "./orders";
 export * from "./tickets";
 export * from "./bookings";

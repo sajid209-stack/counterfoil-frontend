@@ -94,7 +94,6 @@ export default function ProductDetailPage() {
         <p className="text-[13px] text-neutral-400">Loading…</p>
       ) : (
         <ProductForm
-          mode="edit"
           product={product}
           categories={cats.data?.data ?? []}
           locations={locs.data?.data ?? []}

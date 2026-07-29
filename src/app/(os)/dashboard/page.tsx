@@ -8,6 +8,7 @@ import { useApiQuery } from "@/lib/useApi";
 import {
   getOperator,
   listCounters,
+  listDevices,
   listLocations,
   listOrders,
   listProducts,
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const counters = useApiQuery(() => listCounters({ pageSize: 1 }), []);
   const staff = useApiQuery(() => listStaff({ pageSize: 1 }), []);
   const products = useApiQuery(() => listProducts({ pageSize: 1 }), []);
+  const devices = useApiQuery(() => listDevices({ pageSize: 1 }), []);
   const orders = useApiQuery(() => listOrders({ pageSize: 1000 }), []);
 
   const [skipped, setSkipped] = useState<Record<string, boolean>>({});
@@ -35,7 +37,7 @@ export default function DashboardPage() {
     { key: "counter", label: "Add a counter", helper: "A point of sale at a location.", done: has(counters), href: "/counters/new", ready: true },
     { key: "team", label: "Invite a team member", helper: "Someone to sell or scan.", done: has(staff), href: "/staff/new", ready: true },
     { key: "product", label: "Create a product", helper: "Something for guests to buy.", done: has(products), href: "/products/new", ready: true },
-    { key: "device", label: "Register a device", helper: "Pair a tablet to a counter.", done: false, href: "/devices/new", ready: false },
+    { key: "device", label: "Register a device", helper: "Pair a tablet to a counter.", done: has(devices), href: "/devices/new", ready: true },
   ];
 
   const complete = steps.filter((s) => s.done || skipped[s.key]).length;
