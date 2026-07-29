@@ -1,4 +1,7 @@
-import type { BookingTypeCode, ProductSchedule } from "@/lib/api";
+import type { BookingTypeCode, ProductSchedule } from "@/lib/api/types";
+
+/** ISO for a slot start on a given local date + "HH:MM" (Dhaka offset). */
+export const slotISO = (date: string, time: string) => `${date}T${time}:00+06:00`;
 
 // Which booking types carry a schedule, and of which kind.
 export const isSlotBased = (bt: BookingTypeCode) => bt === "BT-03" || bt === "BT-09";
