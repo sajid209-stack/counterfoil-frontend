@@ -26,3 +26,14 @@ export function findTicketByCode(code: string): Ticket | undefined {
 /** Redeem a ticket at the gate. */
 export const redeemTicket = (id: string): Promise<ApiResult<Ticket>> =>
   resource.update(id, { status: "redeemed", redeemedAt: new Date().toISOString() });
+
+/** Issue a fresh ticket (used by POS checkout). */
+export function issueTicket(input: {
+  code: string;
+  orderId: string;
+  productId: string;
+  tierName: string;
+  validFor: string;
+}): Promise<ApiResult<Ticket>> {
+  return resource.create({ ...input, status: "issued", redeemedAt: null });
+}

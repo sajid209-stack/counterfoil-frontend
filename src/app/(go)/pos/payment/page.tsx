@@ -2,29 +2,57 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui";
+import { Button, useToast } from "@/components/ui";
+import { checkout, type CheckoutLine } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { Keypad } from "../../_components/Keypad";
 
+interface Cart {
+  total: number;
+  taxPct: number;
+  locationId: string;
+  lines: CheckoutLine[];
+}
+
 export default function PaymentPage() {
   const router = useRouter();
-  const [total, setTotal] = useState(0);
+  const toast = useToast();
+  const [cart, setCart] = useState<Cart | null>(null);
   const [tenderTaka, setTenderTaka] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("pos_sale");
-    if (raw) setTotal(JSON.parse(raw).total ?? 0);
+    const raw = sessionStorage.getItem("pos_cart");
+    if (raw) setCart(JSON.parse(raw));
     else router.replace("/pos");
   }, [router]);
 
+  const total = cart?.total ?? 0;
   const tenderedMinor = (parseInt(tenderTaka || "0", 10) || 0) * 100;
   const change = tenderedMinor - total;
   const enough = tenderedMinor >= total;
 
-  const complete = () => {
-    const seq = String(Math.floor(Date.parse(new Date().toISOString()) % 900000) + 100000);
-    sessionStorage.setItem("pos_complete", JSON.stringify({ code: `CF-2026-${seq}`, change }));
-    router.push("/pos/complete");
+  const complete = async () => {
+    if (!cart) return;
+    setSaving(true);
+    const res = await checkout({
+      channel: "counter",
+      locationId: cart.locationId,
+      counterId: null,
+      staffId: null,
+      lines: cart.lines,
+      taxPct: cart.taxPct,
+      method: "cash",
+      amountTendered: tenderedMinor,
+    });
+    setSaving(false);
+    if (res.ok) {
+      sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change }));
+      sessionStorage.removeItem("pos_cart");
+      router.push("/pos/complete");
+    } else {
+      toast.error(res.error.message);
+    }
   };
 
   return (
@@ -48,7 +76,7 @@ export default function PaymentPage() {
             </button>
           ))}
         </div>
-        <Button size="lg" fullWidth disabled={!enough} onClick={complete}>Complete sale</Button>
+        <Button size="lg" fullWidth disabled={!enough} loading={saving} onClick={complete}>Complete sale</Button>
       </div>
 
       <div>

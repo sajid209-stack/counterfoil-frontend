@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button, EmptyState } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getOperator, listProducts } from "@/lib/api";
+import { getOperator, listLocations, listProducts } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 
 interface CartLine {
   key: string;
+  productId: string;
   productName: string;
   tierName: string;
   unitPrice: number;
@@ -20,6 +21,7 @@ export default function PosPage() {
   const router = useRouter();
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   const opQ = useApiQuery(() => getOperator(), []);
+  const locationsQ = useApiQuery(() => listLocations({ pageSize: 1, filters: { status: "active" } }), []);
   const [cart, setCart] = useState<CartLine[]>([]);
 
   const currency = opQ.data?.currency ?? "BDT";
@@ -28,12 +30,12 @@ export default function PosPage() {
   const tiles = useMemo(
     () =>
       (productsQ.data?.data ?? []).flatMap((p) =>
-        p.tiers.filter((t) => t.active).map((t) => ({ key: `${p.id}:${t.id}`, productName: p.name, tierName: t.name, unitPrice: t.price })),
+        p.tiers.filter((t) => t.active).map((t) => ({ key: `${p.id}:${t.id}`, productId: p.id, productName: p.name, tierName: t.name, unitPrice: t.price })),
       ),
     [productsQ.data],
   );
 
-  const add = (tile: { key: string; productName: string; tierName: string; unitPrice: number }) =>
+  const add = (tile: { key: string; productId: string; productName: string; tierName: string; unitPrice: number }) =>
     setCart((c) => {
       const found = c.find((l) => l.key === tile.key);
       if (found) return c.map((l) => (l.key === tile.key ? { ...l, qty: l.qty + 1 } : l));
@@ -49,7 +51,15 @@ export default function PosPage() {
   const count = cart.reduce((s, l) => s + l.qty, 0);
 
   const charge = () => {
-    sessionStorage.setItem("pos_sale", JSON.stringify({ total, count }));
+    sessionStorage.setItem(
+      "pos_cart",
+      JSON.stringify({
+        total,
+        taxPct,
+        locationId: locationsQ.data?.data[0]?.id ?? "loc_fort",
+        lines: cart.map((l) => ({ productId: l.productId, productName: l.productName, tierName: l.tierName, quantity: l.qty, unitPrice: l.unitPrice })),
+      }),
+    );
     router.push("/pos/payment");
   };
 

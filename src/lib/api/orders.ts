@@ -1,5 +1,6 @@
 import { createResource } from "./client";
-import type { ApiResult, ListParams, ListResponse, Order } from "./types";
+import { issueTicket } from "./tickets";
+import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod } from "./types";
 
 const resource = createResource<Order>("orders", "Order", {
   search: (o, q) =>
@@ -32,3 +33,62 @@ export const refundOrder = (id: string): Promise<ApiResult<Order>> =>
 
 /** Read-only access for reports/aggregation within the api layer. */
 export const peekOrders = (): Order[] => resource.peek();
+
+export interface CheckoutLine {
+  productId: string;
+  productName: string;
+  tierName: string;
+  quantity: number;
+  unitPrice: Minor;
+}
+export interface CheckoutInput {
+  channel: Channel;
+  locationId: string;
+  counterId: string | null;
+  staffId: string | null;
+  lines: CheckoutLine[];
+  taxPct: number;
+  method: PaymentMethod;
+  amountTendered: Minor;
+}
+
+/** Complete a sale: creates a paid order AND its tickets in the store, so the
+ *  issued code is real and scannable. Returns the order + first ticket code. */
+export async function checkout(
+  input: CheckoutInput,
+): Promise<ApiResult<{ order: Order; firstTicketCode: string }>> {
+  const subtotal = input.lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
+  const tax = Math.round((subtotal * input.taxPct) / 100);
+  const total = subtotal + tax;
+  const now = new Date().toISOString();
+  const reference = `CF-2026-${String(Math.floor(Date.parse(now) % 900000) + 100000)}`;
+
+  const orderRes = await resource.create({
+    reference,
+    status: "paid",
+    channel: input.channel,
+    locationId: input.locationId,
+    counterId: input.counterId,
+    staffId: input.staffId,
+    customerName: null,
+    lines: input.lines.map((l, i) => ({ id: `${reference}-L${i}`, ...l })),
+    payments: [{ id: `${reference}-P0`, method: input.method, amount: total, at: now }],
+    subtotal,
+    tax,
+    total,
+  });
+  if (!orderRes.ok) return orderRes;
+  const order = orderRes.data;
+
+  let firstTicketCode = "";
+  let t = 0;
+  for (const line of input.lines) {
+    for (let q = 0; q < line.quantity && t < 20; q++, t++) {
+      const code = `${reference}-${String(t + 1).padStart(2, "0")}`;
+      if (!firstTicketCode) firstTicketCode = code;
+      await issueTicket({ code, orderId: order.id, productId: line.productId, tierName: line.tierName, validFor: now.slice(0, 10) });
+    }
+  }
+
+  return { ok: true, data: { order, firstTicketCode } };
+}
