@@ -43,6 +43,10 @@ point is to build the table/form/primitives **once** and reuse them.
 | **Auth / sign-in** | https://counterfoil-frontend.vercel.app/sign-in |
 | **Kitchen sink** (primitives) | https://counterfoil-frontend.vercel.app/kitchen-sink |
 | **Products** (reference CRUD) | https://counterfoil-frontend.vercel.app/products |
+| **Locations** | https://counterfoil-frontend.vercel.app/locations |
+| **Counters** | https://counterfoil-frontend.vercel.app/counters |
+| **Staff** | https://counterfoil-frontend.vercel.app/staff |
+| **Roles** | https://counterfoil-frontend.vercel.app/settings/roles |
 | **GitHub repo** | https://github.com/sajid209-stack/counterfoil-frontend (public) |
 | **Vercel project** | `sajid209-stacks-projects/counterfoil-frontend` |
 
@@ -79,7 +83,23 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **3** | Routing structure + typed data layer (`src/lib/api`, `src/lib/mock`) | ✅ Done |
 | **4** | Primitive component layer (`/kitchen-sink` route) | ✅ Done |
 | **5** | Products — the reference CRUD screen | ✅ Done |
-| **6** | Scaffold sweep — every remaining Stream 1 screen | ⬜ In progress |
+| **6** | Scaffold sweep — every remaining Stream 1 screen | 🔄 In progress |
+
+### Phase 6 progress (scaffold sweep)
+
+OS list/detail CRUD screens — all follow the Products pattern (list + `/new` + `/[id]`),
+wired to `@/lib/api`, with search/filter/sort, loading skeletons, empty states, validation:
+
+- ✅ Products · Locations · Counters · Staff · Roles (`/settings/roles`)
+- ⬜ Business Setup (`/settings/business`) · Booking Rules · Pricing
+- ⬜ Orders (list + detail) · Sales Reports · Calendar
+- ⬜ Go: PIN login · shift open · POS · payment · complete · scan · scan result · bookings · shift close
+- ⬜ Auth: sign-up · invite/[token]
+- ⬜ Extend mock layer: Order, Booking, Ticket, Shift, Payment, BookingRule, PriceRule + larger seed
+
+**Deploy note:** Vercel CLI deploys (Hobby plan) queue one-at-a-time and have been slow to
+start (several min). All code lands on GitHub `main` immediately regardless. Consider
+connecting the GitHub repo to Vercel for auto-deploy — more reliable than CLI at this cadence.
 | **later** | OS: Locations · Counters · Staff · Business Setup · Booking Rules · Pricing · Orders · Dashboard · Sales Reports · Calendar | ⬜ |
 | **later** | Go: PIN login/shift open · POS · Cash payment · Ticket issued · Scan · Scan result · Shift close | ⬜ |
 
