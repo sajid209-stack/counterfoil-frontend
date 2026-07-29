@@ -47,6 +47,12 @@ point is to build the table/form/primitives **once** and reuse them.
 | **Counters** | https://counterfoil-frontend.vercel.app/counters |
 | **Staff** | https://counterfoil-frontend.vercel.app/staff |
 | **Roles** | https://counterfoil-frontend.vercel.app/settings/roles |
+| **Orders** | https://counterfoil-frontend.vercel.app/orders |
+| **Sales Reports** | https://counterfoil-frontend.vercel.app/reports/sales |
+| **Calendar** | https://counterfoil-frontend.vercel.app/calendar |
+| **Go — PIN login** | https://counterfoil-frontend.vercel.app/login |
+| **Go — POS till** | https://counterfoil-frontend.vercel.app/pos |
+| **Go — Scan** | https://counterfoil-frontend.vercel.app/scan |
 | **GitHub repo** | https://github.com/sajid209-stack/counterfoil-frontend (public) |
 | **Vercel project** | `sajid209-stacks-projects/counterfoil-frontend` |
 
@@ -83,23 +89,32 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **3** | Routing structure + typed data layer (`src/lib/api`, `src/lib/mock`) | ✅ Done |
 | **4** | Primitive component layer (`/kitchen-sink` route) | ✅ Done |
 | **5** | Products — the reference CRUD screen | ✅ Done |
-| **6** | Scaffold sweep — every remaining Stream 1 screen | 🔄 In progress |
+| **6** | Scaffold sweep — every remaining Stream 1 screen | ✅ Done |
 
-### Phase 6 progress (scaffold sweep)
+### Phase 6 (scaffold sweep) — complete
 
-OS list/detail CRUD screens — all follow the Products pattern (list + `/new` + `/[id]`),
-wired to `@/lib/api`, with search/filter/sort, loading skeletons, empty states, validation:
+**OS** (list + `/new` + `/[id]`, Products pattern; search/filter/sort, skeletons, empty
+states, validation): ✅ Dashboard · Products · Locations · Counters · Staff · Roles
+(`/settings/roles`) · Booking Rules · Pricing · Orders (+ refund) · Sales Reports
+(`/reports/sales`) · Calendar · Business Setup (`/settings/business`).
 
-- ✅ Products · Locations · Counters · Staff · Roles (`/settings/roles`)
-- ⬜ Business Setup (`/settings/business`) · Booking Rules · Pricing
-- ⬜ Orders (list + detail) · Sales Reports · Calendar
-- ⬜ Go: PIN login · shift open · POS · payment · complete · scan · scan result · bookings · shift close
-- ⬜ Auth: sign-up · invite/[token]
-- ⬜ Extend mock layer: Order, Booking, Ticket, Shift, Payment, BookingRule, PriceRule + larger seed
+**Go** (touch, 48px targets, `(go)` layout): ✅ PIN login · shift open · POS till · cash
+payment · ticket complete · scan · scan result (admit/reject: colour+shape+text) · arrivals ·
+shift close.
 
-**Deploy note:** Vercel CLI deploys (Hobby plan) queue one-at-a-time and have been slow to
-start (several min). All code lands on GitHub `main` immediately regardless. Consider
-connecting the GitHub repo to Vercel for auto-deploy — more reliable than CLI at this cadence.
+**Auth:** ✅ sign-in · sign-up · invite/[token].
+
+**Mock layer extended:** Operator (+tax), Category, BookingRule, PriceRule, Order, OrderLine,
+Payment, Ticket, Booking — all via `@/lib/api`, 200–400ms latency, `ApiResult`. Transactional
+data (~160 orders + tickets + bookings) generated deterministically in `lib/mock/generate.ts`.
+
+**Known simplifications (scaffold fidelity — for engineers to finish):** product seed is 8
+(not ~40); Booking Rules / Pricing are list-only (no editor yet); Location hours + logo upload
+are read-only placeholders; Dashboard shows entity counts (not yet revenue/arrivals/fill).
+
+**Deploy note:** Vercel CLI deploys (Hobby plan) queue one-at-a-time and are slow to start
+(several min). All code lands on GitHub `main` immediately regardless. **Recommend connecting
+the GitHub repo to Vercel for auto-deploy** — more reliable than CLI at this cadence.
 | **later** | OS: Locations · Counters · Staff · Business Setup · Booking Rules · Pricing · Orders · Dashboard · Sales Reports · Calendar | ⬜ |
 | **later** | Go: PIN login/shift open · POS · Cash payment · Ticket issued · Scan · Scan result · Shift close | ⬜ |
 
