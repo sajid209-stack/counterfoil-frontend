@@ -92,7 +92,7 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **6** | Scaffold sweep — every remaining Stream 1 screen | ✅ Done |
 | **7** | Golden path — 16-screen journey; NO booking-type dropdown; operator vocabulary | ✅ Done |
 | **8** | Configuration drives the product — schedule builder, seed catalogue, POS reads config, reports | ✅ Done |
-| **9** | Full booking engine — all 14 types, resources as first-class shared objects, pricing rules, IA restructure, design pass | 🔄 In progress |
+| **9** | Full booking engine — all 14 types, resources as first-class shared objects, pricing rules, IA restructure, design pass | ✅ Done |
 
 ### Phase 9 — full booking engine (6 parts, deploy after each)
 
@@ -116,10 +116,22 @@ are called by the operator's own word (Fields/Courts/Lanes…), including in the
   RESOURCE across ALL products (the turf sharing rule), respecting buffer + out-of-service.
   BookingTypeCode extended to all 14. **Backend contract:** `Resource` + product resource pool +
   availability-keyed-by-resource is ready in `types.ts` to hand to the backend lane.
-- **Part 3 ⬜** — Pricing rules (day/time bands, top-down first-match, live preview, resolved price in POS).
-- **Part 4 ⬜** — Provider flow + sections + bundle + credits + course + waitlist + field pass.
-- **Part 5 ⬜** — POS reads all of it (fields×times matrix, provider cards, sections, series, waitlist, quick pass).
-- **Part 6 ⬜** — Seed catalogue (turf sharing fields, etc.) + acceptance walk.
+- **Part 3 ✅** — Pricing rules on products (`PricingRule[]`, day/time bands, top-down first-match,
+  drag-reorder, mandatory live preview). `resolveProductPrice` in `lib/pricing.ts`; POS slot faces
+  show the resolved price.
+- **Part 4 ✅** — Question flow extended to all types: provider (BT-10), course (BT-13), bundle
+  (BT-08), credits (BT-12); waitlist (BT-11) toggle; field-pass quick-issue screen (BT-14) in Go nav.
+  `ProductSection` + provider/course/bundle/credits fields on `Product`.
+- **Part 5 ✅** — POS `ProductSheet` reads every type: fields×times **matrix** (BOOKED = diagonal
+  hatch, no colour-dependence), resource-flexible (resource + start + duration), provider cards,
+  section steppers, course enrol, and **Join waitlist** on full slots. Checkout holds resource
+  bookings (`resourceId` on `Booking`/`CheckoutBooking`); selling decrements per resource live.
+- **Part 6 ✅** — Full seed catalogue: **Football + Cricket sharing Fields 1–2** (base ৳1,500 /
+  evening ৳2,000 / Fri-Sat evening ৳2,500, 15-min buffer), Bowling (Lanes 1–4, flexible, evening
+  uplift), Massage (2 therapists), Film (Stalls/Balcony sections), Day Pass Bundle, 10-Class Yoga
+  credits pack, Beginner Swim course, waitlist Yoga. Explicit turf bookings so Field 1 shows BOOKED
+  on Sat 2026-08-01 while Field 2 stays free — the sharing proof. **All 14 booking types now
+  configurable and sellable.**
 
 ### Phase 8 — configuration is a promise the rest of the product keeps
 
