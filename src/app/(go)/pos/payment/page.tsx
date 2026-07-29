@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, useToast } from "@/components/ui";
-import { checkout, type CheckoutLine } from "@/lib/api";
+import { checkout, type CheckoutBooking, type CheckoutLine } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { Keypad } from "../../_components/Keypad";
 
@@ -12,6 +12,7 @@ interface Cart {
   taxPct: number;
   locationId: string;
   lines: CheckoutLine[];
+  bookings?: CheckoutBooking[];
 }
 
 export default function PaymentPage() {
@@ -41,6 +42,7 @@ export default function PaymentPage() {
       counterId: null,
       staffId: null,
       lines: cart.lines,
+      bookings: cart.bookings,
       taxPct: cart.taxPct,
       method: "cash",
       amountTendered: tenderedMinor,

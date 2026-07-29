@@ -1,3 +1,4 @@
+import { createBooking } from "./bookings";
 import { createResource } from "./client";
 import { issueTicket } from "./tickets";
 import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod } from "./types";
@@ -41,12 +42,18 @@ export interface CheckoutLine {
   quantity: number;
   unitPrice: Minor;
 }
+export interface CheckoutBooking {
+  productId: string;
+  slotStart: string; // "2026-07-29T14:00:00+06:00"
+  partySize: number;
+}
 export interface CheckoutInput {
   channel: Channel;
   locationId: string;
   counterId: string | null;
   staffId: string | null;
   lines: CheckoutLine[];
+  bookings?: CheckoutBooking[]; // slot holds for scheduled products
   taxPct: number;
   method: PaymentMethod;
   amountTendered: Minor;
@@ -88,6 +95,11 @@ export async function checkout(
       if (!firstTicketCode) firstTicketCode = code;
       await issueTicket({ code, orderId: order.id, productId: line.productId, tierName: line.tierName, validFor: now.slice(0, 10) });
     }
+  }
+
+  // Hold slot / daily capacity for scheduled products.
+  for (const b of input.bookings ?? []) {
+    await createBooking({ orderId: order.id, productId: b.productId, locationId: input.locationId, slotStart: b.slotStart, partySize: b.partySize });
   }
 
   return { ok: true, data: { order, firstTicketCode } };

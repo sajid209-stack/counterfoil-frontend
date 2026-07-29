@@ -2,86 +2,84 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button, EmptyState } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getOperator, listLocations, listProducts } from "@/lib/api";
+import { getOperator, listLocations, listProducts, type Product } from "@/lib/api";
+import { isSlotBased, needsSchedule, slotISO } from "@/lib/schedule";
 import { formatMoney } from "@/lib/format";
+import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 
-interface CartLine {
-  key: string;
-  productId: string;
-  productName: string;
-  tierName: string;
-  unitPrice: number;
-  qty: number;
-}
+const TODAY = "2026-07-29";
 
 export default function PosPage() {
   const router = useRouter();
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   const opQ = useApiQuery(() => getOperator(), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 1, filters: { status: "active" } }), []);
-  const [cart, setCart] = useState<CartLine[]>([]);
+  const [cart, setCart] = useState<CartEntry[]>([]);
+  const [sheet, setSheet] = useState<{ product: Product; initial: CartEntry | null } | null>(null);
 
   const currency = opQ.data?.currency ?? "BDT";
   const taxPct = opQ.data?.taxRatePct ?? 0;
+  const products = productsQ.data?.data ?? [];
 
-  const tiles = useMemo(
-    () =>
-      (productsQ.data?.data ?? []).flatMap((p) =>
-        p.tiers.filter((t) => t.active).map((t) => ({ key: `${p.id}:${t.id}`, productId: p.id, productName: p.name, tierName: t.name, unitPrice: t.price })),
-      ),
-    [productsQ.data],
-  );
+  const entryTotal = (e: CartEntry) => e.items.reduce((s, i) => s + i.unitPrice * i.qty, 0);
+  const entrySeats = (e: CartEntry) => e.items.reduce((s, i) => s + i.qty, 0);
+  const entrySlotISO = (e: CartEntry) =>
+    e.slotDate ? (e.slotTime ? slotISO(e.slotDate, e.slotTime) : slotISO(e.slotDate, "10:00")) : undefined;
 
-  const add = (tile: { key: string; productId: string; productName: string; tierName: string; unitPrice: number }) =>
-    setCart((c) => {
-      const found = c.find((l) => l.key === tile.key);
-      if (found) return c.map((l) => (l.key === tile.key ? { ...l, qty: l.qty + 1 } : l));
-      return [...c, { ...tile, qty: 1 }];
-    });
-  const bump = (key: string, delta: number) =>
-    setCart((c) => c.flatMap((l) => (l.key === key ? (l.qty + delta <= 0 ? [] : [{ ...l, qty: l.qty + delta }]) : [l])));
-  const removeLine = (key: string) => setCart((c) => c.filter((l) => l.key !== key));
+  const seatsInCart = (productId: string, slotStart: string) =>
+    cart
+      .filter((e) => e.id !== sheet?.initial?.id && e.productId === productId && entrySlotISO(e) === slotStart)
+      .reduce((s, e) => s + entrySeats(e), 0);
 
-  const subtotal = cart.reduce((s, l) => s + l.unitPrice * l.qty, 0);
+  const tapProduct = (p: Product) => {
+    const activeTiers = p.tiers.filter((t) => t.active);
+    if (!needsSchedule(p.bookingType) && activeTiers.length === 1) {
+      // Zero-friction: straight to cart.
+      const t = activeTiers[0];
+      setCart((c) => [...c, { id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`, productId: p.id, productName: p.name, items: [{ tierId: t.id, tierName: t.name, unitPrice: t.price, qty: 1 }] }]);
+      return;
+    }
+    setSheet({ product: p, initial: null });
+  };
+
+  const upsertEntry = (entry: CartEntry) => {
+    setCart((c) => (c.some((e) => e.id === entry.id) ? c.map((e) => (e.id === entry.id ? entry : e)) : [...c, entry]));
+    setSheet(null);
+  };
+
+  const subtotal = cart.reduce((s, e) => s + entryTotal(e), 0);
   const tax = Math.round((subtotal * taxPct) / 100);
   const total = subtotal + tax;
-  const count = cart.reduce((s, l) => s + l.qty, 0);
 
   const charge = () => {
-    sessionStorage.setItem(
-      "pos_cart",
-      JSON.stringify({
-        total,
-        taxPct,
-        locationId: locationsQ.data?.data[0]?.id ?? "loc_fort",
-        lines: cart.map((l) => ({ productId: l.productId, productName: l.productName, tierName: l.tierName, quantity: l.qty, unitPrice: l.unitPrice })),
-      }),
-    );
+    const lines = cart.flatMap((e) => e.items.map((i) => ({ productId: e.productId, productName: e.productName, tierName: i.tierName, quantity: i.qty, unitPrice: i.unitPrice })));
+    const bookings = cart.filter((e) => e.slotDate).map((e) => ({ productId: e.productId, slotStart: entrySlotISO(e)!, partySize: entrySeats(e) }));
+    sessionStorage.setItem("pos_cart", JSON.stringify({ total, taxPct, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, bookings }));
     router.push("/pos/payment");
+  };
+
+  const slotLabel = (e: CartEntry) => {
+    if (!e.slotDate) return "";
+    const when = e.slotDate === TODAY ? "today" : e.slotDate;
+    return e.slotTime ? ` · ${e.slotTime} ${when}` : ` · ${when}`;
   };
 
   return (
     <div className="grid h-full grid-cols-1 gap-tight p-tight lg:grid-cols-[1fr_22rem]">
-      {/* Product grid */}
       <div className="overflow-y-auto">
         {productsQ.loading ? (
           <p className="p-section text-[13px] text-neutral-400">Loading…</p>
         ) : (
           <div className="grid grid-cols-2 gap-tight sm:grid-cols-3">
-            {tiles.map((tile) => (
-              <button
-                key={tile.key}
-                type="button"
-                onClick={() => add(tile)}
-                className="flex min-h-[5rem] flex-col justify-between rounded-sm border border-neutral-200 bg-white p-comfortable text-left active:bg-neutral-200"
-              >
-                <span className="text-sm font-medium leading-tight">{tile.productName}</span>
+            {products.map((p) => (
+              <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex min-h-[5rem] flex-col justify-between rounded-sm border border-neutral-200 bg-white p-comfortable text-left active:bg-neutral-200">
+                <span className="text-sm font-medium leading-tight">{p.name}</span>
                 <span className="mt-tight flex items-center justify-between">
-                  <span className="font-mono text-[11px] text-neutral-400">{tile.tierName}</span>
-                  <span className="font-mono text-[13px]">{formatMoney(tile.unitPrice, currency)}</span>
+                  <span className="font-mono text-[11px] text-neutral-400">{isSlotBased(p.bookingType) ? "Pick a time" : needsSchedule(p.bookingType) ? "Pick a date" : p.tiers.filter((t) => t.active).length > 1 ? "Choose" : ""}</span>
+                  <span className="font-mono text-[13px]">{formatMoney(Math.min(...p.tiers.filter((t) => t.active).map((t) => t.price)), currency)}</span>
                 </span>
               </button>
             ))}
@@ -89,23 +87,22 @@ export default function PosPage() {
         )}
       </div>
 
-      {/* Cart */}
       <div className="flex flex-col rounded-sm border border-neutral-200 bg-white">
         <div className="flex-1 overflow-y-auto p-comfortable">
           {cart.length === 0 ? (
             <EmptyState title="Empty cart" message="Tap a product to add it." />
           ) : (
             <div className="flex flex-col gap-tight">
-              {cart.map((l) => (
-                <div key={l.key} className="flex items-center gap-tight border-b border-neutral-200 pb-tight last:border-0">
+              {cart.map((e) => (
+                <div key={e.id} className="flex items-start gap-tight border-b border-neutral-200 pb-tight last:border-0">
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{l.productName}</div>
-                    <div className="font-mono text-[11px] text-neutral-400">{l.tierName} · {formatMoney(l.unitPrice, currency)}</div>
+                    <div className="flex justify-between text-sm font-medium"><span className="truncate">{e.productName}</span><span className="font-mono">{formatMoney(entryTotal(e), currency)}</span></div>
+                    <div className="font-mono text-[11px] text-neutral-400">
+                      {e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · ")}{slotLabel(e)}
+                    </div>
                   </div>
-                  <button type="button" aria-label="Decrease" onClick={() => bump(l.key, -1)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 active:bg-neutral-200"><Minus size={16} strokeWidth={1.5} /></button>
-                  <span className="w-6 text-center font-mono text-sm">{l.qty}</span>
-                  <button type="button" aria-label="Increase" onClick={() => bump(l.key, 1)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 active:bg-neutral-200"><Plus size={16} strokeWidth={1.5} /></button>
-                  <button type="button" aria-label="Remove" onClick={() => removeLine(l.key)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 text-danger active:bg-neutral-200"><Trash2 size={16} strokeWidth={1.5} /></button>
+                  <button type="button" aria-label="Edit" onClick={() => setSheet({ product: products.find((p) => p.id === e.productId)!, initial: e })} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 active:bg-neutral-200"><Pencil size={15} strokeWidth={1.5} /></button>
+                  <button type="button" aria-label="Remove" onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 text-danger active:bg-neutral-200"><Trash2 size={15} strokeWidth={1.5} /></button>
                 </div>
               ))}
             </div>
@@ -116,11 +113,22 @@ export default function PosPage() {
           <div className="flex justify-between text-[13px] text-neutral-600"><span>Subtotal</span><span className="font-mono">{formatMoney(subtotal, currency)}</span></div>
           <div className="flex justify-between text-[13px] text-neutral-600"><span>Tax ({taxPct}%)</span><span className="font-mono">{formatMoney(tax, currency)}</span></div>
           <div className="mt-tight flex justify-between text-lg font-medium"><span>Total</span><span className="font-mono">{formatMoney(total, currency)}</span></div>
-          <Button size="lg" fullWidth className="mt-tight" disabled={count === 0} onClick={charge}>
-            Charge {count > 0 ? formatMoney(total, currency) : ""}
+          <Button size="lg" fullWidth className="mt-tight" disabled={cart.length === 0} onClick={charge}>
+            Charge {cart.length > 0 ? formatMoney(total, currency) : ""}
           </Button>
         </div>
       </div>
+
+      {sheet && (
+        <ProductSheet
+          product={sheet.product}
+          currency={currency}
+          initial={sheet.initial}
+          seatsInCart={seatsInCart}
+          onAdd={upsertEntry}
+          onClose={() => setSheet(null)}
+        />
+      )}
     </div>
   );
 }

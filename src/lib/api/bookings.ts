@@ -16,5 +16,16 @@ export const listBookings = (
   params?: ListParams,
 ): Promise<ApiResult<ListResponse<Booking>>> => resource.list(params);
 
-/** All bookings, unpaginated — for the calendar view. */
+/** All bookings, unpaginated — for the calendar view and slot availability. */
 export const peekBookings = (): Booking[] => resource.peek();
+
+/** Create a confirmed booking (used by POS checkout to hold slot capacity). */
+export function createBooking(input: {
+  orderId: string;
+  productId: string;
+  locationId: string;
+  slotStart: string;
+  partySize: number;
+}): Promise<ApiResult<Booking>> {
+  return resource.create({ ...input, status: "confirmed" });
+}

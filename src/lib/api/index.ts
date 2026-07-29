@@ -13,4 +13,5 @@ export * from "./devices";
 export * from "./orders";
 export * from "./tickets";
 export * from "./bookings";
+export * from "./slots";
 export * from "./operator";
