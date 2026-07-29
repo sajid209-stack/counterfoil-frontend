@@ -55,6 +55,7 @@ interface FormState {
   minAge: string;
   tiers: FormTier[];
   pricingRules: FormPricingRule[];
+  waitlist: boolean;
   images: FormImage[];
 }
 
@@ -80,6 +81,7 @@ function fromProduct(p: Product): FormState {
     minAge: p.minAge != null ? String(p.minAge) : "",
     tiers: p.tiers.map((t) => ({ id: t.id, name: t.name, price: minorToMajor(t.price), maxPerOrder: t.maxPerOrder != null ? String(t.maxPerOrder) : "", active: t.active })),
     pricingRules: (p.pricingRules ?? []).map((r) => ({ id: r.id, days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: minorToMajor(r.price) })),
+    waitlist: !!p.waitlistEnabled,
     images: p.images.map((img) => ({ id: img.id, url: img.url, alt: img.alt })),
   };
 }
@@ -98,6 +100,7 @@ export function ProductForm({
   locations,
   team,
   resources: initialResources,
+  products = [],
   currency = "BDT",
 }: {
   product: Product;
@@ -105,6 +108,7 @@ export function ProductForm({
   locations: Location[];
   team: Staff[];
   resources: Resource[];
+  products?: Product[];
   currency?: string;
 }) {
   const router = useRouter();
@@ -155,6 +159,15 @@ export function ProductForm({
       bufferMinutes: state.booking.resource?.bufferMinutes,
       flexibleDurations: state.booking.resource?.flexibleDurations,
       pricingRules: state.pricingRules.filter((r) => r.price !== "").map((r) => ({ id: r.id ?? `pr_${globalThis.crypto.randomUUID().slice(0, 8)}`, days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: majorToMinor(r.price) })),
+      // Preserve the type-specific config unless re-derived via the flow.
+      providerIds: state.booking.provider?.providerIds ?? product.providerIds,
+      providerNoun: state.booking.provider?.noun ?? product.providerNoun,
+      providerPickable: state.booking.provider?.pickable ?? product.providerPickable,
+      courseDates: state.booking.course?.dates ?? product.courseDates,
+      bundleComponentIds: state.booking.bundle?.componentIds ?? product.bundleComponentIds,
+      credits: state.booking.credits ?? product.credits ?? null,
+      sections: product.sections,
+      waitlistEnabled: state.waitlist,
     };
     const res = await updateProduct(product.id, input);
     setSaving(false);
@@ -191,6 +204,8 @@ export function ProductForm({
               <BookingSetup
                 value={state.booking}
                 resources={resources}
+                team={team}
+                products={products}
                 onCreateResource={onCreateResource}
                 onChange={(b) => {
                   if (!b) return;
@@ -212,6 +227,9 @@ export function ProductForm({
               <FormField label="Max per order" variant="number" value={state.maxPerOrder} onChange={(e) => set("maxPerOrder", e.target.value)} />
               <FormField label="Minimum age" variant="number" value={state.minAge} onChange={(e) => set("minAge", e.target.value)} />
               <FormField label="On sale" variant="toggle" checked={state.active} onChange={(e) => set("active", (e.target as HTMLInputElement).checked)} help="Turn off to hide from sale." />
+              {needsSchedule(state.booking.bookingType) && (
+                <FormField label="Waitlist when full" variant="toggle" checked={state.waitlist} onChange={(e) => set("waitlist", (e.target as HTMLInputElement).checked)} help="Let people join a waitlist." />
+              )}
             </div>
           </div>
         )}

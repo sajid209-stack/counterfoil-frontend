@@ -4,6 +4,7 @@ const GO_NAV = [
   { href: "/pos", label: "Sell" },
   { href: "/scan", label: "Scan" },
   { href: "/bookings", label: "Arrivals" },
+  { href: "/quick-pass", label: "Quick pass" },
   { href: "/shift/close", label: "Close" },
 ];
 

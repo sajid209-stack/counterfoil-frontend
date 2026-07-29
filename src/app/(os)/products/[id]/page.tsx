@@ -19,6 +19,7 @@ import {
   getProduct,
   listCategories,
   listLocations,
+  listProducts,
   listResources,
   listStaff,
 } from "@/lib/api";
@@ -34,6 +35,7 @@ export default function ProductDetailPage() {
   const locs = useApiQuery(() => listLocations({ pageSize: 100 }), []);
   const team = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100, filters: { status: "active" } }), []);
+  const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   const op = useApiQuery(() => getOperator(), []);
 
   const [confirmArchive, setConfirmArchive] = useState(false);
@@ -103,6 +105,7 @@ export default function ProductDetailPage() {
           locations={locs.data?.data ?? []}
           team={team.data?.data ?? []}
           resources={resourcesQ.data?.data ?? []}
+          products={(productsQ.data?.data ?? []).filter((p) => p.id !== product.id)}
           currency={op.data?.currency ?? "BDT"}
         />
       )}

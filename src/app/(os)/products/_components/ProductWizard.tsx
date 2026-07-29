@@ -11,6 +11,7 @@ import {
   type Category,
   type Channel,
   type Location,
+  type Product,
   type ProductInput,
   type ProductSchedule,
   type Resource,
@@ -31,12 +32,14 @@ export function ProductWizard({
   locations: initialLocations,
   team,
   resources: initialResources,
+  products = [],
   currency = "BDT",
 }: {
   categories: Category[];
   locations: Location[];
   team: Staff[];
   resources: Resource[];
+  products?: Product[];
   currency?: string;
 }) {
   const router = useRouter();
@@ -53,6 +56,7 @@ export function ProductWizard({
   const [schedule, setSchedule] = useState<ProductSchedule | null>(null);
   const [tiers, setTiers] = useState<FormTier[]>([emptyTier()]);
   const [pricingRules, setPricingRules] = useState<FormPricingRule[]>([]);
+  const [waitlist, setWaitlist] = useState(false);
   const [resources, setResources] = useState<Resource[]>(initialResources);
   const [locations, setLocations] = useState<Location[]>(initialLocations);
 
@@ -132,6 +136,13 @@ export function ProductWizard({
       bufferMinutes: booking.resource?.bufferMinutes,
       flexibleDurations: booking.resource?.flexibleDurations,
       pricingRules: pricingRules.filter((r) => r.price !== "").map((r) => ({ id: r.id ?? `pr_${globalThis.crypto.randomUUID().slice(0, 8)}`, days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: majorToMinor(r.price) })),
+      providerIds: booking.provider?.providerIds,
+      providerNoun: booking.provider?.noun,
+      providerPickable: booking.provider?.pickable,
+      courseDates: booking.course?.dates,
+      bundleComponentIds: booking.bundle?.componentIds,
+      credits: booking.credits ?? null,
+      waitlistEnabled: waitlist || booking.bookingType === "BT-11" ? true : undefined,
     };
     const res = await createProduct(input);
     setSaving(false);
@@ -170,12 +181,15 @@ export function ProductWizard({
 
         {step === 1 && (
           <div className="flex flex-col gap-major">
-            <BookingSetup value={booking} onChange={setBooking} resources={resources} onCreateResource={onCreateResource} />
+            <BookingSetup value={booking} onChange={setBooking} resources={resources} team={team} products={products} onCreateResource={onCreateResource} />
             {booking && needsSchedule(booking.bookingType) && schedule && (
               <div>
                 <p className="type-h2 mb-section text-base">Schedule</p>
                 <ScheduleBuilder bookingType={booking.bookingType} value={schedule} onChange={setSchedule} team={team} />
               </div>
+            )}
+            {booking && needsSchedule(booking.bookingType) && (
+              <FormField label="Let people join a waitlist when it's full" variant="toggle" checked={waitlist} onChange={(e) => setWaitlist((e.target as HTMLInputElement).checked)} />
             )}
           </div>
         )}
