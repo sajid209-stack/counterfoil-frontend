@@ -90,6 +90,20 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **4** | Primitive component layer (`/kitchen-sink` route) | ✅ Done |
 | **5** | Products — the reference CRUD screen | ✅ Done |
 | **6** | Scaffold sweep — every remaining Stream 1 screen | ✅ Done |
+| **7** | Golden path — 16-screen journey; NO booking-type dropdown; operator vocabulary | 🔄 In progress |
+
+### Phase 7 — golden path (the governing rule)
+
+**Internal identifiers never appear in the UI.** No `BT-0n` dropdown anywhere — booking type
+is *derived* from three plain questions and shown only in a read-only **Advanced** section on
+the product edit screen. Operator vocabulary everywhere: Ticket (not entitlement), Check-in
+(not redemption), Business (not tenant), Team member (not staff/role), Daily limit (not
+capacity), Valid dates (not validity window), "Where it's sold" (not channel). Writing rules:
+labels name the thing, helper says what happens, buttons are verbs, errors say what to do.
+The mock persists within a session so the whole journey works without touching seed data.
+
+Delivered in 3 parts: (1) sign-up → onboarding → checklist · (2) location/counter/team/product
+wizard/device · (3) the Go flow back to dashboard.
 
 ### Phase 6 (scaffold sweep) — complete
 
