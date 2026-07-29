@@ -93,6 +93,30 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **7** | Golden path — 16-screen journey; NO booking-type dropdown; operator vocabulary | ✅ Done |
 | **8** | Configuration drives the product — schedule builder, seed catalogue, POS reads config, reports | ✅ Done |
 | **9** | Full booking engine — all 14 types, resources as first-class shared objects, pricing rules, IA restructure, design pass | ✅ Done |
+| **10** | Operational layer — tax, policies, add-ons, tier composition, session-first POS, demo businesses | ✅ Done |
+
+### Phase 10 — the missing operational layer (4 parts, all deployed)
+
+- **Part 1 — POS structure + tax.** Behaviour subtitles on tiles (derived, no codes); category
+  chips; inline payment selector (cash → change-due, non-cash settles inline); **per-line tax
+  from a product tax class** (business rates: 15% standard / 7.5% reduced / exempt) — killed the
+  hardcoded rate, VAT shows on the total; POS discount gated by a role limit ("ask a manager"
+  over 10%); custom-amount tile.
+- **Part 2 — operational config.** Product **Policies tab** (sales window, cancellation,
+  reschedule, re-entry, deposit, party min/max, tax class) with defaults + plain summaries;
+  **tier composition** (`admits` + age note — a Family tier admits 4); **add-ons** (editor +
+  POS in both resource & tiered paths + seed bibs/shoes/oils).
+- **Part 3 — Schedule + Check-In.** Session-first **Schedule tab** (day grid of every session,
+  Sell deep-links to the POS sheet, FULL→Waitlist); **Check-In tab** (session-grouped rosters,
+  partial-group check-in — 3 of 4). Go nav: Sell · Schedule · Scan · Check-in · Pass · Shift.
+- **Part 4 — demo businesses.** Landing picker "Explore a demo business" (Museum · Turf · Bowling
+  · Spa · Cinema) + **Start fresh**; `loadBusiness` swaps the whole mock (operator + products +
+  regenerated 30-day orders); operator state unified in `client.ts`.
+
+**Deferred (named):** capacity-owner unification for guides/providers is model-ready (availability
+keys off `resourceId`) but guide time-selection + conflict isn't wired into the tour POS;
+per-day schedule overrides; deposit charged as partial at POS; Karim's +৳500 per-provider premium;
+credits redemption; refunds releasing capacity (backend TODO).
 
 ### Phase 9 — full booking engine (6 parts, deploy after each)
 
