@@ -5,10 +5,12 @@
    Components talk to `src/lib/api/*` only. Money is minor units (paisa) in BDT.
    ────────────────────────────────────────────────────────────────────────── */
 import type {
+  BookingRule,
   Category,
   Counter,
   Location,
   Operator,
+  PriceRule,
   Product,
   Role,
   Staff,
@@ -21,6 +23,7 @@ export const operator: Operator = {
   name: "Lalbagh Heritage Attractions",
   currency: "BDT",
   defaultTimezone: "Asia/Dhaka",
+  taxRatePct: 15,
   createdAt: T,
   updatedAt: T,
 };
@@ -391,4 +394,18 @@ export const staff: Staff[] = [
   { id: "stf_arif", name: "Arif Rahman", email: "arif@lalbagh.example", phone: "+8801711000009", roleId: "role_manager", locationIds: ["loc_fort", "loc_museum", "loc_garden"], counterIds: [], status: "active", lastActiveAt: "2026-07-29T08:00:00+06:00", createdAt: T, updatedAt: T },
   { id: "stf_shila", name: "Shila Akter", email: "shila@lalbagh.example", phone: null, roleId: "role_cashier", locationIds: ["loc_fort"], counterIds: ["cnt_fort_group"], status: "active", lastActiveAt: "2026-07-27T15:30:00+06:00", createdAt: T, updatedAt: T },
   { id: "stf_mizan", name: "Mizanur Rahman", email: "mizan@lalbagh.example", phone: "+8801711000011", roleId: "role_supervisor", locationIds: ["loc_fort"], counterIds: ["cnt_fort_main", "cnt_fort_kiosk"], status: "suspended", lastActiveAt: "2026-06-15T12:00:00+06:00", createdAt: "2025-12-01T10:00:00+06:00", updatedAt: "2026-06-16T10:00:00+06:00" },
+];
+
+export const bookingRules: BookingRule[] = [
+  { id: "brl_museum_slots", name: "Museum timed-entry slots", productId: "prd_timed_museum", locationId: "loc_museum", capacity: 30, slotMinutes: 30, daysOfWeek: [6, 0], blackoutDates: ["2026-08-15"], status: "active", createdAt: T, updatedAt: T },
+  { id: "brl_tour_capacity", name: "Heritage tour capacity", productId: "prd_tour_heritage", locationId: null, capacity: 12, slotMinutes: 90, daysOfWeek: [2, 3, 4, 5, 6], blackoutDates: [], status: "active", createdAt: T, updatedAt: T },
+  { id: "brl_evening", name: "Evening pass window", productId: "prd_evening_pass", locationId: "loc_fort", capacity: 200, slotMinutes: 120, daysOfWeek: [5], blackoutDates: [], status: "active", createdAt: T, updatedAt: T },
+  { id: "brl_fort_default", name: "Fort general capacity", productId: null, locationId: "loc_fort", capacity: 500, slotMinutes: 60, daysOfWeek: [0, 2, 3, 4, 5, 6], blackoutDates: ["2026-12-16"], status: "active", createdAt: T, updatedAt: T },
+];
+
+export const priceRules: PriceRule[] = [
+  { id: "prc_weekend_peak", name: "Weekend peak surcharge", productId: null, locationId: "loc_fort", channel: "all", kind: "peak", adjustmentPct: 20, status: "active", createdAt: T, updatedAt: T },
+  { id: "prc_online_off", name: "Online early-bird", productId: null, locationId: null, channel: "online", kind: "off_peak", adjustmentPct: -10, status: "active", createdAt: T, updatedAt: T },
+  { id: "prc_museum_std", name: "Museum standard", productId: "prd_timed_museum", locationId: "loc_museum", channel: "all", kind: "standard", adjustmentPct: 0, status: "active", createdAt: T, updatedAt: T },
+  { id: "prc_evening_peak", name: "Evening premium", productId: "prd_evening_pass", locationId: "loc_fort", channel: "counter", kind: "peak", adjustmentPct: 15, status: "inactive", createdAt: T, updatedAt: T },
 ];

@@ -7,4 +7,6 @@ export * from "./locations";
 export * from "./counters";
 export * from "./roles";
 export * from "./staff";
+export * from "./bookingRules";
+export * from "./priceRules";
 export * from "./operator";

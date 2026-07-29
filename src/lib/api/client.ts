@@ -50,6 +50,8 @@ const store: Record<string, Row[]> = {
   counters: structuredClone(seed.counters),
   roles: structuredClone(seed.roles),
   staff: structuredClone(seed.staff),
+  bookingRules: structuredClone(seed.bookingRules),
+  priceRules: structuredClone(seed.priceRules),
 };
 
 const nowISO = () => new Date().toISOString();

@@ -38,9 +38,47 @@ export interface Operator {
   name: string;
   currency: CurrencyCode; // every Minor in the system is denominated in this
   defaultTimezone: string; // "Asia/Dhaka"
+  taxRatePct: number; // sales tax / VAT percent, e.g. 15
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
+export type OperatorPatch = Partial<
+  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct">
+>;
+
+// ── Booking rules — capacity / slots / weekly pattern / blackouts ───────────
+export interface BookingRule {
+  id: ID;
+  name: string;
+  productId: ID | null; // null = applies to all products
+  locationId: ID | null; // null = all locations
+  capacity: number; // guests per slot
+  slotMinutes: number; // slot length
+  daysOfWeek: number[]; // 0–6 the rule is active
+  blackoutDates: ISODate[];
+  status: Lifecycle;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+export type BookingRuleInput = Omit<BookingRule, "id" | "createdAt" | "updatedAt">;
+export type BookingRulePatch = Partial<BookingRuleInput>;
+
+// ── Pricing rules — peak/off-peak adjustments per channel/location ──────────
+export type PriceRuleKind = "standard" | "peak" | "off_peak";
+export interface PriceRule {
+  id: ID;
+  name: string;
+  productId: ID | null;
+  locationId: ID | null;
+  channel: Channel | "all";
+  kind: PriceRuleKind;
+  adjustmentPct: number; // + surcharge / − discount applied to base tier price
+  status: Lifecycle;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+export type PriceRuleInput = Omit<PriceRule, "id" | "createdAt" | "updatedAt">;
+export type PriceRulePatch = Partial<PriceRuleInput>;
 
 // ── Category ───────────────────────────────────────────────────────────────
 export interface Category {
