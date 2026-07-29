@@ -27,6 +27,7 @@ export const operator: Operator = {
   currency: "BDT",
   defaultTimezone: "Asia/Dhaka",
   taxRatePct: 15,
+  reducedRatePct: 7.5,
   createdAt: T,
   updatedAt: T,
 };

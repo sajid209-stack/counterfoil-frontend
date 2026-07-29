@@ -41,6 +41,7 @@ export interface CheckoutLine {
   tierName: string;
   quantity: number;
   unitPrice: Minor;
+  taxRatePct?: number; // per-line rate from the product's tax class
 }
 export interface CheckoutBooking {
   productId: string;
@@ -67,7 +68,8 @@ export async function checkout(
   input: CheckoutInput,
 ): Promise<ApiResult<{ order: Order; firstTicketCode: string }>> {
   const subtotal = input.lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
-  const tax = Math.round((subtotal * input.taxPct) / 100);
+  // Per-line tax from each product's tax class; falls back to the order rate.
+  const tax = input.lines.reduce((s, l) => s + Math.round((l.unitPrice * l.quantity * (l.taxRatePct ?? input.taxPct)) / 100), 0);
   const total = subtotal + tax;
   const now = new Date().toISOString();
   const reference = `CF-2026-${String(Math.floor(Date.parse(now) % 900000) + 100000)}`;

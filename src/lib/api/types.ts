@@ -72,13 +72,16 @@ export interface Operator {
   name: string;
   currency: CurrencyCode; // every Minor in the system is denominated in this
   defaultTimezone: string; // "Asia/Dhaka"
-  taxRatePct: number; // sales tax / VAT percent, e.g. 15
+  taxRatePct: number; // STANDARD sales tax / VAT percent, e.g. 15
+  reducedRatePct?: number; // reduced tax class rate, e.g. 7.5
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
 export type OperatorPatch = Partial<
-  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct">
+  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct">
 >;
+
+export type TaxClass = "standard" | "reduced" | "exempt";
 
 // ── Booking rules — capacity / slots / weekly pattern / blackouts ───────────
 export interface BookingRule {
@@ -153,7 +156,33 @@ export interface PriceTier {
   name: string; // "Adult", "Child", "Senior"
   price: Minor;
   maxPerOrder?: number; // tier cap; must be ≤ Product.maxPerOrder if both set
+  admits?: number; // how many people this ticket admits (default 1; Family = 4)
+  ageNote?: string; // e.g. "5–12" — printed on the ticket
   active: boolean;
+}
+
+/** An optional extra attached to a product (shoe hire, bibs, oils). */
+export interface AddOn {
+  id: ID;
+  name: string;
+  price: Minor;
+  perPerson: boolean;
+}
+
+/** Operational policies around a booking. Sensible defaults; edited post-create. */
+export interface ProductPolicies {
+  salesWindowDays: number; // bookable up to N days ahead
+  cutoffMinutes: number; // sales cut off N min before start
+  cancellation: "none" | "free_until" | "fee";
+  cancelHours: number;
+  cancelFeePct: number;
+  reschedule: "none" | "until";
+  rescheduleHours: number;
+  reentry: "single" | "same_day" | "while_valid";
+  deposit: "full" | "percent";
+  depositPct: number;
+  partyMin: number;
+  partyMax: number;
 }
 
 /** A closure or custom-hours date. `times` only for kind "custom". */
@@ -209,6 +238,9 @@ export interface Product {
   credits?: { count: number; expiryDays: number; productIds: ID[] } | null; // BT-12
   courseDates?: ISODate[]; // BT-13 session dates
   waitlistEnabled?: boolean; // BT-11
+  taxClass?: TaxClass; // which tax rate applies (default standard)
+  addOns?: AddOn[]; // optional extras offered at POS
+  policies?: ProductPolicies; // operational policies (sales window, cancellation…)
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
