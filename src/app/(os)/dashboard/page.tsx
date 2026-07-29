@@ -33,11 +33,11 @@ export default function DashboardPage() {
 
   const steps = [
     { key: "business", label: "Name your business", helper: "Your business name and currency.", done: !!op.data?.name, href: "/settings/business", ready: true },
-    { key: "location", label: "Add a location", helper: "Where you sell and admit guests.", done: has(locations), href: "/locations/new", ready: true },
-    { key: "counter", label: "Add a counter", helper: "A point of sale at a location.", done: has(counters), href: "/counters/new", ready: true },
-    { key: "team", label: "Invite a team member", helper: "Someone to sell or scan.", done: has(staff), href: "/staff/new", ready: true },
+    { key: "location", label: "Add a location", helper: "Where you sell and admit guests.", done: has(locations), href: "/settings/locations/new", ready: true },
+    { key: "counter", label: "Add a counter", helper: "A point of sale at a location.", done: has(counters), href: "/settings/counters/new", ready: true },
+    { key: "team", label: "Invite a team member", helper: "Someone to sell or scan.", done: has(staff), href: "/settings/team/new", ready: true },
     { key: "product", label: "Create a product", helper: "Something for guests to buy.", done: has(products), href: "/products/new", ready: true },
-    { key: "device", label: "Register a device", helper: "Pair a tablet to a counter.", done: has(devices), href: "/devices/new", ready: true },
+    { key: "device", label: "Register a device", helper: "Pair a tablet to a counter.", done: has(devices), href: "/settings/devices/new", ready: true },
   ];
 
   const complete = steps.filter((s) => s.done || skipped[s.key]).length;

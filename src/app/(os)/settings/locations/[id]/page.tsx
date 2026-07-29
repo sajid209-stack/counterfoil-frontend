@@ -18,7 +18,7 @@ export default function LocationDetailPage() {
       <PageShell title="Location">
         <EmptyState
           title="Location not found"
-          action={<Button onClick={() => router.push("/locations")}>Back to locations</Button>}
+          action={<Button onClick={() => router.push("/settings/locations")}>Back to locations</Button>}
         />
       </PageShell>
     );
@@ -30,7 +30,7 @@ export default function LocationDetailPage() {
       description={data ? `${data.city}, ${data.country}` : undefined}
       actions={data ? <StatusPill status={data.status} /> : undefined}
     >
-      <Link href="/locations" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/locations" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
         <ArrowLeft size={14} strokeWidth={1.5} /> Locations
       </Link>
       {loading || !data ? (

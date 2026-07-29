@@ -64,7 +64,7 @@ export default function StaffPage() {
     <PageShell
       title="Staff"
       description="People who sell, scan, and manage — roles, locations, counters."
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/staff/new")}>Add staff</Button>}
+      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/team/new")}>Add staff</Button>}
     >
       <DataTable
         columns={columns}
@@ -73,7 +73,7 @@ export default function StaffPage() {
         loading={loading}
         sort={sort}
         onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
-        onRowClick={(s) => router.push(`/staff/${s.id}`)}
+        onRowClick={(s) => router.push(`/settings/team/${s.id}`)}
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">

@@ -65,7 +65,7 @@ export default function CountersPage() {
     <PageShell
       title="Counters"
       description="Points of sale at each location — allowed products and payment methods."
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/counters/new")}>New counter</Button>}
+      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/counters/new")}>New counter</Button>}
     >
       <DataTable
         columns={columns}
@@ -74,7 +74,7 @@ export default function CountersPage() {
         loading={loading}
         sort={sort}
         onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
-        onRowClick={(c) => router.push(`/counters/${c.id}`)}
+        onRowClick={(c) => router.push(`/settings/counters/${c.id}`)}
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">

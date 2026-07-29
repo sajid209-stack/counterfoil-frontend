@@ -31,7 +31,7 @@ export default function NewDevicePage() {
 
   return (
     <PageShell title="Register a device" description="Name the tablet and pair it to a counter.">
-      <Link href="/devices" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/devices" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
         <ArrowLeft size={14} strokeWidth={1.5} /> Devices
       </Link>
 

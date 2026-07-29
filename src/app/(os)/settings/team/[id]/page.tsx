@@ -20,7 +20,7 @@ export default function StaffDetailPage() {
   if (!member.loading && (member.error || !member.data)) {
     return (
       <PageShell title="Staff">
-        <EmptyState title="Staff member not found" action={<Button onClick={() => router.push("/staff")}>Back to staff</Button>} />
+        <EmptyState title="Staff member not found" action={<Button onClick={() => router.push("/settings/team")}>Back to staff</Button>} />
       </PageShell>
     );
   }
@@ -30,7 +30,7 @@ export default function StaffDetailPage() {
       title={member.data?.name ?? "Staff"}
       actions={member.data ? <StatusPill status={member.data.status} /> : undefined}
     >
-      <Link href="/staff" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/team" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
         <ArrowLeft size={14} strokeWidth={1.5} /> Staff
       </Link>
       {loading || !member.data ? (

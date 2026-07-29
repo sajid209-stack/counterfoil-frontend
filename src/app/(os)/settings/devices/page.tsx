@@ -42,7 +42,7 @@ export default function DevicesPage() {
     <PageShell
       title="Devices"
       description="Tablets paired to a counter for selling and scanning."
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/devices/new")}>Register a device</Button>}
+      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/devices/new")}>Register a device</Button>}
     >
       <DataTable
         columns={columns}
@@ -64,7 +64,7 @@ export default function DevicesPage() {
             </select>
           </div>
         }
-        emptyState={<EmptyState title="No devices yet" message="Register a tablet to start selling on it." action={<Button onClick={() => router.push("/devices/new")}>Register a device</Button>} />}
+        emptyState={<EmptyState title="No devices yet" message="Register a tablet to start selling on it." action={<Button onClick={() => router.push("/settings/devices/new")}>Register a device</Button>} />}
         pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}
       />
     </PageShell>

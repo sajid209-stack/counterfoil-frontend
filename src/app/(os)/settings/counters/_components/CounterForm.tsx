@@ -92,7 +92,7 @@ export function CounterForm({
     setSaving(false);
     if (res.ok) {
       toast.success(mode === "create" ? "Counter created." : "Changes saved.");
-      if (mode === "create") router.push(`/counters/${res.data.id}`);
+      if (mode === "create") router.push(`/settings/counters/${res.data.id}`);
       else setState(fromCounter(res.data));
     } else if (res.error.code === "validation" && res.error.fieldErrors) {
       setErrors(res.error.fieldErrors);
@@ -158,7 +158,7 @@ export function CounterForm({
       </div>
 
       <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-neutral-200 bg-paper py-section">
-        <Button variant="secondary" onClick={() => router.push("/counters")} disabled={saving}>Cancel</Button>
+        <Button variant="secondary" onClick={() => router.push("/settings/counters")} disabled={saving}>Cancel</Button>
         <Button onClick={save} loading={saving} disabled={!dirty && mode === "edit"}>
           {mode === "create" ? "Create counter" : "Save changes"}
         </Button>

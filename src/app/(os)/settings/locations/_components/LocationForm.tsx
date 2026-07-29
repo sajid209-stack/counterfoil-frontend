@@ -114,7 +114,7 @@ export function LocationForm({
     setSaving(false);
     if (res.ok) {
       toast.success(mode === "create" ? "Location created." : "Changes saved.");
-      if (mode === "create") router.push(`/locations/${res.data.id}`);
+      if (mode === "create") router.push(`/settings/locations/${res.data.id}`);
       else setState(fromLocation(res.data));
     } else if (res.error.code === "validation" && res.error.fieldErrors) {
       setErrors(res.error.fieldErrors);
@@ -178,7 +178,7 @@ export function LocationForm({
       <HoursSummary hours={location?.openingHours ?? []} />
 
       <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-neutral-200 bg-paper py-section">
-        <Button variant="secondary" onClick={() => router.push("/locations")} disabled={saving}>
+        <Button variant="secondary" onClick={() => router.push("/settings/locations")} disabled={saving}>
           Cancel
         </Button>
         <Button onClick={save} loading={saving} disabled={!dirty && mode === "edit"}>

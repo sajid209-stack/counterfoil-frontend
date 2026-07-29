@@ -14,7 +14,7 @@ export default function NewCounterPage() {
 
   return (
     <PageShell title="New counter" description="Add a point of sale at a location.">
-      <Link href="/counters" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/counters" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
         <ArrowLeft size={14} strokeWidth={1.5} /> Counters
       </Link>
       {loading ? (

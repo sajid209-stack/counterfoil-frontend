@@ -19,7 +19,7 @@ export default function CounterDetailPage() {
   if (!counter.loading && (counter.error || !counter.data)) {
     return (
       <PageShell title="Counter">
-        <EmptyState title="Counter not found" action={<Button onClick={() => router.push("/counters")}>Back to counters</Button>} />
+        <EmptyState title="Counter not found" action={<Button onClick={() => router.push("/settings/counters")}>Back to counters</Button>} />
       </PageShell>
     );
   }
@@ -29,7 +29,7 @@ export default function CounterDetailPage() {
       title={counter.data?.name ?? "Counter"}
       actions={counter.data ? <StatusPill status={counter.data.status} /> : undefined}
     >
-      <Link href="/counters" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/counters" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
         <ArrowLeft size={14} strokeWidth={1.5} /> Counters
       </Link>
       {loading || !counter.data ? (

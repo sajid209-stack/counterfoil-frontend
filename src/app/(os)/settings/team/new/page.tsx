@@ -15,7 +15,7 @@ export default function NewStaffPage() {
 
   return (
     <PageShell title="Add staff" description="Invite someone to sell, scan, or manage.">
-      <Link href="/staff" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/team" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
         <ArrowLeft size={14} strokeWidth={1.5} /> Staff
       </Link>
       {loading ? (

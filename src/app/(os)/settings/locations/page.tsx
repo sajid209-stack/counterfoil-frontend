@@ -51,7 +51,7 @@ export default function LocationsPage() {
       title="Locations"
       description="Sites where you sell and admit — hours, timezone, status."
       actions={
-        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/locations/new")}>
+        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/locations/new")}>
           New location
         </Button>
       }
@@ -63,7 +63,7 @@ export default function LocationsPage() {
         loading={loading}
         sort={sort}
         onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
-        onRowClick={(l) => router.push(`/locations/${l.id}`)}
+        onRowClick={(l) => router.push(`/settings/locations/${l.id}`)}
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">

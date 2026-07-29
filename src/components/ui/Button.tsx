@@ -12,8 +12,9 @@ export type ButtonVariant =
 export type ButtonSize = "sm" | "md" | "lg";
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  // Solid, high-contrast primary. Never an outline (brand rule).
-  primary: "bg-ink text-paper hover:bg-neutral-800 disabled:bg-neutral-400",
+  // Solid ember — the one brand accent for the primary action. Never an outline.
+  // ink text on ember passes AA; white would not.
+  primary: "bg-ember text-ink hover:opacity-90 disabled:bg-neutral-200 disabled:text-neutral-400",
   secondary:
     "bg-white text-ink border border-neutral-200 hover:border-ink disabled:text-neutral-400 disabled:border-neutral-200",
   tertiary: "bg-transparent text-ink hover:bg-neutral-200 disabled:text-neutral-400",

@@ -83,7 +83,7 @@ export function StaffForm({
     setSaving(false);
     if (res.ok) {
       toast.success(mode === "create" ? "Staff member added." : "Changes saved.");
-      if (mode === "create") router.push(`/staff/${res.data.id}`);
+      if (mode === "create") router.push(`/settings/team/${res.data.id}`);
       else setState(fromStaff(res.data));
     } else if (res.error.code === "validation" && res.error.fieldErrors) {
       setErrors(res.error.fieldErrors);
@@ -144,7 +144,7 @@ export function StaffForm({
       </div>
 
       <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-neutral-200 bg-paper py-section">
-        <Button variant="secondary" onClick={() => router.push("/staff")} disabled={saving}>Cancel</Button>
+        <Button variant="secondary" onClick={() => router.push("/settings/team")} disabled={saving}>Cancel</Button>
         <Button onClick={save} loading={saving} disabled={!dirty && mode === "edit"}>
           {mode === "create" ? "Add staff" : "Save changes"}
         </Button>
