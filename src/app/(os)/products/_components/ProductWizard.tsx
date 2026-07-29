@@ -18,6 +18,7 @@ import {
   type Staff,
 } from "@/lib/api";
 import { defaultSchedule, isDailyCapped, isSlotBased, needsSchedule, slotTimes } from "@/lib/schedule";
+import { defaultPolicies } from "@/lib/tax";
 import { BookingSetup, type BookingSetupResult } from "./BookingSetup";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
 import { PricingRulesField, type FormPricingRule } from "./PricingRulesField";
@@ -126,7 +127,7 @@ export function ProductWizard({
       images: images.map(({ id, url, alt }) => ({ id, url, alt })),
       categoryId: categoryId || null,
       bookingType: booking.bookingType,
-      tiers: tiers.map((t) => ({ id: t.id, name: t.name, price: majorToMinor(t.price), maxPerOrder: t.maxPerOrder ? parseInt(t.maxPerOrder, 10) : undefined, active: t.active })),
+      tiers: tiers.map((t) => ({ id: t.id, name: t.name, price: majorToMinor(t.price), maxPerOrder: t.maxPerOrder ? parseInt(t.maxPerOrder, 10) : undefined, admits: parseInt(t.admits, 10) || 1, ageNote: t.ageNote || undefined, active: t.active })),
       locationIds, channels,
       status: asDraft ? "inactive" : "active",
       validityDays: booking.validityDays,
@@ -143,6 +144,8 @@ export function ProductWizard({
       bundleComponentIds: booking.bundle?.componentIds,
       credits: booking.credits ?? null,
       waitlistEnabled: waitlist || booking.bookingType === "BT-11" ? true : undefined,
+      taxClass: "standard",
+      policies: defaultPolicies(),
     };
     const res = await createProduct(input);
     setSaving(false);

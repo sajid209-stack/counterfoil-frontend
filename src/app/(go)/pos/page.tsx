@@ -51,7 +51,7 @@ export default function PosPage() {
 
   const shown = category === "all" ? products : products.filter((p) => p.categoryId === category);
 
-  const entryTotal = (e: CartEntry) => (e.fixedPrice != null ? e.fixedPrice : e.items.reduce((s, i) => s + i.unitPrice * i.qty, 0));
+  const entryTotal = (e: CartEntry) => (e.fixedPrice ?? 0) + e.items.reduce((s, i) => s + i.unitPrice * i.qty, 0);
   const entrySeats = (e: CartEntry) => (e.fixedPrice != null ? 1 : e.items.reduce((s, i) => s + i.qty, 0));
   const entrySlotISO = (e: CartEntry) => (e.slotDate ? (e.slotTime ? slotISO(e.slotDate, e.slotTime) : slotISO(e.slotDate, "10:00")) : undefined);
   const entryTaxRate = (e: CartEntry) => { const p = productById(e.productId); return p ? taxRateFor(p, operator) : 0; };

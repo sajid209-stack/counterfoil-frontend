@@ -8,6 +8,8 @@ export interface FormTier {
   name: string;
   price: string; // major units as typed, e.g. "30.00"
   maxPerOrder: string;
+  admits: string; // people this ticket admits (default 1)
+  ageNote: string; // e.g. "5–12" — printed on the ticket
   active: boolean;
 }
 
@@ -15,6 +17,8 @@ export const emptyTier = (): FormTier => ({
   name: "",
   price: "",
   maxPerOrder: "",
+  admits: "1",
+  ageNote: "",
   active: true,
 });
 
@@ -61,7 +65,7 @@ export function PriceTiersField({
       {tiers.map((tier, i) => (
         <div
           key={i}
-          className="grid grid-cols-1 items-start gap-tight rounded-sm border border-neutral-200 p-comfortable sm:grid-cols-[1fr_9rem_7rem_auto]"
+          className="grid grid-cols-1 items-start gap-tight rounded-sm border border-neutral-200 p-comfortable sm:grid-cols-[1fr_7rem_4.5rem_5.5rem_auto]"
         >
           <FormField
             label={i === 0 ? "Name" : undefined}
@@ -79,11 +83,17 @@ export function PriceTiersField({
             error={errors[`tiers.${i}.price`]}
           />
           <FormField
-            label={i === 0 ? "Max/order" : undefined}
+            label={i === 0 ? "Admits" : undefined}
             variant="number"
-            placeholder="—"
-            value={tier.maxPerOrder}
-            onChange={(e) => update(i, { maxPerOrder: e.target.value })}
+            placeholder="1"
+            value={tier.admits}
+            onChange={(e) => update(i, { admits: e.target.value })}
+          />
+          <FormField
+            label={i === 0 ? "Age note" : undefined}
+            placeholder="5–12"
+            value={tier.ageNote}
+            onChange={(e) => update(i, { ageNote: e.target.value })}
           />
           <div className={i === 0 ? "flex items-center gap-inline pt-6" : "flex items-center gap-inline"}>
             <button

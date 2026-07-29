@@ -224,6 +224,7 @@ export const products: Product[] = [
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
     resourceIds: ["res_field_1", "res_field_2"], resourceExclusive: true, bufferMinutes: 15,
     pricingRules: [{ id: "pr_fb_wknd", days: [5, 6], fromTime: "18:00", toTime: "23:00", price: 250000 }, { id: "pr_fb_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 200000 }],
+    addOns: [{ id: "add_fb_bibs", name: "Bib set", price: 20000, perPerson: false }],
     createdAt: T, updatedAt: T,
   },
   {
@@ -242,6 +243,7 @@ export const products: Product[] = [
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "10:00", endTime: "22:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
     resourceIds: ["res_lane_1", "res_lane_2", "res_lane_3", "res_lane_4"], resourceExclusive: true, bufferMinutes: 0, flexibleDurations: [60, 90, 120],
     pricingRules: [{ id: "pr_bw_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 120000 }],
+    addOns: [{ id: "add_bw_shoes", name: "Shoe hire", price: 10000, perPerson: true }],
     createdAt: T, updatedAt: T,
   },
   {
@@ -249,6 +251,8 @@ export const products: Product[] = [
     tiers: [{ id: "tier_ms_60", name: "60 min", price: 300000, active: true }, { id: "tier_ms_90", name: "90 min", price: 450000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, schedule: null,
     providerIds: ["stf_nadia", "stf_karim"], providerNoun: "Therapist", providerPickable: true, flexibleDurations: [60, 90],
+    addOns: [{ id: "add_ms_oils", name: "Premium oils", price: 30000, perPerson: false }],
+    policies: { salesWindowDays: 60, cutoffMinutes: 60, cancellation: "fee", cancelHours: 12, cancelFeePct: 50, reschedule: "until", rescheduleHours: 12, reentry: "single", deposit: "percent", depositPct: 50, partyMin: 1, partyMax: 2 },
     createdAt: T, updatedAt: T,
   },
   {

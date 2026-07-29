@@ -71,6 +71,26 @@ export function ProductSheet({
     return q;
   });
 
+  const [addOnQty, setAddOnQty] = useState<Record<string, number>>({});
+  const addOnItems = () => (product.addOns ?? []).filter((a) => (addOnQty[a.id] ?? 0) > 0).map((a) => ({ tierId: a.id, tierName: `${a.name}${a.perPerson ? " (each)" : ""}`, unitPrice: a.price, qty: addOnQty[a.id] }));
+
+  const renderAddOns = () =>
+    (product.addOns?.length ?? 0) > 0 ? (
+      <div className="mt-section flex flex-col gap-tight">
+        <span className="type-label text-[11px] text-neutral-400">Add-ons</span>
+        {(product.addOns ?? []).map((a) => (
+          <div key={a.id} className="flex items-center justify-between rounded-sm border border-neutral-200 bg-white p-comfortable">
+            <div className="text-sm">{a.name} <span className="font-mono text-[12px] text-neutral-400">+{formatMoney(a.price, currency)}{a.perPerson ? " each" : ""}</span></div>
+            <div className="flex items-center gap-tight">
+              <button type="button" aria-label="Less" onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-10 w-10 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">−</button>
+              <span className="w-6 text-center font-mono">{addOnQty[a.id] ?? 0}</span>
+              <button type="button" aria-label="More" onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: (q[a.id] ?? 0) + 1 }))} className="h-10 w-10 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">+</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : null;
+
   // Waitlist mini-form
   const [wl, setWl] = useState<{ time: string } | null>(null);
   const [wlName, setWlName] = useState("");
@@ -99,7 +119,7 @@ export function ProductSheet({
       slotDate: needsSchedule(bt) && !resourceMode ? date : provider || course ? date : undefined,
       slotTime: (!resourceMode && slotTime) || undefined,
       providerLabel: provider ? providers.find((p) => p.id === providerId)?.name : undefined,
-      items: list.filter((x) => qty[x.id] > 0).map((x) => ({ tierId: x.id, tierName: x.name, unitPrice: x.price, qty: qty[x.id] })),
+      items: [...list.filter((x) => qty[x.id] > 0).map((x) => ({ tierId: x.id, tierName: x.name, unitPrice: x.price, qty: qty[x.id] })), ...addOnItems()],
     });
   };
 
@@ -108,7 +128,7 @@ export function ProductSheet({
       id: initial?.id ?? `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`,
       productId: product.id, productName: product.name,
       slotDate: date, slotTime: time, resourceId: rId, resourceLabel: rLabel,
-      items: [], fixedPrice: price,
+      items: addOnItems(), fixedPrice: price,
     });
   };
 
@@ -168,9 +188,12 @@ export function ProductSheet({
               </tbody>
             </table>
             {resourceId && slotTime && (
-              <Button size="lg" fullWidth className="mt-section" onClick={() => submitResource(resourceId, matrix.find((r) => r.resource.id === resourceId)?.resource.name ?? "", slotTime, resolveProductPrice(product, date, slotTime, basePrice))}>
-                Add {matrix.find((r) => r.resource.id === resourceId)?.resource.name} · {slotTime} · {formatMoney(resolveProductPrice(product, date, slotTime, basePrice), currency)}
-              </Button>
+              <>
+                {renderAddOns()}
+                <Button size="lg" fullWidth className="mt-section" onClick={() => submitResource(resourceId, matrix.find((r) => r.resource.id === resourceId)?.resource.name ?? "", slotTime, resolveProductPrice(product, date, slotTime, basePrice))}>
+                  Add {matrix.find((r) => r.resource.id === resourceId)?.resource.name} · {slotTime} · {formatMoney(resolveProductPrice(product, date, slotTime, basePrice), currency)}
+                </Button>
+              </>
             )}
           </div>
         )}
@@ -239,6 +262,7 @@ export function ProductSheet({
                 </div>
               ))}
             </div>
+            {renderAddOns()}
             <Button size="lg" fullWidth className="mt-section" disabled={!canAddTiered} onClick={submitTiered}>{course ? "Enrol" : "Add to sale"}</Button>
           </>
         )}

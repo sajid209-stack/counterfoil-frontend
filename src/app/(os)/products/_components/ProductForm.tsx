@@ -21,7 +21,11 @@ import { BookingSetup, type BookingSetupResult } from "./BookingSetup";
 import { ScheduleBuilder } from "./ScheduleBuilder";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
 import { PricingRulesField, type FormPricingRule } from "./PricingRulesField";
+import { PoliciesField } from "./PoliciesField";
+import { AddOnsField, type FormAddOn } from "./AddOnsField";
 import { ImageUploadField, type FormImage } from "./ImageUploadField";
+import { defaultPolicies } from "@/lib/tax";
+import type { ProductPolicies, TaxClass } from "@/lib/api";
 
 const majorToMinor = (s: string) => { const n = parseFloat(s); return Number.isFinite(n) ? Math.round(n * 100) : 0; };
 const minorToMajor = (m: number) => (m / 100).toFixed(2);
@@ -56,6 +60,9 @@ interface FormState {
   tiers: FormTier[];
   pricingRules: FormPricingRule[];
   waitlist: boolean;
+  taxClass: TaxClass;
+  policies: ProductPolicies;
+  addOns: FormAddOn[];
   images: FormImage[];
 }
 
@@ -79,9 +86,12 @@ function fromProduct(p: Product): FormState {
     locationIds: p.locationIds,
     maxPerOrder: p.maxPerOrder != null ? String(p.maxPerOrder) : "",
     minAge: p.minAge != null ? String(p.minAge) : "",
-    tiers: p.tiers.map((t) => ({ id: t.id, name: t.name, price: minorToMajor(t.price), maxPerOrder: t.maxPerOrder != null ? String(t.maxPerOrder) : "", active: t.active })),
+    tiers: p.tiers.map((t) => ({ id: t.id, name: t.name, price: minorToMajor(t.price), maxPerOrder: t.maxPerOrder != null ? String(t.maxPerOrder) : "", admits: String(t.admits ?? 1), ageNote: t.ageNote ?? "", active: t.active })),
     pricingRules: (p.pricingRules ?? []).map((r) => ({ id: r.id, days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: minorToMajor(r.price) })),
     waitlist: !!p.waitlistEnabled,
+    taxClass: p.taxClass ?? "standard",
+    policies: p.policies ?? defaultPolicies(),
+    addOns: (p.addOns ?? []).map((a) => ({ id: a.id, name: a.name, price: minorToMajor(a.price), perPerson: a.perPerson })),
     images: p.images.map((img) => ({ id: img.id, url: img.url, alt: img.alt })),
   };
 }
@@ -90,6 +100,7 @@ const TABS = [
   { value: "details", label: "Details" },
   { value: "availability", label: "Availability" },
   { value: "pricing", label: "Pricing" },
+  { value: "policies", label: "Policies" },
   { value: "where", label: "Where it's sold" },
   { value: "advanced", label: "Advanced" },
 ];
@@ -146,7 +157,7 @@ export function ProductForm({
       images: state.images.map(({ id, url, alt }) => ({ id, url, alt })),
       categoryId: state.categoryId || null,
       bookingType: state.booking.bookingType,
-      tiers: state.tiers.map((t) => ({ id: t.id, name: t.name, price: majorToMinor(t.price), maxPerOrder: numOrUndef(t.maxPerOrder), active: t.active })),
+      tiers: state.tiers.map((t) => ({ id: t.id, name: t.name, price: majorToMinor(t.price), maxPerOrder: numOrUndef(t.maxPerOrder), admits: parseInt(t.admits, 10) || 1, ageNote: t.ageNote || undefined, active: t.active })),
       locationIds: state.locationIds,
       channels,
       status: state.active ? "active" : "inactive",
@@ -168,6 +179,9 @@ export function ProductForm({
       credits: state.booking.credits ?? product.credits ?? null,
       sections: product.sections,
       waitlistEnabled: state.waitlist,
+      taxClass: state.taxClass,
+      policies: state.policies,
+      addOns: state.addOns.filter((a) => a.name.trim()).map((a) => ({ id: a.id ?? `add_${globalThis.crypto.randomUUID().slice(0, 8)}`, name: a.name, price: majorToMinor(a.price), perPerson: a.perPerson })),
     };
     const res = await updateProduct(product.id, input);
     setSaving(false);
@@ -240,6 +254,14 @@ export function ProductForm({
             {needsSchedule(state.booking.bookingType) && (
               <PricingRulesField rules={state.pricingRules} onChange={(r) => set("pricingRules", r)} currency={currency} basePriceMajor={state.tiers[0]?.price ?? ""} />
             )}
+          </div>
+        )}
+
+        {tab === "policies" && (
+          <div className="flex flex-col gap-major">
+            <FormField label="Tax class" variant="select" value={state.taxClass} onChange={(e) => set("taxClass", e.target.value as TaxClass)} options={[{ value: "standard", label: "Standard (VAT)" }, { value: "reduced", label: "Reduced" }, { value: "exempt", label: "Exempt" }]} className="max-w-xs" help="Rates come from Business settings." />
+            <PoliciesField value={state.policies} onChange={(p) => set("policies", p)} />
+            <AddOnsField addOns={state.addOns} onChange={(a) => set("addOns", a)} currency={currency} />
           </div>
         )}
 
