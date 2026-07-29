@@ -105,6 +105,29 @@ export interface PriceTier {
   active: boolean;
 }
 
+/** A closure or custom-hours date. `times` only for kind "custom". */
+export interface ScheduleException {
+  date: ISODate;
+  kind: "closed" | "custom";
+  times?: string[];
+}
+
+/** Schedule config for timed products. Present only for BT-03 / BT-06 / BT-09;
+ *  null for open (BT-01) and date-range (BT-02) products.
+ *  - slot-based (BT-03/09): slotMinutes/startTime/endTime/capacityPerSession
+ *  - daily-capped (BT-06): dailyCapacity + openDays only */
+export interface ProductSchedule {
+  slotMinutes: number; // interval between session starts
+  sessionMinutes: number; // how long each session lasts
+  startTime: string; // "10:00"
+  endTime: string; // "16:30"
+  capacityPerSession: number; // seats per slot (BT-03/09)
+  dailyCapacity: number | null; // BT-06 (null for slot-based)
+  openDays: number[]; // 0–6
+  guideIds: string[]; // BT-09 — team members who can lead
+  exceptions: ScheduleException[];
+}
+
 export interface Product {
   id: ID;
   name: string;
@@ -120,6 +143,7 @@ export interface Product {
   maxPerOrder?: number;
   minAge?: number;
   validityDays?: number; // BT-02 only
+  schedule?: ProductSchedule | null; // BT-03/06/09 only
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

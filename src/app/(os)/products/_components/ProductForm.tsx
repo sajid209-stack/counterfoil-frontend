@@ -11,8 +11,12 @@ import {
   type Location,
   type Product,
   type ProductInput,
+  type ProductSchedule,
+  type Staff,
 } from "@/lib/api";
+import { defaultSchedule, needsSchedule } from "@/lib/schedule";
 import { BookingSetup, type BookingSetupResult } from "./BookingSetup";
+import { ScheduleBuilder } from "./ScheduleBuilder";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
 import { ImageUploadField, type FormImage } from "./ImageUploadField";
 
@@ -37,6 +41,7 @@ interface FormState {
   description: string;
   categoryId: string;
   booking: BookingSetupResult;
+  schedule: ProductSchedule | null;
   active: boolean;
   counter: boolean;
   online: boolean;
@@ -53,6 +58,7 @@ function fromProduct(p: Product): FormState {
     description: p.description,
     categoryId: p.categoryId ?? "",
     booking: { bookingType: p.bookingType, summary: bookingSummary(p.bookingType), validityDays: p.validityDays },
+    schedule: p.schedule ?? (needsSchedule(p.bookingType) ? defaultSchedule(p.bookingType) : null),
     active: p.status !== "inactive",
     counter: p.channels.includes("counter"),
     online: p.channels.includes("online"),
@@ -76,11 +82,13 @@ export function ProductForm({
   product,
   categories,
   locations,
+  team,
   currency = "BDT",
 }: {
   product: Product;
   categories: Category[];
   locations: Location[];
+  team: Staff[];
   currency?: string;
 }) {
   const router = useRouter();
@@ -115,6 +123,7 @@ export function ProductForm({
       maxPerOrder: numOrUndef(state.maxPerOrder),
       minAge: numOrUndef(state.minAge),
       validityDays: state.booking.validityDays,
+      schedule: needsSchedule(state.booking.bookingType) ? state.schedule : null,
     };
     const res = await updateProduct(product.id, input);
     setSaving(false);
@@ -148,8 +157,24 @@ export function ProductForm({
           <div className="flex flex-col gap-section">
             <div>
               <p className="type-label mb-tight text-[12px] text-neutral-600">When people can use it</p>
-              <BookingSetup value={state.booking} onChange={(b) => b && set("booking", b)} />
+              <BookingSetup
+                value={state.booking}
+                onChange={(b) => {
+                  if (!b) return;
+                  setState((s) => ({
+                    ...s,
+                    booking: b,
+                    schedule: needsSchedule(b.bookingType) ? (s.schedule ?? defaultSchedule(b.bookingType)) : null,
+                  }));
+                }}
+              />
             </div>
+            {needsSchedule(state.booking.bookingType) && state.schedule && (
+              <div>
+                <p className="type-h2 mb-section text-base">Schedule</p>
+                <ScheduleBuilder bookingType={state.booking.bookingType} value={state.schedule} onChange={(sch) => set("schedule", sch)} team={team} />
+              </div>
+            )}
             <div className="grid gap-section sm:grid-cols-2">
               <FormField label="Max per order" variant="number" value={state.maxPerOrder} onChange={(e) => set("maxPerOrder", e.target.value)} />
               <FormField label="Minimum age" variant="number" value={state.minAge} onChange={(e) => set("minAge", e.target.value)} />

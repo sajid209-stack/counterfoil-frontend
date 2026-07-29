@@ -1,24 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
-import { Button, FormField, useToast } from "@/components/ui";
-import { createProduct, type Category, type Channel, type Location, type ProductInput } from "@/lib/api";
+import { Check, Plus } from "lucide-react";
+import { Button, FormField, Modal, useToast } from "@/components/ui";
+import {
+  createLocation,
+  createProduct,
+  type Category,
+  type Channel,
+  type Location,
+  type ProductInput,
+  type ProductSchedule,
+  type Staff,
+} from "@/lib/api";
+import { defaultSchedule, isDailyCapped, isSlotBased, needsSchedule, slotTimes } from "@/lib/schedule";
 import { BookingSetup, type BookingSetupResult } from "./BookingSetup";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
 import { ImageUploadField, type FormImage } from "./ImageUploadField";
+import { ScheduleBuilder } from "./ScheduleBuilder";
 
 const STEPS = ["What you're selling", "When people can use it", "What it costs", "Where it's sold", "Review"];
 const majorToMinor = (s: string) => { const n = parseFloat(s); return Number.isFinite(n) ? Math.round(n * 100) : 0; };
 
 export function ProductWizard({
   categories,
-  locations,
+  locations: initialLocations,
+  team,
   currency = "BDT",
 }: {
   categories: Category[];
   locations: Location[];
+  team: Staff[];
   currency?: string;
 }) {
   const router = useRouter();
@@ -32,10 +45,27 @@ export function ProductWizard({
   const [categoryId, setCategoryId] = useState("");
   const [images, setImages] = useState<FormImage[]>([]);
   const [booking, setBooking] = useState<BookingSetupResult | null>(null);
+  const [schedule, setSchedule] = useState<ProductSchedule | null>(null);
   const [tiers, setTiers] = useState<FormTier[]>([emptyTier()]);
-  const [locationIds, setLocationIds] = useState<string[]>([]);
+  const [locations, setLocations] = useState<Location[]>(initialLocations);
+  const [locationIds, setLocationIds] = useState<string[]>(initialLocations.length === 1 ? [initialLocations[0].id] : []);
   const [counter, setCounter] = useState(true);
   const [online, setOnline] = useState(false);
+
+  // Inline location creation
+  const [addLocOpen, setAddLocOpen] = useState(false);
+  const [newLocName, setNewLocName] = useState("");
+  const [newLocCity, setNewLocCity] = useState("");
+  const [addingLoc, setAddingLoc] = useState(false);
+
+  // Initialise schedule when the booking type needs one.
+  useEffect(() => {
+    if (booking && needsSchedule(booking.bookingType)) {
+      setSchedule((s) => s ?? defaultSchedule(booking.bookingType));
+    } else {
+      setSchedule(null);
+    }
+  }, [booking]);
 
   const canNext =
     step === 0 ? name.trim().length > 0 :
@@ -46,6 +76,24 @@ export function ProductWizard({
   const toggleLocation = (id: string) =>
     setLocationIds((ls) => (ls.includes(id) ? ls.filter((x) => x !== id) : [...ls, id]));
 
+  const addLocation = async () => {
+    setAddingLoc(true);
+    const res = await createLocation({
+      name: newLocName, addressLine1: "", city: newLocCity, country: "Bangladesh",
+      timezone: "Asia/Dhaka", openingHours: [], status: "active",
+    });
+    setAddingLoc(false);
+    if (res.ok) {
+      setLocations((ls) => [...ls, res.data]);
+      setLocationIds((ids) => [...ids, res.data.id]);
+      setAddLocOpen(false);
+      setNewLocName(""); setNewLocCity("");
+      toast.success("Location added.");
+    } else {
+      toast.error(res.error.message);
+    }
+  };
+
   const publish = async (asDraft: boolean) => {
     if (!booking) return;
     setSaving(true);
@@ -54,16 +102,15 @@ export function ProductWizard({
     if (counter) channels.push("counter");
     if (online) channels.push("online");
     const input: ProductInput = {
-      name,
-      description,
+      name, description,
       images: images.map(({ id, url, alt }) => ({ id, url, alt })),
       categoryId: categoryId || null,
       bookingType: booking.bookingType,
       tiers: tiers.map((t) => ({ id: t.id, name: t.name, price: majorToMinor(t.price), maxPerOrder: t.maxPerOrder ? parseInt(t.maxPerOrder, 10) : undefined, active: t.active })),
-      locationIds,
-      channels,
+      locationIds, channels,
       status: asDraft ? "inactive" : "active",
       validityDays: booking.validityDays,
+      schedule: booking && needsSchedule(booking.bookingType) ? schedule : null,
     };
     const res = await createProduct(input);
     setSaving(false);
@@ -81,13 +128,10 @@ export function ProductWizard({
 
   return (
     <div className="flex flex-col gap-major pb-hero">
-      {/* Progress */}
       <ol className="flex flex-wrap gap-tight">
         {STEPS.map((label, i) => (
           <li key={label} className={`flex items-center gap-inline rounded-sm px-comfortable py-tight text-[12px] ${i === step ? "bg-ink text-paper" : i < step ? "text-ink" : "text-neutral-400"}`}>
-            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current font-mono text-[10px]">
-              {i < step ? <Check size={12} strokeWidth={2} /> : i + 1}
-            </span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current font-mono text-[10px]">{i < step ? <Check size={12} strokeWidth={2} /> : i + 1}</span>
             {label}
           </li>
         ))}
@@ -103,7 +147,17 @@ export function ProductWizard({
           </div>
         )}
 
-        {step === 1 && <BookingSetup value={booking} onChange={setBooking} />}
+        {step === 1 && (
+          <div className="flex flex-col gap-major">
+            <BookingSetup value={booking} onChange={setBooking} />
+            {booking && needsSchedule(booking.bookingType) && schedule && (
+              <div>
+                <p className="type-h2 mb-section text-base">Schedule</p>
+                <ScheduleBuilder bookingType={booking.bookingType} value={schedule} onChange={setSchedule} team={team} />
+              </div>
+            )}
+          </div>
+        )}
 
         {step === 2 && <PriceTiersField tiers={tiers} onChange={setTiers} errors={errors} currency={currency} />}
 
@@ -116,12 +170,24 @@ export function ProductWizard({
             </div>
             <div className="flex flex-col gap-tight">
               <span className="type-label text-[12px] text-neutral-600">Locations</span>
-              {locations.map((l) => (
-                <label key={l.id} className="flex cursor-pointer items-center gap-tight text-sm">
-                  <input type="checkbox" checked={locationIds.includes(l.id)} onChange={() => toggleLocation(l.id)} className="h-4 w-4 accent-ember" />
-                  {l.name}
-                </label>
-              ))}
+              {locations.length === 0 ? (
+                <div className="rounded-sm border border-dashed border-neutral-200 px-comfortable py-section text-center">
+                  <p className="text-[13px] text-neutral-400">You haven&apos;t added a location yet.</p>
+                  <Button size="sm" className="mt-tight" icon={<Plus size={14} strokeWidth={1.5} />} onClick={() => setAddLocOpen(true)}>Add one now</Button>
+                </div>
+              ) : locations.length === 1 ? (
+                <p className="rounded-sm border border-neutral-200 px-comfortable py-tight text-sm">Sold at <span className="font-medium">{locations[0].name}</span>.</p>
+              ) : (
+                <>
+                  {locations.map((l) => (
+                    <label key={l.id} className="flex cursor-pointer items-center gap-tight text-sm">
+                      <input type="checkbox" checked={locationIds.includes(l.id)} onChange={() => toggleLocation(l.id)} className="h-4 w-4 accent-ember" />
+                      {l.name}
+                    </label>
+                  ))}
+                  <button type="button" onClick={() => setAddLocOpen(true)} className="mt-inline flex items-center gap-inline self-start text-[13px] text-ember hover:underline"><Plus size={14} strokeWidth={1.5} /> Add a location</button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -129,7 +195,7 @@ export function ProductWizard({
         {step === 4 && (
           <div className="flex flex-col gap-section">
             <h2 className="type-h2 text-base">{name || "Untitled product"}</h2>
-            <Row label="When">{booking?.summary ?? "—"}</Row>
+            <Row label="When">{booking?.summary ?? "—"}{schedule && isSlotBased(booking!.bookingType) ? ` · ${slotTimes(schedule).length} sessions/day` : ""}{schedule && isDailyCapped(booking!.bookingType) ? ` · ${schedule.dailyCapacity}/day` : ""}</Row>
             <Row label="Price">{tiers.map((t) => `${t.name} ${currency} ${t.price || "0"}`).join(" · ")}</Row>
             <Row label="Where">{[counter && "Counter", online && "Online"].filter(Boolean).join(" · ") || "—"}{locationIds.length ? ` · ${locationIds.length} location(s)` : ""}</Row>
           </div>
@@ -147,6 +213,18 @@ export function ProductWizard({
           </div>
         )}
       </div>
+
+      <Modal
+        open={addLocOpen}
+        onClose={() => setAddLocOpen(false)}
+        title="Add a location"
+        footer={<><Button variant="secondary" onClick={() => setAddLocOpen(false)}>Cancel</Button><Button loading={addingLoc} onClick={addLocation} disabled={!newLocName.trim()}>Add location</Button></>}
+      >
+        <div className="flex flex-col gap-section">
+          <FormField label="Name" required placeholder="Main Gate" value={newLocName} onChange={(e) => setNewLocName(e.target.value)} />
+          <FormField label="City" placeholder="Dhaka" value={newLocCity} onChange={(e) => setNewLocCity(e.target.value)} />
+        </div>
+      </Modal>
     </div>
   );
 }
