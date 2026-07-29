@@ -46,3 +46,6 @@ counterfoil_design_tokens.md
 counterfoil_prompt*.md
 Counterfoil Brand Guidelines*.pdf
 counterfoil_*.md
+
+# Local session-continuity notes — machine/auth/deploy details, not for the public repo
+SESSION_HANDOFF.md
