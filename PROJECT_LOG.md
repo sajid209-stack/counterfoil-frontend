@@ -92,6 +92,26 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **6** | Scaffold sweep — every remaining Stream 1 screen | ✅ Done |
 | **7** | Golden path — 16-screen journey; NO booking-type dropdown; operator vocabulary | ✅ Done |
 | **8** | Configuration drives the product — schedule builder, seed catalogue, POS reads config, reports | ✅ Done |
+| **9** | Full booking engine — all 14 types, resources as first-class shared objects, pricing rules, IA restructure, design pass | 🔄 In progress |
+
+### Phase 9 — full booking engine (6 parts, deploy after each)
+
+The structural rule this phase adds: **resources are first-class and shared across products** —
+availability computes *per resource*, so two products on the same field block each other (the
+turf: Football + Cricket sharing Fields 1–2). BT codes stay derived/read-only. Resources/providers
+are called by the operator's own word (Fields/Courts/Lanes…), including in the nav.
+
+- **Part 1 ✅** — IA restructure: setup pages moved under `/settings` (Business · Locations ·
+  Counters · Team · Devices · Payments · Roles) with a sub-nav layout; main nav is now
+  Dashboard · Calendar · Orders · Products · Reports + a prominent Point of Sale link + Settings.
+  Design pass: ink sidebar with DM-Mono section labels + 3px ember active bar; **primary CTA is
+  now solid ember** (ink text, AA); perforated ticket stub on `pos/complete`. Booking Rules /
+  Pricing dropped from nav (fold into product config in Part 3).
+- **Part 2 ⬜** — Resources system + resource flow in wizard; availability computed per resource.
+- **Part 3 ⬜** — Pricing rules (day/time bands, top-down first-match, live preview, resolved price in POS).
+- **Part 4 ⬜** — Provider flow + sections + bundle + credits + course + waitlist + field pass.
+- **Part 5 ⬜** — POS reads all of it (fields×times matrix, provider cards, sections, series, waitlist, quick pass).
+- **Part 6 ⬜** — Seed catalogue (turf sharing fields, etc.) + acceptance walk.
 
 ### Phase 8 — configuration is a promise the rest of the product keeps
 
