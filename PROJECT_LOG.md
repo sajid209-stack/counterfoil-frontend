@@ -37,7 +37,7 @@ point is to build the table/form/primitives **once** and reuse them.
 | | URL |
 |---|---|
 | **Production (Vercel)** | https://counterfoil-frontend.vercel.app |
-| **GitHub repo** | _https://github.com/sajid209-stack/counterfoil-frontend_ (pushed in Phase 1) |
+| **GitHub repo** | https://github.com/sajid209-stack/counterfoil-frontend (public) |
 | **Vercel project** | `sajid209-stacks-projects/counterfoil-frontend` |
 
 Deploy at **every** checkpoint — the owner wants to click things.
@@ -89,8 +89,8 @@ the **scan result** (readable in <1s at 3m; colour alone is not enough — shape
 - **D2 — default branch `main`** (2026-07-29): renamed from create-next-app's `master`.
 - **D3 — roadmap doc kept out of git** (2026-07-29): `counterfoil_claude_code_prompts.md`
   (internal build prompts) is **not committed** — this is a public repo.
-- **D4 — public repo** (2026-07-29): per owner. Repo created manually in the browser because
-  the fine-grained PAT in use cannot create repositories (lacks account "Administration").
+- **D4 — public repo** (2026-07-29): per owner. Created + pushed via `gh repo create` using a
+  classic PAT with `repo` scope (the fine-grained PAT first supplied could not create repos).
 
 ---
 
