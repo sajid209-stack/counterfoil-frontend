@@ -37,6 +37,7 @@ point is to build the table/form/primitives **once** and reuse them.
 | | URL |
 |---|---|
 | **Production (Vercel)** | https://counterfoil-frontend.vercel.app |
+| **Design tokens** | https://counterfoil-frontend.vercel.app/tokens |
 | **GitHub repo** | https://github.com/sajid209-stack/counterfoil-frontend (public) |
 | **Vercel project** | `sajid209-stacks-projects/counterfoil-frontend` |
 
@@ -68,7 +69,7 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 |---|---|---|
 | **0** | Environment check | ✅ Done |
 | **1** | Scaffold · repo · first deploy | ✅ Done |
-| **2** | Design tokens (`/tokens` route) | ⬜ Not started |
+| **2** | Design tokens (`/tokens` route) | ✅ Done |
 | **3** | Routing structure + typed data layer (`src/lib/api`, `src/lib/mock`) | ⬜ Not started |
 | **4** | Primitive component layer (`/kitchen-sink` route) | ⬜ Not started |
 | **5** | Products — the reference CRUD screen | ⬜ Not started |
