@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
@@ -50,6 +50,16 @@ export default function PosPage() {
   const productById = (id: string) => products.find((p) => p.id === id);
 
   const shown = category === "all" ? products : products.filter((p) => p.categoryId === category);
+
+  // Deep-link from the Schedule tab: open a product's sheet on arrival.
+  useEffect(() => {
+    const id = sessionStorage.getItem("pos_open_product");
+    if (id && products.length) {
+      sessionStorage.removeItem("pos_open_product");
+      const p = products.find((x) => x.id === id);
+      if (p) setSheet({ product: p, initial: null });
+    }
+  }, [products]);
 
   const entryTotal = (e: CartEntry) => (e.fixedPrice ?? 0) + e.items.reduce((s, i) => s + i.unitPrice * i.qty, 0);
   const entrySeats = (e: CartEntry) => (e.fixedPrice != null ? 1 : e.items.reduce((s, i) => s + i.qty, 0));

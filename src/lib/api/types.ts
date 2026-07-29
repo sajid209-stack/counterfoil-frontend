@@ -422,6 +422,7 @@ export interface Booking {
   slotStart: ISODateTime;
   slotEnd?: ISODateTime; // for flexible/duration bookings
   partySize: number;
+  checkedIn?: number; // people checked in so far (partial groups: 3 of 4)
   status: BookingStatus;
 }
 

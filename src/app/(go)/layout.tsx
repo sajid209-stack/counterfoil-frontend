@@ -2,10 +2,11 @@ import Link from "next/link";
 
 const GO_NAV = [
   { href: "/pos", label: "Sell" },
+  { href: "/schedule", label: "Schedule" },
   { href: "/scan", label: "Scan" },
-  { href: "/bookings", label: "Arrivals" },
-  { href: "/quick-pass", label: "Quick pass" },
-  { href: "/shift/close", label: "Close" },
+  { href: "/checkin", label: "Check-in" },
+  { href: "/quick-pass", label: "Pass" },
+  { href: "/shift/close", label: "Shift" },
 ];
 
 // Go surface shell — front of house on a tablet. Minimal chrome, touch-first.

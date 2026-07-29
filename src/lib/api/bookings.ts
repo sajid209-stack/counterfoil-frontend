@@ -19,6 +19,10 @@ export const listBookings = (
 /** All bookings, unpaginated — for the calendar view and slot availability. */
 export const peekBookings = (): Booking[] => resource.peek();
 
+/** Record a (possibly partial) group check-in at the gate. */
+export const checkInBooking = (id: string, count: number): Promise<ApiResult<Booking>> =>
+  resource.update(id, { checkedIn: count });
+
 /** Create a confirmed booking (used by POS checkout to hold slot capacity). */
 export function createBooking(input: {
   orderId: string;
