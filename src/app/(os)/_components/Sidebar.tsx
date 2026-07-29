@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 // 404s. Flip `ready` to true as each screen lands.
 const NAV: { label: string; href: string; ready: boolean }[] = [
   { label: "Dashboard", href: "/dashboard", ready: true },
-  { label: "Products", href: "/products", ready: false },
+  { label: "Products", href: "/products", ready: true },
   { label: "Locations", href: "/locations", ready: false },
   { label: "Counters", href: "/counters", ready: false },
   { label: "Staff", href: "/staff", ready: false },
@@ -30,7 +30,8 @@ export function Sidebar() {
 
       <nav className="flex flex-col gap-inline">
         {NAV.map((item) => {
-          const active = pathname === item.href;
+          const active =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
           if (!item.ready) {
             return (
               <span
