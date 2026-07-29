@@ -216,6 +216,75 @@ export const products: Product[] = [
     createdAt: T,
     updatedAt: T,
   },
+  {
+    id: "prd_football", name: "Football — Turf", description: "Book a field for an hour. A team per slot.", images: [], categoryId: "cat_events", bookingType: "BT-04",
+    tiers: [{ id: "tier_fb_slot", name: "Slot", price: 150000, active: true }],
+    locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
+    schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
+    resourceIds: ["res_field_1", "res_field_2"], resourceExclusive: true, bufferMinutes: 15,
+    pricingRules: [{ id: "pr_fb_wknd", days: [5, 6], fromTime: "18:00", toTime: "23:00", price: 250000 }, { id: "pr_fb_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 200000 }],
+    createdAt: T, updatedAt: T,
+  },
+  {
+    id: "prd_cricket", name: "Cricket — Turf", description: "Same fields as football — availability is shared.", images: [], categoryId: "cat_events", bookingType: "BT-04",
+    tiers: [{ id: "tier_cr_slot", name: "Slot", price: 150000, active: true }],
+    locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
+    schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
+    resourceIds: ["res_field_1", "res_field_2"], resourceExclusive: true, bufferMinutes: 15,
+    pricingRules: [{ id: "pr_cr_wknd", days: [5, 6], fromTime: "18:00", toTime: "23:00", price: 250000 }, { id: "pr_cr_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 200000 }],
+    createdAt: T, updatedAt: T,
+  },
+  {
+    id: "prd_bowling", name: "Bowling Lane", description: "Book a lane by the hour.", images: [], categoryId: "cat_events", bookingType: "BT-05",
+    tiers: [{ id: "tier_bw_hr", name: "Per hour", price: 80000, active: true }],
+    locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
+    schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "10:00", endTime: "22:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
+    resourceIds: ["res_lane_1", "res_lane_2", "res_lane_3", "res_lane_4"], resourceExclusive: true, bufferMinutes: 0, flexibleDurations: [60, 90, 120],
+    pricingRules: [{ id: "pr_bw_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 120000 }],
+    createdAt: T, updatedAt: T,
+  },
+  {
+    id: "prd_massage", name: "Deep Tissue Massage", description: "Book a therapist for 60 or 90 minutes.", images: [], categoryId: "cat_tours", bookingType: "BT-10",
+    tiers: [{ id: "tier_ms_60", name: "60 min", price: 300000, active: true }, { id: "tier_ms_90", name: "90 min", price: 450000, active: true }],
+    locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, schedule: null,
+    providerIds: ["stf_nadia", "stf_karim"], providerNoun: "Therapist", providerPickable: true, flexibleDurations: [60, 90],
+    createdAt: T, updatedAt: T,
+  },
+  {
+    id: "prd_film", name: "Evening Film", description: "Pick your section.", images: [], categoryId: "cat_events", bookingType: "BT-07",
+    tiers: [{ id: "tier_flm", name: "Ticket", price: 40000, active: true }],
+    sections: [{ id: "sec_stalls", name: "Stalls", capacity: 120, price: 40000 }, { id: "sec_balcony", name: "Balcony", capacity: 40, price: 70000 }],
+    locationIds: ["loc_museum"], channels: ["counter", "online"], status: "active", archivedAt: null,
+    createdAt: T, updatedAt: T,
+  },
+  {
+    id: "prd_bundle", name: "Day Pass Bundle", description: "Admission + Garden + Planetarium in one ticket.", images: [], categoryId: "cat_entry", bookingType: "BT-08",
+    tiers: [{ id: "tier_bn", name: "Bundle", price: 100000, active: true }],
+    bundleComponentIds: ["prd_admission", "prd_garden", "prd_planetarium"],
+    locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
+    createdAt: T, updatedAt: T,
+  },
+  {
+    id: "prd_yoga_pack", name: "10-Class Yoga Pack", description: "Ten credits to spend on yoga sessions.", images: [], categoryId: "cat_entry", bookingType: "BT-12",
+    tiers: [{ id: "tier_yp", name: "Pack", price: 400000, active: true }],
+    credits: { count: 10, expiryDays: 90, productIds: ["prd_yoga"] },
+    locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
+    createdAt: T, updatedAt: T,
+  },
+  {
+    id: "prd_swim", name: "Beginner Swim Course", description: "Eight sessions, one enrolment.", images: [], categoryId: "cat_tours", bookingType: "BT-13",
+    tiers: [{ id: "tier_sw", name: "Course", price: 800000, active: true }],
+    courseDates: ["2026-08-04", "2026-08-06", "2026-08-11", "2026-08-13", "2026-08-18", "2026-08-20", "2026-08-25", "2026-08-27"],
+    locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
+    createdAt: T, updatedAt: T,
+  },
+  {
+    id: "prd_yoga", name: "Yoga Session", description: "Drop-in class, capped — join the waitlist when full.", images: [], categoryId: "cat_tours", bookingType: "BT-06",
+    tiers: [{ id: "tier_yg", name: "Drop-in", price: 50000, active: true }],
+    locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, waitlistEnabled: true,
+    schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "07:00", endTime: "19:00", capacityPerSession: 0, dailyCapacity: 20, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
+    createdAt: T, updatedAt: T,
+  },
 ];
 
 export const counters: Counter[] = [
@@ -410,6 +479,10 @@ export const devices: Device[] = [
 export const resources: Resource[] = [
   { id: "res_field_1", name: "Field 1", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_field_2", name: "Field 2", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
+  { id: "res_lane_1", name: "Lane 1", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
+  { id: "res_lane_2", name: "Lane 2", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
+  { id: "res_lane_3", name: "Lane 3", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
+  { id: "res_lane_4", name: "Lane 4", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
 ];
 
 // Transactional data — generated deterministically (see generate.ts).
@@ -421,4 +494,20 @@ const sales = generateSales({
 });
 export const orders = sales.orders;
 export const tickets = sales.tickets;
-export const bookings = sales.bookings;
+
+// Explicit turf bookings on Field 1 — created via Football but they block the
+// field for Cricket too (shared availability). Evenings mostly sold; some today.
+const bk = (id: string, field: string, date: string, time: string) => ({
+  id, orderId: "ord_seed", productId: "prd_football", locationId: "loc_fort",
+  resourceId: field, slotStart: `${date}T${time}:00+06:00`, partySize: 1, status: "confirmed" as const,
+});
+const turfBookings = [
+  bk("bkg_f1_today18", "res_field_1", "2026-07-29", "18:00"),
+  bk("bkg_f1_today19", "res_field_1", "2026-07-29", "19:00"),
+  bk("bkg_f2_today20", "res_field_2", "2026-07-29", "20:00"),
+  bk("bkg_f1_sat18", "res_field_1", "2026-08-01", "18:00"),
+  bk("bkg_f1_sat19", "res_field_1", "2026-08-01", "19:00"),
+  bk("bkg_f1_sat20", "res_field_1", "2026-08-01", "20:00"),
+  bk("bkg_f2_sat21", "res_field_2", "2026-08-01", "21:00"),
+];
+export const bookings = [...sales.bookings, ...turfBookings];
