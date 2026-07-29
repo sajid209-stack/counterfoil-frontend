@@ -107,7 +107,15 @@ are called by the operator's own word (Fields/Courts/Lanes…), including in the
   Design pass: ink sidebar with DM-Mono section labels + 3px ember active bar; **primary CTA is
   now solid ember** (ink text, AA); perforated ticket stub on `pos/complete`. Booking Rules /
   Pricing dropped from nav (fold into product config in Part 3).
-- **Part 2 ⬜** — Resources system + resource flow in wizard; availability computed per resource.
+- **Part 2 ✅** — Resources first-class: `Resource` entity + CRUD (`/resources`), nav item appears
+  once resources exist (labelled with the operator's plural noun). Wizard Q1 gains "They book a
+  space or equipment" → resource sub-flow (pick/inline-add resources · fixed vs flexible · exclusive
+  vs shared · buffer) → derives **BT-04** (fixed+exclusive) or **BT-05**. `Product` gains
+  `resourceIds`/`resourceExclusive`/`bufferMinutes`/`flexibleDurations`; `Booking` gains
+  `resourceId`. **`getResourceMatrix(product, date)` in `slots.ts`** computes availability PER
+  RESOURCE across ALL products (the turf sharing rule), respecting buffer + out-of-service.
+  BookingTypeCode extended to all 14. **Backend contract:** `Resource` + product resource pool +
+  availability-keyed-by-resource is ready in `types.ts` to hand to the backend lane.
 - **Part 3 ⬜** — Pricing rules (day/time bands, top-down first-match, live preview, resolved price in POS).
 - **Part 4 ⬜** — Provider flow + sections + bundle + credits + course + waitlist + field pass.
 - **Part 5 ⬜** — POS reads all of it (fields×times matrix, provider cards, sections, series, waitlist, quick pass).
