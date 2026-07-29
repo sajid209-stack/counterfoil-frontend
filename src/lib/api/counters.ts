@@ -58,3 +58,5 @@ export function updateCounter(
 
 export const archiveCounter = (id: string): Promise<ApiResult<Counter>> =>
   resource.archive(id);
+
+export const peekCounters = () => resource.peek();

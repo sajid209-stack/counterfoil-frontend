@@ -92,3 +92,5 @@ export function updateProduct(
 
 export const archiveProduct = (id: string): Promise<ApiResult<Product>> =>
   resource.archive(id);
+
+export const peekProducts = () => resource.peek();

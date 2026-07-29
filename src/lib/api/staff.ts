@@ -56,3 +56,5 @@ export function updateStaff(id: string, patch: StaffPatch): Promise<ApiResult<St
   if (Object.keys(errors).length) return Promise.resolve(fail(validationError(errors)));
   return resource.update(id, patch);
 }
+
+export const peekStaff = () => resource.peek();

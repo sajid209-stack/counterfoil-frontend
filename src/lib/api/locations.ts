@@ -59,3 +59,5 @@ export function updateLocation(
 
 export const archiveLocation = (id: string): Promise<ApiResult<Location>> =>
   resource.archive(id);
+
+export const peekLocations = () => resource.peek();

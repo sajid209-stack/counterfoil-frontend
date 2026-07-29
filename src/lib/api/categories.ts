@@ -46,3 +46,5 @@ export function updateCategory(
   if (Object.keys(errors).length) return Promise.resolve(fail(validationError(errors)));
   return resource.update(id, patch);
 }
+
+export const peekCategories = () => resource.peek();
