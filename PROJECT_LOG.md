@@ -90,7 +90,7 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **4** | Primitive component layer (`/kitchen-sink` route) | ✅ Done |
 | **5** | Products — the reference CRUD screen | ✅ Done |
 | **6** | Scaffold sweep — every remaining Stream 1 screen | ✅ Done |
-| **7** | Golden path — 16-screen journey; NO booking-type dropdown; operator vocabulary | 🔄 In progress |
+| **7** | Golden path — 16-screen journey; NO booking-type dropdown; operator vocabulary | ✅ Done |
 
 ### Phase 7 — golden path (the governing rule)
 
@@ -104,6 +104,14 @@ The mock persists within a session so the whole journey works without touching s
 
 Delivered in 3 parts: (1) sign-up → onboarding → checklist · (2) location/counter/team/product
 wizard/device · (3) the Go flow back to dashboard.
+
+**Done.** `/products/new` is now a 5-step wizard using the `BookingSetup` question flow (Q1→Q2/Q3);
+product edit is a tabbed editor (Details · Availability · Pricing · Where it's sold · Advanced)
+with the BT code read-only in Advanced. New `Device` entity + `/devices` + register-with-pairing-code.
+`/onboarding` + setup-checklist dashboard. **POS checkout (`checkout()`) creates a real paid order
++ tickets**, so the code on the complete screen scans at `/scan` (admit), then is refused on a
+second scan (already redeemed), and the sale shows on the dashboard — the whole 16-screen path
+works in-session without touching seed data.
 
 ### Phase 6 (scaffold sweep) — complete
 
