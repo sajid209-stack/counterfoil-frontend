@@ -91,6 +91,30 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **5** | Products — the reference CRUD screen | ✅ Done |
 | **6** | Scaffold sweep — every remaining Stream 1 screen | ✅ Done |
 | **7** | Golden path — 16-screen journey; NO booking-type dropdown; operator vocabulary | ✅ Done |
+| **8** | Configuration drives the product — schedule builder, seed catalogue, POS reads config, reports | ✅ Done |
+
+### Phase 8 — configuration is a promise the rest of the product keeps
+
+- **Schedule builder** (`ScheduleBuilder`) in the wizard + edit for timed types: weekly pattern
+  (interval, hours, open days, capacity), **live preview line**, tour guides (team multi-select),
+  closed-date exceptions. `ProductSchedule` on the product model. Inline location creation in the
+  wizard; smart default when one location. No schedule shown to open/date-range products.
+- **Seed catalogue**: 5 products, one per type — General Admission (BT-01), Winter Exhibition
+  Pass (BT-02), Planetarium Show (BT-03, 45-min slots 11:00–16:30, 40 seats, closed Mon),
+  Sculpture Garden (BT-06, 200/day), Heritage Walking Tour (BT-09, 10:00 & 14:00, 15 seats,
+  guides Ayesha & Rahim, Fri–Sun). Generator books real slots with capacity; some pre-sold
+  today/tomorrow so POS shows honest remaining.
+- **POS reads configuration** (`lib/api/slots.ts` + `ProductSheet`): tap → open/date-range go
+  straight to cart; capped shows a date with "N left"; slot-based shows a slot grid (seats left,
+  FULL greyed); tour slots carry guides. Bottom sheet over the cart (no navigation). Cart lines
+  carry their slot. Checkout holds slot/daily capacity via bookings → remaining decrements live.
+- **Sales reports** (`lib/api/reports.ts` — the `SalesReportQuery/Row/Response` contract):
+  presets, summary cards with deltas vs previous period, Group-by switcher (product · category ·
+  payment · counter · location · team · hour), sortable, row drill-down to transactions, CSV export.
+
+**Deferred (by decision, per the brief):** calendar-grid exceptions, seat reservation (Stream 2),
+per-booking guest details, online booking, and **refunds releasing slot capacity back — TODO in
+the mock layer; the backend must handle it.**
 
 ### Phase 7 — golden path (the governing rule)
 
