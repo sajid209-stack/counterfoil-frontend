@@ -29,8 +29,42 @@ export type Channel = "counter" | "online";
 export type Lifecycle = "active" | "inactive" | "archived";
 
 // ── Booking types ──────────────────────────────────────────────────────────
-// Stream 1 scope. Kept as a data field on Product; NOT surfaced in the UI.
-export type BookingTypeCode = "BT-01" | "BT-02" | "BT-03" | "BT-06" | "BT-09";
+// The full 14-type classification. DERIVED from the wizard's plain questions;
+// never assembled by hand and never shown (except read-only in Advanced).
+export type BookingTypeCode =
+  | "BT-01" // open — any time
+  | "BT-02" // date, validity window
+  | "BT-03" // fixed time slot
+  | "BT-04" // resource, exclusive (turf field)
+  | "BT-05" // resource, flexible duration (bowling lane)
+  | "BT-06" // daily capacity cap
+  | "BT-07" // sections / seated
+  | "BT-08" // multi-attraction bundle
+  | "BT-09" // guided / departure
+  | "BT-10" // provider (person)
+  | "BT-11" // waitlist (modifier)
+  | "BT-12" // package / credits
+  | "BT-13" // course / series
+  | "BT-14"; // field-issued pass
+
+// ── Resources — first-class, shared across products ─────────────────────────
+// Availability is computed PER RESOURCE across every product attached to it,
+// so two products on the same field block each other. Named with the operator's
+// own word (Field / Court / Lane / Room / Table / Studio).
+export interface Resource {
+  id: ID;
+  name: string; // "Field 1"
+  nounSingular: string; // "Field"
+  nounPlural: string; // "Fields"
+  locationId: ID | null;
+  outOfService: boolean;
+  outOfServiceReason: string | null;
+  status: Lifecycle;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+export type ResourceInput = Omit<Resource, "id" | "createdAt" | "updatedAt">;
+export type ResourcePatch = Partial<ResourceInput>;
 
 // ── Operator (tenant) ──────────────────────────────────────────────────────
 export interface Operator {
@@ -143,7 +177,12 @@ export interface Product {
   maxPerOrder?: number;
   minAge?: number;
   validityDays?: number; // BT-02 only
-  schedule?: ProductSchedule | null; // BT-03/06/09 only
+  schedule?: ProductSchedule | null; // slot/capacity timing (BT-03/04/06/09)
+  // Resource booking (BT-04 exclusive fields, BT-05 flexible lanes):
+  resourceIds?: ID[]; // resources this product can be booked on
+  resourceExclusive?: boolean; // one booking at a time per resource (BT-04) vs shared (BT-05)
+  bufferMinutes?: number; // gap between bookings for changeover/cleaning
+  flexibleDurations?: number[]; // BT-05 selectable durations, minutes
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
@@ -321,7 +360,9 @@ export interface Booking {
   orderId: ID;
   productId: ID;
   locationId: ID;
+  resourceId?: ID | null; // set for resource bookings; blocks that resource+slot
   slotStart: ISODateTime;
+  slotEnd?: ISODateTime; // for flexible/duration bookings
   partySize: number;
   status: BookingStatus;
 }

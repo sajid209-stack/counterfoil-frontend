@@ -53,6 +53,7 @@ const store: Record<string, Row[]> = {
   bookingRules: structuredClone(seed.bookingRules),
   priceRules: structuredClone(seed.priceRules),
   devices: structuredClone(seed.devices),
+  resources: structuredClone(seed.resources),
   orders: structuredClone(seed.orders),
   tickets: structuredClone(seed.tickets),
   bookings: structuredClone(seed.bookings),

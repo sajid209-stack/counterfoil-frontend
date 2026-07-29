@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, FormField, Tabs, useToast } from "@/components/ui";
 import {
+  createResourceRecord,
   updateProduct,
   type BookingTypeCode,
   type Category,
@@ -12,9 +13,10 @@ import {
   type Product,
   type ProductInput,
   type ProductSchedule,
+  type Resource,
   type Staff,
 } from "@/lib/api";
-import { defaultSchedule, needsSchedule } from "@/lib/schedule";
+import { defaultSchedule, isResourceType, needsSchedule } from "@/lib/schedule";
 import { BookingSetup, type BookingSetupResult } from "./BookingSetup";
 import { ScheduleBuilder } from "./ScheduleBuilder";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
@@ -32,6 +34,8 @@ function bookingSummary(code: BookingTypeCode): string {
     case "BT-06": return "Visitors pick a date, capped per day. Once full, that date stops selling.";
     case "BT-03": return "Visitors pick a date and time. Runs at set start times.";
     case "BT-09": return "Visitors pick a date and time. A guide runs each departure.";
+    case "BT-04": return "Visitors book a space for a fixed slot. One booking at a time.";
+    case "BT-05": return "Visitors book a space — shared or flexible duration.";
     default: return "Booking setup configured.";
   }
 }
@@ -57,7 +61,14 @@ function fromProduct(p: Product): FormState {
     name: p.name,
     description: p.description,
     categoryId: p.categoryId ?? "",
-    booking: { bookingType: p.bookingType, summary: bookingSummary(p.bookingType), validityDays: p.validityDays },
+    booking: {
+      bookingType: p.bookingType,
+      summary: bookingSummary(p.bookingType),
+      validityDays: p.validityDays,
+      resource: isResourceType(p.bookingType)
+        ? { resourceIds: p.resourceIds ?? [], exclusive: p.resourceExclusive !== false, bufferMinutes: p.bufferMinutes ?? 0, flexibleDurations: p.flexibleDurations }
+        : undefined,
+    },
     schedule: p.schedule ?? (needsSchedule(p.bookingType) ? defaultSchedule(p.bookingType) : null),
     active: p.status !== "inactive",
     counter: p.channels.includes("counter"),
@@ -83,17 +94,29 @@ export function ProductForm({
   categories,
   locations,
   team,
+  resources: initialResources,
   currency = "BDT",
 }: {
   product: Product;
   categories: Category[];
   locations: Location[];
   team: Staff[];
+  resources: Resource[];
   currency?: string;
 }) {
   const router = useRouter();
   const toast = useToast();
   const initial = useMemo(() => fromProduct(product), [product]);
+  const [resources, setResources] = useState<Resource[]>(initialResources);
+
+  const onCreateResource = async (name: string, noun: string) => {
+    const res = await createResourceRecord({
+      name, nounSingular: noun, nounPlural: noun.endsWith("s") ? noun : `${noun}s`,
+      locationId: null, outOfService: false, outOfServiceReason: null, status: "active",
+    });
+    if (res.ok) { setResources((r) => [...r, res.data]); return res.data; }
+    return null;
+  };
   const [state, setState] = useState<FormState>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -124,6 +147,10 @@ export function ProductForm({
       minAge: numOrUndef(state.minAge),
       validityDays: state.booking.validityDays,
       schedule: needsSchedule(state.booking.bookingType) ? state.schedule : null,
+      resourceIds: state.booking.resource?.resourceIds,
+      resourceExclusive: state.booking.resource?.exclusive,
+      bufferMinutes: state.booking.resource?.bufferMinutes,
+      flexibleDurations: state.booking.resource?.flexibleDurations,
     };
     const res = await updateProduct(product.id, input);
     setSaving(false);
@@ -159,6 +186,8 @@ export function ProductForm({
               <p className="type-label mb-tight text-[12px] text-neutral-600">When people can use it</p>
               <BookingSetup
                 value={state.booking}
+                resources={resources}
+                onCreateResource={onCreateResource}
                 onChange={(b) => {
                   if (!b) return;
                   setState((s) => ({

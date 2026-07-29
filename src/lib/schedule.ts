@@ -4,9 +4,13 @@ import type { BookingTypeCode, ProductSchedule } from "@/lib/api/types";
 export const slotISO = (date: string, time: string) => `${date}T${time}:00+06:00`;
 
 // Which booking types carry a schedule, and of which kind.
-export const isSlotBased = (bt: BookingTypeCode) => bt === "BT-03" || bt === "BT-09";
+export const isResourceType = (bt: BookingTypeCode) => bt === "BT-04" || bt === "BT-05";
+export const isFlexibleResource = (bt: BookingTypeCode) => bt === "BT-05";
+// Fixed-slot timing: standard slots (03/09) and exclusive resource slots (04).
+export const isSlotBased = (bt: BookingTypeCode) => bt === "BT-03" || bt === "BT-09" || bt === "BT-04";
 export const isDailyCapped = (bt: BookingTypeCode) => bt === "BT-06";
-export const needsSchedule = (bt: BookingTypeCode) => isSlotBased(bt) || isDailyCapped(bt);
+export const needsSchedule = (bt: BookingTypeCode) =>
+  isSlotBased(bt) || isDailyCapped(bt) || isFlexibleResource(bt);
 export const isGuided = (bt: BookingTypeCode) => bt === "BT-09";
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -31,14 +35,16 @@ export function slotTimes(schedule: ProductSchedule): string[] {
 }
 
 export function defaultSchedule(bt: BookingTypeCode): ProductSchedule {
+  const resource = isResourceType(bt);
   return {
-    slotMinutes: 30,
-    sessionMinutes: 45,
-    startTime: "10:00",
-    endTime: "17:00",
-    capacityPerSession: isSlotBased(bt) ? 20 : 0,
+    slotMinutes: resource ? 60 : 30,
+    sessionMinutes: resource ? 60 : 45,
+    startTime: resource ? "06:00" : "10:00",
+    endTime: resource ? "23:00" : "17:00",
+    // For exclusive resource slots capacity is 1 per resource; shared/other set below.
+    capacityPerSession: bt === "BT-04" ? 1 : isSlotBased(bt) ? 20 : 0,
     dailyCapacity: isDailyCapped(bt) ? 200 : null,
-    openDays: [2, 3, 4, 5, 6, 0], // Tue–Sun
+    openDays: resource ? [0, 1, 2, 3, 4, 5, 6] : [2, 3, 4, 5, 6, 0],
     guideIds: [],
     exceptions: [],
   };

@@ -10,6 +10,7 @@ export * from "./staff";
 export * from "./bookingRules";
 export * from "./priceRules";
 export * from "./devices";
+export * from "./resources";
 export * from "./orders";
 export * from "./tickets";
 export * from "./bookings";

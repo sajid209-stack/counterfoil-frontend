@@ -13,6 +13,7 @@ import type {
   Operator,
   PriceRule,
   Product,
+  Resource,
   Role,
   Staff,
 } from "@/lib/api/types";
@@ -404,6 +405,11 @@ export const devices: Device[] = [
   { id: "dev_fort_ipad1", name: "Fort iPad 1", counterId: "cnt_fort_main", pairingCode: "PAIR-4821", status: "active", lastSeenAt: "2026-07-29T09:10:00+06:00", createdAt: T, updatedAt: T },
   { id: "dev_fort_ipad2", name: "Fort iPad 2", counterId: "cnt_fort_kiosk", pairingCode: "PAIR-7734", status: "active", lastSeenAt: "2026-07-28T18:02:00+06:00", createdAt: T, updatedAt: T },
   { id: "dev_museum_ipad", name: "Museum Tablet", counterId: "cnt_museum_lobby", pairingCode: "PAIR-1290", status: "inactive", lastSeenAt: null, createdAt: T, updatedAt: T },
+];
+
+export const resources: Resource[] = [
+  { id: "res_field_1", name: "Field 1", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
+  { id: "res_field_2", name: "Field 2", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
 ];
 
 // Transactional data — generated deterministically (see generate.ts).

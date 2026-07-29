@@ -7,11 +7,13 @@ import { Button, FormField, Modal, useToast } from "@/components/ui";
 import {
   createLocation,
   createProduct,
+  createResourceRecord,
   type Category,
   type Channel,
   type Location,
   type ProductInput,
   type ProductSchedule,
+  type Resource,
   type Staff,
 } from "@/lib/api";
 import { defaultSchedule, isDailyCapped, isSlotBased, needsSchedule, slotTimes } from "@/lib/schedule";
@@ -27,11 +29,13 @@ export function ProductWizard({
   categories,
   locations: initialLocations,
   team,
+  resources: initialResources,
   currency = "BDT",
 }: {
   categories: Category[];
   locations: Location[];
   team: Staff[];
+  resources: Resource[];
   currency?: string;
 }) {
   const router = useRouter();
@@ -47,7 +51,17 @@ export function ProductWizard({
   const [booking, setBooking] = useState<BookingSetupResult | null>(null);
   const [schedule, setSchedule] = useState<ProductSchedule | null>(null);
   const [tiers, setTiers] = useState<FormTier[]>([emptyTier()]);
+  const [resources, setResources] = useState<Resource[]>(initialResources);
   const [locations, setLocations] = useState<Location[]>(initialLocations);
+
+  const onCreateResource = async (name: string, noun: string) => {
+    const res = await createResourceRecord({
+      name, nounSingular: noun, nounPlural: noun.endsWith("s") ? noun : `${noun}s`,
+      locationId: null, outOfService: false, outOfServiceReason: null, status: "active",
+    });
+    if (res.ok) { setResources((r) => [...r, res.data]); return res.data; }
+    return null;
+  };
   const [locationIds, setLocationIds] = useState<string[]>(initialLocations.length === 1 ? [initialLocations[0].id] : []);
   const [counter, setCounter] = useState(true);
   const [online, setOnline] = useState(false);
@@ -111,6 +125,10 @@ export function ProductWizard({
       status: asDraft ? "inactive" : "active",
       validityDays: booking.validityDays,
       schedule: booking && needsSchedule(booking.bookingType) ? schedule : null,
+      resourceIds: booking.resource?.resourceIds,
+      resourceExclusive: booking.resource?.exclusive,
+      bufferMinutes: booking.resource?.bufferMinutes,
+      flexibleDurations: booking.resource?.flexibleDurations,
     };
     const res = await createProduct(input);
     setSaving(false);
@@ -149,7 +167,7 @@ export function ProductWizard({
 
         {step === 1 && (
           <div className="flex flex-col gap-major">
-            <BookingSetup value={booking} onChange={setBooking} />
+            <BookingSetup value={booking} onChange={setBooking} resources={resources} onCreateResource={onCreateResource} />
             {booking && needsSchedule(booking.bookingType) && schedule && (
               <div>
                 <p className="type-h2 mb-section text-base">Schedule</p>
