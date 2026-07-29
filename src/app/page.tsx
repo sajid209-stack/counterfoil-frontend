@@ -1,60 +1,65 @@
-import Link from "next/link";
+"use client";
 
-// Root launcher — a surface picker. Not a product screen; just a way into the
-// two surfaces (and auth) so the demo is clickable from "/".
-const SURFACES = [
-  {
-    href: "/dashboard",
-    code: "OS",
-    title: "Operator admin",
-    desc: "Configuration, management, reporting. Desktop, dense.",
-  },
-  {
-    href: "/pos",
-    code: "Go",
-    title: "Front of house",
-    desc: "Point of sale, scanning, shifts. Tablet, touch.",
-  },
-  {
-    href: "/sign-in",
-    code: "Auth",
-    title: "Sign in",
-    desc: "Sign in, sign up, invitation accept.",
-  },
-];
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
+import { loadDemoBusiness, startFreshBusiness } from "@/lib/api";
+import { DEMOS } from "@/lib/demos";
 
 export default function Home() {
+  const router = useRouter();
+
+  const explore = (id: string) => {
+    const d = DEMOS.find((x) => x.id === id)!;
+    loadDemoBusiness(d.name, d.currency, d.productIds);
+    router.push("/dashboard");
+  };
+  const fresh = () => {
+    startFreshBusiness();
+    router.push("/sign-up");
+  };
+
   return (
     <main className="mx-auto flex min-h-full max-w-4xl flex-col justify-center px-section py-hero">
       <p className="type-label text-[13px] text-ember">Counterfoil</p>
-      <h1 className="type-display mt-tight text-5xl">Two surfaces, one system.</h1>
+      <h1 className="type-display mt-tight text-5xl">See it as your business.</h1>
       <p className="type-body mt-section max-w-xl text-neutral-600">
-        Operator-owned platform for venues, tours, and attractions. Pick a
-        surface.
+        Load a demo operation to explore Counterfoil configured end-to-end — or start fresh
+        and set one up yourself.
       </p>
 
-      <div className="mt-major grid gap-tight sm:grid-cols-3">
-        {SURFACES.map((s) => (
-          <Link
-            key={s.href}
-            href={s.href}
-            className="group rounded-md border border-neutral-200 bg-white p-section transition-colors duration-quick ease-counterfoil hover:border-ink"
+      <div className="mt-major grid gap-tight sm:grid-cols-2 lg:grid-cols-3">
+        {DEMOS.map((d) => (
+          <button
+            key={d.id}
+            type="button"
+            onClick={() => explore(d.id)}
+            className="group flex flex-col rounded-md border border-neutral-200 bg-white p-section text-left transition-colors duration-quick hover:border-ink"
           >
-            <span className="font-mono text-xs text-neutral-400">{s.code}</span>
-            <h2 className="type-h2 mt-tight text-lg">{s.title}</h2>
-            <p className="type-body mt-inline text-[13px] text-neutral-600">
-              {s.desc}
-            </p>
-          </Link>
+            <span className="type-h2 text-base">{d.name}</span>
+            <span className="type-body mt-inline text-[13px] text-neutral-600">{d.tagline}</span>
+            <span className="mt-tight font-mono text-[10px] uppercase tracking-wide text-neutral-400">{d.types}</span>
+            <span className="mt-tight inline-flex items-center gap-inline text-[13px] text-ember">
+              Explore <ArrowRight size={14} strokeWidth={1.5} />
+            </span>
+          </button>
         ))}
+        <button
+          type="button"
+          onClick={fresh}
+          className="flex flex-col justify-center rounded-md border border-dashed border-neutral-200 bg-white p-section text-left hover:border-ink"
+        >
+          <span className="type-h2 text-base">Start fresh</span>
+          <span className="type-body mt-inline text-[13px] text-neutral-600">Set up your own from an empty account — the guided path.</span>
+        </button>
       </div>
 
-      <Link
-        href="/tokens"
-        className="mt-major font-mono text-xs text-neutral-400 hover:text-ember"
-      >
-        /tokens · design reference
-      </Link>
+      <div className="mt-major flex flex-wrap gap-major font-mono text-xs text-neutral-400">
+        <Link href="/dashboard" className="hover:text-ember">OS admin →</Link>
+        <Link href="/pos" className="hover:text-ember">Go / POS →</Link>
+        <Link href="/tokens" className="hover:text-ember">Design tokens →</Link>
+        <Link href="/kitchen-sink" className="hover:text-ember">Primitives →</Link>
+      </div>
     </main>
   );
 }

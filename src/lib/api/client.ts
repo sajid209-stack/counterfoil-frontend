@@ -10,11 +10,13 @@
    modules and components already speak only in these types.
    ────────────────────────────────────────────────────────────────────────── */
 import * as seed from "@/lib/mock/data";
+import { generateSales } from "@/lib/mock/generate";
 import type {
   ApiError,
   ApiResult,
   ListParams,
   ListResponse,
+  Operator,
 } from "./types";
 
 // ── latency + result helpers ───────────────────────────────────────────────
@@ -58,6 +60,35 @@ const store: Record<string, Row[]> = {
   tickets: structuredClone(seed.tickets),
   bookings: structuredClone(seed.bookings),
 };
+
+// ── Operator + demo-business switching ──────────────────────────────────────
+let operatorState: Operator = structuredClone(seed.operator);
+export const getOperatorState = (): Operator => operatorState;
+export function patchOperatorState(patch: Partial<Operator>): Operator {
+  operatorState = { ...operatorState, ...patch, updatedAt: new Date().toISOString() };
+  return operatorState;
+}
+
+/** Swap the whole mock to a demo business: its operator, its products, and a
+ *  fresh 30-day order history for them. Shared entities (locations, staff,
+ *  counters, resources) stay so the demo is coherent. */
+export function loadBusiness(name: string, currency: string, productIds: string[]): void {
+  operatorState = { ...structuredClone(seed.operator), name, currency };
+  (store as Record<string, unknown[]>).products = structuredClone(seed.products).filter((p) => productIds.includes(p.id));
+  (store as Record<string, unknown[]>).resources = structuredClone(seed.resources);
+  const sales = generateSales({ products: store.products as never, locations: seed.locations, staff: seed.staff, taxRatePct: operatorState.taxRatePct });
+  (store as Record<string, unknown[]>).orders = sales.orders;
+  (store as Record<string, unknown[]>).tickets = sales.tickets;
+  (store as Record<string, unknown[]>).bookings = sales.bookings;
+}
+
+/** Empty the operator's data for the golden path ("Start fresh"). */
+export function startFresh(): void {
+  operatorState = { ...structuredClone(seed.operator), name: "" };
+  for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources"]) {
+    (store as Record<string, unknown[]>)[k] = [];
+  }
+}
 
 const nowISO = () => new Date().toISOString();
 const genId = (name: string) =>

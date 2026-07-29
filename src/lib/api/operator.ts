@@ -1,20 +1,19 @@
-import * as seed from "@/lib/mock/data";
-import { ok } from "./client";
+import { getOperatorState, loadBusiness, ok, patchOperatorState, startFresh } from "./client";
 import type { ApiResult, Operator, OperatorPatch } from "./types";
 
-// Single-tenant in the mock. Kept as a mutable module-level copy so Business
-// Setup edits persist within a session (mirrors what the real endpoint does).
-let current: Operator = structuredClone(seed.operator);
-
-/** The current operator (tenant). Carries the currency, timezone, and tax rate
- *  every money/time value is interpreted in. */
+/** The current operator (tenant) — reflects the loaded demo business. */
 export async function getOperator(): Promise<ApiResult<Operator>> {
-  return ok(structuredClone(current));
+  return ok(structuredClone(getOperatorState()));
 }
 
-export async function updateOperator(
-  patch: OperatorPatch,
-): Promise<ApiResult<Operator>> {
-  current = { ...current, ...patch, updatedAt: new Date().toISOString() };
-  return ok(structuredClone(current));
+export async function updateOperator(patch: OperatorPatch): Promise<ApiResult<Operator>> {
+  return ok(structuredClone(patchOperatorState(patch)));
+}
+
+/** Swap the whole mock to a demo business, or start fresh (golden path). */
+export function loadDemoBusiness(name: string, currency: string, productIds: string[]): void {
+  loadBusiness(name, currency, productIds);
+}
+export function startFreshBusiness(): void {
+  startFresh();
 }
