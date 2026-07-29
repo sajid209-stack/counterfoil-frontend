@@ -256,6 +256,36 @@ export const counters: Counter[] = [
     createdAt: T,
     updatedAt: T,
   },
+  {
+    id: "cnt_fort_kiosk",
+    name: "Fort Self-Service Kiosk",
+    locationId: "loc_fort",
+    allowedProductIds: ["prd_adm_fort", "prd_audio_guide"],
+    allowedPaymentMethods: ["card_terminal", "bangla_qr"],
+    status: "active",
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
+    id: "cnt_museum_group",
+    name: "Museum Group Desk",
+    locationId: "loc_museum",
+    allowedProductIds: ["prd_school_group", "prd_tour_heritage"],
+    allowedPaymentMethods: ["cash", "voucher", "credit"],
+    status: "active",
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
+    id: "cnt_garden_gate",
+    name: "Garden Gate",
+    locationId: "loc_garden",
+    allowedProductIds: "all",
+    allowedPaymentMethods: ["cash", "bkash"],
+    status: "inactive",
+    createdAt: T,
+    updatedAt: T,
+  },
 ];
 
 export const roles: Role[] = [

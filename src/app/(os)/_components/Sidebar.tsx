@@ -9,8 +9,8 @@ import { usePathname } from "next/navigation";
 const NAV: { label: string; href: string; ready: boolean }[] = [
   { label: "Dashboard", href: "/dashboard", ready: true },
   { label: "Products", href: "/products", ready: true },
-  { label: "Locations", href: "/locations", ready: false },
-  { label: "Counters", href: "/counters", ready: false },
+  { label: "Locations", href: "/locations", ready: true },
+  { label: "Counters", href: "/counters", ready: true },
   { label: "Staff", href: "/staff", ready: false },
   { label: "Orders", href: "/orders", ready: false },
   { label: "Sales Reports", href: "/reports", ready: false },
