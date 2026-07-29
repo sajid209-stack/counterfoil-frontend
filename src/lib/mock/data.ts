@@ -384,4 +384,11 @@ export const staff: Staff[] = [
     createdAt: "2025-11-01T10:00:00+06:00",
     updatedAt: "2026-06-01T10:00:00+06:00",
   },
+  { id: "stf_sabbir", name: "Sabbir Ahmed", email: "sabbir@lalbagh.example", phone: "+8801711000006", roleId: "role_cashier", locationIds: ["loc_fort"], counterIds: ["cnt_fort_kiosk"], status: "active", lastActiveAt: "2026-07-29T07:55:00+06:00", createdAt: T, updatedAt: T },
+  { id: "stf_farhana", name: "Farhana Yasmin", email: "farhana@lalbagh.example", phone: null, roleId: "role_supervisor", locationIds: ["loc_museum"], counterIds: ["cnt_museum_lobby", "cnt_museum_group"], status: "active", lastActiveAt: "2026-07-28T16:10:00+06:00", createdAt: T, updatedAt: T },
+  { id: "stf_jamal", name: "Jamal Hossain", email: null, phone: "+8801711000007", roleId: "role_cashier", locationIds: ["loc_fort"], counterIds: ["cnt_fort_main"], status: "active", lastActiveAt: "2026-07-29T09:12:00+06:00", createdAt: T, updatedAt: T },
+  { id: "stf_ruma", name: "Ruma Begum", email: "ruma@lalbagh.example", phone: "+8801711000008", roleId: "role_cashier", locationIds: ["loc_museum"], counterIds: ["cnt_museum_group"], status: "invited", lastActiveAt: null, createdAt: T, updatedAt: T },
+  { id: "stf_arif", name: "Arif Rahman", email: "arif@lalbagh.example", phone: "+8801711000009", roleId: "role_manager", locationIds: ["loc_fort", "loc_museum", "loc_garden"], counterIds: [], status: "active", lastActiveAt: "2026-07-29T08:00:00+06:00", createdAt: T, updatedAt: T },
+  { id: "stf_shila", name: "Shila Akter", email: "shila@lalbagh.example", phone: null, roleId: "role_cashier", locationIds: ["loc_fort"], counterIds: ["cnt_fort_group"], status: "active", lastActiveAt: "2026-07-27T15:30:00+06:00", createdAt: T, updatedAt: T },
+  { id: "stf_mizan", name: "Mizanur Rahman", email: "mizan@lalbagh.example", phone: "+8801711000011", roleId: "role_supervisor", locationIds: ["loc_fort"], counterIds: ["cnt_fort_main", "cnt_fort_kiosk"], status: "suspended", lastActiveAt: "2026-06-15T12:00:00+06:00", createdAt: "2025-12-01T10:00:00+06:00", updatedAt: "2026-06-16T10:00:00+06:00" },
 ];

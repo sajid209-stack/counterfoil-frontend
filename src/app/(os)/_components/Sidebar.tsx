@@ -11,11 +11,12 @@ const NAV: { label: string; href: string; ready: boolean }[] = [
   { label: "Products", href: "/products", ready: true },
   { label: "Locations", href: "/locations", ready: true },
   { label: "Counters", href: "/counters", ready: true },
-  { label: "Staff", href: "/staff", ready: false },
+  { label: "Staff", href: "/staff", ready: true },
+  { label: "Roles", href: "/settings/roles", ready: true },
   { label: "Orders", href: "/orders", ready: false },
   { label: "Sales Reports", href: "/reports", ready: false },
   { label: "Calendar", href: "/calendar", ready: false },
-  { label: "Business Setup", href: "/settings", ready: false },
+  { label: "Business Setup", href: "/settings/business", ready: false },
 ];
 
 export function Sidebar() {
