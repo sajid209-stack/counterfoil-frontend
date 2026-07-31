@@ -108,7 +108,7 @@ export default function SchedulePage() {
                 <Button size="sm" onClick={() => sell(r.product)}>Sell</Button>
               )}
               {r.resourceId && (
-                <button type="button" aria-label="Row actions" onClick={() => openOos(r.resourceId!)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 text-neutral-400 active:bg-neutral-200">
+                <button type="button" aria-label="Row actions" onClick={() => openOos(r.resourceId!)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 text-neutral-400 active:bg-ember/10">
                   <MoreHorizontal size={15} strokeWidth={1.5} />
                 </button>
               )}

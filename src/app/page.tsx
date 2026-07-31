@@ -34,7 +34,7 @@ export default function Home() {
             key={d.id}
             type="button"
             onClick={() => explore(d.id)}
-            className="group flex flex-col rounded-md border border-neutral-200 bg-white p-section text-left transition-colors duration-quick hover:border-ink"
+            className="group flex flex-col rounded-md border border-neutral-200 bg-white p-section text-left transition-all duration-quick hover:-translate-y-0.5 hover:border-ember/40 hover:shadow-sm active:bg-ember/5"
           >
             <span className="type-h2 text-base">{d.name}</span>
             <span className="type-body mt-inline text-[13px] text-neutral-600">{d.tagline}</span>
@@ -47,7 +47,7 @@ export default function Home() {
         <button
           type="button"
           onClick={fresh}
-          className="flex flex-col justify-center rounded-md border border-dashed border-neutral-200 bg-white p-section text-left hover:border-ink"
+          className="flex flex-col justify-center rounded-md border border-dashed border-neutral-200 bg-white p-section text-left transition-all duration-quick hover:border-ember/40 hover:shadow-sm"
         >
           <span className="type-h2 text-base">Start fresh</span>
           <span className="type-body mt-inline text-[13px] text-neutral-600">Set up your own from an empty account — the guided path.</span>

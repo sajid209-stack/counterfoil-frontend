@@ -12,7 +12,21 @@ import {
   type Column,
 } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { listLocations, listResources, type Resource } from "@/lib/api";
+import { listLocations, listResources, ownerBusyDetailed, type Resource } from "@/lib/api";
+import { toTime } from "@/lib/schedule";
+
+const TODAY = "2026-07-29";
+const NOW_MIN = 12 * 60;
+
+// The same live derivation the POS lane cards use.
+function liveState(r: Resource): { text: string; busy: boolean } {
+  if (r.outOfService) return { text: "Out of service", busy: true };
+  const spans = ownerBusyDetailed(r.id, TODAY);
+  const current = spans.find((s) => s.start <= NOW_MIN && NOW_MIN < s.end);
+  if (current) return { text: `In use until ${toTime(current.end)} · ${current.label}`, busy: true };
+  const next = spans.find((s) => s.start > NOW_MIN);
+  return { text: next ? `Free · next ${toTime(next.start)}` : "Free", busy: false };
+}
 
 export default function ResourcesPage() {
   const router = useRouter();
@@ -35,6 +49,14 @@ export default function ResourcesPage() {
     { key: "name", header: "Name", sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
     { key: "type", header: "Type", render: (r) => r.nounSingular },
     { key: "location", header: "Location", render: (r) => locationName(r.locationId) },
+    {
+      key: "now",
+      header: "Right now",
+      render: (r) => {
+        const s = liveState(r);
+        return <span className={`font-mono text-[12px] ${s.busy ? "text-neutral-600" : "text-success"}`}>{s.text}</span>;
+      },
+    },
     {
       key: "status",
       header: "Status",

@@ -38,7 +38,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
                 href={n.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-12 items-center whitespace-nowrap border-b-[3px] px-comfortable text-sm text-ink active:bg-neutral-200",
+                  "flex h-12 items-center whitespace-nowrap border-b-[3px] px-comfortable text-sm text-ink active:bg-ember/10",
                   active ? "border-ember font-medium" : "border-transparent",
                 )}
               >

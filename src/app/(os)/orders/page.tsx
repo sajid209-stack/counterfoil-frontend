@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import {
   DataTable,
@@ -15,8 +15,18 @@ import { listLocations, listOrders, type Order } from "@/lib/api";
 import { formatDateTime, formatMoney } from "@/lib/format";
 
 export default function OrdersPage() {
+  return (
+    <Suspense>
+      <OrdersPageInner />
+    </Suspense>
+  );
+}
+
+function OrdersPageInner() {
   const router = useRouter();
-  const [search, setSearch] = useState("");
+  const params = useSearchParams();
+  // Deep-link from Customers: /orders?customer=Anika pre-filters the search.
+  const [search, setSearch] = useState(params.get("customer") ?? "");
   const [status, setStatus] = useState("");
   const [channel, setChannel] = useState("");
   const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "createdAt", order: "desc" });

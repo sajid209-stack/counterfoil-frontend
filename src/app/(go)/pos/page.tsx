@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Pencil, Plus, Search, Trash2, UserRound } from "lucide-react";
-import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
+import { BlockedNotice, Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { checkout, findCreditPass, getOperator, isResourceFreeFor, listCategories, listLocations, listProducts, listResources, listStaff, type CreditPass, type PaymentMethod, type Product } from "@/lib/api";
+import { checkout, findCreditPass, getOperator, isResourceFreeFor, listCategories, listLocations, listProducts, listResources, listRoles, listStaff, type CreditPass, type PaymentMethod, type Product } from "@/lib/api";
 import { isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
@@ -21,8 +21,8 @@ const COUNTER_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "bangla_qr", label: "QR" },
   { value: "card_terminal", label: "Card" },
 ];
-// Mock: the signed-in staff's discount limit (roles already carry this).
-const DISCOUNT_LIMIT_PCT = 10;
+// The signed-in staff member (mock session): Nadia, whose role sets her limits.
+const SIGNED_IN_STAFF_ID = "stf_nadia";
 
 /** Animated money value (120ms count) — the cart total moves, staff notice. */
 function AnimatedMoney({ value, currency }: { value: number; currency: string }) {
@@ -53,6 +53,11 @@ export default function PosPage() {
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 1, filters: { status: "active" } }), []);
   const teamQ = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
+  const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
+
+  // "Ask a manager" gating reads the signed-in staff's ROLE — no hardcoded cap.
+  const myRole = rolesQ.data?.data.find((r) => r.id === teamQ.data?.data.find((s) => s.id === SIGNED_IN_STAFF_ID)?.roleId);
+  const discountLimit = myRole?.discountLimitPct ?? Infinity;
 
   const [cart, setCart] = useState<CartEntry[]>([]);
   const [sheet, setSheet] = useState<{ product: Product; initial: CartEntry | null } | null>(null);
@@ -79,6 +84,7 @@ export default function PosPage() {
   const [parkOpen, setParkOpen] = useState(false);
   const [parkName, setParkName] = useState("");
   const [cartOpen, setCartOpen] = useState(false); // phone cart drawer
+  const [cartNotice, setCartNotice] = useState<string | null>(null); // refusal guidance
   const persistParked = (list: Parked[]) => { setParked(list); sessionStorage.setItem("pos_parked", JSON.stringify(list)); };
   const park = () => {
     if (cart.length === 0) return;
@@ -170,9 +176,9 @@ export default function PosPage() {
     const endTime = e.slotEnd.slice(11, 16);
     const current = toMinutes(endTime) - toMinutes(e.slotTime);
     const next = current + cfg.incrementMinutes;
-    if (next > cfg.maxMinutes) { toast.error(`${cfg.maxMinutes / 60} hours is the maximum.`); return; }
+    if (next > cfg.maxMinutes) { setCartNotice(`${cfg.maxMinutes / 60} hours is the maximum booking — start a second booking for longer.`); return; }
     if (!isResourceFreeFor(e.resourceId, e.slotDate, endTime, cfg.incrementMinutes, p.bufferMinutes ?? 0)) {
-      toast.error(`${e.resourceLabel ?? "The lane"} is booked right after — can't extend.`);
+      setCartNotice(`Can't extend — ${e.resourceLabel ?? "the lane"} is booked right after ${endTime}. Try another lane or keep the current time.`);
       return;
     }
     const base = Math.min(...p.tiers.filter((t) => t.active).map((t) => t.price));
@@ -217,7 +223,7 @@ export default function PosPage() {
   const discount = Math.round((subtotal * discountPct) / 100);
   const tax = cart.reduce((s, e) => s + Math.round(((entryTotal(e) - entryCoveredValue(e)) * entryTaxRate(e)) / 100), 0);
   const total = subtotal - discount - creditsValue + tax;
-  const overLimit = discountPct > DISCOUNT_LIMIT_PCT;
+  const overLimit = discountPct > discountLimit;
 
   // ── Deposits: a percent-deposit policy holds part of the entry back until
   //    arrival; only the deposit is charged now.
@@ -305,7 +311,7 @@ export default function PosPage() {
           ) : (
             <div className="grid grid-cols-2 gap-tight sm:grid-cols-3">
               {shown.map((p) => (
-                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex min-h-[6rem] flex-col justify-between rounded-sm border border-neutral-200 border-t-2 border-t-ember bg-white p-comfortable text-left transition-colors duration-quick active:bg-neutral-200">
+                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex min-h-[6rem] flex-col justify-between rounded-sm border border-neutral-200 border-t-2 border-t-ember bg-white p-comfortable text-left transition-colors duration-quick active:bg-ember/10">
                   <div>
                     <span className="block text-[16px] font-semibold leading-tight">{p.name}</span>
                     <span className="mt-inline block text-[13px] leading-tight text-neutral-400">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
@@ -313,7 +319,7 @@ export default function PosPage() {
                   <span className="mt-tight self-end font-mono text-[13px] tabular-nums">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
                 </button>
               ))}
-              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[5.5rem] flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-neutral-200 text-neutral-400 active:bg-neutral-200">
+              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[5.5rem] flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-neutral-200 text-neutral-400 active:bg-ember/10">
                 <Plus size={20} strokeWidth={1.5} /><span className="text-[12px]">Custom amount</span>
               </button>
             </div>
@@ -322,7 +328,7 @@ export default function PosPage() {
       </div>
 
       {/* Cart — fixed right panel on tablet/desktop; bottom drawer on phones */}
-      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] rounded-t-[12px] shadow-2xl" : "hidden"} min-h-0 flex-col border border-neutral-200 bg-white lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-sm lg:shadow-none`}>
+      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] rounded-t-md shadow-2xl" : "hidden"} min-h-0 flex-col border border-neutral-200 bg-white lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-sm lg:shadow-none`}>
         <div className="flex items-center gap-tight border-b border-neutral-200 p-tight">
           {cartOpen && (
             <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-sm border border-neutral-200 px-tight text-[12px] text-neutral-600 lg:hidden">Close</button>
@@ -349,12 +355,12 @@ export default function PosPage() {
                     {entryBalance(e) > 0 && <div className="font-mono text-[11px] text-neutral-400">{productById(e.productId)?.policies?.depositPct}% deposit now · {formatMoney(entryBalance(e), currency)} at arrival</div>}
                   </div>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-neutral-200 px-tight font-mono text-[11px] active:bg-neutral-200">
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-neutral-200 px-tight font-mono text-[11px] active:bg-ember/10">
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
-                  {e.productId !== "custom" && <button type="button" aria-label="Edit" onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-neutral-200 active:bg-neutral-200"><Pencil size={15} strokeWidth={1.5} /></button>}
-                  <button type="button" aria-label="Remove" onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-sm border border-neutral-200 text-danger active:bg-neutral-200"><Trash2 size={15} strokeWidth={1.5} /></button>
+                  {e.productId !== "custom" && <button type="button" aria-label="Edit" onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-neutral-200 active:bg-ember/10"><Pencil size={15} strokeWidth={1.5} /></button>}
+                  <button type="button" aria-label="Remove" onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-sm border border-neutral-200 text-danger active:bg-ember/10"><Trash2 size={15} strokeWidth={1.5} /></button>
                 </div>
               ))}
             </div>
@@ -369,7 +375,12 @@ export default function PosPage() {
               {[0, 5, 10, 15].map((d) => <button key={d} type="button" onClick={() => setDiscountPct(d)} className={`h-12 min-w-12 rounded-xs border px-tight font-mono text-[12px] ${discountPct === d ? "border-ink bg-ink text-paper" : "border-neutral-200"}`}>{d}%</button>)}
             </div>
           </div>
-          {overLimit && <p className="mb-tight text-[12px] text-danger">Over your {DISCOUNT_LIMIT_PCT}% limit — ask a manager.</p>}
+          {overLimit && (
+            <p className="mb-tight rounded-sm border border-neutral-200 border-l-[3px] border-l-ember bg-white p-tight text-[12px]">
+              Over your {discountLimit}% discount limit — ask a manager, or pick {discountLimit}% or less.
+            </p>
+          )}
+          {cartNotice && <div className="mb-tight"><BlockedNotice message={cartNotice} onDismiss={() => setCartNotice(null)} /></div>}
 
           {/* Credits pass */}
           <div className="mb-tight flex items-center justify-between">

@@ -306,6 +306,7 @@ export function ProductForm({
                   value={state.durationConfig}
                   onChange={(cfg) => set("durationConfig", cfg)}
                   currency={currency}
+                  resources={resources.filter((r) => (state.booking.resource?.resourceIds ?? product.resourceIds ?? []).includes(r.id))}
                   pricingRules={state.pricingRules.filter((r) => r.price !== "").map((r) => ({ id: r.id ?? "preview", days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: majorToMinor(r.price) }))}
                 />
               </div>
@@ -342,14 +343,33 @@ export function ProductForm({
           </div>
         )}
 
-        {tab === "pricing" && (
-          <div className="flex flex-col gap-major">
-            <PriceTiersField tiers={state.tiers} onChange={(tiers) => set("tiers", tiers)} errors={errors} currency={currency} />
-            {needsSchedule(state.booking.bookingType) && (
-              <PricingRulesField rules={state.pricingRules} onChange={(r) => set("pricingRules", r)} currency={currency} basePriceMajor={state.tiers[0]?.price ?? ""} />
-            )}
-          </div>
-        )}
+        {tab === "pricing" && (() => {
+          // The pricing basis drives the tab: per-booking products show one
+          // price + group limits — never tier machinery.
+          const basis = state.booking.resource?.basis ?? product.pricingBasis ?? (isResourceType(state.booking.bookingType) ? "per_booking" : "per_person");
+          return (
+            <div className="flex flex-col gap-major">
+              {basis === "per_booking" ? (
+                <div className="flex flex-col gap-tight">
+                  <FormField
+                    label={`Price per booking (${currency})`}
+                    variant="number"
+                    value={state.tiers[0]?.price ?? ""}
+                    onChange={(e) => set("tiers", state.tiers.length ? state.tiers.map((t, i) => (i === 0 ? { ...t, price: e.target.value } : t)) : [{ ...emptyTier(), name: "Booking", price: e.target.value }])}
+                    className="max-w-xs"
+                    help="One price for the whole group — group size is capped by the party limits in Policies."
+                  />
+                  <p className="text-[12px] text-neutral-400">Priced per booking. Switch to per-person tiers by changing the booking setup on the Availability tab.</p>
+                </div>
+              ) : (
+                <PriceTiersField tiers={state.tiers} onChange={(tiers) => set("tiers", tiers)} errors={errors} currency={currency} />
+              )}
+              {needsSchedule(state.booking.bookingType) && (
+                <PricingRulesField rules={state.pricingRules} onChange={(r) => set("pricingRules", r)} currency={currency} basePriceMajor={state.tiers[0]?.price ?? ""} />
+              )}
+            </div>
+          );
+        })()}
 
         {tab === "policies" && (
           <div className="flex flex-col gap-major">

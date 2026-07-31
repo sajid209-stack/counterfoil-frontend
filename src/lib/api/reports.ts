@@ -104,7 +104,11 @@ export async function getSalesReport(query: SalesReportQuery): Promise<ApiResult
       for (const line of o.lines) {
         const amt = line.unitPrice * line.quantity;
         if (query.groupBy === "product") {
-          add(line.productId, line.productName, isSettled ? amt : 0, isRefund ? amt : 0, isSettled ? line.quantity : 0);
+          // Custom-amount sales group under "Custom" (typed names stay on the
+          // order lines for the drill-down); discounts under their own row.
+          const key = line.productId === "custom" ? "custom" : line.productId === "discount" ? "discount" : line.productId;
+          const label = key === "custom" ? "Custom" : key === "discount" ? "Discounts" : line.productName;
+          add(key, label, isSettled ? amt : 0, isRefund ? amt : 0, isSettled && amt > 0 ? line.quantity : 0);
         } else {
           const cid = productCat.get(line.productId) ?? "none";
           add(cid, cid === "none" ? "Uncategorised" : (catName.get(cid) ?? "—"), isSettled ? amt : 0, isRefund ? amt : 0, isSettled ? line.quantity : 0);

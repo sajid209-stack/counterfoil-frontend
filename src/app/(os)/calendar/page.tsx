@@ -1,21 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { EmptyState, PageShell, StatusPill, Tabs } from "@/components/ui";
+import { EmptyState, PageShell, ResourceTimeline, StatusPill, Tabs } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { listBookings, listLocations, listProducts, type Booking } from "@/lib/api";
+import { listBookings, listLocations, listProducts, listResources, ownerBusyDetailed, type Booking } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 
 const NOW = new Date("2026-07-29T12:00:00+06:00");
+const TODAY = "2026-07-29";
 const dayKey = (iso: string) => iso.slice(0, 10);
 const time = (iso: string) =>
   new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
 
 export default function CalendarPage() {
   const [view, setView] = useState("month");
+  const [resourceDate, setResourceDate] = useState(TODAY);
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
+  const resourcesQ = useApiQuery(() => listResources({ pageSize: 100, filters: { status: "active" } }), []);
 
   const productName = (id: string) => productsQ.data?.data.find((p) => p.id === id)?.name ?? "—";
   const locationName = (id: string) => locationsQ.data?.data.find((l) => l.id === id)?.name ?? "—";
@@ -52,6 +55,28 @@ export default function CalendarPage() {
         onChange={setView}
         className="mb-major"
       />
+
+      {/* The day by resource — the same timeline the POS sheet shows, so the
+          manager and the counter see the same picture. */}
+      {view === "day" && (resourcesQ.data?.data.length ?? 0) > 0 && (
+        <div className="mb-major rounded-md border border-neutral-200 bg-white p-major">
+          <div className="mb-section flex items-center justify-between">
+            <h2 className="type-h2 text-base">By {resourcesQ.data!.data[0].nounSingular.toLowerCase()}</h2>
+            <input type="date" value={resourceDate} onChange={(e) => setResourceDate(e.target.value)} className="h-11 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm outline-none focus:border-ink" />
+          </div>
+          <div className="flex flex-col gap-section">
+            {resourcesQ.data!.data.map((r) => (
+              <div key={r.id} className="grid items-center gap-tight sm:grid-cols-[8rem_1fr]">
+                <div>
+                  <p className="text-sm font-medium">{r.name}</p>
+                  {r.outOfService && <p className="text-[11px] text-danger">Out of service{r.outOfServiceReason ? ` — ${r.outOfServiceReason}` : ""}</p>}
+                </div>
+                <ResourceTimeline spans={ownerBusyDetailed(r.id, resourceDate)} openMin={6 * 60} closeMin={23 * 60} hatched={r.outOfService} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>

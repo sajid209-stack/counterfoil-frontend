@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, Ticket } from "lucide-react";
+import { ArrowUpRight, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, Ticket, UsersRound } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 type IconType = React.ComponentType<{ size?: number | string; strokeWidth?: number | string; className?: string }>;
@@ -23,6 +23,7 @@ export function Sidebar({
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Calendar", href: "/calendar", icon: CalendarDays },
     { label: "Orders", href: "/orders", icon: ReceiptText },
+    { label: "Customers", href: "/customers", icon: UsersRound },
     { label: "Products", href: "/products", icon: Ticket },
     { label: "Reports", href: "/reports/sales", icon: ChartNoAxesColumn },
   ];

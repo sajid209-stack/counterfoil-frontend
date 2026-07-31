@@ -15,3 +15,6 @@ export type { Column, DataTableProps } from "./DataTable";
 export { DurationInput } from "./DurationInput";
 export { TimeInput } from "./TimeInput";
 export { BlockedNotice } from "./BlockedNotice";
+export { ResourceTimeline } from "./ResourceTimeline";
+export type { TimelineSpan } from "./ResourceTimeline";
+export { Avatar, ChoiceCard } from "./ChoiceCard";

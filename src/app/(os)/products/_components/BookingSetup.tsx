@@ -29,7 +29,7 @@ const PROVIDER_NOUNS = ["Therapist", "Instructor", "Stylist", "Coach", "Guide", 
 
 function Option({ title, helper, onClick }: { title: string; helper: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex w-full flex-col items-start gap-inline rounded-sm border border-neutral-200 bg-white p-section text-left transition-colors hover:border-ink">
+    <button type="button" onClick={onClick} className="flex w-full flex-col items-start gap-inline rounded-md border border-neutral-200 bg-white p-section text-left transition-all duration-quick hover:border-ember/40 hover:shadow-sm active:bg-ember/5">
       <span className="text-sm font-medium">{title}</span>
       <span className="text-[13px] text-neutral-400">{helper}</span>
     </button>
@@ -261,12 +261,16 @@ function Radio({ label, value, onChange, options }: { label: string; value: stri
   return (
     <div className="flex flex-col gap-tight">
       <span className="type-label text-[12px] text-neutral-600">{label}</span>
-      {options.map((o) => (
-        <button key={o.value} type="button" onClick={() => onChange(o.value)} className={`flex flex-col items-start rounded-sm border p-comfortable text-left ${value === o.value ? "border-ink" : "border-neutral-200"}`}>
-          <span className="text-sm font-medium">{o.label}</span>
-          <span className="text-[12px] text-neutral-400">{o.helper}</span>
-        </button>
-      ))}
+      {options.map((o) => {
+        const selected = value === o.value;
+        return (
+          <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={selected} className={`relative flex flex-col items-start rounded-md border p-comfortable text-left transition-all duration-quick ${selected ? "border-ember bg-ember/5" : "border-neutral-200 bg-white hover:border-ember/40 hover:shadow-sm"}`}>
+            {selected && <span className="absolute right-tight top-tight h-2 w-2 rounded-full bg-ember" aria-hidden />}
+            <span className="text-sm font-medium">{o.label}</span>
+            <span className="text-[12px] text-neutral-400">{o.helper}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

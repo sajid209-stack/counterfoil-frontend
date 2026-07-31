@@ -10,7 +10,8 @@ import {
   resolveDurationPrice,
 } from "@/lib/duration";
 import { formatMoney } from "@/lib/format";
-import type { DurationConfig, PricingRule } from "@/lib/api";
+import { applyResourceRate } from "@/lib/api";
+import type { DurationConfig, PricingRule, Resource } from "@/lib/api";
 
 const majorToMinor = (s: string) => { const n = parseFloat(s); return Number.isFinite(n) ? Math.round(n * 100) : 0; };
 const minorToMajor = (m: number | undefined) => (m != null && m > 0 ? String(m / 100) : "");
@@ -21,11 +22,13 @@ export function DurationEngineField({
   value,
   onChange,
   pricingRules = [],
+  resources = [],
   currency = "BDT",
 }: {
   value: DurationConfig;
   onChange: (cfg: DurationConfig) => void;
   pricingRules?: PricingRule[]; // for the banded preview example
+  resources?: Resource[]; // per-resource rate examples in the preview
   currency?: string;
 }) {
   const set = <K extends keyof DurationConfig>(k: K, v: DurationConfig[K]) => onChange({ ...value, [k]: v });
@@ -121,6 +124,11 @@ export function DurationEngineField({
               {EXAMPLE.label}, {formatDuration(exampleMinutes)} example:{" "}
               <span className="font-mono font-medium text-ink">{formatMoney(bandedExample, currency)}</span>
               {bandedExample !== previewPrice(exampleMinutes) && " (time-band rules applied)"}
+            </p>
+          )}
+          {resources.some((r) => r.rateOverride) && (
+            <p className="mt-tight font-mono text-[12px] text-neutral-600">
+              {EXAMPLE.label} · {resources.slice(0, 4).map((r) => `${r.name} → ${formatMoney(applyResourceRate(bandedExample, exampleMinutes, r), currency)}`).join(" · ")}
             </p>
           )}
         </div>

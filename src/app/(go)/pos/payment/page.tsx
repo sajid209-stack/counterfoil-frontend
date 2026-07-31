@@ -84,9 +84,9 @@ export default function PaymentPage() {
         </div>
         {/* Quick chips: exact, then the notes actually in the till drawer. */}
         <div className="flex gap-tight">
-          <button type="button" onClick={() => setTenderTaka(String(Math.ceil(total / 100)))} className="h-12 flex-1 rounded-sm border border-ink bg-white font-mono text-sm active:bg-neutral-200">Exact</button>
+          <button type="button" onClick={() => setTenderTaka(String(Math.ceil(total / 100)))} className="h-12 flex-1 rounded-sm border border-ink bg-white font-mono text-sm active:bg-ember/10">Exact</button>
           {[500, 1000, 2000].map((amt) => (
-            <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-neutral-200 bg-white font-mono text-sm active:bg-neutral-200">
+            <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-neutral-200 bg-white font-mono text-sm active:bg-ember/10">
               ৳{amt}
             </button>
           ))}

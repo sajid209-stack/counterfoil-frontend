@@ -295,7 +295,8 @@ export default function DashboardPage() {
                     {u.cap > 1 && (
                       <span className="flex items-center gap-tight">
                         <span className="font-mono text-[12px] tabular-nums text-neutral-600">{u.sold}/{u.cap}</span>
-                        <span className="h-1 w-16 overflow-hidden rounded-full bg-neutral-200"><span className="block h-full bg-ember" style={{ width: `${(u.sold / u.cap) * 100}%` }} /></span>
+                        {/* occupancy micro-bar: ember when ≥80% full */}
+                        <span className="h-0.5 w-16 overflow-hidden rounded-full bg-neutral-200"><span className={`block h-full ${u.sold / u.cap >= 0.8 ? "bg-ember" : "bg-neutral-400"}`} style={{ width: `${(u.sold / u.cap) * 100}%` }} /></span>
                       </span>
                     )}
                     {u.state === "FULL" || u.state === "BOOKED" ? (

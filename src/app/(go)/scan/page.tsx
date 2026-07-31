@@ -63,7 +63,7 @@ export default function ScanPage() {
           <span className="type-label text-[11px] text-neutral-400">Try a real ticket</span>
           <div className="flex flex-wrap gap-inline">
             {samplesQ.data.data.map((t) => (
-              <button key={t.id} type="button" onClick={() => submit(t.code)} className="rounded-xs border border-neutral-200 bg-white px-tight py-inline font-mono text-[11px] active:bg-neutral-200">
+              <button key={t.id} type="button" onClick={() => submit(t.code)} className="rounded-xs border border-neutral-200 bg-white px-tight py-inline font-mono text-[11px] active:bg-ember/10">
                 {t.code}
               </button>
             ))}
