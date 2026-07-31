@@ -73,7 +73,7 @@ export function DataTable<T>({
               tabIndex={onRowClick ? 0 : undefined}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
-              className={cn("rounded-md border border-neutral-200 bg-white p-comfortable", onRowClick && "cursor-pointer active:bg-neutral-50")}
+              className={cn("rounded-md border border-neutral-200 bg-white p-comfortable transition-transform duration-quick", onRowClick && "cursor-pointer active:bg-neutral-50 hover:-translate-y-0.5")}
             >
               <div className="text-sm font-medium">
                 {columns[0].render ? columns[0].render(row) : String((row as Record<string, unknown>)[columns[0].key] ?? "")}

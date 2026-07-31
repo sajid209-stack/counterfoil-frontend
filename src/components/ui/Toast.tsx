@@ -5,16 +5,21 @@ import { CircleCheck, CircleAlert, Info, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 type ToastTone = "success" | "error" | "info";
+interface ToastAction {
+  label: string; // "Undo"
+  run: () => void;
+}
 interface ToastItem {
   id: number;
   tone: ToastTone;
   message: string;
+  action?: ToastAction;
 }
 
 interface ToastApi {
-  success: (message: string) => void;
-  error: (message: string) => void;
-  info: (message: string) => void;
+  success: (message: string, action?: ToastAction) => void;
+  error: (message: string, action?: ToastAction) => void;
+  info: (message: string, action?: ToastAction) => void;
 }
 
 const ToastContext = createContext<ToastApi | null>(null);
@@ -39,18 +44,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const push = useCallback(
-    (tone: ToastTone, message: string) => {
+    (tone: ToastTone, message: string, action?: ToastAction) => {
       const id = Date.now() + Math.random();
-      setToasts((t) => [...t, { id, tone, message }]);
-      setTimeout(() => remove(id), 4000);
+      setToasts((t) => [...t, { id, tone, message, action }]);
+      setTimeout(() => remove(id), action ? 6000 : 4000);
     },
     [remove],
   );
 
   const api: ToastApi = {
-    success: (m) => push("success", m),
-    error: (m) => push("error", m),
-    info: (m) => push("info", m),
+    success: (m, a) => push("success", m, a),
+    error: (m, a) => push("error", m, a),
+    info: (m, a) => push("info", m, a),
   };
 
   return (
@@ -70,6 +75,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           >
             <span className="mt-0.5 shrink-0">{TONE_ICON[t.tone]}</span>
             <p className="flex-1 text-[13px] text-ink">{t.message}</p>
+            {t.action && (
+              <button
+                type="button"
+                onClick={() => { t.action!.run(); remove(t.id); }}
+                className="shrink-0 text-[13px] font-medium text-ember underline-offset-4 hover:underline"
+              >
+                {t.action.label}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => remove(t.id)}

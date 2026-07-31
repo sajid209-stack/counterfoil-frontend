@@ -193,6 +193,31 @@ meta, generic in DataTable), forms already single-column with a sticky save bar 
 ink summary bar ("N items · ৳X · View cart"), product grid 2-up. Breakpoint wiring verified
 from both sides of each media query via computed styles.
 
+### Design uplift (counterfoil_design_uplift_plan.md, local — supersedes P8/P9, deeper) —
+all four parts ✅ (2026-08-01):
+
+- **Part 1 — layout shell.** Aside is `h-screen sticky top-0 shrink-0 overflow-y-auto`;
+  main `flex-1 min-w-0 overflow-x-hidden` — wide children scroll in their own cards, never
+  the page (all routes audited: zero page x-scroll). Sidebar **collapses to a 64px icon
+  rail** (tooltips, 200ms, persisted in localStorage).
+- **Part 2 — dashboard redesign.** Header row (date · location switcher · Open POS); hero
+  band (revenue w/ 320ms count-up + delta pill vs same day last week + 7-day sparkline ·
+  tickets · checked-in of expected · arriving-next-2h → Check-In); **Up next** session list
+  (fill bars, hatched FULL/BOOKED, row Sell into POS) + **Live activity** feed; right rail:
+  payment-mix bars, top products, **Needs attention** (out-of-service, low-fill within 3h,
+  pending waitlist; "All clear"). Checklist still replaces the hero until setup completes.
+- **Part 3 — POS overhaul.** Go chrome: counter chip · shift timer · staff initial · 3px
+  ember active underline. POS header zone (counter chip · wide search · parked badge);
+  tile anatomy (16px name / 13px subtitle / mono price bottom-right); sheets rise over the
+  grid only — the cart stays visible; animated tabular cart total; **sliding-thumb payment
+  segmented control**; change due at display size; 56px receipt buttons; **scan accepted =
+  paper on ink with product + tier large, refused = hatched danger** — shape + surface +
+  text, never colour.
+- **Part 4 — OS-wide polish.** DM Mono **breadcrumbs in the universal page header**
+  (derived from the path, every page incl. Settings); **toasts with Undo** (product archive
+  restores); interactive-card hover lift; motion tokens were already exact (120/200/320 ·
+  cubic-bezier(0.32,0.72,0,1)). Grep checks: zero "Loading…", zero rendered BT codes.
+
 **Master acceptance walk (Section C)** — steps 1–10 and 13 verified across the P1–P10
 sessions (blended bowling pricing, engine-only durations, Start now + Extend, turf pricing +
 sharing, Family group scan, two-tour guide conflict, spa deposit, park/resume + role-gated

@@ -22,6 +22,7 @@ import {
   listProducts,
   listResources,
   listStaff,
+  updateProduct,
 } from "@/lib/api";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { ProductForm } from "../_components/ProductForm";
@@ -50,7 +51,14 @@ export default function ProductDetailPage() {
     setArchiving(false);
     setConfirmArchive(false);
     if (res.ok) {
-      toast.success("Product archived.");
+      const id = params.id;
+      toast.success("Product archived.", {
+        label: "Undo",
+        run: async () => {
+          await updateProduct(id, { status: "active", archivedAt: null } as never);
+          toast.success("Restored.");
+        },
+      });
       router.push("/products");
     } else {
       toast.error(res.error.message);
