@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 import { ThemeProvider as NextThemes, useTheme } from "next-themes";
 
 /** Class-strategy theming (light · dark · system), persisted, no flash. */
@@ -8,6 +10,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     <NextThemes attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       {children}
     </NextThemes>
+  );
+}
+
+/** Header mode button: one tap flips light ↔ dark. The full picker (incl.
+ *  System) stays in Settings. Renders after mount to avoid hydration drift. */
+export function ModeButton({ className }: { className?: string }) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return <span className={`inline-block h-11 w-11 ${className ?? ""}`} aria-hidden />;
+  const dark = resolvedTheme === "dark";
+  return (
+    <button
+      type="button"
+      onClick={() => setTheme(dark ? "light" : "dark")}
+      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      className={`flex h-11 w-11 items-center justify-center rounded-sm border border-line bg-card text-muted transition-colors duration-quick hover:border-ember/40 hover:text-fg active:bg-ember/10 ${className ?? ""}`}
+    >
+      {dark ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
+    </button>
   );
 }
 

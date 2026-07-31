@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { ModeButton } from "@/components/ThemeProvider";
 
 // Standard page frame for OS screens: DM Mono breadcrumb (derived from the
 // path), title, optional description, actions slot.
@@ -37,9 +38,10 @@ export function PageShell({
             </p>
           )}
         </div>
-        {actions && (
-          <div className="flex shrink-0 items-center gap-tight">{actions}</div>
-        )}
+        <div className="flex shrink-0 items-center gap-tight">
+          {actions}
+          <ModeButton className="hidden md:flex" />
+        </div>
       </div>
       <div className="mt-major">{children}</div>
     </div>

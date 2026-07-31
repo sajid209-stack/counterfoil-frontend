@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
+import { ModeButton } from "@/components/ThemeProvider";
 import { Sidebar } from "./Sidebar";
 
 /** OS shell. The aside fills and holds the viewport (h-screen sticky); main
@@ -35,6 +36,8 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           </button>
           <span className="type-h2 text-base">Counterfoil</span>
           <span className="font-mono text-[11px] text-faint">OS</span>
+          <span className="flex-1" />
+          <ModeButton />
         </div>
         <div className="min-w-0 flex-1">{children}</div>
       </main>
