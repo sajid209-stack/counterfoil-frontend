@@ -229,6 +229,7 @@ export function ProductForm({
       resourceIds: state.booking.resource?.resourceIds,
       resourceExclusive: state.booking.resource?.exclusive,
       bufferMinutes: state.booking.resource?.bufferMinutes,
+      pricingBasis: state.booking.resource?.basis ?? product.pricingBasis,
       durationConfig: isFlexibleResource(bt) ? state.durationConfig : null,
       flexibleDurations: isFlexibleResource(bt) && state.durationConfig
         ? durationOptions(state.durationConfig)

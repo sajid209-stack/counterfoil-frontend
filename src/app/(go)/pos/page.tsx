@@ -125,7 +125,7 @@ export default function PosPage() {
   // Party size = people admitted, not lines: tier admits (Family = 4) and
   // section seats count; add-ons and premiums don't.
   const entrySeats = (e: CartEntry) => {
-    if (e.fixedPrice != null) return 1;
+    if (e.fixedPrice != null) return e.partySize ?? 1;
     const p = productById(e.productId);
     const seats = e.items.reduce((s, i) => {
       const tier = p?.tiers.find((t) => t.id === i.tierId);
@@ -344,7 +344,7 @@ export default function PosPage() {
                 <div key={e.id} className="flex items-start gap-tight border-b border-neutral-200 pb-tight last:border-0">
                   <div className="min-w-0 flex-1 cursor-pointer" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
                     <div className="flex justify-between text-sm font-medium"><span className="truncate">{e.productName}</span><span className="font-mono">{formatMoney(entryTotal(e), currency)}</span></div>
-                    <div className="font-mono text-[11px] text-neutral-400">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.resourceLabel, e.providerLabel].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
+                    <div className="font-mono text-[11px] text-neutral-400">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.resourceLabel, e.providerLabel, e.partySize != null ? `Group of ${e.partySize}` : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="font-mono text-[11px] text-success">{entryCoveredQty(e)} paid with pass</div>}
                     {entryBalance(e) > 0 && <div className="font-mono text-[11px] text-neutral-400">{productById(e.productId)?.policies?.depositPct}% deposit now · {formatMoney(entryBalance(e), currency)} at arrival</div>}
                   </div>

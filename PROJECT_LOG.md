@@ -218,6 +218,27 @@ all four parts ✅ (2026-08-01):
   restores); interactive-card hover lift; motion tokens were already exact (120/200/320 ·
   cubic-bezier(0.32,0.72,0,1)). Grep checks: zero "Loading…", zero rendered BT codes.
 
+### Lovable findings (counterfoil_lovable_findings.md, local) — all amendments ✅ (2026-08-01)
+
+- **Lane timeline** in the flexible sheet: occupied blocks with party labels (order customer
+  or "Walk-in (n)"), DM Mono hour ticks, the current selection drawn live in ember/70.
+- **Per-resource rates**: `Resource.rateOverride` (premium per booking OR replacement hourly
+  rate) — editor section in the resource form, applied after model + bands everywhere
+  (chips, Start now, Add, matrix). Seeded: Lane 4 at ৳1,000/hr (browser-verified 1h ৳1,000 →
+  3h ৳3,000).
+- **Live lane state** on resource cards: "Free" / "In use until 19:30 · Khan (2)" /
+  bookings-today count; rate shown on the card.
+- **BlockedNotice primitive** (paper surface, ember accent bar, 3s auto-dismiss) — invalid
+  start taps now name the reason AND the way forward.
+- **Waiver gate**: `policies.waiver` toggle → POS requires "Guest has signed the waiver"
+  before Add (all paths incl. Start now). Seeded on the spa.
+- **Pricing basis** made explicit: `Product.pricingBasis` (per person / per booking), asked
+  plainly in the wizard's resource flow; flat-basis sheets show a **group-size stepper**
+  (bounded by party min/max) and the cart line reads "Group of 6"; group size feeds booking
+  partySize.
+- **Date chips first** — the next 5 bookable days as chips, calendar behind "More dates".
+- **Low-availability flag** is percentage-based: amber "N left" at ≤20% of capacity (min 1).
+
 **Master acceptance walk (Section C)** — steps 1–10 and 13 verified across the P1–P10
 sessions (blended bowling pricing, engine-only durations, Start now + Extend, turf pricing +
 sharing, Family group scan, two-tour guide conflict, spa deposit, park/resume + role-gated

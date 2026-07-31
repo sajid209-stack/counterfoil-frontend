@@ -289,7 +289,7 @@ export const products: Product[] = [
     tiers: [{ id: "tier_bw_hr", name: "Per hour", price: 80000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "10:00", endTime: "22:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
-    resourceIds: ["res_lane_1", "res_lane_2", "res_lane_3", "res_lane_4"], resourceExclusive: true, bufferMinutes: 0, flexibleDurations: [60, 90, 120, 150, 180],
+    resourceIds: ["res_lane_1", "res_lane_2", "res_lane_3", "res_lane_4"], resourceExclusive: true, bufferMinutes: 0, flexibleDurations: [60, 90, 120, 150, 180], pricingBasis: "per_booking",
     durationConfig: { minMinutes: 60, maxMinutes: 180, incrementMinutes: 30, pricingModel: "hourly", hourlyRate: 80000, mustEndByClose: true, walkInRoundMinutes: 15, leadTimeMinutes: 0 },
     pricingRules: [{ id: "pr_bw_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 120000 }],
     addOns: [{ id: "add_bw_shoes", name: "Shoe hire", price: 10000, perPerson: true }],
@@ -303,7 +303,7 @@ export const products: Product[] = [
     providerPremiums: { stf_karim: 50000 },
     providerDurations: { stf_nadia: [60, 90], stf_karim: [60, 90] },
     addOns: [{ id: "add_ms_oils", name: "Premium oils", price: 30000, perPerson: false }],
-    policies: { salesWindowDays: 60, cutoffMinutes: 60, cancellation: "fee", cancelHours: 12, cancelFeePct: 50, reschedule: "until", rescheduleHours: 12, reentry: "single", deposit: "percent", depositPct: 50, partyMin: 1, partyMax: 2 },
+    policies: { salesWindowDays: 60, cutoffMinutes: 60, cancellation: "fee", cancelHours: 12, cancelFeePct: 50, reschedule: "until", rescheduleHours: 12, reentry: "single", deposit: "percent", depositPct: 50, partyMin: 1, partyMax: 2, waiver: true },
     createdAt: T, updatedAt: T,
   },
   {
@@ -549,7 +549,7 @@ export const resources: Resource[] = [
   { id: "res_lane_1", name: "Lane 1", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_lane_2", name: "Lane 2", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_lane_3", name: "Lane 3", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
-  { id: "res_lane_4", name: "Lane 4", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
+  { id: "res_lane_4", name: "Lane 4", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, rateOverride: { kind: "replace", amount: 100000 }, status: "active", createdAt: T, updatedAt: T },
 ];
 
 // Transactional data — generated deterministically (see generate.ts).

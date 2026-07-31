@@ -8,6 +8,7 @@ export function policySummary(p: ProductPolicies): string {
   parts.push(p.cancellation === "none" ? "No cancellation" : p.cancellation === "fee" ? `Cancellation fee ${p.cancelFeePct}%` : `Free cancellation until ${p.cancelHours}h before`);
   parts.push(p.deposit === "percent" ? `${p.depositPct}% deposit` : "Full payment");
   parts.push(p.reentry === "single" ? "Single entry" : p.reentry === "same_day" ? "Re-entry same day" : "Re-entry while valid");
+  if (p.waiver) parts.push("Waiver required");
   return parts.join(" · ");
 }
 
@@ -41,6 +42,10 @@ export function PoliciesField({ value, onChange }: { value: ProductPolicies; onC
       <Section title="Party size">
         <FormField label="Minimum" variant="number" value={String(value.partyMin)} onChange={(e) => set("partyMin", num(e.target.value))} />
         <FormField label="Maximum" variant="number" value={String(value.partyMax)} onChange={(e) => set("partyMax", num(e.target.value))} />
+      </Section>
+
+      <Section title="Waiver">
+        <FormField label="Requires waiver acknowledgement at sale" variant="toggle" checked={!!value.waiver} onChange={(e) => set("waiver", (e.target as HTMLInputElement).checked)} help='POS asks "Guest has signed the waiver" before adding to a sale.' />
       </Section>
     </div>
   );

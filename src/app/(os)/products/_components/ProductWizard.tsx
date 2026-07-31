@@ -136,6 +136,7 @@ export function ProductWizard({
       resourceExclusive: booking.resource?.exclusive,
       bufferMinutes: booking.resource?.bufferMinutes,
       flexibleDurations: booking.resource?.flexibleDurations,
+      pricingBasis: booking.resource?.basis,
       // Flexible: seed the duration engine from the wizard's core; the editor
       // refines the pricing model (defaults to hourly at the first tier price).
       durationConfig: booking.resource?.durationCore

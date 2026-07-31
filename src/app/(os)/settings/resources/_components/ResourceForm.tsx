@@ -21,6 +21,8 @@ interface FormState {
   outOfService: boolean;
   outOfServiceReason: string;
   active: boolean;
+  rateKind: "none" | "premium" | "replace";
+  rateAmount: string; // major units
 }
 
 const fromResource = (r: Resource): FormState => ({
@@ -30,6 +32,8 @@ const fromResource = (r: Resource): FormState => ({
   outOfService: r.outOfService,
   outOfServiceReason: r.outOfServiceReason ?? "",
   active: r.status !== "inactive",
+  rateKind: r.rateOverride?.kind ?? "none",
+  rateAmount: r.rateOverride ? String(r.rateOverride.amount / 100) : "",
 });
 
 export function ResourceForm({
@@ -49,7 +53,7 @@ export function ResourceForm({
     () =>
       resource
         ? fromResource(resource)
-        : { name: "", nounSingular: defaultNoun, locationId: locations[0]?.id ?? "", outOfService: false, outOfServiceReason: "", active: true },
+        : { name: "", nounSingular: defaultNoun, locationId: locations[0]?.id ?? "", outOfService: false, outOfServiceReason: "", active: true, rateKind: "none" as const, rateAmount: "" },
     [resource, locations, defaultNoun],
   );
   const [state, setState] = useState<FormState>(initial);
@@ -68,6 +72,10 @@ export function ResourceForm({
       locationId: state.locationId || null,
       outOfService: state.outOfService,
       outOfServiceReason: state.outOfService ? state.outOfServiceReason || null : null,
+      rateOverride:
+        state.rateKind !== "none" && parseFloat(state.rateAmount) > 0
+          ? { kind: state.rateKind, amount: Math.round(parseFloat(state.rateAmount) * 100) }
+          : null,
       status: state.active ? "active" : "inactive",
     };
     const res = mode === "create" ? await createResourceRecord(input) : await updateResource(resource!.id, input);
@@ -100,6 +108,27 @@ export function ResourceForm({
           />
           <FormField label="Location" variant="select" value={state.locationId} onChange={(e) => set("locationId", e.target.value)} options={[{ value: "", label: "No location" }, ...locations.map((l) => ({ value: l.id, label: l.name }))]} />
           <FormField label="Active" variant="toggle" checked={state.active} onChange={(e) => set("active", (e.target as HTMLInputElement).checked)} />
+        </div>
+      </div>
+
+      <div className="rounded-md border border-neutral-200 bg-white p-major">
+        <h2 className="type-h2 mb-section text-base">Rate</h2>
+        <div className="grid gap-section sm:grid-cols-2">
+          <FormField
+            label="Price adjustment"
+            variant="select"
+            value={state.rateKind}
+            onChange={(e) => set("rateKind", e.target.value as FormState["rateKind"])}
+            options={[
+              { value: "none", label: "Product price applies" },
+              { value: "premium", label: "Charge extra on this one" },
+              { value: "replace", label: "Its own hourly rate" },
+            ]}
+            help="Centre court can cost more than court 4."
+          />
+          {state.rateKind !== "none" && (
+            <FormField label={state.rateKind === "premium" ? "Extra per booking (৳)" : "Rate per hour (৳)"} variant="number" value={state.rateAmount} onChange={(e) => set("rateAmount", e.target.value)} />
+          )}
         </div>
       </div>
 

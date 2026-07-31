@@ -16,6 +16,7 @@ export interface BookingSetupResult {
     resourceIds: string[]; exclusive: boolean; bufferMinutes: number; flexibleDurations?: number[];
     /** Flexible only — the duration-engine core; the editor holds the rest. */
     durationCore?: { minMinutes: number; maxMinutes: number; incrementMinutes: number };
+    basis?: "per_booking" | "per_person";
   };
   provider?: { providerIds: string[]; noun: string; pickable: boolean; durationMinutes: number };
   course?: { dates: string[]; capacity: number };
@@ -57,6 +58,7 @@ export function BookingSetup({
   const [picked, setPicked] = useState<string[]>([]);
   const [fixed, setFixed] = useState(true);
   const [exclusive, setExclusive] = useState(true);
+  const [basis, setBasis] = useState<"per_booking" | "per_person">("per_booking");
   const [buffer, setBuffer] = useState(0);
   const [durMin, setDurMin] = useState(60);
   const [durMax, setDurMax] = useState(180);
@@ -110,6 +112,7 @@ export function BookingSetup({
         resourceIds: picked, exclusive, bufferMinutes: buffer,
         flexibleDurations: fixed ? undefined : flexOptions,
         durationCore: fixed ? undefined : { minMinutes: durMin, maxMinutes: durMax, incrementMinutes: durInc },
+        basis,
       },
     });
   };
@@ -189,6 +192,7 @@ export function BookingSetup({
             </div>
           )}
           <Radio label={`One booking at a time per ${noun.toLowerCase()}?`} value={exclusive ? "yes" : "no"} onChange={(v) => setExclusive(v === "yes")} options={[{ value: "yes", label: "Yes — exclusive", helper: "The turf case." }, { value: "no", label: "No — shared", helper: "Several at once." }]} />
+          <Radio label="How is this priced?" value={basis} onChange={(v) => setBasis(v as "per_booking" | "per_person")} options={[{ value: "per_booking", label: "Per booking", helper: "One price for the whole group." }, { value: "per_person", label: "Per person", helper: "Tiers × how many people." }]} />
           <DurationInput label="Gap between bookings" value={buffer} onChange={setBuffer} chips={[0, 10, 15, 30]} className="max-w-xs" />
           <FlowFooter onBack={() => setStep("q1")} onDone={finishResource} disabled={picked.length === 0} />
         </div>

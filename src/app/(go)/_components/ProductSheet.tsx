@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { X } from "lucide-react";
-import { Button, FormField, useToast } from "@/components/ui";
+import { BlockedNotice, Button, FormField, useToast } from "@/components/ui";
 import {
+  applyResourceRate,
   firstFreeResource,
   freeGuides,
   getDailyRemaining,
@@ -13,8 +14,11 @@ import {
   isOwnerFree,
   isResourceFreeFor,
   joinWaitlist,
+  ownerBusyDetailed,
+  type BusyDetail,
   type Product,
   type ProductSchedule,
+  type Resource,
   type Staff,
 } from "@/lib/api";
 import { isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
@@ -34,7 +38,41 @@ export interface CartEntry {
   providerLabel?: string;
   items: { tierId: string; tierName: string; unitPrice: number; qty: number }[];
   fixedPrice?: number; // resource slot resolved price (overrides items sum)
+  partySize?: number; // group size for flat-per-booking entries ("Group of 6")
   taxRatePct?: number; // custom-amount entries carry their own rate
+}
+
+/** The lane's day at a glance: occupied blocks with party labels, hour ticks,
+ *  the current selection drawn live in ember. */
+function LaneTimeline({ spans, openMin, closeMin, sel }: {
+  spans: BusyDetail[];
+  openMin: number;
+  closeMin: number;
+  sel: { start: number; end: number } | null;
+}) {
+  const total = Math.max(1, closeMin - openMin);
+  const pct = (m: number) => `${((m - openMin) / total) * 100}%`;
+  const ticks: number[] = [];
+  for (let m = Math.ceil(openMin / 60) * 60; m <= closeMin; m += 60) ticks.push(m);
+  return (
+    <div>
+      <div className="relative h-8 overflow-hidden rounded-xs border border-neutral-200 bg-white">
+        {spans.map((s, i) => (
+          <span key={i} className="absolute inset-y-0 flex items-center justify-center overflow-hidden bg-neutral-200 font-mono text-[10px] text-neutral-600" style={{ left: pct(s.start), width: pct(s.end - s.start + openMin) }} title={s.label}>
+            <span className="truncate px-inline">{s.label}</span>
+          </span>
+        ))}
+        {sel && (
+          <span className="absolute inset-y-0 bg-ember/70" style={{ left: pct(sel.start), width: pct(sel.end - sel.start + openMin) }} aria-hidden />
+        )}
+      </div>
+      <div className="relative mt-inline h-3">
+        {ticks.map((m) => (
+          <span key={m} className="absolute -translate-x-1/2 font-mono text-[10px] text-neutral-400" style={{ left: pct(m) }}>{Math.floor(m / 60)}</span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 const TODAY = "2026-07-29";
@@ -95,6 +133,36 @@ export function ProductSheet({
   });
 
   const [addOnQty, setAddOnQty] = useState<Record<string, number>>({});
+  const [group, setGroup] = useState<number>(initial?.partySize ?? 2); // flat-per-booking group size
+  const [waived, setWaived] = useState(false);
+  const [blocked, setBlocked] = useState<string | null>(null); // BlockedNotice message
+  const [moreDates, setMoreDates] = useState(false);
+
+  const needsWaiver = !!product.policies?.waiver;
+  const waiverOk = !needsWaiver || waived;
+  const flatBasis = resourceMode && product.pricingBasis !== "per_person";
+  const partyMax = product.policies?.partyMax ?? 20;
+  const partyMin = product.policies?.partyMin ?? 1;
+
+  const renderWaiver = () =>
+    needsWaiver ? (
+      <label className="mt-tight flex cursor-pointer items-center gap-tight rounded-sm border border-neutral-200 bg-white p-comfortable text-sm">
+        <input type="checkbox" checked={waived} onChange={(e) => setWaived(e.target.checked)} className="h-5 w-5 accent-ember" />
+        Guest has signed the waiver
+      </label>
+    ) : null;
+
+  const renderGroup = () =>
+    flatBasis ? (
+      <div className="flex items-center justify-between rounded-sm border border-neutral-200 bg-white p-comfortable">
+        <span className="text-sm">Group size</span>
+        <div className="flex items-center gap-tight">
+          <button type="button" aria-label="Fewer" onClick={() => setGroup((g) => Math.max(partyMin, g - 1))} className="h-12 w-12 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">−</button>
+          <span className="w-8 text-center font-mono">{group}</span>
+          <button type="button" aria-label="More people" onClick={() => setGroup((g) => Math.min(partyMax, g + 1))} className="h-12 w-12 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">+</button>
+        </div>
+      </div>
+    ) : null;
   const addOnItems = () => (product.addOns ?? []).filter((a) => (addOnQty[a.id] ?? 0) > 0).map((a) => ({ tierId: a.id, tierName: `${a.name}${a.perPerson ? " (each)" : ""}`, unitPrice: a.price, qty: addOnQty[a.id] }));
 
   const renderAddOns = () =>
@@ -189,6 +257,7 @@ export function ProductSheet({
       productId: product.id, productName: product.name,
       slotDate: date, slotTime: time, resourceId: rId, resourceLabel: rLabel,
       slotEnd: endISO(date, time, minutes ?? product.schedule?.sessionMinutes ?? 60),
+      partySize: flatBasis ? group : undefined,
       items: addOnItems(), fixedPrice: price,
     });
   };
@@ -200,8 +269,8 @@ export function ProductSheet({
       ? getResourceMatrix(product, date).find((row) => row.resource.id === resourceId)?.resource
       : firstFreeResource(product, date, slotTime, duration);
     if (!lane) return;
-    // Engine price: model + time-band blending across the booked span.
-    const price = productDurationPrice(product, date, slotTime, duration, basePrice);
+    // Engine price (model + band blending), then the lane's own rate.
+    const price = applyResourceRate(productDurationPrice(product, date, slotTime, duration, basePrice), duration, lane);
     submitResource(lane.id, lane.name, slotTime, price, duration);
   };
 
@@ -218,7 +287,8 @@ export function ProductSheet({
     // Daily-capped (BT-06) and courses sell on the date alone.
     (!isSlotBased(bt) || resourceMode ? true : !!slotTime) &&
     (!guided || guides.length === 0 || (!!guideId && slotGuides.includes(guideId))) &&
-    (!provider || (!!slotTime && !!assignedProvider && providerTimeFree(slotTime)));
+    (!provider || (!!slotTime && !!assignedProvider && providerTimeFree(slotTime))) &&
+    waiverOk;
 
   return (
     <div className="fixed inset-y-0 left-0 right-0 z-50 flex flex-col justify-end lg:right-[24rem]" role="dialog" aria-modal="true">
@@ -231,10 +301,25 @@ export function ProductSheet({
         </div>
 
         {(needsSchedule(bt) || provider) && !course && (
-          <div className="mb-section flex flex-wrap gap-tight">
-            {dateBtn(TODAY, "Today")}
-            {dateBtn(TOMORROW, "Tomorrow")}
-            <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setSlotTime(undefined); setResourceId(undefined); }} className="h-12 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm" />
+          <div className="mb-section flex flex-wrap items-center gap-tight">
+            {/* Date chips first — the next bookable days; calendar behind "More dates". */}
+            {(() => {
+              const chips: string[] = [];
+              for (let i = 0; chips.length < 5 && i < 30; i++) {
+                const d = new Date(Date.parse(`${TODAY}T12:00:00Z`) + i * 86400000).toISOString().slice(0, 10);
+                if (isOpenOn(product, d)) chips.push(d);
+              }
+              return chips.map((d) => {
+                const label = d === TODAY ? "Today" : d === TOMORROW ? "Tomorrow"
+                  : new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric" });
+                return dateBtn(d, label);
+              });
+            })()}
+            {moreDates ? (
+              <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setSlotTime(undefined); setResourceId(undefined); }} className="h-12 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm" />
+            ) : (
+              <button type="button" onClick={() => setMoreDates(true)} className="h-12 rounded-sm px-tight text-[13px] text-neutral-400 active:text-ink">More dates</button>
+            )}
           </div>
         )}
         {!openToday && needsSchedule(bt) && <p className="mb-section text-[13px] text-danger">Closed on this date. Pick another.</p>}
@@ -249,7 +334,7 @@ export function ProductSheet({
                   <tr key={row.resource.id}>
                     <td className="p-inline text-left font-medium">{row.resource.name}</td>
                     {row.slots.map((s) => {
-                      const price = resolveProductPrice(product, date, s.time, basePrice);
+                      const price = applyResourceRate(resolveProductPrice(product, date, s.time, basePrice), product.schedule?.sessionMinutes ?? 60, row.resource);
                       const selected = resourceId === row.resource.id && slotTime === s.time;
                       if (!s.available) {
                         return <td key={s.time} className="p-inline"><div className="flex h-12 items-center justify-center rounded-xs border border-neutral-200 bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] font-mono text-[10px] text-neutral-600">{row.resource.outOfService ? "—" : "BOOKED"}</div></td>;
@@ -260,14 +345,19 @@ export function ProductSheet({
                 ))}
               </tbody>
             </table>
-            {resourceId && slotTime && (
-              <>
-                {renderAddOns()}
-                <Button size="lg" fullWidth className="mt-section" onClick={() => submitResource(resourceId, matrix.find((r) => r.resource.id === resourceId)?.resource.name ?? "", slotTime, resolveProductPrice(product, date, slotTime, basePrice))}>
-                  Add {matrix.find((r) => r.resource.id === resourceId)?.resource.name} · {slotTime} · {formatMoney(resolveProductPrice(product, date, slotTime, basePrice), currency)}
-                </Button>
-              </>
-            )}
+            {resourceId && slotTime && (() => {
+              const row = matrix.find((r) => r.resource.id === resourceId);
+              const price = applyResourceRate(resolveProductPrice(product, date, slotTime, basePrice), product.schedule?.sessionMinutes ?? 60, row?.resource);
+              return (
+                <>
+                  {renderAddOns()}
+                  <div className="mt-tight flex flex-col gap-tight">{renderGroup()}{renderWaiver()}</div>
+                  <Button size="lg" fullWidth className="mt-section" disabled={!waiverOk} onClick={() => submitResource(resourceId, row?.resource.name ?? "", slotTime, price)}>
+                    Add {row?.resource.name} · {slotTime} · {formatMoney(price, currency)}
+                  </Button>
+                </>
+              );
+            })()}
           </div>
         )}
 
@@ -293,6 +383,21 @@ export function ProductSheet({
             return free ? { ok: true } : { ok: false, reason: laneId ? "Booked" : "All booked" };
           };
 
+          const laneOf = (id?: string): Resource | undefined => lanes.find((l) => l.id === id);
+          const priceFor = (t: string, dur: number, lane?: Resource | null) =>
+            applyResourceRate(productDurationPrice(product, date, t, dur, basePrice), dur, lane);
+          const rateLabel = (l: Resource) =>
+            l.rateOverride ? (l.rateOverride.kind === "premium" ? `+${formatMoney(l.rateOverride.amount, currency)}` : `${formatMoney(l.rateOverride.amount, currency)}/hr`) : null;
+          const liveState = (l: Resource): string => {
+            const spans = ownerBusyDetailed(l.id, date);
+            if (l.outOfService) return "Out of service";
+            if (date === TODAY) {
+              const current = spans.find((s) => s.start <= NOW_MIN && NOW_MIN < s.end);
+              if (current) return `In use until ${toTime(current.end)} · ${current.label}`;
+            }
+            return spans.length ? `${spans.length} booking${spans.length === 1 ? "" : "s"} today` : "Free";
+          };
+
           const pickDuration = (d: number) => {
             setDuration(d);
             // Re-filter: a start that no longer fits clears with a notice.
@@ -303,7 +408,7 @@ export function ProductSheet({
           const round = cfg?.walkInRoundMinutes || 15;
           const nowTime = toTime(Math.ceil(NOW_MIN / round) * round);
           const nowLane = date === TODAY && (!mustEnd || NOW_MIN + duration <= closeMin) ? firstFreeResource(product, date, nowTime, duration) : null;
-          const nowPrice = nowLane ? productDurationPrice(product, date, nowTime, duration, basePrice) : 0;
+          const nowPrice = nowLane ? priceFor(nowTime, duration, nowLane) : 0;
 
           const endLabel = slotTime ? toTime(toMinutes(slotTime) + duration) : null;
           const chosenLaneFree = slotTime ? startState(slotTime, duration, resourceId).ok : false;
@@ -311,33 +416,51 @@ export function ProductSheet({
           return (
             <div className="mb-section flex flex-col gap-tight">
               {date === TODAY && (
-                <button type="button" disabled={!nowLane} onClick={() => nowLane && submitResource(nowLane.id, nowLane.name, nowTime, nowPrice, duration)} className={`flex h-12 items-center justify-between rounded-sm border px-comfortable text-sm ${nowLane ? "border-ember bg-ember/10 font-medium" : "border-neutral-200 bg-neutral-50 text-neutral-400"}`}>
+                <button type="button" disabled={!nowLane || !waiverOk} onClick={() => nowLane && submitResource(nowLane.id, nowLane.name, nowTime, nowPrice, duration)} className={`flex h-12 items-center justify-between rounded-sm border px-comfortable text-sm ${nowLane && waiverOk ? "border-ember bg-ember/10 font-medium" : "border-neutral-200 bg-neutral-50 text-neutral-400"}`}>
                   <span>Start now · {nowTime} · {formatDuration(duration)}{nowLane ? ` · ${nowLane.name}` : ""}</span>
-                  <span className="font-mono">{nowLane ? formatMoney(nowPrice, currency) : "No lane free"}</span>
+                  <span className="font-mono">{!nowLane ? "No lane free" : !waiverOk ? "Waiver first" : formatMoney(nowPrice, currency)}</span>
                 </button>
               )}
 
               <span className="type-label text-[11px] text-neutral-400">Duration</span>
-              <div className="flex flex-wrap gap-tight">{flexOptions.map((d) => <button key={d} type="button" onClick={() => pickDuration(d)} className={`h-12 flex-1 whitespace-nowrap rounded-sm border px-tight text-sm ${duration === d ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{formatDuration(d)}{slotTime ? <span className="ml-inline font-mono text-[11px] opacity-70">{formatMoney(productDurationPrice(product, date, slotTime, d, basePrice), currency)}</span> : null}</button>)}</div>
+              <div className="flex flex-wrap gap-tight">{flexOptions.map((d) => <button key={d} type="button" onClick={() => pickDuration(d)} className={`h-12 flex-1 whitespace-nowrap rounded-sm border px-tight text-sm ${duration === d ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{formatDuration(d)}{slotTime ? <span className="ml-inline font-mono text-[11px] opacity-70">{formatMoney(priceFor(slotTime, d, laneOf(resourceId)), currency)}</span> : null}</button>)}</div>
 
               <span className="type-label text-[11px] text-neutral-400">{lanes[0]?.nounSingular ?? "Resource"}</span>
               <div className="flex flex-wrap gap-tight">
-                <button type="button" onClick={() => setResourceId(undefined)} className={`h-12 rounded-sm border px-comfortable text-sm ${!resourceId ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>Any</button>
+                <button type="button" onClick={() => setResourceId(undefined)} className={`h-14 rounded-sm border px-comfortable text-sm ${!resourceId ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>Any</button>
                 {lanes.map((r) => (
-                  <button key={r.id} type="button" disabled={r.outOfService} onClick={() => setResourceId(r.id)} className={`h-12 rounded-sm border px-comfortable text-sm ${r.outOfService ? "border-neutral-200 bg-neutral-50 text-neutral-400 line-through" : resourceId === r.id ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{r.name}</button>
+                  <button key={r.id} type="button" disabled={r.outOfService} onClick={() => setResourceId(r.id)} className={`flex h-14 flex-col items-start justify-center rounded-sm border px-comfortable ${r.outOfService ? "border-neutral-200 bg-neutral-50 text-neutral-400" : resourceId === r.id ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>
+                    <span className="text-sm leading-tight">{r.name}{rateLabel(r) ? <span className={`ml-inline font-mono text-[10px] ${resourceId === r.id ? "opacity-70" : "text-neutral-400"}`}>{rateLabel(r)}</span> : null}</span>
+                    <span className={`text-[10px] leading-tight ${resourceId === r.id ? "opacity-70" : "text-neutral-400"}`}>{liveState(r)}</span>
+                  </button>
                 ))}
               </div>
+
+              {/* The lane's day at a glance — selection drawn live on the strip */}
+              {resourceId && (
+                <LaneTimeline
+                  spans={ownerBusyDetailed(resourceId, date)}
+                  openMin={flexTimes.length ? toMinutes(flexTimes[0]) : 0}
+                  closeMin={closeMin}
+                  sel={slotTime ? { start: toMinutes(slotTime), end: toMinutes(slotTime) + duration } : null}
+                />
+              )}
+
+              {blocked && <BlockedNotice message={blocked} onDismiss={() => setBlocked(null)} />}
 
               <span className="type-label text-[11px] text-neutral-400">Start time</span>
               <div className="flex flex-wrap gap-inline">
                 {flexTimes.map((t) => {
                   const st = startState(t, duration, resourceId);
                   if (!st.ok) {
-                    return <button key={t} type="button" onClick={() => toast.error(`${t}: ${st.reason}`)} className="h-12 rounded-sm border border-neutral-200 bg-neutral-50 px-comfortable font-mono text-[13px] text-neutral-400 line-through" title={st.reason}>{t}</button>;
+                    return <button key={t} type="button" onClick={() => setBlocked(`${t} isn't available — ${st.reason?.toLowerCase()}. Try a shorter duration, another start, or a different ${(lanes[0]?.nounSingular ?? "lane").toLowerCase()}.`)} className="h-12 rounded-sm border border-neutral-200 bg-neutral-50 px-comfortable font-mono text-[13px] text-neutral-400 line-through" title={st.reason}>{t}</button>;
                   }
-                  return <button key={t} type="button" onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable font-mono text-[13px] ${slotTime === t ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{t}</button>;
+                  return <button key={t} type="button" onClick={() => { setSlotTime(t); setBlocked(null); }} className={`h-12 rounded-sm border px-comfortable font-mono text-[13px] ${slotTime === t ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{t}</button>;
                 })}
               </div>
+
+              {renderGroup()}
+              {renderWaiver()}
 
               {slotTime && endLabel && (
                 <p className="text-[13px] text-neutral-600">
@@ -345,8 +468,8 @@ export function ProductSheet({
                   {!resourceId && chosenLaneFree ? ` · ${firstFreeResource(product, date, slotTime, duration)?.name} (best fit)` : ""}
                 </p>
               )}
-              <Button size="lg" fullWidth className="mt-tight" disabled={!slotTime || !chosenLaneFree} onClick={submitFlexible}>
-                {slotTime && chosenLaneFree ? `Add ${formatDuration(duration)} · ${slotTime}–${endLabel}` : "Add to sale"}
+              <Button size="lg" fullWidth className="mt-tight" disabled={!slotTime || !chosenLaneFree || !waiverOk} onClick={submitFlexible}>
+                {slotTime && chosenLaneFree ? `Add ${formatDuration(duration)} · ${slotTime}–${endLabel} · ${formatMoney(priceFor(slotTime, duration, laneOf(resourceId) ?? firstFreeResource(product, date, slotTime, duration)), currency)}` : "Add to sale"}
               </Button>
             </div>
           );
@@ -401,7 +524,8 @@ export function ProductSheet({
               if (full && product.waitlistEnabled) {
                 return <button key={s.time} type="button" onClick={() => setWl({ time: s.time })} className="flex h-16 flex-col items-center justify-center rounded-sm border border-warning bg-warning/10 text-warning"><span className="font-mono">{s.time}</span><span className="text-[10px]">Join waitlist</span></button>;
               }
-              return <button key={s.time} type="button" disabled={full} onClick={() => { setSlotTime(s.time); if (guided) setGuideId(freeGuides(product, date, s.time)[0]); }} className={`flex h-16 flex-col items-center justify-center gap-0.5 rounded-sm border text-sm ${full ? "border-neutral-200 bg-neutral-50 text-neutral-400" : slotTime === s.time ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}><span className="font-mono">{s.time}</span><span className="font-mono text-[11px]">{formatMoney(price, currency)}</span><span className="text-[10px] opacity-70">{guideless ? "No guide free" : full ? "FULL" : `${left} left`}</span></button>;
+              const low = !full && left <= Math.max(1, Math.floor(s.capacity * 0.2)); // ≤20% remaining
+              return <button key={s.time} type="button" disabled={full} onClick={() => { setSlotTime(s.time); if (guided) setGuideId(freeGuides(product, date, s.time)[0]); }} className={`flex h-16 flex-col items-center justify-center gap-0.5 rounded-sm border text-sm ${full ? "border-neutral-200 bg-neutral-50 text-neutral-400" : slotTime === s.time ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}><span className="font-mono">{s.time}</span><span className="font-mono text-[11px]">{formatMoney(price, currency)}</span><span className={`text-[10px] ${low && slotTime !== s.time ? "font-medium text-warning" : "opacity-70"}`}>{guideless ? "No guide free" : full ? "FULL" : `${left} left`}</span></button>;
             })}
           </div>
         )}
@@ -441,6 +565,7 @@ export function ProductSheet({
               ))}
             </div>
             {renderAddOns()}
+            {renderWaiver()}
             {depositPct > 0 && (
               <p className="mt-section rounded-sm border border-neutral-200 bg-white p-comfortable text-[13px] text-neutral-600">
                 Deposit: <span className="font-medium text-ink">{depositPct}% now</span>, balance at arrival.

@@ -1,7 +1,8 @@
 import { slotISO, slotTimesOn, toMinutes } from "@/lib/schedule";
 import { peekBookings } from "./bookings";
+import { peekOrders } from "./orders";
 import { peekResources } from "./resources";
-import type { Product, Resource } from "./types";
+import type { Minor, Product, Resource } from "./types";
 
 export interface SlotAvailability {
   time: string;
@@ -105,6 +106,34 @@ export function ownerBusy(ownerId: string, date: string): BusySpan[] {
       const end = b.slotEnd ? toMinutes(b.slotEnd.slice(11, 16)) : start + 60;
       return { start, end };
     });
+}
+
+export interface BusyDetail extends BusySpan {
+  label: string; // "Reyes (4)" / "Walk-in (2)"
+  party: number;
+}
+
+/** Busy spans with party labels — feeds the lane timeline and live state. */
+export function ownerBusyDetailed(ownerId: string, date: string): BusyDetail[] {
+  return peekBookings()
+    .filter((b) => b.status === "confirmed" && b.resourceId === ownerId && b.slotStart.slice(0, 10) === date)
+    .map((b) => {
+      const start = toMinutes(b.slotStart.slice(11, 16));
+      const end = b.slotEnd ? toMinutes(b.slotEnd.slice(11, 16)) : start + 60;
+      const who = peekOrders().find((o) => o.id === b.orderId)?.customerName;
+      const name = who ? who.split(" ")[0] : "Walk-in";
+      return { start, end, party: b.partySize, label: `${name} (${b.partySize})` };
+    })
+    .sort((a, b) => a.start - b.start);
+}
+
+/** Resource-level price adjustment, applied AFTER model + time bands.
+ *  premium adds per booking; replace substitutes the hourly rate. */
+export function applyResourceRate(price: Minor, minutes: number, resource?: Resource | null): Minor {
+  const o = resource?.rateOverride;
+  if (!o) return price;
+  if (o.kind === "premium") return price + o.amount;
+  return Math.round((o.amount * minutes) / 60);
 }
 
 /** Is this owner free for [time, time + minutes) on the date? */

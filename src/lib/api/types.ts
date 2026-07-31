@@ -51,6 +51,13 @@ export type BookingTypeCode =
 // Availability is computed PER RESOURCE across every product attached to it,
 // so two products on the same field block each other. Named with the operator's
 // own word (Field / Court / Lane / Room / Table / Studio).
+/** A resource-level price adjustment (centre court costs more than court 4).
+ *  Resolution order: pricing model → time-band rules → this override. */
+export interface ResourceRateOverride {
+  kind: "premium" | "replace";
+  amount: Minor; // premium: added per booking · replace: the hourly rate
+}
+
 export interface Resource {
   id: ID;
   name: string; // "Field 1"
@@ -59,6 +66,7 @@ export interface Resource {
   locationId: ID | null;
   outOfService: boolean;
   outOfServiceReason: string | null;
+  rateOverride?: ResourceRateOverride | null;
   status: Lifecycle;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
@@ -202,6 +210,7 @@ export interface ProductPolicies {
   depositPct: number;
   partyMin: number;
   partyMax: number;
+  waiver?: boolean; // requires waiver acknowledgement at sale
 }
 
 /** A closure or custom-hours date. `times` only for kind "custom". */
@@ -278,6 +287,7 @@ export interface Product {
   credits?: { count: number; expiryDays: number; productIds: ID[] } | null; // BT-12
   courseDates?: ISODate[]; // BT-13 session dates
   waitlistEnabled?: boolean; // BT-11
+  pricingBasis?: "per_person" | "per_booking"; // tiers × people vs flat per session
   taxClass?: TaxClass; // which tax rate applies (default standard)
   addOns?: AddOn[]; // optional extras offered at POS
   policies?: ProductPolicies; // operational policies (sales window, cancellation…)

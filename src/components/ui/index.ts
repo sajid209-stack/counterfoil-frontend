@@ -14,3 +14,4 @@ export { DataTable } from "./DataTable";
 export type { Column, DataTableProps } from "./DataTable";
 export { DurationInput } from "./DurationInput";
 export { TimeInput } from "./TimeInput";
+export { BlockedNotice } from "./BlockedNotice";
