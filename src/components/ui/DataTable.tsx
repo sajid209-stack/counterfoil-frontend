@@ -55,10 +55,47 @@ export function DataTable<T>({
     <div className="flex flex-col gap-section">
       {toolbar && <div>{toolbar}</div>}
 
-      <div className="overflow-x-auto rounded-md border border-neutral-200 bg-white">
+      {/* Mobile: rows become tappable cards — primary line + labelled meta. */}
+      <div className="flex flex-col gap-tight sm:hidden">
+        {loading &&
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={`csk-${i}`} className="flex animate-pulse flex-col gap-tight rounded-md border border-neutral-200 bg-white p-comfortable">
+              <div className="h-4 w-2/3 rounded-xs bg-neutral-200" />
+              <div className="h-3 w-1/2 rounded-xs bg-neutral-200" />
+            </div>
+          ))}
+        {showEmpty && (emptyState ?? <p className="py-section text-center text-[13px] text-neutral-400">No results.</p>)}
+        {!loading &&
+          rows.map((row) => (
+            <div
+              key={`c-${getRowId(row)}`}
+              role={onRowClick ? "button" : undefined}
+              tabIndex={onRowClick ? 0 : undefined}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+              onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
+              className={cn("rounded-md border border-neutral-200 bg-white p-comfortable", onRowClick && "cursor-pointer active:bg-neutral-50")}
+            >
+              <div className="text-sm font-medium">
+                {columns[0].render ? columns[0].render(row) : String((row as Record<string, unknown>)[columns[0].key] ?? "")}
+              </div>
+              <dl className="mt-inline flex flex-wrap gap-x-section gap-y-inline">
+                {columns.slice(1).map((col) => (
+                  <div key={col.key} className="flex items-baseline gap-inline">
+                    <dt className="type-label text-[10px] uppercase text-neutral-400">{col.header}</dt>
+                    <dd className={cn("text-[13px]", col.align === "right" && "font-mono tabular-nums")}>
+                      {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "")}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+      </div>
+
+      <div className="hidden max-h-[70vh] overflow-auto rounded-md border border-neutral-200 bg-white shadow-sm sm:block">
         <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200">
+          <thead className="sticky top-0 z-10 bg-white shadow-[0_1px_0_0_var(--color-neutral-200)]">
+            <tr>
               {columns.map((col) => {
                 const activeSort = sort?.key === col.key;
                 return (
@@ -125,7 +162,7 @@ export function DataTable<T>({
                   key={getRowId(row)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
-                    "border-b border-neutral-200 last:border-0",
+                    "h-12 border-b border-neutral-200 last:border-0",
                     onRowClick && "cursor-pointer transition-colors duration-quick hover:bg-neutral-50",
                   )}
                 >
@@ -133,8 +170,9 @@ export function DataTable<T>({
                     <td
                       key={col.key}
                       className={cn(
-                        "px-comfortable py-comfortable align-middle",
+                        "px-comfortable py-tight align-middle",
                         alignClass(col.align),
+                        col.align === "right" && "font-mono tabular-nums",
                         col.className,
                       )}
                     >

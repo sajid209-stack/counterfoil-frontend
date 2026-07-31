@@ -1,11 +1,6 @@
-import { Sidebar } from "./_components/Sidebar";
+import { OsShell } from "./_components/OsShell";
 
-// OS surface shell — persistent sidebar + dense content area. Desktop.
+// OS surface shell — persistent sidebar on desktop, hamburger sheet on mobile.
 export default function OsLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex min-h-full">
-      <Sidebar />
-      <div className="min-w-0 flex-1">{children}</div>
-    </div>
-  );
+  return <OsShell>{children}</OsShell>;
 }

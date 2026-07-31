@@ -79,7 +79,7 @@ export default function OrderDetailPage() {
       </Link>
 
       {order.loading || !o ? (
-        <p className="text-[13px] text-neutral-400">Loading…</p>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
       ) : (
         <div className="flex flex-col gap-section pb-hero">
           <div className="grid gap-section sm:grid-cols-3">
@@ -132,7 +132,7 @@ export default function OrderDetailPage() {
             </Card>
             <Card title={`Tickets (${ticketsQ.data?.data.length ?? 0})`}>
               {ticketsQ.loading ? (
-                <p className="text-[13px] text-neutral-400">Loading…</p>
+                <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
               ) : (ticketsQ.data?.data.length ?? 0) === 0 ? (
                 <p className="text-[13px] text-neutral-400">No tickets issued.</p>
               ) : (

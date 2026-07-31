@@ -166,6 +166,42 @@ its product's configuration** — a seeded BT-14 "Parking Pass" (excluded from t
 supplies the durations, per-hour price (followed by the duration picker, still editable) and
 the identifier label ("Plate number") that the issue screen now asks for.
 
+**P7 ✅ (2026-07-31)** — demo businesses to the new spec. The deltas (most already landed in
+P1–P6): museum gains a **second guided tour sharing the same two guides** (Sculpture Garden
+Tour — Sat 10:00 offers only Rahim because Ayesha leads the Heritage tour, browser-verified)
+and an **All-Day Re-entry Pass** (re-entry while valid, same-day validity). Bowling engine
+config, spa per-provider durations/premium/deposit, cinema credits-per-class, session names
+and the Family tier were already seeded.
+
+**P8 ✅ (2026-07-31)** — OS modernization: **zero literal "Loading…"** (all 18 replaced with
+pulse skeletons; DataTable already had row skeletons) · DataTable: **sticky header, 48px
+rows, hover, right-aligned tabular numerics**, subtle elevation · **EmptyState is a
+perforated ticket stub** · sidebar gains 20px lucide icons · toasts move bottom-left ·
+global **2px ember `:focus-visible` ring** · product form centred at max-w-3xl and
+column-responsive.
+
+**P9 ✅ (2026-07-31)** — POS/Go overhaul: **48px touch floor across POS** (category/discount/
+method/pass/cart controls all ≥48px; keypad was already 64px) · charge bar 56px · sheets get
+a drag handle, 12px top radius and a blurred ink backdrop · **scan-refused adds a hatched
+treatment** (shape + pattern + text, not colour alone) · non-group scan results auto-ready
+for the next scan in 2s.
+
+**P10 ✅ (2026-07-31)** — responsive: **OS mobile** — sidebar becomes a hamburger slide-over
+(`OsShell`), **tables become tappable card lists** under 640px (primary line + labelled
+meta, generic in DataTable), forms already single-column with a sticky save bar ·
+**Go phones** — header nav scrolls, **cart becomes a bottom drawer** with a persistent
+ink summary bar ("N items · ৳X · View cart"), product grid 2-up. Breakpoint wiring verified
+from both sides of each media query via computed styles.
+
+**Master acceptance walk (Section C)** — steps 1–10 and 13 verified across the P1–P10
+sessions (blended bowling pricing, engine-only durations, Start now + Extend, turf pricing +
+sharing, Family group scan, two-tour guide conflict, spa deposit, park/resume + role-gated
+discount, search/customer/custom/quick-pass, no "Loading…"/BT codes/hover-only affordances).
+Step 11 (reports by hour + CSV) is Phase-8 functionality, unchanged. Step 12 (phone walk on
+a real 390px viewport) could not be exercised in the automation browser (window resize is
+ignored there) — breakpoint classes verified structurally instead; worth one manual pass on
+a phone.
+
 ### Phase 10 — the missing operational layer (4 parts, all deployed)
 
 - **Part 1 — POS structure + tax.** Behaviour subtitles on tiles (derived, no codes); category

@@ -31,6 +31,13 @@ export default function ScanResultPage() {
     } else router.replace("/scan");
   }, [router]);
 
+  // Non-group results auto-ready for the next scan.
+  useEffect(() => {
+    if (!outcome || outcome.group) return;
+    const t = setTimeout(() => router.push("/scan"), 2000);
+    return () => clearTimeout(t);
+  }, [outcome, router]);
+
   if (!outcome) return null;
 
   const accept = outcome.accept;
@@ -74,7 +81,12 @@ export default function ScanResultPage() {
     <button
       type="button"
       onClick={() => router.push("/scan")}
-      className={`flex min-h-[70vh] w-full flex-col items-center justify-center gap-major px-section py-hero text-center ${accept ? "bg-success" : "bg-danger"}`}
+      className={`flex min-h-[70vh] w-full flex-col items-center justify-center gap-major px-section py-hero text-center ${
+        accept
+          ? "bg-success"
+          : // Refused: hatched treatment — shape + pattern + text, not colour alone.
+            "bg-danger bg-[repeating-linear-gradient(45deg,transparent,transparent_28px,rgba(0,0,0,0.18)_28px,rgba(0,0,0,0.18)_56px)]"
+      }`}
     >
       <span className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white text-white">
         {accept ? <Check size={80} strokeWidth={3} /> : <X size={80} strokeWidth={3} />}
@@ -82,7 +94,7 @@ export default function ScanResultPage() {
       <span className="type-display text-5xl text-white">{accept ? "ADMIT" : "DO NOT ADMIT"}</span>
       <span className="type-body text-lg text-white/90">{outcome.reason}</span>
       <span className="font-mono text-sm text-white/80">{outcome.code}</span>
-      <span className="mt-major text-[13px] text-white/70">Tap anywhere to scan the next ticket</span>
+      <span className="mt-major text-[13px] text-white/70">Ready for the next scan in a moment — or tap anywhere</span>
     </button>
   );
 }

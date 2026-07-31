@@ -109,3 +109,9 @@
     letter-spacing: 0.08em;
   }
 }
+
+/* P8 — a visible focus ring on every keyboard-focused control (2px ember). */
+:focus-visible {
+  outline: 2px solid var(--color-ember);
+  outline-offset: 2px;
+}

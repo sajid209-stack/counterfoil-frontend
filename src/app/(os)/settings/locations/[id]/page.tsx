@@ -34,7 +34,7 @@ export default function LocationDetailPage() {
         <ArrowLeft size={14} strokeWidth={1.5} /> Locations
       </Link>
       {loading || !data ? (
-        <p className="text-[13px] text-neutral-400">Loading…</p>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
       ) : (
         <LocationForm mode="edit" location={data} />
       )}

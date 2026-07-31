@@ -58,6 +58,7 @@ export default function PosPage() {
   });
   const [parkOpen, setParkOpen] = useState(false);
   const [parkName, setParkName] = useState("");
+  const [cartOpen, setCartOpen] = useState(false); // phone cart drawer
   const persistParked = (list: Parked[]) => { setParked(list); sessionStorage.setItem("pos_parked", JSON.stringify(list)); };
   const park = () => {
     if (cart.length === 0) return;
@@ -256,7 +257,7 @@ export default function PosPage() {
   const methodLabel = COUNTER_METHODS.find((m) => m.value === method)?.label ?? "";
 
   return (
-    <div className="grid h-full grid-cols-1 gap-tight p-tight lg:grid-cols-[1fr_23rem]">
+    <div className="grid h-full grid-cols-1 gap-tight p-tight pb-24 lg:grid-cols-[1fr_23rem] lg:pb-tight">
       <div className="flex min-h-0 flex-col gap-tight">
         {/* Search — persistent, live, name + category */}
         <div className="flex h-11 items-center gap-tight rounded-sm border border-neutral-200 bg-white px-comfortable focus-within:border-ink">
@@ -267,12 +268,12 @@ export default function PosPage() {
         {/* Category chips */}
         <div className="flex gap-inline overflow-x-auto pb-inline">
           {[{ id: "all", name: "All" }, ...categories].map((c) => (
-            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-9 shrink-0 rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{c.name}</button>
+            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 shrink-0 rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{c.name}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto">
           {productsQ.loading ? (
-            <p className="p-section text-[13px] text-neutral-400">Loading…</p>
+            <div aria-busy="true" className="flex animate-pulse flex-col gap-tight p-section"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
           ) : (
             <div className="grid grid-cols-2 gap-tight sm:grid-cols-3">
               {shown.map((p) => (
@@ -292,18 +293,21 @@ export default function PosPage() {
         </div>
       </div>
 
-      {/* Cart */}
-      <div className="flex min-h-0 flex-col rounded-sm border border-neutral-200 bg-white">
+      {/* Cart — fixed right panel on tablet/desktop; bottom drawer on phones */}
+      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] rounded-t-[12px] shadow-2xl" : "hidden"} min-h-0 flex-col border border-neutral-200 bg-white lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-sm lg:shadow-none`}>
         <div className="flex items-center gap-tight border-b border-neutral-200 p-tight">
-          <button type="button" onClick={() => { setCustomerDraft(customer); setCustomerOpen(true); }} className={`flex h-9 items-center gap-inline rounded-sm border px-tight text-[12px] ${customer ? "border-ink text-ink" : "border-neutral-200 text-neutral-400"}`}>
+          {cartOpen && (
+            <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-sm border border-neutral-200 px-tight text-[12px] text-neutral-600 lg:hidden">Close</button>
+          )}
+          <button type="button" onClick={() => { setCustomerDraft(customer); setCustomerOpen(true); }} className={`flex h-12 items-center gap-inline rounded-sm border px-tight text-[12px] ${customer ? "border-ink text-ink" : "border-neutral-200 text-neutral-400"}`}>
             <UserRound size={14} strokeWidth={1.5} />{customer || "Customer"}
           </button>
           <span className="flex-1" />
-          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-9 items-center gap-inline rounded-sm border border-neutral-200 px-tight text-[12px] text-neutral-600 disabled:text-neutral-400" title={cart.length === 0 ? "Nothing to park" : "Park this cart"}>
+          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-sm border border-neutral-200 px-tight text-[12px] text-neutral-600 disabled:text-neutral-400" title={cart.length === 0 ? "Nothing to park" : "Park this cart"}>
             <Archive size={14} strokeWidth={1.5} />Park
           </button>
           {parked.length > 0 && (
-            <button type="button" onClick={() => setParkOpen(true)} className="flex h-9 items-center rounded-sm border border-ember bg-ember/10 px-tight font-mono text-[12px] text-ember">
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 items-center rounded-sm border border-ember bg-ember/10 px-tight font-mono text-[12px] text-ember">
               {parked.length} parked
             </button>
           )}
@@ -322,12 +326,12 @@ export default function PosPage() {
                     {entryBalance(e) > 0 && <div className="font-mono text-[11px] text-neutral-400">{productById(e.productId)?.policies?.depositPct}% deposit now · {formatMoney(entryBalance(e), currency)} at arrival</div>}
                   </div>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex h-9 items-center justify-center rounded-sm border border-neutral-200 px-tight font-mono text-[11px] active:bg-neutral-200">
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-neutral-200 px-tight font-mono text-[11px] active:bg-neutral-200">
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
-                  {e.productId !== "custom" && <button type="button" aria-label="Edit" onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 active:bg-neutral-200"><Pencil size={15} strokeWidth={1.5} /></button>}
-                  <button type="button" aria-label="Remove" onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 text-danger active:bg-neutral-200"><Trash2 size={15} strokeWidth={1.5} /></button>
+                  {e.productId !== "custom" && <button type="button" aria-label="Edit" onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-neutral-200 active:bg-neutral-200"><Pencil size={15} strokeWidth={1.5} /></button>}
+                  <button type="button" aria-label="Remove" onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-sm border border-neutral-200 text-danger active:bg-neutral-200"><Trash2 size={15} strokeWidth={1.5} /></button>
                 </div>
               ))}
             </div>
@@ -339,7 +343,7 @@ export default function PosPage() {
           <div className="mb-tight flex items-center justify-between">
             <span className="text-[13px] text-neutral-600">Discount</span>
             <div className="flex items-center gap-inline">
-              {[0, 5, 10, 15].map((d) => <button key={d} type="button" onClick={() => setDiscountPct(d)} className={`h-8 rounded-xs border px-tight font-mono text-[12px] ${discountPct === d ? "border-ink bg-ink text-paper" : "border-neutral-200"}`}>{d}%</button>)}
+              {[0, 5, 10, 15].map((d) => <button key={d} type="button" onClick={() => setDiscountPct(d)} className={`h-12 min-w-12 rounded-xs border px-tight font-mono text-[12px] ${discountPct === d ? "border-ink bg-ink text-paper" : "border-neutral-200"}`}>{d}%</button>)}
             </div>
           </div>
           {overLimit && <p className="mb-tight text-[12px] text-danger">Over your {DISCOUNT_LIMIT_PCT}% limit — ask a manager.</p>}
@@ -353,7 +357,7 @@ export default function PosPage() {
                 <button type="button" aria-label="Remove pass" onClick={() => setPass(null)} className="text-danger">✕</button>
               </span>
             ) : (
-              <button type="button" onClick={() => setPassOpen(true)} className="h-8 rounded-xs border border-neutral-200 px-tight text-[12px]">Redeem a pass</button>
+              <button type="button" onClick={() => setPassOpen(true)} className="h-12 rounded-xs border border-neutral-200 px-tight text-[12px]">Redeem a pass</button>
             )}
           </div>
 
@@ -371,14 +375,22 @@ export default function PosPage() {
 
           {/* Payment method selector */}
           <div className="mt-tight flex gap-inline">
-            {COUNTER_METHODS.map((m) => <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`h-9 flex-1 rounded-xs border text-[12px] ${method === m.value ? "border-ink bg-ink text-paper" : "border-neutral-200"}`}>{m.label}</button>)}
+            {COUNTER_METHODS.map((m) => <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`h-12 flex-1 rounded-xs border text-[13px] ${method === m.value ? "border-ink bg-ink text-paper" : "border-neutral-200"}`}>{m.label}</button>)}
           </div>
 
-          <Button size="lg" fullWidth className="mt-tight" disabled={cart.length === 0 || overLimit} onClick={charge}>
+          <Button size="lg" fullWidth className="mt-tight h-14" disabled={cart.length === 0 || overLimit} onClick={charge}>
             {cart.length > 0 ? `Charge ${formatMoney(dueNow, currency)} — ${methodLabel}` : "Charge"}
           </Button>
         </div>
       </div>
+
+      {/* Phone summary bar — persistent door to the cart drawer */}
+      {!cartOpen && (
+        <button type="button" onClick={() => setCartOpen(true)} className="fixed inset-x-tight bottom-tight z-30 flex h-14 items-center justify-between rounded-sm bg-ink px-section text-paper shadow-lg lg:hidden">
+          <span className="text-sm">{cart.length} item{cart.length === 1 ? "" : "s"}{customer ? ` · ${customer}` : ""}</span>
+          <span className="font-mono text-sm">{formatMoney(dueNow, currency)} · View cart</span>
+        </button>
+      )}
 
       {sheet && <ProductSheet product={sheet.product} currency={currency} initial={sheet.initial} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => setSheet(null)} team={teamQ.data?.data ?? []} />}
 

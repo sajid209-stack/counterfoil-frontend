@@ -77,7 +77,7 @@ export default function CheckInPage() {
       <div className="flex gap-tight">{dateBtn(TODAY, "Today")}{dateBtn(TOMORROW, "Tomorrow")}<input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm" /></div>
 
       {bookingsQ.loading ? (
-        <p className="text-[13px] text-neutral-400">Loading…</p>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
       ) : groups.length === 0 ? (
         <EmptyState title="No bookings" message="No sessions booked for this day." />
       ) : (

@@ -20,7 +20,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
           <span className="type-h2 text-base">Counterfoil</span>
           <span className="font-mono text-[11px] text-neutral-400">Go</span>
         </Link>
-        <nav className="flex items-center gap-inline">
+        <nav className="flex items-center gap-inline overflow-x-auto">
           {GO_NAV.map((n) => (
             <Link
               key={n.href}

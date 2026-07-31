@@ -54,7 +54,7 @@ export default function CalendarPage() {
       />
 
       {loading ? (
-        <p className="text-[13px] text-neutral-400">Loading…</p>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
       ) : grouped.length === 0 ? (
         <EmptyState title="No bookings in this window" message="Try the month view for a wider range." />
       ) : (

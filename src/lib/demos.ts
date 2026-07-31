@@ -15,8 +15,8 @@ export const DEMOS: DemoBusiness[] = [
     name: "Dhaka National Museum",
     currency: "BDT",
     tagline: "Admission, timed slots, guided tours",
-    types: "Open · date-range · slots · daily cap · guided",
-    productIds: ["prd_admission", "prd_winter", "prd_planetarium", "prd_garden", "prd_tour"],
+    types: "Open · date-range · slots · daily cap · guided ×2 · re-entry",
+    productIds: ["prd_admission", "prd_reentry", "prd_winter", "prd_planetarium", "prd_garden", "prd_tour", "prd_tour2"],
   },
   {
     id: "turf",

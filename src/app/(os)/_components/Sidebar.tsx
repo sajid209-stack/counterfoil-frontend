@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, CalendarDays, ChartNoAxesColumn, LayoutDashboard, ReceiptText, Settings, Ticket } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 // Daily surface — the things operators touch every day. Setup (including
@@ -11,25 +11,26 @@ export function Sidebar() {
   const pathname = usePathname();
 
   const OPERATE = [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Calendar", href: "/calendar" },
-    { label: "Orders", href: "/orders" },
-    { label: "Products", href: "/products" },
-    { label: "Reports", href: "/reports/sales" },
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Calendar", href: "/calendar", icon: CalendarDays },
+    { label: "Orders", href: "/orders", icon: ReceiptText },
+    { label: "Products", href: "/products", icon: Ticket },
+    { label: "Reports", href: "/reports/sales", icon: ChartNoAxesColumn },
   ];
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
-  const item = (label: string, href: string, active: boolean) => (
+  const item = (label: string, href: string, active: boolean, Icon?: React.ComponentType<{ size?: number | string; strokeWidth?: number | string; className?: string }>) => (
     <Link
       key={href}
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center border-l-[3px] py-tight pl-comfortable pr-comfortable text-sm font-medium transition-colors duration-quick",
+        "flex items-center gap-tight border-l-[3px] py-tight pl-comfortable pr-comfortable text-sm font-medium transition-colors duration-quick",
         active ? "border-ember text-paper" : "border-transparent text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200",
       )}
     >
+      {Icon && <Icon size={20} strokeWidth={1.5} className={active ? "text-ember" : ""} />}
       {label}
     </Link>
   );
@@ -43,7 +44,7 @@ export function Sidebar() {
 
       <nav className="flex flex-col gap-inline">
         <p className="px-section pb-inline font-mono text-[10px] uppercase tracking-wider text-neutral-600">Operate</p>
-        {OPERATE.map((n) => item(n.label, n.href, isActive(n.href)))}
+        {OPERATE.map((n) => item(n.label, n.href, isActive(n.href), n.icon))}
       </nav>
 
       <div className="px-section">
@@ -58,7 +59,7 @@ export function Sidebar() {
 
       <nav className="flex flex-col gap-inline">
         <p className="px-section pb-inline font-mono text-[10px] uppercase tracking-wider text-neutral-600">Settings</p>
-        {item("Settings", "/settings", pathname.startsWith("/settings"))}
+        {item("Settings", "/settings", pathname.startsWith("/settings"), Settings)}
       </nav>
     </aside>
   );

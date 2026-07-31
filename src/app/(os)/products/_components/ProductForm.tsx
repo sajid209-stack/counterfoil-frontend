@@ -262,7 +262,7 @@ export function ProductForm({
   };
 
   return (
-    <div className="flex flex-col gap-section pb-hero">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-section pb-hero">
       <Tabs items={TABS} value={tab} onChange={setTab} />
 
       <div className="rounded-md border border-neutral-200 bg-white p-major">

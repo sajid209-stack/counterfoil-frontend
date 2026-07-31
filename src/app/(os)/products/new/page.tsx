@@ -22,7 +22,7 @@ export default function NewProductPage() {
         <ArrowLeft size={14} strokeWidth={1.5} /> Products
       </Link>
       {loading ? (
-        <p className="text-[13px] text-neutral-400">Loading…</p>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
       ) : (
         <ProductWizard categories={cats.data?.data ?? []} locations={locs.data?.data ?? []} team={team.data?.data ?? []} resources={resources.data?.data ?? []} products={productsQ.data?.data ?? []} currency={op.data?.currency ?? "BDT"} />
       )}

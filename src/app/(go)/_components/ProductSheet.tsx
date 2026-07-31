@@ -105,9 +105,9 @@ export function ProductSheet({
           <div key={a.id} className="flex items-center justify-between rounded-sm border border-neutral-200 bg-white p-comfortable">
             <div className="text-sm">{a.name} <span className="font-mono text-[12px] text-neutral-400">+{formatMoney(a.price, currency)}{a.perPerson ? " each" : ""}</span></div>
             <div className="flex items-center gap-tight">
-              <button type="button" aria-label="Less" onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-10 w-10 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">−</button>
+              <button type="button" aria-label="Less" onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">−</button>
               <span className="w-6 text-center font-mono">{addOnQty[a.id] ?? 0}</span>
-              <button type="button" aria-label="More" onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: (q[a.id] ?? 0) + 1 }))} className="h-10 w-10 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">+</button>
+              <button type="button" aria-label="More" onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: (q[a.id] ?? 0) + 1 }))} className="h-12 w-12 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">+</button>
             </div>
           </div>
         ))}
@@ -159,7 +159,7 @@ export function ProductSheet({
   const depositPct = product.policies?.deposit === "percent" ? product.policies.depositPct : 0;
 
   const dateBtn = (value: string, label: string) => (
-    <button key={value} type="button" onClick={() => { setDate(value); setSlotTime(undefined); setResourceId(undefined); }} className={`h-10 rounded-sm border px-comfortable text-sm ${date === value ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{label}</button>
+    <button key={value} type="button" onClick={() => { setDate(value); setSlotTime(undefined); setResourceId(undefined); }} className={`h-12 rounded-sm border px-comfortable text-sm ${date === value ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{label}</button>
   );
 
   const submitTiered = () => {
@@ -222,8 +222,9 @@ export function ProductSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-ink/40" onClick={onClose} aria-hidden />
-      <div className="relative z-10 max-h-[85vh] overflow-y-auto rounded-t-lg bg-paper p-section">
+      <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={onClose} aria-hidden />
+      <div className="relative z-10 max-h-[85vh] overflow-y-auto rounded-t-[12px] bg-paper p-section">
+        <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-neutral-200" aria-hidden />
         <div className="mb-section flex items-center justify-between">
           <h2 className="type-h2 text-lg">{product.name}</h2>
           <button type="button" onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-sm active:bg-neutral-200"><X size={20} strokeWidth={1.5} /></button>
@@ -233,7 +234,7 @@ export function ProductSheet({
           <div className="mb-section flex flex-wrap gap-tight">
             {dateBtn(TODAY, "Today")}
             {dateBtn(TOMORROW, "Tomorrow")}
-            <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setSlotTime(undefined); setResourceId(undefined); }} className="h-10 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm" />
+            <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setSlotTime(undefined); setResourceId(undefined); }} className="h-12 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm" />
           </div>
         )}
         {!openToday && needsSchedule(bt) && <p className="mb-section text-[13px] text-danger">Closed on this date. Pick another.</p>}
@@ -317,13 +318,13 @@ export function ProductSheet({
               )}
 
               <span className="type-label text-[11px] text-neutral-400">Duration</span>
-              <div className="flex flex-wrap gap-tight">{flexOptions.map((d) => <button key={d} type="button" onClick={() => pickDuration(d)} className={`h-10 flex-1 whitespace-nowrap rounded-sm border px-tight text-sm ${duration === d ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{formatDuration(d)}{slotTime ? <span className="ml-inline font-mono text-[11px] opacity-70">{formatMoney(productDurationPrice(product, date, slotTime, d, basePrice), currency)}</span> : null}</button>)}</div>
+              <div className="flex flex-wrap gap-tight">{flexOptions.map((d) => <button key={d} type="button" onClick={() => pickDuration(d)} className={`h-12 flex-1 whitespace-nowrap rounded-sm border px-tight text-sm ${duration === d ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{formatDuration(d)}{slotTime ? <span className="ml-inline font-mono text-[11px] opacity-70">{formatMoney(productDurationPrice(product, date, slotTime, d, basePrice), currency)}</span> : null}</button>)}</div>
 
               <span className="type-label text-[11px] text-neutral-400">{lanes[0]?.nounSingular ?? "Resource"}</span>
               <div className="flex flex-wrap gap-tight">
-                <button type="button" onClick={() => setResourceId(undefined)} className={`h-10 rounded-sm border px-comfortable text-sm ${!resourceId ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>Any</button>
+                <button type="button" onClick={() => setResourceId(undefined)} className={`h-12 rounded-sm border px-comfortable text-sm ${!resourceId ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>Any</button>
                 {lanes.map((r) => (
-                  <button key={r.id} type="button" disabled={r.outOfService} onClick={() => setResourceId(r.id)} className={`h-10 rounded-sm border px-comfortable text-sm ${r.outOfService ? "border-neutral-200 bg-neutral-50 text-neutral-400 line-through" : resourceId === r.id ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{r.name}</button>
+                  <button key={r.id} type="button" disabled={r.outOfService} onClick={() => setResourceId(r.id)} className={`h-12 rounded-sm border px-comfortable text-sm ${r.outOfService ? "border-neutral-200 bg-neutral-50 text-neutral-400 line-through" : resourceId === r.id ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{r.name}</button>
                 ))}
               </div>
 
@@ -332,9 +333,9 @@ export function ProductSheet({
                 {flexTimes.map((t) => {
                   const st = startState(t, duration, resourceId);
                   if (!st.ok) {
-                    return <button key={t} type="button" onClick={() => toast.error(`${t}: ${st.reason}`)} className="h-10 rounded-sm border border-neutral-200 bg-neutral-50 px-comfortable font-mono text-[13px] text-neutral-400 line-through" title={st.reason}>{t}</button>;
+                    return <button key={t} type="button" onClick={() => toast.error(`${t}: ${st.reason}`)} className="h-12 rounded-sm border border-neutral-200 bg-neutral-50 px-comfortable font-mono text-[13px] text-neutral-400 line-through" title={st.reason}>{t}</button>;
                   }
-                  return <button key={t} type="button" onClick={() => setSlotTime(t)} className={`h-10 rounded-sm border px-comfortable font-mono text-[13px] ${slotTime === t ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{t}</button>;
+                  return <button key={t} type="button" onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable font-mono text-[13px] ${slotTime === t ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{t}</button>;
                 })}
               </div>
 
@@ -367,7 +368,7 @@ export function ProductSheet({
               {providerTimes.map((t) => {
                 const free = providerTimeFree(t);
                 return (
-                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-10 rounded-sm border px-comfortable font-mono text-[13px] ${!free ? "border-neutral-200 bg-neutral-50 text-neutral-400 line-through" : slotTime === t ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{t}</button>
+                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable font-mono text-[13px] ${!free ? "border-neutral-200 bg-neutral-50 text-neutral-400 line-through" : slotTime === t ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{t}</button>
                 );
               })}
             </div>
@@ -432,9 +433,9 @@ export function ProductSheet({
                 <div key={row.id} className="flex items-center justify-between rounded-sm border border-neutral-200 bg-white p-comfortable">
                   <div><div className="text-sm font-medium">{row.name}</div><div className="font-mono text-[12px] text-neutral-400">{formatMoney(row.price, currency)}{row.cap != null ? ` · ${row.cap} seats` : ""}{row.note ? ` · ${row.note}` : ""}</div></div>
                   <div className="flex items-center gap-tight">
-                    <button type="button" aria-label="Less" onClick={() => setQty((q) => ({ ...q, [row.id]: Math.max(0, (q[row.id] ?? 0) - 1) }))} className="h-11 w-11 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">−</button>
+                    <button type="button" aria-label="Less" onClick={() => setQty((q) => ({ ...q, [row.id]: Math.max(0, (q[row.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">−</button>
                     <span className="w-8 text-center font-mono">{qty[row.id] ?? 0}</span>
-                    <button type="button" aria-label="More" onClick={() => setQty((q) => ({ ...q, [row.id]: (q[row.id] ?? 0) + 1 }))} className="h-11 w-11 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">+</button>
+                    <button type="button" aria-label="More" onClick={() => setQty((q) => ({ ...q, [row.id]: (q[row.id] ?? 0) + 1 }))} className="h-12 w-12 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">+</button>
                   </div>
                 </div>
               ))}

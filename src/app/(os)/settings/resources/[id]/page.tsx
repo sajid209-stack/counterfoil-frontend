@@ -31,7 +31,7 @@ export default function ResourceDetailPage() {
         <ArrowLeft size={14} strokeWidth={1.5} /> Resources
       </Link>
       {res.loading || locs.loading || !res.data ? (
-        <p className="text-[13px] text-neutral-400">Loading…</p>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
       ) : (
         <ResourceForm mode="edit" resource={res.data} locations={locs.data?.data ?? []} />
       )}
