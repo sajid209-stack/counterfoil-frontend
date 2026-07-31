@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { FormField } from "@/components/ui";
-import type { BookingTypeCode, ProductSchedule, Staff } from "@/lib/api";
+import type { BookingTypeCode, DayHours, ProductSchedule, Staff } from "@/lib/api";
 import {
   DAY_LABELS,
+  DAY_NAMES,
   isDailyCapped,
   isGuided,
   isSlotBased,
@@ -39,8 +40,31 @@ export function ScheduleBuilder({
   };
   const removeException = (date: string) => set("exceptions", value.exceptions.filter((e) => e.date !== date));
 
+  // Per-day hour overrides ("Fri 14:00–23:00 while other days run base hours").
+  const overrides = value.dayOverrides ?? {};
+  const setOverride = (d: number, hrs: DayHours | null) => {
+    const next: Record<number, DayHours> = { ...overrides };
+    if (hrs) next[d] = hrs;
+    else delete next[d];
+    set("dayOverrides", Object.keys(next).length ? next : undefined);
+  };
+  const moveOverride = (from: number, to: number) => {
+    const hrs = overrides[from];
+    const next: Record<number, DayHours> = { ...overrides };
+    delete next[from];
+    next[to] = hrs;
+    set("dayOverrides", next);
+  };
+  const addOverride = () => {
+    const d = value.openDays.find((x) => !(x in overrides));
+    if (d != null) setOverride(d, { startTime: value.startTime, endTime: value.endTime });
+  };
+
   const slots = isSlotBased(bookingType) ? slotTimes(value) : [];
   const openCount = value.openDays.length;
+  const overrideSummary = Object.entries(overrides)
+    .map(([d, h]) => `${DAY_LABELS[Number(d)]} ${h.startTime}–${h.endTime}`)
+    .join(" · ");
 
   return (
     <div className="flex flex-col gap-section">
@@ -68,6 +92,33 @@ export function ScheduleBuilder({
           ))}
         </div>
       </div>
+
+      {isSlotBased(bookingType) && (
+        <div className="flex flex-col gap-tight">
+          <span className="type-label text-[12px] text-neutral-600">Different hours on some days</span>
+          {Object.entries(overrides).map(([dStr, hrs]) => {
+            const d = Number(dStr);
+            return (
+              <div key={d} className="flex items-center gap-tight">
+                <select value={d} onChange={(e) => moveOverride(d, Number(e.target.value))} className="h-10 rounded-sm border border-neutral-200 bg-white px-tight text-sm outline-none focus:border-ink">
+                  {value.openDays.filter((x) => x === d || !(x in overrides)).map((x) => (
+                    <option key={x} value={x}>{DAY_NAMES[x]}</option>
+                  ))}
+                </select>
+                <input type="text" value={hrs.startTime} onChange={(e) => setOverride(d, { ...hrs, startTime: e.target.value })} placeholder="HH:MM" className="h-10 w-24 rounded-sm border border-neutral-200 px-tight text-center font-mono text-[13px] outline-none focus:border-ink" />
+                <span className="text-neutral-400">–</span>
+                <input type="text" value={hrs.endTime} onChange={(e) => setOverride(d, { ...hrs, endTime: e.target.value })} placeholder="HH:MM" className="h-10 w-24 rounded-sm border border-neutral-200 px-tight text-center font-mono text-[13px] outline-none focus:border-ink" />
+                <button type="button" aria-label="Remove override" onClick={() => setOverride(d, null)} className="text-neutral-400 hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
+              </div>
+            );
+          })}
+          {value.openDays.some((x) => !(x in overrides)) && (
+            <button type="button" onClick={addOverride} className="flex h-10 w-fit items-center gap-inline rounded-sm border border-neutral-200 px-comfortable text-sm hover:border-ink">
+              <Plus size={16} strokeWidth={1.5} /> Add day override
+            </button>
+          )}
+        </div>
+      )}
 
       {isGuided(bookingType) && (
         <div className="flex flex-col gap-tight">
@@ -99,6 +150,7 @@ export function ScheduleBuilder({
             {slots.length} sessions/day · {slots.length * openCount}/week · up to{" "}
             <span className="font-medium text-ink">{(slots.length * openCount * value.capacityPerSession).toLocaleString()}</span> visitors/week
           </p>
+          {overrideSummary && <p className="mt-tight font-mono text-[12px] text-neutral-600">Except {overrideSummary}</p>}
         </div>
       )}
       {isDailyCapped(bookingType) && (

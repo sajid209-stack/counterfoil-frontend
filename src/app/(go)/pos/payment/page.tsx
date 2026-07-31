@@ -9,10 +9,13 @@ import { Keypad } from "../../_components/Keypad";
 
 interface Cart {
   total: number;
+  dueNow?: number; // deposit orders collect less than the total now
+  balance?: number;
   taxPct: number;
   locationId: string;
   lines: CheckoutLine[];
   bookings?: CheckoutBooking[];
+  credits?: { ticketId: string; count: number } | null;
 }
 
 export default function PaymentPage() {
@@ -28,7 +31,8 @@ export default function PaymentPage() {
     else router.replace("/pos");
   }, [router]);
 
-  const total = cart?.total ?? 0;
+  const total = cart?.dueNow ?? cart?.total ?? 0;
+  const balance = cart?.balance ?? 0;
   const tenderedMinor = (parseInt(tenderTaka || "0", 10) || 0) * 100;
   const change = tenderedMinor - total;
   const enough = tenderedMinor >= total;
@@ -46,10 +50,12 @@ export default function PaymentPage() {
       taxPct: cart.taxPct,
       method: "cash",
       amountTendered: tenderedMinor,
+      payNow: total,
+      credits: cart.credits ?? null,
     });
     setSaving(false);
     if (res.ok) {
-      sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change }));
+      sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change, balance }));
       sessionStorage.removeItem("pos_cart");
       router.push("/pos/complete");
     } else {
@@ -65,7 +71,8 @@ export default function PaymentPage() {
           <h1 className="type-h1 mt-tight text-2xl">Cash</h1>
         </div>
         <div className="rounded-sm border border-neutral-200 bg-white p-section">
-          <div className="flex justify-between text-neutral-600"><span>Amount due</span><span className="font-mono text-lg">{formatMoney(total)}</span></div>
+          <div className="flex justify-between text-neutral-600"><span>{balance > 0 ? "Deposit due now" : "Amount due"}</span><span className="font-mono text-lg">{formatMoney(total)}</span></div>
+          {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-neutral-400"><span>Balance at arrival</span><span className="font-mono">{formatMoney(balance)}</span></div>}
           <div className="mt-tight flex justify-between"><span>Tendered</span><span className="font-mono text-lg">{formatMoney(tenderedMinor)}</span></div>
           <div className={`mt-tight flex justify-between text-xl font-medium ${enough ? "text-success" : "text-neutral-400"}`}>
             <span>Change</span><span className="font-mono">{enough ? formatMoney(change) : "—"}</span>

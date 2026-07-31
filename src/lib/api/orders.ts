@@ -1,6 +1,6 @@
 import { createBooking } from "./bookings";
 import { createResource } from "./client";
-import { issueTicket } from "./tickets";
+import { issueTicket, redeemCredits } from "./tickets";
 import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod } from "./types";
 
 const resource = createResource<Order>("orders", "Order", {
@@ -60,6 +60,11 @@ export interface CheckoutInput {
   taxPct: number;
   method: PaymentMethod;
   amountTendered: Minor;
+  /** Amount actually collected now. Below the order total (a deposit) the
+   *  order lands as "partial" with the balance due at arrival. */
+  payNow?: Minor;
+  /** Credits pass to spend against eligible lines (BT-12 redemption). */
+  credits?: { ticketId: string; count: number } | null;
 }
 
 /** Complete a sale: creates a paid order AND its tickets in the store, so the
@@ -71,19 +76,26 @@ export async function checkout(
   // Per-line tax from each product's tax class; falls back to the order rate.
   const tax = input.lines.reduce((s, l) => s + Math.round((l.unitPrice * l.quantity * (l.taxRatePct ?? input.taxPct)) / 100), 0);
   const total = subtotal + tax;
+  const payNow = input.payNow ?? total;
   const now = new Date().toISOString();
   const reference = `CF-2026-${String(Math.floor(Date.parse(now) % 900000) + 100000)}`;
 
+  // Spend pass credits first so an invalid pass fails the sale cleanly.
+  if (input.credits && input.credits.count > 0) {
+    const spent = await redeemCredits(input.credits.ticketId, input.credits.count);
+    if (!spent.ok) return spent as ApiResult<never>;
+  }
+
   const orderRes = await resource.create({
     reference,
-    status: "paid",
+    status: payNow < total ? "partial" : "paid",
     channel: input.channel,
     locationId: input.locationId,
     counterId: input.counterId,
     staffId: input.staffId,
     customerName: null,
     lines: input.lines.map((l, i) => ({ id: `${reference}-L${i}`, ...l })),
-    payments: [{ id: `${reference}-P0`, method: input.method, amount: total, at: now }],
+    payments: [{ id: `${reference}-P0`, method: input.method, amount: payNow, at: now }],
     subtotal,
     tax,
     total,
@@ -94,6 +106,7 @@ export async function checkout(
   let firstTicketCode = "";
   let t = 0;
   for (const line of input.lines) {
+    if (line.unitPrice < 0) continue; // discount/adjustment lines admit nobody
     for (let q = 0; q < line.quantity && t < 20; q++, t++) {
       const code = `${reference}-${String(t + 1).padStart(2, "0")}`;
       if (!firstTicketCode) firstTicketCode = code;

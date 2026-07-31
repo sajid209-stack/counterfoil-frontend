@@ -34,6 +34,15 @@ export function slotTimes(schedule: ProductSchedule): string[] {
   return out;
 }
 
+export const dowOf = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay();
+
+/** Session start times on a CONCRETE date — applies that weekday's hours
+ *  override (Fri 14:00–23:00 while other days run the base hours). */
+export function slotTimesOn(schedule: ProductSchedule, date: string): string[] {
+  const o = schedule.dayOverrides?.[dowOf(date)];
+  return slotTimes(o ? { ...schedule, startTime: o.startTime, endTime: o.endTime } : schedule);
+}
+
 export function defaultSchedule(bt: BookingTypeCode): ProductSchedule {
   const resource = isResourceType(bt);
   return {

@@ -1,4 +1,4 @@
-import { slotISO, slotTimes, toMinutes } from "@/lib/schedule";
+import { slotISO, slotTimesOn, toMinutes } from "@/lib/schedule";
 import { peekBookings } from "./bookings";
 import { peekResources } from "./resources";
 import type { Product, Resource } from "./types";
@@ -19,7 +19,7 @@ export function getSlots(product: Product, date: string): SlotAvailability[] {
   const sch = product.schedule;
   if (!sch || sch.capacityPerSession <= 0) return [];
   const booked = confirmedFor(product.id, date);
-  return slotTimes(sch).map((time) => {
+  return slotTimesOn(sch, date).map((time) => {
     const iso = slotISO(date, time);
     const sold = booked.filter((b) => b.slotStart === iso).reduce((s, b) => s + b.partySize, 0);
     return { time, capacity: sch.capacityPerSession, sold, remaining: Math.max(0, sch.capacityPerSession - sold) };
@@ -53,7 +53,7 @@ export function getResourceMatrix(product: Product, date: string): ResourceRow[]
   if (!sch) return [];
   const ids = product.resourceIds ?? [];
   const resources = peekResources().filter((r) => ids.includes(r.id) && r.status !== "archived");
-  const times = slotTimes(sch);
+  const times = slotTimesOn(sch, date);
   const exclusive = product.resourceExclusive !== false;
   const capPerSlot = exclusive ? 1 : sch.capacityPerSession || 1;
   const session = sch.sessionMinutes || sch.slotMinutes || 60;
@@ -85,6 +85,42 @@ export function getResourceMatrix(product: Product, date: string): ResourceRow[]
       return { time, available: remaining > 0, remaining };
     }),
   }));
+}
+
+/* ── Capacity owners — ONE conflict mechanism for fields, lanes, guides and
+   providers. A booking's `resourceId` names whichever owner it occupies (a
+   Resource id OR a Staff id); busy spans are computed across every product. */
+
+export interface BusySpan {
+  start: number; // minutes from midnight
+  end: number;
+}
+
+/** All confirmed busy spans for a capacity owner on a date, across products. */
+export function ownerBusy(ownerId: string, date: string): BusySpan[] {
+  return peekBookings()
+    .filter((b) => b.status === "confirmed" && b.resourceId === ownerId && b.slotStart.slice(0, 10) === date)
+    .map((b) => {
+      const start = toMinutes(b.slotStart.slice(11, 16));
+      const end = b.slotEnd ? toMinutes(b.slotEnd.slice(11, 16)) : start + 60;
+      return { start, end };
+    });
+}
+
+/** Is this owner free for [time, time + minutes) on the date? */
+export function isOwnerFree(ownerId: string, date: string, time: string, minutes: number): boolean {
+  const start = toMinutes(time);
+  const end = start + minutes;
+  return !ownerBusy(ownerId, date).some((b) => start < b.end && b.start < end);
+}
+
+/** Guides free to lead a product's session at this slot (BT-09). A guide on
+ *  the 10:00 walking tour is unavailable to every other 10:00 departure. */
+export function freeGuides(product: Product, date: string, time: string): string[] {
+  const sch = product.schedule;
+  if (!sch || sch.guideIds.length === 0) return [];
+  const minutes = sch.sessionMinutes || sch.slotMinutes || 60;
+  return sch.guideIds.filter((g) => isOwnerFree(g, date, time, minutes));
 }
 
 /** Is the product open on this date (open day, not a closed exception)? */

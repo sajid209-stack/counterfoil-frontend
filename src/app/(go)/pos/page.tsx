@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { checkout, getOperator, listCategories, listLocations, listProducts, listResources, listStaff, type PaymentMethod, type Product } from "@/lib/api";
+import { checkout, findCreditPass, getOperator, listCategories, listLocations, listProducts, listResources, listStaff, type CreditPass, type PaymentMethod, type Product } from "@/lib/api";
 import { isResourceType, needsSchedule, slotISO } from "@/lib/schedule";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { taxRateFor } from "@/lib/tax";
@@ -41,6 +41,10 @@ export default function PosPage() {
   const [customOpen, setCustomOpen] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customAmount, setCustomAmount] = useState("");
+  const [pass, setPass] = useState<CreditPass | null>(null);
+  const [passOpen, setPassOpen] = useState(false);
+  const [passCode, setPassCode] = useState("");
+  const [passLoading, setPassLoading] = useState(false);
 
   const operator = opQ.data;
   const currency = operator?.currency ?? "BDT";
@@ -92,24 +96,75 @@ export default function PosPage() {
     setCustomOpen(false); setCustomName(""); setCustomAmount("");
   };
 
+  // ── Credits pass coverage: eligible items are paid by credits, oldest cart
+  //    entries first, until the pass runs out. Covered items sell at 0.
+  const coverage = (() => {
+    const map = new Map<string, number>(); // `${entryId}|${tierId}` → qty covered
+    if (!pass) return map;
+    let left = pass.remaining;
+    for (const e of cart) {
+      if (e.fixedPrice != null || !pass.productIds.includes(e.productId)) continue;
+      for (const i of e.items) {
+        if (left <= 0) break;
+        if (i.unitPrice <= 0) continue;
+        const c = Math.min(i.qty, left);
+        map.set(`${e.id}|${i.tierId}`, c);
+        left -= c;
+      }
+    }
+    return map;
+  })();
+  const entryCoveredQty = (e: CartEntry) => e.items.reduce((s, i) => s + (coverage.get(`${e.id}|${i.tierId}`) ?? 0), 0);
+  const entryCoveredValue = (e: CartEntry) => e.items.reduce((s, i) => s + (coverage.get(`${e.id}|${i.tierId}`) ?? 0) * i.unitPrice, 0);
+  const creditsUsed = cart.reduce((s, e) => s + entryCoveredQty(e), 0);
+  const creditsValue = cart.reduce((s, e) => s + entryCoveredValue(e), 0);
+
   const subtotal = cart.reduce((s, e) => s + entryTotal(e), 0);
   const discount = Math.round((subtotal * discountPct) / 100);
-  const tax = cart.reduce((s, e) => s + Math.round((entryTotal(e) * entryTaxRate(e)) / 100), 0);
-  const total = subtotal - discount + tax;
+  const tax = cart.reduce((s, e) => s + Math.round(((entryTotal(e) - entryCoveredValue(e)) * entryTaxRate(e)) / 100), 0);
+  const total = subtotal - discount - creditsValue + tax;
   const overLimit = discountPct > DISCOUNT_LIMIT_PCT;
+
+  // ── Deposits: a percent-deposit policy holds part of the entry back until
+  //    arrival; only the deposit is charged now.
+  const entryBalance = (e: CartEntry) => {
+    const pol = productById(e.productId)?.policies;
+    if (pol?.deposit !== "percent" || pol.depositPct <= 0) return 0;
+    const payable = entryTotal(e) - entryCoveredValue(e);
+    return Math.max(0, payable - Math.round((payable * pol.depositPct) / 100));
+  };
+  const balance = cart.reduce((s, e) => s + entryBalance(e), 0);
+  const dueNow = total - balance;
+
+  const applyPass = async () => {
+    setPassLoading(true);
+    const res = await findCreditPass(passCode);
+    setPassLoading(false);
+    if (res.ok) { setPass(res.data); setPassOpen(false); setPassCode(""); }
+    else toast.error(res.error.message);
+  };
 
   const charge = async () => {
     const lines = cart.flatMap((e) => {
       const rate = entryTaxRate(e);
-      return e.items.length
-        ? e.items.map((i) => ({ productId: e.productId, productName: e.productName, tierName: i.tierName, quantity: i.qty, unitPrice: i.unitPrice, taxRatePct: rate }))
-        : e.fixedPrice != null
-          ? [{ productId: e.productId, productName: e.productName, tierName: e.resourceLabel ?? e.slotTime ?? "Booking", quantity: 1, unitPrice: e.fixedPrice, taxRatePct: rate }]
-          : [];
+      if (e.items.length) {
+        // Pass-covered quantities split off as 0-price lines (untaxed).
+        return e.items.flatMap((i) => {
+          const cov = coverage.get(`${e.id}|${i.tierId}`) ?? 0;
+          const out = [];
+          if (i.qty - cov > 0) out.push({ productId: e.productId, productName: e.productName, tierName: i.tierName, quantity: i.qty - cov, unitPrice: i.unitPrice, taxRatePct: rate });
+          if (cov > 0) out.push({ productId: e.productId, productName: e.productName, tierName: `${i.tierName} · pass`, quantity: cov, unitPrice: 0, taxRatePct: 0 });
+          return out;
+        });
+      }
+      return e.fixedPrice != null
+        ? [{ productId: e.productId, productName: e.productName, tierName: e.resourceLabel ?? e.slotTime ?? "Booking", quantity: 1, unitPrice: e.fixedPrice, taxRatePct: rate }]
+        : [];
     });
     if (discount > 0) lines.push({ productId: "discount", productName: "Discount", tierName: `${discountPct}%`, quantity: 1, unitPrice: -discount, taxRatePct: 0 });
-    const bookings = cart.filter((e) => e.slotDate).map((e) => ({ productId: e.productId, resourceId: e.resourceId ?? null, slotStart: entrySlotISO(e)!, partySize: entrySeats(e) }));
-    const payload = { total, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, bookings, method };
+    const bookings = cart.filter((e) => e.slotDate).map((e) => ({ productId: e.productId, resourceId: e.resourceId ?? null, slotStart: entrySlotISO(e)!, slotEnd: e.slotEnd, partySize: entrySeats(e) }));
+    const credits = pass && creditsUsed > 0 ? { ticketId: pass.ticketId, count: creditsUsed } : null;
+    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, bookings, method, credits };
 
     if (method === "cash") {
       sessionStorage.setItem("pos_cart", JSON.stringify(payload));
@@ -117,9 +172,9 @@ export default function PosPage() {
       return;
     }
     // Non-cash: settle inline, no change step.
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, lines, bookings, taxPct: payload.taxPct, method, amountTendered: total });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, lines, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, payNow: dueNow, credits });
     if (res.ok) {
-      sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change: 0 }));
+      sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change: 0, balance }));
       router.push("/pos/complete");
     } else toast.error(res.error.message);
   };
@@ -170,6 +225,8 @@ export default function PosPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex justify-between text-sm font-medium"><span className="truncate">{e.productName}</span><span className="font-mono">{formatMoney(entryTotal(e), currency)}</span></div>
                     <div className="font-mono text-[11px] text-neutral-400">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.resourceLabel, e.providerLabel].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
+                    {entryCoveredQty(e) > 0 && <div className="font-mono text-[11px] text-success">{entryCoveredQty(e)} paid with pass</div>}
+                    {entryBalance(e) > 0 && <div className="font-mono text-[11px] text-neutral-400">{productById(e.productId)?.policies?.depositPct}% deposit now · {formatMoney(entryBalance(e), currency)} at arrival</div>}
                   </div>
                   {e.productId !== "custom" && <button type="button" aria-label="Edit" onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 active:bg-neutral-200"><Pencil size={15} strokeWidth={1.5} /></button>}
                   <button type="button" aria-label="Remove" onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 text-danger active:bg-neutral-200"><Trash2 size={15} strokeWidth={1.5} /></button>
@@ -189,10 +246,30 @@ export default function PosPage() {
           </div>
           {overLimit && <p className="mb-tight text-[12px] text-danger">Over your {DISCOUNT_LIMIT_PCT}% limit — ask a manager.</p>}
 
+          {/* Credits pass */}
+          <div className="mb-tight flex items-center justify-between">
+            <span className="text-[13px] text-neutral-600">Pass</span>
+            {pass ? (
+              <span className="flex items-center gap-inline font-mono text-[11px]">
+                <span>{pass.code} · {creditsUsed} used · {pass.remaining - creditsUsed} left</span>
+                <button type="button" aria-label="Remove pass" onClick={() => setPass(null)} className="text-danger">✕</button>
+              </span>
+            ) : (
+              <button type="button" onClick={() => setPassOpen(true)} className="h-8 rounded-xs border border-neutral-200 px-tight text-[12px]">Redeem a pass</button>
+            )}
+          </div>
+
           <div className="flex justify-between text-[13px] text-neutral-600"><span>Subtotal</span><span className="font-mono">{formatMoney(subtotal, currency)}</span></div>
           {discount > 0 && <div className="flex justify-between text-[13px] text-neutral-600"><span>Discount</span><span className="font-mono text-danger">−{formatMoney(discount, currency)}</span></div>}
+          {creditsValue > 0 && <div className="flex justify-between text-[13px] text-neutral-600"><span>Pass · {creditsUsed} credits</span><span className="font-mono text-success">−{formatMoney(creditsValue, currency)}</span></div>}
           <div className="flex justify-between text-[13px] text-neutral-600"><span>VAT</span><span className="font-mono">{formatMoney(tax, currency)}</span></div>
           <div className="mt-tight flex justify-between text-lg font-medium"><span>Total</span><span className="font-mono">{formatMoney(total, currency)}</span></div>
+          {balance > 0 && (
+            <>
+              <div className="flex justify-between text-[13px]"><span>Due now</span><span className="font-mono">{formatMoney(dueNow, currency)}</span></div>
+              <div className="flex justify-between text-[13px] text-neutral-600"><span>Balance at arrival</span><span className="font-mono">{formatMoney(balance, currency)}</span></div>
+            </>
+          )}
 
           {/* Payment method selector */}
           <div className="mt-tight flex gap-inline">
@@ -200,7 +277,7 @@ export default function PosPage() {
           </div>
 
           <Button size="lg" fullWidth className="mt-tight" disabled={cart.length === 0 || overLimit} onClick={charge}>
-            {cart.length > 0 ? `Charge ${formatMoney(total, currency)} — ${methodLabel}` : "Charge"}
+            {cart.length > 0 ? `Charge ${formatMoney(dueNow, currency)} — ${methodLabel}` : "Charge"}
           </Button>
         </div>
       </div>
@@ -211,6 +288,12 @@ export default function PosPage() {
         <div className="flex flex-col gap-section">
           <FormField label="Description" placeholder="Miscellaneous" value={customName} onChange={(e) => setCustomName(e.target.value)} />
           <FormField label={`Amount (${currency})`} variant="number" value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} />
+        </div>
+      </Modal>
+
+      <Modal open={passOpen} onClose={() => setPassOpen(false)} title="Redeem a pass" footer={<><Button variant="secondary" onClick={() => setPassOpen(false)}>Cancel</Button><Button onClick={applyPass} disabled={!passCode.trim()} loading={passLoading}>Apply</Button></>}>
+        <div className="flex flex-col gap-section">
+          <FormField label="Pass code" placeholder="CF-2026-000123-01" value={passCode} onChange={(e) => setPassCode(e.target.value)} help="The code on the customer's credits pack ticket. Eligible items in the cart are paid with credits." />
         </div>
       </Modal>
     </div>

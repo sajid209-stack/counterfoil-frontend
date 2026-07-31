@@ -113,10 +113,33 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
   · Spa · Cinema) + **Start fresh**; `loadBusiness` swaps the whole mock (operator + products +
   regenerated 30-day orders); operator state unified in `client.ts`.
 
-**Deferred (named):** capacity-owner unification for guides/providers is model-ready (availability
-keys off `resourceId`) but guide time-selection + conflict isn't wired into the tour POS;
-per-day schedule overrides; deposit charged as partial at POS; Karim's +৳500 per-provider premium;
-credits redemption; refunds releasing capacity (backend TODO).
+### Phase 10 follow-up — the deferred items, closed (2026-07-31)
+
+All frontend-feasible Phase-10 deferrals are now built, browser-verified and deployed:
+
+- **Guide/provider conflict at POS.** ONE capacity-owner mechanism (`ownerBusy`/`isOwnerFree`/
+  `freeGuides` in `slots.ts`): a booking's `resourceId` names whichever owner it occupies —
+  a Resource id OR a Staff id. Tour sheet: slot → "Led by" guide chips (busy guides disabled,
+  first free auto-picked); a slot with seats but no free guide shows "No guide free". Provider
+  sheet (spa): appointment time grid, per-provider availability, "First available" assigns the
+  cheapest free provider.
+- **Per-provider premium.** `Product.providerPremiums` (Karim +৳500) — shown on the chip,
+  added as a "Karim premium" line.
+- **Deposit charged as partial at POS.** Percent-deposit policy → cart shows Due now / Balance
+  at arrival; cash screen collects the deposit; `checkout(payNow)` books the order as
+  `partial`; complete screen prints "Balance due at arrival".
+- **Per-day schedule overrides.** `ProductSchedule.dayOverrides` (Fri 14:00–23:00 while other
+  days run base hours) — ScheduleBuilder row editor + preview "Except Fr 14:00–23:00";
+  `slotTimesOn(schedule, date)` feeds POS grids/matrix/Schedule tab. Seeded on the turf.
+- **Credits redemption.** A sold pack's ticket IS the pass (`Ticket.creditsUsed`).
+  POS "Redeem a pass" → `findCreditPass(code)` validates (pack, expiry, balance) → eligible
+  items covered oldest-first, sold as ৳0 lines (untaxed) → `checkout(credits)` decrements.
+  Demo pass seeded: `CF-2026-PASS01` (3 of 10 used).
+- **Fix:** daily-capped products (BT-06) could never be added at POS (Add demanded a slot
+  time that capped products don't have); negative lines (discounts) no longer mint tickets.
+
+**Still backend-owned:** refunds releasing capacity. **Still deferred by design:** seat maps,
+online checkout, offline mode, receipt hardware, the Jira backlog sweep (after owner review).
 
 ### Phase 9 — full booking engine (6 parts, deploy after each)
 

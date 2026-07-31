@@ -221,7 +221,7 @@ export const products: Product[] = [
     id: "prd_football", name: "Football — Turf", description: "Book a field for an hour. A team per slot.", images: [], categoryId: "cat_events", bookingType: "BT-04",
     tiers: [{ id: "tier_fb_slot", name: "Slot", price: 150000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
-    schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
+    schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], dayOverrides: { 5: { startTime: "14:00", endTime: "23:00" } }, guideIds: [], exceptions: [] },
     resourceIds: ["res_field_1", "res_field_2"], resourceExclusive: true, bufferMinutes: 15,
     pricingRules: [{ id: "pr_fb_wknd", days: [5, 6], fromTime: "18:00", toTime: "23:00", price: 250000 }, { id: "pr_fb_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 200000 }],
     addOns: [{ id: "add_fb_bibs", name: "Bib set", price: 20000, perPerson: false }],
@@ -231,7 +231,7 @@ export const products: Product[] = [
     id: "prd_cricket", name: "Cricket — Turf", description: "Same fields as football — availability is shared.", images: [], categoryId: "cat_events", bookingType: "BT-04",
     tiers: [{ id: "tier_cr_slot", name: "Slot", price: 150000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
-    schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
+    schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], dayOverrides: { 5: { startTime: "14:00", endTime: "23:00" } }, guideIds: [], exceptions: [] },
     resourceIds: ["res_field_1", "res_field_2"], resourceExclusive: true, bufferMinutes: 15,
     pricingRules: [{ id: "pr_cr_wknd", days: [5, 6], fromTime: "18:00", toTime: "23:00", price: 250000 }, { id: "pr_cr_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 200000 }],
     createdAt: T, updatedAt: T,
@@ -251,6 +251,7 @@ export const products: Product[] = [
     tiers: [{ id: "tier_ms_60", name: "60 min", price: 300000, active: true }, { id: "tier_ms_90", name: "90 min", price: 450000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, schedule: null,
     providerIds: ["stf_nadia", "stf_karim"], providerNoun: "Therapist", providerPickable: true, flexibleDurations: [60, 90],
+    providerPremiums: { stf_karim: 50000 },
     addOns: [{ id: "add_ms_oils", name: "Premium oils", price: 30000, perPerson: false }],
     policies: { salesWindowDays: 60, cutoffMinutes: 60, cancellation: "fee", cancelHours: 12, cancelFeePct: 50, reschedule: "until", rescheduleHours: 12, reentry: "single", deposit: "percent", depositPct: 50, partyMin: 1, partyMax: 2 },
     createdAt: T, updatedAt: T,
@@ -498,7 +499,14 @@ const sales = generateSales({
   taxRatePct: operator.taxRatePct,
 });
 export const orders = sales.orders;
-export const tickets = sales.tickets;
+
+// A sold 10-Class Yoga Pack with 3 credits already spent — its code is the
+// pass a customer hands over at POS ("Redeem a pass" → 7 credits left).
+const yogaPassTicket = {
+  id: "tkt_pass_demo", code: "CF-2026-PASS01", orderId: "ord_seed", productId: "prd_yoga_pack",
+  tierName: "Pack", status: "issued" as const, validFor: "2026-07-20", redeemedAt: null, creditsUsed: 3,
+};
+export const tickets = [...sales.tickets, yogaPassTicket];
 
 // Explicit turf bookings on Field 1 — created via Football but they block the
 // field for Cricket too (shared availability). Evenings mostly sold; some today.
@@ -515,4 +523,14 @@ const turfBookings = [
   bk("bkg_f1_sat20", "res_field_1", "2026-08-01", "20:00"),
   bk("bkg_f2_sat21", "res_field_2", "2026-08-01", "21:00"),
 ];
-export const bookings = [...sales.bookings, ...turfBookings];
+
+// Ayesha already leads the Saturday 10:00 walking tour — guides are capacity
+// owners, so any other 10:00 departure that day offers only Rahim.
+const guidedBookings = [
+  {
+    id: "bkg_tour_sat10", orderId: "ord_seed", productId: "prd_tour", locationId: "loc_fort",
+    resourceId: "stf_ayesha", slotStart: "2026-08-01T10:00:00+06:00", slotEnd: "2026-08-01T11:30:00+06:00",
+    partySize: 6, status: "confirmed" as const,
+  },
+];
+export const bookings = [...sales.bookings, ...turfBookings, ...guidedBookings];

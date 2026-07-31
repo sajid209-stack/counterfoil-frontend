@@ -77,9 +77,13 @@ export function loadBusiness(name: string, currency: string, productIds: string[
   (store as Record<string, unknown[]>).products = structuredClone(seed.products).filter((p) => productIds.includes(p.id));
   (store as Record<string, unknown[]>).resources = structuredClone(seed.resources);
   const sales = generateSales({ products: store.products as never, locations: seed.locations, staff: seed.staff, taxRatePct: operatorState.taxRatePct });
+  // Keep the hand-authored seed rows that belong to this business: the demo
+  // credits pass and the explicit turf/guide bookings (the sharing proofs).
+  const keepTickets = structuredClone(seed.tickets).filter((t) => t.creditsUsed != null && productIds.includes(t.productId));
+  const keepBookings = structuredClone(seed.bookings).filter((b) => b.orderId === "ord_seed" && productIds.includes(b.productId));
   (store as Record<string, unknown[]>).orders = sales.orders;
-  (store as Record<string, unknown[]>).tickets = sales.tickets;
-  (store as Record<string, unknown[]>).bookings = sales.bookings;
+  (store as Record<string, unknown[]>).tickets = [...sales.tickets, ...keepTickets];
+  (store as Record<string, unknown[]>).bookings = [...sales.bookings, ...keepBookings];
 }
 
 /** Empty the operator's data for the golden path ("Start fresh"). */

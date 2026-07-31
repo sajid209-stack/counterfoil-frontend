@@ -4,15 +4,18 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { Button, FormField, useToast } from "@/components/ui";
 import {
+  freeGuides,
   getDailyRemaining,
   getResourceMatrix,
   getSlots,
   isOpenOn,
+  isOwnerFree,
   joinWaitlist,
   type Product,
+  type ProductSchedule,
   type Staff,
 } from "@/lib/api";
-import { isFlexibleResource, isResourceType, needsSchedule, slotISO, slotTimes } from "@/lib/schedule";
+import { isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
 import { formatMoney } from "@/lib/format";
 
@@ -32,6 +35,15 @@ export interface CartEntry {
 
 const TODAY = "2026-07-29";
 const TOMORROW = "2026-07-30";
+
+// Providers without a configured schedule sell appointments on these hours.
+const PROVIDER_DAY: ProductSchedule = {
+  slotMinutes: 60, sessionMinutes: 60, startTime: "10:00", endTime: "19:00",
+  capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [],
+};
+
+const endISO = (date: string, time: string, minutes: number) =>
+  slotISO(date, toTime(toMinutes(time) + minutes));
 
 export function ProductSheet({
   product,
@@ -56,6 +68,7 @@ export function ProductSheet({
   const resourceMode = isResourceType(bt);
   const flexible = isFlexibleResource(bt);
   const provider = bt === "BT-10";
+  const guided = bt === "BT-09";
   const course = bt === "BT-13";
   const sectioned = (product.sections?.length ?? 0) > 0 || bt === "BT-07";
 
@@ -63,6 +76,7 @@ export function ProductSheet({
   const [slotTime, setSlotTime] = useState<string | undefined>(initial?.slotTime);
   const [resourceId, setResourceId] = useState<string | undefined>(initial?.resourceId);
   const [providerId, setProviderId] = useState<string | undefined>();
+  const [guideId, setGuideId] = useState<string | undefined>();
   const [duration, setDuration] = useState<number>(product.flexibleDurations?.[0] ?? 60);
   const [qty, setQty] = useState<Record<string, number>>(() => {
     const q: Record<string, number> = {};
@@ -103,9 +117,37 @@ export function ProductSheet({
   const basePrice = activeTiers.length ? Math.min(...activeTiers.map((t) => t.price)) : 0;
 
   const providers = team.filter((m) => (product.providerIds ?? []).includes(m.id));
-  const flexTimes = flexible ? slotTimes(product.schedule ?? ({ slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "22:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] })) : [];
+  const flexTimes = flexible ? slotTimesOn(product.schedule ?? ({ ...PROVIDER_DAY, startTime: "06:00", endTime: "22:00" }), date) : [];
 
   const partySize = Object.values(qty).reduce((s, n) => s + n, 0);
+
+  // ── Guided (BT-09): guides are capacity owners, shared across products ─────
+  const guides = guided ? team.filter((m) => (product.schedule?.guideIds ?? []).includes(m.id)) : [];
+  const slotGuides = guided && slotTime ? freeGuides(product, date, slotTime) : [];
+
+  // ── Provider (BT-10): appointment times + per-provider conflict/premium ────
+  const premiumOf = (id: string) => product.providerPremiums?.[id] ?? 0;
+  // Session length follows the chosen tier ("90 min" tier → 90), else the first
+  // configured duration.
+  const providerDuration = (() => {
+    const durs = product.flexibleDurations ?? [60];
+    const chosen = activeTiers.filter((t) => (qty[t.id] ?? 0) > 0);
+    const match = durs.filter((d) => chosen.some((t) => t.name.includes(String(d))));
+    return match.length ? Math.max(...match) : (durs[0] ?? 60);
+  })();
+  const providerTimes = provider ? slotTimesOn(product.schedule ?? PROVIDER_DAY, date) : [];
+  const freeProvidersAt = (time: string) =>
+    providers
+      .filter((p) => isOwnerFree(p.id, date, time, providerDuration))
+      .sort((a, b) => premiumOf(a.id) - premiumOf(b.id));
+  const providerTimeFree = (time: string) =>
+    providerId ? isOwnerFree(providerId, date, time, providerDuration) : freeProvidersAt(time).length > 0;
+  // The provider who will actually take the appointment (chosen or cheapest free).
+  const assignedProvider = provider && slotTime
+    ? (providerId ? providers.find((p) => p.id === providerId) : freeProvidersAt(slotTime)[0])
+    : undefined;
+
+  const depositPct = product.policies?.deposit === "percent" ? product.policies.depositPct : 0;
 
   const dateBtn = (value: string, label: string) => (
     <button key={value} type="button" onClick={() => { setDate(value); setSlotTime(undefined); setResourceId(undefined); }} className={`h-10 rounded-sm border px-comfortable text-sm ${date === value ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{label}</button>
@@ -113,21 +155,31 @@ export function ProductSheet({
 
   const submitTiered = () => {
     const list = sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: s.name, price: s.price })) : activeTiers.map((t) => ({ id: t.id, name: t.name, price: t.price }));
+    const items = [...list.filter((x) => qty[x.id] > 0).map((x) => ({ tierId: x.id, tierName: x.name, unitPrice: x.price, qty: qty[x.id] })), ...addOnItems()];
+    // Owner of the session's capacity: the chosen guide or assigned provider.
+    const owner = guided ? guides.find((g) => g.id === guideId) : assignedProvider;
+    if (provider && assignedProvider && premiumOf(assignedProvider.id) > 0) {
+      items.push({ tierId: `prem_${assignedProvider.id}`, tierName: `${assignedProvider.name.split(" ")[0]} premium`, unitPrice: premiumOf(assignedProvider.id), qty: 1 });
+    }
+    const minutes = provider ? providerDuration : (product.schedule?.sessionMinutes || product.schedule?.slotMinutes || 60);
     onAdd({
       id: initial?.id ?? `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`,
       productId: product.id, productName: product.name,
       slotDate: needsSchedule(bt) && !resourceMode ? date : provider || course ? date : undefined,
       slotTime: (!resourceMode && slotTime) || undefined,
-      providerLabel: provider ? providers.find((p) => p.id === providerId)?.name : undefined,
-      items: [...list.filter((x) => qty[x.id] > 0).map((x) => ({ tierId: x.id, tierName: x.name, unitPrice: x.price, qty: qty[x.id] })), ...addOnItems()],
+      slotEnd: (guided || provider) && slotTime ? endISO(date, slotTime, minutes) : undefined,
+      resourceId: owner?.id,
+      providerLabel: owner?.name,
+      items,
     });
   };
 
-  const submitResource = (rId: string, rLabel: string, time: string, price: number) => {
+  const submitResource = (rId: string, rLabel: string, time: string, price: number, minutes?: number) => {
     onAdd({
       id: initial?.id ?? `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`,
       productId: product.id, productName: product.name,
       slotDate: date, slotTime: time, resourceId: rId, resourceLabel: rLabel,
+      slotEnd: endISO(date, time, minutes ?? product.schedule?.sessionMinutes ?? 60),
       items: addOnItems(), fixedPrice: price,
     });
   };
@@ -136,7 +188,7 @@ export function ProductSheet({
     if (!resourceId || !slotTime) return;
     const r = getResourceMatrix(product, date).find((row) => row.resource.id === resourceId);
     const price = resolveProductPrice(product, date, slotTime, basePrice);
-    submitResource(resourceId, r?.resource.name ?? "", slotTime, price * (duration / 60));
+    submitResource(resourceId, r?.resource.name ?? "", slotTime, price * (duration / 60), duration);
   };
 
   const doWaitlist = async () => {
@@ -146,7 +198,13 @@ export function ProductSheet({
     onClose();
   };
 
-  const canAddTiered = partySize > 0 && openToday && (provider ? !!providerId || !product.providerPickable : true) && (course || !needsSchedule(bt) || resourceMode ? true : !!slotTime);
+  const canAddTiered =
+    partySize > 0 && openToday &&
+    // A time is only demanded where there ARE times: slot grids (BT-03/09).
+    // Daily-capped (BT-06) and courses sell on the date alone.
+    (!isSlotBased(bt) || resourceMode ? true : !!slotTime) &&
+    (!guided || guides.length === 0 || (!!guideId && slotGuides.includes(guideId))) &&
+    (!provider || (!!slotTime && !!assignedProvider && providerTimeFree(slotTime)));
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true">
@@ -210,15 +268,32 @@ export function ProductSheet({
           </div>
         )}
 
-        {/* Provider cards */}
+        {/* Provider cards + appointment times (conflict-aware per provider) */}
         {provider && (
           <div className="mb-section flex flex-col gap-tight">
             <div className="flex flex-wrap gap-tight">
               {product.providerPickable && providers.map((p) => (
-                <button key={p.id} type="button" onClick={() => setProviderId(p.id)} className={`rounded-sm border px-comfortable py-tight text-sm ${providerId === p.id ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{p.name}</button>
+                <button key={p.id} type="button" onClick={() => setProviderId(p.id)} className={`rounded-sm border px-comfortable py-tight text-sm ${providerId === p.id ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>
+                  {p.name}{premiumOf(p.id) > 0 && <span className={`ml-inline font-mono text-[11px] ${providerId === p.id ? "opacity-70" : "text-neutral-400"}`}>+{formatMoney(premiumOf(p.id), currency)}</span>}
+                </button>
               ))}
               <button type="button" onClick={() => setProviderId(undefined)} className={`rounded-sm border px-comfortable py-tight text-sm ${!providerId ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>First available</button>
             </div>
+            <span className="type-label mt-tight text-[11px] text-neutral-400">Start time · {providerDuration} min</span>
+            <div className="flex flex-wrap gap-inline">
+              {providerTimes.map((t) => {
+                const free = providerTimeFree(t);
+                return (
+                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-10 rounded-sm border px-comfortable font-mono text-[13px] ${!free ? "border-neutral-200 bg-neutral-50 text-neutral-400 line-through" : slotTime === t ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{t}</button>
+                );
+              })}
+            </div>
+            {slotTime && assignedProvider && !providerId && (
+              <p className="text-[12px] text-neutral-600">First available at {slotTime}: {assignedProvider.name}{premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}</p>
+            )}
+            {slotTime && !providerTimeFree(slotTime) && (
+              <p className="text-[12px] text-danger">{providers.find((p) => p.id === providerId)?.name ?? "Everyone"} is busy at {slotTime} — pick another time.</p>
+            )}
           </div>
         )}
 
@@ -235,13 +310,32 @@ export function ProductSheet({
           <div className="mb-section grid grid-cols-3 gap-tight sm:grid-cols-4">
             {slots.map((s) => {
               const left = s.remaining - seatsInCart(product.id, slotISO(date, s.time));
-              const full = left <= 0;
+              // A departure needs a free guide as well as seats.
+              const guideless = guided && guides.length > 0 && freeGuides(product, date, s.time).length === 0;
+              const full = left <= 0 || guideless;
               const price = resolveProductPrice(product, date, s.time, basePrice);
               if (full && product.waitlistEnabled) {
                 return <button key={s.time} type="button" onClick={() => setWl({ time: s.time })} className="flex h-16 flex-col items-center justify-center rounded-sm border border-warning bg-warning/10 text-warning"><span className="font-mono">{s.time}</span><span className="text-[10px]">Join waitlist</span></button>;
               }
-              return <button key={s.time} type="button" disabled={full} onClick={() => setSlotTime(s.time)} className={`flex h-16 flex-col items-center justify-center gap-0.5 rounded-sm border text-sm ${full ? "border-neutral-200 bg-neutral-50 text-neutral-400" : slotTime === s.time ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}><span className="font-mono">{s.time}</span><span className="font-mono text-[11px]">{formatMoney(price, currency)}</span><span className="text-[10px] opacity-70">{full ? "FULL" : `${left} left`}</span></button>;
+              return <button key={s.time} type="button" disabled={full} onClick={() => { setSlotTime(s.time); if (guided) setGuideId(freeGuides(product, date, s.time)[0]); }} className={`flex h-16 flex-col items-center justify-center gap-0.5 rounded-sm border text-sm ${full ? "border-neutral-200 bg-neutral-50 text-neutral-400" : slotTime === s.time ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}><span className="font-mono">{s.time}</span><span className="font-mono text-[11px]">{formatMoney(price, currency)}</span><span className="text-[10px] opacity-70">{guideless ? "No guide free" : full ? "FULL" : `${left} left`}</span></button>;
             })}
+          </div>
+        )}
+
+        {/* Guided: pick who leads — busy guides (on ANY product) can't be chosen */}
+        {guided && slotTime && guides.length > 0 && openToday && (
+          <div className="mb-section flex flex-col gap-tight">
+            <span className="type-label text-[11px] text-neutral-400">Led by</span>
+            <div className="flex flex-wrap gap-tight">
+              {guides.map((g) => {
+                const free = slotGuides.includes(g.id);
+                return (
+                  <button key={g.id} type="button" disabled={!free} onClick={() => setGuideId(g.id)} className={`rounded-sm border px-comfortable py-tight text-sm ${!free ? "border-neutral-200 bg-neutral-50 text-neutral-400" : guideId === g.id ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>
+                    {g.name}{!free && <span className="ml-inline text-[11px]"> · busy</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -263,7 +357,12 @@ export function ProductSheet({
               ))}
             </div>
             {renderAddOns()}
-            <Button size="lg" fullWidth className="mt-section" disabled={!canAddTiered} onClick={submitTiered}>{course ? "Enrol" : "Add to sale"}</Button>
+            {depositPct > 0 && (
+              <p className="mt-section rounded-sm border border-neutral-200 bg-white p-comfortable text-[13px] text-neutral-600">
+                Deposit: <span className="font-medium text-ink">{depositPct}% now</span>, balance at arrival.
+              </p>
+            )}
+            <Button size="lg" fullWidth className={depositPct > 0 ? "mt-tight" : "mt-section"} disabled={!canAddTiered} onClick={submitTiered}>{course ? "Enrol" : "Add to sale"}</Button>
           </>
         )}
 

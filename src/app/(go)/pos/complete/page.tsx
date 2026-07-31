@@ -8,7 +8,7 @@ import { formatMoney } from "@/lib/format";
 
 export default function CompletePage() {
   const router = useRouter();
-  const [info, setInfo] = useState<{ code: string; change: number } | null>(null);
+  const [info, setInfo] = useState<{ code: string; change: number; balance?: number } | null>(null);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("pos_complete");
@@ -45,6 +45,11 @@ export default function CompletePage() {
           {info.change > 0 && (
             <p className="type-body text-neutral-600">
               Change due <span className="font-mono text-ink">{formatMoney(info.change)}</span>
+            </p>
+          )}
+          {(info.balance ?? 0) > 0 && (
+            <p className="type-body text-neutral-600">
+              Balance due at arrival <span className="font-mono text-ink">{formatMoney(info.balance!)}</span>
             </p>
           )}
         </>

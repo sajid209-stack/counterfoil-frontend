@@ -192,6 +192,13 @@ export interface ScheduleException {
   times?: string[];
 }
 
+/** Different hours on a specific weekday (Fri 14:00–23:00 while other days
+ *  run the schedule's base hours). Keyed by day-of-week 0–6. */
+export interface DayHours {
+  startTime: string; // "14:00"
+  endTime: string; // "23:00"
+}
+
 /** Schedule config for timed products. Present only for BT-03 / BT-06 / BT-09;
  *  null for open (BT-01) and date-range (BT-02) products.
  *  - slot-based (BT-03/09): slotMinutes/startTime/endTime/capacityPerSession
@@ -204,6 +211,7 @@ export interface ProductSchedule {
   capacityPerSession: number; // seats per slot (BT-03/09)
   dailyCapacity: number | null; // BT-06 (null for slot-based)
   openDays: number[]; // 0–6
+  dayOverrides?: Record<number, DayHours>; // per-day hours that differ from base
   guideIds: string[]; // BT-09 — team members who can lead
   exceptions: ScheduleException[];
 }
@@ -234,6 +242,7 @@ export interface Product {
   providerIds?: ID[]; // BT-10 people who deliver this
   providerNoun?: string; // "Therapist" / "Instructor"
   providerPickable?: boolean; // BT-10 choose by name vs first-available
+  providerPremiums?: Record<ID, Minor>; // per-provider surcharge (Karim +৳500)
   bundleComponentIds?: ID[]; // BT-08 products combined into this ticket
   credits?: { count: number; expiryDays: number; productIds: ID[] } | null; // BT-12
   courseDates?: ISODate[]; // BT-13 session dates
@@ -410,6 +419,7 @@ export interface Ticket {
   status: TicketStatus;
   validFor: ISODate;
   redeemedAt: ISODateTime | null;
+  creditsUsed?: number; // BT-12 packs: credits spent against this pass so far
 }
 
 export type BookingStatus = "confirmed" | "cancelled";
