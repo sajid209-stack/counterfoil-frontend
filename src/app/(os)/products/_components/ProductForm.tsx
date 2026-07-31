@@ -16,8 +16,11 @@ import {
   type Resource,
   type Staff,
 } from "@/lib/api";
-import { defaultSchedule, isResourceType, needsSchedule } from "@/lib/schedule";
+import { defaultSchedule, isFlexibleResource, isResourceType, needsSchedule, slotTimes } from "@/lib/schedule";
+import { defaultDurationConfig, durationOptions } from "@/lib/duration";
+import type { DurationConfig } from "@/lib/api";
 import { BookingSetup, type BookingSetupResult } from "./BookingSetup";
+import { DurationEngineField } from "./DurationEngineField";
 import { ScheduleBuilder } from "./ScheduleBuilder";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
 import { PricingRulesField, type FormPricingRule } from "./PricingRulesField";
@@ -64,6 +67,20 @@ interface FormState {
   policies: ProductPolicies;
   addOns: FormAddOn[];
   images: FormImage[];
+  // Per-type configuration (defaults apply; only the relevant ones render).
+  durationConfig: DurationConfig | null;
+  validityMode: "unlimited" | "days" | "same_day";
+  validityDaysStr: string;
+  windowMode: "rolling" | "fixed";
+  windowStart: string;
+  windowEnd: string;
+  sessionNames: Record<string, string>;
+  minPartyToRun: string;
+  meetingPoint: string;
+  providerExtras: Record<string, { premium: string; durations: string }>;
+  creditsPerBooking: string;
+  joinPartway: boolean;
+  passIdentifierLabel: string;
 }
 
 function fromProduct(p: Product): FormState {
@@ -93,6 +110,29 @@ function fromProduct(p: Product): FormState {
     policies: p.policies ?? defaultPolicies(),
     addOns: (p.addOns ?? []).map((a) => ({ id: a.id, name: a.name, price: minorToMajor(a.price), perPerson: a.perPerson })),
     images: p.images.map((img) => ({ id: img.id, url: img.url, alt: img.alt })),
+    durationConfig: p.durationConfig ?? (isFlexibleResource(p.bookingType)
+      ? {
+          ...defaultDurationConfig(p.tiers[0]?.price ?? 0),
+          minMinutes: p.flexibleDurations?.[0] ?? 60,
+          maxMinutes: p.flexibleDurations?.at(-1) ?? 180,
+          incrementMinutes: p.flexibleDurations && p.flexibleDurations.length > 1 ? p.flexibleDurations[1] - p.flexibleDurations[0] : 30,
+        }
+      : null),
+    validityMode: p.validityMode ?? (p.bookingType === "BT-01" ? "unlimited" : "days"),
+    validityDaysStr: p.validityDays != null ? String(p.validityDays) : "",
+    windowMode: p.windowMode ?? "rolling",
+    windowStart: p.windowStart ?? "",
+    windowEnd: p.windowEnd ?? "",
+    sessionNames: p.sessionNames ?? {},
+    minPartyToRun: p.minPartyToRun != null ? String(p.minPartyToRun) : "",
+    meetingPoint: p.meetingPoint ?? "",
+    providerExtras: Object.fromEntries((p.providerIds ?? []).map((id) => [id, {
+      premium: p.providerPremiums?.[id] != null ? minorToMajor(p.providerPremiums[id]) : "",
+      durations: (p.providerDurations?.[id] ?? p.flexibleDurations ?? []).join(", "),
+    }])),
+    creditsPerBooking: String(p.creditsPerBooking ?? 1),
+    joinPartway: !!p.joinPartway,
+    passIdentifierLabel: p.passIdentifierLabel ?? "",
   };
 }
 
@@ -148,6 +188,7 @@ export function ProductForm({
   const save = async () => {
     setSaving(true);
     setErrors({});
+    const bt = state.booking.bookingType;
     const channels: Channel[] = [];
     if (state.counter) channels.push("counter");
     if (state.online) channels.push("online");
@@ -163,12 +204,35 @@ export function ProductForm({
       status: state.active ? "active" : "inactive",
       maxPerOrder: numOrUndef(state.maxPerOrder),
       minAge: numOrUndef(state.minAge),
-      validityDays: state.booking.validityDays,
+      validityMode: bt === "BT-01" ? state.validityMode : undefined,
+      validityDays: bt === "BT-01"
+        ? (state.validityMode === "days" ? numOrUndef(state.validityDaysStr) : undefined)
+        : bt === "BT-02"
+          ? (state.windowMode === "rolling" ? (numOrUndef(state.validityDaysStr) ?? state.booking.validityDays) : undefined)
+          : state.booking.validityDays,
+      windowMode: bt === "BT-02" ? state.windowMode : undefined,
+      windowStart: bt === "BT-02" && state.windowMode === "fixed" ? state.windowStart || undefined : undefined,
+      windowEnd: bt === "BT-02" && state.windowMode === "fixed" ? state.windowEnd || undefined : undefined,
+      sessionNames: bt === "BT-03" ? state.sessionNames : undefined,
+      minPartyToRun: bt === "BT-09" ? numOrUndef(state.minPartyToRun) : undefined,
+      meetingPoint: bt === "BT-09" ? state.meetingPoint || undefined : undefined,
+      creditsPerBooking: bt === "BT-12" ? (numOrUndef(state.creditsPerBooking) ?? 1) : undefined,
+      joinPartway: bt === "BT-13" ? state.joinPartway : undefined,
+      passIdentifierLabel: bt === "BT-14" ? state.passIdentifierLabel || undefined : undefined,
+      providerPremiums: Object.keys(state.providerExtras).length
+        ? Object.fromEntries(Object.entries(state.providerExtras).filter(([, v]) => v.premium !== "").map(([id, v]) => [id, majorToMinor(v.premium)]))
+        : product.providerPremiums,
+      providerDurations: Object.keys(state.providerExtras).length
+        ? Object.fromEntries(Object.entries(state.providerExtras).map(([id, v]) => [id, v.durations.split(/[,\s]+/).map((s) => parseInt(s, 10)).filter((n) => n > 0)]))
+        : product.providerDurations,
       schedule: needsSchedule(state.booking.bookingType) ? state.schedule : null,
       resourceIds: state.booking.resource?.resourceIds,
       resourceExclusive: state.booking.resource?.exclusive,
       bufferMinutes: state.booking.resource?.bufferMinutes,
-      flexibleDurations: state.booking.resource?.flexibleDurations,
+      durationConfig: isFlexibleResource(bt) ? state.durationConfig : null,
+      flexibleDurations: isFlexibleResource(bt) && state.durationConfig
+        ? durationOptions(state.durationConfig)
+        : state.booking.resource?.flexibleDurations,
       pricingRules: state.pricingRules.filter((r) => r.price !== "").map((r) => ({ id: r.id ?? `pr_${globalThis.crypto.randomUUID().slice(0, 8)}`, days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: majorToMinor(r.price) })),
       // Preserve the type-specific config unless re-derived via the flow.
       providerIds: state.booking.provider?.providerIds ?? product.providerIds,
@@ -227,14 +291,43 @@ export function ProductForm({
                     ...s,
                     booking: b,
                     schedule: needsSchedule(b.bookingType) ? (s.schedule ?? defaultSchedule(b.bookingType)) : null,
+                    durationConfig: isFlexibleResource(b.bookingType)
+                      ? { ...(s.durationConfig ?? defaultDurationConfig(majorToMinor(s.tiers[0]?.price ?? ""))), ...(b.resource?.durationCore ?? {}) }
+                      : null,
                   }));
                 }}
               />
             </div>
+            {isFlexibleResource(state.booking.bookingType) && state.durationConfig && (
+              <div>
+                <p className="type-h2 mb-section text-base">Durations & pricing</p>
+                <DurationEngineField
+                  value={state.durationConfig}
+                  onChange={(cfg) => set("durationConfig", cfg)}
+                  currency={currency}
+                  pricingRules={state.pricingRules.filter((r) => r.price !== "").map((r) => ({ id: r.id ?? "preview", days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: majorToMinor(r.price) }))}
+                />
+              </div>
+            )}
             {needsSchedule(state.booking.bookingType) && state.schedule && (
               <div>
                 <p className="type-h2 mb-section text-base">Schedule</p>
                 <ScheduleBuilder bookingType={state.booking.bookingType} value={state.schedule} onChange={(sch) => set("schedule", sch)} team={team} />
+              </div>
+            )}
+            <TypeSpecificFields state={state} set={set} team={team} providerNoun={product.providerNoun} />
+            {state.booking.bookingType === "BT-03" && state.schedule && (
+              <div className="flex flex-col gap-tight">
+                <span className="type-label text-[12px] text-neutral-600">Session names (optional)</span>
+                <p className="text-[12px] text-neutral-400">Name a session and the name shows on tickets and the schedule — &quot;Morning show&quot;.</p>
+                <div className="grid gap-tight sm:grid-cols-3">
+                  {slotTimes(state.schedule).map((t) => (
+                    <div key={t} className="flex items-center gap-tight">
+                      <span className="w-14 font-mono text-[13px] text-neutral-600">{t}</span>
+                      <input type="text" value={state.sessionNames[t] ?? ""} placeholder="—" onChange={(e) => set("sessionNames", { ...state.sessionNames, [t]: e.target.value })} className="h-10 w-full rounded-sm border border-neutral-200 px-comfortable text-sm outline-none focus:border-ink" />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             <div className="grid gap-section sm:grid-cols-2">
@@ -304,6 +397,97 @@ export function ProductForm({
       </div>
     </div>
   );
+}
+
+/** The per-type completeness fields — each renders only for its booking type,
+ *  always with a sensible default already in place. */
+function TypeSpecificFields({
+  state,
+  set,
+  team,
+  providerNoun,
+}: {
+  state: FormState;
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void;
+  team: Staff[];
+  providerNoun?: string;
+}) {
+  const bt = state.booking.bookingType;
+
+  if (bt === "BT-01") {
+    return (
+      <div className="grid gap-section sm:grid-cols-2">
+        <FormField label="Valid after purchase" variant="select" value={state.validityMode} onChange={(e) => set("validityMode", e.target.value as FormState["validityMode"])} options={[{ value: "unlimited", label: "Until used — no expiry" }, { value: "days", label: "For N days" }, { value: "same_day", label: "Same day only" }]} help="When an unused ticket stops being accepted." />
+        {state.validityMode === "days" && <FormField label="Valid for (days)" variant="number" value={state.validityDaysStr} onChange={(e) => set("validityDaysStr", e.target.value)} />}
+      </div>
+    );
+  }
+
+  if (bt === "BT-02") {
+    return (
+      <div className="grid gap-section sm:grid-cols-3">
+        <FormField label="Window" variant="select" value={state.windowMode} onChange={(e) => set("windowMode", e.target.value as FormState["windowMode"])} options={[{ value: "rolling", label: "N days from purchase" }, { value: "fixed", label: "Fixed season dates" }]} help="Rolling: each ticket's window starts when it's bought." />
+        {state.windowMode === "rolling" ? (
+          <FormField label="Valid for (days)" variant="number" value={state.validityDaysStr} onChange={(e) => set("validityDaysStr", e.target.value)} />
+        ) : (
+          <>
+            <FormField label="From" variant="date" value={state.windowStart} onChange={(e) => set("windowStart", e.target.value)} />
+            <FormField label="To" variant="date" value={state.windowEnd} onChange={(e) => set("windowEnd", e.target.value)} />
+          </>
+        )}
+      </div>
+    );
+  }
+
+  if (bt === "BT-09") {
+    return (
+      <div className="grid gap-section sm:grid-cols-2">
+        <FormField label="Minimum party to run" variant="number" value={state.minPartyToRun} onChange={(e) => set("minPartyToRun", e.target.value)} help="Departures with fewer booked can be cancelled." />
+        <FormField label="Meeting point" value={state.meetingPoint} placeholder="Main gate" onChange={(e) => set("meetingPoint", e.target.value)} help="Printed on the ticket." />
+      </div>
+    );
+  }
+
+  if (bt === "BT-10") {
+    const ids = state.booking.provider?.providerIds ?? Object.keys(state.providerExtras);
+    if (ids.length === 0) return null;
+    return (
+      <div className="flex flex-col gap-tight">
+        <span className="type-label text-[12px] text-neutral-600">Per-{(state.booking.provider?.noun ?? providerNoun ?? "provider").toLowerCase()} price & durations</span>
+        {ids.map((id) => {
+          const extra = state.providerExtras[id] ?? { premium: "", durations: "" };
+          const name = team.find((m) => m.id === id)?.name ?? id;
+          return (
+            <div key={id} className="grid items-center gap-tight sm:grid-cols-[1fr_10rem_12rem]">
+              <span className="text-sm">{name}</span>
+              <FormField label="Extra charge" variant="number" placeholder="0" value={extra.premium} onChange={(e) => set("providerExtras", { ...state.providerExtras, [id]: { ...extra, premium: e.target.value } })} />
+              <FormField label="Durations (min)" placeholder="60, 90" value={extra.durations} onChange={(e) => set("providerExtras", { ...state.providerExtras, [id]: { ...extra, durations: e.target.value } })} />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (bt === "BT-12") {
+    return (
+      <FormField label="Credits per booking" variant="number" value={state.creditsPerBooking} onChange={(e) => set("creditsPerBooking", e.target.value)} className="max-w-xs" help="What one booking costs from the pack — a 2-hour slot might cost 2." />
+    );
+  }
+
+  if (bt === "BT-13") {
+    return (
+      <FormField label="Can join partway" variant="toggle" checked={state.joinPartway} onChange={(e) => set("joinPartway", (e.target as HTMLInputElement).checked)} help="Sell enrolment after the course has started." />
+    );
+  }
+
+  if (bt === "BT-14") {
+    return (
+      <FormField label="Identifier asked at issue" value={state.passIdentifierLabel} placeholder="Plate number" onChange={(e) => set("passIdentifierLabel", e.target.value)} className="max-w-xs" help="What staff type in when issuing this pass." />
+    );
+  }
+
+  return null;
 }
 
 function AdvancedRow({ label, value }: { label: string; value: string }) {

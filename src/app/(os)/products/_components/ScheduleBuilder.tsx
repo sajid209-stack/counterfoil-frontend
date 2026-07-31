@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
-import { FormField } from "@/components/ui";
+import { DurationInput, FormField, TimeInput } from "@/components/ui";
 import type { BookingTypeCode, DayHours, ProductSchedule, Staff } from "@/lib/api";
 import {
   DAY_LABELS,
@@ -13,8 +13,7 @@ import {
   slotTimes,
 } from "@/lib/schedule";
 
-const SLOT_INTERVALS = [15, 30, 45, 60];
-const SESSION_LENGTHS = [30, 45, 60, 90, 120];
+const DURATION_CHIPS = [15, 30, 45, 60, 90, 120];
 
 export function ScheduleBuilder({
   bookingType,
@@ -70,10 +69,10 @@ export function ScheduleBuilder({
     <div className="flex flex-col gap-section">
       {isSlotBased(bookingType) && (
         <div className="grid gap-section sm:grid-cols-2">
-          <FormField label="Sessions every" variant="select" value={String(value.slotMinutes)} onChange={(e) => set("slotMinutes", parseInt(e.target.value, 10))} options={SLOT_INTERVALS.map((n) => ({ value: String(n), label: `${n} min` }))} />
-          <FormField label="Each session lasts" variant="select" value={String(value.sessionMinutes)} onChange={(e) => set("sessionMinutes", parseInt(e.target.value, 10))} options={SESSION_LENGTHS.map((n) => ({ value: String(n), label: `${n} min` }))} />
-          <FormField label="First session" variant="text" value={value.startTime} onChange={(e) => set("startTime", e.target.value)} help="HH:MM" />
-          <FormField label="Last session" variant="text" value={value.endTime} onChange={(e) => set("endTime", e.target.value)} help="HH:MM" />
+          <DurationInput label="Sessions every" value={value.slotMinutes} min={5} onChange={(n) => set("slotMinutes", n)} chips={DURATION_CHIPS} help='Type anything — "45", "1:30", "1h15" all work.' />
+          <DurationInput label="Each session lasts" value={value.sessionMinutes} min={5} onChange={(n) => set("sessionMinutes", n)} chips={DURATION_CHIPS} />
+          <TimeInput label="First session" value={value.startTime} onChange={(t) => set("startTime", t)} help='Type "930", "1830" or "6:30p".' />
+          <TimeInput label="Last session" value={value.endTime} onChange={(t) => set("endTime", t)} />
           <FormField label="Each session holds" variant="number" value={String(value.capacityPerSession)} onChange={(e) => set("capacityPerSession", parseInt(e.target.value, 10) || 0)} />
         </div>
       )}
@@ -105,9 +104,9 @@ export function ScheduleBuilder({
                     <option key={x} value={x}>{DAY_NAMES[x]}</option>
                   ))}
                 </select>
-                <input type="text" value={hrs.startTime} onChange={(e) => setOverride(d, { ...hrs, startTime: e.target.value })} placeholder="HH:MM" className="h-10 w-24 rounded-sm border border-neutral-200 px-tight text-center font-mono text-[13px] outline-none focus:border-ink" />
+                <TimeInput value={hrs.startTime} onChange={(t) => setOverride(d, { ...hrs, startTime: t })} className="w-32" />
                 <span className="text-neutral-400">–</span>
-                <input type="text" value={hrs.endTime} onChange={(e) => setOverride(d, { ...hrs, endTime: e.target.value })} placeholder="HH:MM" className="h-10 w-24 rounded-sm border border-neutral-200 px-tight text-center font-mono text-[13px] outline-none focus:border-ink" />
+                <TimeInput value={hrs.endTime} onChange={(t) => setOverride(d, { ...hrs, endTime: t })} className="w-32" />
                 <button type="button" aria-label="Remove override" onClick={() => setOverride(d, null)} className="text-neutral-400 hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
               </div>
             );

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormField } from "@/components/ui";
+import { DurationInput, FormField } from "@/components/ui";
 import type { ProductPolicies } from "@/lib/api";
 
 export function policySummary(p: ProductPolicies): string {
@@ -21,15 +21,15 @@ export function PoliciesField({ value, onChange }: { value: ProductPolicies; onC
 
       <Section title="Sales window">
         <FormField label="Bookable up to (days ahead)" variant="number" value={String(value.salesWindowDays)} onChange={(e) => set("salesWindowDays", num(e.target.value))} />
-        <FormField label="Sales cut-off before start (min)" variant="number" value={String(value.cutoffMinutes)} onChange={(e) => set("cutoffMinutes", num(e.target.value))} />
+        <DurationInput label="Sales cut-off before start" value={value.cutoffMinutes} onChange={(n) => set("cutoffMinutes", n)} chips={[0, 15, 30, 60]} help="Stop selling this long before the session starts." />
       </Section>
 
       <Section title="Cancellation & reschedule">
         <FormField label="Cancellation" variant="select" value={value.cancellation} onChange={(e) => set("cancellation", e.target.value as ProductPolicies["cancellation"])} options={[{ value: "none", label: "Not allowed" }, { value: "free_until", label: "Free until N hours" }, { value: "fee", label: "Fee" }]} />
-        {value.cancellation === "free_until" && <FormField label="Free until (hours before)" variant="number" value={String(value.cancelHours)} onChange={(e) => set("cancelHours", num(e.target.value))} />}
+        {value.cancellation === "free_until" && <DurationInput label="Free until before start" value={value.cancelHours * 60} step={60} onChange={(n) => set("cancelHours", Math.round(n / 60))} chips={[12 * 60, 24 * 60, 48 * 60]} />}
         {value.cancellation === "fee" && <FormField label="Cancellation fee (%)" variant="number" value={String(value.cancelFeePct)} onChange={(e) => set("cancelFeePct", num(e.target.value))} />}
         <FormField label="Reschedule" variant="select" value={value.reschedule} onChange={(e) => set("reschedule", e.target.value as ProductPolicies["reschedule"])} options={[{ value: "none", label: "Not allowed" }, { value: "until", label: "Allowed until N hours" }]} />
-        {value.reschedule === "until" && <FormField label="Reschedule until (hours before)" variant="number" value={String(value.rescheduleHours)} onChange={(e) => set("rescheduleHours", num(e.target.value))} />}
+        {value.reschedule === "until" && <DurationInput label="Reschedule until before start" value={value.rescheduleHours * 60} step={60} onChange={(n) => set("rescheduleHours", Math.round(n / 60))} chips={[12 * 60, 24 * 60, 48 * 60]} />}
       </Section>
 
       <Section title="Entry & payment">

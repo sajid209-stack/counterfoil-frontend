@@ -12,3 +12,5 @@ export { Tabs } from "./Tabs";
 export type { TabItem } from "./Tabs";
 export { DataTable } from "./DataTable";
 export type { Column, DataTableProps } from "./DataTable";
+export { DurationInput } from "./DurationInput";
+export { TimeInput } from "./TimeInput";

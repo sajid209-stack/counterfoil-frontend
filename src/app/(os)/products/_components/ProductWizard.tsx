@@ -136,6 +136,16 @@ export function ProductWizard({
       resourceExclusive: booking.resource?.exclusive,
       bufferMinutes: booking.resource?.bufferMinutes,
       flexibleDurations: booking.resource?.flexibleDurations,
+      // Flexible: seed the duration engine from the wizard's core; the editor
+      // refines the pricing model (defaults to hourly at the first tier price).
+      durationConfig: booking.resource?.durationCore
+        ? {
+            ...booking.resource.durationCore,
+            pricingModel: "hourly" as const,
+            hourlyRate: majorToMinor(tiers[0]?.price ?? ""),
+            mustEndByClose: true, walkInRoundMinutes: 15, leadTimeMinutes: 0,
+          }
+        : undefined,
       pricingRules: pricingRules.filter((r) => r.price !== "").map((r) => ({ id: r.id ?? `pr_${globalThis.crypto.randomUUID().slice(0, 8)}`, days: r.days, fromTime: r.fromTime, toTime: r.toTime, price: majorToMinor(r.price) })),
       providerIds: booking.provider?.providerIds,
       providerNoun: booking.provider?.noun,

@@ -23,6 +23,7 @@ import {
   listResources,
   listStaff,
 } from "@/lib/api";
+import { behaviourSubtitle } from "@/lib/behaviour";
 import { ProductForm } from "../_components/ProductForm";
 
 export default function ProductDetailPage() {
@@ -74,7 +75,7 @@ export default function ProductDetailPage() {
   return (
     <PageShell
       title={product?.name ?? "Product"}
-      description={product ? `Booking type ${product.bookingType}` : undefined}
+      description={product ? behaviourSubtitle(product, { resources: resourcesQ.data?.data, team: team.data?.data }) : undefined}
       actions={
         product && !archived ? (
           <Button

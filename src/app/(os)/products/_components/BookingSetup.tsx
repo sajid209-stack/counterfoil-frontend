@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Pencil, Plus, X } from "lucide-react";
-import { Button, FormField } from "@/components/ui";
+import { Button, DurationInput, FormField } from "@/components/ui";
+import { formatDuration } from "@/lib/duration";
 import type { BookingTypeCode, Product, Resource, Staff } from "@/lib/api";
 
 /* Plain questions → the BT code is DERIVED, never shown. Covers all 14 types. */
@@ -11,7 +12,11 @@ export interface BookingSetupResult {
   bookingType: BookingTypeCode;
   summary: string;
   validityDays?: number;
-  resource?: { resourceIds: string[]; exclusive: boolean; bufferMinutes: number; flexibleDurations?: number[] };
+  resource?: {
+    resourceIds: string[]; exclusive: boolean; bufferMinutes: number; flexibleDurations?: number[];
+    /** Flexible only — the duration-engine core; the editor holds the rest. */
+    durationCore?: { minMinutes: number; maxMinutes: number; incrementMinutes: number };
+  };
   provider?: { providerIds: string[]; noun: string; pickable: boolean; durationMinutes: number };
   course?: { dates: string[]; capacity: number };
   bundle?: { componentIds: string[] };
@@ -52,7 +57,10 @@ export function BookingSetup({
   const [picked, setPicked] = useState<string[]>([]);
   const [fixed, setFixed] = useState(true);
   const [exclusive, setExclusive] = useState(true);
-  const [buffer, setBuffer] = useState("0");
+  const [buffer, setBuffer] = useState(0);
+  const [durMin, setDurMin] = useState(60);
+  const [durMax, setDurMax] = useState(180);
+  const [durInc, setDurInc] = useState(30);
   const [newName, setNewName] = useState("");
   const [newNoun, setNewNoun] = useState(resources[0]?.nounSingular ?? "Field");
   const [adding, setAdding] = useState(false);
@@ -91,10 +99,21 @@ export function BookingSetup({
 
   const finishResource = () => {
     const bookingType: BookingTypeCode = fixed && exclusive ? "BT-04" : "BT-05";
-    const buf = parseInt(buffer, 10) > 0 ? ` ${buffer} min gap.` : "";
-    onChange({ bookingType, summary: `Visitors book a ${noun.toLowerCase()} for ${fixed ? "a fixed slot" : "a start time and duration"}. ${exclusive ? "One at a time" : "Shared"}.${buf} ${picked.length} ${noun}${picked.length === 1 ? "" : "s"}.`, resource: { resourceIds: picked, exclusive, bufferMinutes: parseInt(buffer, 10) || 0, flexibleDurations: fixed ? undefined : [60, 90, 120] } });
+    const buf = buffer > 0 ? ` ${formatDuration(buffer)} gap.` : "";
+    const flexOptions: number[] = [];
+    if (!fixed) for (let d = durMin; d <= durMax; d += durInc) flexOptions.push(d);
+    const timing = fixed ? "a fixed slot" : `${formatDuration(durMin)}–${formatDuration(durMax)} in ${formatDuration(durInc)} steps`;
+    onChange({
+      bookingType,
+      summary: `Visitors book a ${noun.toLowerCase()} for ${timing}. ${exclusive ? "One at a time" : "Shared"}.${buf} ${picked.length} ${noun}${picked.length === 1 ? "" : "s"}.`,
+      resource: {
+        resourceIds: picked, exclusive, bufferMinutes: buffer,
+        flexibleDurations: fixed ? undefined : flexOptions,
+        durationCore: fixed ? undefined : { minMinutes: durMin, maxMinutes: durMax, incrementMinutes: durInc },
+      },
+    });
   };
-  const finishProvider = () => onChange({ bookingType: "BT-10", summary: `Visitors book a ${provNoun.toLowerCase()} for ${provDuration} min${provPickable ? ", chosen by name" : " — first available"}. ${provIds.length} ${provNoun.toLowerCase()}${provIds.length === 1 ? "" : "s"}.`, provider: { providerIds: provIds, noun: provNoun, pickable: provPickable, durationMinutes: parseInt(provDuration, 10) || 60 } });
+  const finishProvider = () => onChange({ bookingType: "BT-10", summary: `Visitors book a ${provNoun.toLowerCase()} for ${formatDuration(parseInt(provDuration, 10) || 60)}${provPickable ? ", chosen by name" : " — first available"}. ${provIds.length} ${provNoun.toLowerCase()}${provIds.length === 1 ? "" : "s"}.`, provider: { providerIds: provIds, noun: provNoun, pickable: provPickable, durationMinutes: parseInt(provDuration, 10) || 60 } });
   const finishCourse = () => onChange({ bookingType: "BT-13", summary: `A course of ${courseDates.length} sessions, ${courseCap} places across the course.`, course: { dates: courseDates, capacity: parseInt(courseCap, 10) || 0 } });
   const finishBundle = () => onChange({ bookingType: "BT-08", summary: `One ticket combining ${bundleIds.length} products.`, bundle: { componentIds: bundleIds } });
   const finishCredits = () => onChange({ bookingType: "BT-12", summary: `A pack of ${creditCount} credits, valid ${creditExpiry} days, spendable on ${creditIds.length} products.`, credits: { count: parseInt(creditCount, 10) || 0, expiryDays: parseInt(creditExpiry, 10) || 0, productIds: creditIds } });
@@ -162,8 +181,15 @@ export function BookingSetup({
             </div>
           </div>
           <Radio label="How is time booked?" value={fixed ? "fixed" : "flex"} onChange={(v) => setFixed(v === "fixed")} options={[{ value: "fixed", label: "Fixed slots", helper: "Set start times." }, { value: "flex", label: "Flexible", helper: "Start time + duration." }]} />
+          {!fixed && (
+            <div className="grid gap-section sm:grid-cols-3">
+              <DurationInput label="Shortest booking" value={durMin} min={5} onChange={setDurMin} chips={[30, 60]} />
+              <DurationInput label="Longest booking" value={durMax} min={5} onChange={setDurMax} chips={[120, 180]} />
+              <DurationInput label="In steps of" value={durInc} min={5} step={5} onChange={setDurInc} chips={[15, 30, 60]} help="Pricing per duration is set in the editor after this." />
+            </div>
+          )}
           <Radio label={`One booking at a time per ${noun.toLowerCase()}?`} value={exclusive ? "yes" : "no"} onChange={(v) => setExclusive(v === "yes")} options={[{ value: "yes", label: "Yes — exclusive", helper: "The turf case." }, { value: "no", label: "No — shared", helper: "Several at once." }]} />
-          <FormField label="Gap between bookings (min)" variant="number" value={buffer} onChange={(e) => setBuffer(e.target.value)} className="max-w-xs" />
+          <DurationInput label="Gap between bookings" value={buffer} onChange={setBuffer} chips={[0, 10, 15, 30]} className="max-w-xs" />
           <FlowFooter onBack={() => setStep("q1")} onDone={finishResource} disabled={picked.length === 0} />
         </div>
       )}
@@ -177,7 +203,7 @@ export function BookingSetup({
               <label key={m.id} className="flex cursor-pointer items-center gap-tight text-sm"><input type="checkbox" checked={provIds.includes(m.id)} onChange={() => setProvIds((p) => toggle(p, m.id))} className="h-4 w-4 accent-ember" />{m.name}</label>
             ))}
           </div>
-          <FormField label="How long does it take? (min)" variant="number" value={provDuration} onChange={(e) => setProvDuration(e.target.value)} className="max-w-xs" />
+          <DurationInput label="How long does it take?" value={parseInt(provDuration, 10) || 60} min={5} onChange={(n) => setProvDuration(String(n))} chips={[30, 45, 60, 90]} className="max-w-xs" />
           <FormField label="Can visitors pick the person?" variant="toggle" checked={provPickable} onChange={(e) => setProvPickable((e.target as HTMLInputElement).checked)} help="Off = first available." />
           <FlowFooter onBack={() => setStep("q1")} onDone={finishProvider} disabled={provIds.length === 0} />
         </div>

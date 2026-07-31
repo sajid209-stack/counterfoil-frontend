@@ -17,6 +17,7 @@ import {
 } from "@/lib/api";
 import { isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
+import { durationOptions, formatDuration, productDurationPrice } from "@/lib/duration";
 import { formatMoney } from "@/lib/format";
 
 export interface CartEntry {
@@ -77,7 +78,11 @@ export function ProductSheet({
   const [resourceId, setResourceId] = useState<string | undefined>(initial?.resourceId);
   const [providerId, setProviderId] = useState<string | undefined>();
   const [guideId, setGuideId] = useState<string | undefined>();
-  const [duration, setDuration] = useState<number>(product.flexibleDurations?.[0] ?? 60);
+  // Flexible durations come from the duration engine when configured.
+  const flexOptions = product.durationConfig
+    ? durationOptions(product.durationConfig)
+    : (product.flexibleDurations ?? [60, 90, 120]);
+  const [duration, setDuration] = useState<number>(flexOptions[0] ?? 60);
   const [qty, setQty] = useState<Record<string, number>>(() => {
     const q: Record<string, number> = {};
     const list = sectioned ? (product.sections ?? []).map((s) => s.id) : activeTiers.map((t) => t.id);
@@ -187,8 +192,9 @@ export function ProductSheet({
   const submitFlexible = () => {
     if (!resourceId || !slotTime) return;
     const r = getResourceMatrix(product, date).find((row) => row.resource.id === resourceId);
-    const price = resolveProductPrice(product, date, slotTime, basePrice);
-    submitResource(resourceId, r?.resource.name ?? "", slotTime, price * (duration / 60), duration);
+    // Engine price: model + time-band blending across the booked span.
+    const price = productDurationPrice(product, date, slotTime, duration, basePrice);
+    submitResource(resourceId, r?.resource.name ?? "", slotTime, price, duration);
   };
 
   const doWaitlist = async () => {
@@ -263,7 +269,7 @@ export function ProductSheet({
             <span className="type-label text-[11px] text-neutral-400">Start time</span>
             <div className="flex flex-wrap gap-inline">{flexTimes.map((t) => <button key={t} type="button" onClick={() => setSlotTime(t)} className={`h-10 rounded-sm border px-comfortable font-mono text-[13px] ${slotTime === t ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{t}</button>)}</div>
             <span className="type-label text-[11px] text-neutral-400">Duration</span>
-            <div className="flex gap-tight">{(product.flexibleDurations ?? [60, 90, 120]).map((d) => <button key={d} type="button" onClick={() => setDuration(d)} className={`h-10 flex-1 rounded-sm border text-sm ${duration === d ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{d} min</button>)}</div>
+            <div className="flex flex-wrap gap-tight">{flexOptions.map((d) => <button key={d} type="button" onClick={() => setDuration(d)} className={`h-10 flex-1 whitespace-nowrap rounded-sm border px-tight text-sm ${duration === d ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{formatDuration(d)}{slotTime ? <span className="ml-inline font-mono text-[11px] opacity-70">{formatMoney(productDurationPrice(product, date, slotTime, d, basePrice), currency)}</span> : null}</button>)}</div>
             <Button size="lg" fullWidth className="mt-tight" disabled={!resourceId || !slotTime} onClick={submitFlexible}>Add to sale</Button>
           </div>
         )}

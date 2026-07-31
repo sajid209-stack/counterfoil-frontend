@@ -22,8 +22,8 @@ export function behaviourSubtitle(
     case "BT-09": return sch ? `Guided · every ${sch.slotMinutes} min` : "Guided departures";
     case "BT-04": return `${sch?.slotMinutes === 60 ? "Hourly" : "Fixed"} slots · ${resNoun()}`;
     case "BT-05": {
-      const from = product.flexibleDurations?.[0];
-      return `From ${from ?? 60} min · ${resNoun()}`;
+      const from = product.durationConfig?.minMinutes ?? product.flexibleDurations?.[0] ?? 60;
+      return `From ${from % 60 === 0 ? `${from / 60} hr` : `${from} min`} · ${resNoun()}`;
     }
     case "BT-10": {
       const names = (ctx.team ?? []).filter((m) => (product.providerIds ?? []).includes(m.id)).map((m) => m.name.split(" ")[0]);

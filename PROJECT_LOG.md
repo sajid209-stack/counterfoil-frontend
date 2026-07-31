@@ -94,6 +94,32 @@ Work proceeds in checkpoints. **Stop at every checkpoint. Do not chain phases.**
 | **8** | Configuration drives the product — schedule builder, seed catalogue, POS reads config, reports | ✅ Done |
 | **9** | Full booking engine — all 14 types, resources as first-class shared objects, pricing rules, IA restructure, design pass | ✅ Done |
 | **10** | Operational layer — tax, policies, add-ons, tier composition, session-first POS, demo businesses | ✅ Done |
+| **11 (P1)** | Master plan P1 — duration engine (liquid time), DurationInput/TimeInput primitives, per-type editor completeness | ✅ Done |
+
+### Master plan (counterfoil_master_plan.md, local) — P1–P10 sequence
+
+The 2026-07-31 master plan supersedes the previous plan docs and runs P1→P10, deploy between
+each. P2 (policies/add-ons/tiers/tax/capacity owners), most of P6 (Schedule/Check-In) and P7
+(demo businesses) were largely delivered in Phase 10 — remaining prompts fill gaps.
+
+**P1 ✅ (2026-07-31)** — the configuration model:
+- **`DurationInput` + `TimeInput`** (`src/components/ui`): free-typed with forgiving parsing
+  (`90`, `1:30`, `1h30`, `1.5` → 1 hr 30 min; `1830`, `6:30p` → 18:30 — `lib/duration.ts`),
+  stepper/scroll adjustment, quick chips that FILL not limit, inline parse errors. Replaced
+  every preset-only duration/time control in OS (ScheduleBuilder, Policies, wizard flows).
+- **The duration engine (BT-05)** — `DurationConfig` on Product: min/max/increment (validated:
+  increment must divide the range), three pricing models (price list w/ fill-from-hourly ·
+  hourly rate · base+extension), must-end-by-close, walk-in rounding, lead time.
+  `lib/duration.ts` prices any span with **time-band blending** (a 17:00 90-min bowling
+  booking = 1h @৳800 + 0.5h evening @৳1,200 = ৳1,400 — browser-verified). Editor =
+  `DurationEngineField` with the mandatory concrete-numbers preview; wizard flexible flow
+  collects the core; POS sheet chips are engine-generated with per-duration prices.
+- **Per-type completeness**: validity-after-purchase (BT-01) · rolling/fixed window (BT-02) ·
+  session names (BT-03, seeded "Morning show") · min-party-to-run + meeting point (BT-09) ·
+  per-provider price/durations (BT-10) · credits-per-booking (BT-12) · join-partway (BT-13) ·
+  pass identifier label (BT-14). All with defaults, in the right editor tab.
+- Fixed a standing-rule violation: product page header showed "Booking type BT-05" — now the
+  derived behaviour subtitle.
 
 ### Phase 10 — the missing operational layer (4 parts, all deployed)
 

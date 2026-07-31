@@ -161,6 +161,25 @@ export interface PriceTier {
   active: boolean;
 }
 
+// ── The duration engine (liquid time — flexible resource products) ──────────
+export type DurationPricingModel = "list" | "hourly" | "base_extension";
+
+/** How a flexible product books time. Valid durations = min + n×increment.
+ *  Time-band PricingRules layer on top of whichever model is chosen. */
+export interface DurationConfig {
+  minMinutes: number; // nothing shorter is bookable
+  maxMinutes: number; // cap per booking
+  incrementMinutes: number; // must divide (max − min)
+  pricingModel: DurationPricingModel;
+  priceList?: Record<number, Minor>; // "list": explicit price per duration
+  hourlyRate?: Minor; // "hourly": one rate, prorated per increment
+  basePrice?: Minor; // "base_extension": the first block (minMinutes)
+  extensionPrice?: Minor; // "base_extension": each additional increment
+  mustEndByClose: boolean; // on: latest start = close − duration
+  walkInRoundMinutes: number; // "Start now" rounds to this
+  leadTimeMinutes: number; // minimum notice before start
+}
+
 /** An optional extra attached to a product (shoe hire, bibs, oils). */
 export interface AddOn {
   id: ID;
@@ -230,19 +249,31 @@ export interface Product {
   archivedAt: ISODateTime | null; // set iff status === "archived"
   maxPerOrder?: number;
   minAge?: number;
-  validityDays?: number; // BT-02 only
+  validityMode?: "unlimited" | "days" | "same_day"; // BT-01 validity after purchase
+  validityDays?: number; // BT-01 ("days" mode) / BT-02 window length
+  windowMode?: "rolling" | "fixed"; // BT-02: N days from purchase vs season dates
+  windowStart?: ISODate; // BT-02 fixed/season window
+  windowEnd?: ISODate;
   schedule?: ProductSchedule | null; // slot/capacity timing (BT-03/04/06/09)
+  sessionNames?: Record<string, string>; // BT-03: "11:00" → "Morning show"
   // Resource booking (BT-04 exclusive fields, BT-05 flexible lanes):
   resourceIds?: ID[]; // resources this product can be booked on
   resourceExclusive?: boolean; // one booking at a time per resource (BT-04) vs shared (BT-05)
   bufferMinutes?: number; // gap between bookings for changeover/cleaning
-  flexibleDurations?: number[]; // BT-05 selectable durations, minutes
+  flexibleDurations?: number[]; // BT-05 selectable durations (derived from durationConfig)
+  durationConfig?: DurationConfig | null; // BT-05/BT-14 — the duration engine
   pricingRules?: PricingRule[]; // time/day price overrides, first match wins
   sections?: ProductSection[]; // BT-07 named sections (Stalls/Balcony/VIP)
   providerIds?: ID[]; // BT-10 people who deliver this
   providerNoun?: string; // "Therapist" / "Instructor"
   providerPickable?: boolean; // BT-10 choose by name vs first-available
   providerPremiums?: Record<ID, Minor>; // per-provider surcharge (Karim +৳500)
+  providerDurations?: Record<ID, number[]>; // per-provider offered durations
+  minPartyToRun?: number; // BT-09: departure runs only with N+ booked
+  meetingPoint?: string; // BT-09: printed on the ticket
+  creditsPerBooking?: number; // BT-12: credits one booking costs (default 1)
+  joinPartway?: boolean; // BT-13: can enrol after the course starts
+  passIdentifierLabel?: string; // BT-14: "Plate number"
   bundleComponentIds?: ID[]; // BT-08 products combined into this ticket
   credits?: { count: number; expiryDays: number; productIds: ID[] } | null; // BT-12
   courseDates?: ISODate[]; // BT-13 session dates
