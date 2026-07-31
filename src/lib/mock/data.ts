@@ -297,6 +297,15 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
+    id: "prd_parking", name: "Parking Pass", description: "Issued at the gate against a plate number.", images: [], categoryId: null, bookingType: "BT-14",
+    tiers: [{ id: "tier_pk", name: "Pass", price: 10000, active: true }],
+    locationIds: ["loc_fort"], channels: ["counter"], status: "active", archivedAt: null,
+    flexibleDurations: [30, 60, 120, 180],
+    passIdentifierLabel: "Plate number",
+    taxClass: "exempt",
+    createdAt: T, updatedAt: T,
+  },
+  {
     id: "prd_yoga", name: "Yoga Session", description: "Drop-in class, capped — join the waitlist when full.", images: [], categoryId: "cat_tours", bookingType: "BT-06",
     tiers: [{ id: "tier_yg", name: "Drop-in", price: 50000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, waitlistEnabled: true,

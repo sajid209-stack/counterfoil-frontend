@@ -160,6 +160,12 @@ Phase 10; this adds the rest):
 - **Custom amount** gains a tax class (entry carries its own rate).
 - **Cart line tap** reopens its sheet with state loaded (pencil retained).
 
+**P6 ✅ (2026-07-31)** — Schedule tab, Check-In, nav and waitlist rows were Phase 10 (and
+gained out-of-service overflow in P3, Extend in P4). The build item here: **Quick pass reads
+its product's configuration** — a seeded BT-14 "Parking Pass" (excluded from the POS grid)
+supplies the durations, per-hour price (followed by the duration picker, still editable) and
+the identifier label ("Plate number") that the issue screen now asks for.
+
 ### Phase 10 — the missing operational layer (4 parts, all deployed)
 
 - **Part 1 — POS structure + tax.** Behaviour subtitles on tiles (derived, no codes); category

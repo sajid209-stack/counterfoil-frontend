@@ -1,31 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CircleCheck } from "lucide-react";
 import { Button, FormField } from "@/components/ui";
-import { checkout } from "@/lib/api";
+import { checkout, listProducts } from "@/lib/api";
+import { useApiQuery } from "@/lib/useApi";
+import { formatDuration } from "@/lib/duration";
 import { formatMoney } from "@/lib/format";
 
-const DURATIONS = [30, 60, 120, 180];
-
-// BT-14 — field-issued pass. Quick issue on the spot: duration, price, optional
-// identifier (e.g. a plate). Not in the product grid.
+// BT-14 — field-issued pass. Quick issue on the spot: duration, price and the
+// identifier the product's config asks for ("Plate number"). Not in the grid.
 export default function QuickPassPage() {
+  const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
+  const passProduct = useMemo(() => productsQ.data?.data.find((p) => p.bookingType === "BT-14"), [productsQ.data]);
+  const durations = passProduct?.flexibleDurations ?? [30, 60, 120, 180];
+  const idLabel = passProduct?.passIdentifierLabel || "Identifier";
+  const baseMinor = passProduct?.tiers.find((t) => t.active)?.price ?? 10000; // per hour
+
   const [duration, setDuration] = useState(60);
-  const [price, setPrice] = useState("100");
+  const [priceEdit, setPriceEdit] = useState<string | null>(null); // null = follow config
   const [identifier, setIdentifier] = useState("");
   const [issuing, setIssuing] = useState(false);
   const [code, setCode] = useState<string | null>(null);
+
+  const price = priceEdit ?? String(Math.round((baseMinor * duration) / 60) / 100);
 
   const issue = async () => {
     setIssuing(true);
     const minor = Math.round((parseFloat(price) || 0) * 100);
     const res = await checkout({
       channel: "counter",
-      locationId: "loc_fort",
+      locationId: passProduct?.locationIds[0] ?? "loc_fort",
       counterId: null,
       staffId: null,
-      lines: [{ productId: "quick_pass", productName: `Pass · ${duration} min`, tierName: identifier || "Pass", quantity: 1, unitPrice: minor }],
+      lines: [{ productId: passProduct?.id ?? "quick_pass", productName: `${passProduct?.name ?? "Pass"} · ${formatDuration(duration)}`, tierName: identifier || "Pass", quantity: 1, unitPrice: minor, taxRatePct: 0 }],
       taxPct: 0,
       method: "cash",
       amountTendered: minor,
@@ -56,14 +64,14 @@ export default function QuickPassPage() {
       <div className="flex flex-col gap-tight">
         <span className="type-label text-[12px] text-neutral-600">Duration</span>
         <div className="flex gap-tight">
-          {DURATIONS.map((d) => (
-            <button key={d} type="button" onClick={() => setDuration(d)} className={`h-12 flex-1 rounded-sm border text-sm ${duration === d ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{d} min</button>
+          {durations.map((d) => (
+            <button key={d} type="button" onClick={() => { setDuration(d); setPriceEdit(null); }} className={`h-12 flex-1 rounded-sm border text-sm ${duration === d ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{formatDuration(d)}</button>
           ))}
         </div>
       </div>
 
-      <FormField label="Price (৳)" variant="number" value={price} onChange={(e) => setPrice(e.target.value)} />
-      <FormField label="Identifier (optional)" placeholder="Plate / name" value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
+      <FormField label="Price (৳)" variant="number" value={price} onChange={(e) => setPriceEdit(e.target.value)} help={priceEdit == null ? "From the pass configuration — edit to override." : undefined} />
+      <FormField label={idLabel} placeholder={idLabel} value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
 
       <Button size="lg" fullWidth loading={issuing} onClick={issue}>Issue pass · {formatMoney(Math.round((parseFloat(price) || 0) * 100))}</Button>
     </main>

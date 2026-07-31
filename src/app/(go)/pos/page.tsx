@@ -83,6 +83,7 @@ export default function PosPage() {
 
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "";
   const shown = products
+    .filter((p) => p.bookingType !== "BT-14") // field passes issue from Quick pass, not the grid
     .filter((p) => category === "all" || p.categoryId === category)
     .filter((p) => {
       const q = query.trim().toLowerCase();
