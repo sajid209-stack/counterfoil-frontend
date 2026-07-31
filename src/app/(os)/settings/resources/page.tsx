@@ -47,7 +47,7 @@ export default function ResourcesPage() {
     <PageShell
       title={noun}
       description="Spaces and equipment guests book — shared across products. Availability is computed per resource."
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/resources/new")}>Add {data?.data[0]?.nounSingular ?? "resource"}</Button>}
+      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/resources/new")}>Add {data?.data[0]?.nounSingular ?? "resource"}</Button>}
     >
       <DataTable
         columns={columns}
@@ -56,7 +56,7 @@ export default function ResourcesPage() {
         loading={loading}
         sort={sort}
         onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
-        onRowClick={(r) => router.push(`/resources/${r.id}`)}
+        onRowClick={(r) => router.push(`/settings/resources/${r.id}`)}
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">
@@ -70,7 +70,7 @@ export default function ResourcesPage() {
             </select>
           </div>
         }
-        emptyState={<EmptyState title="No resources yet" message="Add a field, court, lane or room that guests can book." action={<Button onClick={() => router.push("/resources/new")}>Add resource</Button>} />}
+        emptyState={<EmptyState title="No resources yet" message="Add a field, court, lane or room that guests can book." action={<Button onClick={() => router.push("/settings/resources/new")}>Add resource</Button>} />}
         pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}
       />
     </PageShell>

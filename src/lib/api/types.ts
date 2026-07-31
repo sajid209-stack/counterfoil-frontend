@@ -451,6 +451,7 @@ export interface Ticket {
   validFor: ISODate;
   redeemedAt: ISODateTime | null;
   creditsUsed?: number; // BT-12 packs: credits spent against this pass so far
+  admitted?: number; // group tickets: people through the gate so far (3 of 4)
 }
 
 export type BookingStatus = "confirmed" | "cancelled";

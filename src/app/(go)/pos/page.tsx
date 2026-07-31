@@ -66,7 +66,19 @@ export default function PosPage() {
   }, [products]);
 
   const entryTotal = (e: CartEntry) => (e.fixedPrice ?? 0) + e.items.reduce((s, i) => s + i.unitPrice * i.qty, 0);
-  const entrySeats = (e: CartEntry) => (e.fixedPrice != null ? 1 : e.items.reduce((s, i) => s + i.qty, 0));
+  // Party size = people admitted, not lines: tier admits (Family = 4) and
+  // section seats count; add-ons and premiums don't.
+  const entrySeats = (e: CartEntry) => {
+    if (e.fixedPrice != null) return 1;
+    const p = productById(e.productId);
+    const seats = e.items.reduce((s, i) => {
+      const tier = p?.tiers.find((t) => t.id === i.tierId);
+      if (tier) return s + i.qty * (tier.admits ?? 1);
+      if (p?.sections?.some((sec) => sec.id === i.tierId)) return s + i.qty;
+      return s;
+    }, 0);
+    return seats > 0 ? seats : e.items.reduce((s, i) => s + i.qty, 0);
+  };
   const entrySlotISO = (e: CartEntry) => (e.slotDate ? (e.slotTime ? slotISO(e.slotDate, e.slotTime) : slotISO(e.slotDate, "10:00")) : undefined);
   const entryTaxRate = (e: CartEntry) => { const p = productById(e.productId); return p ? taxRateFor(p, operator) : 0; };
 

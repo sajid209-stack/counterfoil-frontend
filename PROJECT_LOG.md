@@ -121,6 +121,20 @@ each. P2 (policies/add-ons/tiers/tax/capacity owners), most of P6 (Schedule/Chec
 - Fixed a standing-rule violation: product page header showed "Booking type BT-05" — now the
   derived behaviour subtitle.
 
+**P2 ✅ (2026-07-31)** — mostly delivered in Phase 10 (policies · add-ons · tax from config ·
+capacity owners · deposits); the missing piece was **tier composition at the gate**:
+- Family tier seeded on General Admission (৳1,400 · admits 4 · "2 adults + 2 children";
+  age notes on tiers, shown on POS tier rows).
+- **Group scan**: `Ticket.admitted` + `admitTicket()`/`ticketAdmits()` — scanning a group
+  ticket shows "ADMIT 4 · Family · group of 4 · 0 in" with +1 / Admit-all; partial groups
+  honoured (3 in, 1 remains, re-scan continues); fully admitted → redeemed → refused.
+- POS party size now counts **people** (tier admits × qty; sections count; add-ons don't).
+
+**P3 ✅ (2026-07-31)** — IA: Resources moved to `/settings/resources` (sub-nav slot between
+Counters and Team, labelled with the operator's noun when uniform); removed from the main
+sidebar. **Out-of-service (with reason) actionable from the Go Schedule tab** row overflow —
+mark/return with a reason, rows show OUT. Wizard inline-creation unchanged.
+
 ### Phase 10 — the missing operational layer (4 parts, all deployed)
 
 - **Part 1 — POS structure + tax.** Behaviour subtitles on tiles (derived, no codes); category

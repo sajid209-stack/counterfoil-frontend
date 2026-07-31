@@ -17,7 +17,7 @@ export default function ResourceDetailPage() {
   if (!res.loading && (res.error || !res.data)) {
     return (
       <PageShell title="Resource">
-        <EmptyState title="Resource not found" action={<Button onClick={() => router.push("/resources")}>Back</Button>} />
+        <EmptyState title="Resource not found" action={<Button onClick={() => router.push("/settings/resources")}>Back</Button>} />
       </PageShell>
     );
   }
@@ -27,7 +27,7 @@ export default function ResourceDetailPage() {
       title={res.data?.name ?? "Resource"}
       actions={res.data ? (res.data.outOfService ? <StatusPill tone="danger">Out of service</StatusPill> : <StatusPill status={res.data.status} />) : undefined}
     >
-      <Link href="/resources" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/resources" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
         <ArrowLeft size={14} strokeWidth={1.5} /> Resources
       </Link>
       {res.loading || locs.loading || !res.data ? (

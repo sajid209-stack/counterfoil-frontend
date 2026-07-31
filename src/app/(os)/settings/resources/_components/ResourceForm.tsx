@@ -74,7 +74,7 @@ export function ResourceForm({
     setSaving(false);
     if (res.ok) {
       toast.success(mode === "create" ? `${input.nounSingular} added.` : "Changes saved.");
-      if (mode === "create") router.push(`/resources/${res.data.id}`);
+      if (mode === "create") router.push(`/settings/resources/${res.data.id}`);
       else setState(fromResource(res.data));
     } else if (res.error.code === "validation" && res.error.fieldErrors) {
       setErrors(res.error.fieldErrors);
@@ -118,7 +118,7 @@ export function ResourceForm({
       </div>
 
       <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-neutral-200 bg-paper py-section">
-        <Button variant="secondary" onClick={() => router.push("/resources")} disabled={saving}>Cancel</Button>
+        <Button variant="secondary" onClick={() => router.push("/settings/resources")} disabled={saving}>Cancel</Button>
         <Button onClick={save} loading={saving} disabled={!dirty && mode === "edit"}>{mode === "create" ? "Add" : "Save changes"}</Button>
       </div>
     </div>

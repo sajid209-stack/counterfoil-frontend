@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, EmptyState } from "@/components/ui";
+import { MoreHorizontal } from "lucide-react";
+import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getResourceMatrix, getSlots, listProducts, type Product } from "@/lib/api";
+import { getResourceMatrix, getSlots, listProducts, listResources, updateResource, type Product, type Resource } from "@/lib/api";
 import { isResourceType, isSlotBased } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
 import { formatMoney } from "@/lib/format";
@@ -18,12 +19,18 @@ interface Row {
   state: string; // "OPEN" | "BOOKED" | "FULL" | "12/40"
   full: boolean;
   product: Product;
+  resourceId?: string;
 }
 
 export default function SchedulePage() {
   const router = useRouter();
+  const toast = useToast();
   const [date, setDate] = useState(TODAY);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
+  const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
+  const [oos, setOos] = useState<Resource | null>(null); // out-of-service dialog
+  const [oosReason, setOosReason] = useState("");
+  const [oosSaving, setOosSaving] = useState(false);
 
   const rows = useMemo<Row[]>(() => {
     const out: Row[] = [];
@@ -31,7 +38,7 @@ export default function SchedulePage() {
       if (isResourceType(p.bookingType) && !p.flexibleDurations) {
         for (const r of getResourceMatrix(p, date)) {
           for (const s of r.slots) {
-            out.push({ time: s.time, label: `${p.name} — ${r.resource.name}`, state: s.available ? formatMoney(resolveProductPrice(p, date, s.time, p.tiers[0]?.price ?? 0)) : "BOOKED", full: !s.available, product: p });
+            out.push({ time: s.time, label: `${p.name} — ${r.resource.name}`, state: r.resource.outOfService ? "OUT" : s.available ? formatMoney(resolveProductPrice(p, date, s.time, p.tiers[0]?.price ?? 0)) : "BOOKED", full: !s.available, product: p, resourceId: r.resource.id });
           }
         }
       } else if (isSlotBased(p.bookingType)) {
@@ -46,6 +53,26 @@ export default function SchedulePage() {
   const sell = (p: Product) => {
     sessionStorage.setItem("pos_open_product", p.id);
     router.push("/pos");
+  };
+
+  const openOos = (resourceId: string) => {
+    const r = resourcesQ.data?.data.find((x) => x.id === resourceId);
+    if (!r) return;
+    setOos(r);
+    setOosReason(r.outOfServiceReason ?? "");
+  };
+
+  const saveOos = async (outOfService: boolean) => {
+    if (!oos) return;
+    setOosSaving(true);
+    const res = await updateResource(oos.id, { outOfService, outOfServiceReason: outOfService ? oosReason || null : null });
+    setOosSaving(false);
+    if (res.ok) {
+      toast.success(outOfService ? `${oos.name} marked out of service.` : `${oos.name} back in service.`);
+      setOos(null);
+      productsQ.reload();
+      resourcesQ.reload();
+    } else toast.error(res.error.message);
   };
 
   const dateBtn = (v: string, label: string) => (
@@ -80,10 +107,34 @@ export default function SchedulePage() {
               ) : (
                 <Button size="sm" onClick={() => sell(r.product)}>Sell</Button>
               )}
+              {r.resourceId && (
+                <button type="button" aria-label="Row actions" onClick={() => openOos(r.resourceId!)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 text-neutral-400 active:bg-neutral-200">
+                  <MoreHorizontal size={15} strokeWidth={1.5} />
+                </button>
+              )}
             </div>
           ))}
         </div>
       )}
+
+      <Modal
+        open={!!oos}
+        onClose={() => setOos(null)}
+        title={oos ? `${oos.name} — ${oos.outOfService ? "out of service" : "in service"}` : ""}
+        footer={
+          oos?.outOfService ? (
+            <><Button variant="secondary" onClick={() => setOos(null)}>Cancel</Button><Button loading={oosSaving} onClick={() => saveOos(false)}>Return to service</Button></>
+          ) : (
+            <><Button variant="secondary" onClick={() => setOos(null)}>Cancel</Button><Button loading={oosSaving} onClick={() => saveOos(true)}>Mark out of service</Button></>
+          )
+        }
+      >
+        {oos?.outOfService ? (
+          <p className="text-sm text-neutral-600">Currently out of service{oos.outOfServiceReason ? `: ${oos.outOfServiceReason}` : ""}. Returning it makes it bookable again.</p>
+        ) : (
+          <FormField label="Reason" placeholder="Resurfacing until Friday" value={oosReason} onChange={(e) => setOosReason(e.target.value)} help="Bookings stop while it's out of service." />
+        )}
+      </Modal>
     </main>
   );
 }

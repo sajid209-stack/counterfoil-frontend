@@ -98,9 +98,10 @@ export const products: Product[] = [
     categoryId: "cat_entry",
     bookingType: "BT-01",
     tiers: [
-      { id: "tier_adult", name: "Adult", price: 50000, active: true },
-      { id: "tier_child", name: "Child", price: 30000, maxPerOrder: 6, active: true },
-      { id: "tier_senior", name: "Senior", price: 40000, active: true },
+      { id: "tier_adult", name: "Adult", price: 50000, admits: 1, active: true },
+      { id: "tier_child", name: "Child", price: 30000, maxPerOrder: 6, admits: 1, ageNote: "5–12", active: true },
+      { id: "tier_senior", name: "Senior", price: 40000, admits: 1, active: true },
+      { id: "tier_family", name: "Family", price: 140000, admits: 4, ageNote: "2 adults + 2 children", active: true },
     ],
     locationIds: ["loc_fort"],
     channels: ["counter", "online"],

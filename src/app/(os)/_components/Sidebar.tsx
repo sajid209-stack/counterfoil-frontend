@@ -4,28 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { useApiQuery } from "@/lib/useApi";
-import { listResources } from "@/lib/api";
 
-// Daily surface — the things operators touch every day. Setup lives under
-// Settings (its own section). The Resources item appears once resources exist,
-// labelled with the operator's own word (Fields / Courts / Lanes…).
+// Daily surface — the things operators touch every day. Setup (including
+// Resources) lives under Settings, its own section.
 export function Sidebar() {
   const pathname = usePathname();
-  const resourcesQ = useApiQuery(() => listResources({ pageSize: 100, filters: { status: "active" } }), []);
-  const resources = resourcesQ.data?.data ?? [];
-  const resourceLabel = resources.length
-    ? resources.every((r) => r.nounPlural === resources[0].nounPlural)
-      ? resources[0].nounPlural
-      : "Resources"
-    : null;
 
   const OPERATE = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Calendar", href: "/calendar" },
     { label: "Orders", href: "/orders" },
     { label: "Products", href: "/products" },
-    ...(resourceLabel ? [{ label: resourceLabel, href: "/resources" }] : []),
     { label: "Reports", href: "/reports/sales" },
   ];
 

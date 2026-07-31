@@ -351,9 +351,9 @@ export function ProductSheet({
         {!resourceMode && (
           <>
             <div className="flex flex-col gap-tight">
-              {(sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: `${s.name}`, price: s.price, cap: s.capacity })) : activeTiers.map((t) => ({ id: t.id, name: t.name, price: t.price, cap: undefined }))).map((row) => (
+              {(sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: `${s.name}`, price: s.price, cap: s.capacity, note: "" })) : activeTiers.map((t) => ({ id: t.id, name: t.name, price: t.price, cap: undefined, note: [(t.admits ?? 1) > 1 ? `admits ${t.admits}` : "", t.ageNote ?? ""].filter(Boolean).join(" · ") }))).map((row) => (
                 <div key={row.id} className="flex items-center justify-between rounded-sm border border-neutral-200 bg-white p-comfortable">
-                  <div><div className="text-sm font-medium">{row.name}</div><div className="font-mono text-[12px] text-neutral-400">{formatMoney(row.price, currency)}{row.cap != null ? ` · ${row.cap} seats` : ""}</div></div>
+                  <div><div className="text-sm font-medium">{row.name}</div><div className="font-mono text-[12px] text-neutral-400">{formatMoney(row.price, currency)}{row.cap != null ? ` · ${row.cap} seats` : ""}{row.note ? ` · ${row.note}` : ""}</div></div>
                   <div className="flex items-center gap-tight">
                     <button type="button" aria-label="Less" onClick={() => setQty((q) => ({ ...q, [row.id]: Math.max(0, (q[row.id] ?? 0) - 1) }))} className="h-11 w-11 rounded-sm border border-neutral-200 text-lg active:bg-neutral-200">−</button>
                     <span className="w-8 text-center font-mono">{qty[row.id] ?? 0}</span>

@@ -28,6 +28,26 @@ export function findTicketByCode(code: string): Ticket | undefined {
 export const redeemTicket = (id: string): Promise<ApiResult<Ticket>> =>
   resource.update(id, { status: "redeemed", redeemedAt: new Date().toISOString() });
 
+/** How many people a ticket admits — from its tier's composition (Family = 4). */
+export function ticketAdmits(ticket: Ticket): number {
+  const product = peekProducts().find((p) => p.id === ticket.productId);
+  const tier = product?.tiers.find((t) => t.name === ticket.tierName);
+  return tier?.admits ?? 1;
+}
+
+/** Admit part of a group ticket (a Family of 4 arrives as 3 — admit 3, one
+ *  remains). Fully admitted → the ticket flips to redeemed. */
+export async function admitTicket(id: string, count: number): Promise<ApiResult<Ticket>> {
+  const ticket = resource.peek().find((t) => t.id === id);
+  if (!ticket) return fail(notFoundError("Ticket"));
+  const admits = ticketAdmits(ticket);
+  const admitted = Math.min(admits, (ticket.admitted ?? 0) + count);
+  return resource.update(id, {
+    admitted,
+    ...(admitted >= admits ? { status: "redeemed" as const, redeemedAt: new Date().toISOString() } : {}),
+  });
+}
+
 /** Issue a fresh ticket (used by POS checkout). */
 export function issueTicket(input: {
   code: string;

@@ -14,7 +14,7 @@ export default function NewResourcePage() {
 
   return (
     <PageShell title="Add resource" description="A space or piece of equipment guests can book.">
-      <Link href="/resources" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/resources" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
         <ArrowLeft size={14} strokeWidth={1.5} /> Resources
       </Link>
       {locs.loading ? (

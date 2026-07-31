@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ScanLine } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { findTicketByCode, listTickets, redeemTicket } from "@/lib/api";
+import { findTicketByCode, listTickets, redeemTicket, ticketAdmits } from "@/lib/api";
 
 export default function ScanPage() {
   const router = useRouter();
@@ -16,13 +16,19 @@ export default function ScanPage() {
     const c = value.trim();
     if (!c) return;
     const t = findTicketByCode(c);
-    let outcome: { accept: boolean; code: string; reason: string };
+    let outcome: { accept: boolean; code: string; reason: string; group?: { ticketId: string; tierName: string; admits: number; admitted: number } };
     if (!t) outcome = { accept: false, code: c, reason: "Ticket not found" };
     else if (t.status === "redeemed") outcome = { accept: false, code: t.code, reason: "Already redeemed" };
     else if (t.status === "void") outcome = { accept: false, code: t.code, reason: "Void / refunded" };
     else {
-      await redeemTicket(t.id);
-      outcome = { accept: true, code: t.code, reason: "Valid ticket" };
+      const admits = ticketAdmits(t);
+      if (admits > 1) {
+        // Group ticket (a Family admits 4): the result screen takes the count.
+        outcome = { accept: true, code: t.code, reason: `${t.tierName} · admits ${admits}`, group: { ticketId: t.id, tierName: t.tierName, admits, admitted: t.admitted ?? 0 } };
+      } else {
+        await redeemTicket(t.id);
+        outcome = { accept: true, code: t.code, reason: "Valid ticket" };
+      }
     }
     sessionStorage.setItem("scan_result", JSON.stringify(outcome));
     router.push("/scan/result");

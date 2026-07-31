@@ -3,20 +3,30 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
-
-const SUB_NAV = [
-  { label: "Business", href: "/settings/business" },
-  { label: "Locations", href: "/settings/locations" },
-  { label: "Counters", href: "/settings/counters" },
-  { label: "Team", href: "/settings/team" },
-  { label: "Devices", href: "/settings/devices" },
-  { label: "Payments", href: "/settings/payments" },
-  { label: "Roles", href: "/settings/roles" },
-];
+import { useApiQuery } from "@/lib/useApi";
+import { listResources } from "@/lib/api";
 
 // Settings shell — its own sub-nav. Setup lives here, out of the daily nav.
+// Resources sit between Counters and Team, labelled with the operator's noun.
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const resourcesQ = useApiQuery(() => listResources({ pageSize: 100, filters: { status: "active" } }), []);
+  const resources = resourcesQ.data?.data ?? [];
+  const resourceLabel = resources.length && resources.every((r) => r.nounPlural === resources[0].nounPlural)
+    ? resources[0].nounPlural
+    : "Resources";
+
+  const SUB_NAV = [
+    { label: "Business", href: "/settings/business" },
+    { label: "Locations", href: "/settings/locations" },
+    { label: "Counters", href: "/settings/counters" },
+    { label: resourceLabel, href: "/settings/resources" },
+    { label: "Team", href: "/settings/team" },
+    { label: "Devices", href: "/settings/devices" },
+    { label: "Payments", href: "/settings/payments" },
+    { label: "Roles", href: "/settings/roles" },
+  ];
+
   return (
     <div className="flex min-h-full flex-col">
       <div className="border-b border-neutral-200 bg-white px-major">
