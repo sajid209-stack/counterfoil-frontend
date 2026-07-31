@@ -16,6 +16,7 @@ interface Cart {
   lines: CheckoutLine[];
   bookings?: CheckoutBooking[];
   credits?: { ticketId: string; count: number } | null;
+  customerName?: string | null;
 }
 
 export default function PaymentPage() {
@@ -52,6 +53,7 @@ export default function PaymentPage() {
       amountTendered: tenderedMinor,
       payNow: total,
       credits: cart.credits ?? null,
+      customerName: cart.customerName ?? null,
     });
     setSaving(false);
     if (res.ok) {
@@ -78,10 +80,12 @@ export default function PaymentPage() {
             <span>Change</span><span className="font-mono">{enough ? formatMoney(change) : "—"}</span>
           </div>
         </div>
+        {/* Quick chips: exact, then the notes actually in the till drawer. */}
         <div className="flex gap-tight">
-          {[total / 100, Math.ceil(total / 10000) * 100, Math.ceil(total / 50000) * 500].map((amt, i) => (
-            <button key={i} type="button" onClick={() => setTenderTaka(String(Math.round(amt)))} className="h-12 flex-1 rounded-sm border border-neutral-200 bg-white font-mono text-sm active:bg-neutral-200">
-              ৳{Math.round(amt)}
+          <button type="button" onClick={() => setTenderTaka(String(Math.ceil(total / 100)))} className="h-12 flex-1 rounded-sm border border-ink bg-white font-mono text-sm active:bg-neutral-200">Exact</button>
+          {[500, 1000, 2000].map((amt) => (
+            <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-neutral-200 bg-white font-mono text-sm active:bg-neutral-200">
+              ৳{amt}
             </button>
           ))}
         </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Archive, Pencil, Plus, Search, Trash2, UserRound } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { checkout, findCreditPass, getOperator, isResourceFreeFor, listCategories, listLocations, listProducts, listResources, listStaff, type CreditPass, type PaymentMethod, type Product } from "@/lib/api";
@@ -46,6 +46,33 @@ export default function PosPage() {
   const [passOpen, setPassOpen] = useState(false);
   const [passCode, setPassCode] = useState("");
   const [passLoading, setPassLoading] = useState(false);
+  const [query, setQuery] = useState("");
+  const [customTax, setCustomTax] = useState<"standard" | "reduced" | "exempt">("standard");
+  const [customer, setCustomer] = useState("");
+  const [customerOpen, setCustomerOpen] = useState(false);
+  const [customerDraft, setCustomerDraft] = useState("");
+  // Parked carts survive navigation within the session (sessionStorage).
+  type Parked = { name: string; cart: CartEntry[]; discountPct: number; customer: string; pass: CreditPass | null };
+  const [parked, setParked] = useState<Parked[]>(() => {
+    try { return JSON.parse(sessionStorage.getItem("pos_parked") ?? "[]"); } catch { return []; }
+  });
+  const [parkOpen, setParkOpen] = useState(false);
+  const [parkName, setParkName] = useState("");
+  const persistParked = (list: Parked[]) => { setParked(list); sessionStorage.setItem("pos_parked", JSON.stringify(list)); };
+  const park = () => {
+    if (cart.length === 0) return;
+    persistParked([...parked, { name: parkName.trim() || `Guest ${parked.length + 1}`, cart, discountPct, customer, pass }]);
+    setCart([]); setDiscountPct(0); setCustomer(""); setPass(null);
+    setParkOpen(false); setParkName("");
+    toast.success("Cart parked.");
+  };
+  const resume = (i: number) => {
+    const p = parked[i];
+    if (!p) return;
+    setCart(p.cart); setDiscountPct(p.discountPct); setCustomer(p.customer); setPass(p.pass);
+    persistParked(parked.filter((_, x) => x !== i));
+    setParkOpen(false);
+  };
 
   const operator = opQ.data;
   const currency = operator?.currency ?? "BDT";
@@ -54,7 +81,13 @@ export default function PosPage() {
   const resources = resourcesQ.data?.data ?? [];
   const productById = (id: string) => products.find((p) => p.id === id);
 
-  const shown = category === "all" ? products : products.filter((p) => p.categoryId === category);
+  const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "";
+  const shown = products
+    .filter((p) => category === "all" || p.categoryId === category)
+    .filter((p) => {
+      const q = query.trim().toLowerCase();
+      return !q || p.name.toLowerCase().includes(q) || catName(p.categoryId).toLowerCase().includes(q);
+    });
 
   // Deep-link from the Schedule tab: open a product's sheet on arrival.
   useEffect(() => {
@@ -81,7 +114,11 @@ export default function PosPage() {
     return seats > 0 ? seats : e.items.reduce((s, i) => s + i.qty, 0);
   };
   const entrySlotISO = (e: CartEntry) => (e.slotDate ? (e.slotTime ? slotISO(e.slotDate, e.slotTime) : slotISO(e.slotDate, "10:00")) : undefined);
-  const entryTaxRate = (e: CartEntry) => { const p = productById(e.productId); return p ? taxRateFor(p, operator) : 0; };
+  const entryTaxRate = (e: CartEntry) => {
+    if (e.taxRatePct != null) return e.taxRatePct; // custom-amount entries
+    const p = productById(e.productId);
+    return p ? taxRateFor(p, operator) : 0;
+  };
 
   const seatsInCart = (productId: string, slotStart: string) =>
     cart.filter((e) => e.id !== sheet?.initial?.id && e.productId === productId && entrySlotISO(e) === slotStart).reduce((s, e) => s + entrySeats(e), 0);
@@ -126,8 +163,9 @@ export default function PosPage() {
   const addCustom = () => {
     const minor = Math.round((parseFloat(customAmount) || 0) * 100);
     if (minor <= 0) return;
-    setCart((c) => [...c, { id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`, productId: "custom", productName: customName || "Custom amount", items: [{ tierId: "custom", tierName: "Custom", unitPrice: minor, qty: 1 }] }]);
-    setCustomOpen(false); setCustomName(""); setCustomAmount("");
+    const rate = customTax === "exempt" ? 0 : customTax === "reduced" ? (operator?.reducedRatePct ?? 0) : (operator?.taxRatePct ?? 0);
+    setCart((c) => [...c, { id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`, productId: "custom", productName: customName || "Custom amount", taxRatePct: rate, items: [{ tierId: "custom", tierName: "Custom", unitPrice: minor, qty: 1 }] }]);
+    setCustomOpen(false); setCustomName(""); setCustomAmount(""); setCustomTax("standard");
   };
 
   // ── Credits pass coverage: eligible items are paid by credits, oldest cart
@@ -198,7 +236,7 @@ export default function PosPage() {
     if (discount > 0) lines.push({ productId: "discount", productName: "Discount", tierName: `${discountPct}%`, quantity: 1, unitPrice: -discount, taxRatePct: 0 });
     const bookings = cart.filter((e) => e.slotDate).map((e) => ({ productId: e.productId, resourceId: e.resourceId ?? null, slotStart: entrySlotISO(e)!, slotEnd: e.slotEnd, partySize: entrySeats(e) }));
     const credits = pass && creditsUsed > 0 ? { ticketId: pass.ticketId, count: creditsUsed } : null;
-    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, bookings, method, credits };
+    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, bookings, method, credits, customerName: customer || null };
 
     if (method === "cash") {
       sessionStorage.setItem("pos_cart", JSON.stringify(payload));
@@ -206,7 +244,7 @@ export default function PosPage() {
       return;
     }
     // Non-cash: settle inline, no change step.
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, lines, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, payNow: dueNow, credits });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, lines, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, payNow: dueNow, credits });
     if (res.ok) {
       sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change: 0, balance }));
       router.push("/pos/complete");
@@ -219,6 +257,12 @@ export default function PosPage() {
   return (
     <div className="grid h-full grid-cols-1 gap-tight p-tight lg:grid-cols-[1fr_23rem]">
       <div className="flex min-h-0 flex-col gap-tight">
+        {/* Search — persistent, live, name + category */}
+        <div className="flex h-11 items-center gap-tight rounded-sm border border-neutral-200 bg-white px-comfortable focus-within:border-ink">
+          <Search size={16} strokeWidth={1.5} className="shrink-0 text-neutral-400" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products…" className="h-full w-full bg-transparent text-sm outline-none placeholder:text-neutral-400" />
+          {query && <button type="button" onClick={() => setQuery("")} className="text-[12px] text-neutral-400 hover:text-ink">Clear</button>}
+        </div>
         {/* Category chips */}
         <div className="flex gap-inline overflow-x-auto pb-inline">
           {[{ id: "all", name: "All" }, ...categories].map((c) => (
@@ -249,6 +293,20 @@ export default function PosPage() {
 
       {/* Cart */}
       <div className="flex min-h-0 flex-col rounded-sm border border-neutral-200 bg-white">
+        <div className="flex items-center gap-tight border-b border-neutral-200 p-tight">
+          <button type="button" onClick={() => { setCustomerDraft(customer); setCustomerOpen(true); }} className={`flex h-9 items-center gap-inline rounded-sm border px-tight text-[12px] ${customer ? "border-ink text-ink" : "border-neutral-200 text-neutral-400"}`}>
+            <UserRound size={14} strokeWidth={1.5} />{customer || "Customer"}
+          </button>
+          <span className="flex-1" />
+          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-9 items-center gap-inline rounded-sm border border-neutral-200 px-tight text-[12px] text-neutral-600 disabled:text-neutral-400" title={cart.length === 0 ? "Nothing to park" : "Park this cart"}>
+            <Archive size={14} strokeWidth={1.5} />Park
+          </button>
+          {parked.length > 0 && (
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-9 items-center rounded-sm border border-ember bg-ember/10 px-tight font-mono text-[12px] text-ember">
+              {parked.length} parked
+            </button>
+          )}
+        </div>
         <div className="flex-1 overflow-y-auto p-comfortable">
           {cart.length === 0 ? (
             <EmptyState title="Empty cart" message="Tap a product to add it." />
@@ -256,7 +314,7 @@ export default function PosPage() {
             <div className="flex flex-col gap-tight">
               {cart.map((e) => (
                 <div key={e.id} className="flex items-start gap-tight border-b border-neutral-200 pb-tight last:border-0">
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 cursor-pointer" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
                     <div className="flex justify-between text-sm font-medium"><span className="truncate">{e.productName}</span><span className="font-mono">{formatMoney(entryTotal(e), currency)}</span></div>
                     <div className="font-mono text-[11px] text-neutral-400">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.resourceLabel, e.providerLabel].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="font-mono text-[11px] text-success">{entryCoveredQty(e)} paid with pass</div>}
@@ -327,6 +385,38 @@ export default function PosPage() {
         <div className="flex flex-col gap-section">
           <FormField label="Description" placeholder="Miscellaneous" value={customName} onChange={(e) => setCustomName(e.target.value)} />
           <FormField label={`Amount (${currency})`} variant="number" value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} />
+          <FormField label="Tax class" variant="select" value={customTax} onChange={(e) => setCustomTax(e.target.value as typeof customTax)} options={[{ value: "standard", label: "Standard (VAT)" }, { value: "reduced", label: "Reduced" }, { value: "exempt", label: "Exempt" }]} />
+        </div>
+      </Modal>
+
+      <Modal open={customerOpen} onClose={() => setCustomerOpen(false)} title="Customer" footer={<><Button variant="secondary" onClick={() => { setCustomer(""); setCustomerOpen(false); }}>Remove</Button><Button onClick={() => { setCustomer(customerDraft.trim()); setCustomerOpen(false); }}>Attach</Button></>}>
+        <FormField label="Name or phone" placeholder="Anika · 01711…" value={customerDraft} onChange={(e) => setCustomerDraft(e.target.value)} help="Optional — shows on the order and at Check-In." />
+      </Modal>
+
+      <Modal open={parkOpen} onClose={() => setParkOpen(false)} title="Parked carts" footer={<Button variant="secondary" onClick={() => setParkOpen(false)}>Close</Button>}>
+        <div className="flex flex-col gap-section">
+          {cart.length > 0 && (
+            <div className="flex items-end gap-tight">
+              <FormField label="Park the current cart as" placeholder="Guest in the red shirt" value={parkName} onChange={(e) => setParkName(e.target.value)} className="flex-1" />
+              <Button onClick={park}>Park</Button>
+            </div>
+          )}
+          {parked.length === 0 ? (
+            <p className="text-[13px] text-neutral-400">Nothing parked.</p>
+          ) : (
+            <div className="flex flex-col gap-tight">
+              {parked.map((p, i) => (
+                <div key={i} className="flex items-center justify-between rounded-sm border border-neutral-200 p-comfortable">
+                  <div>
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="font-mono text-[12px] text-neutral-400">{p.cart.length} line{p.cart.length === 1 ? "" : "s"} · {formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency)}</p>
+                  </div>
+                  <Button size="sm" onClick={() => resume(i)} disabled={cart.length > 0} >Resume</Button>
+                </div>
+              ))}
+              {cart.length > 0 && <p className="text-[12px] text-neutral-400">Park or clear the current cart before resuming another.</p>}
+            </div>
+          )}
         </div>
       </Modal>
 

@@ -34,6 +34,7 @@ export interface CartEntry {
   providerLabel?: string;
   items: { tierId: string; tierName: string; unitPrice: number; qty: number }[];
   fixedPrice?: number; // resource slot resolved price (overrides items sum)
+  taxRatePct?: number; // custom-amount entries carry their own rate
 }
 
 const TODAY = "2026-07-29";

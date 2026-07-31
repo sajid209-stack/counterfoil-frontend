@@ -55,6 +55,7 @@ export interface CheckoutInput {
   locationId: string;
   counterId: string | null;
   staffId: string | null;
+  customerName?: string | null;
   lines: CheckoutLine[];
   bookings?: CheckoutBooking[]; // slot holds for scheduled products
   taxPct: number;
@@ -93,7 +94,7 @@ export async function checkout(
     locationId: input.locationId,
     counterId: input.counterId,
     staffId: input.staffId,
-    customerName: null,
+    customerName: input.customerName ?? null,
     lines: input.lines.map((l, i) => ({ id: `${reference}-L${i}`, ...l })),
     payments: [{ id: `${reference}-P0`, method: input.method, amount: payNow, at: now }],
     subtotal,

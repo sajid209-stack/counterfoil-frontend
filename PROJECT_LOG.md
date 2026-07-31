@@ -149,6 +149,17 @@ mark/return with a reason, rows show OUT. Wizard inline-creation unchanged.
   `extendBooking` when the lane behind is free.
 - `isResourceFreeFor` / `firstFreeResource` added to the availability engine.
 
+**P5 ✅ (2026-07-31)** — the POS element pass (subtitles/chips/inline payment/discounts were
+Phase 10; this adds the rest):
+- **Search** above the grid — persistent, live, matches name + category ("foot" → Football).
+- **Park / Resume** — named parked carts in sessionStorage, "N parked" badge, full state
+  restored (lines, discount, customer, credits pass); resume blocked while a cart is active.
+- **Customer chip** — quick capture, flows to the order (`CheckoutInput.customerName`).
+- **Cash keypad quick chips** — Exact · ৳500 · ৳1,000 · ৳2,000; **receipt step** on complete
+  (Print · SMS · No receipt, mock actions).
+- **Custom amount** gains a tax class (entry carries its own rate).
+- **Cart line tap** reopens its sheet with state loaded (pencil retained).
+
 ### Phase 10 — the missing operational layer (4 parts, all deployed)
 
 - **Part 1 — POS structure + tax.** Behaviour subtitles on tiles (derived, no codes); category

@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CircleCheck } from "lucide-react";
-import { Button } from "@/components/ui";
+import { CircleCheck, MessageSquare, Printer } from "lucide-react";
+import { Button, useToast } from "@/components/ui";
 import { formatMoney } from "@/lib/format";
 
 export default function CompletePage() {
   const router = useRouter();
+  const toast = useToast();
   const [info, setInfo] = useState<{ code: string; change: number; balance?: number } | null>(null);
 
   useEffect(() => {
@@ -52,6 +53,13 @@ export default function CompletePage() {
               Balance due at arrival <span className="font-mono text-ink">{formatMoney(info.balance!)}</span>
             </p>
           )}
+
+          {/* Receipt step — Print · SMS · None */}
+          <div className="flex w-full gap-tight">
+            <button type="button" onClick={() => toast.success("Receipt sent to the printer.")} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-neutral-200 bg-white text-sm active:bg-neutral-200"><Printer size={16} strokeWidth={1.5} /> Print</button>
+            <button type="button" onClick={() => toast.success("Receipt sent by SMS.")} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-neutral-200 bg-white text-sm active:bg-neutral-200"><MessageSquare size={16} strokeWidth={1.5} /> SMS</button>
+            <button type="button" onClick={() => router.push("/pos")} className="h-12 flex-1 rounded-sm border border-neutral-200 bg-white text-sm text-neutral-600 active:bg-neutral-200">No receipt</button>
+          </div>
         </>
       )}
 
