@@ -135,6 +135,20 @@ Counters and Team, labelled with the operator's noun when uniform); removed from
 sidebar. **Out-of-service (with reason) actionable from the Go Schedule tab** row overflow —
 mark/return with a reason, rows show OUT. Wizard inline-creation unchanged.
 
+**P4 ✅ (2026-07-31)** — the flexible POS sheet, driven by the P1 engine:
+- **"Start now · 12:00 · 1 hr · Lane 1 · ৳800"** quick action (clock rounded per walk-in
+  config, first free lane, one tap to cart).
+- Duration chips with per-duration resolved prices; **lane row with "Any"** (best-fit
+  assigns the first free lane at submit, shown as "Lane 1 (best fit)").
+- **Only valid starts selectable**: past/lead-time ("Already past"), must-end-by-close
+  ("Ends after closing" — 3 hr kills 21:00/22:00), lane busy ("Booked") — invalid starts
+  greyed + struck through, tapping one states the reason. Changing duration re-filters and
+  clears an invalidated selection with a notice. End time always shown ("17:00 – 18:30").
+- **Extend**: cart lines get "+30m" (re-checks the lane behind incl. buffer, re-prices via
+  the engine — verified ৳1,400 → ৳2,000 blended); post-sale Extend in Check-In via
+  `extendBooking` when the lane behind is free.
+- `isResourceFreeFor` / `firstFreeResource` added to the availability engine.
+
 ### Phase 10 — the missing operational layer (4 parts, all deployed)
 
 - **Part 1 — POS structure + tax.** Behaviour subtitles on tiles (derived, no codes); category

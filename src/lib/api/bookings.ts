@@ -23,6 +23,10 @@ export const peekBookings = (): Booking[] => resource.peek();
 export const checkInBooking = (id: string, count: number): Promise<ApiResult<Booking>> =>
   resource.update(id, { checkedIn: count });
 
+/** Extend a resource booking in place (the lane behind must be free). */
+export const extendBooking = (id: string, slotEnd: string): Promise<ApiResult<Booking>> =>
+  resource.update(id, { slotEnd });
+
 /** Create a confirmed booking (used by POS checkout to hold slot capacity). */
 export function createBooking(input: {
   orderId: string;

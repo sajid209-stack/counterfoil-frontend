@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { checkout, findCreditPass, getOperator, listCategories, listLocations, listProducts, listResources, listStaff, type CreditPass, type PaymentMethod, type Product } from "@/lib/api";
-import { isResourceType, needsSchedule, slotISO } from "@/lib/schedule";
+import { checkout, findCreditPass, getOperator, isResourceFreeFor, listCategories, listLocations, listProducts, listResources, listStaff, type CreditPass, type PaymentMethod, type Product } from "@/lib/api";
+import { isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
+import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { taxRateFor } from "@/lib/tax";
 import { formatMoney } from "@/lib/format";
@@ -99,6 +100,27 @@ export default function PosPage() {
   const upsertEntry = (entry: CartEntry) => {
     setCart((c) => (c.some((e) => e.id === entry.id) ? c.map((e) => (e.id === entry.id ? entry : e)) : [...c, entry]));
     setSheet(null);
+  };
+
+  // Extend a flexible booking still in the cart by one increment: the lane
+  // behind must be free (buffer included) and the new length re-prices.
+  const extendEntry = (e: CartEntry) => {
+    const p = productById(e.productId);
+    const cfg = p?.durationConfig;
+    if (!p || !cfg || !e.slotDate || !e.slotTime || !e.slotEnd || !e.resourceId || e.fixedPrice == null) return;
+    const endTime = e.slotEnd.slice(11, 16);
+    const current = toMinutes(endTime) - toMinutes(e.slotTime);
+    const next = current + cfg.incrementMinutes;
+    if (next > cfg.maxMinutes) { toast.error(`${cfg.maxMinutes / 60} hours is the maximum.`); return; }
+    if (!isResourceFreeFor(e.resourceId, e.slotDate, endTime, cfg.incrementMinutes, p.bufferMinutes ?? 0)) {
+      toast.error(`${e.resourceLabel ?? "The lane"} is booked right after — can't extend.`);
+      return;
+    }
+    const base = Math.min(...p.tiers.filter((t) => t.active).map((t) => t.price));
+    const price = productDurationPrice(p, e.slotDate, e.slotTime, next, base);
+    const newEnd = `${e.slotDate}T${toTime(toMinutes(e.slotTime) + next)}:00+06:00`;
+    setCart((c) => c.map((x) => (x.id === e.id ? { ...x, slotEnd: newEnd, fixedPrice: price } : x)));
+    toast.success(`Extended to ${toTime(toMinutes(e.slotTime) + next)} · ${formatMoney(price, currency)}.`);
   };
 
   const addCustom = () => {
@@ -240,6 +262,11 @@ export default function PosPage() {
                     {entryCoveredQty(e) > 0 && <div className="font-mono text-[11px] text-success">{entryCoveredQty(e)} paid with pass</div>}
                     {entryBalance(e) > 0 && <div className="font-mono text-[11px] text-neutral-400">{productById(e.productId)?.policies?.depositPct}% deposit now · {formatMoney(entryBalance(e), currency)} at arrival</div>}
                   </div>
+                  {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-9 items-center justify-center rounded-sm border border-neutral-200 px-tight font-mono text-[11px] active:bg-neutral-200">
+                      +{productById(e.productId)!.durationConfig!.incrementMinutes}m
+                    </button>
+                  )}
                   {e.productId !== "custom" && <button type="button" aria-label="Edit" onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 active:bg-neutral-200"><Pencil size={15} strokeWidth={1.5} /></button>}
                   <button type="button" aria-label="Remove" onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 text-danger active:bg-neutral-200"><Trash2 size={15} strokeWidth={1.5} /></button>
                 </div>

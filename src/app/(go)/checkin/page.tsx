@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Button, EmptyState } from "@/components/ui";
+import { Button, EmptyState, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { checkInBooking, listBookings, listProducts, type Booking } from "@/lib/api";
+import { checkInBooking, extendBooking, isResourceFreeFor, listBookings, listProducts, type Booking } from "@/lib/api";
+import { toMinutes, toTime } from "@/lib/schedule";
 
 const TODAY = "2026-07-29";
 const TOMORROW = "2026-07-30";
@@ -28,11 +29,39 @@ export default function CheckInPage() {
     return [...map.entries()].sort((a, b) => a[0].split("|")[1].localeCompare(b[0].split("|")[1]));
   }, [bookingsQ.data, date]);
 
+  const toast = useToast();
   const checkIn = async (b: Booking, count: number) => {
     setPending(b.id);
     await checkInBooking(b.id, count);
     setPending(null);
     bookingsQ.reload();
+  };
+
+  // Post-sale extend: one increment, only when the lane is free right behind.
+  const extendOf = (b: Booking) => {
+    if (!b.resourceId || !b.slotEnd) return null;
+    const p = productsQ.data?.data.find((x) => x.id === b.productId);
+    const cfg = p?.durationConfig;
+    if (!p || !cfg) return null;
+    const endTime = b.slotEnd.slice(11, 16);
+    const current = toMinutes(endTime) - toMinutes(b.slotStart.slice(11, 16));
+    if (current + cfg.incrementMinutes > cfg.maxMinutes) return null;
+    return { p, cfg, endTime };
+  };
+
+  const extend = async (b: Booking) => {
+    const x = extendOf(b);
+    if (!x) return;
+    if (!isResourceFreeFor(b.resourceId!, b.slotStart.slice(0, 10), x.endTime, x.cfg.incrementMinutes, x.p.bufferMinutes ?? 0)) {
+      toast.error("Booked right after — can't extend.");
+      return;
+    }
+    setPending(b.id);
+    const newEnd = `${b.slotStart.slice(0, 10)}T${toTime(toMinutes(x.endTime) + x.cfg.incrementMinutes)}:00+06:00`;
+    const res = await extendBooking(b.id, newEnd);
+    setPending(null);
+    if (res.ok) { toast.success(`Extended to ${newEnd.slice(11, 16)} — collect the difference at the counter.`); bookingsQ.reload(); }
+    else toast.error(res.error.message);
   };
 
   const dateBtn = (v: string, label: string) => (
@@ -74,6 +103,11 @@ export default function CheckInPage() {
                         <div key={b.id} className="flex items-center gap-tight text-sm">
                           <span className="flex-1 font-mono text-[12px] text-neutral-600">{b.orderId} · party {b.partySize}</span>
                           <span className="font-mono text-[12px]">{b.checkedIn ?? 0}/{b.partySize} in</span>
+                          {extendOf(b) && (
+                            <Button size="sm" variant="secondary" loading={pending === b.id} onClick={() => extend(b)}>
+                              Extend +{extendOf(b)!.cfg.incrementMinutes}m
+                            </Button>
+                          )}
                           {!done && (
                             <>
                               {b.partySize > 1 && (b.checkedIn ?? 0) < b.partySize - 1 && (

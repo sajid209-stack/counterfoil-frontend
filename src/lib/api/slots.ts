@@ -123,6 +123,38 @@ export function freeGuides(product: Product, date: string, time: string): string
   return sch.guideIds.filter((g) => isOwnerFree(g, date, time, minutes));
 }
 
+/** Is a resource free for [time, time + minutes), with buffer either side? */
+export function isResourceFreeFor(
+  resourceId: string,
+  date: string,
+  time: string,
+  minutes: number,
+  bufferMinutes = 0,
+): boolean {
+  const start = toMinutes(time);
+  const end = start + minutes;
+  return !ownerBusy(resourceId, date).some(
+    (b) => start < b.end + bufferMinutes && b.start < end + bufferMinutes,
+  );
+}
+
+/** The first in-service resource of a product free for the span (best fit for
+ *  "Any" / "Start now"). Null when every one is taken. */
+export function firstFreeResource(
+  product: Product,
+  date: string,
+  time: string,
+  minutes: number,
+): Resource | null {
+  const ids = product.resourceIds ?? [];
+  const buffer = product.bufferMinutes ?? 0;
+  return (
+    peekResources().find(
+      (r) => ids.includes(r.id) && r.status !== "archived" && !r.outOfService && isResourceFreeFor(r.id, date, time, minutes, buffer),
+    ) ?? null
+  );
+}
+
 /** Is the product open on this date (open day, not a closed exception)? */
 export function isOpenOn(product: Product, date: string): boolean {
   const sch = product.schedule;
