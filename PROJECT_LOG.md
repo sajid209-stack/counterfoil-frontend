@@ -239,6 +239,32 @@ all four parts ✅ (2026-08-01):
 - **Date chips first** — the next 5 bookable days as chips, calendar behind "More dates".
 - **Low-availability flag** is percentage-based: amber "N left" at ≤20% of capacity (min 1).
 
+### Delta prompts (counterfoil_delta_prompts.md, local) — all four ✅ (2026-08-01)
+
+- **Delta A — OS parity.** Per-resource rate examples in the duration-engine preview
+  ("Sat 19:00 · Lane 4 → …"); the **pricing basis drives the Pricing tab** (per-booking =
+  one price + group limits, never tiers); POS "Ask a manager" **reads the signed-in staff's
+  role limit** (hardcoded cap removed — edit the role, POS gates at the new value); the
+  shared **ResourceTimeline in the OS Calendar day view** (rows per resource, OOS hatched);
+  Resources list shows live state ("Free · next 14:00" / "In use until…"); a minimal
+  **Customers page** (read path, deep-links to their orders); custom-amount sales group
+  under **"Custom"** in reports.
+- **Delta B — behaviour gaps** (most existed from the findings run): occupied timeline
+  blocks tap-explain via BlockedNotice; cart extend refusals + over-limit discounts routed
+  through the guidance pattern; low-availability = ember pill at ≤20%.
+- **Delta C — the selectable-card language.** `ChoiceCard` + `Avatar` primitives: provider
+  cards (avatar · role · +premium · next-free in mono), guide cards, lane cards, wizard
+  options, demo cards and date-strip mini-cards all share one pattern — selection reads in
+  grayscale (ember border + check glyph). Occupancy micro-bars (ember ≥80%), sheets centred
+  at 680px, Go press states = ember tint, zero arbitrary radii.
+- **Delta D — dark & light mode.** Semantic token layer (`surface/card/sheet/fg/muted/
+  faint/line/strong/subtle/inverse`) with every component migrated off raw palette classes
+  (83 files swept); `next-themes` class strategy, Light · Dark · System, persisted, no
+  flash. Dark elevation = surface steps + 1px lines; sidebar gains a dark border; ember
+  unchanged; ink-on-ember stays literal. **Mode-locked:** scan results and the perforated
+  ticket stub. Toggles: OS Settings → Business → Appearance; Go → Shift menu (per device).
+  Dark dashboard + POS browser-verified.
+
 **Master acceptance walk (Section C)** — steps 1–10 and 13 verified across the P1–P10
 sessions (blended bowling pricing, engine-only durations, Start now + Extend, turf pricing +
 sharing, Family group scan, two-tour guide conflict, spa deposit, park/resume + role-gated

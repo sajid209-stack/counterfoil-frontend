@@ -32,13 +32,13 @@ export function ResourceTimeline({
 
   return (
     <div>
-      <div className={`relative h-8 overflow-hidden rounded-xs border border-neutral-200 ${hatched ? "bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_6px)]" : "bg-white"}`}>
+      <div className={`relative h-8 overflow-hidden rounded-xs border border-line ${hatched ? "bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_6px)]" : "bg-card"}`}>
         {spans.map((s, i) => (
           <button
             key={i}
             type="button"
             onClick={onBlockTap ? () => onBlockTap(s) : undefined}
-            className="absolute inset-y-0 flex items-center justify-center overflow-hidden bg-neutral-200 font-mono text-[10px] text-neutral-600"
+            className="absolute inset-y-0 flex items-center justify-center overflow-hidden bg-line font-mono text-[10px] text-muted"
             style={{ left: pct(s.start), width: pct(s.end - s.start + openMin) }}
             title={s.label}
             tabIndex={onBlockTap ? 0 : -1}
@@ -52,7 +52,7 @@ export function ResourceTimeline({
       </div>
       <div className="relative mt-inline h-3">
         {ticks.map((m) => (
-          <span key={m} className="absolute -translate-x-1/2 font-mono text-[10px] text-neutral-400" style={{ left: pct(m) }}>{Math.floor(m / 60)}</span>
+          <span key={m} className="absolute -translate-x-1/2 font-mono text-[10px] text-faint" style={{ left: pct(m) }}>{Math.floor(m / 60)}</span>
         ))}
       </div>
     </div>

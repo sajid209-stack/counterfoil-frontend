@@ -18,12 +18,12 @@ export default function PaymentsSettingsPage() {
 
   return (
     <PageShell title="Payments" description="Which payment methods your counters can take." actions={<Button onClick={() => toast.success("Payment methods saved.")}>Save changes</Button>}>
-      <div className="max-w-xl overflow-hidden rounded-md border border-neutral-200 bg-white">
+      <div className="max-w-xl overflow-hidden rounded-md border border-line bg-card">
         {METHODS.map((m) => (
-          <div key={m.key} className="flex items-center justify-between border-b border-neutral-200 p-section last:border-0">
+          <div key={m.key} className="flex items-center justify-between border-b border-line p-section last:border-0">
             <div>
               <div className="text-sm font-medium">{m.label}</div>
-              <div className="text-[12px] text-neutral-400">{m.helper}</div>
+              <div className="text-[12px] text-faint">{m.helper}</div>
             </div>
             <FormField variant="toggle" checked={on[m.key]} onChange={(e) => setOn((s) => ({ ...s, [m.key]: (e.target as HTMLInputElement).checked }))} />
           </div>

@@ -29,19 +29,19 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
-        <div className="flex items-center gap-tight border-b border-neutral-200 bg-white px-tight py-inline md:hidden">
-          <button type="button" aria-label="Menu" onClick={() => setOpen(true)} className="flex h-12 w-12 items-center justify-center rounded-sm active:bg-neutral-200">
+        <div className="flex items-center gap-tight border-b border-line bg-card px-tight py-inline md:hidden">
+          <button type="button" aria-label="Menu" onClick={() => setOpen(true)} className="flex h-12 w-12 items-center justify-center rounded-sm active:bg-line">
             <Menu size={20} strokeWidth={1.5} />
           </button>
           <span className="type-h2 text-base">Counterfoil</span>
-          <span className="font-mono text-[11px] text-neutral-400">OS</span>
+          <span className="font-mono text-[11px] text-faint">OS</span>
         </div>
         <div className="min-w-0 flex-1">{children}</div>
       </main>
 
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-ink/40" onClick={() => setOpen(false)} aria-hidden />
+          <div className="absolute inset-0 bg-inverse/40" onClick={() => setOpen(false)} aria-hidden />
           {/* any tap inside (a nav link) closes the sheet */}
           <div className="absolute inset-y-0 left-0 overflow-y-auto" onClick={() => setOpen(false)}>
             <Sidebar />

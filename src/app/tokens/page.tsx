@@ -21,8 +21,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-t border-neutral-200 py-major">
-      <h2 className="type-label mb-major text-[13px] text-neutral-600">
+    <section className="border-t border-line py-major">
+      <h2 className="type-label mb-major text-[13px] text-muted">
         {title}
       </h2>
       {children}
@@ -40,8 +40,8 @@ type Swatch = {
 };
 
 const PRIMARIES: Swatch[] = [
-  { name: "ink", hex: "#0A0A0A", cls: "bg-ink", dark: true },
-  { name: "paper", hex: "#F8F7F4", cls: "bg-paper" },
+  { name: "ink", hex: "#0A0A0A", cls: "bg-inverse", dark: true },
+  { name: "paper", hex: "#F8F7F4", cls: "bg-surface" },
   { name: "ember", hex: "#FF6A1F", cls: "bg-ember", dark: true },
   { name: "bt-violet", hex: "#7C3AED", cls: "bg-bt-violet", dark: true },
 ];
@@ -51,8 +51,8 @@ const NEUTRALS: Swatch[] = [
   { name: "neutral-800", hex: "#1C1C1C", cls: "bg-neutral-800", dark: true },
   { name: "neutral-600", hex: "#4A4A48", cls: "bg-neutral-600", dark: true },
   { name: "neutral-400", hex: "#8A8985", cls: "bg-neutral-400", dark: true },
-  { name: "neutral-200", hex: "#D6D4CE", cls: "bg-neutral-200" },
-  { name: "neutral-50", hex: "#F8F7F4", cls: "bg-neutral-50" },
+  { name: "neutral-200", hex: "#D6D4CE", cls: "bg-line" },
+  { name: "neutral-50", hex: "#F8F7F4", cls: "bg-subtle" },
 ];
 
 const AMBERS: Swatch[] = [
@@ -68,15 +68,15 @@ function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
   return (
     <div className="grid grid-cols-2 gap-tight sm:grid-cols-3 lg:grid-cols-6">
       {swatches.map((s) => (
-        <div key={s.name} className="overflow-hidden rounded-sm border border-neutral-200">
+        <div key={s.name} className="overflow-hidden rounded-sm border border-line">
           <div
             className={`${s.cls} flex h-20 items-end p-tight ${
-              s.dark ? "text-paper" : "text-ink"
+              s.dark ? "text-inverse-fg" : "text-fg"
             }`}
           >
             <span className="font-mono text-[11px] opacity-80">{s.hex}</span>
           </div>
-          <div className="bg-paper px-tight py-inline">
+          <div className="bg-surface px-tight py-inline">
             <span className="font-mono text-[12px]">{s.name}</span>
           </div>
         </div>
@@ -122,7 +122,7 @@ export default function TokensPage() {
       <header className="mb-hero">
         <p className="type-label text-[13px] text-ember">Design tokens</p>
         <h1 className="type-display mt-tight text-6xl">Counterfoil</h1>
-        <p className="type-body mt-section max-w-xl text-neutral-600">
+        <p className="type-body mt-section max-w-xl text-muted">
           The token layer both surfaces are built on. Primaries are exact from
           the brand guidelines; the neutral and amber scales are a derivation
           and marked unconfirmed until reconciled with Figma.
@@ -131,7 +131,7 @@ export default function TokensPage() {
 
       <Section title="Primaries — exact">
         <SwatchGrid swatches={PRIMARIES} />
-        <p className="type-body mt-section text-[13px] text-neutral-400">
+        <p className="type-body mt-section text-[13px] text-faint">
           The logo is two-colour only: {""}
           <span className="font-mono">#0A0A0A</span> on light,{" "}
           <span className="font-mono">#F8F7F4</span> on dark. Never an orange
@@ -152,12 +152,12 @@ export default function TokensPage() {
           {TYPE_ROLES.map((t) => (
             <div
               key={t.role}
-              className="flex flex-col gap-inline border-b border-neutral-200 pb-major sm:flex-row sm:items-baseline sm:justify-between"
+              className="flex flex-col gap-inline border-b border-line pb-major sm:flex-row sm:items-baseline sm:justify-between"
             >
               <span className={`${t.cls} ${t.size}`}>
                 {t.role === "Label" ? "Timed entry" : "The experience economy"}
               </span>
-              <span className="font-mono text-[12px] text-neutral-400 whitespace-nowrap">
+              <span className="font-mono text-[12px] text-faint whitespace-nowrap">
                 {t.role} · {t.spec}
               </span>
             </div>
@@ -171,7 +171,7 @@ export default function TokensPage() {
             (code) => (
               <span
                 key={code}
-                className="rounded-sm bg-neutral-900 px-comfortable py-tight font-mono text-sm text-paper"
+                className="rounded-sm bg-neutral-900 px-comfortable py-tight font-mono text-sm text-inverse-fg"
               >
                 {code}
               </span>
@@ -184,14 +184,14 @@ export default function TokensPage() {
         <div className="flex flex-col gap-tight">
           {SPACING.map((s) => (
             <div key={s.name} className="flex items-center gap-section">
-              <span className="w-28 font-mono text-[12px] text-neutral-600">
+              <span className="w-28 font-mono text-[12px] text-muted">
                 {s.name}
               </span>
               <span
                 className="h-4 bg-ember"
                 style={{ width: `${s.value}px` }}
               />
-              <span className="font-mono text-[12px] text-neutral-400">
+              <span className="font-mono text-[12px] text-faint">
                 {s.value}px
               </span>
             </div>
@@ -203,8 +203,8 @@ export default function TokensPage() {
         <div className="flex flex-wrap gap-major">
           {RADII.map((r) => (
             <div key={r.name} className="flex flex-col items-center gap-tight">
-              <div className={`${r.cls} h-20 w-20 border-2 border-ink bg-neutral-200`} />
-              <span className="font-mono text-[12px] text-neutral-600">
+              <div className={`${r.cls} h-20 w-20 border-2 border-inverse bg-line`} />
+              <span className="font-mono text-[12px] text-muted">
                 {r.name} · {r.value}
               </span>
             </div>
@@ -216,15 +216,15 @@ export default function TokensPage() {
         <div className="flex flex-col gap-tight">
           {MOTION.map((m) => (
             <div key={m.name} className="flex items-center gap-section">
-              <span className="w-28 font-mono text-[12px] text-neutral-600">
+              <span className="w-28 font-mono text-[12px] text-muted">
                 {m.name}
               </span>
-              <span className="font-mono text-[12px] text-neutral-400">
+              <span className="font-mono text-[12px] text-faint">
                 {m.value}
               </span>
             </div>
           ))}
-          <p className="type-body mt-tight text-[13px] text-neutral-400">
+          <p className="type-body mt-tight text-[13px] text-faint">
             Easing: <span className="font-mono">cubic-bezier(0.32, 0.72, 0, 1)</span>{" "}
             — both surfaces animate at 120ms.
           </p>

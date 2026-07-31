@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Button, FormField, PageShell, useToast } from "@/components/ui";
+import { AppearancePicker } from "@/components/ThemeProvider";
 import { getOperator, updateOperator, type Operator } from "@/lib/api";
 
 const CURRENCIES = ["BDT", "MYR", "USD", "CAD"];
@@ -68,23 +69,23 @@ export default function BusinessSetupPage() {
   return (
     <PageShell title="Business setup" description="Operator identity, currency, timezone, and tax.">
       {!state ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : (
         <div className="flex max-w-2xl flex-col gap-section pb-hero">
-          <div className="rounded-md border border-neutral-200 bg-white p-major">
+          <div className="rounded-md border border-line bg-card p-major">
             <h2 className="type-h2 mb-section text-base">Identity</h2>
             <div className="grid gap-section sm:grid-cols-2">
               <FormField label="Business name" value={state.name} onChange={(e) => set("name", e.target.value)} className="sm:col-span-2" />
               <div className="flex flex-col gap-tight">
-                <span className="type-label text-[12px] text-neutral-600">Logo</span>
-                <div className="flex h-20 items-center justify-center rounded-sm border border-dashed border-neutral-200 text-[12px] text-neutral-400">
+                <span className="type-label text-[12px] text-muted">Logo</span>
+                <div className="flex h-20 items-center justify-center rounded-sm border border-dashed border-line text-[12px] text-faint">
                   Two-colour logo — upload is a follow-up
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-md border border-neutral-200 bg-white p-major">
+          <div className="rounded-md border border-line bg-card p-major">
             <h2 className="type-h2 mb-section text-base">Regional</h2>
             <div className="grid gap-section sm:grid-cols-3">
               <FormField
@@ -105,7 +106,13 @@ export default function BusinessSetupPage() {
             </div>
           </div>
 
-          <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-neutral-200 bg-paper py-section">
+          <div className="rounded-md border border-line bg-card p-major">
+            <h2 className="type-h2 mb-section text-base">Appearance</h2>
+            <AppearancePicker className="max-w-sm" />
+            <p className="mt-tight text-[12px] text-faint">Per user, on this browser. Scan screens and printed tickets keep their designed look in both modes.</p>
+          </div>
+
+          <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-line bg-surface py-section">
             <Button onClick={save} loading={saving} disabled={!dirty}>
               Save changes
             </Button>

@@ -42,7 +42,7 @@ export default function CustomersPage() {
     { key: "name", header: "Customer", render: (c) => <span className="font-medium">{c.name}</span> },
     { key: "orders", header: "Bookings", align: "right", render: (c) => String(c.orders) },
     { key: "spent", header: "Spent", align: "right", render: (c) => formatMoney(c.spent) },
-    { key: "lastVisit", header: "Last visit", render: (c) => <span className="font-mono text-[12px] text-neutral-600">{c.lastVisit.slice(0, 10)}</span> },
+    { key: "lastVisit", header: "Last visit", render: (c) => <span className="font-mono text-[12px] text-muted">{c.lastVisit.slice(0, 10)}</span> },
   ];
 
   return (
@@ -55,8 +55,8 @@ export default function CustomersPage() {
         onRowClick={(c) => router.push(`/orders?customer=${encodeURIComponent(c.name)}`)}
         toolbar={
           <div className="relative">
-            <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customers…" className="h-9 w-64 rounded-sm border border-neutral-200 pl-8 pr-comfortable text-sm outline-none focus:border-ink" />
+            <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customers…" className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse" />
           </div>
         }
         emptyState={<EmptyState title="No customers yet" message="Attach a customer to a sale at the counter and they appear here." />}

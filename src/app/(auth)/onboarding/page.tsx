@@ -30,10 +30,10 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-md border border-neutral-200 bg-white p-major">
+    <div className="w-full max-w-md rounded-md border border-line bg-card p-major">
       <p className="type-label text-[13px] text-ember">Welcome</p>
       <h1 className="type-h1 mt-inline text-2xl">Name your business</h1>
-      <p className="type-body mt-tight text-[13px] text-neutral-600">
+      <p className="type-body mt-tight text-[13px] text-muted">
         This is what guests and your team will see.
       </p>
 

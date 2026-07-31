@@ -100,13 +100,13 @@ export default function ProductDetailPage() {
     >
       <Link
         href="/products"
-        className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink"
+        className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg"
       >
         <ArrowLeft size={14} strokeWidth={1.5} /> Products
       </Link>
 
       {loading || !product ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : (
         <ProductForm
           product={product}

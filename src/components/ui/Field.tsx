@@ -38,7 +38,7 @@ interface FormFieldProps {
 }
 
 const controlBase =
-  "w-full rounded-sm border bg-white px-comfortable text-sm outline-none transition-colors duration-quick placeholder:text-neutral-400 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-400";
+  "w-full rounded-sm border bg-card px-comfortable text-sm outline-none transition-colors duration-quick placeholder:text-faint disabled:cursor-not-allowed disabled:bg-subtle disabled:text-faint";
 
 /** The label/help/error wrapper. Wrap any control with it. */
 export function Field({
@@ -61,7 +61,7 @@ export function Field({
   return (
     <div className={cn("flex flex-col gap-tight", className)}>
       {label && (
-        <label htmlFor={htmlFor} className="type-label text-[12px] text-neutral-600">
+        <label htmlFor={htmlFor} className="type-label text-[12px] text-muted">
           {label}
           {required && <span className="ml-inline text-danger">*</span>}
         </label>
@@ -70,7 +70,7 @@ export function Field({
       {error ? (
         <p className="text-[12px] text-danger">{error}</p>
       ) : help ? (
-        <p className="text-[12px] text-neutral-400">{help}</p>
+        <p className="text-[12px] text-faint">{help}</p>
       ) : null}
     </div>
   );
@@ -92,7 +92,7 @@ export function FormField({
   ...control
 }: FormFieldProps) {
   const id = useId();
-  const border = error ? "border-danger focus:border-danger" : "border-neutral-200 focus:border-ink";
+  const border = error ? "border-danger focus:border-danger" : "border-line focus:border-inverse";
 
   // Toggle is laid out inline (control beside label), not stacked.
   if (variant === "toggle") {
@@ -108,13 +108,13 @@ export function FormField({
             name={control.name}
             className="peer sr-only"
           />
-          <span className="relative h-6 w-11 shrink-0 rounded-lg bg-neutral-200 transition-colors duration-quick peer-checked:bg-ember peer-focus-visible:ring-2 peer-focus-visible:ring-ink peer-focus-visible:ring-offset-2 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:duration-quick peer-checked:after:translate-x-5" />
+          <span className="relative h-6 w-11 shrink-0 rounded-lg bg-line transition-colors duration-quick peer-checked:bg-ember peer-focus-visible:ring-2 peer-focus-visible:ring-ink peer-focus-visible:ring-offset-2 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-card after:transition-transform after:duration-quick peer-checked:after:translate-x-5" />
           {label && <span className="text-sm">{label}</span>}
         </label>
         {error ? (
           <p className="text-[12px] text-danger">{error}</p>
         ) : help ? (
-          <p className="text-[12px] text-neutral-400">{help}</p>
+          <p className="text-[12px] text-faint">{help}</p>
         ) : null}
       </div>
     );

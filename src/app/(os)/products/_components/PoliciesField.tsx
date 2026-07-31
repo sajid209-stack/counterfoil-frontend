@@ -18,7 +18,7 @@ export function PoliciesField({ value, onChange }: { value: ProductPolicies; onC
 
   return (
     <div className="flex flex-col gap-major">
-      <p className="rounded-sm bg-neutral-50 px-comfortable py-tight text-[13px] text-neutral-600">{policySummary(value)}</p>
+      <p className="rounded-sm bg-subtle px-comfortable py-tight text-[13px] text-muted">{policySummary(value)}</p>
 
       <Section title="Sales window">
         <FormField label="Bookable up to (days ahead)" variant="number" value={String(value.salesWindowDays)} onChange={(e) => set("salesWindowDays", num(e.target.value))} />
@@ -54,7 +54,7 @@ export function PoliciesField({ value, onChange }: { value: ProductPolicies; onC
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="type-label mb-tight text-[12px] text-neutral-600">{title}</p>
+      <p className="type-label mb-tight text-[12px] text-muted">{title}</p>
       <div className="grid gap-section sm:grid-cols-2">{children}</div>
     </div>
   );

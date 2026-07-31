@@ -48,7 +48,7 @@ export function Sidebar({
   );
 
   return (
-    <div style={{ width: collapsed ? 64 : 240 }} className="flex h-full flex-col gap-major bg-neutral-900 py-section text-paper transition-[width] duration-standard ease-counterfoil">
+    <div style={{ width: collapsed ? 64 : 240 }} className="flex h-full flex-col gap-major bg-neutral-900 py-section text-paper transition-[width] duration-standard ease-counterfoil dark:border-r dark:border-line">
       <Link href="/" className={cn("flex items-center", collapsed ? "justify-center" : "px-section")} title={collapsed ? "Counterfoil OS" : undefined}>
         {collapsed ? (
           <span className="type-h2 text-lg text-paper">C</span>

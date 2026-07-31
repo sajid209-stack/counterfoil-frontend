@@ -72,11 +72,11 @@ export default function PaymentPage() {
           <p className="type-label text-[13px] text-ember">Payment</p>
           <h1 className="type-h1 mt-tight text-2xl">Cash</h1>
         </div>
-        <div className="rounded-sm border border-neutral-200 bg-white p-section">
-          <div className="flex justify-between text-neutral-600"><span>{balance > 0 ? "Deposit due now" : "Amount due"}</span><span className="font-mono text-lg">{formatMoney(total)}</span></div>
-          {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-neutral-400"><span>Balance at arrival</span><span className="font-mono">{formatMoney(balance)}</span></div>}
+        <div className="rounded-sm border border-line bg-card p-section">
+          <div className="flex justify-between text-muted"><span>{balance > 0 ? "Deposit due now" : "Amount due"}</span><span className="font-mono text-lg">{formatMoney(total)}</span></div>
+          {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-faint"><span>Balance at arrival</span><span className="font-mono">{formatMoney(balance)}</span></div>}
           <div className="mt-tight flex justify-between"><span>Tendered</span><span className="font-mono text-lg">{formatMoney(tenderedMinor)}</span></div>
-          <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-neutral-400"}`}>
+          <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-faint"}`}>
             <span className="text-xl">Change</span>
             {/* Display size — the number the staff member reads aloud. */}
             <span className="font-mono text-5xl tabular-nums">{enough ? formatMoney(change) : "—"}</span>
@@ -84,9 +84,9 @@ export default function PaymentPage() {
         </div>
         {/* Quick chips: exact, then the notes actually in the till drawer. */}
         <div className="flex gap-tight">
-          <button type="button" onClick={() => setTenderTaka(String(Math.ceil(total / 100)))} className="h-12 flex-1 rounded-sm border border-ink bg-white font-mono text-sm active:bg-ember/10">Exact</button>
+          <button type="button" onClick={() => setTenderTaka(String(Math.ceil(total / 100)))} className="h-12 flex-1 rounded-sm border border-inverse bg-card font-mono text-sm active:bg-ember/10">Exact</button>
           {[500, 1000, 2000].map((amt) => (
-            <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-neutral-200 bg-white font-mono text-sm active:bg-ember/10">
+            <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-line bg-card font-mono text-sm active:bg-ember/10">
               ৳{amt}
             </button>
           ))}

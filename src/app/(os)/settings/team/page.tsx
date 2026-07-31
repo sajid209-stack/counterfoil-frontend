@@ -48,17 +48,17 @@ export default function StaffPage() {
       render: (s) => (
         <div>
           <div className="font-medium">{s.name}</div>
-          <div className="font-mono text-[11px] text-neutral-400">{s.email ?? s.phone ?? "—"}</div>
+          <div className="font-mono text-[11px] text-faint">{s.email ?? s.phone ?? "—"}</div>
         </div>
       ),
     },
     { key: "role", header: "Role", render: (s) => roleName(s.roleId) },
     { key: "locations", header: "Locations", align: "center", render: (s) => <span className="font-mono text-[13px]">{s.locationIds.length}</span> },
     { key: "status", header: "Status", sortable: true, render: (s) => <StatusPill status={s.status} /> },
-    { key: "lastActiveAt", header: "Last active", sortable: true, render: (s) => <span className="text-neutral-600">{formatDateTime(s.lastActiveAt)}</span> },
+    { key: "lastActiveAt", header: "Last active", sortable: true, render: (s) => <span className="text-muted">{formatDateTime(s.lastActiveAt)}</span> },
   ];
 
-  const selectCls = "h-9 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm outline-none focus:border-ink";
+  const selectCls = "h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
 
   return (
     <PageShell
@@ -77,12 +77,12 @@ export default function StaffPage() {
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-neutral-400" />
+              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search staff…"
-                className="h-9 w-64 rounded-sm border border-neutral-200 pl-8 pr-comfortable text-sm outline-none focus:border-ink"
+                className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
             <select value={roleId} onChange={(e) => { setRoleId(e.target.value); setPage(1); }} className={selectCls}>

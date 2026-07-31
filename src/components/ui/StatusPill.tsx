@@ -7,7 +7,7 @@ const TONES: Record<PillTone, string> = {
   warning: "bg-warning/10 text-warning",
   danger: "bg-danger/10 text-danger",
   info: "bg-info/10 text-info",
-  neutral: "bg-neutral-200 text-neutral-800",
+  neutral: "bg-line text-neutral-800",
 };
 
 const DOTS: Record<PillTone, string> = {

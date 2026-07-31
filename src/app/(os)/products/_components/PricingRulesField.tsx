@@ -58,35 +58,35 @@ export function PricingRulesField({
   return (
     <div className="flex flex-col gap-tight">
       <div className="flex items-center justify-between">
-        <span className="type-label text-[12px] text-neutral-600">Pricing rules</span>
+        <span className="type-label text-[12px] text-muted">Pricing rules</span>
         <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} />} onClick={add}>Add rule</Button>
       </div>
-      <p className="text-[12px] text-neutral-400">Checked top to bottom — the first match sets the price. Base applies when nothing matches.</p>
+      <p className="text-[12px] text-faint">Checked top to bottom — the first match sets the price. Base applies when nothing matches.</p>
 
       {rules.map((rule, i) => (
-        <div key={i} className="flex flex-col gap-tight rounded-sm border border-neutral-200 p-comfortable">
+        <div key={i} className="flex flex-col gap-tight rounded-sm border border-line p-comfortable">
           <div className="flex gap-inline">
             {DAY_LABELS.map((label, d) => (
-              <button key={d} type="button" onClick={() => toggleDay(i, d)} className={`h-8 w-8 rounded-xs border text-[11px] ${rule.days.includes(d) ? "border-ink bg-ink text-paper" : "border-neutral-200 text-neutral-600"}`}>{label}</button>
+              <button key={d} type="button" onClick={() => toggleDay(i, d)} className={`h-8 w-8 rounded-xs border text-[11px] ${rule.days.includes(d) ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted"}`}>{label}</button>
             ))}
-            <span className="ml-inline self-center text-[11px] text-neutral-400">{rule.days.length ? "" : "any day"}</span>
+            <span className="ml-inline self-center text-[11px] text-faint">{rule.days.length ? "" : "any day"}</span>
           </div>
           <div className="flex flex-wrap items-end gap-tight">
             <FormField label="From" value={rule.fromTime} onChange={(e) => update(i, { fromTime: e.target.value })} />
             <FormField label="To" value={rule.toTime} onChange={(e) => update(i, { toTime: e.target.value })} />
             <FormField label={`Price (${currency})`} variant="number" value={rule.price} onChange={(e) => update(i, { price: e.target.value })} />
             <div className="flex items-center gap-inline pb-inline">
-              <button type="button" aria-label="Up" onClick={() => move(i, -1)} disabled={i === 0} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 disabled:text-neutral-400"><ChevronUp size={16} strokeWidth={1.5} /></button>
-              <button type="button" aria-label="Down" onClick={() => move(i, 1)} disabled={i === rules.length - 1} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 disabled:text-neutral-400"><ChevronDown size={16} strokeWidth={1.5} /></button>
-              <button type="button" aria-label="Remove" onClick={() => remove(i)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 text-danger"><Trash2 size={16} strokeWidth={1.5} /></button>
+              <button type="button" aria-label="Up" onClick={() => move(i, -1)} disabled={i === 0} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line disabled:text-faint"><ChevronUp size={16} strokeWidth={1.5} /></button>
+              <button type="button" aria-label="Down" onClick={() => move(i, 1)} disabled={i === rules.length - 1} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line disabled:text-faint"><ChevronDown size={16} strokeWidth={1.5} /></button>
+              <button type="button" aria-label="Remove" onClick={() => remove(i)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line text-danger"><Trash2 size={16} strokeWidth={1.5} /></button>
             </div>
           </div>
         </div>
       ))}
 
       {(rules.length > 0 || base > 0) && (
-        <div className="rounded-sm border border-ink bg-white p-section">
-          <p className="type-label text-[11px] text-neutral-400">Preview</p>
+        <div className="rounded-sm border border-inverse bg-card p-section">
+          <p className="type-label text-[11px] text-faint">Preview</p>
           <p className="mt-inline flex flex-wrap gap-section font-mono text-[12px]">
             {EXAMPLES.map(([label, dow, time]) => (
               <span key={label}>{label} → <span className="font-medium">{formatMoney(resolveRulePrice(rulesMinor, dow, time, base), currency)}</span></span>

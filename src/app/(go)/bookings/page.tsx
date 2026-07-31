@@ -33,30 +33,30 @@ export default function GoBookingsPage() {
         <h1 className="type-h1 mt-tight text-2xl">Arrivals</h1>
       </div>
       <div className="relative">
-        <Search size={18} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-neutral-400" />
+        <Search size={18} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by product…"
-          className="h-12 w-full rounded-sm border border-neutral-200 bg-white pl-10 pr-section text-sm outline-none focus:border-ink"
+          className="h-12 w-full rounded-sm border border-line bg-card pl-10 pr-section text-sm outline-none focus:border-inverse"
         />
       </div>
 
       {bookingsQ.loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : arrivals.length === 0 ? (
         <EmptyState title="No upcoming arrivals" />
       ) : (
         <div className="flex flex-col gap-tight">
           {arrivals.slice(0, 40).map((b) => (
-            <div key={b.id} className="flex items-center gap-section rounded-sm border border-neutral-200 bg-white p-comfortable">
+            <div key={b.id} className="flex items-center gap-section rounded-sm border border-line bg-card p-comfortable">
               <div className="text-center">
                 <div className="font-mono text-lg">{time(b.slotStart)}</div>
-                <div className="font-mono text-[10px] text-neutral-400">{formatDate(b.slotStart)}</div>
+                <div className="font-mono text-[10px] text-faint">{formatDate(b.slotStart)}</div>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{productName(b.productId)}</div>
-                <div className="font-mono text-[11px] text-neutral-400">Party of {b.partySize}</div>
+                <div className="font-mono text-[11px] text-faint">Party of {b.partySize}</div>
               </div>
               <StatusPill status="confirmed" />
             </div>

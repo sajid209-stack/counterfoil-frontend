@@ -24,7 +24,7 @@ export default function GoLoginPage() {
         {[0, 1, 2, 3].map((i) => (
           <span
             key={i}
-            className={`h-4 w-4 rounded-full border-2 border-ink ${i < pin.length ? "bg-ink" : "bg-transparent"}`}
+            className={`h-4 w-4 rounded-full border-2 border-inverse ${i < pin.length ? "bg-inverse" : "bg-transparent"}`}
           />
         ))}
       </div>

@@ -31,17 +31,17 @@ export default function NewDevicePage() {
 
   return (
     <PageShell title="Register a device" description="Name the tablet and pair it to a counter.">
-      <Link href="/settings/devices" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/devices" className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg">
         <ArrowLeft size={14} strokeWidth={1.5} /> Devices
       </Link>
 
       {created ? (
-        <div className="max-w-md rounded-md border border-neutral-200 bg-white p-major text-center">
+        <div className="max-w-md rounded-md border border-line bg-card p-major text-center">
           <p className="type-label text-[13px] text-ember">Device registered</p>
           <h2 className="type-h2 mt-tight text-lg">{created.name}</h2>
-          <p className="type-body mt-section text-[13px] text-neutral-600">Enter this pairing code on the tablet to connect it.</p>
+          <p className="type-body mt-section text-[13px] text-muted">Enter this pairing code on the tablet to connect it.</p>
           <div className="mt-section rounded-sm bg-neutral-900 px-section py-major">
-            <span className="font-mono text-3xl text-paper">{created.pairingCode}</span>
+            <span className="font-mono text-3xl text-inverse-fg">{created.pairingCode}</span>
           </div>
           <div className="mt-major flex justify-center gap-tight">
             <Button variant="secondary" onClick={() => { setCreated(null); setName(""); setCounterId(""); }}>Register another</Button>
@@ -49,7 +49,7 @@ export default function NewDevicePage() {
           </div>
         </div>
       ) : (
-        <div className="max-w-md rounded-md border border-neutral-200 bg-white p-major">
+        <div className="max-w-md rounded-md border border-line bg-card p-major">
           <div className="flex flex-col gap-section">
             <FormField label="Device name" required placeholder="Fort iPad 3" value={name} onChange={(e) => { setName(e.target.value); setError(""); }} error={error} />
             <FormField label="Counter" variant="select" value={counterId} onChange={(e) => setCounterId(e.target.value)} options={[{ value: "", label: "Pair later" }, ...counters.map((c) => ({ value: c.id, label: c.name }))]} />

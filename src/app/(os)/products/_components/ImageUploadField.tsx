@@ -34,12 +34,12 @@ export function ImageUploadField({
 
   return (
     <div className="flex flex-col gap-tight">
-      <span className="type-label text-[12px] text-neutral-600">Images</span>
+      <span className="type-label text-[12px] text-muted">Images</span>
       <div className="flex flex-wrap gap-tight">
         {images.map((img) => (
           <div
             key={img.id}
-            className="relative h-24 w-24 overflow-hidden rounded-sm border border-neutral-200 bg-neutral-50"
+            className="relative h-24 w-24 overflow-hidden rounded-sm border border-line bg-subtle"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={img.url} alt={img.alt ?? ""} className="h-full w-full object-cover" />
@@ -47,7 +47,7 @@ export function ImageUploadField({
               type="button"
               aria-label="Remove image"
               onClick={() => remove(img.id)}
-              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-ink/70 text-paper"
+              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-inverse/70 text-inverse-fg"
             >
               <X size={14} strokeWidth={1.5} />
             </button>
@@ -56,7 +56,7 @@ export function ImageUploadField({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex h-24 w-24 flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-neutral-200 text-neutral-400 hover:border-ink hover:text-ink"
+          className="flex h-24 w-24 flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-line text-faint hover:border-inverse hover:text-fg"
         >
           <ImagePlus size={20} strokeWidth={1.5} />
           <span className="text-[11px]">Add</span>

@@ -40,10 +40,10 @@ export function Modal({
       aria-modal="true"
       aria-label={title}
     >
-      <div className="absolute inset-0 bg-ink/40" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 bg-inverse/40" onClick={onClose} aria-hidden />
       <div
         className={cn(
-          "relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-md bg-white p-major shadow-xl",
+          "relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-md bg-card p-major shadow-xl",
           width,
         )}
       >
@@ -51,13 +51,13 @@ export function Modal({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-section top-section text-neutral-400 transition-colors duration-quick hover:text-ink"
+          className="absolute right-section top-section text-faint transition-colors duration-quick hover:text-fg"
         >
           <X size={18} strokeWidth={1.5} />
         </button>
         {title && <h2 className="type-h2 pr-major text-lg">{title}</h2>}
         {description && (
-          <p className="type-body mt-inline text-[13px] text-neutral-600">
+          <p className="type-body mt-inline text-[13px] text-muted">
             {description}
           </p>
         )}

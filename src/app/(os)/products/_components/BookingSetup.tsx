@@ -29,9 +29,9 @@ const PROVIDER_NOUNS = ["Therapist", "Instructor", "Stylist", "Coach", "Guide", 
 
 function Option({ title, helper, onClick }: { title: string; helper: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex w-full flex-col items-start gap-inline rounded-md border border-neutral-200 bg-white p-section text-left transition-all duration-quick hover:border-ember/40 hover:shadow-sm active:bg-ember/5">
+    <button type="button" onClick={onClick} className="flex w-full flex-col items-start gap-inline rounded-md border border-line bg-card p-section text-left transition-all duration-quick hover:border-ember/40 hover:shadow-sm active:bg-ember/5">
       <span className="text-sm font-medium">{title}</span>
-      <span className="text-[13px] text-neutral-400">{helper}</span>
+      <span className="text-[13px] text-faint">{helper}</span>
     </button>
   );
 }
@@ -85,7 +85,7 @@ export function BookingSetup({
 
   if (value) {
     return (
-      <div className="rounded-md border border-neutral-200 bg-white p-major">
+      <div className="rounded-md border border-line bg-card p-major">
         <div className="flex items-start justify-between gap-section">
           <p className="type-body text-sm">{value.summary}</p>
           <button type="button" onClick={() => { setStep("q1"); onChange(null); }} className="flex shrink-0 items-center gap-inline text-[13px] text-ember hover:underline">
@@ -171,11 +171,11 @@ export function BookingSetup({
               {resources.map((r) => (
                 <label key={r.id} className="flex cursor-pointer items-center gap-tight text-sm">
                   <input type="checkbox" checked={picked.includes(r.id)} onChange={() => setPicked((p) => toggle(p, r.id))} className="h-4 w-4 accent-ember" />
-                  {r.name} <span className="text-[12px] text-neutral-400">({r.nounSingular})</span>
+                  {r.name} <span className="text-[12px] text-faint">({r.nounSingular})</span>
                 </label>
               ))}
               {onCreateResource && (
-                <div className="flex flex-wrap items-end gap-tight rounded-sm border border-dashed border-neutral-200 p-comfortable">
+                <div className="flex flex-wrap items-end gap-tight rounded-sm border border-dashed border-line p-comfortable">
                   <FormField label="Add one" placeholder="Field 1" value={newName} onChange={(e) => setNewName(e.target.value)} />
                   <FormField label="Type" variant="select" value={newNoun} onChange={(e) => setNewNoun(e.target.value)} options={NOUNS.map((n) => ({ value: n, label: n }))} />
                   <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} />} loading={adding} onClick={addResource}>Add</Button>
@@ -202,8 +202,8 @@ export function BookingSetup({
         <div className="flex flex-col gap-section">
           <FormField label="What do you call them?" variant="select" value={provNoun} onChange={(e) => setProvNoun(e.target.value)} options={PROVIDER_NOUNS.map((n) => ({ value: n, label: n }))} />
           <div className="flex flex-col gap-tight">
-            <span className="type-label text-[12px] text-neutral-600">Who?</span>
-            {team.length === 0 ? <p className="text-[13px] text-neutral-400">Add team members first, then pick them here.</p> : team.map((m) => (
+            <span className="type-label text-[12px] text-muted">Who?</span>
+            {team.length === 0 ? <p className="text-[13px] text-faint">Add team members first, then pick them here.</p> : team.map((m) => (
               <label key={m.id} className="flex cursor-pointer items-center gap-tight text-sm"><input type="checkbox" checked={provIds.includes(m.id)} onChange={() => setProvIds((p) => toggle(p, m.id))} className="h-4 w-4 accent-ember" />{m.name}</label>
             ))}
           </div>
@@ -216,12 +216,12 @@ export function BookingSetup({
       {step === "course" && (
         <div className="flex flex-col gap-section">
           <div className="flex flex-col gap-tight">
-            <span className="type-label text-[12px] text-neutral-600">Session dates</span>
+            <span className="type-label text-[12px] text-muted">Session dates</span>
             {courseDates.map((d) => (
-              <div key={d} className="flex items-center justify-between rounded-sm border border-neutral-200 px-comfortable py-tight text-sm"><span className="font-mono text-[13px]">{d}</span><button type="button" onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="text-neutral-400 hover:text-danger"><X size={16} strokeWidth={1.5} /></button></div>
+              <div key={d} className="flex items-center justify-between rounded-sm border border-line px-comfortable py-tight text-sm"><span className="font-mono text-[13px]">{d}</span><button type="button" onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="text-faint hover:text-danger"><X size={16} strokeWidth={1.5} /></button></div>
             ))}
             <div className="flex gap-tight">
-              <input type="date" value={courseDate} onChange={(e) => setCourseDate(e.target.value)} className="h-10 flex-1 rounded-sm border border-neutral-200 px-comfortable text-sm" />
+              <input type="date" value={courseDate} onChange={(e) => setCourseDate(e.target.value)} className="h-10 flex-1 rounded-sm border border-line px-comfortable text-sm" />
               <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} />} onClick={() => { if (courseDate && !courseDates.includes(courseDate)) { setCourseDates((d) => [...d, courseDate].sort()); setCourseDate(""); } }}>Add date</Button>
             </div>
           </div>
@@ -247,7 +247,7 @@ export function BookingSetup({
             <FormField label="Expiry (days)" variant="number" value={creditExpiry} onChange={(e) => setCreditExpiry(e.target.value)} />
           </div>
           <div className="flex flex-col gap-tight">
-            <span className="type-label text-[12px] text-neutral-600">Spendable on</span>
+            <span className="type-label text-[12px] text-muted">Spendable on</span>
             {products.map((p) => (<label key={p.id} className="flex cursor-pointer items-center gap-tight text-sm"><input type="checkbox" checked={creditIds.includes(p.id)} onChange={() => setCreditIds((c) => toggle(c, p.id))} className="h-4 w-4 accent-ember" />{p.name}</label>))}
           </div>
           <FlowFooter onBack={() => setStep("q1")} onDone={finishCredits} disabled={creditIds.length === 0} />
@@ -260,14 +260,14 @@ export function BookingSetup({
 function Radio({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string; helper: string }[] }) {
   return (
     <div className="flex flex-col gap-tight">
-      <span className="type-label text-[12px] text-neutral-600">{label}</span>
+      <span className="type-label text-[12px] text-muted">{label}</span>
       {options.map((o) => {
         const selected = value === o.value;
         return (
-          <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={selected} className={`relative flex flex-col items-start rounded-md border p-comfortable text-left transition-all duration-quick ${selected ? "border-ember bg-ember/5" : "border-neutral-200 bg-white hover:border-ember/40 hover:shadow-sm"}`}>
+          <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={selected} className={`relative flex flex-col items-start rounded-md border p-comfortable text-left transition-all duration-quick ${selected ? "border-ember bg-ember/5" : "border-line bg-card hover:border-ember/40 hover:shadow-sm"}`}>
             {selected && <span className="absolute right-tight top-tight h-2 w-2 rounded-full bg-ember" aria-hidden />}
             <span className="text-sm font-medium">{o.label}</span>
-            <span className="text-[12px] text-neutral-400">{o.helper}</span>
+            <span className="text-[12px] text-faint">{o.helper}</span>
           </button>
         );
       })}
@@ -285,5 +285,5 @@ function FlowFooter({ onBack, onDone, disabled }: { onBack: () => void; onDone: 
 }
 
 function BackLink({ onClick }: { onClick: () => void }) {
-  return <button type="button" onClick={onClick} className="self-start text-[13px] text-neutral-400 hover:text-ink">← Back</button>;
+  return <button type="button" onClick={onClick} className="self-start text-[13px] text-faint hover:text-fg">← Back</button>;
 }

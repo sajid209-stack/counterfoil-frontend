@@ -54,7 +54,7 @@ export default function ResourcesPage() {
       header: "Right now",
       render: (r) => {
         const s = liveState(r);
-        return <span className={`font-mono text-[12px] ${s.busy ? "text-neutral-600" : "text-success"}`}>{s.text}</span>;
+        return <span className={`font-mono text-[12px] ${s.busy ? "text-muted" : "text-success"}`}>{s.text}</span>;
       },
     },
     {
@@ -82,10 +82,10 @@ export default function ResourcesPage() {
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-neutral-400" />
-              <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search…" className="h-9 w-64 rounded-sm border border-neutral-200 pl-8 pr-comfortable text-sm outline-none focus:border-ink" />
+              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
+              <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search…" className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse" />
             </div>
-            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm outline-none focus:border-ink">
+            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
               <option value="all">All statuses</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>

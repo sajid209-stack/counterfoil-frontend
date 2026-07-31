@@ -29,11 +29,11 @@ export default function CounterDetailPage() {
       title={counter.data?.name ?? "Counter"}
       actions={counter.data ? <StatusPill status={counter.data.status} /> : undefined}
     >
-      <Link href="/settings/counters" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/counters" className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg">
         <ArrowLeft size={14} strokeWidth={1.5} /> Counters
       </Link>
       {loading || !counter.data ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : (
         <CounterForm mode="edit" counter={counter.data} locations={locs.data?.data ?? []} products={prods.data?.data ?? []} />
       )}

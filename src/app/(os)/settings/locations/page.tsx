@@ -43,7 +43,7 @@ export default function LocationsPage() {
     { key: "city", header: "City", sortable: true },
     { key: "hours", header: "Open days", align: "center", render: (l) => <span className="font-mono text-[13px]">{openDays(l)}/7</span> },
     { key: "status", header: "Status", sortable: true, render: (l) => <StatusPill status={l.status} /> },
-    { key: "updatedAt", header: "Updated", render: (l) => <span className="text-neutral-600">{formatDate(l.updatedAt)}</span> },
+    { key: "updatedAt", header: "Updated", render: (l) => <span className="text-muted">{formatDate(l.updatedAt)}</span> },
   ];
 
   return (
@@ -67,18 +67,18 @@ export default function LocationsPage() {
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-neutral-400" />
+              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search locations…"
-                className="h-9 w-64 rounded-sm border border-neutral-200 pl-8 pr-comfortable text-sm outline-none focus:border-ink"
+                className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
             <select
               value={status}
               onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-              className="h-9 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm outline-none focus:border-ink"
+              className="h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
             >
               <option value="all">All statuses</option>
               <option value="active">Active</option>

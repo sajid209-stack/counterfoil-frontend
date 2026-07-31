@@ -26,8 +26,8 @@ const DEMO_ROWS: DemoRow[] = [
 
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-t border-neutral-200 py-major">
-      <h2 className="type-label mb-section text-[13px] text-neutral-600">{title}</h2>
+    <section className="border-t border-line py-major">
+      <h2 className="type-label mb-section text-[13px] text-muted">{title}</h2>
       {children}
     </section>
   );
@@ -75,7 +75,7 @@ export default function KitchenSink() {
     <main className="mx-auto max-w-4xl px-section py-hero">
       <p className="type-label text-[13px] text-ember">Primitives</p>
       <h1 className="type-display mt-tight text-4xl">Kitchen sink</h1>
-      <p className="type-body mt-section max-w-xl text-neutral-600">
+      <p className="type-body mt-section max-w-xl text-muted">
         Every primitive in every state. These are the reusable pieces the ~15
         CRUD screens assemble from — no product logic inside any of them.
       </p>
@@ -155,7 +155,7 @@ export default function KitchenSink() {
           value={tab}
           onChange={setTab}
         />
-        <p className="mt-section font-mono text-[12px] text-neutral-400">
+        <p className="mt-section font-mono text-[12px] text-faint">
           active tab: {tab}
         </p>
       </Block>
@@ -221,11 +221,11 @@ export default function KitchenSink() {
                 <Search
                   size={16}
                   strokeWidth={1.5}
-                  className="absolute left-comfortable top-1/2 -translate-y-1/2 text-neutral-400"
+                  className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint"
                 />
                 <input
                   placeholder="Search…"
-                  className="h-9 rounded-sm border border-neutral-200 pl-8 pr-comfortable text-sm outline-none focus:border-ink"
+                  className="h-9 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
                 />
               </div>
             </div>

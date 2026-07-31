@@ -69,12 +69,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              "pointer-events-auto flex items-start gap-tight rounded-sm border bg-white p-comfortable shadow-lg",
+              "pointer-events-auto flex items-start gap-tight rounded-sm border bg-card p-comfortable shadow-lg",
               TONE_STYLES[t.tone],
             )}
           >
             <span className="mt-0.5 shrink-0">{TONE_ICON[t.tone]}</span>
-            <p className="flex-1 text-[13px] text-ink">{t.message}</p>
+            <p className="flex-1 text-[13px] text-fg">{t.message}</p>
             {t.action && (
               <button
                 type="button"
@@ -88,7 +88,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               type="button"
               onClick={() => remove(t.id)}
               aria-label="Dismiss"
-              className="shrink-0 text-neutral-400 hover:text-ink"
+              className="shrink-0 text-faint hover:text-fg"
             >
               <X size={16} strokeWidth={1.5} />
             </button>

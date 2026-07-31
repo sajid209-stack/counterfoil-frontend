@@ -42,7 +42,7 @@ export default function ScanPage() {
         <h1 className="type-h1 mt-tight text-2xl">Scan a ticket</h1>
       </div>
 
-      <div className="flex h-40 flex-col items-center justify-center gap-tight rounded-sm border border-dashed border-neutral-200 text-neutral-400">
+      <div className="flex h-40 flex-col items-center justify-center gap-tight rounded-sm border border-dashed border-line text-faint">
         <ScanLine size={40} strokeWidth={1.5} />
         <span className="text-[12px]">Camera scan (mock) — enter a code below</span>
       </div>
@@ -53,17 +53,17 @@ export default function ScanPage() {
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit(code)}
           placeholder="CF-2026-…"
-          className="h-12 flex-1 rounded-sm border border-neutral-200 bg-white px-section font-mono text-sm outline-none focus:border-ink"
+          className="h-12 flex-1 rounded-sm border border-line bg-card px-section font-mono text-sm outline-none focus:border-inverse"
         />
         <Button size="lg" onClick={() => submit(code)}>Check</Button>
       </div>
 
       {samplesQ.data && samplesQ.data.data.length > 0 && (
         <div className="flex flex-col gap-inline">
-          <span className="type-label text-[11px] text-neutral-400">Try a real ticket</span>
+          <span className="type-label text-[11px] text-faint">Try a real ticket</span>
           <div className="flex flex-wrap gap-inline">
             {samplesQ.data.data.map((t) => (
-              <button key={t.id} type="button" onClick={() => submit(t.code)} className="rounded-xs border border-neutral-200 bg-white px-tight py-inline font-mono text-[11px] active:bg-ember/10">
+              <button key={t.id} type="button" onClick={() => submit(t.code)} className="rounded-xs border border-line bg-card px-tight py-inline font-mono text-[11px] active:bg-ember/10">
                 {t.code}
               </button>
             ))}

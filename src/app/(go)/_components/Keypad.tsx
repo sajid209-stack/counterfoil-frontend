@@ -18,7 +18,7 @@ export function Keypad({
           key={k}
           type="button"
           onClick={() => onKey(k)}
-          className="h-16 rounded-sm border border-neutral-200 bg-white font-mono text-2xl active:bg-ember/10"
+          className="h-16 rounded-sm border border-line bg-card font-mono text-2xl active:bg-ember/10"
         >
           {k}
         </button>
@@ -27,7 +27,7 @@ export function Keypad({
       <button
         type="button"
         onClick={() => onKey("0")}
-        className="h-16 rounded-sm border border-neutral-200 bg-white font-mono text-2xl active:bg-ember/10"
+        className="h-16 rounded-sm border border-line bg-card font-mono text-2xl active:bg-ember/10"
       >
         0
       </button>
@@ -35,7 +35,7 @@ export function Keypad({
         type="button"
         onClick={onBackspace}
         aria-label="Delete"
-        className="flex h-16 items-center justify-center rounded-sm border border-neutral-200 bg-white active:bg-ember/10"
+        className="flex h-16 items-center justify-center rounded-sm border border-line bg-card active:bg-ember/10"
       >
         <Delete size={24} strokeWidth={1.5} />
       </button>

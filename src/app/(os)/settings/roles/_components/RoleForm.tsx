@@ -80,12 +80,12 @@ export function RoleForm({ mode, role }: { mode: "create" | "edit"; role?: Role 
 
   return (
     <div className="flex flex-col gap-section pb-hero">
-      <div className="rounded-md border border-neutral-200 bg-white p-major">
+      <div className="rounded-md border border-line bg-card p-major">
         <h2 className="type-h2 mb-section text-base">Details</h2>
         <FormField label="Name" required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="max-w-sm" />
       </div>
 
-      <div className="rounded-md border border-neutral-200 bg-white p-major">
+      <div className="rounded-md border border-line bg-card p-major">
         <h2 className="type-h2 mb-section text-base">Permissions</h2>
         <div className="grid grid-cols-1 gap-tight sm:grid-cols-2">
           {PERMISSIONS.map((p) => (
@@ -97,7 +97,7 @@ export function RoleForm({ mode, role }: { mode: "create" | "edit"; role?: Role 
         </div>
       </div>
 
-      <div className="rounded-md border border-neutral-200 bg-white p-major">
+      <div className="rounded-md border border-line bg-card p-major">
         <h2 className="type-h2 mb-section text-base">Limits</h2>
         <div className="grid gap-section sm:grid-cols-2">
           <div className="flex flex-col gap-tight">
@@ -125,7 +125,7 @@ export function RoleForm({ mode, role }: { mode: "create" | "edit"; role?: Role 
         </div>
       </div>
 
-      <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-neutral-200 bg-paper py-section">
+      <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-line bg-surface py-section">
         <Button variant="secondary" onClick={() => router.push("/settings/roles")} disabled={saving}>Cancel</Button>
         <Button onClick={save} loading={saving} disabled={!dirty && mode === "edit"}>
           {mode === "create" ? "Create role" : "Save changes"}

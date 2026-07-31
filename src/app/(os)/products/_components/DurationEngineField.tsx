@@ -60,22 +60,22 @@ export function DurationEngineField({
       {err ? (
         <p className="rounded-sm border border-danger bg-danger/5 px-comfortable py-tight text-[13px] text-danger">{err}</p>
       ) : (
-        <p className="text-[13px] text-neutral-600">
+        <p className="text-[13px] text-muted">
           Bookable durations: <span className="font-mono text-[12px]">{options.map(formatDurationShort).join(" · ")}</span>
         </p>
       )}
 
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-neutral-600">How is it priced?</span>
+        <span className="type-label text-[12px] text-muted">How is it priced?</span>
         <div className="flex flex-wrap gap-tight">
           {([
             { v: "hourly", label: "Hourly rate", helper: "One rate, prorated" },
             { v: "list", label: "Price list", helper: "A price per duration" },
             { v: "base_extension", label: "Base + extension", helper: "First block, then per step" },
           ] as const).map((o) => (
-            <button key={o.v} type="button" onClick={() => set("pricingModel", o.v)} className={`flex flex-col items-start rounded-sm border px-comfortable py-tight text-left ${value.pricingModel === o.v ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>
+            <button key={o.v} type="button" onClick={() => set("pricingModel", o.v)} className={`flex flex-col items-start rounded-sm border px-comfortable py-tight text-left ${value.pricingModel === o.v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>
               <span className="text-sm font-medium">{o.label}</span>
-              <span className={`text-[11px] ${value.pricingModel === o.v ? "opacity-70" : "text-neutral-400"}`}>{o.helper}</span>
+              <span className={`text-[11px] ${value.pricingModel === o.v ? "opacity-70" : "text-faint"}`}>{o.helper}</span>
             </button>
           ))}
         </div>
@@ -88,7 +88,7 @@ export function DurationEngineField({
       {value.pricingModel === "list" && !err && (
         <div className="flex flex-col gap-tight">
           <div className="flex items-center justify-between">
-            <span className="type-label text-[12px] text-neutral-600">Price per duration</span>
+            <span className="type-label text-[12px] text-muted">Price per duration</span>
             <button type="button" onClick={fillFromHourly} className="text-[13px] text-ember hover:underline">Fill from hourly rate</button>
           </div>
           <div className="grid gap-tight sm:grid-cols-3">
@@ -114,20 +114,20 @@ export function DurationEngineField({
 
       {/* The mandatory preview — concrete numbers before saving. */}
       {!err && options.length > 0 && (
-        <div className="rounded-sm border border-ink bg-white p-section">
-          <p className="type-label text-[11px] text-neutral-400">Preview</p>
+        <div className="rounded-sm border border-inverse bg-card p-section">
+          <p className="type-label text-[11px] text-faint">Preview</p>
           <p className="mt-inline font-mono text-[13px]">
             Bookable: {options.map((d) => `${formatDurationShort(d)} ${formatMoney(previewPrice(d), currency)}`).join(" · ")}
           </p>
           {pricingRules.length > 0 && (
-            <p className="mt-tight text-[13px] text-neutral-600">
+            <p className="mt-tight text-[13px] text-muted">
               {EXAMPLE.label}, {formatDuration(exampleMinutes)} example:{" "}
-              <span className="font-mono font-medium text-ink">{formatMoney(bandedExample, currency)}</span>
+              <span className="font-mono font-medium text-fg">{formatMoney(bandedExample, currency)}</span>
               {bandedExample !== previewPrice(exampleMinutes) && " (time-band rules applied)"}
             </p>
           )}
           {resources.some((r) => r.rateOverride) && (
-            <p className="mt-tight font-mono text-[12px] text-neutral-600">
+            <p className="mt-tight font-mono text-[12px] text-muted">
               {EXAMPLE.label} · {resources.slice(0, 4).map((r) => `${r.name} → ${formatMoney(applyResourceRate(bandedExample, exampleMinutes, r), currency)}`).join(" · ")}
             </p>
           )}

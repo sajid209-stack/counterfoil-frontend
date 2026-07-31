@@ -65,7 +65,7 @@ export default function CheckInPage() {
   };
 
   const dateBtn = (v: string, label: string) => (
-    <button key={v} type="button" onClick={() => setDate(v)} className={`h-10 rounded-sm border px-comfortable text-sm ${date === v ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{label}</button>
+    <button key={v} type="button" onClick={() => setDate(v)} className={`h-10 rounded-sm border px-comfortable text-sm ${date === v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{label}</button>
   );
 
   return (
@@ -74,10 +74,10 @@ export default function CheckInPage() {
         <p className="type-label text-[13px] text-ember">Gate</p>
         <h1 className="type-h1 mt-tight text-2xl">Check-in</h1>
       </div>
-      <div className="flex gap-tight">{dateBtn(TODAY, "Today")}{dateBtn(TOMORROW, "Tomorrow")}<input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm" /></div>
+      <div className="flex gap-tight">{dateBtn(TODAY, "Today")}{dateBtn(TOMORROW, "Tomorrow")}<input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-sm border border-line bg-card px-comfortable text-sm" /></div>
 
       {bookingsQ.loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : groups.length === 0 ? (
         <EmptyState title="No bookings" message="No sessions booked for this day." />
       ) : (
@@ -88,20 +88,20 @@ export default function CheckInPage() {
             const [pid, iso] = key.split("|");
             const isOpen = open[key];
             return (
-              <div key={key} className="rounded-md border border-neutral-200 bg-white">
+              <div key={key} className="rounded-md border border-line bg-card">
                 <button type="button" onClick={() => setOpen((o) => ({ ...o, [key]: !o[key] }))} className="flex w-full items-center gap-section p-comfortable text-left">
                   {isOpen ? <ChevronDown size={16} strokeWidth={1.5} /> : <ChevronRight size={16} strokeWidth={1.5} />}
                   <span className="w-14 font-mono text-sm">{time(iso)}</span>
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{productName(pid)}</span>
-                  <span className={`font-mono text-[13px] ${inCount >= expected ? "text-success" : "text-neutral-600"}`}>{inCount}/{expected}</span>
+                  <span className={`font-mono text-[13px] ${inCount >= expected ? "text-success" : "text-muted"}`}>{inCount}/{expected}</span>
                 </button>
                 {isOpen && (
-                  <div className="flex flex-col gap-tight border-t border-neutral-200 p-comfortable">
+                  <div className="flex flex-col gap-tight border-t border-line p-comfortable">
                     {items.map((b) => {
                       const done = (b.checkedIn ?? 0) >= b.partySize;
                       return (
                         <div key={b.id} className="flex items-center gap-tight text-sm">
-                          <span className="flex-1 font-mono text-[12px] text-neutral-600">{b.orderId} · party {b.partySize}</span>
+                          <span className="flex-1 font-mono text-[12px] text-muted">{b.orderId} · party {b.partySize}</span>
                           <span className="font-mono text-[12px]">{b.checkedIn ?? 0}/{b.partySize} in</span>
                           {extendOf(b) && (
                             <Button size="sm" variant="secondary" loading={pending === b.id} onClick={() => extend(b)}>

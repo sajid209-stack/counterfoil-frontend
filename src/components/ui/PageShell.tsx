@@ -26,13 +26,13 @@ export function PageShell({
       <div className="flex flex-col gap-tight sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           {crumbs.length > 0 && (
-            <p className="mb-inline font-mono text-[12px] uppercase tracking-wide text-neutral-400">
+            <p className="mb-inline font-mono text-[12px] uppercase tracking-wide text-faint">
               {["os", ...crumbs].join(" / ")}
             </p>
           )}
           <h1 className="type-h1 text-2xl">{title}</h1>
           {description && (
-            <p className="type-body mt-inline max-w-2xl text-[13px] text-neutral-600">
+            <p className="type-body mt-inline max-w-2xl text-[13px] text-muted">
               {description}
             </p>
           )}

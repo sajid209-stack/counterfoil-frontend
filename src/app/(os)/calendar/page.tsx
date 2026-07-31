@@ -59,10 +59,10 @@ export default function CalendarPage() {
       {/* The day by resource — the same timeline the POS sheet shows, so the
           manager and the counter see the same picture. */}
       {view === "day" && (resourcesQ.data?.data.length ?? 0) > 0 && (
-        <div className="mb-major rounded-md border border-neutral-200 bg-white p-major">
+        <div className="mb-major rounded-md border border-line bg-card p-major">
           <div className="mb-section flex items-center justify-between">
             <h2 className="type-h2 text-base">By {resourcesQ.data!.data[0].nounSingular.toLowerCase()}</h2>
-            <input type="date" value={resourceDate} onChange={(e) => setResourceDate(e.target.value)} className="h-11 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm outline-none focus:border-ink" />
+            <input type="date" value={resourceDate} onChange={(e) => setResourceDate(e.target.value)} className="h-11 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse" />
           </div>
           <div className="flex flex-col gap-section">
             {resourcesQ.data!.data.map((r) => (
@@ -79,26 +79,26 @@ export default function CalendarPage() {
       )}
 
       {loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : grouped.length === 0 ? (
         <EmptyState title="No bookings in this window" message="Try the month view for a wider range." />
       ) : (
         <div className="flex flex-col gap-section">
           {grouped.map(([date, items]) => (
-            <div key={date} className="rounded-md border border-neutral-200 bg-white p-major">
+            <div key={date} className="rounded-md border border-line bg-card p-major">
               <div className="mb-tight flex items-center justify-between">
                 <h2 className="type-h2 text-base">{formatDate(date)}</h2>
-                <span className="font-mono text-[12px] text-neutral-400">{items.length} booking{items.length === 1 ? "" : "s"}</span>
+                <span className="font-mono text-[12px] text-faint">{items.length} booking{items.length === 1 ? "" : "s"}</span>
               </div>
               <div className="flex flex-col gap-inline">
                 {items
                   .sort((a, b) => a.slotStart.localeCompare(b.slotStart))
                   .map((b) => (
-                    <div key={b.id} className="flex items-center gap-section border-t border-neutral-200 py-tight text-sm first:border-0">
+                    <div key={b.id} className="flex items-center gap-section border-t border-line py-tight text-sm first:border-0">
                       <span className="w-14 font-mono text-[13px]">{time(b.slotStart)}</span>
                       <span className="flex-1">{productName(b.productId)}</span>
-                      <span className="text-[12px] text-neutral-400">{locationName(b.locationId)}</span>
-                      <span className="font-mono text-[12px] text-neutral-600">party {b.partySize}</span>
+                      <span className="text-[12px] text-faint">{locationName(b.locationId)}</span>
+                      <span className="font-mono text-[12px] text-muted">party {b.partySize}</span>
                       <StatusPill status="confirmed" />
                     </div>
                   ))}

@@ -39,8 +39,8 @@ export default function PricingPage() {
 
   const columns: Column<PriceRule>[] = [
     { key: "name", header: "Name", sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
-    { key: "scope", header: "Applies to", render: (r) => <span className="text-[13px] text-neutral-600">{scope(r)}</span> },
-    { key: "channel", header: "Channel", render: (r) => <span className="font-mono text-[12px] text-neutral-600">{r.channel}</span> },
+    { key: "scope", header: "Applies to", render: (r) => <span className="text-[13px] text-muted">{scope(r)}</span> },
+    { key: "channel", header: "Channel", render: (r) => <span className="font-mono text-[12px] text-muted">{r.channel}</span> },
     { key: "kind", header: "Kind", render: (r) => KIND_LABEL[r.kind] },
     {
       key: "adjustmentPct",
@@ -48,7 +48,7 @@ export default function PricingPage() {
       sortable: true,
       align: "right",
       render: (r) => (
-        <span className={`font-mono text-[13px] ${r.adjustmentPct > 0 ? "text-danger" : r.adjustmentPct < 0 ? "text-success" : "text-neutral-600"}`}>
+        <span className={`font-mono text-[13px] ${r.adjustmentPct > 0 ? "text-danger" : r.adjustmentPct < 0 ? "text-success" : "text-muted"}`}>
           {r.adjustmentPct > 0 ? "+" : ""}{r.adjustmentPct}%
         </span>
       ),
@@ -68,15 +68,15 @@ export default function PricingPage() {
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-neutral-400" />
+              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search price rules…"
-                className="h-9 w-64 rounded-sm border border-neutral-200 pl-8 pr-comfortable text-sm outline-none focus:border-ink"
+                className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
-            <select value={kind} onChange={(e) => { setKind(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm outline-none focus:border-ink">
+            <select value={kind} onChange={(e) => { setKind(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
               <option value="">All kinds</option>
               <option value="standard">Standard</option>
               <option value="peak">Peak</option>

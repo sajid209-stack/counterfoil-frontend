@@ -94,7 +94,7 @@ export function ResourceForm({
 
   return (
     <div className="flex flex-col gap-section pb-hero">
-      <div className="rounded-md border border-neutral-200 bg-white p-major">
+      <div className="rounded-md border border-line bg-card p-major">
         <h2 className="type-h2 mb-section text-base">Details</h2>
         <div className="grid gap-section sm:grid-cols-2">
           <FormField label="Name" required placeholder="Field 1" value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} />
@@ -111,7 +111,7 @@ export function ResourceForm({
         </div>
       </div>
 
-      <div className="rounded-md border border-neutral-200 bg-white p-major">
+      <div className="rounded-md border border-line bg-card p-major">
         <h2 className="type-h2 mb-section text-base">Rate</h2>
         <div className="grid gap-section sm:grid-cols-2">
           <FormField
@@ -132,7 +132,7 @@ export function ResourceForm({
         </div>
       </div>
 
-      <div className="rounded-md border border-neutral-200 bg-white p-major">
+      <div className="rounded-md border border-line bg-card p-major">
         <h2 className="type-h2 mb-section text-base">Out of service</h2>
         <FormField
           label={`Take this ${state.nounSingular.toLowerCase()} out of service`}
@@ -146,7 +146,7 @@ export function ResourceForm({
         )}
       </div>
 
-      <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-neutral-200 bg-paper py-section">
+      <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-line bg-surface py-section">
         <Button variant="secondary" onClick={() => router.push("/settings/resources")} disabled={saving}>Cancel</Button>
         <Button onClick={save} loading={saving} disabled={!dirty && mode === "edit"}>{mode === "create" ? "Add" : "Save changes"}</Button>
       </div>

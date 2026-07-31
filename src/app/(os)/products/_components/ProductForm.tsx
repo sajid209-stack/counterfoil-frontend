@@ -266,7 +266,7 @@ export function ProductForm({
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-section pb-hero">
       <Tabs items={TABS} value={tab} onChange={setTab} />
 
-      <div className="rounded-md border border-neutral-200 bg-white p-major">
+      <div className="rounded-md border border-line bg-card p-major">
         {tab === "details" && (
           <div className="grid gap-section sm:grid-cols-2">
             <FormField label="Name" required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="sm:col-span-2" />
@@ -279,7 +279,7 @@ export function ProductForm({
         {tab === "availability" && (
           <div className="flex flex-col gap-section">
             <div>
-              <p className="type-label mb-tight text-[12px] text-neutral-600">When people can use it</p>
+              <p className="type-label mb-tight text-[12px] text-muted">When people can use it</p>
               <BookingSetup
                 value={state.booking}
                 resources={resources}
@@ -320,13 +320,13 @@ export function ProductForm({
             <TypeSpecificFields state={state} set={set} team={team} providerNoun={product.providerNoun} />
             {state.booking.bookingType === "BT-03" && state.schedule && (
               <div className="flex flex-col gap-tight">
-                <span className="type-label text-[12px] text-neutral-600">Session names (optional)</span>
-                <p className="text-[12px] text-neutral-400">Name a session and the name shows on tickets and the schedule — &quot;Morning show&quot;.</p>
+                <span className="type-label text-[12px] text-muted">Session names (optional)</span>
+                <p className="text-[12px] text-faint">Name a session and the name shows on tickets and the schedule — &quot;Morning show&quot;.</p>
                 <div className="grid gap-tight sm:grid-cols-3">
                   {slotTimes(state.schedule).map((t) => (
                     <div key={t} className="flex items-center gap-tight">
-                      <span className="w-14 font-mono text-[13px] text-neutral-600">{t}</span>
-                      <input type="text" value={state.sessionNames[t] ?? ""} placeholder="—" onChange={(e) => set("sessionNames", { ...state.sessionNames, [t]: e.target.value })} className="h-10 w-full rounded-sm border border-neutral-200 px-comfortable text-sm outline-none focus:border-ink" />
+                      <span className="w-14 font-mono text-[13px] text-muted">{t}</span>
+                      <input type="text" value={state.sessionNames[t] ?? ""} placeholder="—" onChange={(e) => set("sessionNames", { ...state.sessionNames, [t]: e.target.value })} className="h-10 w-full rounded-sm border border-line px-comfortable text-sm outline-none focus:border-inverse" />
                     </div>
                   ))}
                 </div>
@@ -359,7 +359,7 @@ export function ProductForm({
                     className="max-w-xs"
                     help="One price for the whole group — group size is capped by the party limits in Policies."
                   />
-                  <p className="text-[12px] text-neutral-400">Priced per booking. Switch to per-person tiers by changing the booking setup on the Availability tab.</p>
+                  <p className="text-[12px] text-faint">Priced per booking. Switch to per-person tiers by changing the booking setup on the Availability tab.</p>
                 </div>
               ) : (
                 <PriceTiersField tiers={state.tiers} onChange={(tiers) => set("tiers", tiers)} errors={errors} currency={currency} />
@@ -382,12 +382,12 @@ export function ProductForm({
         {tab === "where" && (
           <div className="grid gap-section sm:grid-cols-2">
             <div className="flex flex-col gap-tight">
-              <span className="type-label text-[12px] text-neutral-600">Where it&apos;s sold</span>
+              <span className="type-label text-[12px] text-muted">Where it&apos;s sold</span>
               <FormField label="At the counter" variant="toggle" checked={state.counter} onChange={(e) => set("counter", (e.target as HTMLInputElement).checked)} />
               <FormField label="Online" variant="toggle" checked={state.online} onChange={(e) => set("online", (e.target as HTMLInputElement).checked)} />
             </div>
             <div className="flex flex-col gap-tight">
-              <span className="type-label text-[12px] text-neutral-600">Locations</span>
+              <span className="type-label text-[12px] text-muted">Locations</span>
               {locations.map((l) => (
                 <label key={l.id} className="flex cursor-pointer items-center gap-tight text-sm">
                   <input type="checkbox" checked={state.locationIds.includes(l.id)} onChange={() => toggleLocation(l.id)} className="h-4 w-4 accent-ember" />
@@ -400,7 +400,7 @@ export function ProductForm({
 
         {tab === "advanced" && (
           <div className="flex flex-col gap-tight text-sm">
-            <p className="text-[13px] text-neutral-400">Internal values for support and debugging. Read-only.</p>
+            <p className="text-[13px] text-faint">Internal values for support and debugging. Read-only.</p>
             <AdvancedRow label="Booking type" value={state.booking.bookingType} />
             <AdvancedRow label="Product ID" value={product.id} />
             <AdvancedRow label="Created" value={product.createdAt} />
@@ -409,8 +409,8 @@ export function ProductForm({
         )}
       </div>
 
-      <div className="sticky bottom-0 flex items-center justify-between border-t border-neutral-200 bg-paper py-section">
-        <span className="font-mono text-[12px] text-neutral-400">{dirty ? "Unsaved changes" : "No changes"}</span>
+      <div className="sticky bottom-0 flex items-center justify-between border-t border-line bg-surface py-section">
+        <span className="font-mono text-[12px] text-faint">{dirty ? "Unsaved changes" : "No changes"}</span>
         <div className="flex items-center gap-tight">
           <Button variant="secondary" onClick={() => router.push("/products")} disabled={saving}>Cancel</Button>
           <Button onClick={save} loading={saving} disabled={!dirty}>Save changes</Button>
@@ -474,7 +474,7 @@ function TypeSpecificFields({
     if (ids.length === 0) return null;
     return (
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-neutral-600">Per-{(state.booking.provider?.noun ?? providerNoun ?? "provider").toLowerCase()} price & durations</span>
+        <span className="type-label text-[12px] text-muted">Per-{(state.booking.provider?.noun ?? providerNoun ?? "provider").toLowerCase()} price & durations</span>
         {ids.map((id) => {
           const extra = state.providerExtras[id] ?? { premium: "", durations: "" };
           const name = team.find((m) => m.id === id)?.name ?? id;
@@ -513,8 +513,8 @@ function TypeSpecificFields({
 
 function AdvancedRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between border-b border-neutral-200 py-tight last:border-0">
-      <span className="text-neutral-600">{label}</span>
+    <div className="flex justify-between border-b border-line py-tight last:border-0">
+      <span className="text-muted">{label}</span>
       <span className="font-mono text-[12px]">{value}</span>
     </div>
   );

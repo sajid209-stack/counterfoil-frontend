@@ -47,7 +47,7 @@ export default function QuickPassPage() {
       <main className="mx-auto flex max-w-md flex-col items-center gap-major px-section py-hero text-center">
         <CircleCheck size={48} strokeWidth={1.5} className="text-success" />
         <h1 className="type-h1 text-2xl">Pass issued</h1>
-        <div className="w-full rounded-sm bg-ink px-section py-major"><span className="font-mono text-2xl text-paper">{code}</span></div>
+        <div className="w-full rounded-sm bg-inverse px-section py-major"><span className="font-mono text-2xl text-inverse-fg">{code}</span></div>
         <Button size="lg" fullWidth onClick={() => { setCode(null); setIdentifier(""); }}>Issue another</Button>
       </main>
     );
@@ -58,14 +58,14 @@ export default function QuickPassPage() {
       <div>
         <p className="type-label text-[13px] text-ember">Gate</p>
         <h1 className="type-h1 mt-tight text-2xl">Quick pass</h1>
-        <p className="type-body mt-tight text-neutral-600">Issue a timed pass on the spot.</p>
+        <p className="type-body mt-tight text-muted">Issue a timed pass on the spot.</p>
       </div>
 
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-neutral-600">Duration</span>
+        <span className="type-label text-[12px] text-muted">Duration</span>
         <div className="flex gap-tight">
           {durations.map((d) => (
-            <button key={d} type="button" onClick={() => { setDuration(d); setPriceEdit(null); }} className={`h-12 flex-1 rounded-sm border text-sm ${duration === d ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{formatDuration(d)}</button>
+            <button key={d} type="button" onClick={() => { setDuration(d); setPriceEdit(null); }} className={`h-12 flex-1 rounded-sm border text-sm ${duration === d ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{formatDuration(d)}</button>
           ))}
         </div>
       </div>

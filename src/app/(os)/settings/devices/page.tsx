@@ -33,9 +33,9 @@ export default function DevicesPage() {
   const columns: Column<Device>[] = [
     { key: "name", header: "Name", sortable: true, render: (d) => <span className="font-medium">{d.name}</span> },
     { key: "counter", header: "Counter", render: (d) => counterName(d.counterId) },
-    { key: "code", header: "Pairing code", render: (d) => <span className="font-mono text-[12px] text-neutral-600">{d.pairingCode}</span> },
+    { key: "code", header: "Pairing code", render: (d) => <span className="font-mono text-[12px] text-muted">{d.pairingCode}</span> },
     { key: "status", header: "Status", sortable: true, render: (d) => <StatusPill status={d.status} /> },
-    { key: "lastSeen", header: "Last seen", render: (d) => <span className="text-neutral-600">{formatDateTime(d.lastSeenAt)}</span> },
+    { key: "lastSeen", header: "Last seen", render: (d) => <span className="text-muted">{formatDateTime(d.lastSeenAt)}</span> },
   ];
 
   return (
@@ -54,10 +54,10 @@ export default function DevicesPage() {
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-neutral-400" />
-              <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search devices…" className="h-9 w-64 rounded-sm border border-neutral-200 pl-8 pr-comfortable text-sm outline-none focus:border-ink" />
+              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
+              <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search devices…" className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse" />
             </div>
-            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm outline-none focus:border-ink">
+            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
               <option value="all">All statuses</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>

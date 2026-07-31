@@ -51,7 +51,7 @@ const blank: FormState = {
 
 function HoursSummary({ hours }: { hours: OpeningHours[] }) {
   return (
-    <div className="rounded-md border border-neutral-200 bg-white p-major">
+    <div className="rounded-md border border-line bg-card p-major">
       <h2 className="type-h2 mb-section text-base">Opening hours</h2>
       <div className="flex flex-col gap-inline">
         {DAYS.map((label, day) => {
@@ -59,8 +59,8 @@ function HoursSummary({ hours }: { hours: OpeningHours[] }) {
           const intervals = entry?.intervals ?? [];
           return (
             <div key={day} className="flex items-center justify-between text-sm">
-              <span className="w-12 text-neutral-600">{label}</span>
-              <span className="font-mono text-[12px] text-neutral-600">
+              <span className="w-12 text-muted">{label}</span>
+              <span className="font-mono text-[12px] text-muted">
                 {intervals.length
                   ? intervals.map((i) => `${i.opensAt}–${i.closesAt}`).join(", ")
                   : "Closed"}
@@ -69,7 +69,7 @@ function HoursSummary({ hours }: { hours: OpeningHours[] }) {
           );
         })}
       </div>
-      <p className="mt-section text-[12px] text-neutral-400">
+      <p className="mt-section text-[12px] text-faint">
         Hours + special dates editor is a follow-up — an engineer picks it up here.
       </p>
     </div>
@@ -126,7 +126,7 @@ export function LocationForm({
 
   return (
     <div className="flex flex-col gap-section pb-hero">
-      <div className="rounded-md border border-neutral-200 bg-white p-major">
+      <div className="rounded-md border border-line bg-card p-major">
         <h2 className="type-h2 mb-section text-base">Details</h2>
         <div className="grid gap-section sm:grid-cols-2">
           <FormField
@@ -177,7 +177,7 @@ export function LocationForm({
 
       <HoursSummary hours={location?.openingHours ?? []} />
 
-      <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-neutral-200 bg-paper py-section">
+      <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-line bg-surface py-section">
         <Button variant="secondary" onClick={() => router.push("/settings/locations")} disabled={saving}>
           Cancel
         </Button>

@@ -28,15 +28,15 @@ export function ChoiceCard({
       className={cn(
         "relative rounded-md border text-left transition-all duration-quick",
         disabled
-          ? "border-neutral-200 bg-neutral-50 text-neutral-400"
+          ? "border-line bg-subtle text-faint"
           : selected
             ? "border-ember bg-ember/5"
-            : "border-neutral-200 bg-white hover:border-ember/40 hover:shadow-sm active:bg-ember/5",
+            : "border-line bg-card hover:border-ember/40 hover:shadow-sm active:bg-ember/5",
         className,
       )}
     >
       {selected && (
-        <span className="absolute right-tight top-tight flex h-4 w-4 items-center justify-center rounded-full bg-ember text-ink" aria-hidden>
+        <span className="absolute right-tight top-tight flex h-4 w-4 items-center justify-center rounded-full bg-ember text-fg" aria-hidden>
           <Check size={11} strokeWidth={3} />
         </span>
       )}
@@ -54,7 +54,7 @@ export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
     .join("");
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-full bg-ink font-semibold text-paper"
+      className="flex shrink-0 items-center justify-center rounded-full bg-inverse font-semibold text-inverse-fg"
       style={{ width: size, height: size, fontSize: size * 0.35 }}
       aria-hidden
     >

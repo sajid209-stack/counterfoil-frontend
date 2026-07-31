@@ -65,7 +65,7 @@ export default function SalesReportPage() {
     { key: "gross", header: "Gross", sortable: true, align: "right", render: (r) => <span className="font-mono text-[13px]">{formatMoney(r.gross)}</span> },
     { key: "refunds", header: "Refunds", sortable: true, align: "right", render: (r) => <span className="font-mono text-[13px] text-danger">{r.refunds ? `−${formatMoney(r.refunds)}` : "—"}</span> },
     { key: "net", header: "Net", sortable: true, align: "right", render: (r) => <span className="font-mono text-[13px]">{formatMoney(r.net)}</span> },
-    { key: "shareOfTotal", header: "% of total", align: "right", render: (r) => <span className="font-mono text-[12px] text-neutral-400">{(r.shareOfTotal * 100).toFixed(0)}%</span> },
+    { key: "shareOfTotal", header: "% of total", align: "right", render: (r) => <span className="font-mono text-[12px] text-faint">{(r.shareOfTotal * 100).toFixed(0)}%</span> },
   ];
 
   // Drill-down transactions for the selected group row.
@@ -104,14 +104,14 @@ export default function SalesReportPage() {
     >
       <div className="mb-major flex flex-wrap items-center gap-tight">
         {PRESETS.map((p) => (
-          <button key={p.value} type="button" onClick={() => setPreset(p.value)} className={`h-9 rounded-sm border px-comfortable text-sm ${preset === p.value ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{p.label}</button>
+          <button key={p.value} type="button" onClick={() => setPreset(p.value)} className={`h-9 rounded-sm border px-comfortable text-sm ${preset === p.value ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{p.label}</button>
         ))}
-        <button type="button" onClick={() => setPreset("custom")} className={`h-9 rounded-sm border px-comfortable text-sm ${preset === "custom" ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>Custom</button>
+        <button type="button" onClick={() => setPreset("custom")} className={`h-9 rounded-sm border px-comfortable text-sm ${preset === "custom" ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>Custom</button>
         {preset === "custom" && (
           <span className="flex items-center gap-inline">
-            <input type="date" value={custom[0]} onChange={(e) => setCustom([e.target.value, custom[1]])} className="h-9 rounded-sm border border-neutral-200 px-comfortable text-sm" />
-            <span className="text-neutral-400">→</span>
-            <input type="date" value={custom[1]} onChange={(e) => setCustom([custom[0], e.target.value])} className="h-9 rounded-sm border border-neutral-200 px-comfortable text-sm" />
+            <input type="date" value={custom[0]} onChange={(e) => setCustom([e.target.value, custom[1]])} className="h-9 rounded-sm border border-line px-comfortable text-sm" />
+            <span className="text-faint">→</span>
+            <input type="date" value={custom[1]} onChange={(e) => setCustom([custom[0], e.target.value])} className="h-9 rounded-sm border border-line px-comfortable text-sm" />
           </span>
         )}
       </div>
@@ -139,20 +139,20 @@ export default function SalesReportPage() {
         <div className="mt-major">
           <div className="mb-tight flex items-center justify-between">
             <h2 className="type-h2 text-base">Transactions · {drill.label}</h2>
-            <button type="button" onClick={() => setDrill(null)} className="text-[13px] text-neutral-400 hover:text-ink">Clear</button>
+            <button type="button" onClick={() => setDrill(null)} className="text-[13px] text-faint hover:text-fg">Clear</button>
           </div>
-          <div className="overflow-x-auto rounded-md border border-neutral-200 bg-white">
+          <div className="overflow-x-auto rounded-md border border-line bg-card">
             <table className="w-full text-sm">
               <tbody>
                 {drillOrders.map((o) => (
-                  <tr key={o.id} className="border-b border-neutral-200 last:border-0">
+                  <tr key={o.id} className="border-b border-line last:border-0">
                     <td className="px-comfortable py-tight font-mono text-[12px]">{o.reference}</td>
-                    <td className="px-comfortable py-tight text-neutral-600">{formatDateTime(o.createdAt)}</td>
+                    <td className="px-comfortable py-tight text-muted">{formatDateTime(o.createdAt)}</td>
                     <td className="px-comfortable py-tight text-right font-mono text-[13px]">{formatMoney(o.total)}</td>
-                    <td className="px-comfortable py-tight text-right font-mono text-[11px] text-neutral-400">{o.status}</td>
+                    <td className="px-comfortable py-tight text-right font-mono text-[11px] text-faint">{o.status}</td>
                   </tr>
                 ))}
-                {drillOrders.length === 0 && <tr><td className="px-comfortable py-major text-center text-[13px] text-neutral-400">No transactions.</td></tr>}
+                {drillOrders.length === 0 && <tr><td className="px-comfortable py-major text-center text-[13px] text-faint">No transactions.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -164,10 +164,10 @@ export default function SalesReportPage() {
 
 function Card({ label, value, delta }: { label: string; value: string; delta?: string }) {
   return (
-    <div className="rounded-md border border-neutral-200 bg-white p-section">
-      <p className="type-label text-[12px] text-neutral-400">{label}</p>
+    <div className="rounded-md border border-line bg-card p-section">
+      <p className="type-label text-[12px] text-faint">{label}</p>
       <p className="mt-tight font-mono text-2xl">{value}</p>
-      {delta && <p className="mt-inline font-mono text-[11px] text-neutral-400">{delta} vs prev</p>}
+      {delta && <p className="mt-inline font-mono text-[11px] text-faint">{delta} vs prev</p>}
     </div>
   );
 }

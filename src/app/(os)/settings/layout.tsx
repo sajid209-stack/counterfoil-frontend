@@ -29,7 +29,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="border-b border-neutral-200 bg-white px-major">
+      <div className="border-b border-line bg-card px-major">
         <nav className="flex gap-inline overflow-x-auto">
           {SUB_NAV.map((s) => {
             const active = pathname === s.href || pathname.startsWith(`${s.href}/`);
@@ -39,7 +39,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                 href={s.href}
                 className={cn(
                   "flex h-11 items-center whitespace-nowrap border-b-2 px-comfortable text-sm transition-colors duration-quick",
-                  active ? "border-ink font-medium text-ink" : "border-transparent text-neutral-400 hover:text-ink",
+                  active ? "border-inverse font-medium text-fg" : "border-transparent text-faint hover:text-fg",
                 )}
               >
                 {s.label}

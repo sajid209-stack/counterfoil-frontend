@@ -76,7 +76,7 @@ export default function SchedulePage() {
   };
 
   const dateBtn = (v: string, label: string) => (
-    <button key={v} type="button" onClick={() => setDate(v)} className={`h-10 rounded-sm border px-comfortable text-sm ${date === v ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{label}</button>
+    <button key={v} type="button" onClick={() => setDate(v)} className={`h-10 rounded-sm border px-comfortable text-sm ${date === v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{label}</button>
   );
 
   return (
@@ -88,27 +88,27 @@ export default function SchedulePage() {
       <div className="flex gap-tight">
         {dateBtn(TODAY, "Today")}
         {dateBtn(TOMORROW, "Tomorrow")}
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm" />
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-sm border border-line bg-card px-comfortable text-sm" />
       </div>
 
       {productsQ.loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : rows.length === 0 ? (
         <EmptyState title="No sessions" message="This day has no timed or resourced sessions." />
       ) : (
-        <div className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+        <div className="overflow-hidden rounded-md border border-line bg-card">
           {rows.map((r, i) => (
-            <div key={i} className="flex items-center gap-section border-b border-neutral-200 px-section py-tight last:border-0">
+            <div key={i} className="flex items-center gap-section border-b border-line px-section py-tight last:border-0">
               <span className="w-14 font-mono text-sm">{r.time}</span>
               <span className="min-w-0 flex-1 truncate text-sm">{r.label}</span>
-              <span className={`font-mono text-[12px] ${r.full ? "text-neutral-400" : "text-neutral-600"}`}>{r.state}</span>
+              <span className={`font-mono text-[12px] ${r.full ? "text-faint" : "text-muted"}`}>{r.state}</span>
               {r.full ? (
-                r.product.waitlistEnabled ? <Button size="sm" variant="secondary" onClick={() => sell(r.product)}>Waitlist</Button> : <span className="w-16 text-right font-mono text-[11px] text-neutral-400">—</span>
+                r.product.waitlistEnabled ? <Button size="sm" variant="secondary" onClick={() => sell(r.product)}>Waitlist</Button> : <span className="w-16 text-right font-mono text-[11px] text-faint">—</span>
               ) : (
                 <Button size="sm" onClick={() => sell(r.product)}>Sell</Button>
               )}
               {r.resourceId && (
-                <button type="button" aria-label="Row actions" onClick={() => openOos(r.resourceId!)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-neutral-200 text-neutral-400 active:bg-ember/10">
+                <button type="button" aria-label="Row actions" onClick={() => openOos(r.resourceId!)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line text-faint active:bg-ember/10">
                   <MoreHorizontal size={15} strokeWidth={1.5} />
                 </button>
               )}
@@ -130,7 +130,7 @@ export default function SchedulePage() {
         }
       >
         {oos?.outOfService ? (
-          <p className="text-sm text-neutral-600">Currently out of service{oos.outOfServiceReason ? `: ${oos.outOfServiceReason}` : ""}. Returning it makes it bookable again.</p>
+          <p className="text-sm text-muted">Currently out of service{oos.outOfServiceReason ? `: ${oos.outOfServiceReason}` : ""}. Returning it makes it bookable again.</p>
         ) : (
           <FormField label="Reason" placeholder="Resurfacing until Friday" value={oosReason} onChange={(e) => setOosReason(e.target.value)} help="Bookings stop while it's out of service." />
         )}

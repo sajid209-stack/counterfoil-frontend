@@ -8,7 +8,7 @@ import { RoleForm } from "../_components/RoleForm";
 export default function NewRolePage() {
   return (
     <PageShell title="New role" description="Define a permission set and limits.">
-      <Link href="/settings/roles" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/roles" className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg">
         <ArrowLeft size={14} strokeWidth={1.5} /> Roles
       </Link>
       <RoleForm mode="create" />

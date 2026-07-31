@@ -24,7 +24,7 @@ export function Tabs({
   return (
     <div
       role="tablist"
-      className={cn("flex gap-inline border-b border-neutral-200", className)}
+      className={cn("flex gap-inline border-b border-line", className)}
     >
       {items.map((it) => {
         const active = it.value === value;
@@ -38,13 +38,13 @@ export function Tabs({
             className={cn(
               "-mb-px h-10 border-b-2 px-comfortable text-sm transition-colors duration-quick",
               active
-                ? "border-ink font-medium text-ink"
-                : "border-transparent text-neutral-400 hover:text-ink",
+                ? "border-inverse font-medium text-fg"
+                : "border-transparent text-faint hover:text-fg",
             )}
           >
             {it.label}
             {it.count != null && (
-              <span className="ml-inline font-mono text-[11px] text-neutral-400">
+              <span className="ml-inline font-mono text-[11px] text-faint">
                 {it.count}
               </span>
             )}

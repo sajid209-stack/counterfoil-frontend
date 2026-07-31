@@ -82,10 +82,10 @@ export function ScheduleBuilder({
       )}
 
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-neutral-600">Open days</span>
+        <span className="type-label text-[12px] text-muted">Open days</span>
         <div className="flex gap-inline">
           {DAY_LABELS.map((label, d) => (
-            <button key={d} type="button" onClick={() => toggleDay(d)} className={`h-10 w-10 rounded-sm border text-[13px] ${value.openDays.includes(d) ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white text-neutral-600"}`}>
+            <button key={d} type="button" onClick={() => toggleDay(d)} className={`h-10 w-10 rounded-sm border text-[13px] ${value.openDays.includes(d) ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card text-muted"}`}>
               {label}
             </button>
           ))}
@@ -94,25 +94,25 @@ export function ScheduleBuilder({
 
       {isSlotBased(bookingType) && (
         <div className="flex flex-col gap-tight">
-          <span className="type-label text-[12px] text-neutral-600">Different hours on some days</span>
+          <span className="type-label text-[12px] text-muted">Different hours on some days</span>
           {Object.entries(overrides).map(([dStr, hrs]) => {
             const d = Number(dStr);
             return (
               <div key={d} className="flex items-center gap-tight">
-                <select value={d} onChange={(e) => moveOverride(d, Number(e.target.value))} className="h-10 rounded-sm border border-neutral-200 bg-white px-tight text-sm outline-none focus:border-ink">
+                <select value={d} onChange={(e) => moveOverride(d, Number(e.target.value))} className="h-10 rounded-sm border border-line bg-card px-tight text-sm outline-none focus:border-inverse">
                   {value.openDays.filter((x) => x === d || !(x in overrides)).map((x) => (
                     <option key={x} value={x}>{DAY_NAMES[x]}</option>
                   ))}
                 </select>
                 <TimeInput value={hrs.startTime} onChange={(t) => setOverride(d, { ...hrs, startTime: t })} className="w-32" />
-                <span className="text-neutral-400">–</span>
+                <span className="text-faint">–</span>
                 <TimeInput value={hrs.endTime} onChange={(t) => setOverride(d, { ...hrs, endTime: t })} className="w-32" />
-                <button type="button" aria-label="Remove override" onClick={() => setOverride(d, null)} className="text-neutral-400 hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
+                <button type="button" aria-label="Remove override" onClick={() => setOverride(d, null)} className="text-faint hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
               </div>
             );
           })}
           {value.openDays.some((x) => !(x in overrides)) && (
-            <button type="button" onClick={addOverride} className="flex h-10 w-fit items-center gap-inline rounded-sm border border-neutral-200 px-comfortable text-sm hover:border-ink">
+            <button type="button" onClick={addOverride} className="flex h-10 w-fit items-center gap-inline rounded-sm border border-line px-comfortable text-sm hover:border-inverse">
               <Plus size={16} strokeWidth={1.5} /> Add day override
             </button>
           )}
@@ -121,15 +121,15 @@ export function ScheduleBuilder({
 
       {isGuided(bookingType) && (
         <div className="flex flex-col gap-tight">
-          <span className="type-label text-[12px] text-neutral-600">Who can lead this?</span>
+          <span className="type-label text-[12px] text-muted">Who can lead this?</span>
           {team.length === 0 ? (
-            <p className="rounded-sm border border-dashed border-neutral-200 px-comfortable py-comfortable text-[13px] text-neutral-400">
+            <p className="rounded-sm border border-dashed border-line px-comfortable py-comfortable text-[13px] text-faint">
               No team members yet — add your first guide from the Team screen.
             </p>
           ) : (
             <div className="flex flex-wrap gap-inline">
               {team.map((m) => (
-                <button key={m.id} type="button" onClick={() => toggleGuide(m.id)} className={`rounded-sm border px-comfortable py-tight text-[13px] ${value.guideIds.includes(m.id) ? "border-ember bg-ember/10 text-ember" : "border-neutral-200 text-neutral-600"}`}>
+                <button key={m.id} type="button" onClick={() => toggleGuide(m.id)} className={`rounded-sm border px-comfortable py-tight text-[13px] ${value.guideIds.includes(m.id) ? "border-ember bg-ember/10 text-ember" : "border-line text-muted"}`}>
                   {m.name}
                 </button>
               ))}
@@ -140,39 +140,39 @@ export function ScheduleBuilder({
 
       {/* Live preview — the most important element. */}
       {isSlotBased(bookingType) && (
-        <div className="rounded-sm border border-ink bg-white p-section">
-          <p className="type-label text-[11px] text-neutral-400">Preview</p>
+        <div className="rounded-sm border border-inverse bg-card p-section">
+          <p className="type-label text-[11px] text-faint">Preview</p>
           <p className="mt-inline font-mono text-[13px]">
             {slots.slice(0, 6).join(" · ")}{slots.length > 6 ? ` … ${slots[slots.length - 1]}` : ""}
           </p>
-          <p className="mt-tight text-[13px] text-neutral-600">
+          <p className="mt-tight text-[13px] text-muted">
             {slots.length} sessions/day · {slots.length * openCount}/week · up to{" "}
-            <span className="font-medium text-ink">{(slots.length * openCount * value.capacityPerSession).toLocaleString()}</span> visitors/week
+            <span className="font-medium text-fg">{(slots.length * openCount * value.capacityPerSession).toLocaleString()}</span> visitors/week
           </p>
-          {overrideSummary && <p className="mt-tight font-mono text-[12px] text-neutral-600">Except {overrideSummary}</p>}
+          {overrideSummary && <p className="mt-tight font-mono text-[12px] text-muted">Except {overrideSummary}</p>}
         </div>
       )}
       {isDailyCapped(bookingType) && (
-        <div className="rounded-sm border border-ink bg-white p-section text-[13px] text-neutral-600">
-          Up to <span className="font-medium text-ink">{(value.dailyCapacity ?? 0).toLocaleString()}</span> visitors/day, {openCount} days a week.
+        <div className="rounded-sm border border-inverse bg-card p-section text-[13px] text-muted">
+          Up to <span className="font-medium text-fg">{(value.dailyCapacity ?? 0).toLocaleString()}</span> visitors/day, {openCount} days a week.
         </div>
       )}
 
       {/* Exceptions */}
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-neutral-600">Closed & special dates</span>
+        <span className="type-label text-[12px] text-muted">Closed & special dates</span>
         {value.exceptions.map((e) => (
-          <div key={e.date} className="flex items-center justify-between rounded-sm border border-neutral-200 px-comfortable py-tight text-sm">
+          <div key={e.date} className="flex items-center justify-between rounded-sm border border-line px-comfortable py-tight text-sm">
             <span className="font-mono text-[13px]">{e.date}</span>
             <span className="flex items-center gap-section">
-              <span className="text-neutral-400">Closed</span>
-              <button type="button" aria-label="Remove" onClick={() => removeException(e.date)} className="text-neutral-400 hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
+              <span className="text-faint">Closed</span>
+              <button type="button" aria-label="Remove" onClick={() => removeException(e.date)} className="text-faint hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
             </span>
           </div>
         ))}
         <div className="flex gap-tight">
-          <input type="date" value={exDate} onChange={(e) => setExDate(e.target.value)} className="h-10 flex-1 rounded-sm border border-neutral-200 px-comfortable text-sm outline-none focus:border-ink" />
-          <button type="button" onClick={addException} className="flex h-10 items-center gap-inline rounded-sm border border-neutral-200 px-comfortable text-sm hover:border-ink">
+          <input type="date" value={exDate} onChange={(e) => setExDate(e.target.value)} className="h-10 flex-1 rounded-sm border border-line px-comfortable text-sm outline-none focus:border-inverse" />
+          <button type="button" onClick={addException} className="flex h-10 items-center gap-inline rounded-sm border border-line px-comfortable text-sm hover:border-inverse">
             <Plus size={16} strokeWidth={1.5} /> Add closed date
           </button>
         </div>

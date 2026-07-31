@@ -287,11 +287,11 @@ export default function PosPage() {
       <div className="flex min-h-0 flex-col gap-tight">
         {/* Header zone: counter chip · wide search · parked badge */}
         <div className="flex items-center gap-tight">
-          <span className="hidden h-12 shrink-0 items-center rounded-sm border border-neutral-200 bg-white px-comfortable text-[13px] text-neutral-600 sm:flex">Fort Main Gate</span>
-          <div className="flex h-12 min-w-0 flex-1 items-center gap-tight rounded-sm border border-neutral-200 bg-white px-comfortable focus-within:border-ink">
-            <Search size={16} strokeWidth={1.5} className="shrink-0 text-neutral-400" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products…" className="h-full w-full bg-transparent text-sm outline-none placeholder:text-neutral-400" />
-            {query && <button type="button" onClick={() => setQuery("")} className="text-[12px] text-neutral-400 hover:text-ink">Clear</button>}
+          <span className="hidden h-12 shrink-0 items-center rounded-sm border border-line bg-card px-comfortable text-[13px] text-muted sm:flex">Fort Main Gate</span>
+          <div className="flex h-12 min-w-0 flex-1 items-center gap-tight rounded-sm border border-line bg-card px-comfortable focus-within:border-inverse">
+            <Search size={16} strokeWidth={1.5} className="shrink-0 text-faint" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products…" className="h-full w-full bg-transparent text-sm outline-none placeholder:text-faint" />
+            {query && <button type="button" onClick={() => setQuery("")} className="text-[12px] text-faint hover:text-fg">Clear</button>}
           </div>
           {parked.length > 0 && (
             <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable font-mono text-[12px] text-ember">
@@ -302,24 +302,24 @@ export default function PosPage() {
         {/* Category chips */}
         <div className="flex gap-inline overflow-x-auto pb-inline">
           {[{ id: "all", name: "All" }, ...categories].map((c) => (
-            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 shrink-0 rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ink bg-ink text-paper" : "border-neutral-200 bg-white"}`}>{c.name}</button>
+            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 shrink-0 rounded-sm border px-comfortable text-sm ${category === c.id ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{c.name}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto">
           {productsQ.loading ? (
-            <div aria-busy="true" className="flex animate-pulse flex-col gap-tight p-section"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
+            <div aria-busy="true" className="flex animate-pulse flex-col gap-tight p-section"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
           ) : (
             <div className="grid grid-cols-2 gap-tight sm:grid-cols-3">
               {shown.map((p) => (
-                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex min-h-[6rem] flex-col justify-between rounded-sm border border-neutral-200 border-t-2 border-t-ember bg-white p-comfortable text-left transition-colors duration-quick active:bg-ember/10">
+                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex min-h-[6rem] flex-col justify-between rounded-sm border border-line border-t-2 border-t-ember bg-card p-comfortable text-left transition-colors duration-quick active:bg-ember/10">
                   <div>
                     <span className="block text-[16px] font-semibold leading-tight">{p.name}</span>
-                    <span className="mt-inline block text-[13px] leading-tight text-neutral-400">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
+                    <span className="mt-inline block text-[13px] leading-tight text-faint">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
                   </div>
                   <span className="mt-tight self-end font-mono text-[13px] tabular-nums">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
                 </button>
               ))}
-              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[5.5rem] flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-neutral-200 text-neutral-400 active:bg-ember/10">
+              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[5.5rem] flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-line text-faint active:bg-ember/10">
                 <Plus size={20} strokeWidth={1.5} /><span className="text-[12px]">Custom amount</span>
               </button>
             </div>
@@ -328,16 +328,16 @@ export default function PosPage() {
       </div>
 
       {/* Cart — fixed right panel on tablet/desktop; bottom drawer on phones */}
-      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] rounded-t-md shadow-2xl" : "hidden"} min-h-0 flex-col border border-neutral-200 bg-white lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-sm lg:shadow-none`}>
-        <div className="flex items-center gap-tight border-b border-neutral-200 p-tight">
+      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] rounded-t-md shadow-2xl" : "hidden"} min-h-0 flex-col border border-line bg-card lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-sm lg:shadow-none`}>
+        <div className="flex items-center gap-tight border-b border-line p-tight">
           {cartOpen && (
-            <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-sm border border-neutral-200 px-tight text-[12px] text-neutral-600 lg:hidden">Close</button>
+            <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-sm border border-line px-tight text-[12px] text-muted lg:hidden">Close</button>
           )}
-          <button type="button" onClick={() => { setCustomerDraft(customer); setCustomerOpen(true); }} className={`flex h-12 items-center gap-inline rounded-sm border px-tight text-[12px] ${customer ? "border-ink text-ink" : "border-neutral-200 text-neutral-400"}`}>
+          <button type="button" onClick={() => { setCustomerDraft(customer); setCustomerOpen(true); }} className={`flex h-12 items-center gap-inline rounded-sm border px-tight text-[12px] ${customer ? "border-inverse text-fg" : "border-line text-faint"}`}>
             <UserRound size={14} strokeWidth={1.5} />{customer || "Customer"}
           </button>
           <span className="flex-1" />
-          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-sm border border-neutral-200 px-tight text-[12px] text-neutral-600 disabled:text-neutral-400" title={cart.length === 0 ? "Nothing to park" : "Park this cart"}>
+          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-sm border border-line px-tight text-[12px] text-muted disabled:text-faint" title={cart.length === 0 ? "Nothing to park" : "Park this cart"}>
             <Archive size={14} strokeWidth={1.5} />Park
           </button>
         </div>
@@ -347,36 +347,36 @@ export default function PosPage() {
           ) : (
             <div className="flex flex-col gap-tight">
               {cart.map((e) => (
-                <div key={e.id} className="flex items-start gap-tight border-b border-neutral-200 pb-tight last:border-0">
+                <div key={e.id} className="flex items-start gap-tight border-b border-line pb-tight last:border-0">
                   <div className="min-w-0 flex-1 cursor-pointer" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
                     <div className="flex justify-between text-sm font-medium"><span className="truncate">{e.productName}</span><span className="font-mono">{formatMoney(entryTotal(e), currency)}</span></div>
-                    <div className="font-mono text-[11px] text-neutral-400">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.resourceLabel, e.providerLabel, e.partySize != null ? `Group of ${e.partySize}` : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
+                    <div className="font-mono text-[11px] text-faint">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.resourceLabel, e.providerLabel, e.partySize != null ? `Group of ${e.partySize}` : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="font-mono text-[11px] text-success">{entryCoveredQty(e)} paid with pass</div>}
-                    {entryBalance(e) > 0 && <div className="font-mono text-[11px] text-neutral-400">{productById(e.productId)?.policies?.depositPct}% deposit now · {formatMoney(entryBalance(e), currency)} at arrival</div>}
+                    {entryBalance(e) > 0 && <div className="font-mono text-[11px] text-faint">{productById(e.productId)?.policies?.depositPct}% deposit now · {formatMoney(entryBalance(e), currency)} at arrival</div>}
                   </div>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-neutral-200 px-tight font-mono text-[11px] active:bg-ember/10">
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight font-mono text-[11px] active:bg-ember/10">
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
-                  {e.productId !== "custom" && <button type="button" aria-label="Edit" onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-neutral-200 active:bg-ember/10"><Pencil size={15} strokeWidth={1.5} /></button>}
-                  <button type="button" aria-label="Remove" onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-sm border border-neutral-200 text-danger active:bg-ember/10"><Trash2 size={15} strokeWidth={1.5} /></button>
+                  {e.productId !== "custom" && <button type="button" aria-label="Edit" onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line active:bg-ember/10"><Pencil size={15} strokeWidth={1.5} /></button>}
+                  <button type="button" aria-label="Remove" onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-danger active:bg-ember/10"><Trash2 size={15} strokeWidth={1.5} /></button>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="border-t border-neutral-200 p-comfortable">
+        <div className="border-t border-line p-comfortable">
           {/* Discount */}
           <div className="mb-tight flex items-center justify-between">
-            <span className="text-[13px] text-neutral-600">Discount</span>
+            <span className="text-[13px] text-muted">Discount</span>
             <div className="flex items-center gap-inline">
-              {[0, 5, 10, 15].map((d) => <button key={d} type="button" onClick={() => setDiscountPct(d)} className={`h-12 min-w-12 rounded-xs border px-tight font-mono text-[12px] ${discountPct === d ? "border-ink bg-ink text-paper" : "border-neutral-200"}`}>{d}%</button>)}
+              {[0, 5, 10, 15].map((d) => <button key={d} type="button" onClick={() => setDiscountPct(d)} className={`h-12 min-w-12 rounded-xs border px-tight font-mono text-[12px] ${discountPct === d ? "border-inverse bg-inverse text-inverse-fg" : "border-line"}`}>{d}%</button>)}
             </div>
           </div>
           {overLimit && (
-            <p className="mb-tight rounded-sm border border-neutral-200 border-l-[3px] border-l-ember bg-white p-tight text-[12px]">
+            <p className="mb-tight rounded-sm border border-line border-l-[3px] border-l-ember bg-card p-tight text-[12px]">
               Over your {discountLimit}% discount limit — ask a manager, or pick {discountLimit}% or less.
             </p>
           )}
@@ -384,38 +384,38 @@ export default function PosPage() {
 
           {/* Credits pass */}
           <div className="mb-tight flex items-center justify-between">
-            <span className="text-[13px] text-neutral-600">Pass</span>
+            <span className="text-[13px] text-muted">Pass</span>
             {pass ? (
               <span className="flex items-center gap-inline font-mono text-[11px]">
                 <span>{pass.code} · {creditsUsed} used · {pass.remaining - creditsUsed} left</span>
                 <button type="button" aria-label="Remove pass" onClick={() => setPass(null)} className="text-danger">✕</button>
               </span>
             ) : (
-              <button type="button" onClick={() => setPassOpen(true)} className="h-12 rounded-xs border border-neutral-200 px-tight text-[12px]">Redeem a pass</button>
+              <button type="button" onClick={() => setPassOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[12px]">Redeem a pass</button>
             )}
           </div>
 
-          <div className="flex justify-between text-[13px] text-neutral-600"><span>Subtotal</span><span className="font-mono">{formatMoney(subtotal, currency)}</span></div>
-          {discount > 0 && <div className="flex justify-between text-[13px] text-neutral-600"><span>Discount</span><span className="font-mono text-danger">−{formatMoney(discount, currency)}</span></div>}
-          {creditsValue > 0 && <div className="flex justify-between text-[13px] text-neutral-600"><span>Pass · {creditsUsed} credits</span><span className="font-mono text-success">−{formatMoney(creditsValue, currency)}</span></div>}
-          <div className="flex justify-between text-[13px] text-neutral-600"><span>VAT</span><span className="font-mono">{formatMoney(tax, currency)}</span></div>
+          <div className="flex justify-between text-[13px] text-muted"><span>Subtotal</span><span className="font-mono">{formatMoney(subtotal, currency)}</span></div>
+          {discount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>Discount</span><span className="font-mono text-danger">−{formatMoney(discount, currency)}</span></div>}
+          {creditsValue > 0 && <div className="flex justify-between text-[13px] text-muted"><span>Pass · {creditsUsed} credits</span><span className="font-mono text-success">−{formatMoney(creditsValue, currency)}</span></div>}
+          <div className="flex justify-between text-[13px] text-muted"><span>VAT</span><span className="font-mono">{formatMoney(tax, currency)}</span></div>
           <div className="mt-tight flex items-baseline justify-between text-lg font-medium"><span>Total</span><AnimatedMoney value={total} currency={currency} /></div>
           {balance > 0 && (
             <>
               <div className="flex justify-between text-[13px]"><span>Due now</span><span className="font-mono">{formatMoney(dueNow, currency)}</span></div>
-              <div className="flex justify-between text-[13px] text-neutral-600"><span>Balance at arrival</span><span className="font-mono">{formatMoney(balance, currency)}</span></div>
+              <div className="flex justify-between text-[13px] text-muted"><span>Balance at arrival</span><span className="font-mono">{formatMoney(balance, currency)}</span></div>
             </>
           )}
 
           {/* Payment method — segmented control with a sliding thumb */}
-          <div className="relative mt-tight grid h-12 grid-cols-4 rounded-sm bg-neutral-200/60 p-inline">
+          <div className="relative mt-tight grid h-12 grid-cols-4 rounded-sm bg-line/60 p-inline">
             <span
               aria-hidden
-              className="absolute inset-y-inline rounded-xs bg-ink transition-[left] duration-quick ease-counterfoil"
+              className="absolute inset-y-inline rounded-xs bg-inverse transition-[left] duration-quick ease-counterfoil"
               style={{ width: "calc(25% - 8px)", left: `calc(${COUNTER_METHODS.findIndex((m) => m.value === method) * 25}% + 4px)` }}
             />
             {COUNTER_METHODS.map((m) => (
-              <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[13px] transition-colors duration-quick ${method === m.value ? "font-medium text-paper" : "text-neutral-600"}`}>{m.label}</button>
+              <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[13px] transition-colors duration-quick ${method === m.value ? "font-medium text-inverse-fg" : "text-muted"}`}>{m.label}</button>
             ))}
           </div>
 
@@ -427,7 +427,7 @@ export default function PosPage() {
 
       {/* Phone summary bar — persistent door to the cart drawer */}
       {!cartOpen && (
-        <button type="button" onClick={() => setCartOpen(true)} className="fixed inset-x-tight bottom-tight z-30 flex h-14 items-center justify-between rounded-sm bg-ink px-section text-paper shadow-lg lg:hidden">
+        <button type="button" onClick={() => setCartOpen(true)} className="fixed inset-x-tight bottom-tight z-30 flex h-14 items-center justify-between rounded-sm bg-inverse px-section text-inverse-fg shadow-lg lg:hidden">
           <span className="text-sm">{cart.length} item{cart.length === 1 ? "" : "s"}{customer ? ` · ${customer}` : ""}</span>
           <span className="font-mono text-sm">{formatMoney(dueNow, currency)} · View cart</span>
         </button>
@@ -456,19 +456,19 @@ export default function PosPage() {
             </div>
           )}
           {parked.length === 0 ? (
-            <p className="text-[13px] text-neutral-400">Nothing parked.</p>
+            <p className="text-[13px] text-faint">Nothing parked.</p>
           ) : (
             <div className="flex flex-col gap-tight">
               {parked.map((p, i) => (
-                <div key={i} className="flex items-center justify-between rounded-sm border border-neutral-200 p-comfortable">
+                <div key={i} className="flex items-center justify-between rounded-sm border border-line p-comfortable">
                   <div>
                     <p className="text-sm font-medium">{p.name}</p>
-                    <p className="font-mono text-[12px] text-neutral-400">{p.cart.length} line{p.cart.length === 1 ? "" : "s"} · {formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency)}</p>
+                    <p className="font-mono text-[12px] text-faint">{p.cart.length} line{p.cart.length === 1 ? "" : "s"} · {formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency)}</p>
                   </div>
                   <Button size="sm" onClick={() => resume(i)} disabled={cart.length > 0} >Resume</Button>
                 </div>
               ))}
-              {cart.length > 0 && <p className="text-[12px] text-neutral-400">Park or clear the current cart before resuming another.</p>}
+              {cart.length > 0 && <p className="text-[12px] text-faint">Park or clear the current cart before resuming another.</p>}
             </div>
           )}
         </div>

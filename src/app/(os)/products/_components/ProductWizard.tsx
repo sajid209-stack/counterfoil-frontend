@@ -176,14 +176,14 @@ export function ProductWizard({
     <div className="flex flex-col gap-major pb-hero">
       <ol className="flex flex-wrap gap-tight">
         {STEPS.map((label, i) => (
-          <li key={label} className={`flex items-center gap-inline rounded-sm px-comfortable py-tight text-[12px] ${i === step ? "bg-ink text-paper" : i < step ? "text-ink" : "text-neutral-400"}`}>
+          <li key={label} className={`flex items-center gap-inline rounded-sm px-comfortable py-tight text-[12px] ${i === step ? "bg-inverse text-inverse-fg" : i < step ? "text-fg" : "text-faint"}`}>
             <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current font-mono text-[10px]">{i < step ? <Check size={12} strokeWidth={2} /> : i + 1}</span>
             {label}
           </li>
         ))}
       </ol>
 
-      <div className="rounded-md border border-neutral-200 bg-white p-major">
+      <div className="rounded-md border border-line bg-card p-major">
         {step === 0 && (
           <div className="grid gap-section sm:grid-cols-2">
             <FormField label="Name" required placeholder="Fort General Admission" value={name} onChange={(e) => setName(e.target.value)} className="sm:col-span-2" />
@@ -220,19 +220,19 @@ export function ProductWizard({
         {step === 3 && (
           <div className="grid gap-section sm:grid-cols-2">
             <div className="flex flex-col gap-tight">
-              <span className="type-label text-[12px] text-neutral-600">Where it&apos;s sold</span>
+              <span className="type-label text-[12px] text-muted">Where it&apos;s sold</span>
               <FormField label="At the counter" variant="toggle" checked={counter} onChange={(e) => setCounter((e.target as HTMLInputElement).checked)} />
               <FormField label="Online" variant="toggle" checked={online} onChange={(e) => setOnline((e.target as HTMLInputElement).checked)} />
             </div>
             <div className="flex flex-col gap-tight">
-              <span className="type-label text-[12px] text-neutral-600">Locations</span>
+              <span className="type-label text-[12px] text-muted">Locations</span>
               {locations.length === 0 ? (
-                <div className="rounded-sm border border-dashed border-neutral-200 px-comfortable py-section text-center">
-                  <p className="text-[13px] text-neutral-400">You haven&apos;t added a location yet.</p>
+                <div className="rounded-sm border border-dashed border-line px-comfortable py-section text-center">
+                  <p className="text-[13px] text-faint">You haven&apos;t added a location yet.</p>
                   <Button size="sm" className="mt-tight" icon={<Plus size={14} strokeWidth={1.5} />} onClick={() => setAddLocOpen(true)}>Add one now</Button>
                 </div>
               ) : locations.length === 1 ? (
-                <p className="rounded-sm border border-neutral-200 px-comfortable py-tight text-sm">Sold at <span className="font-medium">{locations[0].name}</span>.</p>
+                <p className="rounded-sm border border-line px-comfortable py-tight text-sm">Sold at <span className="font-medium">{locations[0].name}</span>.</p>
               ) : (
                 <>
                   {locations.map((l) => (
@@ -287,8 +287,8 @@ export function ProductWizard({
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-section border-b border-neutral-200 pb-tight text-sm last:border-0">
-      <span className="w-16 shrink-0 text-neutral-400">{label}</span>
+    <div className="flex gap-section border-b border-line pb-tight text-sm last:border-0">
+      <span className="w-16 shrink-0 text-faint">{label}</span>
       <span className="flex-1">{children}</span>
     </div>
   );

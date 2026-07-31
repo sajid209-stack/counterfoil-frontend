@@ -23,11 +23,11 @@ export default function RoleDetailPage() {
 
   return (
     <PageShell title={data?.name ?? "Role"}>
-      <Link href="/settings/roles" className="mb-section inline-flex items-center gap-inline text-[13px] text-neutral-400 hover:text-ink">
+      <Link href="/settings/roles" className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg">
         <ArrowLeft size={14} strokeWidth={1.5} /> Roles
       </Link>
       {loading || !data ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-neutral-200" /><div className="h-4 w-2/3 rounded-xs bg-neutral-200" /><div className="h-4 w-1/2 rounded-xs bg-neutral-200" /></div>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : (
         <RoleForm mode="edit" role={data} />
       )}

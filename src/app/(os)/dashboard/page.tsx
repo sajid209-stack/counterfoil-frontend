@@ -198,7 +198,7 @@ export default function DashboardPage() {
 
   const dateLabel = new Date(`${TODAY}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
-  const card = "rounded-md border border-neutral-200 bg-white shadow-sm";
+  const card = "rounded-md border border-line bg-card shadow-sm";
 
   return (
     <PageShell
@@ -207,7 +207,7 @@ export default function DashboardPage() {
       actions={
         <div className="flex items-center gap-tight">
           {locations.length > 1 && (
-            <select value={locationId} onChange={(e) => setLocationId(e.target.value)} className="h-11 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm outline-none focus:border-ink">
+            <select value={locationId} onChange={(e) => setLocationId(e.target.value)} className="h-11 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
               <option value="all">All locations</option>
               {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
@@ -219,32 +219,32 @@ export default function DashboardPage() {
       {loading ? (
         <div className="grid grid-cols-2 gap-tight lg:grid-cols-4" aria-busy="true">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className={`${card} animate-pulse p-section`}><div className="h-3 w-1/2 rounded-xs bg-neutral-200" /><div className="mt-tight h-8 w-2/3 rounded-xs bg-neutral-200" /></div>
+            <div key={i} className={`${card} animate-pulse p-section`}><div className="h-3 w-1/2 rounded-xs bg-line" /><div className="mt-tight h-8 w-2/3 rounded-xs bg-line" /></div>
           ))}
         </div>
       ) : !allDone ? (
         <div className={`${card} mb-major p-major`}>
           <div className="mb-section flex items-center justify-between">
             <h2 className="type-h2 text-base">Finish setting up</h2>
-            <span className="font-mono text-[12px] text-neutral-400">{complete} of {steps.length}</span>
+            <span className="font-mono text-[12px] text-faint">{complete} of {steps.length}</span>
           </div>
-          <div className="mb-major h-1.5 w-full overflow-hidden rounded-full bg-neutral-200">
+          <div className="mb-major h-1.5 w-full overflow-hidden rounded-full bg-line">
             <div className="h-full bg-ember transition-all" style={{ width: `${(complete / steps.length) * 100}%` }} />
           </div>
           <div className="flex flex-col gap-tight">
             {steps.map((s, i) => {
               const done = s.done || skipped[s.key];
               return (
-                <div key={s.key} className="flex items-center gap-section rounded-sm border border-neutral-200 p-comfortable">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-[13px] ${done ? "bg-success text-white" : "bg-neutral-200 text-neutral-600"}`}>
+                <div key={s.key} className="flex items-center gap-section rounded-sm border border-line p-comfortable">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-[13px] ${done ? "bg-success text-white" : "bg-line text-muted"}`}>
                     {done ? <Check size={16} strokeWidth={2} /> : i + 1}
                   </span>
                   <span className="min-w-0 flex-1 text-sm font-medium">{s.label}</span>
                   {done ? (
-                    <span className="font-mono text-[11px] text-neutral-400">{s.done ? "Done" : "Skipped"}</span>
+                    <span className="font-mono text-[11px] text-faint">{s.done ? "Done" : "Skipped"}</span>
                   ) : (
                     <div className="flex items-center gap-tight">
-                      <button type="button" onClick={() => skip(s.key)} className="text-[12px] text-neutral-400 hover:text-ink">Skip</button>
+                      <button type="button" onClick={() => skip(s.key)} className="text-[12px] text-faint hover:text-fg">Skip</button>
                       <Button size="sm" icon={<ArrowRight size={14} strokeWidth={1.5} />} onClick={() => router.push(s.href)}>Start</Button>
                     </div>
                   )}
@@ -256,23 +256,23 @@ export default function DashboardPage() {
       ) : (
         <div className="grid grid-cols-2 gap-tight lg:grid-cols-4">
           <div className={`${card} p-section`}>
-            <p className="type-label text-[12px] text-neutral-400">Today&apos;s revenue</p>
+            <p className="type-label text-[12px] text-faint">Today&apos;s revenue</p>
             <p className="mt-tight font-mono text-3xl tabular-nums">{formatMoney(revenueAnimated)}</p>
             <div className="mt-inline"><DeltaPill now={revenueToday} then={revenueLastWeek} /></div>
             <Sparkline points={week} />
           </div>
           <div className={`${card} p-section`}>
-            <p className="type-label text-[12px] text-neutral-400">Tickets sold</p>
+            <p className="type-label text-[12px] text-faint">Tickets sold</p>
             <p className="mt-tight font-mono text-3xl tabular-nums">{ticketsToday}</p>
             <div className="mt-inline"><DeltaPill now={ticketsToday} then={ticketsLastWeek} /></div>
           </div>
           <div className={`${card} p-section`}>
-            <p className="type-label text-[12px] text-neutral-400">Checked in</p>
+            <p className="type-label text-[12px] text-faint">Checked in</p>
             <p className="mt-tight font-mono text-3xl tabular-nums">{checkedIn}</p>
-            <p className="mt-inline text-[12px] text-neutral-400">of {expected} expected</p>
+            <p className="mt-inline text-[12px] text-faint">of {expected} expected</p>
           </div>
           <button type="button" onClick={() => router.push("/checkin")} className={`${card} p-section text-left transition-transform duration-quick hover:-translate-y-0.5`}>
-            <p className="type-label text-[12px] text-neutral-400">Arriving next 2h</p>
+            <p className="type-label text-[12px] text-faint">Arriving next 2h</p>
             <p className="mt-tight font-mono text-3xl tabular-nums">{arriving2h}</p>
             <p className="mt-inline text-[12px] text-ember">Open Check-In →</p>
           </button>
@@ -284,23 +284,23 @@ export default function DashboardPage() {
           {/* Left ⅔ — Up next + Live activity */}
           <div className="flex flex-col gap-tight lg:col-span-2">
             <div className={card}>
-              <p className="type-label border-b border-neutral-200 px-section py-tight text-[11px] text-neutral-600">Up next</p>
+              <p className="type-label border-b border-line px-section py-tight text-[11px] text-muted">Up next</p>
               {upNext.length === 0 ? (
-                <p className="px-section py-major text-[13px] text-neutral-400">No more sessions today.</p>
+                <p className="px-section py-major text-[13px] text-faint">No more sessions today.</p>
               ) : (
                 upNext.map((u, i) => (
-                  <div key={i} className="flex h-12 items-center gap-section border-b border-neutral-200 px-section last:border-0">
+                  <div key={i} className="flex h-12 items-center gap-section border-b border-line px-section last:border-0">
                     <span className="w-12 font-mono text-sm tabular-nums">{u.time}</span>
-                    <span className="min-w-0 flex-1 truncate text-sm">{u.label}{u.who ? <span className="text-neutral-400"> · {u.who}</span> : null}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm">{u.label}{u.who ? <span className="text-faint"> · {u.who}</span> : null}</span>
                     {u.cap > 1 && (
                       <span className="flex items-center gap-tight">
-                        <span className="font-mono text-[12px] tabular-nums text-neutral-600">{u.sold}/{u.cap}</span>
+                        <span className="font-mono text-[12px] tabular-nums text-muted">{u.sold}/{u.cap}</span>
                         {/* occupancy micro-bar: ember when ≥80% full */}
-                        <span className="h-0.5 w-16 overflow-hidden rounded-full bg-neutral-200"><span className={`block h-full ${u.sold / u.cap >= 0.8 ? "bg-ember" : "bg-neutral-400"}`} style={{ width: `${(u.sold / u.cap) * 100}%` }} /></span>
+                        <span className="h-0.5 w-16 overflow-hidden rounded-full bg-line"><span className={`block h-full ${u.sold / u.cap >= 0.8 ? "bg-ember" : "bg-neutral-400"}`} style={{ width: `${(u.sold / u.cap) * 100}%` }} /></span>
                       </span>
                     )}
                     {u.state === "FULL" || u.state === "BOOKED" ? (
-                      <span className="rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight font-mono text-[10px] text-neutral-600">{u.state}</span>
+                      <span className="rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight font-mono text-[10px] text-muted">{u.state}</span>
                     ) : (
                       <Button size="sm" onClick={() => sell(u.product)}>Sell</Button>
                     )}
@@ -310,14 +310,14 @@ export default function DashboardPage() {
             </div>
 
             <div className={card}>
-              <p className="type-label border-b border-neutral-200 px-section py-tight text-[11px] text-neutral-600">Live activity</p>
+              <p className="type-label border-b border-line px-section py-tight text-[11px] text-muted">Live activity</p>
               {activity.map((a) => (
-                <div key={a.id} className="flex h-12 items-center gap-section border-b border-neutral-200 px-section last:border-0">
-                  <span className={`w-12 text-[12px] ${a.what === "Refund" ? "text-danger" : "text-neutral-600"}`}>{a.what}</span>
-                  <span className="font-mono text-[12px] text-neutral-400">{a.ref}</span>
+                <div key={a.id} className="flex h-12 items-center gap-section border-b border-line px-section last:border-0">
+                  <span className={`w-12 text-[12px] ${a.what === "Refund" ? "text-danger" : "text-muted"}`}>{a.what}</span>
+                  <span className="font-mono text-[12px] text-faint">{a.ref}</span>
                   <span className="min-w-0 flex-1 truncate text-sm">{a.product}</span>
                   <span className="font-mono text-[13px] tabular-nums">{formatMoney(a.amount)}</span>
-                  <span className="w-16 text-right font-mono text-[11px] text-neutral-400">{a.rel}</span>
+                  <span className="w-16 text-right font-mono text-[11px] text-faint">{a.rel}</span>
                 </div>
               ))}
             </div>
@@ -326,33 +326,33 @@ export default function DashboardPage() {
           {/* Right ⅓ */}
           <div className="flex flex-col gap-tight">
             <div className={`${card} p-section`}>
-              <p className="type-label mb-tight text-[11px] text-neutral-600">Payment mix today</p>
-              {mix.length === 0 ? <p className="text-[13px] text-neutral-400">No payments yet.</p> : mix.map((m) => (
+              <p className="type-label mb-tight text-[11px] text-muted">Payment mix today</p>
+              {mix.length === 0 ? <p className="text-[13px] text-faint">No payments yet.</p> : mix.map((m) => (
                 <div key={m.label} className="mb-tight last:mb-0">
                   <div className="flex justify-between text-[12px]"><span>{m.label}</span><span className="font-mono tabular-nums">{formatMoney(m.amount)}</span></div>
-                  <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-neutral-200"><div className="h-full bg-ink" style={{ width: `${(m.amount / mixMax) * 100}%` }} /></div>
+                  <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-inverse" style={{ width: `${(m.amount / mixMax) * 100}%` }} /></div>
                 </div>
               ))}
             </div>
 
             <div className={`${card} p-section`}>
-              <p className="type-label mb-tight text-[11px] text-neutral-600">Top products today</p>
-              {top.length === 0 ? <p className="text-[13px] text-neutral-400">Nothing sold yet.</p> : top.map(([name, t]) => (
-                <div key={name} className="flex h-9 items-center justify-between gap-tight border-b border-neutral-200 text-[13px] last:border-0">
+              <p className="type-label mb-tight text-[11px] text-muted">Top products today</p>
+              {top.length === 0 ? <p className="text-[13px] text-faint">Nothing sold yet.</p> : top.map(([name, t]) => (
+                <div key={name} className="flex h-9 items-center justify-between gap-tight border-b border-line text-[13px] last:border-0">
                   <span className="min-w-0 flex-1 truncate">{name}</span>
-                  <span className="font-mono text-[11px] text-neutral-400">{t.qty}×</span>
+                  <span className="font-mono text-[11px] text-faint">{t.qty}×</span>
                   <span className="font-mono text-[12px] tabular-nums">{formatMoney(t.rev)}</span>
                 </div>
               ))}
             </div>
 
             <div className={`${card} p-section`}>
-              <p className="type-label mb-tight text-[11px] text-neutral-600">Needs attention</p>
+              <p className="type-label mb-tight text-[11px] text-muted">Needs attention</p>
               {attention.length === 0 ? (
                 <p className="text-[13px] text-success">All clear.</p>
               ) : (
                 attention.map((a, i) => (
-                  <button key={i} type="button" onClick={() => router.push(a.href)} className="block w-full border-b border-neutral-200 py-tight text-left text-[13px] last:border-0 hover:text-ember">
+                  <button key={i} type="button" onClick={() => router.push(a.href)} className="block w-full border-b border-line py-tight text-left text-[13px] last:border-0 hover:text-ember">
                     {a.text}
                   </button>
                 ))

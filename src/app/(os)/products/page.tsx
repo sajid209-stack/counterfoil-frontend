@@ -66,8 +66,8 @@ export default function ProductsPage() {
       sortable: true,
       render: (p) => (
         <div>
-          <div className="font-medium text-ink">{p.name}</div>
-          <div className="font-mono text-[11px] text-neutral-400">{p.bookingType}</div>
+          <div className="font-medium text-fg">{p.name}</div>
+          <div className="font-mono text-[11px] text-faint">{p.bookingType}</div>
         </div>
       ),
     },
@@ -82,7 +82,7 @@ export default function ProductsPage() {
       key: "channels",
       header: "Channels",
       render: (p) => (
-        <span className="font-mono text-[11px] text-neutral-600">
+        <span className="font-mono text-[11px] text-muted">
           {p.channels.length ? p.channels.join(" · ") : "—"}
         </span>
       ),
@@ -92,12 +92,12 @@ export default function ProductsPage() {
       key: "updatedAt",
       header: "Updated",
       sortable: true,
-      render: (p) => <span className="text-neutral-600">{formatDate(p.updatedAt)}</span>,
+      render: (p) => <span className="text-muted">{formatDate(p.updatedAt)}</span>,
     },
   ];
 
   const selectCls =
-    "h-9 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm outline-none focus:border-ink";
+    "h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
 
   return (
     <PageShell
@@ -131,7 +131,7 @@ export default function ProductsPage() {
               <Search
                 size={16}
                 strokeWidth={1.5}
-                className="absolute left-comfortable top-1/2 -translate-y-1/2 text-neutral-400"
+                className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint"
               />
               <input
                 value={search}
@@ -140,7 +140,7 @@ export default function ProductsPage() {
                   setPage(1);
                 }}
                 placeholder="Search products…"
-                className="h-9 w-64 rounded-sm border border-neutral-200 pl-8 pr-comfortable text-sm outline-none focus:border-ink"
+                className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
             <select

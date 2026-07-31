@@ -64,11 +64,11 @@ export function DurationInput({
     setText(formatDuration(next));
   };
 
-  const border = error || parseError ? "border-danger focus-within:border-danger" : "border-neutral-200 focus-within:border-ink";
+  const border = error || parseError ? "border-danger focus-within:border-danger" : "border-line focus-within:border-inverse";
 
   return (
     <Field label={label} help={help} error={error ?? parseError ?? undefined} required={required} htmlFor={id} className={className}>
-      <div className={cn("flex h-11 items-stretch overflow-hidden rounded-sm border bg-white transition-colors duration-quick", border, disabled && "bg-neutral-50")}>
+      <div className={cn("flex h-11 items-stretch overflow-hidden rounded-sm border bg-card transition-colors duration-quick", border, disabled && "bg-subtle")}>
         <input
           id={id}
           type="text"
@@ -84,17 +84,17 @@ export function DurationInput({
             if (e.key === "ArrowDown") { e.preventDefault(); nudge(-1); }
           }}
           onWheel={(e) => { if (focused) { e.preventDefault(); nudge(e.deltaY < 0 ? 1 : -1); } }}
-          className="w-full bg-transparent px-comfortable font-mono text-sm outline-none placeholder:text-neutral-400 disabled:cursor-not-allowed"
+          className="w-full bg-transparent px-comfortable font-mono text-sm outline-none placeholder:text-faint disabled:cursor-not-allowed"
         />
-        <div className="flex flex-col border-l border-neutral-200">
-          <button type="button" tabIndex={-1} aria-label="More" disabled={disabled} onClick={() => nudge(1)} className="flex h-1/2 w-8 items-center justify-center text-neutral-400 hover:text-ink active:bg-neutral-200"><ChevronUp size={13} strokeWidth={1.5} /></button>
-          <button type="button" tabIndex={-1} aria-label="Less" disabled={disabled} onClick={() => nudge(-1)} className="flex h-1/2 w-8 items-center justify-center border-t border-neutral-200 text-neutral-400 hover:text-ink active:bg-neutral-200"><ChevronDown size={13} strokeWidth={1.5} /></button>
+        <div className="flex flex-col border-l border-line">
+          <button type="button" tabIndex={-1} aria-label="More" disabled={disabled} onClick={() => nudge(1)} className="flex h-1/2 w-8 items-center justify-center text-faint hover:text-fg active:bg-line"><ChevronUp size={13} strokeWidth={1.5} /></button>
+          <button type="button" tabIndex={-1} aria-label="Less" disabled={disabled} onClick={() => nudge(-1)} className="flex h-1/2 w-8 items-center justify-center border-t border-line text-faint hover:text-fg active:bg-line"><ChevronDown size={13} strokeWidth={1.5} /></button>
         </div>
       </div>
       {chips && chips.length > 0 && (
         <div className="flex flex-wrap gap-inline">
           {chips.map((c) => (
-            <button key={c} type="button" disabled={disabled} onClick={() => { setParseError(null); onChange(c); setText(formatDuration(c)); }} className={cn("h-7 rounded-xs border px-tight font-mono text-[11px] transition-colors duration-quick", value === c ? "border-ink bg-ink text-paper" : "border-neutral-200 text-neutral-600 hover:border-ink")}>
+            <button key={c} type="button" disabled={disabled} onClick={() => { setParseError(null); onChange(c); setText(formatDuration(c)); }} className={cn("h-7 rounded-xs border px-tight font-mono text-[11px] transition-colors duration-quick", value === c ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted hover:border-inverse")}>
               {formatDuration(c)}
             </button>
           ))}

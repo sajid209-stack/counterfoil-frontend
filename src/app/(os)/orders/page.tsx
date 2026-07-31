@@ -42,15 +42,15 @@ function OrdersPageInner() {
 
   const columns: Column<Order>[] = [
     { key: "reference", header: "Reference", sortable: true, render: (o) => <span className="font-mono text-[13px]">{o.reference}</span> },
-    { key: "createdAt", header: "Date", sortable: true, render: (o) => <span className="text-neutral-600">{formatDateTime(o.createdAt)}</span> },
+    { key: "createdAt", header: "Date", sortable: true, render: (o) => <span className="text-muted">{formatDateTime(o.createdAt)}</span> },
     { key: "location", header: "Location", render: (o) => locationName(o.locationId) },
-    { key: "channel", header: "Channel", render: (o) => <span className="font-mono text-[11px] text-neutral-600">{o.channel}</span> },
+    { key: "channel", header: "Channel", render: (o) => <span className="font-mono text-[11px] text-muted">{o.channel}</span> },
     { key: "items", header: "Items", align: "center", render: (o) => <span className="font-mono text-[13px]">{o.lines.reduce((s, l) => s + l.quantity, 0)}</span> },
     { key: "total", header: "Total", sortable: true, align: "right", render: (o) => <span className="font-mono text-[13px]">{formatMoney(o.total)}</span> },
     { key: "status", header: "Status", sortable: true, render: (o) => <StatusPill status={o.status} /> },
   ];
 
-  const selectCls = "h-9 rounded-sm border border-neutral-200 bg-white px-comfortable text-sm outline-none focus:border-ink";
+  const selectCls = "h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
 
   return (
     <PageShell title="Orders" description="Every sale — counter and online, across all locations.">
@@ -65,12 +65,12 @@ function OrdersPageInner() {
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-neutral-400" />
+              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder="Search by reference…"
-                className="h-9 w-64 rounded-sm border border-neutral-200 pl-8 pr-comfortable text-sm outline-none focus:border-ink"
+                className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={selectCls}>

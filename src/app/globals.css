@@ -115,3 +115,32 @@
   outline: 2px solid var(--color-ember);
   outline-offset: 2px;
 }
+@theme {
+  --color-surface: #f8f7f4;
+  --color-card: #ffffff;
+  --color-sheet: #ffffff;
+  --color-fg: #0a0a0a;
+  --color-muted: #4a4a48;
+  --color-faint: #8a8985;
+  --color-line: #d6d4ce;
+  --color-strong: #8a8985;
+  --color-subtle: #f3f2ee;
+  --color-inverse: #0a0a0a;
+  --color-inverse-fg: #f8f7f4;
+}
+
+/* Dark: elevation comes from surface steps + 1px lines, not shadows. */
+.dark {
+  --color-surface: #0a0a0a;
+  --color-card: #161615;
+  --color-sheet: #1e1e1c;
+  --color-fg: #f8f7f4;
+  --color-muted: #a8a6a0;
+  --color-faint: #6e6c66;
+  --color-line: #2a2a28;
+  --color-strong: #3a3a36;
+  --color-subtle: #131312;
+  --color-inverse: #f8f7f4;
+  --color-inverse-fg: #0a0a0a;
+}
+.dark body { background: var(--color-surface); color: var(--color-fg); }
