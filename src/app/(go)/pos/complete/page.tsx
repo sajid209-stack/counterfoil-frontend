@@ -56,9 +56,9 @@ export default function CompletePage() {
 
           {/* Receipt step — Print · SMS · None */}
           <div className="flex w-full gap-tight">
-            <button type="button" onClick={() => toast.success("Receipt sent to the printer.")} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-neutral-200 bg-white text-sm active:bg-neutral-200"><Printer size={16} strokeWidth={1.5} /> Print</button>
-            <button type="button" onClick={() => toast.success("Receipt sent by SMS.")} className="flex h-12 flex-1 items-center justify-center gap-inline rounded-sm border border-neutral-200 bg-white text-sm active:bg-neutral-200"><MessageSquare size={16} strokeWidth={1.5} /> SMS</button>
-            <button type="button" onClick={() => router.push("/pos")} className="h-12 flex-1 rounded-sm border border-neutral-200 bg-white text-sm text-neutral-600 active:bg-neutral-200">No receipt</button>
+            <button type="button" onClick={() => toast.success("Receipt sent to the printer.")} className="flex h-14 flex-1 items-center justify-center gap-inline rounded-sm border border-neutral-200 bg-white text-sm active:bg-neutral-200"><Printer size={16} strokeWidth={1.5} /> Print</button>
+            <button type="button" onClick={() => toast.success("Receipt sent by SMS.")} className="flex h-14 flex-1 items-center justify-center gap-inline rounded-sm border border-neutral-200 bg-white text-sm active:bg-neutral-200"><MessageSquare size={16} strokeWidth={1.5} /> SMS</button>
+            <button type="button" onClick={() => router.push("/pos")} className="h-14 flex-1 rounded-sm border border-neutral-200 bg-white text-sm text-neutral-600 active:bg-neutral-200">No receipt</button>
           </div>
         </>
       )}

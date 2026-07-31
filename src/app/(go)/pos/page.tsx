@@ -24,6 +24,26 @@ const COUNTER_METHODS: { value: PaymentMethod; label: string }[] = [
 // Mock: the signed-in staff's discount limit (roles already carry this).
 const DISCOUNT_LIMIT_PCT = 10;
 
+/** Animated money value (120ms count) — the cart total moves, staff notice. */
+function AnimatedMoney({ value, currency }: { value: number; currency: string }) {
+  const [shown, setShown] = useState(value);
+  useEffect(() => {
+    const from = shown;
+    if (from === value) return;
+    let raf = 0;
+    const start = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / 120);
+      setShown(Math.round(from + (value - from) * p));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  return <span className="font-mono text-2xl tabular-nums">{formatMoney(shown, currency)}</span>;
+}
+
 export default function PosPage() {
   const router = useRouter();
   const toast = useToast();
@@ -259,11 +279,19 @@ export default function PosPage() {
   return (
     <div className="grid h-full grid-cols-1 gap-tight p-tight pb-24 lg:grid-cols-[1fr_23rem] lg:pb-tight">
       <div className="flex min-h-0 flex-col gap-tight">
-        {/* Search — persistent, live, name + category */}
-        <div className="flex h-11 items-center gap-tight rounded-sm border border-neutral-200 bg-white px-comfortable focus-within:border-ink">
-          <Search size={16} strokeWidth={1.5} className="shrink-0 text-neutral-400" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products…" className="h-full w-full bg-transparent text-sm outline-none placeholder:text-neutral-400" />
-          {query && <button type="button" onClick={() => setQuery("")} className="text-[12px] text-neutral-400 hover:text-ink">Clear</button>}
+        {/* Header zone: counter chip · wide search · parked badge */}
+        <div className="flex items-center gap-tight">
+          <span className="hidden h-12 shrink-0 items-center rounded-sm border border-neutral-200 bg-white px-comfortable text-[13px] text-neutral-600 sm:flex">Fort Main Gate</span>
+          <div className="flex h-12 min-w-0 flex-1 items-center gap-tight rounded-sm border border-neutral-200 bg-white px-comfortable focus-within:border-ink">
+            <Search size={16} strokeWidth={1.5} className="shrink-0 text-neutral-400" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products…" className="h-full w-full bg-transparent text-sm outline-none placeholder:text-neutral-400" />
+            {query && <button type="button" onClick={() => setQuery("")} className="text-[12px] text-neutral-400 hover:text-ink">Clear</button>}
+          </div>
+          {parked.length > 0 && (
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable font-mono text-[12px] text-ember">
+              {parked.length} parked
+            </button>
+          )}
         </div>
         {/* Category chips */}
         <div className="flex gap-inline overflow-x-auto pb-inline">
@@ -277,12 +305,12 @@ export default function PosPage() {
           ) : (
             <div className="grid grid-cols-2 gap-tight sm:grid-cols-3">
               {shown.map((p) => (
-                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex min-h-[5.5rem] flex-col justify-between rounded-sm border border-neutral-200 border-t-2 border-t-ember bg-white p-comfortable text-left active:bg-neutral-200">
+                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex min-h-[6rem] flex-col justify-between rounded-sm border border-neutral-200 border-t-2 border-t-ember bg-white p-comfortable text-left transition-colors duration-quick active:bg-neutral-200">
                   <div>
-                    <span className="text-sm font-semibold leading-tight">{p.name}</span>
-                    <span className="mt-inline block font-mono text-[10px] leading-tight text-neutral-400">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
+                    <span className="block text-[16px] font-semibold leading-tight">{p.name}</span>
+                    <span className="mt-inline block text-[13px] leading-tight text-neutral-400">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
                   </div>
-                  <span className="mt-tight font-mono text-[13px]">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
+                  <span className="mt-tight self-end font-mono text-[13px] tabular-nums">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
                 </button>
               ))}
               <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[5.5rem] flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-neutral-200 text-neutral-400 active:bg-neutral-200">
@@ -306,11 +334,6 @@ export default function PosPage() {
           <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-sm border border-neutral-200 px-tight text-[12px] text-neutral-600 disabled:text-neutral-400" title={cart.length === 0 ? "Nothing to park" : "Park this cart"}>
             <Archive size={14} strokeWidth={1.5} />Park
           </button>
-          {parked.length > 0 && (
-            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 items-center rounded-sm border border-ember bg-ember/10 px-tight font-mono text-[12px] text-ember">
-              {parked.length} parked
-            </button>
-          )}
         </div>
         <div className="flex-1 overflow-y-auto p-comfortable">
           {cart.length === 0 ? (
@@ -365,7 +388,7 @@ export default function PosPage() {
           {discount > 0 && <div className="flex justify-between text-[13px] text-neutral-600"><span>Discount</span><span className="font-mono text-danger">−{formatMoney(discount, currency)}</span></div>}
           {creditsValue > 0 && <div className="flex justify-between text-[13px] text-neutral-600"><span>Pass · {creditsUsed} credits</span><span className="font-mono text-success">−{formatMoney(creditsValue, currency)}</span></div>}
           <div className="flex justify-between text-[13px] text-neutral-600"><span>VAT</span><span className="font-mono">{formatMoney(tax, currency)}</span></div>
-          <div className="mt-tight flex justify-between text-lg font-medium"><span>Total</span><span className="font-mono">{formatMoney(total, currency)}</span></div>
+          <div className="mt-tight flex items-baseline justify-between text-lg font-medium"><span>Total</span><AnimatedMoney value={total} currency={currency} /></div>
           {balance > 0 && (
             <>
               <div className="flex justify-between text-[13px]"><span>Due now</span><span className="font-mono">{formatMoney(dueNow, currency)}</span></div>
@@ -373,9 +396,16 @@ export default function PosPage() {
             </>
           )}
 
-          {/* Payment method selector */}
-          <div className="mt-tight flex gap-inline">
-            {COUNTER_METHODS.map((m) => <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`h-12 flex-1 rounded-xs border text-[13px] ${method === m.value ? "border-ink bg-ink text-paper" : "border-neutral-200"}`}>{m.label}</button>)}
+          {/* Payment method — segmented control with a sliding thumb */}
+          <div className="relative mt-tight grid h-12 grid-cols-4 rounded-sm bg-neutral-200/60 p-inline">
+            <span
+              aria-hidden
+              className="absolute inset-y-inline rounded-xs bg-ink transition-[left] duration-quick ease-counterfoil"
+              style={{ width: "calc(25% - 8px)", left: `calc(${COUNTER_METHODS.findIndex((m) => m.value === method) * 25}% + 4px)` }}
+            />
+            {COUNTER_METHODS.map((m) => (
+              <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[13px] transition-colors duration-quick ${method === m.value ? "font-medium text-paper" : "text-neutral-600"}`}>{m.label}</button>
+            ))}
           </div>
 
           <Button size="lg" fullWidth className="mt-tight h-14" disabled={cart.length === 0 || overLimit} onClick={charge}>

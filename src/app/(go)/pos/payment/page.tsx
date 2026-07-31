@@ -76,8 +76,10 @@ export default function PaymentPage() {
           <div className="flex justify-between text-neutral-600"><span>{balance > 0 ? "Deposit due now" : "Amount due"}</span><span className="font-mono text-lg">{formatMoney(total)}</span></div>
           {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-neutral-400"><span>Balance at arrival</span><span className="font-mono">{formatMoney(balance)}</span></div>}
           <div className="mt-tight flex justify-between"><span>Tendered</span><span className="font-mono text-lg">{formatMoney(tenderedMinor)}</span></div>
-          <div className={`mt-tight flex justify-between text-xl font-medium ${enough ? "text-success" : "text-neutral-400"}`}>
-            <span>Change</span><span className="font-mono">{enough ? formatMoney(change) : "—"}</span>
+          <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-neutral-400"}`}>
+            <span className="text-xl">Change</span>
+            {/* Display size — the number the staff member reads aloud. */}
+            <span className="font-mono text-5xl tabular-nums">{enough ? formatMoney(change) : "—"}</span>
           </div>
         </div>
         {/* Quick chips: exact, then the notes actually in the till drawer. */}

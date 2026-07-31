@@ -221,7 +221,7 @@ export function ProductSheet({
     (!provider || (!!slotTime && !!assignedProvider && providerTimeFree(slotTime)));
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true">
+    <div className="fixed inset-y-0 left-0 right-0 z-50 flex flex-col justify-end lg:right-[24rem]" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div className="relative z-10 max-h-[85vh] overflow-y-auto rounded-t-[12px] bg-paper p-section">
         <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-neutral-200" aria-hidden />

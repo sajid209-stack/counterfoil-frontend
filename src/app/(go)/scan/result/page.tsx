@@ -53,26 +53,28 @@ export default function ScanResultPage() {
   };
 
   // Group ticket: the big state stays, plus the count controls.
+  // Accepted = paper on ink; refused = hatched danger. Judged at 3 metres by
+  // shape (check vs cross), surface (solid vs hatch) and text — never colour.
   if (accept && group) {
     return (
-      <main className="flex min-h-[70vh] w-full flex-col items-center justify-center gap-major bg-success px-section py-hero text-center">
-        <span className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-white text-white">
+      <main className="flex min-h-[70vh] w-full flex-col items-center justify-center gap-major bg-ink px-section py-hero text-center text-paper">
+        <span className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-paper">
           <Check size={72} strokeWidth={3} />
         </span>
-        <span className="type-display text-5xl text-white">ADMIT {remaining > 0 ? remaining : "—"}</span>
-        <span className="type-body text-lg text-white/90">{group.tierName} · group of {group.admits} · {admitted} in</span>
-        <span className="font-mono text-sm text-white/80">{outcome.code}</span>
+        <span className="type-display text-5xl">ADMIT {remaining > 0 ? remaining : "—"}</span>
+        <span className="type-body text-xl text-paper/90">{outcome.reason} · group of {group.admits} · {admitted} in</span>
+        <span className="font-mono text-sm text-paper/70">{outcome.code}</span>
         {remaining > 0 ? (
           <div className="flex flex-wrap items-center justify-center gap-tight">
-            <button type="button" disabled={busy} onClick={() => admit(1)} className="h-14 rounded-sm border-2 border-white px-major text-lg font-medium text-white active:bg-white/20">+1</button>
-            <button type="button" disabled={busy} onClick={() => admit(remaining)} className="h-14 rounded-sm bg-white px-major text-lg font-medium text-success active:bg-white/80">
+            <button type="button" disabled={busy} onClick={() => admit(1)} className="h-14 rounded-sm border-2 border-paper px-major text-lg font-medium active:bg-paper/20">+1</button>
+            <button type="button" disabled={busy} onClick={() => admit(remaining)} className="h-14 rounded-sm bg-paper px-major text-lg font-medium text-ink active:bg-paper/80">
               Admit all {remaining}
             </button>
           </div>
         ) : (
-          <span className="type-body text-lg text-white">Everyone&apos;s in — ticket redeemed.</span>
+          <span className="type-body text-lg">Everyone&apos;s in — ticket redeemed.</span>
         )}
-        <button type="button" onClick={() => router.push("/scan")} className="mt-major text-[13px] text-white/70 underline-offset-4 hover:underline">Scan the next ticket</button>
+        <button type="button" onClick={() => router.push("/scan")} className="mt-major text-[13px] text-paper/70 underline-offset-4 hover:underline">Scan the next ticket</button>
       </main>
     );
   }
@@ -83,18 +85,17 @@ export default function ScanResultPage() {
       onClick={() => router.push("/scan")}
       className={`flex min-h-[70vh] w-full flex-col items-center justify-center gap-major px-section py-hero text-center ${
         accept
-          ? "bg-success"
-          : // Refused: hatched treatment — shape + pattern + text, not colour alone.
-            "bg-danger bg-[repeating-linear-gradient(45deg,transparent,transparent_28px,rgba(0,0,0,0.18)_28px,rgba(0,0,0,0.18)_56px)]"
+          ? "bg-ink text-paper"
+          : "bg-danger text-white bg-[repeating-linear-gradient(45deg,transparent,transparent_28px,rgba(0,0,0,0.18)_28px,rgba(0,0,0,0.18)_56px)]"
       }`}
     >
-      <span className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white text-white">
+      <span className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-current">
         {accept ? <Check size={80} strokeWidth={3} /> : <X size={80} strokeWidth={3} />}
       </span>
-      <span className="type-display text-5xl text-white">{accept ? "ADMIT" : "DO NOT ADMIT"}</span>
-      <span className="type-body text-lg text-white/90">{outcome.reason}</span>
-      <span className="font-mono text-sm text-white/80">{outcome.code}</span>
-      <span className="mt-major text-[13px] text-white/70">Ready for the next scan in a moment — or tap anywhere</span>
+      <span className="type-display text-5xl">{accept ? "ADMIT" : "DO NOT ADMIT"}</span>
+      <span className="type-body text-2xl opacity-90">{outcome.reason}</span>
+      <span className="font-mono text-sm opacity-70">{outcome.code}</span>
+      <span className="mt-major text-[13px] opacity-60">Ready for the next scan in a moment — or tap anywhere</span>
     </button>
   );
 }
