@@ -85,10 +85,10 @@ export default function SchedulePage() {
         <p className="type-label text-[13px] text-ember">Front of house</p>
         <h1 className="type-h1 mt-tight text-2xl">Schedule</h1>
       </div>
-      <div className="flex gap-tight">
+      <div className="flex flex-wrap gap-tight">
         {dateBtn(TODAY, "Today")}
         {dateBtn(TOMORROW, "Tomorrow")}
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-sm border border-line bg-card px-comfortable text-sm" />
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-sm" />
       </div>
 
       {productsQ.loading ? (

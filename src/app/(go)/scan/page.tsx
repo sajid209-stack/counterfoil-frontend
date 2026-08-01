@@ -47,15 +47,15 @@ export default function ScanPage() {
         <span className="text-[12px]">Camera scan (mock) — enter a code below</span>
       </div>
 
-      <div className="flex gap-tight">
+      <div className="flex min-w-0 gap-tight">
         <input
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit(code)}
           placeholder="CF-2026-…"
-          className="h-12 flex-1 rounded-sm border border-line bg-card px-section font-mono text-sm outline-none focus:border-inverse"
+          className="h-12 w-full min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable font-mono text-sm outline-none focus:border-inverse"
         />
-        <Button size="lg" onClick={() => submit(code)}>Check</Button>
+        <Button size="lg" className="shrink-0" onClick={() => submit(code)}>Check</Button>
       </div>
 
       {samplesQ.data && samplesQ.data.data.length > 0 && (
