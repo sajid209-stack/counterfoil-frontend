@@ -46,7 +46,7 @@ export default function OnboardingPage() {
           error={error}
         />
         <FormField label="Country" variant="select" value={country} onChange={(e) => setCountry(e.target.value)} options={COUNTRIES.map((c) => ({ value: c, label: c }))} />
-        <div className="grid grid-cols-2 gap-section">
+        <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
           <FormField label="Currency" variant="select" value={currency} onChange={(e) => setCurrency(e.target.value)} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
           <FormField label="Timezone" variant="select" value={timezone} onChange={(e) => setTimezone(e.target.value)} options={TIMEZONES.map((t) => ({ value: t, label: t }))} />
         </div>

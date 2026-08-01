@@ -41,7 +41,7 @@ export function OrderLinesDetail({ order, compact = false }: { order: Pick<Order
       {parents.map((l) => (
         <div key={l.id} className="border-b border-line py-tight last:border-0">
           <div className="flex items-baseline justify-between gap-tight">
-            <span className={`min-w-0 truncate font-medium ${refunded(l) ? "text-faint line-through" : ""}`}>
+            <span className={`min-w-0 break-words font-medium line-clamp-2 ${refunded(l) ? "text-faint line-through" : ""}`}>
               {l.productName}
               {l.booking?.resourceName ? ` — ${l.booking.resourceName}` : l.tierName && l.tierName !== l.productName && l.quantity === 1 && !l.tierId ? ` — ${l.tierName}` : ""}
             </span>
@@ -56,7 +56,7 @@ export function OrderLinesDetail({ order, compact = false }: { order: Pick<Order
           {refunded(l) && <p className="font-mono text-[11px] text-danger">Refunded {l.refundedQuantity} × · −{formatMoney(l.refundedAmount)}</p>}
           {childrenOf(l.id).map((c) => (
             <div key={c.id} className="mt-inline flex items-baseline justify-between gap-tight pl-section">
-              <span className="min-w-0 truncate text-muted">↳ {c.productName} · <span className="font-mono text-[12px]">{c.quantity} × {formatMoney(c.unitPrice)}</span></span>
+              <span className="min-w-0 break-words text-muted line-clamp-2">↳ {c.productName} · <span className="font-mono text-[12px]">{c.quantity} × {formatMoney(c.unitPrice)}</span></span>
               <span className={`${money} text-[13px]`}>{formatMoney(c.subtotal)}</span>
             </div>
           ))}

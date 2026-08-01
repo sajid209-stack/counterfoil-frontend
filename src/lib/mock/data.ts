@@ -18,6 +18,8 @@ import type {
   Staff,
 } from "@/lib/api/types";
 import { generateSales } from "./generate";
+import { buildOrderLines } from "@/lib/orderMath";
+import type { Order } from "@/lib/api/types";
 
 const T = "2026-01-15T10:00:00+06:00"; // stable seed timestamp
 
@@ -344,7 +346,7 @@ export const products: Product[] = [
     images: [], categoryId: "cat_tours", bookingType: "BT-03",
     tiers: [
       { id: "tier_st_adult", name: "Adult", price: 250000, active: true },
-      { id: "tier_st_senior", name: "Senior Citizen (65+, ID required)", price: 180000, active: true },
+      { id: "tier_st_senior", name: "Senior Citizen (65+, valid ID required)", price: 180000, active: true },
     ],
     locationIds: ["loc_fort"], channels: ["counter"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 90, startTime: "17:00", endTime: "19:00", capacityPerSession: 18, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
@@ -558,7 +560,7 @@ export const devices: Device[] = [
 ];
 
 export const resources: Resource[] = [
-  { id: "res_court_1", name: "Championship Court 1 — Centre", nounSingular: "Court", nounPlural: "Courts", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
+  { id: "res_court_1", name: "Championship Court 1 — Centre (Covered)", nounSingular: "Court", nounPlural: "Courts", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_field_1", name: "Field 1", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_field_2", name: "Field 2", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_lane_1", name: "Lane 1", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
@@ -575,7 +577,32 @@ const sales = generateSales({
   taxRatePct: operator.taxRatePct,
   reducedRatePct: operator.reducedRatePct,
 });
-export const orders = sales.orders;
+
+// F12 permanent stress order: 6 lines incl. 2 add-on children, both discount
+// levels, the long product/resource/tier strings and a long customer name —
+// every list, detail and receipt must render it without overflow.
+const stressSale = buildOrderLines(
+  [
+    { productId: "prd_stress", productName: "Grand Heritage Architectural Walking Tour of Old Dhaka with Rooftop Iftar Experience", tierId: "tier_st_adult", tierName: "Adult", admits: 1, quantity: 2, unitPrice: 250000, taxClass: "standard", taxRate: 0.15, booking: { date: "2026-07-29", startTime: "17:00", endTime: "18:30", guests: 3, durationMinutes: 90 } },
+    { productId: "prd_stress", productName: "Grand Heritage Architectural Walking Tour of Old Dhaka with Rooftop Iftar Experience", tierId: "tier_st_senior", tierName: "Senior Citizen (65+, valid ID required)", admits: 1, quantity: 1, unitPrice: 180000, lineDiscount: 18000, taxClass: "standard", taxRate: 0.15 },
+    { productId: "addon_add_ms_oils", productName: "Premium oils", tierName: "Each", admits: 0, quantity: 1, unitPrice: 30000, parentIndex: 0, taxClass: "standard", taxRate: 0.15 },
+    { productId: "prd_football", productName: "Football — Turf", tierName: "Championship Court 1 — Centre (Covered)", admits: 4, quantity: 1, unitPrice: 150000, taxClass: "standard", taxRate: 0.15, booking: { date: "2026-07-29", startTime: "18:00", endTime: "19:00", resourceId: "res_court_1", resourceName: "Championship Court 1 — Centre (Covered)", guests: 4, durationMinutes: 60 } },
+    { productId: "addon_add_fb_bibs", productName: "Bib set", tierName: "Each", admits: 0, quantity: 4, unitPrice: 20000, parentIndex: 3, taxClass: "standard", taxRate: 0.15 },
+    { productId: "prd_admission", productName: "General Admission", tierId: "tier_adult", tierName: "Adult", admits: 1, quantity: 2, unitPrice: 50000, taxClass: "standard", taxRate: 0.15 },
+  ],
+  50000, // 5%-ish cart discount, allocated pro rata by the engine
+  "CF-2026-999001",
+);
+const stressOrder: Order = {
+  id: "ord_stress", reference: "CF-2026-999001", status: "paid", channel: "counter",
+  locationId: "loc_fort", counterId: "cnt_fort_main", staffId: "stf_nadia",
+  customerName: "Mohammad Abdur Rahman Chowdhury · 01712-345678",
+  lines: stressSale.lines, payments: [{ id: "CF-2026-999001-P0", method: "cash", amount: stressSale.totals.total, tendered: stressSale.totals.total, change: 0, status: "confirmed", createdAt: "2026-07-29T11:05:00+06:00" }],
+  ...stressSale.totals,
+  createdAt: "2026-07-29T11:05:00+06:00", updatedAt: "2026-07-29T11:05:00+06:00",
+};
+
+export const orders = [...sales.orders, stressOrder];
 
 // A sold 10-Class Yoga Pack with 3 credits already spent — its code is the
 // pass a customer hands over at POS ("Redeem a pass" → 7 credits left).

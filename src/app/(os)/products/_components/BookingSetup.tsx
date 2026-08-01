@@ -242,7 +242,7 @@ export function BookingSetup({
 
       {step === "credits" && (
         <div className="flex flex-col gap-section">
-          <div className="grid grid-cols-2 gap-section max-w-md">
+          <div className="grid max-w-md grid-cols-1 gap-section sm:grid-cols-2">
             <FormField label="Number of credits" variant="number" value={creditCount} onChange={(e) => setCreditCount(e.target.value)} />
             <FormField label="Expiry (days)" variant="number" value={creditExpiry} onChange={(e) => setCreditExpiry(e.target.value)} />
           </div>

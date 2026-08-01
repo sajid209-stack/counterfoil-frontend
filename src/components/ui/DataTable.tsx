@@ -55,8 +55,8 @@ export function DataTable<T>({
     <div className="flex flex-col gap-section">
       {toolbar && <div>{toolbar}</div>}
 
-      {/* Mobile: rows become tappable cards — primary line + labelled meta. */}
-      <div className="flex flex-col gap-tight sm:hidden">
+      {/* Mobile (<768px): rows become tappable cards — primary line + labelled meta. */}
+      <div className="flex flex-col gap-tight md:hidden">
         {loading &&
           Array.from({ length: 3 }).map((_, i) => (
             <div key={`csk-${i}`} className="flex animate-pulse flex-col gap-tight rounded-md border border-line bg-card p-comfortable">
@@ -75,7 +75,7 @@ export function DataTable<T>({
               onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
               className={cn("rounded-md border border-line bg-card p-comfortable transition-transform duration-quick", onRowClick && "cursor-pointer active:bg-subtle hover:-translate-y-0.5")}
             >
-              <div className="text-sm font-medium">
+              <div className="break-words text-sm font-medium">
                 {columns[0].render ? columns[0].render(row) : String((row as Record<string, unknown>)[columns[0].key] ?? "")}
               </div>
               <dl className="mt-inline flex flex-wrap gap-x-section gap-y-inline">
@@ -92,7 +92,7 @@ export function DataTable<T>({
           ))}
       </div>
 
-      <div className="hidden max-h-[70vh] overflow-auto rounded-md border border-line bg-card shadow-sm sm:block">
+      <div className="hidden max-h-[70vh] overflow-auto rounded-md border border-line bg-card shadow-sm md:block">
         <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_var(--color-neutral-200)]">
             <tr>

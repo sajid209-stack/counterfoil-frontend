@@ -47,7 +47,7 @@ export default function CompletePage() {
           <div className="relative w-full">
             <div className="rounded-md bg-ink px-section pb-major pt-major text-paper">
               <p className="type-label text-[11px] text-faint">Booking reference</p>
-              <p className="mt-tight font-mono text-3xl tracking-tight">{info.code}</p>
+              <p className="mt-tight break-all font-mono text-2xl tracking-tight sm:text-3xl">{info.code}</p>
             </div>
             {/* perforation */}
             <div className="relative flex items-center">

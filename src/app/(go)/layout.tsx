@@ -76,7 +76,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
         {/* active marker: 2px along the tab's leading edge */}
         {active && <span aria-hidden className={cn("absolute bg-ember", rail ? "left-0 top-2 bottom-2 w-[2px]" : "left-2 right-2 top-0 h-[2px]")} />}
         <Icon size={24} strokeWidth={1.5} />
-        <span className="text-[11px] font-medium">{t.label}</span>
+        <span className="max-w-full truncate px-inline text-[11px] font-medium">{t.label}</span>
       </Link>
     );
   };
@@ -91,7 +91,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
       )}
     >
       <Ellipsis size={24} strokeWidth={1.5} />
-      <span className="text-[11px] font-medium">More</span>
+      <span className="max-w-full truncate px-inline text-[11px] font-medium">More</span>
     </button>
   );
 

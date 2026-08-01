@@ -527,7 +527,8 @@ export default function PosPage() {
           </div>
 
           <Button size="lg" fullWidth className="mt-tight h-14" disabled={cart.length === 0 || overLimit} onClick={charge}>
-            {cart.length > 0 ? `Charge ${formatMoney(dueNow, currency)} — ${methodLabel}` : "Charge"}
+            {/* The amount never wraps; the method gives way first on narrow screens. */}
+            <span className="min-w-0 truncate">{cart.length > 0 ? `Charge ${formatMoney(dueNow, currency)} — ${methodLabel}` : "Charge"}</span>
           </Button>
         </div>
       </div>

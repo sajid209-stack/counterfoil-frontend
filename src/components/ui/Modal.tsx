@@ -43,7 +43,7 @@ export function Modal({
       <div className="absolute inset-0 bg-inverse/40" onClick={onClose} aria-hidden />
       <div
         className={cn(
-          "relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-md bg-card p-major shadow-xl",
+          "relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-md bg-card p-section shadow-xl sm:p-major",
           width,
         )}
       >

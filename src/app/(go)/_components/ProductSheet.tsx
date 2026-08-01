@@ -648,7 +648,7 @@ export function ProductSheet({
         {wl && (
           <div className="mt-section rounded-sm border border-warning bg-warning/5 p-section">
             <p className="text-sm font-medium">Join the waitlist for {wl.time}</p>
-            <div className="mt-tight grid grid-cols-2 gap-tight">
+            <div className="mt-tight grid grid-cols-1 gap-tight sm:grid-cols-2">
               <FormField label="Name" value={wlName} onChange={(e) => setWlName(e.target.value)} />
               <FormField label="Phone" value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} />
             </div>

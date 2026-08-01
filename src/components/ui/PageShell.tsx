@@ -23,7 +23,7 @@ export function PageShell({
     .map((s) => s.replace(/-/g, " "));
 
   return (
-    <div className="px-major py-major">
+    <div className="px-section py-section sm:px-major sm:py-major">
       <div className="flex flex-col gap-tight sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           {crumbs.length > 0 && (
@@ -31,7 +31,8 @@ export function PageShell({
               {["os", ...crumbs].join(" / ")}
             </p>
           )}
-          <h1 className="type-h1 text-2xl">{title}</h1>
+          {/* References and long names must wrap, never bleed out of the header. */}
+          <h1 className="type-h1 break-words text-2xl">{title}</h1>
           {description && (
             <p className="type-body mt-inline max-w-2xl text-[13px] text-muted">
               {description}

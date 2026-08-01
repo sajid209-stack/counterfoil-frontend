@@ -118,7 +118,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             >
               {active && <span aria-hidden className="absolute left-2 right-2 top-0 h-[2px] bg-ember" />}
               <Icon size={24} strokeWidth={1.5} />
-              <span className="text-[11px] font-medium">{t.label}</span>
+              <span className="max-w-full truncate px-inline text-[11px] font-medium">{t.label}</span>
             </Link>
           );
         })}
@@ -132,7 +132,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         >
           {moreOpen && <span aria-hidden className="absolute left-2 right-2 top-0 h-[2px] bg-ember" />}
           <Ellipsis size={24} strokeWidth={1.5} />
-          <span className="text-[11px] font-medium">More</span>
+          <span className="max-w-full truncate px-inline text-[11px] font-medium">More</span>
         </button>
       </nav>
 
