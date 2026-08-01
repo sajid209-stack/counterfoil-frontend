@@ -19,7 +19,10 @@ export default function SignInPage() {
       </div>
 
       <div className="mt-section flex flex-col gap-tight">
-        <label className="type-label text-[12px] text-muted">Password</label>
+        <div className="flex items-baseline justify-between">
+          <label className="type-label text-[12px] text-muted">Password</label>
+          <Link href="/forgot-password" className="text-[12px] text-faint hover:text-ember">Forgot password?</Link>
+        </div>
         <input
           type="password"
           placeholder="••••••••"

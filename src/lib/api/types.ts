@@ -82,11 +82,12 @@ export interface Operator {
   defaultTimezone: string; // "Asia/Dhaka"
   taxRatePct: number; // STANDARD sales tax / VAT percent, e.g. 15
   reducedRatePct?: number; // reduced tax class rate, e.g. 7.5
+  smsTemplate?: string; // ticket SMS body with {{placeholders}}
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
 export type OperatorPatch = Partial<
-  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct">
+  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct" | "smsTemplate">
 >;
 
 export type TaxClass = "standard" | "reduced" | "exempt";
@@ -446,6 +447,10 @@ export interface Order {
   subtotal: Minor;
   tax: Minor;
   total: Minor;
+  /** Who did what and when — refunds, resends, date changes. */
+  history?: { at: ISODateTime; who: string; text: string }[];
+  /** Internal notes, never shown to guests. */
+  notes?: { at: ISODateTime; who: string; text: string }[];
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
@@ -475,6 +480,8 @@ export interface Booking {
   slotEnd?: ISODateTime; // for flexible/duration bookings
   partySize: number;
   checkedIn?: number; // people checked in so far (partial groups: 3 of 4)
+  noShow?: boolean; // recorded no-show (with an optional reason)
+  noShowReason?: string;
   status: BookingStatus;
 }
 

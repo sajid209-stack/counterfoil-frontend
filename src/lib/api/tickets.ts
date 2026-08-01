@@ -28,6 +28,12 @@ export function findTicketByCode(code: string): Ticket | undefined {
 export const redeemTicket = (id: string): Promise<ApiResult<Ticket>> =>
   resource.update(id, { status: "redeemed", redeemedAt: new Date().toISOString() });
 
+/** Void every unredeemed ticket on an order (refunds). */
+export async function voidOrderTickets(orderId: string, productId?: string): Promise<void> {
+  const hit = resource.peek().filter((t) => t.orderId === orderId && t.status === "issued" && (!productId || t.productId === productId));
+  for (const t of hit) await resource.update(t.id, { status: "void" });
+}
+
 /** How many people a ticket admits — from its tier's composition (Family = 4). */
 export function ticketAdmits(ticket: Ticket): number {
   const product = peekProducts().find((p) => p.id === ticket.productId);

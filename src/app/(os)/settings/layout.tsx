@@ -25,6 +25,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     { label: "Devices", href: "/settings/devices" },
     { label: "Payments", href: "/settings/payments" },
     { label: "Roles", href: "/settings/roles" },
+    { label: "Security", href: "/settings/security" },
   ];
 
   return (

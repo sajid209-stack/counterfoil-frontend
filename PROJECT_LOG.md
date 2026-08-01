@@ -313,6 +313,47 @@ a real 390px viewport) could not be exercised in the automation browser (window 
 ignored there) — breakpoint classes verified structurally instead; worth one manual pass on
 a phone.
 
+### F7–F9 (counterfoil_F7_F9_prompts.md, local) ✅ (2026-08-01)
+
+- **F7 — Sales Reports rebuilt as the operator's questions.** `reports.ts` gains the
+  transaction/analytics contract (`TransactionQuery/Row`, `AnalyticsQuery/Series`,
+  `getTransactions`, `getAnalytics`). `/reports/sales`: 3 tabs — **Transactions** (default;
+  expandable rows, running filters), **Summary** (group-by table; row-click filters into
+  Transactions), **Analytics** (SVG chart primitives in `ui/charts.tsx`: revenue w/ compare,
+  hour-of-day, day-of-week, payment mix, capacity utilisation, no-show rate, lead-time
+  histogram, top products). Shared filter bar; **URL-synced state** (shareable links),
+  **saved views** (localStorage), per-tab CSV export.
+- **F8 — Go PIN screen.** Two-step: staff cards (photo initials, first name) → large PIN pad
+  (72px keys); wrong-PIN shake + attempt countdown keeps the selection; 3 misses → 30s
+  lockout w/ manager override; open-shift takeover ("Take over from Nadia?"); full-bleed ink.
+- **F9 — Stream-1 coverage gaps.** Every named gap built and browser-verified:
+  - **Account recovery**: `/forgot-password` (response never reveals account existence) →
+    `/reset/[token]` (expired/used tokens get clear states); sign-in links it.
+  - **Settings → Security**: password change, two-step toggle, **backup codes generated and
+    shown once** (copy-all), email change w/ pending-confirmation state, recovery contact,
+    recent sign-ins, sign-out-everywhere. Settings sub-nav gains Security.
+  - **`/profile`** (Go avatar links to it): own details, language, read-only assignments,
+    per-device sign-out. Team list gains an admin **Reset password** row action.
+  - **Booking completion at the counter** (Check-In): each booking shows **paid vs
+    outstanding from its order**; **Take balance** in any method (`addOrderPayment`);
+    check-in **gated until settled** ("Settle first"); **Add extra** (product add-ons →
+    `addOrderLines`); **Upgrade tier** (price difference only); receipt strip lists every
+    payment (bkash ৳1,950 + cash ৳1,500). Plus **search** (name/reference), **Add a walk-in**
+    (instant sale → today's roster), **no-show w/ reason** (`markNoShow`).
+  - **Order actions** (`/orders/[id]`): **per-line refund with a reason**
+    (`refundOrderLines` — negative payment, voids the product's unredeemed tickets,
+    capacity release stays a backend TODO), **resend ticket** (email/SMS → history),
+    **change date/time** (slot picker re-checks remaining vs party size →
+    `rescheduleBooking`), **change history** + **internal notes** sections
+    (`Order.history/notes`).
+  - **Non-cash POS flows**: bKash → transaction-ID entry; Bangla QR → QR display; both run
+    pending → confirmed | failed (failed = nothing charged, retry/cancel) before the sale
+    lands; txn ID logged on the order.
+  - **Ticket delivery**: Print → thermal-stub preview modal; SMS → exact message preview
+    rendered from **`Operator.smsTemplate`** (`lib/sms.ts` placeholders `{business}/{code}/
+    {date}`); Business settings gains the template editor w/ live preview.
+  - **`/admin`** — hidden platform-operator console scaffold (operator list + create).
+
 ### Phase 10 — the missing operational layer (4 parts, all deployed)
 
 - **Part 1 — POS structure + tax.** Behaviour subtitles on tiles (derived, no codes); category

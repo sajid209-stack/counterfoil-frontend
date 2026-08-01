@@ -23,6 +23,14 @@ export const peekBookings = (): Booking[] => resource.peek();
 export const checkInBooking = (id: string, count: number): Promise<ApiResult<Booking>> =>
   resource.update(id, { checkedIn: count });
 
+/** Record a no-show, with an optional reason. */
+export const markNoShow = (id: string, reason?: string): Promise<ApiResult<Booking>> =>
+  resource.update(id, { noShow: true, noShowReason: reason || undefined });
+
+/** Move a booking to a new slot (availability re-checked by the caller). */
+export const rescheduleBooking = (id: string, slotStart: string, slotEnd?: string): Promise<ApiResult<Booking>> =>
+  resource.update(id, { slotStart, slotEnd });
+
 /** Extend a resource booking in place (the lane behind must be free). */
 export const extendBooking = (id: string, slotEnd: string): Promise<ApiResult<Booking>> =>
   resource.update(id, { slotEnd });

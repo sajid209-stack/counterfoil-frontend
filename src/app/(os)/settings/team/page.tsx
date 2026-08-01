@@ -9,6 +9,7 @@ import {
   EmptyState,
   PageShell,
   StatusPill,
+  useToast,
   type Column,
 } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -17,6 +18,7 @@ import { formatDateTime } from "@/lib/format";
 
 export default function StaffPage() {
   const router = useRouter();
+  const toast = useToast();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [roleId, setRoleId] = useState("");
@@ -56,6 +58,23 @@ export default function StaffPage() {
     { key: "locations", header: "Locations", align: "center", render: (s) => <span className="font-mono text-[13px]">{s.locationIds.length}</span> },
     { key: "status", header: "Status", sortable: true, render: (s) => <StatusPill status={s.status} /> },
     { key: "lastActiveAt", header: "Last active", sortable: true, render: (s) => <span className="text-muted">{formatDateTime(s.lastActiveAt)}</span> },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (s) => (
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={(e) => {
+            e.stopPropagation();
+            toast.success(`Password reset link sent to ${s.email ?? s.name}. It expires in 1 hour.`);
+          }}
+        >
+          Reset password
+        </Button>
+      ),
+    },
   ];
 
   const selectCls = "h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";

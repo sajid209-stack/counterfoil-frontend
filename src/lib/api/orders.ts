@@ -1,7 +1,7 @@
 import { createBooking } from "./bookings";
 import { createResource } from "./client";
-import { issueTicket, redeemCredits } from "./tickets";
-import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod } from "./types";
+import { issueTicket, redeemCredits, voidOrderTickets } from "./tickets";
+import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, OrderLine, PaymentMethod } from "./types";
 
 const resource = createResource<Order>("orders", "Order", {
   search: (o, q) =>
@@ -34,6 +34,69 @@ export const refundOrder = (id: string): Promise<ApiResult<Order>> =>
 
 /** Read-only access for reports/aggregation within the api layer. */
 export const peekOrders = (): Order[] => resource.peek();
+
+const withHistory = (o: Order, who: string, text: string) => [
+  ...(o.history ?? []),
+  { at: new Date().toISOString(), who, text },
+];
+
+/** Take a further payment against an order (deposits, counter balances). */
+export async function addOrderPayment(orderId: string, method: PaymentMethod, amount: Minor, who = "Counter"): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  const payments = [...o.payments, { id: `${o.reference}-P${o.payments.length}`, method, amount, at: new Date().toISOString() }];
+  const paid = payments.reduce((s, p) => s + p.amount, 0);
+  return resource.update(orderId, {
+    payments,
+    status: paid >= o.total ? "paid" : "partial",
+    history: withHistory(o, who, `Took ${method} payment of ${amount / 100}`),
+  });
+}
+
+/** Add lines to an existing order (extras / tier upgrades at the counter). */
+export async function addOrderLines(orderId: string, lines: Omit<OrderLine, "id">[], who = "Counter"): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  const added = lines.map((l, i) => ({ ...l, id: `${o.reference}-X${o.lines.length + i}` }));
+  const addTotal = added.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
+  return resource.update(orderId, {
+    lines: [...o.lines, ...added],
+    subtotal: o.subtotal + addTotal,
+    total: o.total + addTotal,
+    status: "partial",
+    history: withHistory(o, who, `Added ${added.map((l) => l.tierName).join(", ")}`),
+  });
+}
+
+/** Refund specific lines with a reason. Capacity release is a backend TODO. */
+export async function refundOrderLines(orderId: string, lineIds: string[], reason: string, who = "Counter"): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  const hit = o.lines.filter((l) => lineIds.includes(l.id));
+  const amount = hit.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
+  const all = hit.length === o.lines.filter((l) => l.unitPrice > 0).length;
+  // Void the unredeemed tickets for the refunded products.
+  for (const l of hit) await voidOrderTickets(orderId, l.productId);
+  return resource.update(orderId, {
+    payments: [...o.payments, { id: `${o.reference}-R${o.payments.length}`, method: o.payments[0]?.method ?? "cash", amount: -amount, at: new Date().toISOString() }],
+    status: all ? "refunded" : o.status,
+    history: withHistory(o, who, `Refunded ${hit.map((l) => l.tierName).join(", ")} — ${reason}`),
+  });
+}
+
+/** Append an internal note. */
+export async function addOrderNote(orderId: string, text: string, who = "Counter"): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  return resource.update(orderId, { notes: [...(o.notes ?? []), { at: new Date().toISOString(), who, text }] });
+}
+
+/** Record any other management action on the order's history. */
+export async function logOrderAction(orderId: string, text: string, who = "Counter"): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  return resource.update(orderId, { history: withHistory(o, who, text) });
+}
 
 export interface CheckoutLine {
   productId: string;

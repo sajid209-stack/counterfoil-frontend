@@ -3,19 +3,34 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, MessageSquare, Printer } from "lucide-react";
-import { Button, useToast } from "@/components/ui";
+import { Button, Modal, useToast } from "@/components/ui";
+import { useApiQuery } from "@/lib/useApi";
+import { getOperator } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
+import { DEFAULT_SMS_TEMPLATE, renderSms } from "@/lib/sms";
+
+const TODAY = "2026-07-29";
 
 export default function CompletePage() {
   const router = useRouter();
   const toast = useToast();
   const [info, setInfo] = useState<{ code: string; change: number; balance?: number } | null>(null);
+  const [printOpen, setPrintOpen] = useState(false);
+  const [smsOpen, setSmsOpen] = useState(false);
+  const operatorQ = useApiQuery(() => getOperator(), []);
+  const business = operatorQ.data?.name ?? "Counterfoil";
 
   useEffect(() => {
     const raw = sessionStorage.getItem("pos_complete");
     if (raw) setInfo(JSON.parse(raw));
     else router.replace("/pos");
   }, [router]);
+
+  const smsText = renderSms(operatorQ.data?.smsTemplate || DEFAULT_SMS_TEMPLATE, {
+    business,
+    code: info?.code ?? "",
+    date: TODAY,
+  });
 
   return (
     <main className="mx-auto flex max-w-md flex-col items-center gap-major px-section py-hero text-center">
@@ -56,14 +71,35 @@ export default function CompletePage() {
 
           {/* Receipt step — Print · SMS · None */}
           <div className="flex w-full gap-tight">
-            <button type="button" onClick={() => toast.success("Receipt sent to the printer.")} className="flex h-14 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-sm active:bg-ember/10"><Printer size={16} strokeWidth={1.5} /> Print</button>
-            <button type="button" onClick={() => toast.success("Receipt sent by SMS.")} className="flex h-14 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-sm active:bg-ember/10"><MessageSquare size={16} strokeWidth={1.5} /> SMS</button>
+            <button type="button" onClick={() => setPrintOpen(true)} className="flex h-14 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-sm active:bg-ember/10"><Printer size={16} strokeWidth={1.5} /> Print</button>
+            <button type="button" onClick={() => setSmsOpen(true)} className="flex h-14 flex-1 items-center justify-center gap-inline rounded-sm border border-line bg-card text-sm active:bg-ember/10"><MessageSquare size={16} strokeWidth={1.5} /> SMS</button>
             <button type="button" onClick={() => router.push("/pos")} className="h-14 flex-1 rounded-sm border border-line bg-card text-sm text-muted active:bg-ember/10">No receipt</button>
           </div>
         </>
       )}
 
       <Button size="lg" fullWidth onClick={() => router.push("/pos")}>New sale</Button>
+
+      {/* Print preview — what comes off the thermal printer. Mode-locked ink/paper. */}
+      <Modal open={printOpen} onClose={() => setPrintOpen(false)} title="Print preview" footer={<><Button variant="secondary" onClick={() => setPrintOpen(false)}>Cancel</Button><Button onClick={() => { setPrintOpen(false); toast.success("Sent to the counter printer."); }}>Print</Button></>}>
+        <div className="mx-auto w-64 bg-white p-comfortable text-left font-mono text-[12px] text-black shadow-sm">
+          <p className="text-center text-[13px] font-bold uppercase tracking-wider">{business}</p>
+          <p className="mt-tight text-center text-[11px]">{TODAY}</p>
+          <div className="my-tight border-t border-dashed border-black/40" />
+          <p className="text-center text-[11px]">TICKET</p>
+          <p className="my-tight text-center text-lg font-bold tracking-tight">{info?.code}</p>
+          <div className="my-tight border-t border-dashed border-black/40" />
+          {(info?.balance ?? 0) > 0 && <p>Balance at arrival: {formatMoney(info!.balance!)}</p>}
+          <p className="mt-tight text-center text-[11px]">Present at the gate · scan to check in</p>
+          <p className="mt-tight text-center text-[10px]">Powered by Counterfoil</p>
+        </div>
+      </Modal>
+
+      {/* SMS preview — the exact message, rendered from the business template. */}
+      <Modal open={smsOpen} onClose={() => setSmsOpen(false)} title="Send by SMS" footer={<><Button variant="secondary" onClick={() => setSmsOpen(false)}>Cancel</Button><Button onClick={() => { setSmsOpen(false); toast.success("SMS sent."); }}>Send SMS</Button></>}>
+        <div className="rounded-md rounded-bl-xs border border-line bg-subtle p-comfortable text-left text-sm">{smsText}</div>
+        <p className="mt-tight text-left text-[12px] text-faint">{smsText.length} characters · template editable in Settings → Business.</p>
+      </Modal>
     </main>
   );
 }

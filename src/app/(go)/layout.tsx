@@ -50,7 +50,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
         </nav>
         <span className="flex shrink-0 items-center gap-tight">
           <ModeButton />
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-inverse font-mono text-[13px] text-inverse-fg" title="Nadia Islam">N</span>
+          <Link href="/profile" className="flex h-9 w-9 items-center justify-center rounded-full bg-inverse font-mono text-[13px] text-inverse-fg" title="Nadia Islam — my profile">N</Link>
         </span>
       </header>
       <div className="flex-1">{children}</div>

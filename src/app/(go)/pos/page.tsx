@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Archive, Pencil, Plus, Search, Trash2, UserRound } from "lucide-react";
 import { BlockedNotice, Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { checkout, findCreditPass, getOperator, isResourceFreeFor, listCategories, listLocations, listProducts, listResources, listRoles, listStaff, type CreditPass, type PaymentMethod, type Product } from "@/lib/api";
+import { checkout, findCreditPass, getOperator, isResourceFreeFor, listCategories, listLocations, listProducts, listResources, listRoles, listStaff, logOrderAction, type CreditPass, type PaymentMethod, type Product } from "@/lib/api";
 import { isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
@@ -85,6 +85,9 @@ export default function PosPage() {
   const [parkName, setParkName] = useState("");
   const [cartOpen, setCartOpen] = useState(false); // phone cart drawer
   const [cartNotice, setCartNotice] = useState<string | null>(null); // refusal guidance
+  // Non-cash simulated flow: bKash asks for the transaction ID, QR shows the
+  // code to scan. Both pass pending → confirmed | failed before the sale lands.
+  const [nc, setNc] = useState<null | { method: "bkash" | "bangla_qr"; state: "pending" | "confirmed" | "failed"; txn: string }>(null);
   const persistParked = (list: Parked[]) => { setParked(list); sessionStorage.setItem("pos_parked", JSON.stringify(list)); };
   const park = () => {
     if (cart.length === 0) return;
@@ -244,7 +247,7 @@ export default function PosPage() {
     else toast.error(res.error.message);
   };
 
-  const charge = async () => {
+  const buildSale = () => {
     const lines = cart.flatMap((e) => {
       const rate = entryTaxRate(e);
       if (e.items.length) {
@@ -265,15 +268,31 @@ export default function PosPage() {
     const bookings = cart.filter((e) => e.slotDate).map((e) => ({ productId: e.productId, resourceId: e.resourceId ?? null, slotStart: entrySlotISO(e)!, slotEnd: e.slotEnd, partySize: entrySeats(e) }));
     const credits = pass && creditsUsed > 0 ? { ticketId: pass.ticketId, count: creditsUsed } : null;
     const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, bookings, method, credits, customerName: customer || null };
+    return { lines, bookings, credits, payload };
+  };
+
+  const charge = async () => {
+    const { payload } = buildSale();
 
     if (method === "cash") {
       sessionStorage.setItem("pos_cart", JSON.stringify(payload));
       router.push("/pos/payment");
       return;
     }
-    // Non-cash: settle inline, no change step.
+    if (method === "bkash" || method === "bangla_qr") {
+      // The sale only lands once the wallet payment is confirmed.
+      setNc({ method, state: "pending", txn: "" });
+      return;
+    }
+    await settleInline();
+  };
+
+  // Non-cash settle: no change step; runs after the wallet flow confirms.
+  const settleInline = async (txnNote?: string) => {
+    const { lines, bookings, credits, payload } = buildSale();
     const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, lines, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, payNow: dueNow, credits });
     if (res.ok) {
+      if (txnNote) await logOrderAction(res.data.order.id, txnNote);
       sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change: 0, balance }));
       router.push("/pos/complete");
     } else toast.error(res.error.message);
@@ -478,6 +497,50 @@ export default function PosPage() {
         <div className="flex flex-col gap-section">
           <FormField label="Pass code" placeholder="CF-2026-000123-01" value={passCode} onChange={(e) => setPassCode(e.target.value)} help="The code on the customer's credits pack ticket. Eligible items in the cart are paid with credits." />
         </div>
+      </Modal>
+
+      {/* Non-cash wallet flow — pending → confirmed | failed. Nothing is
+          charged and no tickets exist until the payment confirms. */}
+      <Modal open={!!nc} onClose={() => setNc(null)} title={nc?.method === "bkash" ? "bKash payment" : "Bangla QR payment"}>
+        {nc?.state === "failed" ? (
+          <div className="flex flex-col gap-section">
+            <div className="rounded-sm border border-danger/40 bg-danger/10 p-comfortable text-sm text-danger">
+              Payment didn&apos;t go through. Nothing was charged and no tickets were issued.
+            </div>
+            <div className="flex gap-tight">
+              <Button variant="secondary" fullWidth onClick={() => setNc(null)}>Cancel sale</Button>
+              <Button fullWidth onClick={() => setNc({ ...nc, state: "pending", txn: "" })}>Try again</Button>
+            </div>
+          </div>
+        ) : nc?.method === "bkash" ? (
+          <div className="flex flex-col gap-section">
+            <p className="text-sm text-muted">Ask the guest to send <span className="font-mono font-medium text-fg">{formatMoney(dueNow, currency)}</span> to <span className="font-mono text-fg">01711-000000</span>, then enter the transaction ID from their confirmation SMS.</p>
+            <FormField label="Transaction ID" placeholder="e.g. 9HX72KQML4" value={nc.txn} onChange={(e) => setNc({ ...nc, txn: e.target.value.toUpperCase() })} />
+            <div className="flex gap-tight">
+              <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>It failed</Button>
+              <Button fullWidth disabled={nc.txn.trim().length < 6} onClick={async () => { const txn = nc.txn.trim(); setNc({ ...nc, state: "confirmed" }); await settleInline(`bKash confirmed — txn ${txn}`); setNc(null); }}>
+                {nc.state === "confirmed" ? "Confirming…" : "Payment received"}
+              </Button>
+            </div>
+          </div>
+        ) : nc ? (
+          <div className="flex flex-col gap-section">
+            {/* Stand-in QR — a real terminal renders the payload from the PSP. */}
+            <div className="mx-auto grid w-40 grid-cols-8 gap-px rounded-sm border border-line bg-card p-tight" aria-label="Payment QR code">
+              {Array.from({ length: 64 }, (_, i) => (
+                <span key={i} className={`aspect-square ${((i * 7 + 3) % 5 < 2 || i % 9 === 0) ? "bg-fg" : "bg-card"}`} />
+              ))}
+            </div>
+            <p className="text-center font-mono text-lg tabular-nums">{formatMoney(dueNow, currency)}</p>
+            <p className="text-center text-[13px] text-muted">Guest scans with any Bangla QR app. Confirm once their app shows success.</p>
+            <div className="flex gap-tight">
+              <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>It failed</Button>
+              <Button fullWidth onClick={async () => { setNc({ ...nc, state: "confirmed" }); await settleInline("Bangla QR payment confirmed"); setNc(null); }}>
+                {nc.state === "confirmed" ? "Confirming…" : "Payment received"}
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </Modal>
     </div>
   );

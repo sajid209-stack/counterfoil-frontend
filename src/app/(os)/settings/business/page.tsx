@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button, FormField, PageShell, useToast } from "@/components/ui";
 import { AppearancePicker } from "@/components/ThemeProvider";
 import { getOperator, updateOperator, type Operator } from "@/lib/api";
+import { DEFAULT_SMS_TEMPLATE, SMS_PLACEHOLDERS, renderSms } from "@/lib/sms";
 
 const CURRENCIES = ["BDT", "MYR", "USD", "CAD"];
 const TIMEZONES = ["Asia/Dhaka", "Asia/Kuala_Lumpur", "America/New_York", "America/Toronto"];
@@ -13,6 +14,7 @@ interface FormState {
   currency: string;
   defaultTimezone: string;
   taxRatePct: string;
+  smsTemplate: string;
 }
 
 const fromOperator = (o: Operator): FormState => ({
@@ -20,6 +22,7 @@ const fromOperator = (o: Operator): FormState => ({
   currency: o.currency,
   defaultTimezone: o.defaultTimezone,
   taxRatePct: String(o.taxRatePct),
+  smsTemplate: o.smsTemplate ?? DEFAULT_SMS_TEMPLATE,
 });
 
 export default function BusinessSetupPage() {
@@ -54,6 +57,7 @@ export default function BusinessSetupPage() {
       currency: state.currency,
       defaultTimezone: state.defaultTimezone,
       taxRatePct: parseFloat(state.taxRatePct) || 0,
+      smsTemplate: state.smsTemplate,
     });
     setSaving(false);
     if (res.ok) {
@@ -104,6 +108,27 @@ export default function BusinessSetupPage() {
               />
               <FormField label="Tax rate (%)" variant="number" value={state.taxRatePct} onChange={(e) => set("taxRatePct", e.target.value)} />
             </div>
+          </div>
+
+          <div className="rounded-md border border-line bg-card p-major">
+            <h2 className="type-h2 mb-section text-base">Ticket SMS</h2>
+            <FormField
+              label="Message template"
+              variant="textarea"
+              rows={3}
+              value={state.smsTemplate}
+              onChange={(e) => set("smsTemplate", e.target.value)}
+              help="Sent when staff choose SMS after a sale."
+            />
+            <div className="mt-tight flex flex-wrap gap-tight text-[12px] text-muted">
+              {SMS_PLACEHOLDERS.map((p) => (
+                <span key={p.key} className="rounded-xs border border-line bg-subtle px-tight py-inline font-mono text-[11px]">{p.key} <span className="font-sans text-faint">= {p.means}</span></span>
+              ))}
+            </div>
+            <p className="mt-section text-[12px] text-faint">Preview:</p>
+            <p className="mt-inline rounded-sm border border-line bg-subtle p-comfortable text-[13px]">
+              {renderSms(state.smsTemplate, { business: state.name, code: "CF-2026-000123-01", date: "2026-07-29" })}
+            </p>
           </div>
 
           <div className="rounded-md border border-line bg-card p-major">
