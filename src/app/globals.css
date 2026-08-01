@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* F10 — the Go left rail replaces the bottom tab bar only on a tablet held in
+   landscape (thumbs live at the screen edges there, not the bottom centre). */
+@custom-variant rail (@media (min-width: 64rem) and (orientation: landscape));
+
 @theme {
   /* ── Brand primaries — EXACT from the Counterfoil brand guidelines ────── */
   --color-ink: #0a0a0a;
@@ -66,6 +70,10 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    /* F10 app readiness: no rubber-band bounce on the shell, no blue tap
+       flashes — the 120ms press states replace them. */
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
@@ -74,6 +82,13 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overscroll-behavior: none;
+  }
+
+  /* Chrome is not selectable; content (booking refs etc.) stays selectable. */
+  nav, button, [role="tab"], [role="tablist"] {
+    user-select: none;
+    -webkit-user-select: none;
   }
 }
 

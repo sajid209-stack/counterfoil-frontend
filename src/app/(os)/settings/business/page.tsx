@@ -137,7 +137,7 @@ export default function BusinessSetupPage() {
             <p className="mt-tight text-[12px] text-faint">Per user, on this browser. Scan screens and printed tickets keep their designed look in both modes.</p>
           </div>
 
-          <div className="sticky bottom-0 flex items-center justify-end gap-tight border-t border-line bg-surface py-section">
+          <div className="sticky bottom-0 max-md:bottom-[calc(56px+env(safe-area-inset-bottom))] flex items-center justify-end gap-tight border-t border-line bg-surface py-section">
             <Button onClick={save} loading={saving} disabled={!dirty}>
               Save changes
             </Button>

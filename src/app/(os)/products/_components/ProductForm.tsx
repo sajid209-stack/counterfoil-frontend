@@ -409,7 +409,7 @@ export function ProductForm({
         )}
       </div>
 
-      <div className="sticky bottom-0 flex items-center justify-between border-t border-line bg-surface py-section">
+      <div className="sticky bottom-0 max-md:bottom-[calc(56px+env(safe-area-inset-bottom))] flex items-center justify-between border-t border-line bg-surface py-section">
         <span className="font-mono text-[12px] text-faint">{dirty ? "Unsaved changes" : "No changes"}</span>
         <div className="flex items-center gap-tight">
           <Button variant="secondary" onClick={() => router.push("/products")} disabled={saving}>Cancel</Button>

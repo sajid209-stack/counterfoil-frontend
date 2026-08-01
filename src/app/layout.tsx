@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, DM_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/ui";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { PwaSetup } from "@/components/PwaSetup";
 import "./globals.css";
 
 // Manrope is a variable font — the full weight axis (300–800) is available
@@ -25,6 +26,21 @@ export const metadata: Metadata = {
   title: "Counterfoil",
   description:
     "Operator-owned platform for venues, tours, and attractions — timed entry, tickets, and bookings.",
+  applicationName: "Counterfoil",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Counterfoil" },
+};
+
+// F10 app readiness: draw under the notch/home indicator (safe-area insets
+// handle the overlap) and stop input-focus zoom — Go runs as an app, not a page.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8f7f4" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
@@ -42,6 +58,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>{children}</ToastProvider>
         </ThemeProvider>
+        <PwaSetup />
       </body>
     </html>
   );

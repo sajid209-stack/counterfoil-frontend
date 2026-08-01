@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0a0a0a"/>
+  <circle cx="0" cy="256" r="36" fill="#f8f7f4"/>
+  <circle cx="512" cy="256" r="36" fill="#f8f7f4"/>
+  <text x="256" y="326" font-family="Manrope, system-ui, sans-serif" font-size="256" font-weight="800" fill="#f8f7f4" text-anchor="middle">C</text>
+  <rect x="160" y="390" width="192" height="16" rx="8" fill="#ff6a1f"/>
+</svg>

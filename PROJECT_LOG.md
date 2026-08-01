@@ -313,6 +313,39 @@ a real 390px viewport) could not be exercised in the automation browser (window 
 ignored there) — breakpoint classes verified structurally instead; worth one manual pass on
 a phone.
 
+### F10 — mobile navigation + app readiness (counterfoil_F10_mobile_nav.md, local) ✅ (2026-08-01)
+
+Nav position is now **responsive by form factor**; the top tab strip is gone from Go.
+- **Go**: phone + tablet portrait get a **bottom tab bar** (56px + `env(safe-area-inset-bottom)`,
+  24px icon over 11px label, ember active w/ 2px leading bar, tap-active-scrolls-to-top);
+  a tablet held in **landscape** gets an **88px left rail** instead (custom Tailwind variant
+  `rail` = `(min-width:64rem) and (orientation:landscape)` in globals.css). Tabs:
+  Sell · Schedule · Scan · Check In · **More** — Schedule hides itself when the catalogue has
+  no slotted products; Shift left the tab set (it's a state, it lives in the context bar).
+  **More** = bottom-sheet grid: Shift · My sales (shift takings modal) · Quick pass ·
+  My profile · Switch user · Settings · Help.
+- **POS stacking on phone**: collapsed cart summary sits directly **above** the tab bar;
+  the opened cart drawer and every sheet are z-50 **over** the tab bar (z-40) — nothing
+  tappable behind a modal.
+- **OS mobile**: hamburger drawer replaced by a bottom tab bar (Dashboard · Calendar ·
+  Orders · Products · More); **More** opens a destination grid (3-col cards, same order every
+  time, active card = ember border + tint + check). Desktop ink sidebar unchanged. Sticky
+  form save-bars offset above the mobile tab bar.
+- **App readiness (PWA)**: `app/manifest.ts` (standalone, any orientation, ink theme,
+  192/512 + maskable SVG icons); viewport `viewport-fit=cover` + `maximum-scale=1` (no
+  input-focus zoom) + light/dark `theme-color`; safe-area insets on every fixed element
+  (tab bars, cart bar, sheets); `overscroll-behavior:none` (no rubber-band);
+  `-webkit-tap-highlight-color:transparent`; chrome is `user-select:none` (content stays
+  selectable); **app-shell service worker** (`public/sw.js`, prod-only registration via
+  `PwaSetup`) — cache-first for hashed build assets, network-first navigations; offline
+  data stays out of scope.
+- Deferred (optional item): device-role default tab (gate device lands on Scan) — needs a
+  device-identity mechanism the mock doesn't have.
+- Verified: rail ↔ bottom-bar media split (computed styles both branches), More sheets in
+  both surfaces, manifest/sw/icons all 200, viewport + overscroll + user-select live.
+  True 390px viewport still can't be exercised in the automation browser (resize ignored) —
+  structural verification only; worth one manual phone pass.
+
 ### F7–F9 (counterfoil_F7_F9_prompts.md, local) ✅ (2026-08-01)
 
 - **F7 — Sales Reports rebuilt as the operator's questions.** `reports.ts` gains the

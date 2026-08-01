@@ -347,7 +347,8 @@ export default function PosPage() {
       </div>
 
       {/* Cart — fixed right panel on tablet/desktop; bottom drawer on phones */}
-      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] rounded-t-md shadow-2xl" : "hidden"} min-h-0 flex-col border border-line bg-card lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-sm lg:shadow-none`}>
+      {/* Sheets cover the tab bar (z-50 over z-40) — nothing tappable behind a modal cart. */}
+      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] rounded-t-md pb-[env(safe-area-inset-bottom)] shadow-2xl" : "hidden"} min-h-0 flex-col border border-line bg-card lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-sm lg:pb-0 lg:shadow-none`}>
         <div className="flex items-center gap-tight border-b border-line p-tight">
           {cartOpen && (
             <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-sm border border-line px-tight text-[12px] text-muted lg:hidden">Close</button>
@@ -446,7 +447,7 @@ export default function PosPage() {
 
       {/* Phone summary bar — persistent door to the cart drawer */}
       {!cartOpen && (
-        <button type="button" onClick={() => setCartOpen(true)} className="fixed inset-x-tight bottom-tight z-30 flex h-14 items-center justify-between rounded-sm bg-inverse px-section text-inverse-fg shadow-lg lg:hidden">
+        <button type="button" onClick={() => setCartOpen(true)} className="fixed inset-x-tight bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 flex h-14 items-center justify-between rounded-sm bg-inverse px-section text-inverse-fg shadow-lg rail:bottom-tight lg:hidden">
           <span className="text-sm">{cart.length} item{cart.length === 1 ? "" : "s"}{customer ? ` · ${customer}` : ""}</span>
           <span className="font-mono text-sm">{formatMoney(dueNow, currency)} · View cart</span>
         </button>
