@@ -39,6 +39,7 @@ export interface CartEntry {
   fixedPrice?: number; // resource slot resolved price (overrides items sum)
   partySize?: number; // group size for flat-per-booking entries ("Group of 6")
   taxRatePct?: number; // custom-amount entries carry their own rate
+  lineDiscountPct?: number; // F11 line-level discount (cycles 0/5/10/15 in the cart)
 }
 
 

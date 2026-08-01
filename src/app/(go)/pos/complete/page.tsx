@@ -14,7 +14,9 @@ const TODAY = "2026-07-29";
 export default function CompletePage() {
   const router = useRouter();
   const toast = useToast();
-  const [info, setInfo] = useState<{ code: string; change: number; balance?: number } | null>(null);
+  interface ReceiptLine { name: string; qty: number; amount: number; child?: boolean }
+  interface Receipt { lines: ReceiptLine[]; subtotal: number; lineDiscountTotal: number; orderDiscount: number; tax: number; total: number }
+  const [info, setInfo] = useState<{ code: string; change: number; balance?: number; receipt?: Receipt; payments?: { method: string; amount: number }[] } | null>(null);
   const [printOpen, setPrintOpen] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
   const operatorQ = useApiQuery(() => getOperator(), []);
@@ -89,6 +91,27 @@ export default function CompletePage() {
           <p className="text-center text-[11px]">TICKET</p>
           <p className="my-tight text-center text-lg font-bold tracking-tight">{info?.code}</p>
           <div className="my-tight border-t border-dashed border-black/40" />
+          {/* F11 — the receipt shows lines, discounts and the tax breakdown. */}
+          {info?.receipt && (
+            <>
+              {info.receipt.lines.map((l, i) => (
+                <div key={i} className="flex justify-between gap-2">
+                  <span className="min-w-0 truncate">{l.child ? "  + " : ""}{l.qty > 1 ? `${l.qty}× ` : ""}{l.name}</span>
+                  <span className="shrink-0">{formatMoney(l.amount)}</span>
+                </div>
+              ))}
+              <div className="my-tight border-t border-dashed border-black/40" />
+              <div className="flex justify-between"><span>Subtotal</span><span>{formatMoney(info.receipt.subtotal)}</span></div>
+              {info.receipt.lineDiscountTotal > 0 && <div className="flex justify-between"><span>Line discounts</span><span>-{formatMoney(info.receipt.lineDiscountTotal)}</span></div>}
+              {info.receipt.orderDiscount > 0 && <div className="flex justify-between"><span>Discount</span><span>-{formatMoney(info.receipt.orderDiscount)}</span></div>}
+              <div className="flex justify-between"><span>VAT</span><span>{formatMoney(info.receipt.tax)}</span></div>
+              <div className="flex justify-between font-bold"><span>TOTAL</span><span>{formatMoney(info.receipt.total)}</span></div>
+              {(info.payments ?? []).map((p, i) => (
+                <div key={i} className="flex justify-between"><span>Paid {p.method}</span><span>{formatMoney(p.amount)}</span></div>
+              ))}
+              <div className="my-tight border-t border-dashed border-black/40" />
+            </>
+          )}
           {(info?.balance ?? 0) > 0 && <p>Balance at arrival: {formatMoney(info!.balance!)}</p>}
           <p className="mt-tight text-center text-[11px]">Present at the gate · scan to check in</p>
           <p className="mt-tight text-center text-[10px]">Powered by Counterfoil</p>

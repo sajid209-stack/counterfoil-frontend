@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Archive, Pencil, Plus, Search, Trash2, UserRound } from "lucide-react";
 import { BlockedNotice, Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { checkout, findCreditPass, getOperator, isResourceFreeFor, listCategories, listLocations, listProducts, listResources, listRoles, listStaff, logOrderAction, type CreditPass, type PaymentMethod, type Product } from "@/lib/api";
+import { checkout, findCreditPass, getOperator, isResourceFreeFor, listCategories, listLocations, listProducts, listResources, listRoles, listStaff, logOrderAction, type CheckoutLine, type CreditPass, type PaymentMethod, type Product } from "@/lib/api";
+import { buildOrderLines } from "@/lib/orderMath";
 import { isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
@@ -222,11 +223,97 @@ export default function PosPage() {
   const creditsUsed = cart.reduce((s, e) => s + entryCoveredQty(e), 0);
   const creditsValue = cart.reduce((s, e) => s + entryCoveredValue(e), 0);
 
-  const subtotal = cart.reduce((s, e) => s + entryTotal(e), 0);
-  const discount = Math.round((subtotal * discountPct) / 100);
-  const tax = cart.reduce((s, e) => s + Math.round(((entryTotal(e) - entryCoveredValue(e)) * entryTaxRate(e)) / 100), 0);
-  const total = subtotal - discount - creditsValue + tax;
-  const overLimit = discountPct > discountLimit;
+  // ── F11: the cart IS order lines. One inputs builder feeds the shared order
+  //    engine (lib/orderMath) for both the live totals and the settle payload,
+  //    so what the cart shows is exactly what the order records.
+  const buildInputs = (): CheckoutLine[] => {
+    const inputs: CheckoutLine[] = [];
+    for (const e of cart) {
+      const p = productById(e.productId);
+      const rate = entryTaxRate(e) / 100;
+      const taxClass = e.taxRatePct != null ? (e.taxRatePct === 0 ? "exempt" : "standard") : (p?.taxClass ?? "standard");
+      const ld = e.lineDiscountPct ?? 0;
+      const pctOf = (base: number) => (ld > 0 ? Math.round((base * ld) / 100) : 0);
+      const addOnOf = (tierId: string) => p?.addOns?.find((a) => a.id === tierId);
+      let parentIdx: number | null = null;
+
+      if (e.fixedPrice != null) {
+        // The booking line — a resource/provider span, one unit admitting the group.
+        parentIdx = inputs.length;
+        const dur = e.slotTime && e.slotEnd ? toMinutes(e.slotEnd.slice(11, 16)) - toMinutes(e.slotTime) : undefined;
+        inputs.push({
+          productId: e.productId, productName: e.productName,
+          tierName: e.resourceLabel ?? e.providerLabel ?? e.slotTime ?? "Booking",
+          admits: entrySeats(e), quantity: 1, unitPrice: e.fixedPrice,
+          lineDiscount: pctOf(e.fixedPrice),
+          taxClass, taxRate: rate,
+          booking: e.slotDate ? {
+            date: e.slotDate, startTime: e.slotTime, endTime: e.slotEnd?.slice(11, 16),
+            resourceId: e.resourceId, resourceName: e.resourceLabel, providerName: e.providerLabel,
+            guests: entrySeats(e), durationMinutes: dur && dur > 0 ? dur : undefined,
+          } : undefined,
+        });
+      }
+
+      // Tier / section / premium / custom items. Pass-covered quantities split
+      // into their own 0-price untaxed lines. The entry's first tier line
+      // carries the booking snapshot for slotted products.
+      let bookingAttached = e.fixedPrice != null;
+      for (const i of e.items) {
+        if (addOnOf(i.tierId)) continue; // add-ons parent below
+        const cov = coverage.get(`${e.id}|${i.tierId}`) ?? 0;
+        const tier = p?.tiers.find((t) => t.id === i.tierId);
+        const isPremium = i.tierId.startsWith("prem_");
+        const mk = (qty: number, unitPrice: number, covered: boolean) => {
+          const idx = inputs.length;
+          const carryBooking = !isPremium && !bookingAttached && !!e.slotDate;
+          if (carryBooking) bookingAttached = true;
+          inputs.push({
+            productId: e.productId, productName: e.productName,
+            tierId: tier?.id, tierName: covered ? `${i.tierName} · pass` : i.tierName,
+            admits: isPremium ? 0 : (tier?.admits ?? 1),
+            quantity: qty, unitPrice,
+            lineDiscount: covered ? 0 : pctOf(unitPrice * qty),
+            taxClass: covered ? "exempt" : taxClass, taxRate: covered ? 0 : rate,
+            parentIndex: isPremium && parentIdx != null ? parentIdx : undefined,
+            booking: carryBooking ? { date: e.slotDate!, startTime: e.slotTime, guests: entrySeats(e) } : undefined,
+          });
+          if (parentIdx == null && !isPremium) parentIdx = idx;
+        };
+        if (i.qty - cov > 0) mk(i.qty - cov, i.unitPrice, false);
+        if (cov > 0) mk(cov, 0, true);
+      }
+
+      // Add-ons are CHILD LINES — their own product identity, revenue and tax;
+      // they render indented and refunds will cascade from the parent.
+      for (const i of e.items) {
+        const a = addOnOf(i.tierId);
+        if (!a) continue;
+        inputs.push({
+          productId: `addon_${a.id}`, productName: a.name,
+          tierName: i.tierName, admits: 0, quantity: i.qty, unitPrice: i.unitPrice,
+          lineDiscount: pctOf(i.unitPrice * i.qty),
+          taxClass, taxRate: rate,
+          parentIndex: parentIdx ?? undefined,
+        });
+      }
+    }
+    return inputs;
+  };
+
+  const saleInputs = buildInputs();
+  const preBase = saleInputs.reduce((s, l) => s + l.unitPrice * l.quantity - (l.lineDiscount ?? 0), 0);
+  const orderDiscount = Math.round((Math.max(0, preBase) * discountPct) / 100);
+  const sale = buildOrderLines(saleInputs, orderDiscount, "PREVIEW");
+  const subtotal = sale.totals.subtotal;
+  const lineDiscountTotal = sale.totals.lineDiscountTotal;
+  const discount = sale.totals.discountTotal;
+  const tax = sale.totals.taxTotal;
+  const total = sale.totals.total;
+  // Role limits gate the COMBINED effective discount — 5% on a line plus 5% on
+  // the cart must not dodge a 5% limit.
+  const effectivePct = subtotal > 0 ? (discount / subtotal) * 100 : 0;
+  const overLimit = effectivePct > discountLimit + 1e-9;
 
   // ── Deposits: a percent-deposit policy holds part of the entry back until
   //    arrival; only the deposit is charged now.
@@ -248,27 +335,17 @@ export default function PosPage() {
   };
 
   const buildSale = () => {
-    const lines = cart.flatMap((e) => {
-      const rate = entryTaxRate(e);
-      if (e.items.length) {
-        // Pass-covered quantities split off as 0-price lines (untaxed).
-        return e.items.flatMap((i) => {
-          const cov = coverage.get(`${e.id}|${i.tierId}`) ?? 0;
-          const out = [];
-          if (i.qty - cov > 0) out.push({ productId: e.productId, productName: e.productName, tierName: i.tierName, quantity: i.qty - cov, unitPrice: i.unitPrice, taxRatePct: rate });
-          if (cov > 0) out.push({ productId: e.productId, productName: e.productName, tierName: `${i.tierName} · pass`, quantity: cov, unitPrice: 0, taxRatePct: 0 });
-          return out;
-        });
-      }
-      return e.fixedPrice != null
-        ? [{ productId: e.productId, productName: e.productName, tierName: e.resourceLabel ?? e.slotTime ?? "Booking", quantity: 1, unitPrice: e.fixedPrice, taxRatePct: rate }]
-        : [];
-    });
-    if (discount > 0) lines.push({ productId: "discount", productName: "Discount", tierName: `${discountPct}%`, quantity: 1, unitPrice: -discount, taxRatePct: 0 });
+    // The SAME inputs the live totals were computed from — no drift possible.
+    const lines = saleInputs;
     const bookings = cart.filter((e) => e.slotDate).map((e) => ({ productId: e.productId, resourceId: e.resourceId ?? null, slotStart: entrySlotISO(e)!, slotEnd: e.slotEnd, partySize: entrySeats(e) }));
     const credits = pass && creditsUsed > 0 ? { ticketId: pass.ticketId, count: creditsUsed } : null;
-    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, bookings, method, credits, customerName: customer || null };
-    return { lines, bookings, credits, payload };
+    // Receipt detail for the complete screen: lines, discounts, tax, payments.
+    const receipt = {
+      lines: sale.lines.map((l) => ({ name: l.tierId && l.tierName !== l.productName ? `${l.productName} · ${l.tierName}` : l.productName, qty: l.quantity, amount: l.subtotal, child: !!l.parentLineId })),
+      subtotal, lineDiscountTotal, orderDiscount, tax, total,
+    };
+    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, orderDiscount, bookings, method, credits, customerName: customer || null, receipt };
+    return { lines, bookings, credits, payload, receipt };
   };
 
   const charge = async () => {
@@ -288,12 +365,12 @@ export default function PosPage() {
   };
 
   // Non-cash settle: no change step; runs after the wallet flow confirms.
-  const settleInline = async (txnNote?: string) => {
-    const { lines, bookings, credits, payload } = buildSale();
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, lines, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, payNow: dueNow, credits });
+  const settleInline = async (txnNote?: string, txnRef?: string) => {
+    const { lines, bookings, credits, payload, receipt } = buildSale();
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow, credits });
     if (res.ok) {
       if (txnNote) await logOrderAction(res.data.order.id, txnNote);
-      sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change: 0, balance }));
+      sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change: 0, balance, receipt, payments: [{ method, amount: dueNow }] }));
       router.push("/pos/complete");
     } else toast.error(res.error.message);
   };
@@ -372,8 +449,17 @@ export default function PosPage() {
                     <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap font-mono tabular-nums">{formatMoney(entryTotal(e), currency)}</span></div>
                     <div className="font-mono text-[11px] text-faint">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.resourceLabel, e.providerLabel, e.partySize != null ? `Group of ${e.partySize}` : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="font-mono text-[11px] text-success">{entryCoveredQty(e)} paid with pass</div>}
+                    {(e.lineDiscountPct ?? 0) > 0 && <div className="font-mono text-[11px] text-danger">−{e.lineDiscountPct}% line discount</div>}
                     {entryBalance(e) > 0 && <div className="font-mono text-[11px] text-faint">{productById(e.productId)?.policies?.depositPct}% deposit now · {formatMoney(entryBalance(e), currency)} at arrival</div>}
                   </div>
+                  <button
+                    type="button"
+                    aria-label="Line discount"
+                    onClick={() => setCart((c) => c.map((x) => (x.id === e.id ? { ...x, lineDiscountPct: ((x.lineDiscountPct ?? 0) + 5) % 20 } : x)))}
+                    className={`flex h-12 w-12 items-center justify-center rounded-sm border font-mono text-[11px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 ? "border-ember text-ember" : "border-line"}`}
+                  >
+                    {(e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
+                  </button>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
                     <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight font-mono text-[11px] active:bg-ember/10">
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
@@ -397,7 +483,7 @@ export default function PosPage() {
           </div>
           {overLimit && (
             <p className="mb-tight rounded-sm border border-line border-l-[3px] border-l-ember bg-card p-tight text-[12px]">
-              Over your {discountLimit}% discount limit — ask a manager, or pick {discountLimit}% or less.
+              Combined discount ({effectivePct.toFixed(1)}%) is over your {discountLimit}% limit — ask a manager, or reduce the line/cart discounts.
             </p>
           )}
           {cartNotice && <div className="mb-tight"><BlockedNotice message={cartNotice} onDismiss={() => setCartNotice(null)} /></div>}
@@ -416,7 +502,8 @@ export default function PosPage() {
           </div>
 
           <div className="flex justify-between text-[13px] text-muted"><span>Subtotal</span><span className="font-mono">{formatMoney(subtotal, currency)}</span></div>
-          {discount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>Discount</span><span className="font-mono text-danger">−{formatMoney(discount, currency)}</span></div>}
+          {lineDiscountTotal > 0 && <div className="flex justify-between text-[13px] text-muted"><span>Line discounts</span><span className="font-mono text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
+          {orderDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>Discount {discountPct}%</span><span className="font-mono text-danger">−{formatMoney(orderDiscount, currency)}</span></div>}
           {creditsValue > 0 && <div className="flex justify-between text-[13px] text-muted"><span>Pass · {creditsUsed} credits</span><span className="font-mono text-success">−{formatMoney(creditsValue, currency)}</span></div>}
           <div className="flex justify-between text-[13px] text-muted"><span>VAT</span><span className="font-mono">{formatMoney(tax, currency)}</span></div>
           <div className="mt-tight flex items-baseline justify-between text-lg font-medium"><span>Total</span><AnimatedMoney value={total} currency={currency} /></div>
@@ -519,7 +606,7 @@ export default function PosPage() {
             <FormField label="Transaction ID" placeholder="e.g. 9HX72KQML4" value={nc.txn} onChange={(e) => setNc({ ...nc, txn: e.target.value.toUpperCase() })} />
             <div className="flex gap-tight">
               <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>It failed</Button>
-              <Button fullWidth disabled={nc.txn.trim().length < 6} onClick={async () => { const txn = nc.txn.trim(); setNc({ ...nc, state: "confirmed" }); await settleInline(`bKash confirmed — txn ${txn}`); setNc(null); }}>
+              <Button fullWidth disabled={nc.txn.trim().length < 6} onClick={async () => { const txn = nc.txn.trim(); setNc({ ...nc, state: "confirmed" }); await settleInline(`bKash confirmed — txn ${txn}`, txn); setNc(null); }}>
                 {nc.state === "confirmed" ? "Confirming…" : "Payment received"}
               </Button>
             </div>

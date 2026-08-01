@@ -313,6 +313,45 @@ a real 390px viewport) could not be exercised in the automation browser (window 
 ignored there) — breakpoint classes verified structurally instead; worth one manual pass on
 a phone.
 
+### F11 — order lines, discounts, per-product revenue (counterfoil_F11_order_lines.md, local) ✅ (2026-08-01)
+
+The order model rebuilt around **lines** (the doc said "run before F7" — it arrived after, so
+F7's reports were retrofitted to aggregate from lines). The backend contract in `types.ts`
+changed accordingly — **hand the new `Order`/`OrderLine`/`Payment` shapes to the backend lane.**
+
+- **The model.** `OrderLine` = full snapshot at time of sale (productName, tierId/tierName,
+  `admits`, unitPrice, `taxClass` + `taxRate` fraction, optional `booking` snapshot with
+  resource/provider names, `parentLineId` for add-on children, `refundedQuantity/Amount`).
+  Order carries `lineDiscountTotal · orderDiscount · discountTotal · taxTotal` (SUM of line
+  taxes, never rate×total). `Payment` gains tendered/change/reference/status/createdAt.
+  Renaming a product **cannot** rewrite history — browser-verified (renamed General
+  Admission → Gate Entry; past orders still read General Admission at the old price).
+- **One math engine** (`lib/orderMath.ts`) shared by POS totals, `checkout()`, counter
+  add-ons AND the seed generator: subtotal → lineDiscount → pro-rata `orderDiscount`
+  allocation (**largest-remainder**, asserts `sum === orderDiscount` exactly, self-test runs
+  at module load in dev) → per-line tax → line total.
+- **Discounts at both levels**: cart-line "%" action cycles a line discount; cart chips set
+  the order discount; the role limit gates the **combined effective rate**
+  (`discountTotal / subtotal`), not each level separately.
+- **Add-ons are child lines** with their own product identity (`addon_*`) — indented under
+  their parent everywhere, attributed separately in reports (Bib set / Premium oils / Shoe
+  hire appear as their own Summary rows).
+- **Tickets per line**: `quantity × admits`, each ticket carries `lineId` + the admits
+  snapshot (2 Family tickets → each scans "group of 4 · Admit all 4"); child lines mint
+  nothing.
+- **Payments stay order-level**: cross-tabs bucket split tender under a visible **"Mixed"**
+  row (22 seed orders) — never a fictional pro-rata split.
+- **§8 transaction detail** (`components/OrderLinesDetail`): parent lines w/ booking meta,
+  ↳ indented add-ons, per-line discounts on their own line, footer math, "Paid Cash ৳X ·
+  bKash ৳Y" — rendered on the order page AND inside expandable transaction rows; the POS
+  print receipt shows the same lines/discounts/VAT.
+- **Everything that reads orders updated**: reports aggregate from line NET values,
+  dashboard Top products reads line totals, per-line refunds mark `refundedQuantity/Amount`
+  → `partly_refunded`, seed regenerated as multi-line orders (mixed carts, add-on children,
+  line + order discounts, split tender).
+- Verified in-browser: 5,000−165−483.50+652.73 cart math to the paisa; standard+reduced in
+  one order → VAT 150 = 75+75; all 8 acceptance checks.
+
 ### F10 — mobile navigation + app readiness (counterfoil_F10_mobile_nav.md, local) ✅ (2026-08-01)
 
 Nav position is now **responsive by form factor**; the top tab strip is gone from Go.

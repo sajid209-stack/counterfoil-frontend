@@ -14,9 +14,11 @@ interface Cart {
   taxPct: number;
   locationId: string;
   lines: CheckoutLine[];
+  orderDiscount?: number;
   bookings?: CheckoutBooking[];
   credits?: { ticketId: string; count: number } | null;
   customerName?: string | null;
+  receipt?: unknown; // line detail for the complete-screen receipt
 }
 
 export default function PaymentPage() {
@@ -47,6 +49,7 @@ export default function PaymentPage() {
       counterId: null,
       staffId: null,
       lines: cart.lines,
+      orderDiscount: cart.orderDiscount ?? 0,
       bookings: cart.bookings,
       taxPct: cart.taxPct,
       method: "cash",
@@ -57,7 +60,7 @@ export default function PaymentPage() {
     });
     setSaving(false);
     if (res.ok) {
-      sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change, balance }));
+      sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change, balance, receipt: cart.receipt, payments: [{ method: "cash", amount: total, tendered: tenderedMinor, change }] }));
       sessionStorage.removeItem("pos_cart");
       router.push("/pos/complete");
     } else {

@@ -1,7 +1,8 @@
 import { createBooking } from "./bookings";
 import { createResource } from "./client";
 import { issueTicket, redeemCredits, voidOrderTickets } from "./tickets";
-import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, OrderLine, PaymentMethod } from "./types";
+import { buildOrderLines, type LineInput } from "@/lib/orderMath";
+import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod } from "./types";
 
 const resource = createResource<Order>("orders", "Order", {
   search: (o, q) =>
@@ -44,7 +45,7 @@ const withHistory = (o: Order, who: string, text: string) => [
 export async function addOrderPayment(orderId: string, method: PaymentMethod, amount: Minor, who = "Counter"): Promise<ApiResult<Order>> {
   const o = resource.peek().find((x) => x.id === orderId);
   if (!o) return resource.get(orderId);
-  const payments = [...o.payments, { id: `${o.reference}-P${o.payments.length}`, method, amount, at: new Date().toISOString() }];
+  const payments: Order["payments"] = [...o.payments, { id: `${o.reference}-P${o.payments.length}`, method, amount, status: "confirmed", createdAt: new Date().toISOString() }];
   const paid = payments.reduce((s, p) => s + p.amount, 0);
   return resource.update(orderId, {
     payments,
@@ -53,33 +54,40 @@ export async function addOrderPayment(orderId: string, method: PaymentMethod, am
   });
 }
 
-/** Add lines to an existing order (extras / tier upgrades at the counter). */
-export async function addOrderLines(orderId: string, lines: Omit<OrderLine, "id">[], who = "Counter"): Promise<ApiResult<Order>> {
+/** Add lines to an existing order (extras / tier upgrades at the counter).
+ *  Runs through the same order engine — full snapshot lines, per-line tax. */
+export async function addOrderLines(orderId: string, inputs: LineInput[], who = "Counter"): Promise<ApiResult<Order>> {
   const o = resource.peek().find((x) => x.id === orderId);
   if (!o) return resource.get(orderId);
-  const added = lines.map((l, i) => ({ ...l, id: `${o.reference}-X${o.lines.length + i}` }));
-  const addTotal = added.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
+  const { lines: added, totals } = buildOrderLines(inputs, 0, `${o.reference}-X${o.lines.length}`);
   return resource.update(orderId, {
     lines: [...o.lines, ...added],
-    subtotal: o.subtotal + addTotal,
-    total: o.total + addTotal,
+    subtotal: o.subtotal + totals.subtotal,
+    taxTotal: o.taxTotal + totals.taxTotal,
+    total: o.total + totals.total,
     status: "partial",
     history: withHistory(o, who, `Added ${added.map((l) => l.tierName).join(", ")}`),
   });
 }
 
-/** Refund specific lines with a reason. Capacity release is a backend TODO. */
+/** Refund specific lines with a reason — marks the lines (refundedQuantity /
+ *  refundedAmount), voids their unredeemed tickets, and reverses the money as
+ *  a negative payment. Capacity release is a backend TODO. */
 export async function refundOrderLines(orderId: string, lineIds: string[], reason: string, who = "Counter"): Promise<ApiResult<Order>> {
   const o = resource.peek().find((x) => x.id === orderId);
   if (!o) return resource.get(orderId);
   const hit = o.lines.filter((l) => lineIds.includes(l.id));
-  const amount = hit.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
-  const all = hit.length === o.lines.filter((l) => l.unitPrice > 0).length;
-  // Void the unredeemed tickets for the refunded products.
+  const amount = hit.reduce((s, l) => s + l.total - l.refundedAmount, 0);
+  const lines = o.lines.map((l) =>
+    lineIds.includes(l.id) ? { ...l, refundedQuantity: l.quantity, refundedAmount: l.total } : l,
+  );
+  const all = lines.filter((l) => l.subtotal > 0).every((l) => l.refundedQuantity >= l.quantity);
+  // Void the unredeemed tickets for the refunded lines.
   for (const l of hit) await voidOrderTickets(orderId, l.productId);
   return resource.update(orderId, {
-    payments: [...o.payments, { id: `${o.reference}-R${o.payments.length}`, method: o.payments[0]?.method ?? "cash", amount: -amount, at: new Date().toISOString() }],
-    status: all ? "refunded" : o.status,
+    lines,
+    payments: [...o.payments, { id: `${o.reference}-R${o.payments.length}`, method: o.payments[0]?.method ?? "cash", amount: -amount, status: "confirmed", createdAt: new Date().toISOString() }],
+    status: all ? "refunded" : "partly_refunded",
     history: withHistory(o, who, `Refunded ${hit.map((l) => l.tierName).join(", ")} — ${reason}`),
   });
 }
@@ -98,14 +106,8 @@ export async function logOrderAction(orderId: string, text: string, who = "Count
   return resource.update(orderId, { history: withHistory(o, who, text) });
 }
 
-export interface CheckoutLine {
-  productId: string;
-  productName: string;
-  tierName: string;
-  quantity: number;
-  unitPrice: Minor;
-  taxRatePct?: number; // per-line rate from the product's tax class
-}
+/** A cart line at settle — the shape the POS produces. See lib/orderMath. */
+export type CheckoutLine = LineInput;
 export interface CheckoutBooking {
   productId: string;
   resourceId?: string | null;
@@ -121,9 +123,15 @@ export interface CheckoutInput {
   customerName?: string | null;
   lines: CheckoutLine[];
   bookings?: CheckoutBooking[]; // slot holds for scheduled products
+  /** Cart-level discount in minor units — allocated across lines pro rata
+   *  (largest-remainder) by the order engine. */
+  orderDiscount?: Minor;
+  /** Fallback tax rate (percent) for lines without their own snapshot rate. */
   taxPct: number;
   method: PaymentMethod;
   amountTendered: Minor;
+  /** Wallet transaction id (bKash etc.) recorded on the payment. */
+  paymentReference?: string;
   /** Amount actually collected now. Below the order total (a deposit) the
    *  order lands as "partial" with the balance due at arrival. */
   payNow?: Minor;
@@ -136,19 +144,35 @@ export interface CheckoutInput {
 export async function checkout(
   input: CheckoutInput,
 ): Promise<ApiResult<{ order: Order; firstTicketCode: string }>> {
-  const subtotal = input.lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
-  // Per-line tax from each product's tax class; falls back to the order rate.
-  const tax = input.lines.reduce((s, l) => s + Math.round((l.unitPrice * l.quantity * (l.taxRatePct ?? input.taxPct)) / 100), 0);
-  const total = subtotal + tax;
-  const payNow = input.payNow ?? total;
   const now = new Date().toISOString();
   const reference = `CF-2026-${String(Math.floor(Date.parse(now) % 900000) + 100000)}`;
+
+  // ONE math path for every order in the system (lib/orderMath).
+  const { lines, totals } = buildOrderLines(
+    input.lines.map((l) => ({ ...l, taxRate: l.taxRate ?? input.taxPct / 100 })),
+    input.orderDiscount ?? 0,
+    reference,
+  );
+  const total = totals.total;
+  const payNow = input.payNow ?? total;
 
   // Spend pass credits first so an invalid pass fails the sale cleanly.
   if (input.credits && input.credits.count > 0) {
     const spent = await redeemCredits(input.credits.ticketId, input.credits.count);
     if (!spent.ok) return spent as ApiResult<never>;
   }
+
+  const payment: Order["payments"][number] = {
+    id: `${reference}-P0`,
+    method: input.method,
+    amount: payNow,
+    status: "confirmed",
+    createdAt: now,
+    ...(input.method === "cash"
+      ? { tendered: input.amountTendered, change: Math.max(0, input.amountTendered - payNow) }
+      : {}),
+    ...(input.paymentReference ? { reference: input.paymentReference } : {}),
+  };
 
   const orderRes = await resource.create({
     reference,
@@ -158,23 +182,24 @@ export async function checkout(
     counterId: input.counterId,
     staffId: input.staffId,
     customerName: input.customerName ?? null,
-    lines: input.lines.map((l, i) => ({ id: `${reference}-L${i}`, ...l })),
-    payments: [{ id: `${reference}-P0`, method: input.method, amount: payNow, at: now }],
-    subtotal,
-    tax,
-    total,
+    lines,
+    payments: [payment],
+    ...totals,
   });
   if (!orderRes.ok) return orderRes;
   const order = orderRes.data;
 
+  // Tickets generate PER LINE: quantity × admits. A line of 2 Family tickets
+  // (admits 4) mints 2 tickets, each admitting 4. Add-on child lines admit
+  // nobody and mint nothing. Each ticket carries its line id.
   let firstTicketCode = "";
   let t = 0;
-  for (const line of input.lines) {
-    if (line.unitPrice < 0) continue; // discount/adjustment lines admit nobody
+  for (const line of order.lines) {
+    if (line.parentLineId || line.admits <= 0 || line.unitPrice < 0) continue;
     for (let q = 0; q < line.quantity && t < 20; q++, t++) {
       const code = `${reference}-${String(t + 1).padStart(2, "0")}`;
       if (!firstTicketCode) firstTicketCode = code;
-      await issueTicket({ code, orderId: order.id, productId: line.productId, tierName: line.tierName, validFor: now.slice(0, 10) });
+      await issueTicket({ code, orderId: order.id, lineId: line.id, productId: line.productId, tierName: line.tierName, admits: line.admits, validFor: now.slice(0, 10) });
     }
   }
 

@@ -34,8 +34,10 @@ export async function voidOrderTickets(orderId: string, productId?: string): Pro
   for (const t of hit) await resource.update(t.id, { status: "void" });
 }
 
-/** How many people a ticket admits — from its tier's composition (Family = 4). */
+/** How many people a ticket admits — the line snapshot when present (F11),
+ *  else the tier's current composition (Family = 4). */
 export function ticketAdmits(ticket: Ticket): number {
+  if (ticket.admits != null) return ticket.admits;
   const product = peekProducts().find((p) => p.id === ticket.productId);
   const tier = product?.tiers.find((t) => t.name === ticket.tierName);
   return tier?.admits ?? 1;
@@ -54,12 +56,15 @@ export async function admitTicket(id: string, count: number): Promise<ApiResult<
   });
 }
 
-/** Issue a fresh ticket (used by POS checkout). */
+/** Issue a fresh ticket (used by POS checkout). Carries its order line id so
+ *  a scan traces back to what was sold, and the admits snapshot. */
 export function issueTicket(input: {
   code: string;
   orderId: string;
+  lineId?: string;
   productId: string;
   tierName: string;
+  admits?: number;
   validFor: string;
 }): Promise<ApiResult<Ticket>> {
   return resource.create({ ...input, status: "issued", redeemedAt: null });

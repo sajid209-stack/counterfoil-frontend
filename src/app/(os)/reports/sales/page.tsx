@@ -20,6 +20,7 @@ import {
   type TxStatus,
 } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
+import { OrderLinesDetail } from "@/components/OrderLinesDetail";
 
 const NOW = "2026-07-29";
 const shift = (d: string, days: number) => new Date(Date.parse(d) + days * 86400000).toISOString().slice(0, 10);
@@ -451,7 +452,8 @@ function SalesReportInner() {
 function FragmentRow({ r, expanded, onToggle, onOpen }: { r: TransactionRow; expanded: boolean; onToggle: () => void; onOpen: () => void }) {
   const time = r.time.slice(11, 16);
   const day = r.time.slice(0, 10);
-  const method: Record<string, string> = { cash: "Cash", bkash: "bKash", bangla_qr: "QR", card_terminal: "Card", voucher: "Voucher", credit: "Credit" };
+  // "Mixed" is a visible bucket — split tender is never allocated across lines.
+  const method: Record<string, string> = { cash: "Cash", bkash: "bKash", bangla_qr: "QR", card_terminal: "Card", voucher: "Voucher", credit: "Credit", mixed: "Mixed" };
   const pill: Record<TxStatus, { label: string; tone: "success" | "danger" | "warning" | "neutral" }> = {
     completed: { label: "Completed", tone: "success" },
     refunded: { label: "Refunded", tone: "danger" },
@@ -475,14 +477,18 @@ function FragmentRow({ r, expanded, onToggle, onOpen }: { r: TransactionRow; exp
       {expanded && (
         <tr className="border-b border-line bg-subtle">
           <td />
-          <td colSpan={9} className="px-comfortable py-tight">
-            {r.lines.map((l) => (
-              <div key={l.id} className="flex h-8 items-center gap-section text-[13px]">
-                <span className="min-w-0 flex-1 truncate">{l.productName} · {l.tierName}</span>
-                <span className="font-mono text-[12px] tabular-nums text-muted">{l.quantity} × {formatMoney(l.unitPrice)}</span>
-                <span className="w-24 shrink-0 whitespace-nowrap text-right font-mono text-[12px] tabular-nums">{formatMoney(l.unitPrice * l.quantity)}</span>
-              </div>
-            ))}
+          <td colSpan={9} className="max-w-xl px-comfortable py-tight">
+            {/* F11 §8 — same detail structure as the order page. */}
+            <OrderLinesDetail compact order={{
+              lines: r.lines,
+              subtotal: r.lines.reduce((s, l) => s + (l.subtotal ?? l.unitPrice * l.quantity), 0),
+              lineDiscountTotal: r.lines.reduce((s, l) => s + (l.lineDiscount ?? 0), 0),
+              orderDiscount: r.lines.reduce((s, l) => s + (l.allocatedOrderDiscount ?? 0), 0),
+              discountTotal: r.lines.reduce((s, l) => s + (l.lineDiscount ?? 0) + (l.allocatedOrderDiscount ?? 0), 0),
+              taxTotal: r.lines.reduce((s, l) => s + (l.taxAmount ?? 0), 0),
+              total: r.lines.reduce((s, l) => s + (l.total ?? l.unitPrice * l.quantity), 0),
+              payments: [],
+            }} />
           </td>
         </tr>
       )}

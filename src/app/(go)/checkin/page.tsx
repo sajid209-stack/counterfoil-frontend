@@ -126,7 +126,7 @@ export default function CheckInPage() {
     const p = productsQ.data?.data.find((x) => x.id === extraFor.productId);
     const a = p?.addOns?.find((x) => x.id === addOnId);
     if (!p || !a) return;
-    await addOrderLines(extraFor.orderId, [{ productId: p.id, productName: p.name, tierName: a.name, quantity: 1, unitPrice: a.price }]);
+    await addOrderLines(extraFor.orderId, [{ productId: `addon_${a.id}`, productName: a.name, tierName: a.perPerson ? "Per person" : "Each", admits: 0, quantity: 1, unitPrice: a.price }]);
     toast.success(`${a.name} added — take the balance before check-in.`);
     setExtraFor(null);
     reload();
@@ -141,7 +141,7 @@ export default function CheckInPage() {
     const currentLine = o.lines.filter((l) => l.productId === p.id && l.unitPrice > 0).sort((a, b) => a.unitPrice - b.unitPrice)[0];
     const diff = target.price - (currentLine?.unitPrice ?? 0);
     if (diff <= 0) { toast.error("That's not an upgrade — it costs the same or less."); return; }
-    await addOrderLines(o.id, [{ productId: p.id, productName: p.name, tierName: `Upgrade → ${target.name}`, quantity: 1, unitPrice: diff }]);
+    await addOrderLines(o.id, [{ productId: p.id, productName: p.name, tierId: target.id, tierName: `Upgrade → ${target.name}`, admits: 0, quantity: 1, unitPrice: diff }]);
     toast.success(`Upgraded to ${target.name} — difference ${formatMoney(diff)} added to the order.`);
     setUpgradeFor(null);
     reload();
@@ -162,7 +162,7 @@ export default function CheckInPage() {
     const res = await checkout({
       channel: "counter", locationId: p.locationIds[0] ?? "loc_fort", counterId: null, staffId: null,
       customerName: walkInName.trim() || "Walk-in",
-      lines: [{ productId: p.id, productName: p.name, tierName: tier.name, quantity: walkInParty, unitPrice: tier.price }],
+      lines: [{ productId: p.id, productName: p.name, tierId: tier.id, tierName: tier.name, admits: tier.admits ?? 1, quantity: walkInParty, unitPrice: tier.price }],
       bookings: [{ productId: p.id, slotStart: `${date}T12:00:00+06:00`, partySize: walkInParty }],
       taxPct: 0, method: "cash", amountTendered: tier.price * walkInParty,
     });

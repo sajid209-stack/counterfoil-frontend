@@ -81,7 +81,9 @@ export interface TransactionRow {
   customer: string | null;
   staffName: string | null;
   counterName: string | null;
-  method: PaymentMethod;
+  /** "mixed" = split tender — shown as its own visible bucket, never split
+   *  across lines pro rata. */
+  method: PaymentMethod | "mixed";
   net: Minor;
   status: TxStatus;
   lines: OrderLine[];
@@ -111,8 +113,16 @@ export interface SeriesPoint {
 
 export type AnalyticsResponse = Partial<Record<AnalyticsSeries, SeriesPoint[]>>;
 
-const settled = (o: Order) => o.status === "paid" || o.status === "partial";
-const orderTickets = (o: Order) => o.lines.reduce((s, l) => s + l.quantity, 0);
+const settled = (o: Order) => o.status === "paid" || o.status === "partial" || o.status === "partly_refunded";
+const orderTickets = (o: Order) => o.lines.filter((l) => !l.parentLineId && l.admits > 0).reduce((s, l) => s + l.quantity, 0);
+/** Net (pre-tax, post-discount) value of a line — the number reports attribute. */
+const lineNet = (l: Order["lines"][number]) => l.taxableAmount ?? l.unitPrice * l.quantity;
+/** Payment-method bucket for cross-tabs: several methods → an honest "Mixed"
+ *  row, never a fictional pro-rata split of payments across lines. */
+const methodBucket = (o: Order): PaymentMethod | "mixed" => {
+  const methods = [...new Set(o.payments.filter((p) => p.amount > 0 && p.status !== "failed").map((p) => p.method))];
+  return methods.length > 1 ? "mixed" : (methods[0] ?? "cash");
+};
 const dayCount = (from: string, to: string) => Math.max(1, Math.round((Date.parse(to) - Date.parse(from)) / 86400000) + 1);
 const shift = (d: string, days: number) => new Date(Date.parse(d) + days * 86400000).toISOString().slice(0, 10);
 
@@ -128,8 +138,11 @@ function inRange(orders: Order[], from: string, to: string, locationId?: string)
 function summarise(orders: Order[]) {
   let gross = 0, refunds = 0, ticketCount = 0;
   for (const o of orders) {
-    if (settled(o)) { gross += o.subtotal; ticketCount += orderTickets(o); }
-    else if (o.status === "refunded") refunds += o.subtotal;
+    if (settled(o)) {
+      gross += o.subtotal - (o.discountTotal ?? 0);
+      refunds += o.lines.reduce((s, l) => s + l.refundedAmount, 0);
+      ticketCount += orderTickets(o);
+    } else if (o.status === "refunded") refunds += o.subtotal - (o.discountTotal ?? 0);
   }
   return { gross, refunds, net: gross - refunds, ticketCount };
 }
@@ -165,29 +178,33 @@ export async function getSalesReport(query: SalesReportQuery): Promise<ApiResult
     if (!isSettled && !isRefund) continue;
 
     if (query.groupBy === "product" || query.groupBy === "category") {
+      // F11: revenue attributes PER LINE at its net (post-discount) value.
+      // Add-on child lines are products in their own right (bib hire ≠ turf).
       for (const line of o.lines) {
-        const amt = line.unitPrice * line.quantity;
+        const amt = lineNet(line);
+        const lineRefund = line.refundedAmount > 0 ? line.taxableAmount ?? amt : 0;
         if (query.groupBy === "product") {
           // Custom-amount sales group under "Custom" (typed names stay on the
-          // order lines for the drill-down); discounts under their own row.
-          const key = line.productId === "custom" ? "custom" : line.productId === "discount" ? "discount" : line.productId;
-          const label = key === "custom" ? "Custom" : key === "discount" ? "Discounts" : line.productName;
-          add(key, label, isSettled ? amt : 0, isRefund ? amt : 0, isSettled && amt > 0 ? line.quantity : 0);
+          // order lines for the drill-down).
+          const key = line.productId === "custom" ? "custom" : line.productId;
+          const label = key === "custom" ? "Custom" : line.productName;
+          add(key, label, isSettled ? amt : 0, isRefund ? amt : isSettled ? lineRefund : 0, isSettled && line.admits > 0 && !line.parentLineId ? line.quantity : 0);
         } else {
-          const cid = productCat.get(line.productId) ?? "none";
-          add(cid, cid === "none" ? "Uncategorised" : (catName.get(cid) ?? "—"), isSettled ? amt : 0, isRefund ? amt : 0, isSettled ? line.quantity : 0);
+          const cid = line.productId.startsWith("addon_") ? "addons" : (productCat.get(line.productId) ?? "none");
+          add(cid, cid === "addons" ? "Add-ons" : cid === "none" ? "Uncategorised" : (catName.get(cid) ?? "—"), isSettled ? amt : 0, isRefund ? amt : 0, isSettled ? line.quantity : 0);
         }
       }
       continue;
     }
 
-    // Order-level groupings
-    const g = isSettled ? o.subtotal : 0;
-    const r = isRefund ? o.subtotal : 0;
+    // Order-level groupings — net of discounts, from line values.
+    const orderNet = o.lines.reduce((s, l) => s + lineNet(l), 0);
+    const g = isSettled ? orderNet : 0;
+    const r = isRefund ? orderNet : 0;
     const tk = isSettled ? orderTickets(o) : 0;
     if (query.groupBy === "payment_method") {
-      const m = o.payments[0]?.method ?? "cash";
-      add(m, methodLabel[m] ?? m, g, r, tk);
+      const m = methodBucket(o);
+      add(m, m === "mixed" ? "Mixed" : (methodLabel[m] ?? m), g, r, tk);
     } else if (query.groupBy === "counter") {
       add(o.counterId ?? "none", o.counterId ? (cntName.get(o.counterId) ?? "—") : "No counter", g, r, tk);
     } else if (query.groupBy === "location") {
@@ -222,7 +239,7 @@ export async function getSalesReport(query: SalesReportQuery): Promise<ApiResult
 
 // ── F7 implementations against the mock store ───────────────────────────────
 const txStatus = (o: Order): TxStatus =>
-  o.status === "refunded" ? "refunded" : o.status === "cancelled" ? "void" : o.status === "pending" ? "void" : "completed";
+  o.status === "refunded" ? "refunded" : o.status === "partly_refunded" ? "partly_refunded" : o.status === "cancelled" ? "void" : o.status === "pending" ? "void" : "completed";
 
 function matches(o: Order, q: Omit<TransactionQuery, "sort" | "cursor" | "limit">): boolean {
   const d = o.createdAt.slice(0, 10);
@@ -235,7 +252,10 @@ function matches(o: Order, q: Omit<TransactionQuery, "sort" | "cursor" | "limit"
     const cats = new Map(peekProducts().map((p) => [p.id, p.categoryId]));
     if (!o.lines.some((l) => q.categoryIds!.includes(cats.get(l.productId) ?? ""))) return false;
   }
-  if (q.paymentMethods?.length && !q.paymentMethods.includes(o.payments[0]?.method ?? "cash")) return false;
+  if (q.paymentMethods?.length) {
+    const b = methodBucket(o);
+    if (b === "mixed" || !q.paymentMethods.includes(b)) return false;
+  }
   if (q.status?.length && !q.status.includes(txStatus(o))) return false;
   if (q.minAmount != null && o.total < q.minAmount) return false;
   if (q.maxAmount != null && o.total > q.maxAmount) return false;
@@ -278,7 +298,7 @@ export async function getTransactions(q: TransactionQuery): Promise<ApiResult<Tr
         customer: o.customerName,
         staffName: o.staffId ? (stfName.get(o.staffId) ?? null) : null,
         counterName: o.counterId ? (cntName.get(o.counterId) ?? null) : null,
-        method: o.payments[0]?.method ?? "cash",
+        method: methodBucket(o),
         net: o.total,
         status: txStatus(o),
         lines: o.lines,
@@ -375,8 +395,9 @@ export async function getAnalytics(q: AnalyticsQuery): Promise<ApiResult<Analyti
     out.lead_time = labels.map((l, i) => ({ label: l, value: counts[i] }));
   }
   if (q.series.includes("top_products")) {
+    // From line NET values — add-ons count as their own products.
     const m = new Map<string, number>();
-    orders.forEach((o) => o.lines.forEach((l) => { if (l.unitPrice > 0) m.set(l.productName, (m.get(l.productName) ?? 0) + l.unitPrice * l.quantity); }));
+    orders.forEach((o) => o.lines.forEach((l) => { if (l.unitPrice > 0) m.set(l.productName, (m.get(l.productName) ?? 0) + lineNet(l)); }));
     out.top_products = [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([label, value]) => ({ label, value }));
   }
   return ok(out);

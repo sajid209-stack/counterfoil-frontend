@@ -263,7 +263,8 @@ export default function DashboardPage() {
     orders.filter((o) => paidish(o) && o.createdAt.slice(0, 10) === TODAY).forEach((o) => o.lines.forEach((l) => {
       if (l.unitPrice <= 0) return;
       const cur = m.get(l.productName) ?? { qty: 0, rev: 0 };
-      m.set(l.productName, { qty: cur.qty + l.quantity, rev: cur.rev + l.unitPrice * l.quantity });
+      // F11: line NET totals — add-on child lines count as their own product.
+      m.set(l.productName, { qty: cur.qty + l.quantity, rev: cur.rev + (l.taxableAmount ?? l.unitPrice * l.quantity) });
     }));
     return [...m.entries()].sort((a, b) => b[1].rev - a[1].rev).slice(0, 5);
   }, [orders]);

@@ -415,22 +415,58 @@ export type DeviceInput = Pick<Device, "name" | "counterId" | "status">;
 export type DevicePatch = Partial<DeviceInput>;
 
 // ── Orders / payments / tickets / bookings ─────────────────────────────────
-export type OrderStatus = "paid" | "pending" | "partial" | "refunded" | "cancelled";
+export type OrderStatus = "paid" | "pending" | "partial" | "refunded" | "partly_refunded" | "cancelled";
 
-export interface OrderLine {
-  id: ID;
-  productId: ID;
-  productName: string; // denormalised for display/audit at time of sale
-  tierName: string;
-  quantity: number;
-  unitPrice: Minor;
+/** What was booked, snapshotted onto the line at time of sale. */
+export interface OrderLineBooking {
+  date: ISODate;
+  startTime?: string; // "18:00"
+  endTime?: string;
+  resourceId?: ID;
+  resourceName?: string; // snapshot — renaming Field 1 must not rewrite history
+  providerId?: ID;
+  providerName?: string;
+  durationMinutes?: number;
+  guests?: number;
 }
 
+/** One sold thing. EVERYTHING here is a snapshot at time of sale — names,
+ *  prices and rates are stored, never looked up, so reports can't change
+ *  retrospectively when a product is edited. Revenue attributes per line. */
+export interface OrderLine {
+  id: ID;
+  parentLineId?: ID; // set on add-on lines (bib hire under the Field 1 booking)
+  productId: ID;
+  productName: string;
+  tierId?: ID;
+  tierName: string;
+  admits: number; // people per unit (Family = 4); 0 for add-ons
+  quantity: number;
+  unitPrice: Minor; // resolved price at time of sale
+  subtotal: Minor; // unitPrice × quantity
+  lineDiscount: Minor; // applied directly to this line
+  allocatedOrderDiscount: Minor; // this line's pro-rata share of the cart discount
+  taxableAmount: Minor; // subtotal − lineDiscount − allocatedOrderDiscount
+  taxClass: TaxClass;
+  taxRate: number; // snapshot fraction, e.g. 0.15
+  taxAmount: Minor;
+  total: Minor; // taxableAmount + taxAmount
+  booking?: OrderLineBooking;
+  // structure now, UI later
+  refundedQuantity: number;
+  refundedAmount: Minor;
+}
+
+export type PaymentStatus = "pending" | "confirmed" | "failed";
 export interface Payment {
   id: ID;
   method: PaymentMethod;
   amount: Minor;
-  at: ISODateTime;
+  tendered?: Minor; // cash
+  change?: Minor; // cash
+  reference?: string; // bKash txn id etc.
+  status: PaymentStatus;
+  createdAt: ISODateTime;
 }
 
 export interface Order {
@@ -441,11 +477,15 @@ export interface Order {
   locationId: ID;
   counterId: ID | null;
   staffId: ID | null;
+  shiftId?: ID | null;
   customerName: string | null;
   lines: OrderLine[];
   payments: Payment[];
-  subtotal: Minor;
-  tax: Minor;
+  subtotal: Minor; // sum of line subtotals
+  lineDiscountTotal: Minor; // sum of line-level discounts
+  orderDiscount: Minor; // cart-level discount, before allocation
+  discountTotal: Minor; // lineDiscountTotal + orderDiscount
+  taxTotal: Minor; // SUM OF LINE TAXES — never computed on the order total
   total: Minor;
   /** Who did what and when — refunds, resends, date changes. */
   history?: { at: ISODateTime; who: string; text: string }[];
@@ -460,8 +500,10 @@ export interface Ticket {
   id: ID;
   code: string; // "CF-2026-008479-01"
   orderId: ID;
+  lineId?: ID; // which order line minted it — a scan traces back to the sale
   productId: ID;
   tierName: string;
+  admits?: number; // snapshot from the line (Family = 4); fallback: tier lookup
   status: TicketStatus;
   validFor: ISODate;
   redeemedAt: ISODateTime | null;

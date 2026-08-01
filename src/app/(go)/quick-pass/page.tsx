@@ -33,7 +33,7 @@ export default function QuickPassPage() {
       locationId: passProduct?.locationIds[0] ?? "loc_fort",
       counterId: null,
       staffId: null,
-      lines: [{ productId: passProduct?.id ?? "quick_pass", productName: `${passProduct?.name ?? "Pass"} · ${formatDuration(duration)}`, tierName: identifier || "Pass", quantity: 1, unitPrice: minor, taxRatePct: 0 }],
+      lines: [{ productId: passProduct?.id ?? "quick_pass", productName: `${passProduct?.name ?? "Pass"} · ${formatDuration(duration)}`, tierName: identifier || "Pass", admits: 1, quantity: 1, unitPrice: minor, taxRate: 0 }],
       taxPct: 0,
       method: "cash",
       amountTendered: minor,

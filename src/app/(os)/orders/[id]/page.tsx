@@ -27,6 +27,7 @@ import {
   type Booking,
 } from "@/lib/api";
 import { formatDateTime, formatMoney } from "@/lib/format";
+import { OrderLinesDetail } from "@/components/OrderLinesDetail";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -81,7 +82,7 @@ export default function OrderDetailPage() {
     );
   }
 
-  const refundTotal = o ? o.lines.filter((l) => refundLines[l.id]).reduce((s, l) => s + l.unitPrice * l.quantity, 0) : 0;
+  const refundTotal = o ? o.lines.filter((l) => refundLines[l.id]).reduce((s, l) => s + (l.total ?? l.unitPrice * l.quantity) - (l.refundedAmount ?? 0), 0) : 0;
 
   const doRefund = async () => {
     if (!o) return;
@@ -172,25 +173,7 @@ export default function OrderDetailPage() {
           </div>
 
           <Card title="Items">
-            <table className="w-full text-sm">
-              <tbody>
-                {o.lines.map((l) => (
-                  <tr key={l.id} className="border-b border-line last:border-0">
-                    <td className="py-tight">
-                      <div className="font-medium">{l.productName}</div>
-                      <div className="font-mono text-[11px] text-faint">{l.tierName}</div>
-                    </td>
-                    <td className="py-tight text-center font-mono text-[13px]">×{l.quantity}</td>
-                    <td className="py-tight text-right font-mono text-[13px]">{formatMoney(l.unitPrice * l.quantity)}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr><td className="pt-tight text-muted" colSpan={2}>Subtotal</td><td className="pt-tight text-right font-mono">{formatMoney(o.subtotal)}</td></tr>
-                <tr><td className="text-muted" colSpan={2}>Tax</td><td className="text-right font-mono">{formatMoney(o.tax)}</td></tr>
-                <tr><td className="font-medium" colSpan={2}>Total</td><td className="text-right font-mono font-medium">{formatMoney(o.total)}</td></tr>
-              </tfoot>
-            </table>
+            <OrderLinesDetail order={o} />
           </Card>
 
           {orderBookings.length > 0 && (
@@ -289,11 +272,11 @@ export default function OrderDetailPage() {
         }
       >
         <div className="flex flex-col gap-tight">
-          {(o?.lines ?? []).filter((l) => l.unitPrice > 0).map((l) => (
+          {(o?.lines ?? []).filter((l) => l.unitPrice > 0 && (l.refundedQuantity ?? 0) < l.quantity).map((l) => (
             <label key={l.id} className="flex cursor-pointer items-center gap-tight rounded-sm border border-line p-comfortable text-sm">
               <input type="checkbox" checked={!!refundLines[l.id]} onChange={(e) => setRefundLines((r) => ({ ...r, [l.id]: e.target.checked }))} className="h-4 w-4 accent-[var(--color-ember)]" />
-              <span className="min-w-0 flex-1 truncate">{l.productName} · {l.tierName} ×{l.quantity}</span>
-              <span className="font-mono text-[13px]">{formatMoney(l.unitPrice * l.quantity)}</span>
+              <span className="min-w-0 flex-1 truncate">{l.parentLineId ? "↳ " : ""}{l.productName} · {l.tierName} ×{l.quantity}</span>
+              <span className="font-mono text-[13px]">{formatMoney(l.total ?? l.unitPrice * l.quantity)}</span>
             </label>
           ))}
         </div>

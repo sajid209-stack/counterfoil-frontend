@@ -573,6 +573,7 @@ const sales = generateSales({
   locations,
   staff,
   taxRatePct: operator.taxRatePct,
+  reducedRatePct: operator.reducedRatePct,
 });
 export const orders = sales.orders;
 

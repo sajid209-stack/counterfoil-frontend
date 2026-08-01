@@ -31,6 +31,8 @@ export function statusTone(status: string): PillTone {
     case "invited":
     case "partial":
       return "warning";
+    case "partly_refunded":
+      return "warning";
     case "archived":
     case "refunded":
     case "suspended":
