@@ -144,3 +144,10 @@
   --color-inverse-fg: #0a0a0a;
 }
 .dark body { background: var(--color-surface); color: var(--color-fg); }
+
+/* F8 — wrong-PIN shake (120ms, run twice). */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
