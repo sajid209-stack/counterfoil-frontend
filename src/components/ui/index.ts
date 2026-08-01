@@ -18,3 +18,5 @@ export { BlockedNotice } from "./BlockedNotice";
 export { ResourceTimeline } from "./ResourceTimeline";
 export type { TimelineSpan } from "./ResourceTimeline";
 export { Avatar, ChoiceCard } from "./ChoiceCard";
+export { BarChart, DonutChart, HBarChart, LineChart } from "./charts";
+export type { ChartPoint } from "./charts";

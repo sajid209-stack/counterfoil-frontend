@@ -1,11 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Download } from "lucide-react";
-import { Button, DataTable, PageShell, Tabs, useToast, type Column } from "@/components/ui";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronDown, ChevronRight, Download, Plus, X } from "lucide-react";
+import { BarChart, Button, DonutChart, HBarChart, LineChart, Modal, PageShell, StatusPill, Tabs, useToast, FormField } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getSalesReport, listOrders, type SalesGroupBy, type SalesReportRow } from "@/lib/api";
-import { formatDateTime, formatMoney } from "@/lib/format";
+import {
+  getAnalytics,
+  getSalesReport,
+  getTransactions,
+  listCategories,
+  listCounters,
+  listLocations,
+  listProducts,
+  listStaff,
+  type SalesGroupBy,
+  type TransactionQuery,
+  type TransactionRow,
+  type TxStatus,
+} from "@/lib/api";
+import { formatMoney } from "@/lib/format";
 
 const NOW = "2026-07-29";
 const shift = (d: string, days: number) => new Date(Date.parse(d) + days * 86400000).toISOString().slice(0, 10);
@@ -13,161 +27,465 @@ const shift = (d: string, days: number) => new Date(Date.parse(d) + days * 86400
 const PRESETS: { value: string; label: string; range: () => [string, string] }[] = [
   { value: "today", label: "Today", range: () => [NOW, NOW] },
   { value: "yesterday", label: "Yesterday", range: () => [shift(NOW, -1), shift(NOW, -1)] },
-  { value: "7d", label: "Last 7 days", range: () => [shift(NOW, -6), NOW] },
-  { value: "30d", label: "Last 30 days", range: () => [shift(NOW, -29), NOW] },
+  { value: "7d", label: "Last 7", range: () => [shift(NOW, -6), NOW] },
+  { value: "30d", label: "Last 30", range: () => [shift(NOW, -29), NOW] },
   { value: "month", label: "This month", range: () => ["2026-07-01", NOW] },
+  { value: "lastmonth", label: "Last month", range: () => ["2026-06-01", "2026-06-30"] },
 ];
 
-const GROUPS: { value: SalesGroupBy; label: string }[] = [
-  { value: "product", label: "Product" },
-  { value: "category", label: "Category" },
-  { value: "payment_method", label: "Payment" },
-  { value: "counter", label: "Counter" },
-  { value: "location", label: "Location" },
-  { value: "staff", label: "Team member" },
-  { value: "hour", label: "Hour of day" },
-];
-
-function delta(cur: number, prev: number): string {
-  if (prev === 0) return cur > 0 ? "▲ new" : "—";
-  const pct = ((cur - prev) / prev) * 100;
-  return `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(0)}%`;
+// The shared filter set — persists across tabs, encodes into the URL.
+interface Filters {
+  preset: string;
+  from: string;
+  to: string;
+  locationId?: string;
+  counterId?: string;
+  staffId?: string;
+  productId?: string;
+  categoryId?: string;
+  method?: string;
+  status?: string;
+  minA?: string;
+  maxA?: string;
+  channel?: string;
+  customer?: string;
+  q?: string;
 }
+const DEFAULTS: Filters = { preset: "30d", from: shift(NOW, -29), to: NOW };
+type FilterKey = keyof Omit<Filters, "preset" | "from" | "to">;
+const FILTER_DEFS: { key: FilterKey; label: string }[] = [
+  { key: "locationId", label: "Location" },
+  { key: "counterId", label: "Counter" },
+  { key: "staffId", label: "Team member" },
+  { key: "productId", label: "Product" },
+  { key: "categoryId", label: "Category" },
+  { key: "method", label: "Payment method" },
+  { key: "status", label: "Status" },
+  { key: "minA", label: "Min amount" },
+  { key: "maxA", label: "Max amount" },
+  { key: "channel", label: "Channel" },
+  { key: "customer", label: "Customer" },
+];
+
+const toQuery = (f: Filters): TransactionQuery => ({
+  from: f.from,
+  to: f.to,
+  locationIds: f.locationId ? [f.locationId] : undefined,
+  counterIds: f.counterId ? [f.counterId] : undefined,
+  staffIds: f.staffId ? [f.staffId] : undefined,
+  productIds: f.productId ? [f.productId] : undefined,
+  categoryIds: f.categoryId ? [f.categoryId] : undefined,
+  paymentMethods: f.method ? [f.method as TransactionQuery["paymentMethods"] extends (infer U)[] | undefined ? U : never] : undefined,
+  status: f.status ? [f.status as TxStatus] : undefined,
+  minAmount: f.minA ? Math.round(parseFloat(f.minA) * 100) : undefined,
+  maxAmount: f.maxA ? Math.round(parseFloat(f.maxA) * 100) : undefined,
+  customerId: f.customer || undefined,
+  channel: (f.channel as "counter" | "online") || undefined,
+  search: f.q || undefined,
+});
 
 export default function SalesReportPage() {
+  return (
+    <Suspense>
+      <SalesReportInner />
+    </Suspense>
+  );
+}
+
+function SalesReportInner() {
+  const router = useRouter();
+  const params = useSearchParams();
   const toast = useToast();
-  const [preset, setPreset] = useState("30d");
-  const [custom, setCustom] = useState<[string, string]>([shift(NOW, -29), NOW]);
+
+  // URL → state on first load: a filtered view is shareable.
+  const [filters, setFilters] = useState<Filters>(() => {
+    const f: Filters = { ...DEFAULTS };
+    params.forEach((v, k) => { (f as unknown as Record<string, string>)[k] = v; });
+    if (f.preset !== "custom") {
+      const p = PRESETS.find((x) => x.value === f.preset);
+      if (p) [f.from, f.to] = p.range();
+    }
+    return f;
+  });
+  const [tab, setTab] = useState(params.get("tab") ?? "transactions");
+  const [added, setAdded] = useState<FilterKey[]>(() => FILTER_DEFS.map((d) => d.key).filter((k) => !!(filters as unknown as Record<string, string | undefined>)[k]));
+
+  // State → URL (replace, so back doesn't spam history).
+  useEffect(() => {
+    const p = new URLSearchParams();
+    p.set("tab", tab);
+    Object.entries(filters).forEach(([k, v]) => { if (v) p.set(k, String(v)); });
+    router.replace(`/reports/sales?${p.toString()}`, { scroll: false });
+  }, [filters, tab, router]);
+
+  const set = <K extends keyof Filters>(k: K, v: Filters[K]) => setFilters((f) => ({ ...f, [k]: v }));
+  const setPreset = (preset: string) => {
+    if (preset === "custom") setFilters((f) => ({ ...f, preset }));
+    else { const [from, to] = PRESETS.find((p) => p.value === preset)!.range(); setFilters((f) => ({ ...f, preset, from, to })); }
+  };
+  const removeFilter = (k: FilterKey) => { setAdded((a) => a.filter((x) => x !== k)); setFilters((f) => ({ ...f, [k]: undefined })); };
+  const clearAll = () => { setAdded([]); setFilters((f) => ({ ...DEFAULTS, preset: f.preset, from: f.from, to: f.to, q: f.q })); };
+  const activeCount = added.filter((k) => (filters as unknown as Record<string, string | undefined>)[k]).length;
+
+  // Lookup data for filter controls.
+  const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
+  const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
+  const staffQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
+  const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
+  const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
+
+  // Saved views — name a filter set, restore it later.
+  const [views, setViews] = useState<{ name: string; qs: string }[]>(() => {
+    try { return JSON.parse(localStorage.getItem("report_views") ?? "[]"); } catch { return []; }
+  });
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [viewName, setViewName] = useState("");
+  const saveView = () => {
+    const p = new URLSearchParams();
+    Object.entries(filters).forEach(([k, v]) => { if (v) p.set(k, String(v)); });
+    const next = [...views.filter((v) => v.name !== viewName.trim()), { name: viewName.trim() || `View ${views.length + 1}`, qs: p.toString() }];
+    setViews(next);
+    localStorage.setItem("report_views", JSON.stringify(next));
+    setSaveOpen(false); setViewName("");
+    toast.success("View saved.");
+  };
+  const applyView = (qs: string) => {
+    const p = new URLSearchParams(qs);
+    const f: Filters = { ...DEFAULTS };
+    p.forEach((v, k) => { (f as unknown as Record<string, string>)[k] = v; });
+    setFilters(f);
+    setAdded(FILTER_DEFS.map((d) => d.key).filter((k) => !!(f as unknown as Record<string, string | undefined>)[k]));
+  };
+
+  const query = useMemo(() => toQuery(filters), [filters]);
+
+  // ── Transactions ──────────────────────────────────────────────────────────
+  const [sort, setSort] = useState<{ field: "time" | "amount" | "status"; dir: "asc" | "desc" }>({ field: "time", dir: "desc" });
+  const [cursor, setCursor] = useState(0);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const txQ = useApiQuery(
+    () => getTransactions({ ...query, sort, cursor: String(cursor), limit: 25 }),
+    [JSON.stringify(query), sort.field, sort.dir, cursor],
+  );
+
+  // ── Summary ──────────────────────────────────────────────────────────────
   const [groupBy, setGroupBy] = useState<SalesGroupBy>("product");
-  const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "net", order: "desc" });
-  const [drill, setDrill] = useState<SalesReportRow | null>(null);
+  const summaryQ = useApiQuery(
+    () => getSalesReport({ from: filters.from, to: filters.to, groupBy, locationId: filters.locationId }),
+    [filters.from, filters.to, groupBy, filters.locationId],
+  );
 
-  const [from, to] = preset === "custom" ? custom : PRESETS.find((p) => p.value === preset)!.range();
-
-  const report = useApiQuery(() => getSalesReport({ from, to, groupBy }), [from, to, groupBy]);
-  const ordersQ = useApiQuery(() => listOrders({ pageSize: 1000 }), []);
-
-  const rows = useMemo(() => {
-    const data = report.data?.rows ?? [];
-    const dir = sort.order === "asc" ? 1 : -1;
-    return [...data].sort((a, b) => {
-      const av = (a as unknown as Record<string, number | string>)[sort.key];
-      const bv = (b as unknown as Record<string, number | string>)[sort.key];
-      return typeof av === "number" && typeof bv === "number" ? (av - bv) * dir : String(av).localeCompare(String(bv)) * dir;
-    });
-  }, [report.data, sort]);
-
-  const s = report.data?.summary;
-
-  const columns: Column<SalesReportRow>[] = [
-    { key: "label", header: "Name", sortable: true, render: (r) => <span className="font-medium">{r.label}</span> },
-    { key: "ticketCount", header: "Tickets", sortable: true, align: "right", render: (r) => <span className="font-mono text-[13px]">{r.ticketCount}</span> },
-    { key: "gross", header: "Gross", sortable: true, align: "right", render: (r) => <span className="font-mono text-[13px]">{formatMoney(r.gross)}</span> },
-    { key: "refunds", header: "Refunds", sortable: true, align: "right", render: (r) => <span className="font-mono text-[13px] text-danger">{r.refunds ? `−${formatMoney(r.refunds)}` : "—"}</span> },
-    { key: "net", header: "Net", sortable: true, align: "right", render: (r) => <span className="font-mono text-[13px]">{formatMoney(r.net)}</span> },
-    { key: "shareOfTotal", header: "% of total", align: "right", render: (r) => <span className="font-mono text-[12px] text-faint">{(r.shareOfTotal * 100).toFixed(0)}%</span> },
-  ];
-
-  // Drill-down transactions for the selected group row.
-  const drillOrders = useMemo(() => {
-    if (!drill) return [];
-    const inWin = (ordersQ.data?.data ?? []).filter((o) => o.createdAt.slice(0, 10) >= from && o.createdAt.slice(0, 10) <= to);
-    return inWin.filter((o) => {
-      switch (groupBy) {
-        case "product": return o.lines.some((l) => l.productId === drill.key);
-        case "payment_method": return (o.payments[0]?.method ?? "cash") === drill.key;
-        case "counter": return (o.counterId ?? "none") === drill.key;
-        case "location": return o.locationId === drill.key;
-        case "staff": return (o.staffId ?? "none") === drill.key;
-        case "hour": return String(new Date(Date.parse(o.createdAt) + 6 * 3600000).getUTCHours()) === drill.key;
-        default: return true; // category — approximate
-      }
-    }).slice(0, 50);
-  }, [drill, ordersQ.data, from, to, groupBy]);
+  // ── Analytics ────────────────────────────────────────────────────────────
+  const [gran, setGran] = useState<"auto" | "hour" | "day" | "week">("auto");
+  const anQ = useApiQuery(
+    () => getAnalytics({
+      ...query,
+      series: ["revenue", "hour_of_day", "day_of_week", "payment_mix", "capacity_utilisation", "no_show_rate", "lead_time", "top_products"],
+      granularity: gran === "auto" ? undefined : gran,
+      compareToPrevious: true,
+    }),
+    [JSON.stringify(query), gran],
+  );
 
   const exportCsv = () => {
-    const header = "Name,Tickets,Gross,Refunds,Net,Share";
-    const lines = rows.map((r) => `"${r.label}",${r.ticketCount},${(r.gross / 100).toFixed(2)},${(r.refunds / 100).toFixed(2)},${(r.net / 100).toFixed(2)},${(r.shareOfTotal * 100).toFixed(1)}%`);
-    const blob = new Blob([[header, ...lines].join("\n")], { type: "text/csv" });
+    let name = "";
+    let content = "";
+    if (tab === "transactions") {
+      name = "transactions";
+      content = ["Time,Reference,Items,Customer,Staff,Counter,Method,Net,Status",
+        ...(txQ.data?.rows ?? []).map((r) => `${r.time},"${r.reference}","${r.itemsLabel}","${r.customer ?? ""}","${r.staffName ?? ""}","${r.counterName ?? ""}",${r.method},${(r.net / 100).toFixed(2)},${r.status}`)].join("\n");
+    } else if (tab === "summary") {
+      name = `summary-${groupBy}`;
+      content = ["Name,Tickets,Gross,Refunds,Net",
+        ...(summaryQ.data?.rows ?? []).map((r) => `"${r.label}",${r.ticketCount},${(r.gross / 100).toFixed(2)},${(r.refunds / 100).toFixed(2)},${(r.net / 100).toFixed(2)}`)].join("\n");
+    } else {
+      name = "analytics";
+      const a = anQ.data ?? {};
+      content = Object.entries(a).map(([series, pts]) => [`# ${series}`, "Label,Value,Compare", ...(pts ?? []).map((p) => `"${p.label}",${p.value},${p.compare ?? ""}`)].join("\n")).join("\n\n");
+    }
+    const blob = new Blob([content], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `sales-${groupBy}-${from}_${to}.csv`; a.click();
+    a.href = url; a.download = `${name}-${filters.from}_${filters.to}.csv`; a.click();
     URL.revokeObjectURL(url);
-    toast.success("CSV exported.");
+    toast.success("CSV exported — filters respected.");
   };
+
+  const selectCls = "h-9 rounded-sm border border-line bg-card px-tight text-[13px] outline-none focus:border-inverse";
+  const money = (v: number) => formatMoney(v);
+
+  const filterControl = (k: FilterKey) => {
+    const v = (filters as unknown as Record<string, string | undefined>)[k] ?? "";
+    const on = (val: string) => set(k, val || undefined);
+    switch (k) {
+      case "locationId": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">Any location</option>{(locationsQ.data?.data ?? []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select>;
+      case "counterId": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">Any counter</option>{(countersQ.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>;
+      case "staffId": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">Anyone</option>{(staffQ.data?.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>;
+      case "productId": return <select value={v} onChange={(e) => on(e.target.value)} className={`${selectCls} max-w-48`}><option value="">Any product</option>{(productsQ.data?.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>;
+      case "categoryId": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">Any category</option>{(categoriesQ.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>;
+      case "method": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">Any method</option><option value="cash">Cash</option><option value="bkash">bKash</option><option value="bangla_qr">QR</option><option value="card_terminal">Card</option></select>;
+      case "status": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">Any status</option><option value="completed">Completed</option><option value="refunded">Refunded</option><option value="partly_refunded">Partly refunded</option><option value="void">Void</option></select>;
+      case "channel": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">Any channel</option><option value="counter">Counter</option><option value="online">Online</option></select>;
+      case "minA": return <input type="number" placeholder="Min ৳" value={v} onChange={(e) => on(e.target.value)} className={`${selectCls} w-24`} />;
+      case "maxA": return <input type="number" placeholder="Max ৳" value={v} onChange={(e) => on(e.target.value)} className={`${selectCls} w-24`} />;
+      case "customer": return <input placeholder="Customer name" value={v} onChange={(e) => on(e.target.value)} className={`${selectCls} w-40`} />;
+    }
+  };
+
+  const card = "rounded-md border border-line bg-card p-section";
+  const chartSkeleton = <div className="h-36 animate-pulse rounded-sm bg-line/50" aria-busy="true" />;
+  const emptyChart = <p className="flex h-36 items-center justify-center text-[13px] text-faint">Nothing in this range.</p>;
+  const hasData = (pts?: { value: number }[]) => (pts ?? []).some((p) => p.value > 0);
 
   return (
     <PageShell
       title="Sales reports"
-      description="Revenue, refunds and tickets over a date range, broken down any way you need."
+      description="Transactions, breakdowns and analytics — one scope, three views."
       actions={<Button variant="secondary" icon={<Download size={16} strokeWidth={1.5} />} onClick={exportCsv}>Export CSV</Button>}
     >
-      <div className="mb-major flex flex-wrap items-center gap-tight">
-        {PRESETS.map((p) => (
-          <button key={p.value} type="button" onClick={() => setPreset(p.value)} className={`h-9 rounded-sm border px-comfortable text-sm ${preset === p.value ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{p.label}</button>
-        ))}
-        <button type="button" onClick={() => setPreset("custom")} className={`h-9 rounded-sm border px-comfortable text-sm ${preset === "custom" ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>Custom</button>
-        {preset === "custom" && (
-          <span className="flex items-center gap-inline">
-            <input type="date" value={custom[0]} onChange={(e) => setCustom([e.target.value, custom[1]])} className="h-9 rounded-sm border border-line px-comfortable text-sm" />
-            <span className="text-faint">→</span>
-            <input type="date" value={custom[1]} onChange={(e) => setCustom([custom[0], e.target.value])} className="h-9 rounded-sm border border-line px-comfortable text-sm" />
-          </span>
-        )}
+      {/* The shared filter bar — one scope across all three tabs. */}
+      <div className="mb-section rounded-md border border-line bg-card p-comfortable">
+        <div className="flex flex-wrap items-center gap-tight">
+          {PRESETS.map((p) => (
+            <button key={p.value} type="button" onClick={() => setPreset(p.value)} className={`h-9 rounded-sm border px-tight text-[13px] ${filters.preset === p.value ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{p.label}</button>
+          ))}
+          <button type="button" onClick={() => setPreset("custom")} className={`h-9 rounded-sm border px-tight text-[13px] ${filters.preset === "custom" ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>Custom</button>
+          {filters.preset === "custom" && (
+            <span className="flex items-center gap-inline">
+              <input type="date" value={filters.from} onChange={(e) => set("from", e.target.value)} className={selectCls} />
+              <span className="text-faint">→</span>
+              <input type="date" value={filters.to} onChange={(e) => set("to", e.target.value)} className={selectCls} />
+            </span>
+          )}
+          <input value={filters.q ?? ""} onChange={(e) => set("q", e.target.value || undefined)} placeholder="Search reference, customer, product…" className={`${selectCls} w-64`} />
+          <span className="flex-1" />
+          {views.length > 0 && (
+            <select value="" onChange={(e) => { const v = views.find((x) => x.name === e.target.value); if (v) applyView(v.qs); }} className={selectCls}>
+              <option value="">Saved views…</option>
+              {views.map((v) => <option key={v.name} value={v.name}>{v.name}</option>)}
+            </select>
+          )}
+          <button type="button" onClick={() => setSaveOpen(true)} className="h-9 rounded-sm border border-line px-tight text-[13px] text-muted hover:text-fg">Save view</button>
+        </div>
+        <div className="mt-tight flex flex-wrap items-center gap-tight">
+          {added.map((k) => (
+            <span key={k} className="flex items-center gap-inline rounded-lg border border-line bg-subtle py-inline pl-tight pr-inline">
+              <span className="text-[11px] uppercase tracking-wide text-faint">{FILTER_DEFS.find((d) => d.key === k)!.label}</span>
+              {filterControl(k)}
+              <button type="button" aria-label={`Remove ${k}`} onClick={() => removeFilter(k)} className="text-faint hover:text-danger"><X size={14} strokeWidth={1.5} /></button>
+            </span>
+          ))}
+          {added.length < FILTER_DEFS.length && (
+            <select value="" onChange={(e) => { const k = e.target.value as FilterKey; if (k) setAdded((a) => [...a, k]); }} className={`${selectCls} text-muted`}>
+              <option value="">＋ Add filter</option>
+              {FILTER_DEFS.filter((d) => !added.includes(d.key)).map((d) => <option key={d.key} value={d.key}>{d.label}</option>)}
+            </select>
+          )}
+          {activeCount > 0 && <button type="button" onClick={clearAll} className="text-[13px] text-faint hover:text-danger">Clear all</button>}
+        </div>
       </div>
 
-      <div className="mb-major grid grid-cols-2 gap-tight lg:grid-cols-4">
-        <Card label="Gross" value={s ? formatMoney(s.gross) : "—"} delta={s ? delta(s.gross, s.prevGross) : ""} />
-        <Card label="Refunds" value={s ? formatMoney(s.refunds) : "—"} />
-        <Card label="Net" value={s ? formatMoney(s.net) : "—"} delta={s ? delta(s.net, s.prevNet) : ""} />
-        <Card label="Tickets sold" value={s ? String(s.ticketCount) : "—"} delta={s ? delta(s.ticketCount, s.prevTicketCount) : ""} />
-      </div>
-
-      <Tabs items={GROUPS} value={groupBy} onChange={(v) => { setGroupBy(v as SalesGroupBy); setDrill(null); }} className="mb-section" />
-
-      <DataTable
-        columns={columns}
-        rows={rows}
-        getRowId={(r) => String(r.key)}
-        loading={report.loading}
-        sort={sort}
-        onSortChange={(key) => setSort((st) => ({ key, order: st.key === key && st.order === "desc" ? "asc" : "desc" }))}
-        onRowClick={(r) => setDrill(r)}
+      <Tabs
+        items={[{ value: "transactions", label: "Transactions" }, { value: "summary", label: "Summary" }, { value: "analytics", label: "Analytics" }]}
+        value={tab}
+        onChange={setTab}
+        className="mb-section"
       />
 
-      {drill && (
-        <div className="mt-major">
-          <div className="mb-tight flex items-center justify-between">
-            <h2 className="type-h2 text-base">Transactions · {drill.label}</h2>
-            <button type="button" onClick={() => setDrill(null)} className="text-[13px] text-faint hover:text-fg">Clear</button>
-          </div>
-          <div className="overflow-x-auto rounded-md border border-line bg-card">
-            <table className="w-full text-sm">
-              <tbody>
-                {drillOrders.map((o) => (
-                  <tr key={o.id} className="border-b border-line last:border-0">
-                    <td className="px-comfortable py-tight font-mono text-[12px]">{o.reference}</td>
-                    <td className="px-comfortable py-tight text-muted">{formatDateTime(o.createdAt)}</td>
-                    <td className="px-comfortable py-tight text-right font-mono text-[13px]">{formatMoney(o.total)}</td>
-                    <td className="px-comfortable py-tight text-right font-mono text-[11px] text-faint">{o.status}</td>
-                  </tr>
+      {tab === "transactions" && (
+        <div className="overflow-x-auto rounded-md border border-line bg-card">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 z-10 bg-card">
+              <tr className="border-b border-line">
+                <th className="w-8" />
+                {([
+                  ["time", "Time", true], ["reference", "Reference", false], ["items", "Items", false], ["customer", "Customer", false],
+                  ["staff", "Staff", false], ["counter", "Counter", false], ["method", "Method", false], ["amount", "Net", true], ["status", "Status", true],
+                ] as const).map(([key, label, sortable]) => (
+                  <th key={key} className={`type-label whitespace-nowrap px-comfortable py-tight text-left text-[11px] text-muted ${key === "amount" ? "text-right" : ""}`}>
+                    {sortable ? (
+                      <button type="button" onClick={() => setSort((s) => ({ field: key as typeof s.field, dir: s.field === key && s.dir === "desc" ? "asc" : "desc" }))} className="uppercase tracking-wide hover:text-fg">
+                        {label}{sort.field === key ? (sort.dir === "asc" ? " ↑" : " ↓") : ""}
+                      </button>
+                    ) : label}
+                  </th>
                 ))}
-                {drillOrders.length === 0 && <tr><td className="px-comfortable py-major text-center text-[13px] text-faint">No transactions.</td></tr>}
-              </tbody>
-            </table>
+              </tr>
+            </thead>
+            <tbody>
+              {txQ.loading && Array.from({ length: 6 }).map((_, i) => (
+                <tr key={i} className="border-b border-line"><td colSpan={10} className="px-comfortable py-comfortable"><div className="h-4 animate-pulse rounded-xs bg-line" /></td></tr>
+              ))}
+              {!txQ.loading && (txQ.data?.rows ?? []).map((r: TransactionRow) => (
+                <FragmentRow key={r.id} r={r} expanded={expanded === r.id} onToggle={() => setExpanded(expanded === r.id ? null : r.id)} onOpen={() => router.push(`/orders/${r.id}`)} />
+              ))}
+              {!txQ.loading && (txQ.data?.rows.length ?? 0) === 0 && (
+                <tr><td colSpan={10} className="px-comfortable py-hero text-center text-[13px] text-faint">No transactions match this scope.</td></tr>
+              )}
+            </tbody>
+          </table>
+          <div className="flex items-center justify-between border-t border-line px-comfortable py-tight">
+            <span className="font-mono text-[12px] text-faint">{txQ.data ? `${cursor + 1}–${cursor + (txQ.data.rows.length)} of ${txQ.data.total}` : "…"}</span>
+            <div className="flex gap-tight">
+              <Button size="sm" variant="secondary" disabled={cursor === 0} onClick={() => setCursor(Math.max(0, cursor - 25))}>Previous</Button>
+              <Button size="sm" variant="secondary" disabled={!txQ.data?.cursor} onClick={() => setCursor(cursor + 25)}>Next</Button>
+            </div>
           </div>
         </div>
       )}
+
+      {tab === "summary" && (() => {
+        const s = summaryQ.data?.summary;
+        const d = (cur: number, prev: number) => (prev === 0 ? (cur > 0 ? "▲ new" : "—") : `${cur >= prev ? "▲" : "▼"} ${Math.abs(((cur - prev) / prev) * 100).toFixed(0)}%`);
+        return (
+          <>
+            <div className="mb-section grid grid-cols-2 gap-tight lg:grid-cols-4">
+              {[["Gross", s?.gross, s?.prevGross], ["Refunds", s?.refunds, undefined], ["Net", s?.net, s?.prevNet], ["Tickets", s?.ticketCount, s?.prevTicketCount]].map(([label, v, pv]) => (
+                <div key={label as string} className={card}>
+                  <p className="type-label text-[12px] text-faint">{label as string}</p>
+                  <p className="mt-tight whitespace-nowrap font-mono text-2xl tabular-nums">{v == null ? "—" : label === "Tickets" ? String(v) : formatMoney(v as number)}</p>
+                  {pv != null && v != null && <p className="mt-inline font-mono text-[11px] text-faint">{d(v as number, pv as number)} vs prev</p>}
+                </div>
+              ))}
+            </div>
+            <Tabs
+              items={[["product", "Product"], ["category", "Category"], ["payment_method", "Payment"], ["counter", "Counter"], ["location", "Location"], ["staff", "Team member"], ["hour", "Hour of day"]].map(([v, l]) => ({ value: v, label: l }))}
+              value={groupBy}
+              onChange={(v) => setGroupBy(v as SalesGroupBy)}
+              className="mb-section"
+            />
+            <div className="overflow-x-auto rounded-md border border-line bg-card">
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-line">{["Name", "Tickets", "Gross", "Refunds", "Net", "% of total"].map((h, i) => <th key={h} className={`type-label px-comfortable py-tight text-[11px] uppercase tracking-wide text-muted ${i === 0 ? "text-left" : "text-right"}`}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {(summaryQ.data?.rows ?? []).map((r) => (
+                    <tr
+                      key={String(r.key)}
+                      className="h-12 cursor-pointer border-b border-line last:border-0 hover:bg-subtle"
+                      onClick={() => {
+                        // Row click filters the Transactions tab — same scope, drilled.
+                        if (groupBy === "product") { set("productId", String(r.key)); setAdded((a) => a.includes("productId") ? a : [...a, "productId"]); }
+                        else if (groupBy === "payment_method") { set("method", String(r.key)); setAdded((a) => a.includes("method") ? a : [...a, "method"]); }
+                        else if (groupBy === "counter") { set("counterId", String(r.key)); setAdded((a) => a.includes("counterId") ? a : [...a, "counterId"]); }
+                        else if (groupBy === "location") { set("locationId", String(r.key)); setAdded((a) => a.includes("locationId") ? a : [...a, "locationId"]); }
+                        else if (groupBy === "staff") { set("staffId", String(r.key)); setAdded((a) => a.includes("staffId") ? a : [...a, "staffId"]); }
+                        else if (groupBy === "category") { set("categoryId", String(r.key)); setAdded((a) => a.includes("categoryId") ? a : [...a, "categoryId"]); }
+                        setTab("transactions"); setCursor(0);
+                      }}
+                    >
+                      <td className="min-w-0 max-w-64 truncate px-comfortable font-medium">{r.label}</td>
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{r.ticketCount}</td>
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(r.gross)}</td>
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums text-danger">{r.refunds ? `−${formatMoney(r.refunds)}` : "—"}</td>
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(r.net)}</td>
+                      <td className="px-comfortable text-right font-mono text-[12px] text-faint">{(r.shareOfTotal * 100).toFixed(0)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        );
+      })()}
+
+      {tab === "analytics" && (() => {
+        const a = anQ.data;
+        return (
+          <div className="flex flex-col gap-tight">
+            <div className={card}>
+              <div className="mb-tight flex items-center justify-between">
+                <p className="type-label text-[11px] text-muted">Revenue over time <span className="normal-case text-faint">· dashed = previous period</span></p>
+                <select value={gran} onChange={(e) => setGran(e.target.value as typeof gran)} className={selectCls}>
+                  <option value="auto">Auto</option><option value="hour">Hourly</option><option value="day">Daily</option><option value="week">Weekly</option>
+                </select>
+              </div>
+              {anQ.loading ? chartSkeleton : hasData(a?.revenue) ? <LineChart points={a!.revenue!} fmt={money} /> : emptyChart}
+            </div>
+
+            <div className="grid gap-tight lg:grid-cols-3">
+              <div className={card}>
+                <p className="type-label mb-tight text-[11px] text-muted">Sales by hour of day</p>
+                {anQ.loading ? chartSkeleton : hasData(a?.hour_of_day) ? <BarChart points={a!.hour_of_day!} fmt={money} /> : emptyChart}
+              </div>
+              <div className={card}>
+                <p className="type-label mb-tight text-[11px] text-muted">Sales by day of week</p>
+                {anQ.loading ? chartSkeleton : hasData(a?.day_of_week) ? <BarChart points={a!.day_of_week!} fmt={money} /> : emptyChart}
+              </div>
+              <div className={card}>
+                <p className="type-label mb-tight text-[11px] text-muted">Payment mix</p>
+                {anQ.loading ? chartSkeleton : hasData(a?.payment_mix) ? <DonutChart points={a!.payment_mix!} fmt={money} /> : emptyChart}
+              </div>
+            </div>
+
+            {/* The distinctive ones — only a system that owns the sale AND the scan can draw these. */}
+            <div className="grid gap-tight lg:grid-cols-3">
+              <div className={card}>
+                <p className="type-label mb-tight text-[11px] text-muted">Capacity utilisation</p>
+                {anQ.loading ? chartSkeleton : hasData(a?.capacity_utilisation) ? <LineChart points={a!.capacity_utilisation!} fmt={(v) => `${v}%`} height={120} /> : emptyChart}
+              </div>
+              <div className={card}>
+                <p className="type-label mb-tight text-[11px] text-muted">No-show rate</p>
+                {anQ.loading ? chartSkeleton : hasData(a?.no_show_rate) ? <LineChart points={a!.no_show_rate!} fmt={(v) => `${v}%`} height={120} /> : emptyChart}
+              </div>
+              <div className={card}>
+                <p className="type-label mb-tight text-[11px] text-muted">Booking lead time</p>
+                {anQ.loading ? chartSkeleton : hasData(a?.lead_time) ? <BarChart points={a!.lead_time!} fmt={(v) => `${v} booking${v === 1 ? "" : "s"}`} /> : emptyChart}
+              </div>
+            </div>
+
+            <div className={card}>
+              <p className="type-label mb-tight text-[11px] text-muted">Top products</p>
+              {anQ.loading ? chartSkeleton : hasData(a?.top_products) ? <HBarChart points={a!.top_products!} fmt={money} /> : emptyChart}
+            </div>
+          </div>
+        );
+      })()}
+
+      <Modal open={saveOpen} onClose={() => setSaveOpen(false)} title="Save this view" footer={<><Button variant="secondary" onClick={() => setSaveOpen(false)}>Cancel</Button><Button onClick={saveView}>Save</Button></>}>
+        <FormField label="Name" placeholder="Weekend turf" value={viewName} onChange={(e) => setViewName(e.target.value)} help="Saved views restore the whole filter set from the dropdown." />
+      </Modal>
     </PageShell>
   );
 }
 
-function Card({ label, value, delta }: { label: string; value: string; delta?: string }) {
+function FragmentRow({ r, expanded, onToggle, onOpen }: { r: TransactionRow; expanded: boolean; onToggle: () => void; onOpen: () => void }) {
+  const time = r.time.slice(11, 16);
+  const day = r.time.slice(0, 10);
+  const method: Record<string, string> = { cash: "Cash", bkash: "bKash", bangla_qr: "QR", card_terminal: "Card", voucher: "Voucher", credit: "Credit" };
+  const pill: Record<TxStatus, { label: string; tone: "success" | "danger" | "warning" | "neutral" }> = {
+    completed: { label: "Completed", tone: "success" },
+    refunded: { label: "Refunded", tone: "danger" },
+    partly_refunded: { label: "Partly refunded", tone: "warning" },
+    void: { label: "Void", tone: "neutral" },
+  };
   return (
-    <div className="rounded-md border border-line bg-card p-section">
-      <p className="type-label text-[12px] text-faint">{label}</p>
-      <p className="mt-tight font-mono text-2xl">{value}</p>
-      {delta && <p className="mt-inline font-mono text-[11px] text-faint">{delta} vs prev</p>}
-    </div>
+    <>
+      <tr className="h-12 cursor-pointer border-b border-line hover:bg-subtle" onClick={onOpen}>
+        <td className="pl-tight"><button type="button" aria-label="Lines" onClick={(e) => { e.stopPropagation(); onToggle(); }} className="flex h-8 w-8 items-center justify-center text-faint hover:text-fg">{expanded ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}</button></td>
+        <td className="whitespace-nowrap px-comfortable font-mono text-[12px] tabular-nums">{day} {time}</td>
+        <td className="whitespace-nowrap px-comfortable font-mono text-[12px]">{r.reference}</td>
+        <td className="min-w-0 max-w-56 truncate px-comfortable">{r.itemsLabel}</td>
+        <td className="min-w-0 max-w-32 truncate px-comfortable text-muted">{r.customer ?? "—"}</td>
+        <td className="min-w-0 max-w-32 truncate px-comfortable text-muted">{r.staffName ?? "—"}</td>
+        <td className="min-w-0 max-w-32 truncate px-comfortable text-muted">{r.counterName ?? "—"}</td>
+        <td className="whitespace-nowrap px-comfortable text-[12px]">{method[r.method] ?? r.method}</td>
+        <td className="whitespace-nowrap px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(r.net)}</td>
+        <td className="px-comfortable"><StatusPill tone={pill[r.status].tone}>{pill[r.status].label}</StatusPill></td>
+      </tr>
+      {expanded && (
+        <tr className="border-b border-line bg-subtle">
+          <td />
+          <td colSpan={9} className="px-comfortable py-tight">
+            {r.lines.map((l) => (
+              <div key={l.id} className="flex h-8 items-center gap-section text-[13px]">
+                <span className="min-w-0 flex-1 truncate">{l.productName} · {l.tierName}</span>
+                <span className="font-mono text-[12px] tabular-nums text-muted">{l.quantity} × {formatMoney(l.unitPrice)}</span>
+                <span className="w-24 shrink-0 whitespace-nowrap text-right font-mono text-[12px] tabular-nums">{formatMoney(l.unitPrice * l.quantity)}</span>
+              </div>
+            ))}
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
