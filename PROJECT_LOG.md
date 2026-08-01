@@ -287,6 +287,23 @@ the new work was **F3 = Delta E — sheet refinements + the overflow audit**:
   Iftar Experience" (+ "Senior Citizen (65+, ID required)" tier, "Championship Court 1 —
   Centre" resource) — walked through grid/sheet/cart with zero page overflow.
 
+### Dashboard v2 (counterfoil_design_uplift_plan (1).md — revised Part 2) ✅ (2026-08-01)
+
+**Nothing is sold from OS.** The dashboard is the manager's cockpit — capacity, not
+revenue, is the distinctive angle (the system owns both the sale and the scan):
+- Header: date · location switcher · **Today / This-week scope** — no primary action;
+  Open POS and every Sell affordance removed.
+- Hero: Revenue (count-up, delta, sparkline) · **Capacity sold** ("6 / 772 · 1%" + fill
+  bar + delta) · **Arrived** ("0 of 6 · 100% no-show") · **Booked ahead** (committed
+  revenue next 7 days vs the week after).
+- **Today's sessions** — management actions only: expand → the session's booking list
+  inline · **Adjust capacity** (stepper modal, whole-pattern) · **Cancel session**
+  (warning names affected bookings; `cancelSessionBookings` releases them).
+- Right rail in priority order: **Needs attention** (cash variance · OOS · **products
+  with no availability beyond a date** · waitlist · arrivals owing balances · devices
+  unseen 7+ days) · **Idle capacity** (next 48h under 30% fill with the value of unsold
+  places) · **Open shifts now** (mock Shift record) · Payment mix · Top products below.
+
 **Master acceptance walk (Section C)** — steps 1–10 and 13 verified across the P1–P10
 sessions (blended bowling pricing, engine-only durations, Start now + Extend, turf pricing +
 sharing, Family group scan, two-tour guide conflict, spa deposit, park/resume + role-gated

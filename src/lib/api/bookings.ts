@@ -27,6 +27,14 @@ export const checkInBooking = (id: string, count: number): Promise<ApiResult<Boo
 export const extendBooking = (id: string, slotEnd: string): Promise<ApiResult<Booking>> =>
   resource.update(id, { slotEnd });
 
+/** Cancel a whole session: every confirmed booking at that product+slot.
+ *  Returns how many were released. (Refunds are the backend's job.) */
+export async function cancelSessionBookings(productId: string, slotStart: string): Promise<ApiResult<{ cancelled: number }>> {
+  const hit = resource.peek().filter((b) => b.productId === productId && b.slotStart === slotStart && b.status === "confirmed");
+  for (const b of hit) await resource.update(b.id, { status: "cancelled" });
+  return { ok: true, data: { cancelled: hit.length } };
+}
+
 /** Create a confirmed booking (used by POS checkout to hold slot capacity). */
 export function createBooking(input: {
   orderId: string;
