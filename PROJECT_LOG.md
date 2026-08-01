@@ -313,6 +313,34 @@ a real 390px viewport) could not be exercised in the automation browser (window 
 ignored there) — breakpoint classes verified structurally instead; worth one manual pass on
 a phone.
 
+### F12 — mobile overflow by mechanism (counterfoil_F12_mobile_overflow.md, local) ✅ (2026-08-01)
+
+Fixed by mechanism, not by screen; then **measured**, not assumed:
+- **One nowrap per row** — audited all 24 `whitespace-nowrap` sites; money/time is the only
+  nowrap child, labels get `min-w-0` + truncate/clamp. Two real offenders found by the sweep
+  and fixed: the Scan code row (input now shrinks, button `shrink-0`) and the Schedule
+  date row (wraps).
+- **Unbreakable strings** — `break-words` on PageShell titles (references), DataTable card
+  primaries, OrderLinesDetail names (`line-clamp-2`, incl. add-on child rows); ticket code
+  on the complete screen `break-all` + responsive size.
+- **Tables → cards under 768px** — DataTable card-list breakpoint moved sm→md; the reports
+  transaction/summary tables keep their own `overflow-x-auto` card (wide breakdowns scroll
+  inside the card, never the page).
+- **Grids collapse** — remaining unresponsive form pairs (onboarding, wizard credits,
+  waitlist mini-form) now single-column under 640px; chip/segmented grids audited as fitting.
+- **No fixed width exceeds ~340px** (all remaining are ≤256px inputs or max-widths).
+- **Buttons/tabs** — Charge label truncates (the amount never wraps), tab-bar labels
+  truncate at 320px; **Modal + PageShell padding** drop to 16px under 640px.
+- **Stress seeds (permanent)**: resource "Championship Court 1 — Centre (Covered)", tier
+  "Senior Citizen (65+, valid ID required)", the long tour name, and order
+  **CF-2026-999001** — 6 lines incl. 2 add-on children, both discount levels, customer
+  "Mohammad Abdur Rahman Chowdhury · 01712-345678".
+- **Verification**: the automation browser ignores window resize, so the sweep ran in
+  **width-constrained iframes** (media queries follow the iframe viewport): 31 routes ×
+  320/390/768 all pass `scrollWidth ≤ innerWidth`; the stress order at 320 shows zero
+  clipped money elements; /orders at 390 renders as cards with the table hidden; the
+  stress product's sheet opens at 320 without overflow.
+
 ### F11 — order lines, discounts, per-product revenue (counterfoil_F11_order_lines.md, local) ✅ (2026-08-01)
 
 The order model rebuilt around **lines** (the doc said "run before F7" — it arrived after, so
