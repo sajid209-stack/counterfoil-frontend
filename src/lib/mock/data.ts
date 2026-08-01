@@ -337,6 +337,20 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
+    // The overflow stress test — long names must truncate, never collide.
+    id: "prd_stress",
+    name: "Grand Heritage Architectural Walking Tour of Old Dhaka with Rooftop Iftar Experience",
+    description: "The stress-test product: nothing may overflow, collide, or clip.",
+    images: [], categoryId: "cat_tours", bookingType: "BT-03",
+    tiers: [
+      { id: "tier_st_adult", name: "Adult", price: 250000, active: true },
+      { id: "tier_st_senior", name: "Senior Citizen (65+, ID required)", price: 180000, active: true },
+    ],
+    locationIds: ["loc_fort"], channels: ["counter"], status: "active", archivedAt: null,
+    schedule: { slotMinutes: 60, sessionMinutes: 90, startTime: "17:00", endTime: "19:00", capacityPerSession: 18, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
+    createdAt: T, updatedAt: T,
+  },
+  {
     id: "prd_parking", name: "Parking Pass", description: "Issued at the gate against a plate number.", images: [], categoryId: null, bookingType: "BT-14",
     tiers: [{ id: "tier_pk", name: "Pass", price: 10000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter"], status: "active", archivedAt: null,
@@ -544,6 +558,7 @@ export const devices: Device[] = [
 ];
 
 export const resources: Resource[] = [
+  { id: "res_court_1", name: "Championship Court 1 — Centre", nounSingular: "Court", nounPlural: "Courts", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_field_1", name: "Field 1", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_field_2", name: "Field 2", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_lane_1", name: "Lane 1", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },

@@ -145,6 +145,33 @@ export function resolveDurationPrice(
   return Math.round((base * banded) / flat);
 }
 
+export interface PriceSegment {
+  minutes: number;
+  ratePerHour: Minor;
+}
+
+/** The banded rate segments across a span — the "why is it this price" line.
+ *  One segment → "৳800 × 2 hr"; a band crossing → "1 hr @ ৳800 + 1 hr @ ৳1,200". */
+export function priceSegments(
+  cfg: DurationConfig,
+  rules: PricingRule[],
+  date: string,
+  startTime: string,
+  minutes: number,
+): PriceSegment[] {
+  const hourly = hourlyEquivalent(cfg);
+  const dow = new Date(`${date}T12:00:00Z`).getUTCDay();
+  const start = toMinutes(startTime);
+  const segs: PriceSegment[] = [];
+  for (let m = 0; m < minutes; m++) {
+    const rate = rules.length ? resolveRulePrice(rules, dow, toTime((start + m) % 1440), hourly) : hourly;
+    const last = segs[segs.length - 1];
+    if (last && last.ratePerHour === rate) last.minutes += 1;
+    else segs.push({ minutes: 1, ratePerHour: rate });
+  }
+  return segs;
+}
+
 /** Convenience for POS: a product's flexible price at a concrete start. */
 export function productDurationPrice(product: Product, date: string, startTime: string, minutes: number, fallbackHourly: Minor): Minor {
   const cfg = product.durationConfig ?? { ...defaultDurationConfig(fallbackHourly), minMinutes: product.flexibleDurations?.[0] ?? 60, maxMinutes: product.flexibleDurations?.at(-1) ?? 180 };

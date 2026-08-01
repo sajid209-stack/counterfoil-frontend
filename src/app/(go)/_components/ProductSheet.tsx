@@ -22,7 +22,7 @@ import {
 } from "@/lib/api";
 import { isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
-import { durationOptions, formatDuration, productDurationPrice } from "@/lib/duration";
+import { durationOptions, formatDuration, priceSegments, productDurationPrice } from "@/lib/duration";
 import { formatMoney } from "@/lib/format";
 
 export interface CartEntry {
@@ -132,20 +132,34 @@ export function ProductSheet({
     ) : null;
   const addOnItems = () => (product.addOns ?? []).filter((a) => (addOnQty[a.id] ?? 0) > 0).map((a) => ({ tierId: a.id, tierName: `${a.name}${a.perPerson ? " (each)" : ""}`, unitPrice: a.price, qty: addOnQty[a.id] }));
 
+  // Add-on rows — the catering pattern: a full-width row whose + becomes a
+  // stepper once added. Per-person add-ons start at the group/party size and
+  // multiply live.
+  const headsFor = () => (flatBasis ? group : Math.max(1, Object.values(qty).reduce((s, n) => s + n, 0)));
   const renderAddOns = () =>
     (product.addOns?.length ?? 0) > 0 ? (
       <div className="mt-section flex flex-col gap-tight">
         <span className="type-label text-[11px] text-faint">Add-ons</span>
-        {(product.addOns ?? []).map((a) => (
-          <div key={a.id} className="flex items-center justify-between rounded-sm border border-line bg-card p-comfortable">
-            <div className="text-sm">{a.name} <span className="font-mono text-[12px] text-faint">+{formatMoney(a.price, currency)}{a.perPerson ? " each" : ""}</span></div>
-            <div className="flex items-center gap-tight">
-              <button type="button" aria-label="Less" onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">−</button>
-              <span className="w-6 text-center font-mono">{addOnQty[a.id] ?? 0}</span>
-              <button type="button" aria-label="More" onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: (q[a.id] ?? 0) + 1 }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
+        {(product.addOns ?? []).map((a) => {
+          const n = addOnQty[a.id] ?? 0;
+          return (
+            <div key={a.id} className="flex min-h-14 items-center gap-tight rounded-sm border border-line bg-card p-comfortable">
+              <div className="min-w-0 flex-1">
+                <span className="block truncate text-sm">{a.name}</span>
+                <span className="font-mono text-[12px] text-faint">{formatMoney(a.price, currency)}{a.perPerson ? "/head" : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}</span>
+              </div>
+              {n === 0 ? (
+                <button type="button" aria-label={`Add ${a.name}`} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: a.perPerson ? headsFor() : 1 }))} className="h-12 w-12 shrink-0 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
+              ) : (
+                <div className="flex shrink-0 items-center gap-tight">
+                  <button type="button" aria-label="Less" onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">−</button>
+                  <span className="w-6 text-center font-mono">{n}</span>
+                  <button type="button" aria-label="More" onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: (q[a.id] ?? 0) + 1 }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     ) : null;
 
@@ -193,13 +207,32 @@ export function ProductSheet({
 
   const depositPct = product.policies?.deposit === "percent" ? product.policies.depositPct : 0;
 
+  // Capacity under a date chip: daily-capped remaining, or seats across the
+  // day's departures. Ember when ≤20% remains.
+  const dateCap = (d: string): { left: number; total: number } | null => {
+    if (bt === "BT-06" && product.schedule?.dailyCapacity) {
+      return { left: getDailyRemaining(product, d), total: product.schedule.dailyCapacity };
+    }
+    if (guided || bt === "BT-03") {
+      const ss = getSlots(product, d);
+      if (!ss.length) return null;
+      return { left: ss.reduce((s, x) => s + x.remaining, 0), total: ss.reduce((s, x) => s + x.capacity, 0) };
+    }
+    return null;
+  };
+
   // Date strip chips — the selectable-card pattern in miniature.
-  const dateBtn = (value: string, label: string) => (
-    <ChoiceCard key={value} selected={date === value} onClick={() => { setDate(value); setSlotTime(undefined); setResourceId(undefined); }} className="flex h-14 min-w-16 flex-col items-center justify-center px-tight">
-      <span className="text-[10px] uppercase tracking-wide text-faint">{label === "Today" || label === "Tomorrow" ? label : label.split(" ")[0]}</span>
-      <span className="font-mono text-[13px] tabular-nums">{value.slice(8, 10)} {new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
-    </ChoiceCard>
-  );
+  const dateBtn = (value: string, label: string) => {
+    const cap = dateCap(value);
+    const low = cap && cap.total > 0 && cap.left <= Math.max(1, Math.floor(cap.total * 0.2));
+    return (
+      <ChoiceCard key={value} selected={date === value} onClick={() => { setDate(value); setSlotTime(undefined); setResourceId(undefined); }} className="flex min-h-14 min-w-16 flex-col items-center justify-center px-tight py-inline">
+        <span className="text-[10px] uppercase tracking-wide text-faint">{label === "Today" || label === "Tomorrow" ? label : label.split(" ")[0]}</span>
+        <span className="font-mono text-[13px] tabular-nums">{value.slice(8, 10)} {new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
+        {cap && <span className={`font-mono text-[10px] tabular-nums ${low ? "font-medium text-ember" : "text-faint"}`}>{cap.left} left</span>}
+      </ChoiceCard>
+    );
+  };
 
   const submitTiered = () => {
     const list = sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: s.name, price: s.price })) : activeTiers.map((t) => ({ id: t.id, name: t.name, price: t.price }));
@@ -324,7 +357,12 @@ export function ProductSheet({
                 <>
                   {renderAddOns()}
                   <div className="mt-tight flex flex-col gap-tight">{renderGroup()}{renderWaiver()}</div>
-                  <Button size="lg" fullWidth className="mt-section" disabled={!waiverOk} onClick={() => submitResource(resourceId, row?.resource.name ?? "", slotTime, price)}>
+                  {/* The live selection summary. */}
+                  <p className="mt-tight text-[13px]">
+                    <span className="font-medium">{row?.resource.name}</span> · <span className="font-mono tabular-nums">{slotTime}</span> · {formatDuration(product.schedule?.sessionMinutes ?? 60)}
+                    {flatBasis ? ` · Group of ${group}` : ""} · <span className="font-mono tabular-nums">{formatMoney(price + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0), currency)}</span>
+                  </p>
+                  <Button size="lg" fullWidth className="mt-tight" disabled={!waiverOk} onClick={() => submitResource(resourceId, row?.resource.name ?? "", slotTime, price)}>
                     Add {row?.resource.name} · {slotTime} · {formatMoney(price, currency)}
                   </Button>
                 </>
@@ -401,9 +439,9 @@ export function ProductSheet({
               <div className="flex flex-wrap gap-tight">
                 <ChoiceCard selected={!resourceId} onClick={() => setResourceId(undefined)} className="flex h-14 items-center px-comfortable text-sm">Any</ChoiceCard>
                 {lanes.map((r) => (
-                  <ChoiceCard key={r.id} selected={resourceId === r.id} disabled={r.outOfService} onClick={() => setResourceId(r.id)} className="flex h-14 flex-col items-start justify-center px-comfortable">
-                    <span className="text-sm leading-tight">{r.name}{rateLabel(r) ? <span className="ml-inline font-mono text-[10px] text-faint">{rateLabel(r)}</span> : null}</span>
-                    <span className="font-mono text-[10px] leading-tight text-muted">{liveState(r)}</span>
+                  <ChoiceCard key={r.id} selected={resourceId === r.id} disabled={r.outOfService} onClick={() => setResourceId(r.id)} className="flex min-h-14 max-w-56 flex-col items-start justify-center px-comfortable py-inline">
+                    <span className="block max-w-full truncate text-sm leading-tight">{r.name}{rateLabel(r) ? <span className="ml-inline whitespace-nowrap font-mono text-[10px] text-faint">{rateLabel(r)}</span> : null}</span>
+                    <span className="block max-w-full truncate font-mono text-[10px] leading-tight text-muted">{liveState(r)}</span>
                   </ChoiceCard>
                 ))}
               </div>
@@ -423,7 +461,15 @@ export function ProductSheet({
 
               {blocked && <BlockedNotice message={blocked} onDismiss={() => setBlocked(null)} />}
 
-              <span className="type-label text-[11px] text-faint">Start time</span>
+              <div className="flex items-center justify-between">
+                <span className="type-label text-[11px] text-faint">Start time</span>
+                {/* Chips for speed, the stepper for precision (walk-in rounding). */}
+                <div className="flex items-center gap-inline">
+                  <button type="button" aria-label="Earlier" onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const next = Math.max(flexTimes.length ? toMinutes(flexTimes[0]) : 0, base - round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember/10">−</button>
+                  <span className="w-14 text-center font-mono text-[13px] tabular-nums">{slotTime ?? "—"}</span>
+                  <button type="button" aria-label="Later" onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const cap = mustEnd ? closeMin - duration : 24 * 60 - round; const next = Math.min(cap, base + round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember/10">+</button>
+                </div>
+              </div>
               <div className="flex flex-wrap gap-inline">
                 {flexTimes.map((t) => {
                   const st = startState(t, duration, resourceId);
@@ -437,12 +483,33 @@ export function ProductSheet({
               {renderGroup()}
               {renderWaiver()}
 
-              {slotTime && endLabel && (
-                <p className="text-[13px] text-muted">
-                  {slotTime} – <span className="font-mono">{endLabel}</span>
-                  {!resourceId && chosenLaneFree ? ` · ${firstFreeResource(product, date, slotTime, duration)?.name} (best fit)` : ""}
-                </p>
-              )}
+              {slotTime && endLabel && (() => {
+                const lane = laneOf(resourceId) ?? (chosenLaneFree ? firstFreeResource(product, date, slotTime, duration) : null);
+                const total = priceFor(slotTime, duration, lane);
+                // The price math — staff can answer "why is it this price".
+                const segs = lane?.rateOverride?.kind === "replace"
+                  ? [{ minutes: duration, ratePerHour: lane.rateOverride.amount }]
+                  : cfg
+                    ? priceSegments(cfg, product.pricingRules ?? [], date, slotTime, duration)
+                    : [];
+                const math = segs.length === 1
+                  ? `${formatMoney(segs[0].ratePerHour, currency)} × ${formatDuration(duration)} = ${formatMoney(total, currency)}`
+                  : segs.length > 1
+                    ? `${segs.map((s) => `${formatDuration(s.minutes)} @ ${formatMoney(s.ratePerHour, currency)}`).join(" + ")} = ${formatMoney(total, currency)}`
+                    : "";
+                const premium = lane?.rateOverride?.kind === "premium" ? ` (incl. ${lane.name} +${formatMoney(lane.rateOverride.amount, currency)})` : "";
+                return (
+                  <div className="flex flex-col gap-inline">
+                    {math && <p className="font-mono text-[12px] tabular-nums text-muted">{math}{premium}</p>}
+                    {/* The live selection summary — the CTA never enables without it. */}
+                    <p className="text-[13px]">
+                      <span className="font-medium">{lane?.name ?? "Any lane"}</span> · <span className="font-mono tabular-nums">{slotTime}–{endLabel}</span> · {formatDuration(duration)}
+                      {flatBasis ? ` · Group of ${group}` : ""} · <span className="font-mono tabular-nums">{formatMoney(total, currency)}</span>
+                      {!resourceId && lane ? <span className="text-faint"> (best fit)</span> : null}
+                    </p>
+                  </div>
+                );
+              })()}
               <Button size="lg" fullWidth className="mt-tight" disabled={!slotTime || !chosenLaneFree || !waiverOk} onClick={submitFlexible}>
                 {slotTime && chosenLaneFree ? `Add ${formatDuration(duration)} · ${slotTime}–${endLabel} · ${formatMoney(priceFor(slotTime, duration, laneOf(resourceId) ?? firstFreeResource(product, date, slotTime, duration)), currency)}` : "Add to sale"}
               </Button>
@@ -550,6 +617,23 @@ export function ProductSheet({
             </div>
             {renderAddOns()}
             {renderWaiver()}
+            {/* The live selection summary — plain language, mono numbers. */}
+            {partySize > 0 && (() => {
+              const list = sectioned ? (product.sections ?? []) : activeTiers;
+              const itemsLabel = list.filter((x) => (qty[x.id] ?? 0) > 0).map((x) => `${qty[x.id]} ${x.name}`).join(" · ");
+              const owner = guided ? guides.find((g) => g.id === guideId)?.name : provider ? assignedProvider?.name : undefined;
+              const prem = provider && assignedProvider ? premiumOf(assignedProvider.id) : 0;
+              const total = list.reduce((s, x) => s + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0) + prem;
+              const when = slotTime ? `${slotTime} ${date === TODAY ? "today" : date}` : (needsSchedule(bt) || provider || course) ? (date === TODAY ? "today" : date) : null;
+              return (
+                <p className="mt-tight text-[13px]">
+                  {when && <><span className="font-mono tabular-nums">{when}</span> · </>}
+                  {itemsLabel}
+                  {owner ? <> · <span className="font-medium">{owner}</span>{provider ? ` · ${formatDuration(providerDuration)}` : ""}</> : null}
+                  {" · "}<span className="font-mono tabular-nums">{formatMoney(total, currency)}</span>
+                </p>
+              );
+            })()}
             {depositPct > 0 && (
               <p className="mt-section rounded-sm border border-line bg-card p-comfortable text-[13px] text-muted">
                 Deposit: <span className="font-medium text-fg">{depositPct}% now</span>, balance at arrival.

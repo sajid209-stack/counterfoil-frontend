@@ -312,11 +312,11 @@ export default function PosPage() {
             <div className="grid grid-cols-2 gap-tight sm:grid-cols-3">
               {shown.map((p) => (
                 <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex min-h-[6rem] flex-col justify-between rounded-sm border border-line border-t-2 border-t-ember bg-card p-comfortable text-left transition-colors duration-quick active:bg-ember/10">
-                  <div>
-                    <span className="block text-[16px] font-semibold leading-tight">{p.name}</span>
-                    <span className="mt-inline block text-[13px] leading-tight text-faint">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
+                  <div className="min-w-0">
+                    <span className="line-clamp-2 block text-[16px] font-semibold leading-tight">{p.name}</span>
+                    <span className="mt-inline block truncate text-[13px] leading-tight text-faint">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
                   </div>
-                  <span className="mt-tight self-end font-mono text-[13px] tabular-nums">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
+                  <span className="mt-tight shrink-0 self-end whitespace-nowrap font-mono text-[13px] tabular-nums">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
                 </button>
               ))}
               <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[5.5rem] flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-line text-faint active:bg-ember/10">
@@ -349,7 +349,7 @@ export default function PosPage() {
               {cart.map((e) => (
                 <div key={e.id} className="flex items-start gap-tight border-b border-line pb-tight last:border-0">
                   <div className="min-w-0 flex-1 cursor-pointer" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
-                    <div className="flex justify-between text-sm font-medium"><span className="truncate">{e.productName}</span><span className="font-mono">{formatMoney(entryTotal(e), currency)}</span></div>
+                    <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap font-mono tabular-nums">{formatMoney(entryTotal(e), currency)}</span></div>
                     <div className="font-mono text-[11px] text-faint">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.resourceLabel, e.providerLabel, e.partySize != null ? `Group of ${e.partySize}` : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="font-mono text-[11px] text-success">{entryCoveredQty(e)} paid with pass</div>}
                     {entryBalance(e) > 0 && <div className="font-mono text-[11px] text-faint">{productById(e.productId)?.policies?.depositPct}% deposit now · {formatMoney(entryBalance(e), currency)} at arrival</div>}

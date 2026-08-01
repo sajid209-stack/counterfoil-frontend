@@ -265,6 +265,28 @@ all four parts ✅ (2026-08-01):
   ticket stub. Toggles: OS Settings → Business → Appearance; Go → Shift menu (per device).
   Dark dashboard + POS browser-verified.
 
+### Delta E (counterfoil_delta_prompts (1).md + COUNTERFOIL_RUN_ORDER.md) ✅ (2026-08-01)
+
+The run-order doc's F1/F2/F4/F5/F6 were already delivered (Deltas A–D + uplift Parts 1–2);
+the new work was **F3 = Delta E — sheet refinements + the overflow audit**:
+- **Selection summary line** above every sheet CTA, live, mono numbers ("Lane 2 ·
+  17:00–18:30 · 1 hr 30 min · Group of 2 · ৳1,400"); CTA stays disabled until complete.
+- **The price math shown, not just the result**: `priceSegments` in `lib/duration.ts` —
+  single-band reads "৳800 × 2 hr = ৳1,600", a band crossing reads
+  "1 hr @ ৳800 + 30 min @ ৳1,200 = ৳1,400" (browser-verified); lane premiums noted inline,
+  replacement rates collapse to one segment.
+- **Start-time stepper** beside the chips (steps by the walk-in rounding, clamped to
+  close − duration).
+- **Capacity under date chips** (daily-cap remaining or seats across the day's
+  departures), ember at ≤20%.
+- **Add-on rows as the catering pattern**: full-width row, + becomes a stepper once
+  added; per-person add-ons start at group/party size and show "× N = total" live.
+- **Overflow audit**: min-w-0 on text flex children, names line-clamp/truncate, money
+  `shrink-0 whitespace-nowrap`, min-heights instead of fixed heights on choice cards.
+  **Stress seed**: "Grand Heritage Architectural Walking Tour of Old Dhaka with Rooftop
+  Iftar Experience" (+ "Senior Citizen (65+, ID required)" tier, "Championship Court 1 —
+  Centre" resource) — walked through grid/sheet/cart with zero page overflow.
+
 **Master acceptance walk (Section C)** — steps 1–10 and 13 verified across the P1–P10
 sessions (blended bowling pricing, engine-only durations, Start now + Extend, turf pricing +
 sharing, Family group scan, two-tour guide conflict, spa deposit, park/resume + role-gated
