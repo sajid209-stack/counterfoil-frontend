@@ -75,5 +75,13 @@
   "resendQueuedSms": "SMS-এ পুনঃপ্রেরণ সারিবদ্ধ হয়েছে।",
   "moveTooTight": "{time}-এ শুধু {count} বাকি — {size} জনের দল বসবে না।",
   "moved": "{date} তারিখে {time}-এ সরানো হয়েছে।",
-  "booking": "বুকিং"
+  "booking": "বুকিং",
+  "takePayment": "পেমেন্ট নিন",
+  "takePaymentTitle": "পেমেন্ট নিন",
+  "takePaymentBtn": "পেমেন্ট নিন",
+  "tookPayment": "{amount} পেমেন্ট রেকর্ড হয়েছে",
+  "outstandingLabel": "বকেয়া",
+  "amountLabel": "পরিমাণ",
+  "amountHelp": "বকেয়া পরিমাণ পর্যন্ত। আংশিক পেমেন্টের জন্য কম লিখুন।",
+  "methodLabel": "মাধ্যম"
 }

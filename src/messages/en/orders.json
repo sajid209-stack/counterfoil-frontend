@@ -75,5 +75,13 @@
   "resendQueuedSms": "Resend queued by SMS.",
   "moveTooTight": "Only {count} left at {time} — party of {size} won't fit.",
   "moved": "Moved to {date} at {time}.",
-  "booking": "booking"
+  "booking": "booking",
+  "takePayment": "Take payment",
+  "takePaymentTitle": "Take a payment",
+  "takePaymentBtn": "Take payment",
+  "tookPayment": "Payment of {amount} recorded",
+  "outstandingLabel": "Outstanding",
+  "amountLabel": "Amount",
+  "amountHelp": "Up to the outstanding balance. Enter less to take a further part-payment.",
+  "methodLabel": "Method"
 }

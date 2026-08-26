@@ -48,7 +48,8 @@
     "vat": "ভ্যাট",
     "total": "মোট",
     "dueNow": "এখন দেয়",
-    "balanceAtArrival": "আগমনে বাকি"
+    "balanceAtArrival": "আগমনে বাকি",
+    "payInFull": "এখনই সম্পূর্ণ পরিশোধ"
   },
   "charge": "চার্জ",
   "chargeAmount": "চার্জ {amount} — {method}",

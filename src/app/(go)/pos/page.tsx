@@ -14,6 +14,7 @@ import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { taxRateFor } from "@/lib/tax";
 import { formatMoney } from "@/lib/format";
+import { cn } from "@/lib/cn";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { Keypad } from "../_components/Keypad";
 
@@ -75,6 +76,7 @@ export default function PosPage() {
   const [sheet, setSheet] = useState<{ product: Product; initial: CartEntry | null } | null>(null);
   const [category, setCategory] = useState("all");
   const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [payInFull, setPayInFull] = useState(false);
   const [discountPct, setDiscountPct] = useState(0);
   const [discountReason, setDiscountReason] = useState("");
   const [couponInput, setCouponInput] = useState("");
@@ -370,14 +372,16 @@ export default function PosPage() {
   };
 
   // ── Deposits: a percent-deposit policy holds part of the entry back until
-  //    arrival; only the deposit is charged now.
+  //    arrival; only the minimum deposit is charged now — unless the cashier
+  //    chooses to take the balance in full (payInFull).
   const entryBalance = (e: CartEntry) => {
     const pol = productById(e.productId)?.policies;
     if (pol?.deposit !== "percent" || pol.depositPct <= 0) return 0;
     const payable = entryTotal(e) - entryCoveredValue(e);
     return Math.max(0, payable - Math.round((payable * pol.depositPct) / 100));
   };
-  const balance = cart.reduce((s, e) => s + entryBalance(e), 0);
+  const depositBalance = cart.reduce((s, e) => s + entryBalance(e), 0);
+  const balance = payInFull ? 0 : depositBalance;
   const dueNow = total - balance;
 
   const applyPass = async () => {
@@ -607,10 +611,20 @@ export default function PosPage() {
           {creditsValue > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.passCredits", { count: creditsUsed })}</span><span className="font-mono text-success">−{formatMoney(creditsValue, currency)}</span></div>}
           <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.vat")}</span><span className="font-mono">{formatMoney(tax, currency)}</span></div>
           <div className="mt-tight flex items-baseline justify-between text-lg font-medium"><span>{t("summary.total")}</span><AnimatedMoney value={total} currency={currency} /></div>
-          {balance > 0 && (
+          {depositBalance > 0 && (
             <>
-              <div className="flex justify-between text-[13px]"><span>{t("summary.dueNow")}</span><span className="font-mono">{formatMoney(dueNow, currency)}</span></div>
-              <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="font-mono">{formatMoney(balance, currency)}</span></div>
+              <button type="button" onClick={() => setPayInFull((v) => !v)} className="mt-tight flex w-full items-center justify-between text-[13px]">
+                <span className="text-muted">{t("summary.payInFull")}</span>
+                <span className={cn("flex h-6 w-10 shrink-0 items-center rounded-full px-0.5 transition-colors duration-quick", payInFull ? "bg-ember" : "bg-strong")}>
+                  <span className={cn("h-5 w-5 rounded-full bg-card transition-transform duration-quick", payInFull && "translate-x-4")} />
+                </span>
+              </button>
+              {balance > 0 && (
+                <>
+                  <div className="flex justify-between text-[13px]"><span>{t("summary.dueNow")}</span><span className="font-mono">{formatMoney(dueNow, currency)}</span></div>
+                  <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="font-mono">{formatMoney(balance, currency)}</span></div>
+                </>
+              )}
             </>
           )}
 

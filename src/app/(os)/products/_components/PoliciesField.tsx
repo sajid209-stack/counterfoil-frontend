@@ -6,7 +6,7 @@ import type { ProductPolicies } from "@/lib/api";
 export function policySummary(p: ProductPolicies): string {
   const parts: string[] = [];
   parts.push(p.cancellation === "none" ? "No cancellation" : p.cancellation === "fee" ? `Cancellation fee ${p.cancelFeePct}%` : `Free cancellation until ${p.cancelHours}h before`);
-  parts.push(p.deposit === "percent" ? `${p.depositPct}% deposit` : "Full payment");
+  parts.push(p.deposit === "percent" ? `Partial pay · min ${p.depositPct}% deposit` : "Full payment");
   parts.push(p.reentry === "single" ? "Single entry" : p.reentry === "same_day" ? "Re-entry same day" : "Re-entry while valid");
   if (p.waiver) parts.push("Waiver required");
   return parts.join(" · ");
@@ -35,8 +35,8 @@ export function PoliciesField({ value, onChange }: { value: ProductPolicies; onC
 
       <Section title="Entry & payment">
         <FormField label="Re-entry" variant="select" value={value.reentry} onChange={(e) => set("reentry", e.target.value as ProductPolicies["reentry"])} options={[{ value: "single", label: "Single entry" }, { value: "same_day", label: "Re-entry same day" }, { value: "while_valid", label: "Re-entry while valid" }]} />
-        <FormField label="Payment" variant="select" value={value.deposit} onChange={(e) => set("deposit", e.target.value as ProductPolicies["deposit"])} options={[{ value: "full", label: "Full payment" }, { value: "percent", label: "Deposit %" }]} />
-        {value.deposit === "percent" && <FormField label="Deposit (%)" variant="number" value={String(value.depositPct)} onChange={(e) => set("depositPct", num(e.target.value))} />}
+        <FormField label="Payment" variant="select" value={value.deposit} onChange={(e) => set("deposit", e.target.value as ProductPolicies["deposit"])} options={[{ value: "full", label: "Full payment only" }, { value: "percent", label: "Allow partial payment" }]} help="Partial: the customer pays a deposit now and settles the balance later (at the counter or on arrival)." />
+        {value.deposit === "percent" && <FormField label="Minimum deposit (%)" variant="number" value={String(value.depositPct)} onChange={(e) => set("depositPct", num(e.target.value))} help="The least that must be collected up front. The cashier can take more, up to the full amount." />}
       </Section>
 
       <Section title="Party size">

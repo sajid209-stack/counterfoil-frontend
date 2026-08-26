@@ -48,7 +48,8 @@
     "vat": "VAT",
     "total": "Total",
     "dueNow": "Due now",
-    "balanceAtArrival": "Balance at arrival"
+    "balanceAtArrival": "Balance at arrival",
+    "payInFull": "Pay in full now"
   },
   "charge": "Charge",
   "chargeAmount": "Charge {amount} — {method}",

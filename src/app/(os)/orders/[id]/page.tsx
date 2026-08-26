@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, CalendarClock, Printer, RotateCcw, Send } from "lucide-react";
+import { ArrowLeft, CalendarClock, Printer, RotateCcw, Send, Wallet } from "lucide-react";
 import {
   Button,
   EmptyState,
@@ -23,7 +23,9 @@ import {
   listTickets,
   logOrderAction,
   addOrderNote,
+  addOrderPayment,
   refundOrderLines,
+  type PaymentMethod,
   rescheduleBooking,
   writeOffOrder,
   type Booking,
@@ -58,6 +60,12 @@ export default function OrderDetailPage() {
   const [refundLines, setRefundLines] = useState<Record<string, boolean>>({});
   const [refundReason, setRefundReason] = useState("");
   const [refunding, setRefunding] = useState(false);
+
+  // Take payment — complete a partial balance (deposit → full, or any part of it)
+  const [payOpen, setPayOpen] = useState(false);
+  const [payTaka, setPayTaka] = useState("");
+  const [payMethod, setPayMethod] = useState<PaymentMethod>("cash");
+  const [paying, setPaying] = useState(false);
 
   // Resend ticket
   const [resendOpen, setResendOpen] = useState(false);
@@ -127,6 +135,28 @@ export default function OrderDetailPage() {
     else toast.error(res.error.message);
   };
 
+  const openPay = () => {
+    if (!o) return;
+    const outstanding = Math.max(0, o.total - o.payments.reduce((s, p) => s + p.amount, 0));
+    setPayTaka(String(Math.ceil(outstanding / 100)));
+    setPayMethod("cash");
+    setPayOpen(true);
+  };
+
+  const doTakePayment = async () => {
+    if (!o) return;
+    const outstanding = Math.max(0, o.total - o.payments.reduce((s, p) => s + p.amount, 0));
+    const amount = Math.min(outstanding, Math.round((parseFloat(payTaka) || 0) * 100));
+    if (amount <= 0) return;
+    setPaying(true);
+    const res = await addOrderPayment(o.id, payMethod, amount);
+    setPaying(false);
+    setPayOpen(false);
+    setPayTaka("");
+    if (res.ok) { toast.success(t("tookPayment", { amount: formatMoney(amount) })); order.reload(); }
+    else toast.error(res.error.message);
+  };
+
   const resend = async (how: "email" | "sms") => {
     if (!o) return;
     await logOrderAction(o.id, `Ticket re-sent by ${how === "email" ? "email" : "SMS"}`);
@@ -176,6 +206,11 @@ export default function OrderDetailPage() {
             <Button variant="secondary" icon={<Send size={16} strokeWidth={1.5} />} onClick={() => setResendOpen(true)}>
               {t("resendTicket")}
             </Button>
+            {o.status === "partial" && o.total - o.payments.reduce((s, p) => s + p.amount, 0) > 0 && (
+              <Button icon={<Wallet size={16} strokeWidth={1.5} />} onClick={openPay}>
+                {t("takePayment")}
+              </Button>
+            )}
             {canRefund && (
               <Button variant="secondary" icon={<RotateCcw size={16} strokeWidth={1.5} />} onClick={() => setRefundOpen(true)}>
                 {t("refundAction")}
@@ -208,6 +243,9 @@ export default function OrderDetailPage() {
             </Card>
             <Card title={t("cardPaid")}>
               <p className="font-mono text-2xl">{formatMoney(o.payments.reduce((s, p) => s + p.amount, 0))}</p>
+              {o.total - o.payments.reduce((s, p) => s + p.amount, 0) > 0 && (
+                <p className="mt-inline font-mono text-[12px] text-warning">{t("outstandingLabel")} · {formatMoney(o.total - o.payments.reduce((s, p) => s + p.amount, 0))}</p>
+              )}
             </Card>
           </div>
 
@@ -295,6 +333,30 @@ export default function OrderDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Take payment — complete a partial (deposit) balance, in any method. */}
+      <Modal
+        open={payOpen}
+        onClose={() => setPayOpen(false)}
+        title={t("takePaymentTitle")}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setPayOpen(false)} disabled={paying}>{t("cancel")}</Button>
+            <Button loading={paying} onClick={doTakePayment}>{t("takePaymentBtn")}</Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-section">
+          {o && (
+            <div className="flex items-center justify-between rounded-sm bg-subtle px-comfortable py-tight text-[13px]">
+              <span className="text-muted">{t("outstandingLabel")}</span>
+              <span className="font-mono tabular-nums">{formatMoney(Math.max(0, o.total - o.payments.reduce((s, p) => s + p.amount, 0)))}</span>
+            </div>
+          )}
+          <FormField label={t("amountLabel")} variant="number" value={payTaka} onChange={(e) => setPayTaka(e.target.value)} help={t("amountHelp")} />
+          <FormField label={t("methodLabel")} variant="select" value={payMethod} onChange={(e) => setPayMethod(e.target.value as PaymentMethod)} options={(["cash", "bkash", "card_terminal", "bangla_qr"] as PaymentMethod[]).map((m) => ({ value: m, label: enumL.method(m) }))} />
+        </div>
+      </Modal>
 
       {/* Per-line refund with a reason. */}
       <Modal
