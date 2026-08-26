@@ -21,7 +21,7 @@ import {
 import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
-import { Modal } from "@/components/ui";
+import { LogoMark, Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { listProducts } from "@/lib/api";
 import { isSlotBased } from "@/lib/schedule";
@@ -110,6 +110,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
       <header className="flex items-center justify-between gap-tight border-b border-line px-section py-tight">
         <div className="flex min-w-0 items-center gap-tight">
           <Link href="/login" className="flex h-12 shrink-0 items-center gap-tight">
+            <LogoMark size={24} />
             <span className="type-h2 text-base">Counterfoil</span>
             <span className="font-mono text-[11px] text-faint">Go</span>
           </Link>

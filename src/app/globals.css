@@ -148,8 +148,8 @@
      card = resting surface depth · pop = floating overlays (menus, modals).
      Light-mode only: dark mode gets elevation from surface steps + 1px
      lines (neutralised in .dark below), per the color system. */
-  --shadow-card: 0 1px 2px rgb(20 20 19 / 0.04), 0 6px 16px -8px rgb(20 20 19 / 0.06);
-  --shadow-pop: 0 10px 30px -10px rgb(20 20 19 / 0.14), 0 2px 6px -2px rgb(20 20 19 / 0.06);
+  --shadow-card: 0 1px 2px rgb(20 20 19 / 0.06), 0 8px 24px -8px rgb(20 20 19 / 0.12);
+  --shadow-pop: 0 12px 36px -10px rgb(20 20 19 / 0.20), 0 3px 8px -2px rgb(20 20 19 / 0.10);
 }
 
 @layer base {

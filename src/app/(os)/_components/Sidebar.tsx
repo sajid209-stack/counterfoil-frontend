@@ -4,13 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, Ticket, TicketPercent, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { LogoMark } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
 type IconType = React.ComponentType<{ size?: number | string; strokeWidth?: number | string; className?: string }>;
 
-// Daily surface — the things operators touch every day. Setup (including
-// Resources) lives under Settings, its own section. Collapses to a 64px icon
-// rail (tooltips via title) with a 200ms width transition.
+// Aura light-glass sidebar. Daily surface — the things operators touch every
+// day. Setup lives under Settings, its own section. Collapses to a 64px icon
+// rail (tooltips via title) with a 200ms width transition. Active items get a
+// subtle filled pill + an ember dot; the ember accent moves off the border.
 export function Sidebar({
   collapsed = false,
   onToggleCollapsed,
@@ -40,25 +42,32 @@ export function Sidebar({
       title={collapsed ? label : undefined}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-tight border-l-[3px] py-tight text-sm font-medium transition-colors duration-quick",
-        collapsed ? "justify-center pl-0 pr-[3px]" : "pl-comfortable pr-comfortable",
-        active ? "border-ember text-paper" : "border-transparent text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200",
+        "group flex items-center gap-tight rounded-sm py-tight text-sm font-medium transition-colors duration-quick",
+        collapsed ? "justify-center px-0" : "px-comfortable",
+        active
+          ? "bg-subtle text-fg"
+          : "text-muted hover:bg-subtle/60 hover:text-fg",
       )}
     >
-      {Icon && <Icon size={20} strokeWidth={1.5} className={active ? "text-ember" : ""} />}
-      {!collapsed && label}
+      {Icon && <Icon size={20} strokeWidth={1.5} className={active ? "text-ember" : "text-muted group-hover:text-fg"} />}
+      {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+      {!collapsed && active && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-ember" />}
     </Link>
   );
 
   return (
-    <div style={{ width: collapsed ? 64 : 240 }} className="flex h-full flex-col bg-neutral-900 text-paper transition-[width] duration-standard ease-counterfoil dark:border-r dark:border-line">
+    <div
+      style={{ width: collapsed ? 64 : 240 }}
+      className="flex h-full flex-col border-r border-line bg-surface/70 text-fg backdrop-blur-xl transition-[width] duration-standard ease-counterfoil"
+    >
       {/* Header — always visible (never scrolls): logo + the collapse/expand
           toggle. This is the reliable expand affordance in both states. */}
       <div className={cn("flex shrink-0 items-center py-section", collapsed ? "justify-center" : "justify-between px-section")}>
         {!collapsed && (
-          <Link href="/" className="flex items-center" title="Counterfoil OS">
-            <span className="type-h2 text-lg text-paper">Counterfoil</span>
-            <span className="ml-inline font-mono text-[11px] text-neutral-600">OS</span>
+          <Link href="/" className="flex items-center gap-tight" title="Counterfoil OS">
+            <LogoMark size={28} />
+            <span className="type-h2 text-lg text-fg">Counterfoil</span>
+            <span className="font-mono text-[11px] text-faint">OS</span>
           </Link>
         )}
         {onToggleCollapsed && (
@@ -68,7 +77,7 @@ export function Sidebar({
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-expanded={!collapsed}
-            className="flex h-9 w-9 items-center justify-center rounded-sm text-neutral-400 transition-colors duration-quick hover:bg-neutral-800 hover:text-neutral-200"
+            className="flex h-9 w-9 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg"
           >
             {collapsed ? <PanelLeftOpen size={20} strokeWidth={1.5} /> : <PanelLeftClose size={20} strokeWidth={1.5} />}
           </button>
@@ -76,19 +85,19 @@ export function Sidebar({
       </div>
 
       {/* Scrollable nav — overflow lives here so the header toggle stays put. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-major overflow-y-auto pb-section">
+      <div className="flex min-h-0 flex-1 flex-col gap-major overflow-y-auto px-comfortable pb-section">
         <nav className="flex flex-col gap-inline">
-          {!collapsed && <p className="px-section pb-inline font-mono text-[10px] uppercase tracking-wider text-neutral-600">{t("overview")}</p>}
+          {!collapsed && <p className="px-comfortable pb-inline font-mono text-[10px] uppercase tracking-wider text-muted">{t("overview")}</p>}
           {OPERATE.map((n) => item(n.label, n.href, isActive(n.href), n.icon))}
         </nav>
 
-        <div className={collapsed ? "px-inline" : "px-section"}>
+        <div>
           <Link
             href="/pos"
             title={collapsed ? t("pos") : undefined}
             className={cn(
-              "flex items-center rounded-sm border border-neutral-800 py-tight text-sm font-medium text-paper hover:border-ember",
-              collapsed ? "justify-center" : "justify-between px-comfortable",
+              "flex items-center rounded-sm border border-line py-tight text-sm font-medium text-fg transition-colors duration-quick hover:border-ember hover:bg-subtle/60",
+              collapsed ? "justify-center px-0" : "justify-between px-comfortable",
             )}
           >
             {!collapsed && t("pos")}
@@ -97,7 +106,7 @@ export function Sidebar({
         </div>
 
         <nav className="flex flex-col gap-inline">
-          {!collapsed && <p className="px-section pb-inline font-mono text-[10px] uppercase tracking-wider text-neutral-600">{t("settings")}</p>}
+          {!collapsed && <p className="px-comfortable pb-inline font-mono text-[10px] uppercase tracking-wider text-muted">{t("settings")}</p>}
           {item(t("settings"), "/settings", pathname.startsWith("/settings"), Settings)}
         </nav>
       </div>

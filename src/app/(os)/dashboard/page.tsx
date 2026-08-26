@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Check, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, TrendingUp, UserCheck, Users } from "lucide-react";
 import { Button, Modal, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -349,14 +349,20 @@ export default function DashboardPage() {
       ) : (
         <div className="grid grid-cols-2 gap-tight lg:grid-cols-4">
           <div className={`${card} p-section`}>
-            <p className="type-label text-[12px] text-faint">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
-            <p className="mt-tight whitespace-nowrap font-mono text-3xl tabular-nums">{formatMoney(revenueAnimated)}</p>
+            <div className="flex items-center gap-tight">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><TrendingUp size={18} strokeWidth={1.5} /></span>
+              <p className="type-label text-[12px] text-faint">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
+            </div>
+            <p className="mt-comfortable whitespace-nowrap font-mono text-3xl tabular-nums">{formatMoney(revenueAnimated)}</p>
             <div className="mt-inline"><DeltaPill now={revenue} then={revenuePrev} /></div>
             <Sparkline points={week} />
           </div>
           <div className={`${card} p-section`}>
-            <p className="type-label text-[12px] text-faint">{t("capacitySold")}</p>
-            <p className="mt-tight whitespace-nowrap font-mono text-3xl tabular-nums">{sold} <span className="text-lg text-faint">/ {capacity}</span></p>
+            <div className="flex items-center gap-tight">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><Users size={18} strokeWidth={1.5} /></span>
+              <p className="type-label text-[12px] text-faint">{t("capacitySold")}</p>
+            </div>
+            <p className="mt-comfortable whitespace-nowrap font-mono text-3xl tabular-nums">{sold} <span className="text-lg text-faint">/ {capacity}</span></p>
             <div className="mt-inline flex items-center gap-tight">
               <span className="font-mono text-[12px] tabular-nums text-muted">{soldPct}%</span>
               <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className={`block h-full ${soldPct >= 80 ? "bg-ember" : "bg-strong"}`} style={{ width: `${Math.min(100, soldPct)}%` }} /></span>
@@ -364,13 +370,19 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className={`${card} p-section`}>
-            <p className="type-label text-[12px] text-faint">{t("arrived")}</p>
-            <p className="mt-tight whitespace-nowrap font-mono text-3xl tabular-nums">{arrived} <span className="text-lg text-faint">{t("arrivedOf", { total: sold })}</span></p>
+            <div className="flex items-center gap-tight">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><UserCheck size={18} strokeWidth={1.5} /></span>
+              <p className="type-label text-[12px] text-faint">{t("arrived")}</p>
+            </div>
+            <p className="mt-comfortable whitespace-nowrap font-mono text-3xl tabular-nums">{arrived} <span className="text-lg text-faint">{t("arrivedOf", { total: sold })}</span></p>
             <p className={`mt-inline font-mono text-[12px] tabular-nums ${noShowPct >= 30 ? "text-danger" : "text-muted"}`}>{t("noShow", { pct: noShowPct })}</p>
           </div>
           <div className={`${card} p-section`}>
-            <p className="type-label text-[12px] text-faint">{t("bookedAhead")}</p>
-            <p className="mt-tight whitespace-nowrap font-mono text-3xl tabular-nums">{formatMoney(ahead)}</p>
+            <div className="flex items-center gap-tight">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><CalendarClock size={18} strokeWidth={1.5} /></span>
+              <p className="type-label text-[12px] text-faint">{t("bookedAhead")}</p>
+            </div>
+            <p className="mt-comfortable whitespace-nowrap font-mono text-3xl tabular-nums">{formatMoney(ahead)}</p>
             <div className="mt-inline"><DeltaPill now={ahead} then={aheadPrev} /></div>
           </div>
         </div>

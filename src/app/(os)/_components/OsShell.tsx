@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
-  Building2,
   CalendarDays,
   Check,
   ChartLine,
@@ -17,6 +16,7 @@ import {
   MonitorSmartphone,
   Package,
   ReceiptText,
+  Search,
   Settings,
   ShieldCheck,
   Store,
@@ -28,6 +28,7 @@ import {
 import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
+import { LogoMark } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -94,21 +95,43 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
-        <div className="flex items-center gap-tight border-b border-line bg-card px-section py-inline md:hidden">
-          <Building2 size={18} strokeWidth={1.5} className="text-faint" />
+        {/* Mobile — glass top bar. Sticky so it stays as content scrolls. */}
+        <div className="glass-navbar sticky top-0 z-30 flex items-center gap-tight px-section py-tight md:hidden">
+          <LogoMark size={24} />
           <span className="type-h2 text-base">Counterfoil</span>
           <span className="font-mono text-[11px] text-faint">OS</span>
           <span className="flex-1" />
           <LocaleToggle />
           <ModeButton />
         </div>
+
+        {/* Desktop — slim glass navbar: search · locale · theme · operator. */}
+        <div className="glass-navbar sticky top-0 z-20 hidden h-16 items-center gap-tight px-major md:flex">
+          <div className="ml-auto flex items-center gap-tight">
+            <div className="hidden items-center gap-tight rounded-sm border border-line bg-card/60 px-comfortable py-tight text-sm text-muted transition-colors duration-quick hover:bg-card focus-within:ring-2 focus-within:ring-ember/20 lg:flex lg:w-64">
+              <Search size={16} strokeWidth={1.5} className="text-faint" />
+              <input
+                aria-label={t("search")}
+                placeholder={t("search")}
+                className="min-w-0 flex-1 bg-transparent text-fg outline-none placeholder:text-faint"
+              />
+              <kbd className="rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-[10px] text-faint">⌘K</kbd>
+            </div>
+            <LocaleToggle />
+            <ModeButton />
+            <span className="ml-inline grid h-9 w-9 place-items-center rounded-sm bg-subtle text-[11px] font-bold text-fg ring-1 ring-line">
+              {(operatorQ.data?.name ?? "CF").slice(0, 2).toUpperCase()}
+            </span>
+          </div>
+        </div>
+
         <div className="min-w-0 flex-1 pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
       </main>
 
       {/* Mobile bottom tab bar */}
       <nav
         aria-label="OS navigation"
-        className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-card md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/80 backdrop-blur-xl md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {MOBILE_TABS.map((tab) => {
