@@ -41,7 +41,7 @@ export default function PrintReceiptPage() {
       {ready && !o ? (
         <EmptyState title={t("noTickets")} />
       ) : o ? (
-        <div className="mx-auto w-full rounded-md border border-line bg-card p-major print:border-0">
+        <div className="mx-auto w-full card-surface p-major print:border-0">
           <div className="mb-section text-center">
             <p className="type-h2 text-base">{business}</p>
             <p className="font-mono text-[12px] text-muted">{o.reference} · {formatDate(o.createdAt)}</p>

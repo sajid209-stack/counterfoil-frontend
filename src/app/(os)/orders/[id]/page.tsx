@@ -35,7 +35,7 @@ import { OrderLinesDetail } from "@/components/OrderLinesDetail";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-md border border-line bg-card p-major">
+    <div className="card-surface p-major">
       <h2 className="type-label mb-section text-[12px] text-muted">{title}</h2>
       {children}
     </div>

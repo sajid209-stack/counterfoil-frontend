@@ -81,12 +81,12 @@ export function RoleForm({ mode, role }: { mode: "create" | "edit"; role?: Role 
 
   return (
     <div className="flex flex-col gap-section pb-hero">
-      <div className="rounded-md border border-line bg-card p-major">
+      <div className="card-surface p-major">
         <h2 className="type-h2 mb-section text-base">{t("common.details")}</h2>
         <FormField label={t("common.name")} required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="max-w-sm" />
       </div>
 
-      <div className="rounded-md border border-line bg-card p-major">
+      <div className="card-surface p-major">
         <h2 className="type-h2 mb-section text-base">{t("roles.permissions")}</h2>
         <div className="grid grid-cols-1 gap-tight sm:grid-cols-2">
           {PERMISSIONS.map((p) => (
@@ -98,7 +98,7 @@ export function RoleForm({ mode, role }: { mode: "create" | "edit"; role?: Role 
         </div>
       </div>
 
-      <div className="rounded-md border border-line bg-card p-major">
+      <div className="card-surface p-major">
         <h2 className="type-h2 mb-section text-base">{t("roles.limits")}</h2>
         <div className="grid gap-section sm:grid-cols-2">
           <div className="flex flex-col gap-tight">

@@ -34,7 +34,7 @@ export default function Home() {
             key={d.id}
             type="button"
             onClick={() => explore(d.id)}
-            className="group flex flex-col rounded-md border border-line bg-card p-section text-left transition-all duration-quick hover:-translate-y-0.5 hover:border-ember/40 hover:shadow-sm active:bg-ember/5"
+            className="group flex flex-col card-surface p-section text-left transition-all duration-quick hover:-translate-y-0.5 hover:border-ember/40 hover:shadow-sm active:bg-ember/5"
           >
             <span className="type-h2 text-base">{d.name}</span>
             <span className="type-body mt-inline text-[13px] text-muted">{d.tagline}</span>

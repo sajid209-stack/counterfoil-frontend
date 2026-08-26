@@ -69,7 +69,7 @@ export default function PriceRuleEditorPage() {
         <ArrowLeft size={14} strokeWidth={1.5} /> {t("back")}
       </button>
 
-      <div className="grid max-w-2xl gap-section rounded-md border border-line bg-card p-major sm:grid-cols-2">
+      <div className="grid max-w-2xl gap-section card-surface p-major sm:grid-cols-2">
         <FormField label={t("fieldName")} value={form.name} onChange={(e) => set("name", e.target.value)} className="sm:col-span-2" />
         <FormField label={t("fieldProduct")} variant="select" value={form.productId ?? ""} onChange={(e) => set("productId", e.target.value || null)} options={[{ value: "", label: t("allProducts") }, ...products.map((p) => ({ value: p.id, label: p.name }))]} />
         <FormField label={t("fieldLocation")} variant="select" value={form.locationId ?? ""} onChange={(e) => set("locationId", e.target.value || null)} options={[{ value: "", label: t("allLocations") }, ...locations.map((l) => ({ value: l.id, label: l.name }))]} />

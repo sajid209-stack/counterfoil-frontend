@@ -98,7 +98,7 @@ export default function SchedulePage() {
       ) : rows.length === 0 ? (
         <EmptyState title={t("noSessionsTitle")} message={t("noSessionsMessage")} />
       ) : (
-        <div className="overflow-hidden rounded-md border border-line bg-card">
+        <div className="overflow-hidden card-surface">
           {rows.map((r, i) => (
             <div key={i} className="flex items-center gap-section border-b border-line px-section py-tight last:border-0">
               <span className="w-14 font-mono text-sm">{r.time}</span>

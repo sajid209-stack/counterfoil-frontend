@@ -53,7 +53,7 @@ const blank: FormState = {
 function HoursSummary({ hours }: { hours: OpeningHours[] }) {
   const t = useTranslations("settings");
   return (
-    <div className="rounded-md border border-line bg-card p-major">
+    <div className="card-surface p-major">
       <h2 className="type-h2 mb-section text-base">{t("locations.openingHours")}</h2>
       <div className="flex flex-col gap-inline">
         {DAY_KEYS.map((dayKey, day) => {
@@ -129,7 +129,7 @@ export function LocationForm({
 
   return (
     <div className="flex flex-col gap-section pb-hero">
-      <div className="rounded-md border border-line bg-card p-major">
+      <div className="card-surface p-major">
         <h2 className="type-h2 mb-section text-base">{t("common.details")}</h2>
         <div className="grid gap-section sm:grid-cols-2">
           <FormField

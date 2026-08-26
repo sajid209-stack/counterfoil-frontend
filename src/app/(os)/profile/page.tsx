@@ -39,7 +39,7 @@ export default function ProfilePage() {
   }, [meQ.data]);
 
   const me = meQ.data;
-  const card = "rounded-md border border-line bg-card p-major";
+  const card = "card-surface p-major";
 
   const save = async () => {
     const res = await updateStaff(ME, { name, email: email || null, phone: phone || null });

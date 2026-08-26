@@ -285,7 +285,7 @@ export default function DashboardPage() {
   const allDone = complete === steps.length;
 
   const dateLabel = new Date(`${TODAY}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  const card = "rounded-md border border-line bg-card shadow-sm";
+  const card = "card-surface";
 
   return (
     <PageShell

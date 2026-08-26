@@ -40,10 +40,10 @@ export function Modal({
       aria-modal="true"
       aria-label={title}
     >
-      <div className="absolute inset-0 bg-inverse/40" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 bg-inverse/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
       <div
         className={cn(
-          "relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-md bg-card p-section shadow-xl sm:p-major",
+          "glass relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-md p-section sm:p-major",
           width,
         )}
       >

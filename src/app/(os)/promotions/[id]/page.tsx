@@ -52,7 +52,7 @@ export default function PromotionEditorPage() {
         <ArrowLeft size={14} strokeWidth={1.5} /> {t("editor.back")}
       </button>
 
-      <div className="grid max-w-2xl gap-section rounded-md border border-line bg-card p-major sm:grid-cols-2">
+      <div className="grid max-w-2xl gap-section card-surface p-major sm:grid-cols-2">
         <FormField label={t("editor.name")} value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} />
         <FormField label={t("editor.kind")} variant="select" value={p.kind} onChange={(e) => setP({ ...p, kind: e.target.value as PromotionKind })} options={KINDS.map((k) => ({ value: k, label: t(`kind.${k}`) }))} />
 

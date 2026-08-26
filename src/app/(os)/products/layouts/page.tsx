@@ -43,7 +43,7 @@ export default function SeatLayoutsPage() {
               key={l.id}
               type="button"
               onClick={() => router.push(`/products/layouts/${l.id}`)}
-              className="flex flex-col gap-tight rounded-md border border-line bg-card p-section text-left transition-colors duration-quick hover:border-ember/40 active:bg-ember/10"
+              className="flex flex-col gap-tight card-surface p-section text-left transition-colors duration-quick hover:border-ember/40 active:bg-ember/10"
             >
               <div className="flex items-center gap-tight">
                 <Grid3x3 size={18} strokeWidth={1.5} className="text-faint" />

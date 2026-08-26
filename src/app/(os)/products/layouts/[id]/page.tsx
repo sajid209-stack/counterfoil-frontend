@@ -91,7 +91,7 @@ export default function SeatLayoutEditorPage() {
 
       <div className="flex flex-col gap-major">
         {/* Meta */}
-        <div className="grid gap-section rounded-md border border-line bg-card p-major sm:grid-cols-4">
+        <div className="grid gap-section card-surface p-major sm:grid-cols-4">
           <FormField label={t("editor.name")} value={name} onChange={(e) => setName(e.target.value)} />
           <FormField label={t("editor.rows")} variant="number" value={String(rows)} onChange={(e) => setRows(Math.max(1, parseInt(e.target.value) || 1))} />
           <FormField label={t("editor.seatsPerRow")} variant="number" value={String(perRow)} onChange={(e) => setPerRow(Math.max(1, parseInt(e.target.value) || 1))} />
@@ -102,7 +102,7 @@ export default function SeatLayoutEditorPage() {
         </div>
 
         {/* Categories */}
-        <div className="rounded-md border border-line bg-card p-major">
+        <div className="card-surface p-major">
           <div className="mb-section flex items-center justify-between">
             <h2 className="type-h2 text-base">{t("editor.categoriesTitle")}</h2>
             <Button size="sm" icon={<Plus size={14} strokeWidth={1.5} />} onClick={addCategory}>{t("editor.addCategory")}</Button>
@@ -124,7 +124,7 @@ export default function SeatLayoutEditorPage() {
         </div>
 
         {/* Seat grid */}
-        <div className="rounded-md border border-line bg-card p-major">
+        <div className="card-surface p-major">
           <div className="mb-tight flex items-center justify-between">
             <h2 className="type-h2 text-base">{t("editor.gridTitle")}</h2>
             <span className="font-mono text-[12px] text-muted">{t("editor.seatsForSale", { count: forSale })}</span>

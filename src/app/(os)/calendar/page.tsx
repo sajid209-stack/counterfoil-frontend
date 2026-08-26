@@ -61,7 +61,7 @@ export default function CalendarPage() {
       {/* The day by resource — the same timeline the POS sheet shows, so the
           manager and the counter see the same picture. */}
       {view === "day" && (resourcesQ.data?.data.length ?? 0) > 0 && (
-        <div className="mb-major rounded-md border border-line bg-card p-major">
+        <div className="mb-major card-surface p-major">
           <div className="mb-section flex items-center justify-between">
             <h2 className="type-h2 text-base">{t("byResource", { noun: resourcesQ.data!.data[0].nounSingular.toLowerCase() })}</h2>
             <input type="date" value={resourceDate} onChange={(e) => setResourceDate(e.target.value)} className="h-11 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse" />
@@ -87,7 +87,7 @@ export default function CalendarPage() {
       ) : (
         <div className="flex flex-col gap-section">
           {grouped.map(([date, items]) => (
-            <div key={date} className="rounded-md border border-line bg-card p-major">
+            <div key={date} className="card-surface p-major">
               <div className="mb-tight flex items-center justify-between">
                 <h2 className="type-h2 text-base">{formatDate(date)}</h2>
                 <span className="font-mono text-[12px] text-faint">{items.length === 1 ? t("bookingCount", { count: items.length }) : t("bookingCountPlural", { count: items.length })}</span>

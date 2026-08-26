@@ -143,6 +143,13 @@
   --duration-standard: 200ms;
   --duration-considered: 320ms;
   --ease-counterfoil: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* ── Elevation — Aura "minimal, diffused, soft" shadows ─────────────────
+     card = resting surface depth · pop = floating overlays (menus, modals).
+     Light-mode only: dark mode gets elevation from surface steps + 1px
+     lines (neutralised in .dark below), per the color system. */
+  --shadow-card: 0 1px 2px rgb(20 20 19 / 0.04), 0 6px 16px -8px rgb(20 20 19 / 0.06);
+  --shadow-pop: 0 10px 30px -10px rgb(20 20 19 / 0.14), 0 2px 6px -2px rgb(20 20 19 / 0.06);
 }
 
 @layer base {
@@ -201,6 +208,60 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
+}
+
+/* ── Aura surface language ──────────────────────────────────────────────
+   One vocabulary for depth so screens stop re-declaring card strings:
+   • .card-surface — resting flat card (bg + 1px line + md radius + soft
+     diffused shadow). Drop-in for `card-surface`.
+   • .card-interactive — adds a calm hover lift for clickable cards.
+   • .glass / .glass-navbar — translucent, blurred surfaces for overlays
+     (menus, modals, sheets) and sticky headers. */
+@layer components {
+  .card-surface {
+    background-color: var(--color-card);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow var(--duration-quick) var(--ease-counterfoil),
+      border-color var(--duration-quick) var(--ease-counterfoil),
+      transform var(--duration-quick) var(--ease-counterfoil);
+  }
+
+  .card-interactive:hover {
+    border-color: var(--color-strong);
+    box-shadow: var(--shadow-pop);
+  }
+  .card-interactive:active {
+    transform: scale(0.995);
+  }
+
+  .glass {
+    background-color: color-mix(in srgb, var(--color-card) 78%, transparent);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid var(--color-line);
+    box-shadow: var(--shadow-pop);
+  }
+
+  .glass-navbar {
+    background-color: color-mix(in srgb, var(--color-surface) 72%, transparent);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border-bottom: 1px solid var(--color-line);
+  }
+}
+
+/* Dark: elevation is carried by surface steps + 1px lines, not shadows. */
+.dark .card-surface {
+  box-shadow: none;
+}
+.dark .card-interactive:hover {
+  box-shadow: none;
+  background-color: color-mix(in srgb, var(--color-card) 100%, var(--color-fg) 3%);
+}
+.dark .glass {
+  box-shadow: 0 12px 40px -16px rgb(0 0 0 / 0.6);
 }
 
 /* P8 — a visible focus ring on every keyboard-focused control (2px ember). */

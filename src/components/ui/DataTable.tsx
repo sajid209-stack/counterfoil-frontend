@@ -59,7 +59,7 @@ export function DataTable<T>({
       <div className="flex flex-col gap-tight md:hidden">
         {loading &&
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={`csk-${i}`} className="flex animate-pulse flex-col gap-tight rounded-md border border-line bg-card p-comfortable">
+            <div key={`csk-${i}`} className="flex animate-pulse flex-col gap-tight card-surface p-comfortable">
               <div className="h-4 w-2/3 rounded-xs bg-line" />
               <div className="h-3 w-1/2 rounded-xs bg-line" />
             </div>
@@ -73,7 +73,7 @@ export function DataTable<T>({
               tabIndex={onRowClick ? 0 : undefined}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
-              className={cn("rounded-md border border-line bg-card p-comfortable transition-transform duration-quick", onRowClick && "cursor-pointer active:bg-subtle hover:-translate-y-0.5")}
+              className={cn("card-surface p-comfortable transition-transform duration-quick", onRowClick && "cursor-pointer active:bg-subtle hover:-translate-y-0.5")}
             >
               <div className="break-words text-sm font-medium">
                 {columns[0].render ? columns[0].render(row) : String((row as Record<string, unknown>)[columns[0].key] ?? "")}
@@ -92,7 +92,7 @@ export function DataTable<T>({
           ))}
       </div>
 
-      <div className="hidden max-h-[70vh] overflow-auto rounded-md border border-line bg-card shadow-sm md:block">
+      <div className="hidden max-h-[70vh] overflow-auto card-surface md:block">
         <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_var(--color-neutral-200)]">
             <tr>

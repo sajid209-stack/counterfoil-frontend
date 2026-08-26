@@ -29,7 +29,7 @@ const PROVIDER_NOUNS = ["Therapist", "Instructor", "Stylist", "Coach", "Guide", 
 
 function Option({ title, helper, onClick }: { title: string; helper: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex w-full flex-col items-start gap-inline rounded-md border border-line bg-card p-section text-left transition-all duration-quick hover:border-ember/40 hover:shadow-sm active:bg-ember/5">
+    <button type="button" onClick={onClick} className="flex w-full flex-col items-start gap-inline card-surface p-section text-left transition-all duration-quick hover:border-ember/40 hover:shadow-sm active:bg-ember/5">
       <span className="text-sm font-medium">{title}</span>
       <span className="text-[13px] text-faint">{helper}</span>
     </button>
@@ -85,7 +85,7 @@ export function BookingSetup({
 
   if (value) {
     return (
-      <div className="rounded-md border border-line bg-card p-major">
+      <div className="card-surface p-major">
         <div className="flex items-start justify-between gap-section">
           <p className="type-body text-sm">{value.summary}</p>
           <button type="button" onClick={() => { setStep("q1"); onChange(null); }} className="flex shrink-0 items-center gap-inline text-[13px] text-ember hover:underline">

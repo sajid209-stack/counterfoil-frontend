@@ -5,7 +5,7 @@ export const metadata = { title: "Sign in · Counterfoil" };
 // Placeholder sign-in shell — static; wired to the auth flow in a later phase.
 export default function SignInPage() {
   return (
-    <div className="rounded-md border border-line bg-card p-major">
+    <div className="card-surface p-major">
       <p className="type-label text-[13px] text-ember">Counterfoil</p>
       <h1 className="type-h1 mt-inline text-2xl">Sign in</h1>
 

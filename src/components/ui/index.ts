@@ -1,4 +1,5 @@
 export { Button } from "./Button";
+export { Card } from "./Card";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./Button";
 export { StatusPill, statusTone } from "./StatusPill";
 export type { PillTone } from "./StatusPill";

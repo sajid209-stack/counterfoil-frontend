@@ -237,7 +237,7 @@ function SalesReportInner() {
     }
   };
 
-  const card = "rounded-md border border-line bg-card p-section";
+  const card = "card-surface p-section";
   const chartSkeleton = <div className="h-36 animate-pulse rounded-sm bg-line/50" aria-busy="true" />;
   const emptyChart = <p className="flex h-36 items-center justify-center text-[13px] text-faint">{t("nothingInRange")}</p>;
   const hasData = (pts?: { value: number }[]) => (pts ?? []).some((p) => p.value > 0);
@@ -249,7 +249,7 @@ function SalesReportInner() {
       actions={<Button variant="secondary" icon={<Download size={16} strokeWidth={1.5} />} onClick={exportCsv}>{t("exportCsv")}</Button>}
     >
       {/* The shared filter bar — one scope across all three tabs. */}
-      <div className="mb-section rounded-md border border-line bg-card p-comfortable">
+      <div className="mb-section card-surface p-comfortable">
         <div className="flex flex-wrap items-center gap-tight">
           {PRESETS.map((p) => (
             <button key={p.value} type="button" onClick={() => setPreset(p.value)} className={`h-9 rounded-sm border px-tight text-[13px] ${filters.preset === p.value ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{t(`presets.${p.value}`)}</button>
@@ -298,7 +298,7 @@ function SalesReportInner() {
       />
 
       {tab === "transactions" && (
-        <div className="overflow-x-auto rounded-md border border-line bg-card">
+        <div className="overflow-x-auto card-surface">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-line">
@@ -359,7 +359,7 @@ function SalesReportInner() {
               onChange={(v) => setGroupBy(v as SalesGroupBy)}
               className="mb-section"
             />
-            <div className="overflow-x-auto rounded-md border border-line bg-card">
+            <div className="overflow-x-auto card-surface">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-line">{[t("columns.name"), t("columns.tickets"), t("columns.gross"), t("columns.refunds"), t("columns.net"), t("columns.shareOfTotal")].map((h, i) => <th key={h} className={`type-label px-comfortable py-tight text-[11px] uppercase tracking-wide text-muted ${i === 0 ? "text-left" : "text-right"}`}>{h}</th>)}</tr></thead>
                 <tbody>

@@ -79,7 +79,7 @@ export default function BusinessSetupPage() {
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : (
         <div className="flex max-w-2xl flex-col gap-section pb-hero">
-          <div className="rounded-md border border-line bg-card p-major">
+          <div className="card-surface p-major">
             <h2 className="type-h2 mb-section text-base">{t("business.identity")}</h2>
             <div className="grid gap-section sm:grid-cols-2">
               <FormField label={t("business.businessName")} value={state.name} onChange={(e) => set("name", e.target.value)} className="sm:col-span-2" />
@@ -92,7 +92,7 @@ export default function BusinessSetupPage() {
             </div>
           </div>
 
-          <div className="rounded-md border border-line bg-card p-major">
+          <div className="card-surface p-major">
             <h2 className="type-h2 mb-section text-base">{t("business.regional")}</h2>
             <div className="grid gap-section sm:grid-cols-3">
               <FormField
@@ -113,7 +113,7 @@ export default function BusinessSetupPage() {
             </div>
           </div>
 
-          <div className="rounded-md border border-line bg-card p-major">
+          <div className="card-surface p-major">
             <h2 className="type-h2 mb-section text-base">{t("business.smsSection")}</h2>
             <FormField
               label={t("business.smsTemplate")}
@@ -134,7 +134,7 @@ export default function BusinessSetupPage() {
             </p>
           </div>
 
-          <div className="rounded-md border border-line bg-card p-major">
+          <div className="card-surface p-major">
             <h2 className="type-h2 mb-section text-base">{t("business.appearance")}</h2>
             <AppearancePicker className="max-w-sm" />
             <div className="mt-major">

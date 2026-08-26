@@ -183,7 +183,7 @@ export function ProductWizard({
         ))}
       </ol>
 
-      <div className="rounded-md border border-line bg-card p-major">
+      <div className="card-surface p-major">
         {step === 0 && (
           <div className="grid gap-section sm:grid-cols-2">
             <FormField label="Name" required placeholder="Fort General Admission" value={name} onChange={(e) => setName(e.target.value)} className="sm:col-span-2" />

@@ -31,7 +31,7 @@ export default function SecurityPage() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
 
-  const card = "rounded-md border border-line bg-card p-major";
+  const card = "card-surface p-major";
 
   const makeCodes = () => {
     setCodes(genCodes());

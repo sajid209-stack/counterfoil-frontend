@@ -208,7 +208,7 @@ export default function CheckInPage() {
             const [pid, iso] = key.split("|");
             const isOpen = open[key];
             return (
-              <div key={key} className="rounded-md border border-line bg-card">
+              <div key={key} className="card-surface">
                 <button type="button" onClick={() => setOpen((o) => ({ ...o, [key]: !o[key] }))} className="flex w-full items-center gap-section p-comfortable text-left">
                   {isOpen ? <ChevronDown size={16} strokeWidth={1.5} /> : <ChevronRight size={16} strokeWidth={1.5} />}
                   <span className="w-14 font-mono text-sm">{time(iso)}</span>

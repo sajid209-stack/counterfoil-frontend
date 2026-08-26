@@ -10,7 +10,7 @@ export default function SignUpPage() {
   const [phase, setPhase] = useState<"form" | "verify">("form");
 
   return (
-    <div className="rounded-md border border-line bg-card p-major">
+    <div className="card-surface p-major">
       <p className="type-label text-[13px] text-ember">Counterfoil</p>
 
       {phase === "form" ? (

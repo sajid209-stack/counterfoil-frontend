@@ -96,7 +96,7 @@ export function ResourceForm({
 
   return (
     <div className="flex flex-col gap-section pb-hero">
-      <div className="rounded-md border border-line bg-card p-major">
+      <div className="card-surface p-major">
         <h2 className="type-h2 mb-section text-base">{t("common.details")}</h2>
         <div className="grid gap-section sm:grid-cols-2">
           <FormField label={t("common.name")} required placeholder={t("resources.namePlaceholder")} value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} />
@@ -113,7 +113,7 @@ export function ResourceForm({
         </div>
       </div>
 
-      <div className="rounded-md border border-line bg-card p-major">
+      <div className="card-surface p-major">
         <h2 className="type-h2 mb-section text-base">{t("resources.rate")}</h2>
         <div className="grid gap-section sm:grid-cols-2">
           <FormField
@@ -134,7 +134,7 @@ export function ResourceForm({
         </div>
       </div>
 
-      <div className="rounded-md border border-line bg-card p-major">
+      <div className="card-surface p-major">
         <h2 className="type-h2 mb-section text-base">{t("resources.outOfServiceSection")}</h2>
         <FormField
           label={t("resources.takeOutOfService", { noun: state.nounSingular.toLowerCase() })}

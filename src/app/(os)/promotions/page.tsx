@@ -58,7 +58,7 @@ export default function PromotionsPage() {
     >
       <div className="flex flex-col gap-major">
         {/* Cashier discount policy */}
-        <section className="rounded-md border border-line bg-card p-major">
+        <section className="card-surface p-major">
           <h2 className="type-h2 text-base">{t("policy.title")}</h2>
           <p className="mb-section text-[13px] text-faint">{t("policy.description")}</p>
           {policy && (

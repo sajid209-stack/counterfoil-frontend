@@ -79,7 +79,7 @@ export default function MoneySetupPage() {
           <h2 className="type-h2 mb-inline text-base">{t("accounts.title")}</h2>
           <p className="mb-section text-[13px] text-faint">{t("accounts.description")}</p>
 
-          <div className="overflow-hidden rounded-md border border-line bg-card">
+          <div className="overflow-hidden card-surface">
             {/* Cash — always on, no account */}
             <div className="flex items-center gap-section border-b border-line p-section">
               <Wallet size={20} strokeWidth={1.5} className="shrink-0 text-faint" />
@@ -130,7 +130,7 @@ export default function MoneySetupPage() {
         </section>
 
         {/* ── Tax ──────────────────────────────────────────────────────── */}
-        <section className="rounded-md border border-line bg-card p-major">
+        <section className="card-surface p-major">
           <h2 className="type-h2 mb-section text-base">{t("tax.title")}</h2>
           {tax && (
             <div className="grid gap-section sm:grid-cols-2">
