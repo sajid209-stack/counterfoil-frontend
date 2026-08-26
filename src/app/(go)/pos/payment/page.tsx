@@ -1,105 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button, useToast } from "@/components/ui";
-import { checkout, type CheckoutBooking, type CheckoutLine } from "@/lib/api";
-import { formatMoney } from "@/lib/format";
-import { Keypad } from "../../_components/Keypad";
 
-interface Cart {
-  total: number;
-  dueNow?: number; // deposit orders collect less than the total now
-  balance?: number;
-  taxPct: number;
-  locationId: string;
-  lines: CheckoutLine[];
-  orderDiscount?: number;
-  bookings?: CheckoutBooking[];
-  credits?: { ticketId: string; count: number } | null;
-  customerName?: string | null;
-  receipt?: unknown; // line detail for the complete-screen receipt
-}
-
-export default function PaymentPage() {
+// Cash tender now happens inline on /pos (no page navigation). This route is
+// kept only so any old deep link lands somewhere sane — it bounces to the till.
+export default function PaymentRedirect() {
   const router = useRouter();
-  const toast = useToast();
-  const [cart, setCart] = useState<Cart | null>(null);
-  const [tenderTaka, setTenderTaka] = useState("");
-  const [saving, setSaving] = useState(false);
-
   useEffect(() => {
-    const raw = sessionStorage.getItem("pos_cart");
-    if (raw) setCart(JSON.parse(raw));
-    else router.replace("/pos");
+    router.replace("/pos");
   }, [router]);
-
-  const total = cart?.dueNow ?? cart?.total ?? 0;
-  const balance = cart?.balance ?? 0;
-  const tenderedMinor = (parseInt(tenderTaka || "0", 10) || 0) * 100;
-  const change = tenderedMinor - total;
-  const enough = tenderedMinor >= total;
-
-  const complete = async () => {
-    if (!cart) return;
-    setSaving(true);
-    const res = await checkout({
-      channel: "counter",
-      locationId: cart.locationId,
-      counterId: null,
-      staffId: null,
-      lines: cart.lines,
-      orderDiscount: cart.orderDiscount ?? 0,
-      bookings: cart.bookings,
-      taxPct: cart.taxPct,
-      method: "cash",
-      amountTendered: tenderedMinor,
-      payNow: total,
-      credits: cart.credits ?? null,
-      customerName: cart.customerName ?? null,
-    });
-    setSaving(false);
-    if (res.ok) {
-      sessionStorage.setItem("pos_complete", JSON.stringify({ code: res.data.firstTicketCode, change, balance, receipt: cart.receipt, payments: [{ method: "cash", amount: total, tendered: tenderedMinor, change }] }));
-      sessionStorage.removeItem("pos_cart");
-      router.push("/pos/complete");
-    } else {
-      toast.error(res.error.message);
-    }
-  };
-
-  return (
-    <main className="mx-auto grid max-w-3xl grid-cols-1 gap-major px-section py-section lg:grid-cols-2">
-      <div className="flex flex-col gap-section">
-        <div>
-          <p className="type-label text-[13px] text-ember">Payment</p>
-          <h1 className="type-h1 mt-tight text-2xl">Cash</h1>
-        </div>
-        <div className="rounded-sm border border-line bg-card p-section">
-          <div className="flex justify-between text-muted"><span>{balance > 0 ? "Deposit due now" : "Amount due"}</span><span className="font-mono text-lg">{formatMoney(total)}</span></div>
-          {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-faint"><span>Balance at arrival</span><span className="font-mono">{formatMoney(balance)}</span></div>}
-          <div className="mt-tight flex justify-between"><span>Tendered</span><span className="font-mono text-lg">{formatMoney(tenderedMinor)}</span></div>
-          <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-faint"}`}>
-            <span className="text-xl">Change</span>
-            {/* Display size — the number the staff member reads aloud. */}
-            <span className="font-mono text-5xl tabular-nums">{enough ? formatMoney(change) : "—"}</span>
-          </div>
-        </div>
-        {/* Quick chips: exact, then the notes actually in the till drawer. */}
-        <div className="flex gap-tight">
-          <button type="button" onClick={() => setTenderTaka(String(Math.ceil(total / 100)))} className="h-12 flex-1 rounded-sm border border-inverse bg-card font-mono text-sm active:bg-ember/10">Exact</button>
-          {[500, 1000, 2000].map((amt) => (
-            <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-line bg-card font-mono text-sm active:bg-ember/10">
-              ৳{amt}
-            </button>
-          ))}
-        </div>
-        <Button size="lg" fullWidth disabled={!enough} loading={saving} onClick={complete}>Complete sale</Button>
-      </div>
-
-      <div>
-        <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
-      </div>
-    </main>
-  );
+  return null;
 }

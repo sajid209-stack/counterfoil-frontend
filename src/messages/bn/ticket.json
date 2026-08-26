@@ -1,0 +1,15 @@
+{
+  "ticketsTitle": "টিকিট",
+  "receiptTitle": "রসিদ",
+  "referenceLabel": "বুকিং রেফারেন্স",
+  "gateHint": "গেটে দেখান · চেক ইনের জন্য স্ক্যান করুন",
+  "admits": "{count} জন প্রবেশ",
+  "print": "প্রিন্ট",
+  "printTickets": "টিকিট প্রিন্ট করুন",
+  "printReceipt": "রসিদ প্রিন্ট করুন",
+  "reprintTickets": "টিকিট পুনরায় প্রিন্ট",
+  "back": "পেছনে",
+  "noTickets": "এই অর্ডারের জন্য কোনো টিকিট নেই।",
+  "seat": "সিট {label}",
+  "poweredBy": "Counterfoil দ্বারা পরিচালিত"
+}

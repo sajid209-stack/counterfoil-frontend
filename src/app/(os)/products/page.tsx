@@ -8,11 +8,13 @@ import {
   DataTable,
   EmptyState,
   PageShell,
+  ProductThumb,
   StatusPill,
   type Column,
 } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { listCategories, listProducts, type Product } from "@/lib/api";
+import { listCategories, listProducts, listResources, listStaff, type Product } from "@/lib/api";
+import { behaviourSubtitle } from "@/lib/behaviour";
 import { formatDate, formatMoney } from "@/lib/format";
 
 const STATUS_OPTIONS = [
@@ -43,6 +45,9 @@ export default function ProductsPage() {
 
   const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
   const categories = categoriesQ.data?.data ?? [];
+  // For the derived behaviour subtitle (never show raw BT codes in the UI).
+  const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
+  const teamQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
   const categoryName = (id: string | null) =>
     id ? (categories.find((c) => c.id === id)?.name ?? "—") : "—";
 
@@ -65,9 +70,12 @@ export default function ProductsPage() {
       header: "Name",
       sortable: true,
       render: (p) => (
-        <div>
-          <div className="font-medium text-fg">{p.name}</div>
-          <div className="font-mono text-[11px] text-faint">{p.bookingType}</div>
+        <div className="flex items-center gap-tight">
+          <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="chip" />
+          <div className="min-w-0">
+            <div className="truncate font-medium text-fg">{p.name}</div>
+            <div className="truncate text-[11px] text-faint">{behaviourSubtitle(p, { resources: resourcesQ.data?.data ?? [], team: teamQ.data?.data ?? [] })}</div>
+          </div>
         </div>
       ),
     },
@@ -104,12 +112,17 @@ export default function ProductsPage() {
       title="Products"
       description="Everything you sell — admission, tours, events, add-ons."
       actions={
-        <Button
-          icon={<Plus size={16} strokeWidth={1.5} />}
-          onClick={() => router.push("/products/new")}
-        >
-          New product
-        </Button>
+        <div className="flex gap-tight">
+          <Button variant="secondary" onClick={() => router.push("/products/layouts")}>
+            Seat layouts
+          </Button>
+          <Button
+            icon={<Plus size={16} strokeWidth={1.5} />}
+            onClick={() => router.push("/products/new")}
+          >
+            New product
+          </Button>
+        </div>
       }
     >
       <DataTable

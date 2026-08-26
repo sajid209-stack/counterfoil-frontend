@@ -1,0 +1,44 @@
+{
+  "list": {
+    "title": "Seat layouts",
+    "description": "Halls and rooms with assigned seats you can sell.",
+    "new": "New layout",
+    "seats": "seats",
+    "empty": "No seat layouts yet.",
+    "created": "Layout created."
+  },
+  "editor": {
+    "backToList": "Seat layouts",
+    "name": "Layout name",
+    "rows": "Rows",
+    "seatsPerRow": "Seats per row",
+    "buffer": "Buffer after (min)",
+    "regenerate": "Regenerate grid",
+    "regenerateWarning": "Regenerating replaces all seats and clears category assignments.",
+    "categoriesTitle": "Categories",
+    "addCategory": "Add category",
+    "catName": "Name",
+    "catColor": "Colour",
+    "catPrice": "Price",
+    "catGa": "General admission",
+    "removeCategory": "Remove",
+    "gridTitle": "Seats",
+    "gridHelp": "Pick a tool, then tap seats. Assign a category to make a seat sellable; Block takes it out of sale; Clear makes it not-for-sale (aisle/gap).",
+    "toolAssign": "Assign",
+    "toolBlock": "Block",
+    "toolClear": "Clear",
+    "screen": "SCREEN",
+    "legendBlocked": "Blocked",
+    "legendNotForSale": "Not for sale",
+    "save": "Save layout",
+    "saved": "Layout saved.",
+    "seatsForSale": "{count} seats for sale"
+  },
+  "picker": {
+    "title": "Choose seats",
+    "sold": "Sold",
+    "selected": "{count} selected",
+    "tapToChoose": "Tap seats to choose",
+    "screen": "SCREEN"
+  }
+}

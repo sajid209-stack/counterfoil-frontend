@@ -16,7 +16,9 @@ import type {
   ApiResult,
   ListParams,
   ListResponse,
+  ManualDiscountPolicy,
   Operator,
+  TaxConfig,
 } from "./types";
 
 // ── latency + result helpers ───────────────────────────────────────────────
@@ -59,6 +61,10 @@ const store: Record<string, Row[]> = {
   orders: structuredClone(seed.orders),
   tickets: structuredClone(seed.tickets),
   bookings: structuredClone(seed.bookings),
+  paymentAccounts: structuredClone(seed.paymentAccounts),
+  seatLayouts: structuredClone(seed.seatLayouts),
+  promotions: structuredClone(seed.promotions),
+  coupons: structuredClone(seed.coupons),
 };
 
 // ── Operator + demo-business switching ──────────────────────────────────────
@@ -67,6 +73,22 @@ export const getOperatorState = (): Operator => operatorState;
 export function patchOperatorState(patch: Partial<Operator>): Operator {
   operatorState = { ...operatorState, ...patch, updatedAt: new Date().toISOString() };
   return operatorState;
+}
+
+// Tax config is a singleton (per settings.v2 tax-config), not a collection.
+let taxConfigState: TaxConfig = structuredClone(seed.taxConfig);
+export const getTaxConfigState = (): TaxConfig => taxConfigState;
+export function patchTaxConfigState(patch: Partial<TaxConfig>): TaxConfig {
+  taxConfigState = { ...taxConfigState, ...patch };
+  return taxConfigState;
+}
+
+// Manual-discount policy is a singleton (per-location in the backend).
+let manualDiscountPolicyState: ManualDiscountPolicy = structuredClone(seed.manualDiscountPolicy);
+export const getManualDiscountPolicyState = (): ManualDiscountPolicy => manualDiscountPolicyState;
+export function patchManualDiscountPolicyState(patch: Partial<ManualDiscountPolicy>): ManualDiscountPolicy {
+  manualDiscountPolicyState = { ...manualDiscountPolicyState, ...patch };
+  return manualDiscountPolicyState;
 }
 
 /** Swap the whole mock to a demo business: its operator, its products, and a
@@ -89,7 +111,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
 /** Empty the operator's data for the golden path ("Start fresh"). */
 export function startFresh(): void {
   operatorState = { ...structuredClone(seed.operator), name: "" };
-  for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources"]) {
+  for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts"]) {
     (store as Record<string, unknown[]>)[k] = [];
   }
 }

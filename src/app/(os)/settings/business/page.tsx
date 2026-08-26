@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button, FormField, PageShell, useToast } from "@/components/ui";
 import { AppearancePicker } from "@/components/ThemeProvider";
+import { LanguagePicker } from "@/components/LocaleProvider";
 import { getOperator, updateOperator, type Operator } from "@/lib/api";
 import { DEFAULT_SMS_TEMPLATE, SMS_PLACEHOLDERS, renderSms } from "@/lib/sms";
 
@@ -26,6 +28,7 @@ const fromOperator = (o: Operator): FormState => ({
 });
 
 export default function BusinessSetupPage() {
+  const t = useTranslations("settings");
   const toast = useToast();
   const [state, setState] = useState<FormState | null>(null);
   const [initial, setInitial] = useState<FormState | null>(null);
@@ -64,82 +67,85 @@ export default function BusinessSetupPage() {
       const s = fromOperator(res.data);
       setState(s);
       setInitial(s);
-      toast.success("Business settings saved.");
+      toast.success(t("business.saved"));
     } else {
       toast.error(res.error.message);
     }
   };
 
   return (
-    <PageShell title="Business setup" description="Operator identity, currency, timezone, and tax.">
+    <PageShell title={t("business.title")} description={t("business.description")}>
       {!state ? (
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : (
         <div className="flex max-w-2xl flex-col gap-section pb-hero">
           <div className="rounded-md border border-line bg-card p-major">
-            <h2 className="type-h2 mb-section text-base">Identity</h2>
+            <h2 className="type-h2 mb-section text-base">{t("business.identity")}</h2>
             <div className="grid gap-section sm:grid-cols-2">
-              <FormField label="Business name" value={state.name} onChange={(e) => set("name", e.target.value)} className="sm:col-span-2" />
+              <FormField label={t("business.businessName")} value={state.name} onChange={(e) => set("name", e.target.value)} className="sm:col-span-2" />
               <div className="flex flex-col gap-tight">
-                <span className="type-label text-[12px] text-muted">Logo</span>
+                <span className="type-label text-[12px] text-muted">{t("business.logo")}</span>
                 <div className="flex h-20 items-center justify-center rounded-sm border border-dashed border-line text-[12px] text-faint">
-                  Two-colour logo — upload is a follow-up
+                  {t("business.logoHint")}
                 </div>
               </div>
             </div>
           </div>
 
           <div className="rounded-md border border-line bg-card p-major">
-            <h2 className="type-h2 mb-section text-base">Regional</h2>
+            <h2 className="type-h2 mb-section text-base">{t("business.regional")}</h2>
             <div className="grid gap-section sm:grid-cols-3">
               <FormField
-                label="Currency"
+                label={t("business.currency")}
                 variant="select"
                 value={state.currency}
                 onChange={(e) => set("currency", e.target.value)}
                 options={CURRENCIES.map((c) => ({ value: c, label: c }))}
               />
               <FormField
-                label="Timezone"
+                label={t("common.timezone")}
                 variant="select"
                 value={state.defaultTimezone}
                 onChange={(e) => set("defaultTimezone", e.target.value)}
-                options={TIMEZONES.map((t) => ({ value: t, label: t }))}
+                options={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
               />
-              <FormField label="Tax rate (%)" variant="number" value={state.taxRatePct} onChange={(e) => set("taxRatePct", e.target.value)} />
+              <FormField label={t("business.taxRate")} variant="number" value={state.taxRatePct} onChange={(e) => set("taxRatePct", e.target.value)} />
             </div>
           </div>
 
           <div className="rounded-md border border-line bg-card p-major">
-            <h2 className="type-h2 mb-section text-base">Ticket SMS</h2>
+            <h2 className="type-h2 mb-section text-base">{t("business.smsSection")}</h2>
             <FormField
-              label="Message template"
+              label={t("business.smsTemplate")}
               variant="textarea"
               rows={3}
               value={state.smsTemplate}
               onChange={(e) => set("smsTemplate", e.target.value)}
-              help="Sent when staff choose SMS after a sale."
+              help={t("business.smsHelp")}
             />
             <div className="mt-tight flex flex-wrap gap-tight text-[12px] text-muted">
               {SMS_PLACEHOLDERS.map((p) => (
                 <span key={p.key} className="rounded-xs border border-line bg-subtle px-tight py-inline font-mono text-[11px]">{p.key} <span className="font-sans text-faint">= {p.means}</span></span>
               ))}
             </div>
-            <p className="mt-section text-[12px] text-faint">Preview:</p>
+            <p className="mt-section text-[12px] text-faint">{t("business.preview")}</p>
             <p className="mt-inline rounded-sm border border-line bg-subtle p-comfortable text-[13px]">
               {renderSms(state.smsTemplate, { business: state.name, code: "CF-2026-000123-01", date: "2026-07-29" })}
             </p>
           </div>
 
           <div className="rounded-md border border-line bg-card p-major">
-            <h2 className="type-h2 mb-section text-base">Appearance</h2>
+            <h2 className="type-h2 mb-section text-base">{t("business.appearance")}</h2>
             <AppearancePicker className="max-w-sm" />
-            <p className="mt-tight text-[12px] text-faint">Per user, on this browser. Scan screens and printed tickets keep their designed look in both modes.</p>
+            <div className="mt-major">
+              <LanguagePicker className="max-w-sm" />
+            </div>
+            <p className="mt-tight text-[12px] text-faint">{t("business.appearanceNote")}</p>
           </div>
 
           <div className="sticky bottom-0 max-md:bottom-[calc(56px+env(safe-area-inset-bottom))] flex items-center justify-end gap-tight border-t border-line bg-surface py-section">
             <Button onClick={save} loading={saving} disabled={!dirty}>
-              Save changes
+              {t("common.saveChanges")}
             </Button>
           </div>
         </div>

@@ -1,0 +1,15 @@
+{
+  "ticketsTitle": "Tickets",
+  "receiptTitle": "Receipt",
+  "referenceLabel": "Booking reference",
+  "gateHint": "Present at the gate · scan to check in",
+  "admits": "Admits {count}",
+  "print": "Print",
+  "printTickets": "Print tickets",
+  "printReceipt": "Print receipt",
+  "reprintTickets": "Reprint tickets",
+  "back": "Back",
+  "noTickets": "No tickets for this order.",
+  "seat": "Seat {label}",
+  "poweredBy": "Powered by Counterfoil"
+}

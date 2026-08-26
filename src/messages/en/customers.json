@@ -1,0 +1,11 @@
+{
+  "title": "Customers",
+  "description": "Everyone a sale has been attached to. Capture happens at the counter.",
+  "colCustomer": "Customer",
+  "colBookings": "Bookings",
+  "colSpent": "Spent",
+  "colLastVisit": "Last visit",
+  "searchPlaceholder": "Search customers…",
+  "emptyTitle": "No customers yet",
+  "emptyMessage": "Attach a customer to a sale at the counter and they appear here."
+}

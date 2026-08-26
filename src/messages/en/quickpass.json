@@ -1,0 +1,13 @@
+{
+  "identifierFallback": "Identifier",
+  "passFallback": "Pass",
+  "passIssuedTitle": "Pass issued",
+  "issueAnother": "Issue another",
+  "gateLabel": "Gate",
+  "title": "Quick pass",
+  "subtitle": "Issue a timed pass on the spot.",
+  "duration": "Duration",
+  "priceLabel": "Price (৳)",
+  "priceHelp": "From the pass configuration — edit to override.",
+  "issuePass": "Issue pass · {amount}"
+}

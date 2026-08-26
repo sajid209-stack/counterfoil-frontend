@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import { useEnumLabels } from "@/lib/labels";
 
 export type PillTone = "success" | "warning" | "danger" | "info" | "neutral";
 
@@ -7,7 +8,7 @@ const TONES: Record<PillTone, string> = {
   warning: "bg-warning/10 text-warning",
   danger: "bg-danger/10 text-danger",
   info: "bg-info/10 text-info",
-  neutral: "bg-line text-neutral-800",
+  neutral: "bg-subtle text-muted",
 };
 
 const DOTS: Record<PillTone, string> = {
@@ -15,7 +16,7 @@ const DOTS: Record<PillTone, string> = {
   warning: "bg-warning",
   danger: "bg-danger",
   info: "bg-info",
-  neutral: "bg-neutral-600",
+  neutral: "bg-muted",
 };
 
 /** Map a domain status string to a tone. Colour never carries meaning alone —
@@ -58,8 +59,9 @@ export function StatusPill({
   status?: string;
   className?: string;
 }) {
+  const { status: statusLabel } = useEnumLabels();
   const resolvedTone = tone ?? (status ? statusTone(status) : "neutral");
-  const label = children ?? status ?? "";
+  const label = children ?? (status ? statusLabel(status) : "");
   return (
     <span
       className={cn(

@@ -10,12 +10,19 @@ import type {
   Counter,
   Device,
   Location,
+  Coupon,
+  LayoutSeat,
+  ManualDiscountPolicy,
   Operator,
+  PaymentAccount,
   PriceRule,
   Product,
+  Promotion,
   Resource,
   Role,
+  SeatLayout,
   Staff,
+  TaxConfig,
 } from "@/lib/api/types";
 import { generateSales } from "./generate";
 import { buildOrderLines } from "@/lib/orderMath";
@@ -32,6 +39,101 @@ export const operator: Operator = {
   reducedRatePct: 7.5,
   createdAt: T,
   updatedAt: T,
+};
+
+// Money setup (M1): one live bKash merchant-of-record account + tax config.
+export const paymentAccounts: PaymentAccount[] = [
+  {
+    id: "pacct_bkash",
+    locationId: null,
+    provider: "bkash",
+    posture: "merchant_of_record",
+    status: "active",
+    chargesEnabled: true,
+    payoutsEnabled: true,
+    requirementsDue: [],
+    country: "BD",
+    defaultCurrency: "BDT",
+    providerAccountRef: "bka_live_8842",
+    createdAt: T,
+    updatedAt: T,
+  },
+];
+
+export const taxConfig: TaxConfig = {
+  mode: "exclusive",
+  rateBasisPoints: 1500, // 15% VAT
+  taxName: "VAT",
+  registrationNumber: "BIN-000123456-0201",
+};
+
+// Seat maps (M1): a cinema hall — 8 rows × 12, Stalls (A–F) + Balcony (G–H),
+// a few seats pre-sold so the POS picker shows real unavailability.
+function buildCinemaSeats(): LayoutSeat[] {
+  const rows = 8, per = 12;
+  const sold = new Set(["A5", "A6", "D7", "D8", "G1", "G2"]);
+  const seats: LayoutSeat[] = [];
+  let order = 0;
+  for (let r = 0; r < rows; r++) {
+    const label = String.fromCharCode(65 + r);
+    const catId = r < 6 ? "cat_stalls" : "cat_balcony";
+    for (let c = 0; c < per; c++) {
+      const name = `${label}${c + 1}`;
+      seats.push({
+        id: `seat_${name}`, name, posX: c, posY: r, seatRow: label, seatNumber: c + 1,
+        seatCategoryId: catId, isAvailable: !sold.has(name), capacity: 1,
+        shape: "square", width: 1, height: 1, rotation: 0, assignOrder: order++,
+      });
+    }
+  }
+  return seats;
+}
+
+export const seatLayouts: SeatLayout[] = [
+  {
+    id: "layout_cinema",
+    locationId: null,
+    name: "Main Hall",
+    rows: 8,
+    seatsPerRow: 12,
+    rowLabels: ["A", "B", "C", "D", "E", "F", "G", "H"],
+    bufferAfterMinutes: 15,
+    seatCount: 96,
+    categories: [
+      { uid: "cat_stalls", name: "Stalls", color: "#F94A00", price: 40000, pricingMode: "fixed", isGeneralAdmission: false },
+      { uid: "cat_balcony", name: "Balcony", color: "#2563EB", price: 70000, pricingMode: "fixed", isGeneralAdmission: false },
+    ],
+    seats: buildCinemaSeats(),
+    createdAt: T,
+    updatedAt: T,
+  },
+];
+
+// Promotions (M1): a coupon %-off, an automatic BXGY, and the cashier policy.
+export const promotions: Promotion[] = [
+  {
+    id: "promo_welcome", locationId: null, name: "Welcome 10%", kind: "percentage_off", source: "coupon",
+    percentBps: 1000, maxDiscountAmount: 50000,
+    eligibility: { channels: ["counter", "online"], minSubtotal: 20000 },
+    stacking: { stackable: true, exclusive: false },
+    maxUsesTotal: 500, maxUsesPerCustomer: 1, status: "active", createdAt: T, updatedAt: T,
+  },
+  {
+    id: "promo_bxgy", locationId: null, name: "Buy 3 tours, 4th half price", kind: "buy_x_get_y", source: "automatic",
+    buyXGetY: { buyQuantity: 3, getQuantity: 1, getDiscountBps: 5000 },
+    eligibility: { channels: ["counter", "online"], eligibleCategories: ["cat_tours"] },
+    stacking: { stackable: false, exclusive: true }, status: "active", createdAt: T, updatedAt: T,
+  },
+];
+
+export const coupons: Coupon[] = [
+  { id: "cpn_welcome", promotionId: "promo_welcome", code: "WELCOME10", status: "active", maxUsesTotal: 500, maxUsesPerCustomer: 1, createdAt: T, updatedAt: T },
+];
+
+export const manualDiscountPolicy: ManualDiscountPolicy = {
+  locationId: null,
+  maxPercentBps: 1000, // cashiers can give up to 10% ad-hoc
+  requireReason: true,
 };
 
 export const categories: Category[] = [
@@ -96,7 +198,7 @@ export const products: Product[] = [
     id: "prd_admission",
     name: "General Admission",
     description: "Same-day entry to the grounds. Come any time we're open.",
-    images: [],
+    images: [{ id: "img_admission", url: "/seed/admission.jpg", alt: "Lalbagh Fort heritage grounds" }],
     categoryId: "cat_entry",
     bookingType: "BT-01",
     tiers: [
@@ -119,7 +221,7 @@ export const products: Product[] = [
     id: "prd_winter",
     name: "Winter Exhibition Pass",
     description: "Valid any day from 1 December to 28 February. Pick a date.",
-    images: [],
+    images: [{ id: "img_winter", url: "/seed/winter.jpg", alt: "Winter exhibition gallery" }],
     categoryId: "cat_events",
     bookingType: "BT-02",
     tiers: [
@@ -143,7 +245,7 @@ export const products: Product[] = [
     id: "prd_planetarium",
     name: "Planetarium Show",
     description: "A 45-minute show. Pick a start time.",
-    images: [],
+    images: [{ id: "img_planetarium", url: "/seed/planetarium.jpg", alt: "Planetarium dome show" }],
     categoryId: "cat_events",
     bookingType: "BT-03",
     tiers: [
@@ -173,7 +275,7 @@ export const products: Product[] = [
     id: "prd_garden",
     name: "Sculpture Garden",
     description: "Open daily. Capped so it never gets crowded.",
-    images: [],
+    images: [{ id: "img_garden", url: "/seed/garden.jpg", alt: "Sculpture garden" }],
     categoryId: "cat_entry",
     bookingType: "BT-06",
     tiers: [{ id: "tier_g_flat", name: "Entry", price: 35000, active: true }],
@@ -199,7 +301,7 @@ export const products: Product[] = [
     id: "prd_tour",
     name: "Heritage Walking Tour",
     description: "A guided walk. Pick a departure — a guide leads each one.",
-    images: [],
+    images: [{ id: "img_tour", url: "/seed/tour.jpg", alt: "Old city heritage street" }],
     categoryId: "cat_tours",
     bookingType: "BT-09",
     tiers: [
@@ -231,7 +333,7 @@ export const products: Product[] = [
     id: "prd_tour2",
     name: "Sculpture Garden Tour",
     description: "A guided garden walk — same guides as the heritage tour, so 10:00 can only run one of them.",
-    images: [],
+    images: [{ id: "img_tour2", url: "/seed/tour2.jpg", alt: "Botanical garden tour" }],
     categoryId: "cat_tours",
     bookingType: "BT-09",
     tiers: [{ id: "tier_t2_all", name: "Ticket", price: 90000, active: true }],
@@ -253,7 +355,7 @@ export const products: Product[] = [
     id: "prd_reentry",
     name: "All-Day Re-entry Pass",
     description: "Come and go all day — the gate re-admits while it's valid.",
-    images: [],
+    images: [{ id: "img_reentry", url: "/seed/reentry.jpg", alt: "Entry gate" }],
     categoryId: "cat_entry",
     bookingType: "BT-01",
     tiers: [{ id: "tier_re", name: "Day pass", price: 80000, active: true }],
@@ -268,7 +370,7 @@ export const products: Product[] = [
     updatedAt: T,
   },
   {
-    id: "prd_football", name: "Football — Turf", description: "Book a field for an hour. A team per slot.", images: [], categoryId: "cat_events", bookingType: "BT-04",
+    id: "prd_football", name: "Football — Turf", description: "Book a field for an hour. A team per slot.", images: [{ id: "img_football", url: "/seed/football.jpg", alt: "Football turf field" }], categoryId: "cat_events", bookingType: "BT-04",
     tiers: [{ id: "tier_fb_slot", name: "Slot", price: 150000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], dayOverrides: { 5: { startTime: "14:00", endTime: "23:00" } }, guideIds: [], exceptions: [] },
@@ -278,7 +380,7 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_cricket", name: "Cricket — Turf", description: "Same fields as football — availability is shared.", images: [], categoryId: "cat_events", bookingType: "BT-04",
+    id: "prd_cricket", name: "Cricket — Turf", description: "Same fields as football — availability is shared.", images: [{ id: "img_cricket", url: "/seed/cricket.jpg", alt: "Cricket pitch" }], categoryId: "cat_events", bookingType: "BT-04",
     tiers: [{ id: "tier_cr_slot", name: "Slot", price: 150000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], dayOverrides: { 5: { startTime: "14:00", endTime: "23:00" } }, guideIds: [], exceptions: [] },
@@ -287,7 +389,7 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_bowling", name: "Bowling Lane", description: "Book a lane by the hour.", images: [], categoryId: "cat_events", bookingType: "BT-05",
+    id: "prd_bowling", name: "Bowling Lane", description: "Book a lane by the hour.", images: [{ id: "img_bowling", url: "/seed/bowling.jpg", alt: "Bowling lanes" }], categoryId: "cat_events", bookingType: "BT-05",
     tiers: [{ id: "tier_bw_hr", name: "Per hour", price: 80000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "10:00", endTime: "22:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
@@ -298,7 +400,7 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_massage", name: "Deep Tissue Massage", description: "Book a therapist for 60 or 90 minutes.", images: [], categoryId: "cat_tours", bookingType: "BT-10",
+    id: "prd_massage", name: "Deep Tissue Massage", description: "Book a therapist for 60 or 90 minutes.", images: [{ id: "img_massage", url: "/seed/massage.jpg", alt: "Massage spa room" }], categoryId: "cat_tours", bookingType: "BT-10",
     tiers: [{ id: "tier_ms_60", name: "60 min", price: 300000, active: true }, { id: "tier_ms_90", name: "90 min", price: 450000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, schedule: null,
     providerIds: ["stf_nadia", "stf_karim"], providerNoun: "Therapist", providerPickable: true, flexibleDurations: [60, 90],
@@ -309,21 +411,22 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_film", name: "Evening Film", description: "Pick your section.", images: [], categoryId: "cat_events", bookingType: "BT-07",
+    id: "prd_film", name: "Evening Film", description: "Pick your section.", images: [{ id: "img_film", url: "/seed/film.jpg", alt: "Cinema hall" }], categoryId: "cat_events", bookingType: "BT-07",
     tiers: [{ id: "tier_flm", name: "Ticket", price: 40000, active: true }],
     sections: [{ id: "sec_stalls", name: "Stalls", capacity: 120, price: 40000 }, { id: "sec_balcony", name: "Balcony", capacity: 40, price: 70000 }],
+    layoutId: "layout_cinema",
     locationIds: ["loc_museum"], channels: ["counter", "online"], status: "active", archivedAt: null,
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_bundle", name: "Day Pass Bundle", description: "Admission + Garden + Planetarium in one ticket.", images: [], categoryId: "cat_entry", bookingType: "BT-08",
+    id: "prd_bundle", name: "Day Pass Bundle", description: "Admission + Garden + Planetarium in one ticket.", images: [{ id: "img_bundle", url: "/seed/bundle.jpg", alt: "Museum day pass" }], categoryId: "cat_entry", bookingType: "BT-08",
     tiers: [{ id: "tier_bn", name: "Bundle", price: 100000, active: true }],
     bundleComponentIds: ["prd_admission", "prd_garden", "prd_planetarium"],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_yoga_pack", name: "10-Class Yoga Pack", description: "Ten credits to spend on yoga sessions.", images: [], categoryId: "cat_entry", bookingType: "BT-12",
+    id: "prd_yoga_pack", name: "10-Class Yoga Pack", description: "Ten credits to spend on yoga sessions.", images: [{ id: "img_yoga_pack", url: "/seed/yoga_pack.jpg", alt: "Yoga class" }], categoryId: "cat_entry", bookingType: "BT-12",
     tiers: [{ id: "tier_yp", name: "Pack", price: 400000, active: true }],
     credits: { count: 10, expiryDays: 90, productIds: ["prd_yoga"] },
     creditsPerBooking: 1,
@@ -331,7 +434,7 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_swim", name: "Beginner Swim Course", description: "Eight sessions, one enrolment.", images: [], categoryId: "cat_tours", bookingType: "BT-13",
+    id: "prd_swim", name: "Beginner Swim Course", description: "Eight sessions, one enrolment.", images: [{ id: "img_swim", url: "/seed/swim.jpg", alt: "Swimming pool" }], categoryId: "cat_tours", bookingType: "BT-13",
     tiers: [{ id: "tier_sw", name: "Course", price: 800000, active: true }],
     courseDates: ["2026-08-04", "2026-08-06", "2026-08-11", "2026-08-13", "2026-08-18", "2026-08-20", "2026-08-25", "2026-08-27"],
     joinPartway: false,
@@ -343,7 +446,7 @@ export const products: Product[] = [
     id: "prd_stress",
     name: "Grand Heritage Architectural Walking Tour of Old Dhaka with Rooftop Iftar Experience",
     description: "The stress-test product: nothing may overflow, collide, or clip.",
-    images: [], categoryId: "cat_tours", bookingType: "BT-03",
+    images: [{ id: "img_stress", url: "/seed/stress.jpg", alt: "Old Dhaka architecture" }], categoryId: "cat_tours", bookingType: "BT-03",
     tiers: [
       { id: "tier_st_adult", name: "Adult", price: 250000, active: true },
       { id: "tier_st_senior", name: "Senior Citizen (65+, valid ID required)", price: 180000, active: true },
@@ -362,10 +465,16 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_yoga", name: "Yoga Session", description: "Drop-in class, capped — join the waitlist when full.", images: [], categoryId: "cat_tours", bookingType: "BT-06",
+    id: "prd_yoga", name: "Yoga Session", description: "Drop-in class, capped — join the waitlist when full.", images: [{ id: "img_yoga", url: "/seed/yoga.jpg", alt: "Yoga session" }], categoryId: "cat_tours", bookingType: "BT-06",
     tiers: [{ id: "tier_yg", name: "Drop-in", price: 50000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, waitlistEnabled: true,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "07:00", endTime: "19:00", capacityPerSession: 0, dailyCapacity: 20, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
+    createdAt: T, updatedAt: T,
+  },
+  {
+    id: "prd_donation", name: "Support the Museum", description: "A voluntary donation — pay what you want.", images: [], categoryId: "cat_entry", bookingType: "BT-01",
+    tiers: [{ id: "tier_donation", name: "Donation", price: 5000, donation: true, admits: 0, active: true }],
+    locationIds: ["loc_fort", "loc_museum"], channels: ["counter", "online"], status: "active", archivedAt: null,
     createdAt: T, updatedAt: T,
   },
 ];

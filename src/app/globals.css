@@ -5,44 +5,122 @@
 @custom-variant rail (@media (min-width: 64rem) and (orientation: landscape));
 
 @theme {
-  /* ── Brand primaries — EXACT from the Counterfoil brand guidelines ────── */
-  --color-ink: #0a0a0a;
-  --color-paper: #f8f7f4;
-  --color-ember: #ff6a1f;
+  /* ══════════════════════════════════════════════════════════════════════
+     COUNTERFOIL COLOR SYSTEM — canonical values from "Counterfoil Color
+     System" (2026-08-22). Relationship-based: primitive tonal scales below,
+     semantic tokens (further down) reference them by role. Changing a
+     primitive cascades through every token that points at it.
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /* ── Primitive: Brand / Primary — hue 18°, derived from #F94A00 ───────── */
+  --color-brand-50:  #fff5ee;
+  --color-brand-100: #ffe6d5;
+  --color-brand-200: #ffc9a8;
+  --color-brand-300: #ffa572;
+  --color-brand-400: #ff7a3d;
+  --color-brand-500: #f94a00;
+  --color-brand-600: #d63d00;
+  --color-brand-700: #aa3000;
+  --color-brand-800: #802500;
+  --color-brand-900: #541900;
+  --color-brand-950: #2d0d00;
+
+  /* ── Primitive: Neutral / Warm Gray — hue 40°, 3% sat ────────────────── */
+  --color-neutral-50:  #f5f2eb;
+  --color-neutral-100: #efece5;
+  --color-neutral-200: #e2ded5;
+  --color-neutral-300: #d1cdc3;
+  --color-neutral-400: #b8b3a8;
+  --color-neutral-500: #969188;
+  --color-neutral-600: #706c65;
+  --color-neutral-700: #514e48;
+  --color-neutral-800: #383632;
+  --color-neutral-900: #22211f;
+  --color-neutral-950: #141413;
+
+  /* ── Primitive: Green (success), Amber (warning), Red (destructive),
+        Blue (info) — full scales so any step is available ──────────────── */
+  --color-green-50:  #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-200: #bbf7d0;
+  --color-green-300: #86efac;
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+  --color-green-800: #166534;
+  --color-green-900: #14532d;
+  --color-green-950: #052e16;
+
+  --color-amber-50:  #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  --color-amber-900: #78350f;
+  --color-amber-950: #451a03;
+
+  --color-red-50:  #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-200: #fecaca;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-red-800: #991b1b;
+  --color-red-900: #7f1d1d;
+  --color-red-950: #450a0a;
+
+  --color-blue-50:  #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  --color-blue-950: #172554;
+
+  /* ── Brand primaries (semantic aliases onto the scales) ────────────────
+     ink = deepest structural neutral · paper = lightest · ember = primary.
+     ember + status colours are mode-adaptive (overridden in .dark below). */
+  --color-ink: #141413;    /* neutral-950 */
+  --color-paper: #f5f2eb;  /* neutral-50  */
+  --color-ember: #f94a00;  /* brand-500 (light) → brand-400 in dark */
   --color-bt-violet: #7c3aed;
 
-  /* ── Functional / semantic colours ─────────────────────────────────────
-     NOT brand accents — these carry state only (status pills, destructive
-     actions, inline feedback). "One accent per screen" still refers to ember;
-     semantic colours are exempt because they encode meaning, not branding. */
-  --color-success: #1a7f4b;
-  --color-warning: #b06a00;
-  --color-danger: #b42318;
-  --color-info: #2563eb;
+  /* ── Functional / semantic status colours ──────────────────────────────
+     WCAG-validated foreground values (readable as text AND as fills on the
+     mode's surfaces). Mode-adaptive: light steps here, brighter in .dark. */
+  --color-success: #166534; /* green-800  */
+  --color-warning: #92400e; /* amber-800  */
+  --color-danger:  #b91c1c; /* red-700    */
+  --color-info:    #1d4ed8; /* blue-700   */
 
-  /* ── Neutral scale — DERIVED / UNCONFIRMED ─────────────────────────────
-     The guidelines show these as swatches without published hex values.
-     These are a best-guess derivation; correct them from the Figma library
-     before launch. Do not treat as canonical. */
-  --color-neutral-900: #0a0a0a;
-  --color-neutral-800: #1c1c1c;
-  --color-neutral-600: #4a4a48;
-  --color-neutral-400: #8a8985;
-  --color-neutral-200: #d6d4ce;
-  --color-neutral-50: #f8f7f4;
-
-  /* ── Amber scale — DERIVED / UNCONFIRMED (same caveat as the neutrals) ── */
-  --color-amber-950: #451a05;
-  --color-amber-800: #9a3412;
-  --color-amber-700: #c2410c;
-  --color-amber-600: #ff6a1f;
-  --color-amber-400: #fb923c;
-  --color-amber-200: #fed7aa;
+  /* ── shadcn-style semantic aliases (additive, for new design work) ─────
+     Existing components keep using surface/card/fg/muted/line etc. below;
+     these give future work the canonical role names from the color system. */
+  --color-primary: var(--color-ember);
+  --color-primary-foreground: #ffffff;
+  --color-ring: var(--color-ember);
+  --color-brand-foreground: #aa3000;   /* brand-700 — brand-coloured TEXT   */
+  --color-success-foreground: var(--color-success);
+  --color-warning-foreground: var(--color-warning);
+  --color-destructive: #dc2626;        /* red-600 — destructive buttons     */
+  --color-destructive-foreground: #ffffff;
+  --color-info-foreground: var(--color-info);
 
   /* ── Type ──────────────────────────────────────────────────────────────
      DM Mono is not decorative: it carries booking refs, status codes, dates,
      IDs and BT codes (e.g. CF-2026-008479, CONFIRMED) everywhere. */
-  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-sans: var(--font-manrope), var(--font-hind-siliguri), system-ui, sans-serif;
   --font-mono: var(--font-dm-mono), ui-monospace, monospace;
 
   /* ── Spacing — base 8 ──────────────────────────────────────────────── */
@@ -131,32 +209,51 @@
   outline-offset: 2px;
 }
 @theme {
-  --color-surface: #f8f7f4;
-  --color-card: #ffffff;
-  --color-sheet: #ffffff;
-  --color-fg: #0a0a0a;
-  --color-muted: #4a4a48;
-  --color-faint: #8a8985;
-  --color-line: #d6d4ce;
-  --color-strong: #8a8985;
-  --color-subtle: #f3f2ee;
-  --color-inverse: #0a0a0a;
-  --color-inverse-fg: #f8f7f4;
+  /* ── Light mode surfaces & content (color-system §Semantic Tokens) ────── */
+  --color-surface: #f5f2eb;    /* background   ← neutral-50  */
+  --color-card: #ffffff;       /* card         ← white       */
+  --color-sheet: #ffffff;      /* popover      ← white       */
+  --color-fg: #22211f;         /* foreground   ← neutral-900 */
+  --color-muted: #706c65;      /* muted-fg     ← neutral-600 */
+  --color-faint: #b8b3a8;      /* disabled-fg  ← neutral-400 */
+  --color-line: #e2ded5;       /* border       ← neutral-200 */
+  --color-strong: #d1cdc3;     /* stronger border ← neutral-300 */
+  --color-subtle: #efece5;     /* secondary/muted surface ← neutral-100 */
+  --color-inverse: #141413;    /* inverse surface ← neutral-950 */
+  --color-inverse-fg: #f5f2eb; /* text on inverse ← neutral-50  */
 }
 
-/* Dark: elevation comes from surface steps + 1px lines, not shadows. */
+/* Dark: tonal direction reverses — content lightens, surfaces deepen.
+   Elevation comes from surface steps + 1px lines, not shadows.
+   ember + status colours brighten one region so they stay legible on ink. */
 .dark {
-  --color-surface: #0a0a0a;
-  --color-card: #161615;
-  --color-sheet: #1e1e1c;
-  --color-fg: #f8f7f4;
-  --color-muted: #a8a6a0;
-  --color-faint: #6e6c66;
-  --color-line: #2a2a28;
-  --color-strong: #3a3a36;
-  --color-subtle: #131312;
-  --color-inverse: #f8f7f4;
-  --color-inverse-fg: #0a0a0a;
+  --color-surface: #141413;    /* background   ← neutral-950 */
+  --color-card: #22211f;       /* card         ← neutral-900 */
+  --color-sheet: #22211f;      /* popover      ← neutral-900 */
+  --color-fg: #efece5;         /* foreground   ← neutral-100 */
+  --color-muted: #969188;      /* muted-fg     ← neutral-500 */
+  --color-faint: #514e48;      /* disabled-fg  ← neutral-700 */
+  --color-line: #383632;       /* border       ← neutral-800 */
+  --color-strong: #514e48;     /* stronger border ← neutral-700 */
+  --color-subtle: #22211f;     /* secondary surface ← neutral-900 */
+  --color-inverse: #efece5;    /* inverse surface ← neutral-100 */
+  --color-inverse-fg: #141413; /* text on inverse ← neutral-950 */
+
+  --color-ember: #ff7a3d;               /* brand-400 */
+  --color-primary: #ff7a3d;
+  --color-primary-foreground: #141413;  /* neutral-950 */
+  --color-ring: #ff7a3d;
+  --color-brand-foreground: #ffa572;    /* brand-300 */
+
+  --color-success: #4ade80;             /* green-400 */
+  --color-warning: #fbbf24;             /* amber-400 */
+  --color-danger:  #f87171;             /* red-400   */
+  --color-info:    #60a5fa;             /* blue-400  */
+  --color-success-foreground: #4ade80;
+  --color-warning-foreground: #fbbf24;
+  --color-info-foreground: #60a5fa;
+  --color-destructive: #ef4444;         /* red-500   */
+  --color-destructive-foreground: #141413;
 }
 .dark body { background: var(--color-surface); color: var(--color-fg); }
 
@@ -165,4 +262,12 @@
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-6px); }
   75% { transform: translateX(6px); }
+}
+
+/* Print — force a white page and let the print-adaptive ticket/receipt show.
+   (App chrome isn't rendered on /print routes; this just neutralises the
+   themed surface background.) */
+@media print {
+  html, body { background: #ffffff !important; }
+  @page { margin: 12mm; }
 }

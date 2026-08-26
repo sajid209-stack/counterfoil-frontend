@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button, FormField, useToast } from "@/components/ui";
+import { useEnumLabels } from "@/lib/labels";
 import {
   createStaff,
   updateStaff,
@@ -50,6 +52,8 @@ export function StaffForm({
   counters: Counter[];
 }) {
   const router = useRouter();
+  const t = useTranslations("settings");
+  const enumL = useEnumLabels();
   const toast = useToast();
   const initial = useMemo<FormState>(
     () =>
@@ -82,7 +86,7 @@ export function StaffForm({
     const res = mode === "create" ? await createStaff(input) : await updateStaff(staff!.id, input);
     setSaving(false);
     if (res.ok) {
-      toast.success(mode === "create" ? "Staff member added." : "Changes saved.");
+      toast.success(mode === "create" ? t("team.added") : t("common.changesSaved"));
       if (mode === "create") router.push(`/settings/team/${res.data.id}`);
       else setState(fromStaff(res.data));
     } else if (res.error.code === "validation" && res.error.fieldErrors) {
@@ -96,31 +100,31 @@ export function StaffForm({
   return (
     <div className="flex flex-col gap-section pb-hero">
       <div className="rounded-md border border-line bg-card p-major">
-        <h2 className="type-h2 mb-section text-base">Details</h2>
+        <h2 className="type-h2 mb-section text-base">{t("common.details")}</h2>
         <div className="grid gap-section sm:grid-cols-2">
-          <FormField label="Name" required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="sm:col-span-2" />
-          <FormField label="Email" variant="email" value={state.email} onChange={(e) => set("email", e.target.value)} error={errors.email} help="Email or phone required." />
-          <FormField label="Phone" value={state.phone} onChange={(e) => set("phone", e.target.value)} />
+          <FormField label={t("common.name")} required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="sm:col-span-2" />
+          <FormField label={t("team.email")} variant="email" value={state.email} onChange={(e) => set("email", e.target.value)} error={errors.email} help={t("team.emailOrPhoneHelp")} />
+          <FormField label={t("team.phone")} value={state.phone} onChange={(e) => set("phone", e.target.value)} />
           <FormField
-            label="Role"
+            label={t("common.role")}
             variant="select"
             value={state.roleId}
             onChange={(e) => set("roleId", e.target.value)}
             options={roles.map((r) => ({ value: r.id, label: r.name }))}
           />
           <FormField
-            label="Status"
+            label={t("common.status")}
             variant="select"
             value={state.status}
             onChange={(e) => set("status", e.target.value as StaffStatus)}
-            options={STATUSES.map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1) }))}
+            options={STATUSES.map((s) => ({ value: s, label: enumL.status(s) }))}
           />
         </div>
       </div>
 
       <div className="grid gap-section sm:grid-cols-2">
         <div className="rounded-md border border-line bg-card p-major">
-          <h2 className="type-h2 mb-section text-base">Locations</h2>
+          <h2 className="type-h2 mb-section text-base">{t("team.locations")}</h2>
           <div className="flex flex-col gap-tight">
             {locations.map((l) => (
               <label key={l.id} className="flex cursor-pointer items-center gap-tight text-sm">
@@ -131,7 +135,7 @@ export function StaffForm({
           </div>
         </div>
         <div className="rounded-md border border-line bg-card p-major">
-          <h2 className="type-h2 mb-section text-base">Counters</h2>
+          <h2 className="type-h2 mb-section text-base">{t("team.counters")}</h2>
           <div className="flex flex-col gap-tight">
             {counters.map((c) => (
               <label key={c.id} className="flex cursor-pointer items-center gap-tight text-sm">
@@ -144,9 +148,9 @@ export function StaffForm({
       </div>
 
       <div className="sticky bottom-0 max-md:bottom-[calc(56px+env(safe-area-inset-bottom))] flex items-center justify-end gap-tight border-t border-line bg-surface py-section">
-        <Button variant="secondary" onClick={() => router.push("/settings/team")} disabled={saving}>Cancel</Button>
+        <Button variant="secondary" onClick={() => router.push("/settings/team")} disabled={saving}>{t("common.cancel")}</Button>
         <Button onClick={save} loading={saving} disabled={!dirty && mode === "edit"}>
-          {mode === "create" ? "Add staff" : "Save changes"}
+          {mode === "create" ? t("team.addStaff") : t("common.saveChanges")}
         </Button>
       </div>
     </div>

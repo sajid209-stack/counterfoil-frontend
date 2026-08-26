@@ -1,0 +1,21 @@
+{
+  "gateLabel": "গেট",
+  "title": "টিকিট স্ক্যান করুন",
+  "cameraHint": "ক্যামেরা স্ক্যান (মক) — নিচে কোড লিখুন",
+  "codePlaceholder": "CF-2026-…",
+  "check": "যাচাই",
+  "trySample": "একটি আসল টিকিট চেষ্টা করুন",
+  "notFound": "টিকিট পাওয়া যায়নি",
+  "alreadyRedeemed": "আগেই ব্যবহৃত হয়েছে",
+  "voidRefunded": "বাতিল / ফেরত দেওয়া",
+  "validTicket": "বৈধ টিকিট",
+  "admitCount": "প্রবেশ {count}",
+  "admit": "প্রবেশ",
+  "doNotAdmit": "প্রবেশ নয়",
+  "groupSummary": "{reason} · {size} জনের দল · {admitted} জন ঢুকেছে",
+  "plusOne": "+১",
+  "admitAll": "সবাইকে ঢোকান {count}",
+  "everyoneIn": "সবাই ঢুকেছে — টিকিট সম্পন্ন।",
+  "scanNext": "পরের টিকিট স্ক্যান করুন",
+  "readyNext": "একটু পরেই পরের স্ক্যানের জন্য প্রস্তুত — অথবা যেকোনো জায়গায় ট্যাপ করুন"
+}

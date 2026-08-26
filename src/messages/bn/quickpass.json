@@ -1,0 +1,13 @@
+{
+  "identifierFallback": "শনাক্তকারী",
+  "passFallback": "পাস",
+  "passIssuedTitle": "পাস ইস্যু হয়েছে",
+  "issueAnother": "আরেকটি ইস্যু করুন",
+  "gateLabel": "গেট",
+  "title": "কুইক পাস",
+  "subtitle": "এখনই একটি সময়ভিত্তিক পাস ইস্যু করুন।",
+  "duration": "সময়কাল",
+  "priceLabel": "দাম (৳)",
+  "priceHelp": "পাস কনফিগারেশন থেকে — বদলাতে এডিট করুন।",
+  "issuePass": "পাস ইস্যু · {amount}"
+}

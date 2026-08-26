@@ -1,0 +1,23 @@
+{
+  "title": "My profile",
+  "description": "Your own details — assignments are set by a manager.",
+  "changePhoto": "Change photo",
+  "photoInfo": "Profile photos use your initials for now.",
+  "name": "Name",
+  "email": "Email",
+  "phone": "Phone",
+  "saveChanges": "Save changes",
+  "saved": "Profile saved.",
+  "whereIWork": "Where I work",
+  "locations": "Locations",
+  "counters": "Counters",
+  "assignmentsNote": "Assignments are managed in Settings → Team.",
+  "signedInDevices": "Signed-in devices",
+  "thisDevice": "This device",
+  "signOut": "Sign out",
+  "signedOut": "{name} signed out.",
+  "lastNow": "Now",
+  "lastMinAgo": "{count} min ago",
+  "lastHrAgo": "{count} hr ago",
+  "lastDaysAgo": "{count} days ago"
+}

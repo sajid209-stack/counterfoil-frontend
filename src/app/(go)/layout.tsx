@@ -18,7 +18,9 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
+import { LocaleToggle } from "@/components/LocaleProvider";
 import { Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { listProducts } from "@/lib/api";
@@ -30,24 +32,25 @@ import { formatMoney } from "@/lib/format";
 // get a bottom tab bar (thumb zone); a tablet held in landscape gets an 88px
 // left rail (thumbs sit at the screen edges there). No top tab strip anywhere.
 const TABS = [
-  { href: "/pos", label: "Sell", icon: Store },
-  { href: "/schedule", label: "Schedule", icon: CalendarDays },
-  { href: "/scan", label: "Scan", icon: ScanLine },
-  { href: "/checkin", label: "Check In", icon: UserCheck },
-];
+  { href: "/pos", key: "sell", icon: Store },
+  { href: "/schedule", key: "schedule", icon: CalendarDays },
+  { href: "/scan", key: "scan", icon: ScanLine },
+  { href: "/checkin", key: "checkin", icon: UserCheck },
+] as const;
 
 const MORE_ITEMS = [
-  { label: "Shift", icon: Clock, href: "/shift/close" },
-  { label: "My sales", icon: Banknote, action: "sales" },
-  { label: "Quick pass", icon: Ticket, href: "/quick-pass" },
-  { label: "My profile", icon: UserRound, href: "/profile" },
-  { label: "Switch user", icon: Users, href: "/login" },
-  { label: "Settings", icon: Settings, href: "/settings/business" },
-  { label: "Help", icon: CircleHelp, action: "help" },
+  { key: "shift", icon: Clock, href: "/shift/close" },
+  { key: "mySales", icon: Banknote, action: "sales" },
+  { key: "quickPass", icon: Ticket, href: "/quick-pass" },
+  { key: "myProfile", icon: UserRound, href: "/profile" },
+  { key: "switchUser", icon: Users, href: "/login" },
+  { key: "settings", icon: Settings, href: "/settings/business" },
+  { key: "help", icon: CircleHelp, action: "help" },
 ] as const;
 
 export default function GoLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
   const [moreOpen, setMoreOpen] = useState(false);
   const [salesOpen, setSalesOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -58,13 +61,13 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
-  const tabButton = (t: (typeof TABS)[number], rail: boolean) => {
-    const active = isActive(t.href);
-    const Icon = t.icon;
+  const tabButton = (tab: (typeof TABS)[number], rail: boolean) => {
+    const active = isActive(tab.href);
+    const Icon = tab.icon;
     return (
       <Link
-        key={t.href}
-        href={t.href}
+        key={tab.href}
+        href={tab.href}
         aria-current={active ? "page" : undefined}
         onClick={() => { if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
         className={cn(
@@ -76,7 +79,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
         {/* active marker: 2px along the tab's leading edge */}
         {active && <span aria-hidden className={cn("absolute bg-ember", rail ? "left-0 top-2 bottom-2 w-[2px]" : "left-2 right-2 top-0 h-[2px]")} />}
         <Icon size={24} strokeWidth={1.5} />
-        <span className="max-w-full truncate px-inline text-[11px] font-medium">{t.label}</span>
+        <span className="max-w-full truncate px-inline text-[11px] font-medium">{t(tab.key)}</span>
       </Link>
     );
   };
@@ -91,7 +94,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
       )}
     >
       <Ellipsis size={24} strokeWidth={1.5} />
-      <span className="max-w-full truncate px-inline text-[11px] font-medium">More</span>
+      <span className="max-w-full truncate px-inline text-[11px] font-medium">{t("more")}</span>
     </button>
   );
 
@@ -150,9 +153,12 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
                 <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
                 <p className="font-mono text-[11px] text-faint">Fort Main Gate · shift open 3:24</p>
               </div>
-              <button type="button" aria-label="Close" onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-sm active:bg-line">
-                <X size={20} strokeWidth={1.5} />
-              </button>
+              <div className="flex items-center gap-tight">
+                <LocaleToggle />
+                <button type="button" aria-label="Close" onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-sm active:bg-line">
+                  <X size={20} strokeWidth={1.5} />
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-tight sm:grid-cols-4">
               {MORE_ITEMS.map((item) => {
@@ -160,15 +166,15 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
                 const inner = (
                   <>
                     <Icon size={24} strokeWidth={1.5} />
-                    <span className="text-[12px] font-medium">{item.label}</span>
+                    <span className="text-[12px] font-medium">{t(item.key)}</span>
                   </>
                 );
                 return "href" in item && item.href ? (
-                  <Link key={item.label} href={item.href} onClick={() => setMoreOpen(false)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-sm border border-line bg-card text-fg active:bg-ember/10">
+                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-sm border border-line bg-card text-fg active:bg-ember/10">
                     {inner}
                   </Link>
                 ) : (
-                  <button key={item.label} type="button" onClick={() => runItem(item)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-sm border border-line bg-card text-fg active:bg-ember/10">
+                  <button key={item.key} type="button" onClick={() => runItem(item)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-sm border border-line bg-card text-fg active:bg-ember/10">
                     {inner}
                   </button>
                 );

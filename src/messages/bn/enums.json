@@ -1,0 +1,36 @@
+{
+  "status": {
+    "active": "সক্রিয়",
+    "inactive": "নিষ্ক্রিয়",
+    "confirmed": "নিশ্চিত",
+    "paid": "পরিশোধিত",
+    "completed": "সম্পন্ন",
+    "pending": "অপেক্ষমাণ",
+    "invited": "আমন্ত্রিত",
+    "partial": "আংশিক",
+    "partly_refunded": "আংশিক ফেরত",
+    "archived": "আর্কাইভকৃত",
+    "refunded": "ফেরতকৃত",
+    "suspended": "স্থগিত",
+    "cancelled": "বাতিল",
+    "void": "বাতিলকৃত",
+    "issued": "ইস্যুকৃত",
+    "redeemed": "ব্যবহৃত",
+    "expired": "মেয়াদোত্তীর্ণ",
+    "no_show": "অনুপস্থিত",
+    "draft": "খসড়া"
+  },
+  "method": {
+    "cash": "নগদ",
+    "bkash": "বিকাশ",
+    "bangla_qr": "বাংলা QR",
+    "card_terminal": "কার্ড",
+    "credits": "পাস",
+    "mixed": "মিশ্র"
+  },
+  "tax": {
+    "standard": "স্ট্যান্ডার্ড (ভ্যাট)",
+    "reduced": "হ্রাসকৃত",
+    "exempt": "অব্যাহতিপ্রাপ্ত"
+  }
+}

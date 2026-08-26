@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
 import {
   Button,
@@ -20,6 +21,7 @@ const openDays = (l: Location) =>
 
 export default function LocationsPage() {
   const router = useRouter();
+  const t = useTranslations("settings");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "name", order: "asc" });
@@ -39,20 +41,20 @@ export default function LocationsPage() {
   );
 
   const columns: Column<Location>[] = [
-    { key: "name", header: "Name", sortable: true, render: (l) => <span className="font-medium">{l.name}</span> },
-    { key: "city", header: "City", sortable: true },
-    { key: "hours", header: "Open days", align: "center", render: (l) => <span className="font-mono text-[13px]">{openDays(l)}/7</span> },
-    { key: "status", header: "Status", sortable: true, render: (l) => <StatusPill status={l.status} /> },
-    { key: "updatedAt", header: "Updated", render: (l) => <span className="text-muted">{formatDate(l.updatedAt)}</span> },
+    { key: "name", header: t("common.name"), sortable: true, render: (l) => <span className="font-medium">{l.name}</span> },
+    { key: "city", header: t("common.city"), sortable: true },
+    { key: "hours", header: t("locations.openDays"), align: "center", render: (l) => <span className="font-mono text-[13px]">{openDays(l)}/7</span> },
+    { key: "status", header: t("common.status"), sortable: true, render: (l) => <StatusPill status={l.status} /> },
+    { key: "updatedAt", header: t("common.updated"), render: (l) => <span className="text-muted">{formatDate(l.updatedAt)}</span> },
   ];
 
   return (
     <PageShell
-      title="Locations"
-      description="Sites where you sell and admit — hours, timezone, status."
+      title={t("locations.title")}
+      description={t("locations.description")}
       actions={
         <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/locations/new")}>
-          New location
+          {t("locations.new")}
         </Button>
       }
     >
@@ -71,7 +73,7 @@ export default function LocationsPage() {
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder="Search locations…"
+                placeholder={t("locations.searchPlaceholder")}
                 className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
@@ -80,14 +82,14 @@ export default function LocationsPage() {
               onChange={(e) => { setStatus(e.target.value); setPage(1); }}
               className="h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
             >
-              <option value="all">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
+              <option value="all">{t("common.allStatuses")}</option>
+              <option value="active">{t("common.active")}</option>
+              <option value="inactive">{t("common.inactive")}</option>
+              <option value="archived">{t("common.archived")}</option>
             </select>
           </div>
         }
-        emptyState={<EmptyState title="No locations found" message="Adjust your search, or add a location." />}
+        emptyState={<EmptyState title={t("locations.emptyTitle")} message={t("locations.emptyMessage")} />}
         pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}
       />
     </PageShell>

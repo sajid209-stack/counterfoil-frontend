@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Check, X } from "lucide-react";
 import { admitTicket } from "@/lib/api";
 
@@ -18,6 +19,7 @@ interface Outcome {
 // the arriving count right here — partial groups honoured.
 export default function ScanResultPage() {
   const router = useRouter();
+  const t = useTranslations("scan");
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [admitted, setAdmitted] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -61,20 +63,20 @@ export default function ScanResultPage() {
         <span className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-paper">
           <Check size={72} strokeWidth={3} />
         </span>
-        <span className="type-display text-5xl">ADMIT {remaining > 0 ? remaining : "—"}</span>
-        <span className="type-body text-xl text-paper/90">{outcome.reason} · group of {group.admits} · {admitted} in</span>
+        <span className="type-display text-5xl">{t("admitCount", { count: remaining > 0 ? remaining : "—" })}</span>
+        <span className="type-body text-xl text-paper/90">{t("groupSummary", { reason: outcome.reason, size: group.admits, admitted })}</span>
         <span className="font-mono text-sm text-paper/70">{outcome.code}</span>
         {remaining > 0 ? (
           <div className="flex flex-wrap items-center justify-center gap-tight">
-            <button type="button" disabled={busy} onClick={() => admit(1)} className="h-14 rounded-sm border-2 border-paper px-major text-lg font-medium active:bg-paper/20">+1</button>
+            <button type="button" disabled={busy} onClick={() => admit(1)} className="h-14 rounded-sm border-2 border-paper px-major text-lg font-medium active:bg-paper/20">{t("plusOne")}</button>
             <button type="button" disabled={busy} onClick={() => admit(remaining)} className="h-14 rounded-sm bg-paper px-major text-lg font-medium text-ink active:bg-paper/80">
-              Admit all {remaining}
+              {t("admitAll", { count: remaining })}
             </button>
           </div>
         ) : (
-          <span className="type-body text-lg">Everyone&apos;s in — ticket redeemed.</span>
+          <span className="type-body text-lg">{t("everyoneIn")}</span>
         )}
-        <button type="button" onClick={() => router.push("/scan")} className="mt-major text-[13px] text-paper/70 underline-offset-4 hover:underline">Scan the next ticket</button>
+        <button type="button" onClick={() => router.push("/scan")} className="mt-major text-[13px] text-paper/70 underline-offset-4 hover:underline">{t("scanNext")}</button>
       </main>
     );
   }
@@ -92,10 +94,10 @@ export default function ScanResultPage() {
       <span className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-current">
         {accept ? <Check size={80} strokeWidth={3} /> : <X size={80} strokeWidth={3} />}
       </span>
-      <span className="type-display text-5xl">{accept ? "ADMIT" : "DO NOT ADMIT"}</span>
+      <span className="type-display text-5xl">{accept ? t("admit") : t("doNotAdmit")}</span>
       <span className="type-body text-2xl opacity-90">{outcome.reason}</span>
       <span className="font-mono text-sm opacity-70">{outcome.code}</span>
-      <span className="mt-major text-[13px] opacity-60">Ready for the next scan in a moment — or tap anywhere</span>
+      <span className="mt-major text-[13px] opacity-60">{t("readyNext")}</span>
     </button>
   );
 }

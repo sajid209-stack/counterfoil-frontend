@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope, DM_Mono } from "next/font/google";
+import { Manrope, DM_Mono, Hind_Siliguri } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { ToastProvider } from "@/components/ui";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { PwaSetup } from "@/components/PwaSetup";
@@ -22,6 +24,15 @@ const dmMono = DM_Mono({
   display: "swap",
 });
 
+// Bangla UI face. Latin glyphs stay on Manrope via the --font-sans stack;
+// Bengali codepoints fall through to Hind Siliguri per-glyph (no lang switch).
+const hindSiliguri = Hind_Siliguri({
+  variable: "--font-hind-siliguri",
+  subsets: ["latin", "bengali"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Counterfoil",
   description:
@@ -38,25 +49,29 @@ export const viewport: Viewport = {
   maximumScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8f7f4" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f2eb" },
+    { media: "(prefers-color-scheme: dark)", color: "#141413" },
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
   return (
     <html
-      lang="en"
+      lang={locale}
       suppressHydrationWarning
-      className={`${manrope.variable} ${dmMono.variable} h-full`}
+      className={`${manrope.variable} ${dmMono.variable} ${hindSiliguri.variable} h-full`}
     >
       <body className="min-h-full antialiased">
         <ThemeProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <ToastProvider>{children}</ToastProvider>
+          </NextIntlClientProvider>
         </ThemeProvider>
         <PwaSetup />
       </body>

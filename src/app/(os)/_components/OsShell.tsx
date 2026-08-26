@@ -20,11 +20,16 @@ import {
   Settings,
   ShieldCheck,
   Store,
+  TicketPercent,
   UserCog,
   Users,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
+import { LocaleToggle } from "@/components/LocaleProvider";
+import { useApiQuery } from "@/lib/useApi";
+import { getOperator } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { Sidebar } from "./Sidebar";
 
@@ -32,34 +37,37 @@ import { Sidebar } from "./Sidebar";
 // four daily destinations, and More opens a full-height destination grid.
 // Desktop is unchanged: the ink sidebar stays.
 const MOBILE_TABS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/orders", label: "Orders", icon: ReceiptText },
-  { href: "/products", label: "Products", icon: Package },
-];
+  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { href: "/calendar", key: "calendar", icon: CalendarDays },
+  { href: "/orders", key: "orders", icon: ReceiptText },
+  { href: "/products", key: "products", icon: Package },
+] as const;
 
 // Same grid, same order, every time — muscle memory is the point.
 const DESTINATIONS = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/orders", label: "Orders", icon: ReceiptText },
-  { href: "/products", label: "Products", icon: Package },
-  { href: "/reports/sales", label: "Reports", icon: BarChart3 },
-  { href: "/reports/sales?tab=analytics", label: "Analytics", icon: ChartLine },
-  { href: "/pos", label: "Point of Sale", icon: Store },
-  { href: "/settings/resources", label: "Resources", icon: LandPlot },
-  { href: "/settings/counters", label: "Counters", icon: Store },
-  { href: "/settings/locations", label: "Locations", icon: MapPin },
-  { href: "/settings/team", label: "Team", icon: Users },
-  { href: "/settings/devices", label: "Devices", icon: MonitorSmartphone },
-  { href: "/settings/payments", label: "Payments", icon: CreditCard },
-  { href: "/settings/roles", label: "Roles", icon: UserCog },
-  { href: "/settings/security", label: "Security", icon: ShieldCheck },
-  { href: "/settings/business", label: "Settings", icon: Settings },
-];
+  { href: "/dashboard", key: "overview", icon: LayoutDashboard },
+  { href: "/calendar", key: "calendar", icon: CalendarDays },
+  { href: "/orders", key: "orders", icon: ReceiptText },
+  { href: "/products", key: "products", icon: Package },
+  { href: "/reports/sales", key: "reports", icon: BarChart3 },
+  { href: "/reports/sales?tab=analytics", key: "analytics", icon: ChartLine },
+  { href: "/promotions", key: "promotions", icon: TicketPercent },
+  { href: "/pos", key: "pos", icon: Store },
+  { href: "/settings/resources", key: "resources", icon: LandPlot },
+  { href: "/settings/counters", key: "counters", icon: Store },
+  { href: "/settings/locations", key: "locations", icon: MapPin },
+  { href: "/settings/team", key: "team", icon: Users },
+  { href: "/settings/devices", key: "devices", icon: MonitorSmartphone },
+  { href: "/settings/payments", key: "payments", icon: CreditCard },
+  { href: "/settings/roles", key: "roles", icon: UserCog },
+  { href: "/settings/security", key: "security", icon: ShieldCheck },
+  { href: "/settings/business", key: "settings", icon: Settings },
+] as const;
 
 export function OsShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
+  const operatorQ = useApiQuery(() => getOperator(), []);
   const [moreOpen, setMoreOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -91,6 +99,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           <span className="type-h2 text-base">Counterfoil</span>
           <span className="font-mono text-[11px] text-faint">OS</span>
           <span className="flex-1" />
+          <LocaleToggle />
           <ModeButton />
         </div>
         <div className="min-w-0 flex-1 pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
@@ -102,13 +111,13 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-card md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        {MOBILE_TABS.map((t) => {
-          const active = tabActive(t.href);
-          const Icon = t.icon;
+        {MOBILE_TABS.map((tab) => {
+          const active = tabActive(tab.href);
+          const Icon = tab.icon;
           return (
             <Link
-              key={t.href}
-              href={t.href}
+              key={tab.href}
+              href={tab.href}
               aria-current={active ? "page" : undefined}
               onClick={() => { setMoreOpen(false); if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
               className={cn(
@@ -118,7 +127,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             >
               {active && <span aria-hidden className="absolute left-2 right-2 top-0 h-[2px] bg-ember" />}
               <Icon size={24} strokeWidth={1.5} />
-              <span className="max-w-full truncate px-inline text-[11px] font-medium">{t.label}</span>
+              <span className="max-w-full truncate px-inline text-[11px] font-medium">{t(tab.key)}</span>
             </Link>
           );
         })}
@@ -132,7 +141,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         >
           {moreOpen && <span aria-hidden className="absolute left-2 right-2 top-0 h-[2px] bg-ember" />}
           <Ellipsis size={24} strokeWidth={1.5} />
-          <span className="max-w-full truncate px-inline text-[11px] font-medium">More</span>
+          <span className="max-w-full truncate px-inline text-[11px] font-medium">{t("more")}</span>
         </button>
       </nav>
 
@@ -141,7 +150,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-x-0 top-0 z-30 flex flex-col bg-surface md:hidden" style={{ bottom: "calc(56px + env(safe-area-inset-bottom))" }}>
           <div className="flex items-center justify-between border-b border-line px-section py-tight">
             <div>
-              <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
+              <p className="text-sm font-medium">{operatorQ.data?.name ?? "Counterfoil"}</p>
               <p className="font-mono text-[11px] text-faint">Counterfoil OS workspace</p>
             </div>
             <button type="button" aria-label="Close" onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-sm active:bg-line">
@@ -154,7 +163,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               const Icon = d.icon;
               return (
                 <Link
-                  key={d.label}
+                  key={d.href}
                   href={d.href}
                   onClick={() => setMoreOpen(false)}
                   className={cn(
@@ -168,7 +177,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
                     </span>
                   )}
                   <Icon size={24} strokeWidth={1.5} className={active ? "text-ember" : "text-muted"} />
-                  <span className="text-center text-[12px] font-medium leading-tight">{d.label}</span>
+                  <span className="text-center text-[12px] font-medium leading-tight">{t(d.key)}</span>
                 </Link>
               );
             })}

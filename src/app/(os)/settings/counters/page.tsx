@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
 import {
   Button,
@@ -16,6 +17,7 @@ import { listCounters, listLocations, type Counter } from "@/lib/api";
 
 export default function CountersPage() {
   const router = useRouter();
+  const t = useTranslations("settings");
   const [search, setSearch] = useState("");
   const [locationId, setLocationId] = useState("");
   const [status, setStatus] = useState("all");
@@ -40,32 +42,32 @@ export default function CountersPage() {
   );
 
   const columns: Column<Counter>[] = [
-    { key: "name", header: "Name", sortable: true, render: (c) => <span className="font-medium">{c.name}</span> },
-    { key: "location", header: "Location", render: (c) => locationName(c.locationId) },
+    { key: "name", header: t("common.name"), sortable: true, render: (c) => <span className="font-medium">{c.name}</span> },
+    { key: "location", header: t("common.location"), render: (c) => locationName(c.locationId) },
     {
       key: "products",
-      header: "Products",
+      header: t("counters.colProducts"),
       render: (c) => (
         <span className="font-mono text-[12px] text-muted">
-          {c.allowedProductIds === "all" ? "All" : `${c.allowedProductIds.length} selected`}
+          {c.allowedProductIds === "all" ? t("counters.allProducts") : t("counters.selectedCount", { count: c.allowedProductIds.length })}
         </span>
       ),
     },
     {
       key: "payments",
-      header: "Payments",
+      header: t("counters.colPayments"),
       render: (c) => <span className="font-mono text-[11px] text-muted">{c.allowedPaymentMethods.length}</span>,
     },
-    { key: "status", header: "Status", sortable: true, render: (c) => <StatusPill status={c.status} /> },
+    { key: "status", header: t("common.status"), sortable: true, render: (c) => <StatusPill status={c.status} /> },
   ];
 
   const selectCls = "h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
 
   return (
     <PageShell
-      title="Counters"
-      description="Points of sale at each location — allowed products and payment methods."
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/counters/new")}>New counter</Button>}
+      title={t("counters.title")}
+      description={t("counters.description")}
+      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/counters/new")}>{t("counters.newCounter")}</Button>}
     >
       <DataTable
         columns={columns}
@@ -82,23 +84,23 @@ export default function CountersPage() {
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder="Search counters…"
+                placeholder={t("counters.searchPlaceholder")}
                 className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
             <select value={locationId} onChange={(e) => { setLocationId(e.target.value); setPage(1); }} className={selectCls}>
-              <option value="">All locations</option>
+              <option value="">{t("common.allLocations")}</option>
               {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
             <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={selectCls}>
-              <option value="all">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
+              <option value="all">{t("common.allStatuses")}</option>
+              <option value="active">{t("common.active")}</option>
+              <option value="inactive">{t("common.inactive")}</option>
+              <option value="archived">{t("common.archived")}</option>
             </select>
           </div>
         }
-        emptyState={<EmptyState title="No counters found" message="Adjust your search, or add a counter." />}
+        emptyState={<EmptyState title={t("counters.emptyTitle")} message={t("counters.emptyMessage")} />}
         pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}
       />
     </PageShell>

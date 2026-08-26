@@ -40,28 +40,44 @@ type Swatch = {
 };
 
 const PRIMARIES: Swatch[] = [
-  { name: "ink", hex: "#0A0A0A", cls: "bg-inverse", dark: true },
-  { name: "paper", hex: "#F8F7F4", cls: "bg-surface" },
-  { name: "ember", hex: "#FF6A1F", cls: "bg-ember", dark: true },
+  { name: "ink", hex: "#141413", cls: "bg-inverse", dark: true },
+  { name: "paper", hex: "#F5F2EB", cls: "bg-surface" },
+  { name: "ember", hex: "#F94A00", cls: "bg-ember", dark: true },
   { name: "bt-violet", hex: "#7C3AED", cls: "bg-bt-violet", dark: true },
 ];
 
 const NEUTRALS: Swatch[] = [
-  { name: "neutral-900", hex: "#0A0A0A", cls: "bg-neutral-900", dark: true },
-  { name: "neutral-800", hex: "#1C1C1C", cls: "bg-neutral-800", dark: true },
-  { name: "neutral-600", hex: "#4A4A48", cls: "bg-neutral-600", dark: true },
-  { name: "neutral-400", hex: "#8A8985", cls: "bg-neutral-400", dark: true },
-  { name: "neutral-200", hex: "#D6D4CE", cls: "bg-line" },
-  { name: "neutral-50", hex: "#F8F7F4", cls: "bg-subtle" },
+  { name: "neutral-950", hex: "#141413", cls: "bg-neutral-950", dark: true },
+  { name: "neutral-900", hex: "#22211F", cls: "bg-neutral-900", dark: true },
+  { name: "neutral-800", hex: "#383632", cls: "bg-neutral-800", dark: true },
+  { name: "neutral-700", hex: "#514E48", cls: "bg-neutral-700", dark: true },
+  { name: "neutral-600", hex: "#706C65", cls: "bg-neutral-600", dark: true },
+  { name: "neutral-500", hex: "#969188", cls: "bg-neutral-500", dark: true },
+  { name: "neutral-400", hex: "#B8B3A8", cls: "bg-neutral-400" },
+  { name: "neutral-300", hex: "#D1CDC3", cls: "bg-neutral-300" },
+  { name: "neutral-200", hex: "#E2DED5", cls: "bg-neutral-200" },
+  { name: "neutral-100", hex: "#EFECE5", cls: "bg-neutral-100" },
+  { name: "neutral-50", hex: "#F5F2EB", cls: "bg-neutral-50" },
+];
+
+const BRANDS: Swatch[] = [
+  { name: "brand-950", hex: "#2D0D00", cls: "bg-brand-950", dark: true },
+  { name: "brand-700", hex: "#AA3000", cls: "bg-brand-700", dark: true },
+  { name: "brand-600", hex: "#D63D00", cls: "bg-brand-600", dark: true },
+  { name: "brand-500", hex: "#F94A00", cls: "bg-brand-500", dark: true },
+  { name: "brand-400", hex: "#FF7A3D", cls: "bg-brand-400", dark: true },
+  { name: "brand-300", hex: "#FFA572", cls: "bg-brand-300" },
+  { name: "brand-100", hex: "#FFE6D5", cls: "bg-brand-100" },
+  { name: "brand-50", hex: "#FFF5EE", cls: "bg-brand-50" },
 ];
 
 const AMBERS: Swatch[] = [
-  { name: "amber-950", hex: "#451A05", cls: "bg-amber-950", dark: true },
-  { name: "amber-800", hex: "#9A3412", cls: "bg-amber-800", dark: true },
-  { name: "amber-700", hex: "#C2410C", cls: "bg-amber-700", dark: true },
-  { name: "amber-600", hex: "#FF6A1F", cls: "bg-amber-600", dark: true },
-  { name: "amber-400", hex: "#FB923C", cls: "bg-amber-400", dark: true },
-  { name: "amber-200", hex: "#FED7AA", cls: "bg-amber-200" },
+  { name: "amber-950", hex: "#451A03", cls: "bg-amber-950", dark: true },
+  { name: "amber-800", hex: "#92400E", cls: "bg-amber-800", dark: true },
+  { name: "amber-700", hex: "#B45309", cls: "bg-amber-700", dark: true },
+  { name: "amber-600", hex: "#D97706", cls: "bg-amber-600", dark: true },
+  { name: "amber-400", hex: "#FBBF24", cls: "bg-amber-400" },
+  { name: "amber-200", hex: "#FDE68A", cls: "bg-amber-200" },
 ];
 
 function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
@@ -123,27 +139,31 @@ export default function TokensPage() {
         <p className="type-label text-[13px] text-ember">Design tokens</p>
         <h1 className="type-display mt-tight text-6xl">Counterfoil</h1>
         <p className="type-body mt-section max-w-xl text-muted">
-          The token layer both surfaces are built on. Primaries are exact from
-          the brand guidelines; the neutral and amber scales are a derivation
-          and marked unconfirmed until reconciled with Figma.
+          The token layer both surfaces are built on — the canonical Counterfoil
+          Color System: primitive tonal scales, mode-adaptive semantic tokens,
+          WCAG-validated contrast.
         </p>
       </header>
 
-      <Section title="Primaries — exact">
+      <Section title="Primaries">
         <SwatchGrid swatches={PRIMARIES} />
         <p className="type-body mt-section text-[13px] text-faint">
           The logo is two-colour only: {""}
-          <span className="font-mono">#0A0A0A</span> on light,{" "}
-          <span className="font-mono">#F8F7F4</span> on dark. Never an orange
+          <span className="font-mono">#141413</span> on light,{" "}
+          <span className="font-mono">#F5F2EB</span> on dark. Never an orange
           logo, never an orange background behind it.
         </p>
       </Section>
 
-      <Section title="Neutral scale — derived / unconfirmed">
+      <Section title="Brand / Primary scale — hue 18°, from #F94A00">
+        <SwatchGrid swatches={BRANDS} />
+      </Section>
+
+      <Section title="Neutral / Warm gray scale — hue 40°">
         <SwatchGrid swatches={NEUTRALS} />
       </Section>
 
-      <Section title="Amber scale — derived / unconfirmed">
+      <Section title="Amber / Warning scale — hue 38°">
         <SwatchGrid swatches={AMBERS} />
       </Section>
 

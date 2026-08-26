@@ -2,21 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button, FormField, useToast } from "@/components/ui";
 import { createRole, updateRole, type Role, type RoleInput } from "@/lib/api";
-
-const PERMISSIONS: { value: string; label: string }[] = [
-  { value: "products.manage", label: "Manage products" },
-  { value: "pricing.manage", label: "Manage pricing" },
-  { value: "bookings.manage", label: "Manage bookings" },
-  { value: "orders.view", label: "View orders" },
-  { value: "orders.refund", label: "Refund orders" },
-  { value: "reports.view", label: "View reports" },
-  { value: "pos.sell", label: "Sell at POS" },
-  { value: "scan.validate", label: "Scan & validate" },
-  { value: "staff.manage", label: "Manage staff" },
-  { value: "settings.manage", label: "Manage settings" },
-];
 
 interface FormState {
   name: string;
@@ -39,6 +27,19 @@ const fromRole = (r: Role): FormState => ({
 export function RoleForm({ mode, role }: { mode: "create" | "edit"; role?: Role }) {
   const router = useRouter();
   const toast = useToast();
+  const t = useTranslations("settings");
+  const PERMISSIONS: { value: string; label: string }[] = [
+    { value: "products.manage", label: t("roles.permProductsManage") },
+    { value: "pricing.manage", label: t("roles.permPricingManage") },
+    { value: "bookings.manage", label: t("roles.permBookingsManage") },
+    { value: "orders.view", label: t("roles.permOrdersView") },
+    { value: "orders.refund", label: t("roles.permOrdersRefund") },
+    { value: "reports.view", label: t("roles.permReportsView") },
+    { value: "pos.sell", label: t("roles.permPosSell") },
+    { value: "scan.validate", label: t("roles.permScanValidate") },
+    { value: "staff.manage", label: t("roles.permStaffManage") },
+    { value: "settings.manage", label: t("roles.permSettingsManage") },
+  ];
   const initial = useMemo<FormState>(
     () =>
       role
@@ -67,7 +68,7 @@ export function RoleForm({ mode, role }: { mode: "create" | "edit"; role?: Role 
     const res = mode === "create" ? await createRole(input) : await updateRole(role!.id, input);
     setSaving(false);
     if (res.ok) {
-      toast.success(mode === "create" ? "Role created." : "Changes saved.");
+      toast.success(mode === "create" ? t("roles.created") : t("common.changesSaved"));
       if (mode === "create") router.push(`/settings/roles/${res.data.id}`);
       else setState(fromRole(res.data));
     } else if (res.error.code === "validation" && res.error.fieldErrors) {
@@ -81,12 +82,12 @@ export function RoleForm({ mode, role }: { mode: "create" | "edit"; role?: Role 
   return (
     <div className="flex flex-col gap-section pb-hero">
       <div className="rounded-md border border-line bg-card p-major">
-        <h2 className="type-h2 mb-section text-base">Details</h2>
-        <FormField label="Name" required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="max-w-sm" />
+        <h2 className="type-h2 mb-section text-base">{t("common.details")}</h2>
+        <FormField label={t("common.name")} required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="max-w-sm" />
       </div>
 
       <div className="rounded-md border border-line bg-card p-major">
-        <h2 className="type-h2 mb-section text-base">Permissions</h2>
+        <h2 className="type-h2 mb-section text-base">{t("roles.permissions")}</h2>
         <div className="grid grid-cols-1 gap-tight sm:grid-cols-2">
           {PERMISSIONS.map((p) => (
             <label key={p.value} className="flex cursor-pointer items-center gap-tight text-sm">
@@ -98,37 +99,37 @@ export function RoleForm({ mode, role }: { mode: "create" | "edit"; role?: Role 
       </div>
 
       <div className="rounded-md border border-line bg-card p-major">
-        <h2 className="type-h2 mb-section text-base">Limits</h2>
+        <h2 className="type-h2 mb-section text-base">{t("roles.limits")}</h2>
         <div className="grid gap-section sm:grid-cols-2">
           <div className="flex flex-col gap-tight">
             <FormField
-              label="Unlimited refunds"
+              label={t("roles.unlimitedRefunds")}
               variant="toggle"
               checked={state.refundUnlimited}
               onChange={(e) => set("refundUnlimited", (e.target as HTMLInputElement).checked)}
             />
             {!state.refundUnlimited && (
-              <FormField label="Refund limit (BDT)" variant="number" value={state.refundLimit} onChange={(e) => set("refundLimit", e.target.value)} error={errors.refundLimit} />
+              <FormField label={t("roles.refundLimit")} variant="number" value={state.refundLimit} onChange={(e) => set("refundLimit", e.target.value)} error={errors.refundLimit} />
             )}
           </div>
           <div className="flex flex-col gap-tight">
             <FormField
-              label="Unlimited discount"
+              label={t("roles.unlimitedDiscount")}
               variant="toggle"
               checked={state.discountUnlimited}
               onChange={(e) => set("discountUnlimited", (e.target as HTMLInputElement).checked)}
             />
             {!state.discountUnlimited && (
-              <FormField label="Discount limit (%)" variant="number" value={state.discountLimitPct} onChange={(e) => set("discountLimitPct", e.target.value)} error={errors.discountLimitPct} />
+              <FormField label={t("roles.discountLimit")} variant="number" value={state.discountLimitPct} onChange={(e) => set("discountLimitPct", e.target.value)} error={errors.discountLimitPct} />
             )}
           </div>
         </div>
       </div>
 
       <div className="sticky bottom-0 max-md:bottom-[calc(56px+env(safe-area-inset-bottom))] flex items-center justify-end gap-tight border-t border-line bg-surface py-section">
-        <Button variant="secondary" onClick={() => router.push("/settings/roles")} disabled={saving}>Cancel</Button>
+        <Button variant="secondary" onClick={() => router.push("/settings/roles")} disabled={saving}>{t("common.cancel")}</Button>
         <Button onClick={save} loading={saving} disabled={!dirty && mode === "edit"}>
-          {mode === "create" ? "Create role" : "Save changes"}
+          {mode === "create" ? t("roles.createRole") : t("common.saveChanges")}
         </Button>
       </div>
     </div>

@@ -1,0 +1,15 @@
+{
+  "title": "Calendar",
+  "description": "Confirmed bookings by slot — day, week, or month.",
+  "tabDay": "Day",
+  "tabWeek": "Week",
+  "tabMonth": "Month",
+  "byResource": "By {noun}",
+  "outOfService": "Out of service",
+  "outOfServiceReason": "Out of service — {reason}",
+  "emptyTitle": "No bookings in this window",
+  "emptyMessage": "Try the month view for a wider range.",
+  "bookingCount": "{count} booking",
+  "bookingCountPlural": "{count} bookings",
+  "party": "party {size}"
+}

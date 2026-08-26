@@ -163,10 +163,11 @@ export interface ProductSection {
 export interface PriceTier {
   id: ID;
   name: string; // "Adult", "Child", "Senior"
-  price: Minor;
+  price: Minor; // for donation tiers this is the MINIMUM (suggested floor)
   maxPerOrder?: number; // tier cap; must be ≤ Product.maxPerOrder if both set
   admits?: number; // how many people this ticket admits (default 1; Family = 4)
   ageNote?: string; // e.g. "5–12" — printed on the ticket
+  donation?: boolean; // pay-what-you-want: the buyer/staff enters the amount (≥ price)
   active: boolean;
 }
 
@@ -292,6 +293,7 @@ export interface Product {
   taxClass?: TaxClass; // which tax rate applies (default standard)
   addOns?: AddOn[]; // optional extras offered at POS
   policies?: ProductPolicies; // operational policies (sales window, cancellation…)
+  layoutId?: ID | null; // BT-07 seated: the seat layout this product sells (M1)
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
@@ -491,9 +493,12 @@ export interface Order {
   history?: { at: ISODateTime; who: string; text: string }[];
   /** Internal notes, never shown to guests. */
   notes?: { at: ISODateTime; who: string; text: string }[];
+  /** Balance cleared without a refund (bad debt / dispute / goodwill). */
+  writeOffs?: { at: ISODateTime; who: string; amount: Minor; category: WriteOffCategory; reason: string }[];
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
+export type WriteOffCategory = "uncollectible" | "customer_dispute" | "business_decision" | "administrative";
 
 export type TicketStatus = "issued" | "redeemed" | "void";
 export interface Ticket {
@@ -571,3 +576,197 @@ export interface ApiError {
 export type ApiResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: ApiError };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Milestone 1 — surfaces modeled on the real backend OpenAPI contracts.
+// Field names/enums mirror `counterfoil-app/application` so the eventual
+// client.ts → SDK swap is mechanical. Money stays INTEGER minor units.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── payments.v2 · PaymentAccount — the operator's connected PSP account ──────
+export type PaymentProvider = "stripe" | "sslcommerz" | "bkash";
+export type PaymentPosture = "merchant_of_record" | "connect";
+export type PaymentAccountStatus =
+  | "pending_onboarding"
+  | "active"
+  | "restricted"
+  | "disabled";
+export interface PaymentAccount {
+  id: ID;
+  locationId: ID | null; // null = tenant-wide
+  provider: PaymentProvider;
+  posture: PaymentPosture;
+  status: PaymentAccountStatus;
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  requirementsDue: string[]; // outstanding onboarding items
+  country: string; // ISO-3166 alpha-2
+  defaultCurrency: CurrencyCode;
+  providerAccountRef?: string;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+export type PaymentAccountInput = Pick<
+  PaymentAccount,
+  "provider" | "posture" | "locationId" | "country" | "defaultCurrency"
+>;
+/** Hosted onboarding link returned when connecting a provider. */
+export interface AccountLink {
+  url: string;
+  expiresAt: ISODateTime;
+}
+
+// ── settings.v2 · TaxConfig — tenant/location tax mode + rate ────────────────
+export type TaxMode = "inclusive" | "exclusive";
+export interface TaxConfig {
+  mode: TaxMode;
+  rateBasisPoints: number; // 1500 = 15%
+  taxName: string; // "VAT"
+  registrationNumber?: string;
+}
+
+// ── catalog.v1 · seat maps (layouts / seats / seat-categories) ───────────────
+export type SeatPricingMode = "fixed" | "inherit";
+export interface SeatCategory {
+  uid: ID;
+  name: string; // "Stalls", "Balcony", "VIP"
+  color: string; // hex for the map (e.g. "#F94A00")
+  price: Minor;
+  pricingMode: SeatPricingMode;
+  isGeneralAdmission: boolean;
+  gaCapacity?: number; // when GA, capacity of the standing area
+}
+export type SeatShape = "square" | "circle";
+export interface LayoutSeat {
+  id: ID;
+  name: string; // seat label, e.g. "A1"
+  posX: number; // grid column (0-based)
+  posY: number; // grid row (0-based)
+  seatRow: string; // row label, e.g. "A"
+  seatNumber: number;
+  seatCategoryId: ID | null; // null = not for sale / aisle gap
+  isAvailable: boolean; // false = blocked/held/sold
+  capacity: number; // seats admitted (usually 1; GA blocks > 1)
+  shape: SeatShape;
+  width: number;
+  height: number;
+  rotation: number;
+  assignOrder: number; // best-available fill order
+}
+export interface SeatLayout {
+  id: ID;
+  locationId: ID | null;
+  name: string;
+  rows: number;
+  seatsPerRow: number;
+  rowLabels: string[]; // ["A","B",…]
+  bufferAfterMinutes: number;
+  seatCount: number;
+  categories: SeatCategory[];
+  seats: LayoutSeat[];
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+export type SeatLayoutInput = Pick<
+  SeatLayout,
+  "name" | "locationId" | "rows" | "seatsPerRow" | "rowLabels" | "bufferAfterMinutes"
+>;
+/** Read shape for the POS/storefront seat picker (catalog available-seats). */
+export interface AvailableSeat {
+  label: string;
+  available: boolean;
+  section: string; // category name
+  categoryUid: ID;
+  categoryName: string;
+  color: string;
+  price: Minor;
+  posX: number;
+  posY: number;
+}
+/** Link between a product and a seat layout (ConfigLayoutLink). */
+export interface ConfigLayoutLink {
+  layoutId: ID;
+  name: string;
+  isPrimary: boolean;
+  seatCount: number;
+}
+
+// ── promotions.v2 · discounts, coupons, manual-discount policy ───────────────
+export type PromotionKind =
+  | "percentage_off"
+  | "fixed_amount_off"
+  | "buy_x_get_y"
+  | "fixed_price"
+  | "bundle_price";
+export type PromotionSource = "coupon" | "manual" | "membership" | "automatic";
+export interface BuyXGetYConfig { buyQuantity: number; getQuantity: number; getDiscountBps: number; }
+export interface BundleConfig { bundlePrice: Minor; componentSkus: ID[]; }
+export interface PromotionEligibility {
+  channels: Channel[];
+  minSubtotal?: Minor;
+  minQuantity?: number;
+  firstPurchaseOnly?: boolean;
+  eligibleCategories?: ID[];
+  excludedCategories?: ID[];
+}
+export interface PromotionStacking { stackable: boolean; exclusive: boolean; }
+export interface Promotion {
+  id: ID;
+  locationId: ID | null;
+  name: string;
+  kind: PromotionKind;
+  source: PromotionSource;
+  percentBps?: number; // percentage_off (1000 = 10%)
+  amount?: Minor; // fixed_amount_off / fixed_price
+  buyXGetY?: BuyXGetYConfig;
+  bundle?: BundleConfig;
+  maxDiscountAmount?: Minor;
+  eligibility: PromotionEligibility;
+  stacking: PromotionStacking;
+  maxUsesTotal?: number;
+  maxUsesPerCustomer?: number;
+  validFrom?: ISODate;
+  validTo?: ISODate;
+  status: Lifecycle;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+export type PromotionInput = Omit<Promotion, "id" | "createdAt" | "updatedAt">;
+export interface Coupon {
+  id: ID;
+  promotionId: ID;
+  code: string;
+  status: "active" | "disabled" | "exhausted";
+  maxUsesTotal?: number;
+  maxUsesPerCustomer?: number;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+export interface ManualDiscountPolicy {
+  locationId: ID | null;
+  maxPercentBps: number; // cap on ad-hoc cashier %
+  maxAmount?: Minor;
+  requireReason: boolean;
+}
+export interface AppliedPromotion {
+  promotionId: ID;
+  kind: PromotionKind;
+  source: PromotionSource;
+  code?: string;
+  name: string;
+  discount: Minor; // total minor units discounted
+}
+/** A cart line as the promotions engine sees it (promotions QuoteRequest). */
+export interface QuoteLine {
+  lineId: string;
+  quantity: number;
+  unitAmount: Minor;
+  categoryId?: ID | null;
+}
+export interface PromotionQuote {
+  subtotal: Minor;
+  discountTotal: Minor;
+  netTotal: Minor;
+  applied: AppliedPromotion[];
+  rejected: { code: string; reason: string }[];
+}

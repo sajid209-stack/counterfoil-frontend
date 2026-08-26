@@ -1,0 +1,21 @@
+{
+  "gateLabel": "Gate",
+  "title": "Scan a ticket",
+  "cameraHint": "Camera scan (mock) — enter a code below",
+  "codePlaceholder": "CF-2026-…",
+  "check": "Check",
+  "trySample": "Try a real ticket",
+  "notFound": "Ticket not found",
+  "alreadyRedeemed": "Already redeemed",
+  "voidRefunded": "Void / refunded",
+  "validTicket": "Valid ticket",
+  "admitCount": "ADMIT {count}",
+  "admit": "ADMIT",
+  "doNotAdmit": "DO NOT ADMIT",
+  "groupSummary": "{reason} · group of {size} · {admitted} in",
+  "plusOne": "+1",
+  "admitAll": "Admit all {count}",
+  "everyoneIn": "Everyone's in — ticket redeemed.",
+  "scanNext": "Scan the next ticket",
+  "readyNext": "Ready for the next scan in a moment — or tap anywhere"
+}

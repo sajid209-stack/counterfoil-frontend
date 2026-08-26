@@ -1,0 +1,60 @@
+{
+  "title": "Money setup",
+  "description": "Connect how you take payment, and set your tax.",
+  "accounts": {
+    "title": "Payment accounts",
+    "description": "Connect a provider to take card and wallet payments. Cash always works.",
+    "connect": "Connect",
+    "completeOnboarding": "Complete onboarding",
+    "disable": "Disable",
+    "charges": "Charges",
+    "payouts": "Payouts",
+    "enabled": "Enabled",
+    "off": "Off",
+    "requirementsDue": "Still needed",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "linkOpened": "Onboarding link opened (demo).",
+    "activated": "{provider} is live — you can take payments now.",
+    "disabledToast": "{provider} disabled."
+  },
+  "status": {
+    "pending_onboarding": "Onboarding",
+    "active": "Active",
+    "restricted": "Restricted",
+    "disabled": "Disabled"
+  },
+  "posture": {
+    "merchant_of_record": "Counterfoil collects",
+    "connect": "Settles to you"
+  },
+  "provider": {
+    "bkash": "bKash",
+    "sslcommerz": "SSLCommerz",
+    "stripe": "Card (Stripe)",
+    "bkashHelper": "Mobile wallet — Bangladesh.",
+    "sslcommerzHelper": "Cards & local rails — Bangladesh.",
+    "stripeHelper": "Global card processing."
+  },
+  "cash": {
+    "title": "Cash",
+    "helper": "Always available at the counter — no setup needed.",
+    "always": "Always on"
+  },
+  "tax": {
+    "title": "Tax",
+    "mode": "Tax mode",
+    "inclusive": "Included in price",
+    "exclusive": "Added at checkout",
+    "rate": "Rate (%)",
+    "name": "Tax name",
+    "regNumber": "Registration number",
+    "save": "Save tax",
+    "saved": "Tax settings saved."
+  },
+  "requirement": {
+    "business_profile": "Business profile",
+    "bank_account": "Bank account",
+    "identity_verification": "Identity verification"
+  }
+}

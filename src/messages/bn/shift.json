@@ -1,0 +1,15 @@
+{
+  "startLabel": "শিফটের শুরু",
+  "openingTitle": "শুরুর ক্যাশ",
+  "openingHint": "বিক্রি শুরুর আগে ক্যাশ ড্রয়ার গুনে নিন।",
+  "openingCash": "শুরুর নগদ (৳)",
+  "openShift": "শিফট চালু করুন",
+  "endLabel": "শিফটের শেষ",
+  "closeTitle": "ড্রয়ার বন্ধ করুন",
+  "closeHint": "নগদ গুনে মোট রেকর্ড করুন।",
+  "expected": "প্রত্যাশিত",
+  "counted": "গোনা",
+  "variance": "পার্থক্য",
+  "countedCash": "গোনা নগদ (৳)",
+  "closeShift": "শিফট বন্ধ করুন"
+}

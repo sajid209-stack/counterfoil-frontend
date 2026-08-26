@@ -1,0 +1,63 @@
+{
+  "list": {
+    "title": "Promotions",
+    "description": "Coupons, automatic discounts, and the cashier discount policy.",
+    "new": "New promotion",
+    "empty": "No promotions yet.",
+    "coupon": "Coupon",
+    "automatic": "Automatic",
+    "created": "Promotion created."
+  },
+  "kind": {
+    "percentage_off": "% off",
+    "fixed_amount_off": "Amount off",
+    "buy_x_get_y": "Buy X get Y",
+    "fixed_price": "Fixed price",
+    "bundle_price": "Bundle price"
+  },
+  "editor": {
+    "back": "Promotions",
+    "name": "Name",
+    "kind": "Type",
+    "source": "Source",
+    "percent": "Percent off (%)",
+    "amount": "Amount",
+    "maxDiscount": "Max discount",
+    "minSubtotal": "Minimum spend",
+    "channels": "Where it applies",
+    "counter": "Counter",
+    "online": "Online",
+    "validFrom": "Valid from",
+    "validTo": "Valid to",
+    "status": "Status",
+    "save": "Save promotion",
+    "saved": "Promotion saved.",
+    "couponCode": "Coupon code",
+    "bxgyNote": "Buy {buy}, get {get} at {pct}% off.",
+    "advancedNote": "Buy-X-get-Y and bundle rules are edited in the backend for now."
+  },
+  "policy": {
+    "title": "Cashier discount policy",
+    "description": "Limits on ad-hoc discounts staff can apply at the counter.",
+    "maxPercent": "Maximum discount (%)",
+    "requireReason": "Require a reason",
+    "save": "Save policy",
+    "saved": "Policy saved."
+  },
+  "pos": {
+    "couponPlaceholder": "Coupon code",
+    "apply": "Apply",
+    "applied": "{name} applied",
+    "remove": "Remove",
+    "reasonLabel": "Discount reason",
+    "reasonPlaceholder": "Why the discount? (required)",
+    "overPolicy": "Over the {limit}% cashier limit — reduce the discount.",
+    "rejected": {
+      "not_found": "No such coupon.",
+      "channel_not_eligible": "Not valid at the counter.",
+      "min_subtotal_not_met": "Spend more to use this coupon.",
+      "min_quantity_not_met": "Add more items to use this coupon.",
+      "no_discount": "This coupon doesn't apply to your cart."
+    }
+  }
+}

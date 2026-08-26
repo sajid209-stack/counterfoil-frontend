@@ -1,0 +1,36 @@
+{
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "confirmed": "Confirmed",
+    "paid": "Paid",
+    "completed": "Completed",
+    "pending": "Pending",
+    "invited": "Invited",
+    "partial": "Partial",
+    "partly_refunded": "Partly refunded",
+    "archived": "Archived",
+    "refunded": "Refunded",
+    "suspended": "Suspended",
+    "cancelled": "Cancelled",
+    "void": "Void",
+    "issued": "Issued",
+    "redeemed": "Redeemed",
+    "expired": "Expired",
+    "no_show": "No-show",
+    "draft": "Draft"
+  },
+  "method": {
+    "cash": "Cash",
+    "bkash": "bKash",
+    "bangla_qr": "Bangla QR",
+    "card_terminal": "Card",
+    "credits": "Pass",
+    "mixed": "Mixed"
+  },
+  "tax": {
+    "standard": "Standard (VAT)",
+    "reduced": "Reduced",
+    "exempt": "Exempt"
+  }
+}

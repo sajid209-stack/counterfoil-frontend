@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import { DataTable, EmptyState, PageShell, type Column } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -19,6 +20,7 @@ interface CustomerRow {
 // answers "who is this person and what have they done here".
 export default function CustomersPage() {
   const router = useRouter();
+  const t = useTranslations("customers");
   const [search, setSearch] = useState("");
   const ordersQ = useApiQuery(() => listOrders({ pageSize: 1000 }), []);
 
@@ -39,14 +41,14 @@ export default function CustomersPage() {
   }, [ordersQ.data, search]);
 
   const columns: Column<CustomerRow>[] = [
-    { key: "name", header: "Customer", render: (c) => <span className="font-medium">{c.name}</span> },
-    { key: "orders", header: "Bookings", align: "right", render: (c) => String(c.orders) },
-    { key: "spent", header: "Spent", align: "right", render: (c) => formatMoney(c.spent) },
-    { key: "lastVisit", header: "Last visit", render: (c) => <span className="font-mono text-[12px] text-muted">{c.lastVisit.slice(0, 10)}</span> },
+    { key: "name", header: t("colCustomer"), render: (c) => <span className="font-medium">{c.name}</span> },
+    { key: "orders", header: t("colBookings"), align: "right", render: (c) => String(c.orders) },
+    { key: "spent", header: t("colSpent"), align: "right", render: (c) => formatMoney(c.spent) },
+    { key: "lastVisit", header: t("colLastVisit"), render: (c) => <span className="font-mono text-[12px] text-muted">{c.lastVisit.slice(0, 10)}</span> },
   ];
 
   return (
-    <PageShell title="Customers" description="Everyone a sale has been attached to. Capture happens at the counter.">
+    <PageShell title={t("title")} description={t("description")}>
       <DataTable
         columns={columns}
         rows={rows}
@@ -56,10 +58,10 @@ export default function CustomersPage() {
         toolbar={
           <div className="relative">
             <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customers…" className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchPlaceholder")} className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse" />
           </div>
         }
-        emptyState={<EmptyState title="No customers yet" message="Attach a customer to a sale at the counter and they appear here." />}
+        emptyState={<EmptyState title={t("emptyTitle")} message={t("emptyMessage")} />}
       />
     </PageShell>
   );

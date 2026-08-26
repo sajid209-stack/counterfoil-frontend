@@ -697,3 +697,38 @@ When you finish a unit of work, before you stop, update the sections that change
 **phase tracker** (status), **decisions log** (new choices, dated), **open questions**
 (resolved → strike/remove; new → add), and **live links** if a URL appears. A stale log is
 worse than none — it should always describe the repo _as it is right now_.
+
+---
+
+## Backend gap-closing — Milestone 1 (2026-08-23) ✅
+
+After reading the real backend (`counterfoil-app/application` — FastAPI microservices + OpenAPI
+contracts), we began closing frontend↔backend feature gaps. **All local (mock data layer); nothing
+pushed. New types modeled on the real OpenAPI shapes so the eventual `client.ts`→SDK swap is
+mechanical.** Money stays integer minor units.
+
+- **Money setup** — `/settings/payments` upgraded to payment-account onboarding
+  (`PaymentAccount`: provider bkash/sslcommerz/stripe · posture · status · charges/payouts ·
+  requirementsDue) + tax config (`TaxConfig`: mode + bps). POS non-cash methods now gate on a live
+  PSP account (`canTakeNonCash`). `lib/api/paymentAccounts.ts`, `taxConfig.ts`; seed = 1 live bKash
+  MoR account + 15% VAT.
+- **Seat maps** — `SeatLayout/SeatCategory/LayoutSeat/ConfigLayoutLink/AvailableSeat`;
+  `lib/api/layouts.ts`. OS editor at `/products/layouts` (+`/[id]`): grid seat editor, colour+price
+  categories, GA, buffer. POS `ProductSheet` renders a visual **seat picker** for products with a
+  `layoutId` (feeds `CartEntry.seatLabels`). Seeded a cinema "Main Hall" (8×12, Stalls/Balcony,
+  some pre-sold) linked to `prd_film`.
+- **Richer promotions** — `Promotion/Coupon/ManualDiscountPolicy/AppliedPromotion` + a pure quote
+  engine (`lib/api/promotions.ts`, mirrors promotions/engine.py: %/fixed/fixed-price/BXGY). OS
+  `/promotions` list + editor + cashier-discount-policy card. POS: coupon entry (resolve→apply, line
+  allocation), and the manual discount now gated by `ManualDiscountPolicy` (cap + **required
+  reason**) instead of the flat role cap. Seed: WELCOME10 (10%), an automatic BXGY, policy (10% +
+  reason required).
+- **i18n**: new namespaces `moneysetup`, `seatmaps`, `promotions` (+ `nav.promotions`) authored in
+  **both en and bn**. Enum labels via `lib/labels.ts`.
+- Verified: `tsc --noEmit` clean · `npm run build` clean · all routes 200 in EN + বাংলা.
+
+**Next milestones (not started):** memberships; customer depth (dedupe/merge, consent, intake
+forms); holds/TTL in POS; transfers/resale + credential reissue; donation pricing; write-offs;
+rebooking; billing; storefront + API keys; then the actual `client.ts`→SDK wiring + full
+`types.ts`↔OpenAPI alignment. i18n Batch 2 (remaining OS screens: products editor, orders, reports,
+settings forms, auth, profile) also still pending.

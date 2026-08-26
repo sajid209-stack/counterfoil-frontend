@@ -10,6 +10,7 @@ export interface FormTier {
   maxPerOrder: string;
   admits: string; // people this ticket admits (default 1)
   ageNote: string; // e.g. "5–12" — printed on the ticket
+  donation: boolean; // pay-what-you-want: price is the minimum, buyer enters more
   active: boolean;
 }
 
@@ -19,6 +20,7 @@ export const emptyTier = (): FormTier => ({
   maxPerOrder: "",
   admits: "1",
   ageNote: "",
+  donation: false,
   active: true,
 });
 
@@ -65,7 +67,7 @@ export function PriceTiersField({
       {tiers.map((tier, i) => (
         <div
           key={i}
-          className="grid grid-cols-1 items-start gap-tight rounded-sm border border-line p-comfortable sm:grid-cols-[1fr_7rem_4.5rem_5.5rem_auto]"
+          className="grid grid-cols-1 items-start gap-tight rounded-sm border border-line p-comfortable sm:grid-cols-[1fr_7rem_4.5rem_5.5rem_auto_auto]"
         >
           <FormField
             label={i === 0 ? "Name" : undefined}
@@ -95,6 +97,10 @@ export function PriceTiersField({
             value={tier.ageNote}
             onChange={(e) => update(i, { ageNote: e.target.value })}
           />
+          <label className={`flex items-center gap-inline whitespace-nowrap text-[12px] ${i === 0 ? "pt-6" : ""}`} title="Pay what you want (price becomes the minimum)">
+            <input type="checkbox" checked={tier.donation} onChange={(e) => update(i, { donation: e.target.checked })} className="h-4 w-4 accent-ember" />
+            Donation
+          </label>
           <div className={i === 0 ? "flex items-center gap-inline pt-6" : "flex items-center gap-inline"}>
             <button
               type="button"

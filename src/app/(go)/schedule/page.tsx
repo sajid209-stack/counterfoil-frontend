@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { MoreHorizontal } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -24,6 +25,7 @@ interface Row {
 
 export default function SchedulePage() {
   const router = useRouter();
+  const t = useTranslations("schedule");
   const toast = useToast();
   const [date, setDate] = useState(TODAY);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
@@ -38,17 +40,17 @@ export default function SchedulePage() {
       if (isResourceType(p.bookingType) && !p.flexibleDurations) {
         for (const r of getResourceMatrix(p, date)) {
           for (const s of r.slots) {
-            out.push({ time: s.time, label: `${p.name} — ${r.resource.name}`, state: r.resource.outOfService ? "OUT" : s.available ? formatMoney(resolveProductPrice(p, date, s.time, p.tiers[0]?.price ?? 0)) : "BOOKED", full: !s.available, product: p, resourceId: r.resource.id });
+            out.push({ time: s.time, label: `${p.name} — ${r.resource.name}`, state: r.resource.outOfService ? t("stateOut") : s.available ? formatMoney(resolveProductPrice(p, date, s.time, p.tiers[0]?.price ?? 0)) : t("stateBooked"), full: !s.available, product: p, resourceId: r.resource.id });
           }
         }
       } else if (isSlotBased(p.bookingType)) {
         for (const s of getSlots(p, date)) {
-          out.push({ time: s.time, label: p.name, state: s.remaining <= 0 ? "FULL" : `${s.sold}/${s.capacity}`, full: s.remaining <= 0, product: p });
+          out.push({ time: s.time, label: p.name, state: s.remaining <= 0 ? t("stateFull") : `${s.sold}/${s.capacity}`, full: s.remaining <= 0, product: p });
         }
       }
     }
     return out.sort((a, b) => a.time.localeCompare(b.time));
-  }, [productsQ.data, date]);
+  }, [productsQ.data, date, t]);
 
   const sell = (p: Product) => {
     sessionStorage.setItem("pos_open_product", p.id);
@@ -68,7 +70,7 @@ export default function SchedulePage() {
     const res = await updateResource(oos.id, { outOfService, outOfServiceReason: outOfService ? oosReason || null : null });
     setOosSaving(false);
     if (res.ok) {
-      toast.success(outOfService ? `${oos.name} marked out of service.` : `${oos.name} back in service.`);
+      toast.success(outOfService ? t("markedOut", { name: oos.name }) : t("backInService", { name: oos.name }));
       setOos(null);
       productsQ.reload();
       resourcesQ.reload();
@@ -82,19 +84,19 @@ export default function SchedulePage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-section px-section py-section">
       <div>
-        <p className="type-label text-[13px] text-ember">Front of house</p>
-        <h1 className="type-h1 mt-tight text-2xl">Schedule</h1>
+        <p className="type-label text-[13px] text-ember">{t("fohLabel")}</p>
+        <h1 className="type-h1 mt-tight text-2xl">{t("title")}</h1>
       </div>
       <div className="flex flex-wrap gap-tight">
-        {dateBtn(TODAY, "Today")}
-        {dateBtn(TOMORROW, "Tomorrow")}
+        {dateBtn(TODAY, t("today"))}
+        {dateBtn(TOMORROW, t("tomorrow"))}
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-sm" />
       </div>
 
       {productsQ.loading ? (
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : rows.length === 0 ? (
-        <EmptyState title="No sessions" message="This day has no timed or resourced sessions." />
+        <EmptyState title={t("noSessionsTitle")} message={t("noSessionsMessage")} />
       ) : (
         <div className="overflow-hidden rounded-md border border-line bg-card">
           {rows.map((r, i) => (
@@ -103,12 +105,12 @@ export default function SchedulePage() {
               <span className="min-w-0 flex-1 truncate text-sm">{r.label}</span>
               <span className={`font-mono text-[12px] ${r.full ? "text-faint" : "text-muted"}`}>{r.state}</span>
               {r.full ? (
-                r.product.waitlistEnabled ? <Button size="sm" variant="secondary" onClick={() => sell(r.product)}>Waitlist</Button> : <span className="w-16 text-right font-mono text-[11px] text-faint">—</span>
+                r.product.waitlistEnabled ? <Button size="sm" variant="secondary" onClick={() => sell(r.product)}>{t("waitlist")}</Button> : <span className="w-16 text-right font-mono text-[11px] text-faint">—</span>
               ) : (
-                <Button size="sm" onClick={() => sell(r.product)}>Sell</Button>
+                <Button size="sm" onClick={() => sell(r.product)}>{t("sell")}</Button>
               )}
               {r.resourceId && (
-                <button type="button" aria-label="Row actions" onClick={() => openOos(r.resourceId!)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line text-faint active:bg-ember/10">
+                <button type="button" aria-label={t("rowActions")} onClick={() => openOos(r.resourceId!)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line text-faint active:bg-ember/10">
                   <MoreHorizontal size={15} strokeWidth={1.5} />
                 </button>
               )}
@@ -120,19 +122,19 @@ export default function SchedulePage() {
       <Modal
         open={!!oos}
         onClose={() => setOos(null)}
-        title={oos ? `${oos.name} — ${oos.outOfService ? "out of service" : "in service"}` : ""}
+        title={oos ? (oos.outOfService ? t("oosTitleOut", { name: oos.name }) : t("oosTitleIn", { name: oos.name })) : ""}
         footer={
           oos?.outOfService ? (
-            <><Button variant="secondary" onClick={() => setOos(null)}>Cancel</Button><Button loading={oosSaving} onClick={() => saveOos(false)}>Return to service</Button></>
+            <><Button variant="secondary" onClick={() => setOos(null)}>{t("cancel")}</Button><Button loading={oosSaving} onClick={() => saveOos(false)}>{t("returnToService")}</Button></>
           ) : (
-            <><Button variant="secondary" onClick={() => setOos(null)}>Cancel</Button><Button loading={oosSaving} onClick={() => saveOos(true)}>Mark out of service</Button></>
+            <><Button variant="secondary" onClick={() => setOos(null)}>{t("cancel")}</Button><Button loading={oosSaving} onClick={() => saveOos(true)}>{t("markOutOfService")}</Button></>
           )
         }
       >
         {oos?.outOfService ? (
-          <p className="text-sm text-muted">Currently out of service{oos.outOfServiceReason ? `: ${oos.outOfServiceReason}` : ""}. Returning it makes it bookable again.</p>
+          <p className="text-sm text-muted">{oos.outOfServiceReason ? t("currentlyOutReason", { reason: oos.outOfServiceReason }) : t("currentlyOut")}</p>
         ) : (
-          <FormField label="Reason" placeholder="Resurfacing until Friday" value={oosReason} onChange={(e) => setOosReason(e.target.value)} help="Bookings stop while it's out of service." />
+          <FormField label={t("reasonLabel")} placeholder={t("reasonPlaceholder")} value={oosReason} onChange={(e) => setOosReason(e.target.value)} help={t("reasonHelp")} />
         )}
       </Modal>
     </main>

@@ -1,0 +1,15 @@
+{
+  "startLabel": "Start of shift",
+  "openingTitle": "Opening float",
+  "openingHint": "Count the cash drawer before you start selling.",
+  "openingCash": "Opening cash (৳)",
+  "openShift": "Open shift",
+  "endLabel": "End of shift",
+  "closeTitle": "Close drawer",
+  "closeHint": "Count the cash and record the total.",
+  "expected": "Expected",
+  "counted": "Counted",
+  "variance": "Variance",
+  "countedCash": "Counted cash (৳)",
+  "closeShift": "Close shift"
+}

@@ -1,0 +1,60 @@
+{
+  "title": "পেমেন্ট সেটআপ",
+  "description": "কীভাবে পেমেন্ট নেবেন তা যুক্ত করুন এবং ট্যাক্স নির্ধারণ করুন।",
+  "accounts": {
+    "title": "পেমেন্ট অ্যাকাউন্ট",
+    "description": "কার্ড ও ওয়ালেট পেমেন্ট নিতে একটি প্রোভাইডার যুক্ত করুন। নগদ সবসময় চালু থাকে।",
+    "connect": "যুক্ত করুন",
+    "completeOnboarding": "অনবোর্ডিং সম্পূর্ণ করুন",
+    "disable": "নিষ্ক্রিয় করুন",
+    "charges": "চার্জ",
+    "payouts": "পেআউট",
+    "enabled": "চালু",
+    "off": "বন্ধ",
+    "requirementsDue": "এখনও প্রয়োজন",
+    "connected": "যুক্ত হয়েছে",
+    "notConnected": "যুক্ত হয়নি",
+    "linkOpened": "অনবোর্ডিং লিংক খোলা হয়েছে (ডেমো)।",
+    "activated": "{provider} এখন সক্রিয় — আপনি পেমেন্ট নিতে পারবেন।",
+    "disabledToast": "{provider} নিষ্ক্রিয় করা হয়েছে।"
+  },
+  "status": {
+    "pending_onboarding": "অনবোর্ডিং",
+    "active": "সক্রিয়",
+    "restricted": "সীমিত",
+    "disabled": "নিষ্ক্রিয়"
+  },
+  "posture": {
+    "merchant_of_record": "Counterfoil সংগ্রহ করে",
+    "connect": "সরাসরি আপনার কাছে জমা হয়"
+  },
+  "provider": {
+    "bkash": "বিকাশ",
+    "sslcommerz": "SSLCommerz",
+    "stripe": "কার্ড (Stripe)",
+    "bkashHelper": "মোবাইল ওয়ালেট — বাংলাদেশ।",
+    "sslcommerzHelper": "কার্ড ও স্থানীয় পেমেন্ট — বাংলাদেশ।",
+    "stripeHelper": "গ্লোবাল কার্ড প্রসেসিং।"
+  },
+  "cash": {
+    "title": "নগদ",
+    "helper": "কাউন্টারে সবসময় চালু — কোনো সেটআপ লাগে না।",
+    "always": "সবসময় চালু"
+  },
+  "tax": {
+    "title": "ট্যাক্স",
+    "mode": "ট্যাক্স মোড",
+    "inclusive": "দামের মধ্যে অন্তর্ভুক্ত",
+    "exclusive": "চেকআউটে যোগ হয়",
+    "rate": "হার (%)",
+    "name": "ট্যাক্সের নাম",
+    "regNumber": "রেজিস্ট্রেশন নম্বর",
+    "save": "ট্যাক্স সংরক্ষণ",
+    "saved": "ট্যাক্স সেটিংস সংরক্ষিত হয়েছে।"
+  },
+  "requirement": {
+    "business_profile": "ব্যবসার প্রোফাইল",
+    "bank_account": "ব্যাংক অ্যাকাউন্ট",
+    "identity_verification": "পরিচয় যাচাই"
+  }
+}

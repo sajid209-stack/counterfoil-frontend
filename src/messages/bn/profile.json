@@ -1,0 +1,23 @@
+{
+  "title": "আমার প্রোফাইল",
+  "description": "আপনার নিজের তথ্য — দায়িত্ব বরাদ্দ ম্যানেজার নির্ধারণ করেন।",
+  "changePhoto": "ছবি পরিবর্তন করুন",
+  "photoInfo": "আপাতত প্রোফাইল ছবিতে আপনার নামের আদ্যক্ষর ব্যবহার হচ্ছে।",
+  "name": "নাম",
+  "email": "ইমেইল",
+  "phone": "ফোন",
+  "saveChanges": "পরিবর্তন সংরক্ষণ করুন",
+  "saved": "প্রোফাইল সংরক্ষিত হয়েছে।",
+  "whereIWork": "আমি যেখানে কাজ করি",
+  "locations": "লোকেশন",
+  "counters": "কাউন্টার",
+  "assignmentsNote": "দায়িত্ব বরাদ্দ Settings → Team-এ পরিচালিত হয়।",
+  "signedInDevices": "সাইন-ইন করা ডিভাইস",
+  "thisDevice": "এই ডিভাইস",
+  "signOut": "সাইন আউট",
+  "signedOut": "{name} সাইন আউট হয়েছে।",
+  "lastNow": "এখন",
+  "lastMinAgo": "{count} মিনিট আগে",
+  "lastHrAgo": "{count} ঘণ্টা আগে",
+  "lastDaysAgo": "{count} দিন আগে"
+}

@@ -2,7 +2,7 @@ import { createBooking } from "./bookings";
 import { createResource } from "./client";
 import { issueTicket, redeemCredits, voidOrderTickets } from "./tickets";
 import { buildOrderLines, type LineInput } from "@/lib/orderMath";
-import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod } from "./types";
+import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod, WriteOffCategory } from "./types";
 
 const resource = createResource<Order>("orders", "Order", {
   search: (o, q) =>
@@ -97,6 +97,18 @@ export async function addOrderNote(orderId: string, text: string, who = "Counter
   const o = resource.peek().find((x) => x.id === orderId);
   if (!o) return resource.get(orderId);
   return resource.update(orderId, { notes: [...(o.notes ?? []), { at: new Date().toISOString(), who, text }] });
+}
+
+/** Write off part of an order's balance (bad debt / dispute / goodwill) — not a
+ *  refund (no money moves), just clears what's owed and records why. */
+export async function writeOffOrder(orderId: string, amount: Minor, category: WriteOffCategory, reason: string, who = "Counter"): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  const at = new Date().toISOString();
+  return resource.update(orderId, {
+    writeOffs: [...(o.writeOffs ?? []), { at, who, amount, category, reason }],
+    history: withHistory(o, who, `Wrote off ${amount} (${category})${reason ? ` — ${reason}` : ""}`),
+  });
 }
 
 /** Record any other management action on the order's history. */

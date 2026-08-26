@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Plus, Search } from "lucide-react";
 import {
+  Button,
   DataTable,
   EmptyState,
   PageShell,
@@ -12,13 +15,14 @@ import {
 import { useApiQuery } from "@/lib/useApi";
 import { listLocations, listPriceRules, listProducts, type PriceRule } from "@/lib/api";
 
-const KIND_LABEL: Record<PriceRule["kind"], string> = {
-  standard: "Standard",
-  peak: "Peak",
-  off_peak: "Off-peak",
-};
-
 export default function PricingPage() {
+  const t = useTranslations("pricing");
+  const router = useRouter();
+  const kindLabel: Record<PriceRule["kind"], string> = {
+    standard: t("kindStandard"),
+    peak: t("kindPeak"),
+    off_peak: t("kindOffPeak"),
+  };
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState("");
   const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "name", order: "asc" });
@@ -27,8 +31,8 @@ export default function PricingPage() {
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
   const scope = (r: PriceRule) => {
-    const p = r.productId ? productsQ.data?.data.find((x) => x.id === r.productId)?.name : "All products";
-    const l = r.locationId ? locationsQ.data?.data.find((x) => x.id === r.locationId)?.name : "All locations";
+    const p = r.productId ? productsQ.data?.data.find((x) => x.id === r.productId)?.name : t("allProducts");
+    const l = r.locationId ? locationsQ.data?.data.find((x) => x.id === r.locationId)?.name : t("allLocations");
     return `${p ?? "—"} · ${l ?? "—"}`;
   };
 
@@ -38,13 +42,13 @@ export default function PricingPage() {
   );
 
   const columns: Column<PriceRule>[] = [
-    { key: "name", header: "Name", sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
-    { key: "scope", header: "Applies to", render: (r) => <span className="text-[13px] text-muted">{scope(r)}</span> },
-    { key: "channel", header: "Channel", render: (r) => <span className="font-mono text-[12px] text-muted">{r.channel}</span> },
-    { key: "kind", header: "Kind", render: (r) => KIND_LABEL[r.kind] },
+    { key: "name", header: t("colName"), sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
+    { key: "scope", header: t("colAppliesTo"), render: (r) => <span className="text-[13px] text-muted">{scope(r)}</span> },
+    { key: "channel", header: t("colChannel"), render: (r) => <span className="font-mono text-[12px] text-muted">{r.channel}</span> },
+    { key: "kind", header: t("colKind"), render: (r) => kindLabel[r.kind] },
     {
       key: "adjustmentPct",
-      header: "Adjustment",
+      header: t("colAdjustment"),
       sortable: true,
       align: "right",
       render: (r) => (
@@ -53,16 +57,17 @@ export default function PricingPage() {
         </span>
       ),
     },
-    { key: "status", header: "Status", render: (r) => <StatusPill status={r.status} /> },
+    { key: "status", header: t("colStatus"), render: (r) => <StatusPill status={r.status} /> },
   ];
 
   return (
-    <PageShell title="Pricing" description="Peak / off-peak adjustments per product, location, and channel.">
+    <PageShell title={t("title")} description={t("description")} actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/pricing/new")}>{t("newRule")}</Button>}>
       <DataTable
         columns={columns}
         rows={data?.data ?? []}
         getRowId={(r) => r.id}
         loading={loading}
+        onRowClick={(r) => router.push(`/pricing/${r.id}`)}
         sort={sort}
         onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
         toolbar={
@@ -72,19 +77,19 @@ export default function PricingPage() {
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder="Search price rules…"
+                placeholder={t("searchPlaceholder")}
                 className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
             <select value={kind} onChange={(e) => { setKind(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
-              <option value="">All kinds</option>
-              <option value="standard">Standard</option>
-              <option value="peak">Peak</option>
-              <option value="off_peak">Off-peak</option>
+              <option value="">{t("allKinds")}</option>
+              <option value="standard">{t("kindStandard")}</option>
+              <option value="peak">{t("kindPeak")}</option>
+              <option value="off_peak">{t("kindOffPeak")}</option>
             </select>
           </div>
         }
-        emptyState={<EmptyState title="No price rules" message="Peak and off-peak adjustments will appear here." />}
+        emptyState={<EmptyState title={t("emptyTitle")} message={t("emptyMessage")} />}
         pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}
       />
     </PageShell>

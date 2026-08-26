@@ -1,0 +1,15 @@
+{
+  "title": "ক্যালেন্ডার",
+  "description": "স্লট অনুযায়ী নিশ্চিত হওয়া বুকিং — দিন, সপ্তাহ বা মাস।",
+  "tabDay": "দিন",
+  "tabWeek": "সপ্তাহ",
+  "tabMonth": "মাস",
+  "byResource": "{noun} অনুযায়ী",
+  "outOfService": "সেবার বাইরে",
+  "outOfServiceReason": "সেবার বাইরে — {reason}",
+  "emptyTitle": "এই সময়সীমায় কোনো বুকিং নেই",
+  "emptyMessage": "আরও বড় পরিসরের জন্য মাস ভিউ দেখুন।",
+  "bookingCount": "{count}টি বুকিং",
+  "bookingCountPlural": "{count}টি বুকিং",
+  "party": "দল {size}"
+}

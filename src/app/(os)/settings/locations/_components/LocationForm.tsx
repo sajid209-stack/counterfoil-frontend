@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button, FormField, useToast } from "@/components/ui";
 import {
   createLocation,
@@ -17,7 +18,7 @@ const TIMEZONES = [
   "America/New_York",
   "America/Toronto",
 ];
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_KEYS = ["daySun", "dayMon", "dayTue", "dayWed", "dayThu", "dayFri", "daySat"] as const;
 
 interface FormState {
   name: string;
@@ -50,27 +51,28 @@ const blank: FormState = {
 };
 
 function HoursSummary({ hours }: { hours: OpeningHours[] }) {
+  const t = useTranslations("settings");
   return (
     <div className="rounded-md border border-line bg-card p-major">
-      <h2 className="type-h2 mb-section text-base">Opening hours</h2>
+      <h2 className="type-h2 mb-section text-base">{t("locations.openingHours")}</h2>
       <div className="flex flex-col gap-inline">
-        {DAYS.map((label, day) => {
+        {DAY_KEYS.map((dayKey, day) => {
           const entry = hours.find((h) => h.dayOfWeek === day);
           const intervals = entry?.intervals ?? [];
           return (
             <div key={day} className="flex items-center justify-between text-sm">
-              <span className="w-12 text-muted">{label}</span>
+              <span className="w-12 text-muted">{t(`common.${dayKey}` as never)}</span>
               <span className="font-mono text-[12px] text-muted">
                 {intervals.length
                   ? intervals.map((i) => `${i.opensAt}–${i.closesAt}`).join(", ")
-                  : "Closed"}
+                  : t("locations.closed")}
               </span>
             </div>
           );
         })}
       </div>
       <p className="mt-section text-[12px] text-faint">
-        Hours + special dates editor is a follow-up — an engineer picks it up here.
+        {t("locations.hoursFollowUp")}
       </p>
     </div>
   );
@@ -85,6 +87,7 @@ export function LocationForm({
 }) {
   const router = useRouter();
   const toast = useToast();
+  const t = useTranslations("settings");
   const initial = useMemo(() => (location ? fromLocation(location) : blank), [location]);
   const [state, setState] = useState<FormState>(initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -113,7 +116,7 @@ export function LocationForm({
         : await updateLocation(location!.id, input);
     setSaving(false);
     if (res.ok) {
-      toast.success(mode === "create" ? "Location created." : "Changes saved.");
+      toast.success(mode === "create" ? t("locations.createdToast") : t("common.changesSaved"));
       if (mode === "create") router.push(`/settings/locations/${res.data.id}`);
       else setState(fromLocation(res.data));
     } else if (res.error.code === "validation" && res.error.fieldErrors) {
@@ -127,10 +130,10 @@ export function LocationForm({
   return (
     <div className="flex flex-col gap-section pb-hero">
       <div className="rounded-md border border-line bg-card p-major">
-        <h2 className="type-h2 mb-section text-base">Details</h2>
+        <h2 className="type-h2 mb-section text-base">{t("common.details")}</h2>
         <div className="grid gap-section sm:grid-cols-2">
           <FormField
-            label="Name"
+            label={t("common.name")}
             required
             value={state.name}
             onChange={(e) => set("name", e.target.value)}
@@ -138,36 +141,36 @@ export function LocationForm({
             className="sm:col-span-2"
           />
           <FormField
-            label="Address line 1"
+            label={t("locations.addressLine1")}
             value={state.addressLine1}
             onChange={(e) => set("addressLine1", e.target.value)}
           />
           <FormField
-            label="Address line 2"
+            label={t("locations.addressLine2")}
             value={state.addressLine2}
             onChange={(e) => set("addressLine2", e.target.value)}
           />
           <FormField
-            label="City"
+            label={t("common.city")}
             required
             value={state.city}
             onChange={(e) => set("city", e.target.value)}
             error={errors.city}
           />
           <FormField
-            label="Country"
+            label={t("common.country")}
             value={state.country}
             onChange={(e) => set("country", e.target.value)}
           />
           <FormField
-            label="Timezone"
+            label={t("common.timezone")}
             variant="select"
             value={state.timezone}
             onChange={(e) => set("timezone", e.target.value)}
-            options={TIMEZONES.map((t) => ({ value: t, label: t }))}
+            options={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
           />
           <FormField
-            label="Active"
+            label={t("common.active")}
             variant="toggle"
             checked={state.active}
             onChange={(e) => set("active", (e.target as HTMLInputElement).checked)}
@@ -179,10 +182,10 @@ export function LocationForm({
 
       <div className="sticky bottom-0 max-md:bottom-[calc(56px+env(safe-area-inset-bottom))] flex items-center justify-end gap-tight border-t border-line bg-surface py-section">
         <Button variant="secondary" onClick={() => router.push("/settings/locations")} disabled={saving}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button onClick={save} loading={saving} disabled={!dirty && mode === "edit"}>
-          {mode === "create" ? "Create location" : "Save changes"}
+          {mode === "create" ? t("locations.createButton") : t("common.saveChanges")}
         </Button>
       </div>
     </div>
