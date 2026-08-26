@@ -13,7 +13,7 @@ export function Keypad({
   large?: boolean;
 }) {
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
-  const keyCls = `${large ? "h-20" : "h-16"} rounded-sm border border-line bg-card font-mono text-2xl active:bg-ember/10`;
+  const keyCls = `${large ? "h-20" : "h-16"} rounded-sm border border-line bg-card font-mono text-2xl text-fg active:bg-ember/10`;
   return (
     <div className={`grid grid-cols-3 ${large ? "gap-comfortable" : "gap-tight"}`}>
       {keys.map((k) => (
