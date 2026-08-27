@@ -212,7 +212,7 @@ export function ProductWizard({
           <div className="flex flex-col gap-major">
             <PriceTiersField tiers={tiers} onChange={setTiers} errors={errors} currency={currency} />
             {booking && needsSchedule(booking.bookingType) && (
-              <PricingRulesField rules={pricingRules} onChange={setPricingRules} currency={currency} basePriceMajor={tiers[0]?.price ?? ""} />
+              <PricingRulesField rules={pricingRules} onChange={setPricingRules} currency={currency} basePriceMajor={tiers[0]?.price ?? ""} dayStart={schedule?.startTime} dayEnd={schedule?.endTime} />
             )}
           </div>
         )}
