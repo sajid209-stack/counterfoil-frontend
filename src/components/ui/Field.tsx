@@ -92,7 +92,7 @@ export function FormField({
   ...control
 }: FormFieldProps) {
   const id = useId();
-  const border = error ? "border-danger focus:border-danger" : "border-line focus:border-inverse";
+  const border = error ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20";
 
   // Toggle is laid out inline (control beside label), not stacked.
   if (variant === "toggle") {
