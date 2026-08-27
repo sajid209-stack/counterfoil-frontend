@@ -28,7 +28,7 @@ import {
 import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
-import { LogoMark } from "@/components/ui";
+import { Logo } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -97,9 +97,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         {/* Mobile — glass top bar. Sticky so it stays as content scrolls. */}
         <div className="glass-navbar sticky top-0 z-30 flex items-center gap-tight px-section py-tight md:hidden">
-          <LogoMark size={24} />
-          <span className="type-h2 text-base">Counterfoil</span>
-          <span className="font-mono text-[11px] text-faint">OS</span>
+          <Logo variant="os" size={24} />
           <span className="flex-1" />
           <LocaleToggle />
           <ModeButton />

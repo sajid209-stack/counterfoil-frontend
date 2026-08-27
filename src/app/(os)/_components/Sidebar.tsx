@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, Ticket, TicketPercent, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { LogoMark } from "@/components/ui";
+import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
 type IconType = React.ComponentType<{ size?: number | string; strokeWidth?: number | string; className?: string }>;
@@ -64,10 +64,8 @@ export function Sidebar({
           toggle. This is the reliable expand affordance in both states. */}
       <div className={cn("flex shrink-0 items-center py-section", collapsed ? "justify-center" : "justify-between px-section")}>
         {!collapsed && (
-          <Link href="/" className="flex items-center gap-tight" title="Counterfoil OS">
-            <LogoMark size={28} />
-            <span className="type-h2 text-lg text-fg">Counterfoil</span>
-            <span className="font-mono text-[11px] text-faint">OS</span>
+          <Link href="/" title="Counterfoil OS">
+            <Logo variant="os" size={28} />
           </Link>
         )}
         {onToggleCollapsed && (

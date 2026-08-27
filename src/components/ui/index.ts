@@ -1,6 +1,7 @@
 export { Button } from "./Button";
 export { Card } from "./Card";
 export { LogoMark } from "./LogoMark";
+export { Logo } from "./Logo";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./Button";
 export { StatusPill, statusTone } from "./StatusPill";
 export type { PillTone } from "./StatusPill";

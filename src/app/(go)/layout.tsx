@@ -21,7 +21,7 @@ import {
 import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
-import { LogoMark, Modal } from "@/components/ui";
+import { Logo, Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { listProducts } from "@/lib/api";
 import { isSlotBased } from "@/lib/schedule";
@@ -109,10 +109,8 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
       {/* Context bar — business · counter · shift state. Nav does NOT live here. */}
       <header className="flex items-center justify-between gap-tight border-b border-line px-section py-tight">
         <div className="flex min-w-0 items-center gap-tight">
-          <Link href="/login" className="flex h-12 shrink-0 items-center gap-tight">
-            <LogoMark size={24} />
-            <span className="type-h2 text-base">Counterfoil</span>
-            <span className="font-mono text-[11px] text-faint">Go</span>
+          <Link href="/login" className="flex h-12 shrink-0 items-center">
+            <Logo variant="go" size={24} />
           </Link>
           <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[11px] text-muted sm:block">Fort Main Gate</span>
           <span className="hidden shrink-0 font-mono text-[11px] text-faint sm:block" title="Shift open for">⏱ 3:24</span>
