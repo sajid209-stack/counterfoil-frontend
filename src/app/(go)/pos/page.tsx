@@ -7,7 +7,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { Archive, Pencil, Plus, Search, Trash2, UserRound, X } from "lucide-react";
 import { BlockedNotice, Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { checkout, findCreditPass, getManualDiscountPolicy, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, quoteCart, type AppliedPromotion, type CheckoutLine, type CreditPass, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { addOrderPayment, checkout, findCreditPass, findOrderByReference, getManualDiscountPolicy, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, quoteCart, type AppliedPromotion, type CheckoutLine, type CreditPass, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
@@ -87,6 +87,33 @@ export default function PosPage() {
   const [customAmount, setCustomAmount] = useState("");
   const [pass, setPass] = useState<CreditPass | null>(null);
   const [passOpen, setPassOpen] = useState(false);
+
+  // Settle a booking — look up an existing order by reference and take its
+  // outstanding balance right at the till (completes a partly-paid booking).
+  const [settleOpen, setSettleOpen] = useState(false);
+  const [settleRef, setSettleRef] = useState("");
+  const [settleOrder, setSettleOrder] = useState<Order | null>(null);
+  const [settleLoading, setSettleLoading] = useState(false);
+  const [settling, setSettling] = useState(false);
+  const [settleMethod, setSettleMethod] = useState<PaymentMethod>("cash");
+  const settlePaid = settleOrder ? settleOrder.payments.reduce((s, p) => s + p.amount, 0) : 0;
+  const settleOutstanding = settleOrder ? Math.max(0, settleOrder.total - settlePaid) : 0;
+  const closeSettle = () => { setSettleOpen(false); setSettleOrder(null); setSettleRef(""); };
+  const findBooking = async () => {
+    setSettleLoading(true);
+    const res = await findOrderByReference(settleRef);
+    setSettleLoading(false);
+    if (res.ok) setSettleOrder(res.data);
+    else { setSettleOrder(null); toast.error(t("settle.notFound")); }
+  };
+  const takeSettle = async () => {
+    if (!settleOrder || settleOutstanding <= 0) return;
+    setSettling(true);
+    const res = await addOrderPayment(settleOrder.id, settleMethod, settleOutstanding);
+    setSettling(false);
+    if (res.ok) { setSettleOrder(res.data); toast.success(t("settle.settled", { amount: formatMoney(settleOutstanding, currency) })); }
+    else toast.error(res.error.message);
+  };
   const [passCode, setPassCode] = useState("");
   const [passLoading, setPassLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -602,6 +629,7 @@ export default function PosPage() {
             ) : (
               <button type="button" onClick={() => setPassOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[12px]">{t("summary.redeemPass")}</button>
             )}
+            <button type="button" onClick={() => setSettleOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[12px]">{t("summary.settleBooking")}</button>
           </div>
 
           <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.subtotal")}</span><span className="font-mono">{formatMoney(subtotal, currency)}</span></div>
@@ -752,6 +780,42 @@ export default function PosPage() {
             </div>
           )}
         </div>
+      </Modal>
+
+      <Modal open={settleOpen} onClose={closeSettle} title={t("settle.title")}>
+        {!settleOrder ? (
+          <div className="flex flex-col gap-section">
+            <p className="text-[13px] text-muted">{t("settle.help")}</p>
+            <FormField label={t("settle.refLabel")} value={settleRef} onChange={(e) => setSettleRef(e.target.value)} placeholder={t("settle.refPlaceholder")} />
+            <Button onClick={findBooking} loading={settleLoading} disabled={!settleRef.trim()}>{t("settle.find")}</Button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-section">
+            <div className="rounded-sm bg-subtle p-comfortable text-sm">
+              <div className="flex items-center justify-between">
+                <span className="font-mono">{settleOrder.reference}</span>
+                <span className="font-mono text-[12px] text-muted">{enumL.status(settleOrder.status)}</span>
+              </div>
+              {settleOrder.customerName && <p className="mt-inline text-muted">{settleOrder.customerName}</p>}
+              <div className="mt-tight flex justify-between"><span className="text-muted">{t("settle.total")}</span><span className="font-mono tabular-nums">{formatMoney(settleOrder.total, currency)}</span></div>
+              <div className="flex justify-between"><span className="text-muted">{t("settle.paid")}</span><span className="font-mono tabular-nums">{formatMoney(settlePaid, currency)}</span></div>
+              <div className="flex justify-between font-medium"><span>{t("settle.outstanding")}</span><span className="font-mono tabular-nums text-warning">{formatMoney(settleOutstanding, currency)}</span></div>
+            </div>
+            {settleOutstanding > 0 ? (
+              <>
+                <div className="grid grid-cols-2 gap-tight">
+                  {(["cash", "bkash", "card_terminal", "bangla_qr"] as PaymentMethod[]).map((m) => (
+                    <Button key={m} variant={settleMethod === m ? "primary" : "secondary"} className="h-12" onClick={() => setSettleMethod(m)}>{enumL.method(m)}</Button>
+                  ))}
+                </div>
+                <Button onClick={takeSettle} loading={settling}>{t("settle.take", { amount: formatMoney(settleOutstanding, currency) })}</Button>
+              </>
+            ) : (
+              <p className="rounded-sm bg-success/10 py-tight text-center text-sm font-medium text-success">{t("settle.fullyPaid")}</p>
+            )}
+            <button type="button" onClick={() => { setSettleOrder(null); setSettleRef(""); }} className="text-center text-[13px] text-faint hover:text-fg">{t("settle.lookupAnother")}</button>
+          </div>
+        )}
       </Modal>
 
       <Modal open={passOpen} onClose={() => setPassOpen(false)} title={t("pass.title")} footer={<><Button variant="secondary" onClick={() => setPassOpen(false)}>{t("pass.cancel")}</Button><Button onClick={applyPass} disabled={!passCode.trim()} loading={passLoading}>{t("pass.apply")}</Button></>}>

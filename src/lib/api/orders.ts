@@ -29,6 +29,15 @@ export const listOrders = (
 
 export const getOrder = (id: string): Promise<ApiResult<Order>> => resource.get(id);
 
+/** Look up one order by its human reference (POS "Settle a booking" lookup).
+ *  Exact match preferred, else a contains-match; errors if nothing matches. */
+export function findOrderByReference(ref: string): Promise<ApiResult<Order>> {
+  const q = ref.trim().toLowerCase();
+  const all = resource.peek();
+  const hit = all.find((o) => o.reference.toLowerCase() === q) ?? all.find((o) => q.length >= 3 && o.reference.toLowerCase().includes(q));
+  return resource.get(hit?.id ?? "__no_order__");
+}
+
 /** Full refund — flips status; the real endpoint would also reverse payments. */
 export const refundOrder = (id: string): Promise<ApiResult<Order>> =>
   resource.update(id, { status: "refunded" });

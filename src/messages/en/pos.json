@@ -49,7 +49,8 @@
     "total": "Total",
     "dueNow": "Due now",
     "balanceAtArrival": "Balance at arrival",
-    "payInFull": "Pay in full now"
+    "payInFull": "Pay in full now",
+    "settleBooking": "Settle a booking"
   },
   "charge": "Charge",
   "chargeAmount": "Charge {amount} — {method}",
@@ -221,5 +222,19 @@
     "cancel": "Cancel",
     "join": "Join",
     "addedToWaitlist": "Added to the waitlist."
+  },
+  "settle": {
+    "title": "Settle a booking",
+    "help": "Enter a booking reference to take its outstanding balance.",
+    "refLabel": "Booking reference",
+    "refPlaceholder": "e.g. CF-2026-000123",
+    "find": "Find booking",
+    "notFound": "No booking found for that reference.",
+    "total": "Total",
+    "paid": "Paid",
+    "outstanding": "Outstanding",
+    "take": "Take {amount}",
+    "fullyPaid": "Fully paid — nothing outstanding.",
+    "lookupAnother": "Look up another booking"
   }
 }

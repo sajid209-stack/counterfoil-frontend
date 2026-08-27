@@ -49,7 +49,8 @@
     "total": "মোট",
     "dueNow": "এখন দেয়",
     "balanceAtArrival": "আগমনে বাকি",
-    "payInFull": "এখনই সম্পূর্ণ পরিশোধ"
+    "payInFull": "এখনই সম্পূর্ণ পরিশোধ",
+    "settleBooking": "বুকিং নিষ্পত্তি"
   },
   "charge": "চার্জ",
   "chargeAmount": "চার্জ {amount} — {method}",
@@ -221,5 +222,19 @@
     "cancel": "বাতিল",
     "join": "যোগ দিন",
     "addedToWaitlist": "ওয়েটলিস্টে যোগ করা হয়েছে।"
+  },
+  "settle": {
+    "title": "বুকিং নিষ্পত্তি",
+    "help": "বকেয়া নিতে একটি বুকিং রেফারেন্স লিখুন।",
+    "refLabel": "বুকিং রেফারেন্স",
+    "refPlaceholder": "যেমন CF-2026-000123",
+    "find": "বুকিং খুঁজুন",
+    "notFound": "সেই রেফারেন্সে কোনো বুকিং নেই।",
+    "total": "মোট",
+    "paid": "পরিশোধিত",
+    "outstanding": "বকেয়া",
+    "take": "{amount} নিন",
+    "fullyPaid": "সম্পূর্ণ পরিশোধিত — কোনো বকেয়া নেই।",
+    "lookupAnother": "অন্য বুকিং খুঁজুন"
   }
 }
