@@ -1,7 +1,7 @@
 // F10 app-shell service worker. Shell only: hashed build assets and fonts are
 // cached first-hit so the app opens instantly; navigations stay network-first
 // (offline DATA is deferred and out of scope — this is not offline mode).
-const SHELL_CACHE = "counterfoil-shell-v1";
+const SHELL_CACHE = "counterfoil-shell-v2";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
