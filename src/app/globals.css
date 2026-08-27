@@ -234,6 +234,9 @@
       transform var(--duration-quick) var(--ease-counterfoil);
   }
 
+  .card-interactive {
+    cursor: pointer;
+  }
   .card-interactive:hover {
     border-color: var(--color-strong);
     box-shadow: var(--shadow-pop);
@@ -339,4 +342,19 @@
 @media print {
   html, body { background: #ffffff !important; }
   @page { margin: 12mm; }
+}
+
+/* Respect users who prefer reduced motion — neutralise transitions,
+   animations and smooth scrolling app-wide (ui-ux-pro-max flags this as a
+   High-severity accessibility gap). Meaningful state changes still happen,
+   just without the motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
