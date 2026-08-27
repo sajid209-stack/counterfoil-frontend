@@ -11,7 +11,8 @@
   "tabs": {
     "transactions": "Transactions",
     "summary": "Summary",
-    "analytics": "Analytics"
+    "analytics": "Analytics",
+    "outstanding": "Outstanding"
   },
   "presets": {
     "today": "Today",
@@ -120,5 +121,18 @@
     "topProducts": "Top products",
     "bookings": "{count} booking",
     "bookingsPlural": "{count} bookings"
+  },
+  "outstanding": {
+    "totalOwed": "Total owed",
+    "count": "Partly-paid orders",
+    "empty": "Nothing outstanding — every order is settled.",
+    "col": {
+      "reference": "Order",
+      "customer": "Customer",
+      "time": "Placed",
+      "total": "Total",
+      "paid": "Paid",
+      "owed": "Owed"
+    }
   }
 }

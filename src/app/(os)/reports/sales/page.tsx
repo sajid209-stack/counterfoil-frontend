@@ -13,6 +13,7 @@ import {
   listCategories,
   listCounters,
   listLocations,
+  listOrders,
   listProducts,
   listStaff,
   type SalesGroupBy,
@@ -136,6 +137,17 @@ function SalesReportInner() {
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
   const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
   const staffQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
+
+  // ── Outstanding — money owed on partly-paid orders (a "right now" view,
+  //    independent of the date range). Ties to the partial-payments flow. ──
+  const ordersQ = useApiQuery(() => listOrders({ pageSize: 500 }), []);
+  const outstanding = (ordersQ.data?.data ?? [])
+    .filter((o) => o.status === "partial")
+    .map((o) => ({ o, paid: o.payments.reduce((s, p) => s + p.amount, 0) }))
+    .map((x) => ({ ...x, owed: Math.max(0, x.o.total - x.paid) }))
+    .filter((x) => x.owed > 0)
+    .sort((a, b) => b.owed - a.owed);
+  const totalOwed = outstanding.reduce((s, x) => s + x.owed, 0);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
   const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
 
@@ -291,7 +303,7 @@ function SalesReportInner() {
       </div>
 
       <Tabs
-        items={[{ value: "transactions", label: t("tabs.transactions") }, { value: "summary", label: t("tabs.summary") }, { value: "analytics", label: t("tabs.analytics") }]}
+        items={[{ value: "transactions", label: t("tabs.transactions") }, { value: "summary", label: t("tabs.summary") }, { value: "outstanding", label: t("tabs.outstanding") }, { value: "analytics", label: t("tabs.analytics") }]}
         value={tab}
         onChange={setTab}
         className="mb-section"
@@ -335,6 +347,50 @@ function SalesReportInner() {
               <Button size="sm" variant="secondary" disabled={cursor === 0} onClick={() => setCursor(Math.max(0, cursor - 25))}>{t("transactions.previous")}</Button>
               <Button size="sm" variant="secondary" disabled={!txQ.data?.cursor} onClick={() => setCursor(cursor + 25)}>{t("transactions.next")}</Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {tab === "outstanding" && (
+        <div className="flex flex-col gap-section">
+          <div className="grid gap-tight sm:grid-cols-2">
+            <div className="card-surface p-section">
+              <p className="type-label text-[12px] text-faint">{t("outstanding.totalOwed")}</p>
+              <p className="mt-tight font-mono text-3xl tabular-nums text-warning">{formatMoney(totalOwed)}</p>
+            </div>
+            <div className="card-surface p-section">
+              <p className="type-label text-[12px] text-faint">{t("outstanding.count")}</p>
+              <p className="mt-tight font-mono text-3xl tabular-nums">{outstanding.length}</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto card-surface">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-line">
+                  {([["reference", "left"], ["customer", "left"], ["time", "left"], ["total", "right"], ["paid", "right"], ["owed", "right"]] as const).map(([key, align]) => (
+                    <th key={key} className={`type-label whitespace-nowrap px-comfortable py-tight text-[11px] text-muted text-${align}`}>{t(`outstanding.col.${key}`)}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {ordersQ.loading && Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i} className="border-b border-line"><td colSpan={6} className="px-comfortable py-comfortable"><div className="h-4 animate-pulse rounded-xs bg-line" /></td></tr>
+                ))}
+                {!ordersQ.loading && outstanding.map(({ o, paid, owed }) => (
+                  <tr key={o.id} onClick={() => router.push(`/orders/${o.id}`)} className="cursor-pointer border-b border-line last:border-0 hover:bg-subtle/60">
+                    <td className="whitespace-nowrap px-comfortable py-tight font-mono text-[12px]">{o.reference}</td>
+                    <td className="px-comfortable py-tight">{o.customerName ?? <span className="text-faint">—</span>}</td>
+                    <td className="whitespace-nowrap px-comfortable py-tight font-mono text-[12px] text-muted">{o.createdAt.slice(0, 10)}</td>
+                    <td className="whitespace-nowrap px-comfortable py-tight text-right font-mono tabular-nums">{formatMoney(o.total)}</td>
+                    <td className="whitespace-nowrap px-comfortable py-tight text-right font-mono tabular-nums text-muted">{formatMoney(paid)}</td>
+                    <td className="whitespace-nowrap px-comfortable py-tight text-right font-mono tabular-nums font-medium text-warning">{formatMoney(owed)}</td>
+                  </tr>
+                ))}
+                {!ordersQ.loading && outstanding.length === 0 && (
+                  <tr><td colSpan={6} className="px-comfortable py-hero text-center text-[13px] text-faint">{t("outstanding.empty")}</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

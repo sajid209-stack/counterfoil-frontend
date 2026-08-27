@@ -45,7 +45,7 @@ export function Sidebar({
         "group flex items-center gap-tight rounded-sm py-tight text-sm font-medium transition-colors duration-quick",
         collapsed ? "justify-center px-0" : "px-comfortable",
         active
-          ? "bg-subtle text-fg"
+          ? "bg-card text-fg shadow-sm ring-1 ring-line/70"
           : "text-muted hover:bg-subtle/60 hover:text-fg",
       )}
     >

@@ -11,7 +11,8 @@
   "tabs": {
     "transactions": "লেনদেন",
     "summary": "সারসংক্ষেপ",
-    "analytics": "বিশ্লেষণ"
+    "analytics": "বিশ্লেষণ",
+    "outstanding": "বকেয়া"
   },
   "presets": {
     "today": "আজ",
@@ -120,5 +121,18 @@
     "topProducts": "শীর্ষ পণ্য",
     "bookings": "{count} বুকিং",
     "bookingsPlural": "{count} বুকিং"
+  },
+  "outstanding": {
+    "totalOwed": "মোট বকেয়া",
+    "count": "আংশিক পরিশোধিত অর্ডার",
+    "empty": "কোনো বকেয়া নেই — সব অর্ডার নিষ্পন্ন।",
+    "col": {
+      "reference": "অর্ডার",
+      "customer": "গ্রাহক",
+      "time": "তৈরি",
+      "total": "মোট",
+      "paid": "পরিশোধিত",
+      "owed": "বকেয়া"
+    }
   }
 }
