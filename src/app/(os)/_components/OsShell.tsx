@@ -97,7 +97,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         {/* Mobile — glass top bar. Sticky so it stays as content scrolls. */}
         <div className="glass-navbar sticky top-0 z-30 flex items-center gap-tight px-section py-tight md:hidden">
-          <Logo variant="os" size={24} />
+          <Logo size={26} />
           <span className="flex-1" />
           <LocaleToggle />
           <ModeButton />

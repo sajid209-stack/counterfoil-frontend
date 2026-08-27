@@ -3,6 +3,10 @@
 /* F10 — the Go left rail replaces the bottom tab bar only on a tablet held in
    landscape (thumbs live at the screen edges there, not the bottom centre). */
 @custom-variant rail (@media (min-width: 64rem) and (orientation: landscape));
+/* Dark mode is class-based (next-themes toggles .dark on <html>) — bind the
+   Tailwind dark: variant to that class so dark: utilities follow the in-app
+   theme toggle, not the OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   /* ══════════════════════════════════════════════════════════════════════

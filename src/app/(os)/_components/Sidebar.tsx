@@ -62,10 +62,10 @@ export function Sidebar({
     >
       {/* Header — always visible (never scrolls): logo + the collapse/expand
           toggle. This is the reliable expand affordance in both states. */}
-      <div className={cn("flex shrink-0 items-center py-section", collapsed ? "justify-center" : "justify-between px-section")}>
+      <div className={cn("flex shrink-0 items-center py-section", collapsed ? "justify-center" : "justify-between px-comfortable")}>
         {!collapsed && (
           <Link href="/" title="Counterfoil OS">
-            <Logo variant="os" size={28} />
+            <Logo size={30} />
           </Link>
         )}
         {onToggleCollapsed && (
@@ -75,7 +75,7 @@ export function Sidebar({
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-expanded={!collapsed}
-            className="flex h-9 w-9 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg"
           >
             {collapsed ? <PanelLeftOpen size={20} strokeWidth={1.5} /> : <PanelLeftClose size={20} strokeWidth={1.5} />}
           </button>
