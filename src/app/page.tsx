@@ -2,9 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { loadDemoBusiness, startFreshBusiness } from "@/lib/api";
 import { DEMOS } from "@/lib/demos";
+import { Logo } from "@/components/ui";
+
+// Each demo business gets a representative image so the picker reads as a wall
+// of real venues, not a settings list.
+const DEMO_IMAGE: Record<string, string> = {
+  museum: "/seed/admission.jpg",
+  turf: "/seed/football.jpg",
+  bowling: "/seed/bowling.jpg",
+  spa: "/seed/massage.jpg",
+  cinema: "/seed/film.jpg",
+};
 
 export default function Home() {
   const router = useRouter();
@@ -20,45 +31,87 @@ export default function Home() {
   };
 
   return (
-    <main className="mx-auto flex min-h-full max-w-4xl flex-col justify-center px-section py-hero">
-      <p className="type-label text-[13px] text-ember">Counterfoil</p>
-      <h1 className="type-display mt-tight text-5xl">See it as your business.</h1>
-      <p className="type-body mt-section max-w-xl text-muted">
-        Load a demo operation to explore Counterfoil configured end-to-end — or start fresh
-        and set one up yourself.
-      </p>
+    <main className="relative min-h-full overflow-hidden">
+      {/* Ambient warmth — a soft ember glow bleeding in from the top-right, the
+          brand colour used as atmosphere rather than decoration. */}
+      <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-ember/15 blur-[120px]" />
+      <div aria-hidden className="pointer-events-none absolute -left-32 top-1/2 h-96 w-96 rounded-full bg-ember/5 blur-[120px]" />
 
-      <div className="mt-major grid gap-tight sm:grid-cols-2 lg:grid-cols-3">
-        {DEMOS.map((d) => (
+      <div className="relative mx-auto max-w-5xl px-section py-hero sm:px-major">
+        {/* Wordmark */}
+        <Logo size={30} />
+
+        {/* Hero — the thesis: this is the operating system for a real gate. */}
+        <div className="mt-hero max-w-2xl">
+          <p className="type-label text-[12px] text-brand-foreground">Operating system for venues · tours · attractions</p>
+          <h1 className="type-display mt-comfortable text-5xl sm:text-6xl">
+            See it as <span className="text-ember">your</span> business.
+          </h1>
+          <p className="type-body mt-section max-w-xl text-[15px] text-muted">
+            Load a demo operation configured end-to-end — tickets, bookings, pricing, the gate — and
+            walk it as if it were yours. Or start fresh and set one up.
+          </p>
+        </div>
+
+        {/* Pick a business — admission-ticket cards. */}
+        <p className="type-label mt-hero text-[11px] text-faint">Pick a business to explore</p>
+        <div className="mt-tight grid gap-section sm:grid-cols-2 lg:grid-cols-3">
+          {DEMOS.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              onClick={() => explore(d.id)}
+              className="card-surface card-interactive group relative flex flex-col overflow-hidden p-0 text-left"
+            >
+              {/* Banner */}
+              <div className="relative h-28 w-full overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={DEMO_IMAGE[d.id] ?? "/seed/admission.jpg"} alt="" className="h-full w-full object-cover transition-transform duration-considered group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/50 to-transparent" />
+              </div>
+
+              {/* Ticket perforation — the counterfoil tear. The two notches sit
+                  half over the card edges; overflow-hidden clips them into a
+                  clean semicircular bite. */}
+              <div className="relative h-3">
+                <span className="absolute -left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-surface" />
+                <span className="absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-surface" />
+                <div className="absolute inset-x-3 top-1/2 border-t border-dashed border-strong" />
+              </div>
+
+              {/* Stub */}
+              <div className="flex flex-1 flex-col p-section pt-tight">
+                <span className="type-h2 text-base">{d.name}</span>
+                <span className="type-body mt-inline text-[13px] text-muted">{d.tagline}</span>
+                <span className="mt-tight font-mono text-[10px] uppercase leading-relaxed tracking-wide text-faint">{d.types}</span>
+                <span className="mt-comfortable inline-flex items-center gap-inline text-[13px] font-medium text-ember">
+                  Explore <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-quick group-hover:translate-x-0.5" />
+                </span>
+              </div>
+            </button>
+          ))}
+
+          {/* Start fresh */}
           <button
-            key={d.id}
             type="button"
-            onClick={() => explore(d.id)}
-            className="group flex flex-col card-surface p-section text-left transition-all duration-quick hover:-translate-y-0.5 hover:border-ember/40 hover:shadow-sm active:bg-ember/5"
+            onClick={fresh}
+            className="card-interactive group flex min-h-[15rem] flex-col items-start justify-center gap-tight rounded-[16px] border border-dashed border-strong bg-transparent p-section text-left hover:border-ember"
           >
-            <span className="type-h2 text-base">{d.name}</span>
-            <span className="type-body mt-inline text-[13px] text-muted">{d.tagline}</span>
-            <span className="mt-tight font-mono text-[10px] uppercase tracking-wide text-faint">{d.types}</span>
-            <span className="mt-tight inline-flex items-center gap-inline text-[13px] text-ember">
-              Explore <ArrowRight size={14} strokeWidth={1.5} />
+            <span className="flex h-10 w-10 items-center justify-center rounded-sm bg-ember/10 text-ember">
+              <Plus size={20} strokeWidth={1.5} />
             </span>
+            <span className="type-h2 mt-tight text-base">Start fresh</span>
+            <span className="type-body text-[13px] text-muted">Set up your own from an empty account — the guided path.</span>
           </button>
-        ))}
-        <button
-          type="button"
-          onClick={fresh}
-          className="flex flex-col justify-center rounded-md border border-dashed border-line bg-card p-section text-left transition-all duration-quick hover:border-ember/40 hover:shadow-sm"
-        >
-          <span className="type-h2 text-base">Start fresh</span>
-          <span className="type-body mt-inline text-[13px] text-muted">Set up your own from an empty account — the guided path.</span>
-        </button>
-      </div>
+        </div>
 
-      <div className="mt-major flex flex-wrap gap-major font-mono text-xs text-faint">
-        <Link href="/dashboard" className="hover:text-ember">OS admin →</Link>
-        <Link href="/pos" className="hover:text-ember">Go / POS →</Link>
-        <Link href="/tokens" className="hover:text-ember">Design tokens →</Link>
-        <Link href="/kitchen-sink" className="hover:text-ember">Primitives →</Link>
+        {/* Quiet dev/entry links. */}
+        <div className="mt-hero flex flex-wrap gap-major border-t border-line pt-major font-mono text-xs text-faint">
+          <Link href="/dashboard" className="hover:text-ember">OS admin →</Link>
+          <Link href="/pos" className="hover:text-ember">Go · POS →</Link>
+          <Link href="/tokens" className="hover:text-ember">Design tokens →</Link>
+          <Link href="/kitchen-sink" className="hover:text-ember">Primitives →</Link>
+        </div>
       </div>
     </main>
   );
