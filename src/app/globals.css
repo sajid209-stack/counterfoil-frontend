@@ -254,9 +254,11 @@
   }
 }
 
-/* Dark: elevation is carried by surface steps + 1px lines, not shadows. */
+/* Dark: elevation is carried by surface steps + 1px lines, not shadows —
+   so the hairline must be full-strength here (no shadow to lean on). */
 .dark .card-surface {
   box-shadow: none;
+  border-color: var(--color-line);
 }
 .dark .card-interactive:hover {
   box-shadow: none;
