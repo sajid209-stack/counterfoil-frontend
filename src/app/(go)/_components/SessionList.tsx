@@ -42,7 +42,7 @@ export function SessionList({
   selected?: string;
   currency: string;
   onSelect: (time: string) => void;
-  onBlocked: (reason: string) => void;
+  onBlocked: (time: string, reason: string) => void;
   onWaitlist?: (time: string) => void;
 }) {
   const t = useTranslations("pos");
@@ -62,7 +62,7 @@ export function SessionList({
             type="button"
             onClick={() => {
               if (full && s.waitlist && onWaitlist) return onWaitlist(s.time);
-              if (full) return onBlocked(s.blockedReason ?? t("sheet.full"));
+              if (full) return onBlocked(s.time, s.blockedReason ?? t("sheet.full"));
               onSelect(s.time);
             }}
             className={cn(

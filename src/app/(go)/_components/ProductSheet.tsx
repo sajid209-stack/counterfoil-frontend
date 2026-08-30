@@ -646,12 +646,13 @@ export function ProductSheet({
               if (guided) setGuideId(freeGuides(product, date, time)[0]);
             }}
             onWaitlist={(time) => setWl({ time })}
-            onBlocked={(reason) => {
-              const slot = slots.find((x) => x.time === slotTime);
+            onBlocked={(time, reason) => {
+              // Explain the slot that was TAPPED, not whatever happens to be
+              // selected — otherwise the reason describes a different session.
               const why = explainUnavailable({
                 product,
                 date,
-                slotStart: slotISO(date, slot?.time ?? ""),
+                slotStart: slotISO(date, time),
                 remaining: 0,
                 wanted: 1,
               });

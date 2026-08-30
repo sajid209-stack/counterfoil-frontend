@@ -49,7 +49,6 @@ export function SlotMatrix({
   const t = useTranslations("pos");
   if (rows.length === 0) return null;
 
-  const times = rows[0].cells.map((c) => c.time);
   // The base rate is the one most slots charge; anything else is an uplift
   // worth calling out.
   const counts = new Map<number, number>();
@@ -61,19 +60,6 @@ export function SlotMatrix({
     <div className="mb-section flex flex-col gap-tight">
       <div className="overflow-x-auto">
         <div className="min-w-max">
-          {/* One shared time header, not a price in every cell. */}
-          <div className="mb-inline flex gap-inline">
-            <span className="w-24 shrink-0" />
-            {times.map((time) => (
-              <span
-                key={time}
-                className="w-14 shrink-0 text-center font-mono text-[10px] text-faint"
-              >
-                {time}
-              </span>
-            ))}
-          </div>
-
           {rows.map((row) => (
             <div key={row.id} className="mb-inline flex items-center gap-inline">
               <span
