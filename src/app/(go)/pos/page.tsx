@@ -634,21 +634,23 @@ export default function PosPage() {
           {productsQ.loading ? (
             <div aria-busy="true" className="flex animate-pulse flex-col gap-tight p-section"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
           ) : (
-            <div className="grid grid-cols-2 gap-tight sm:grid-cols-3">
+            /* Rows, not photo tiles. The 4:3 band pushed the name, subtitle and
+               price into a strip under 250px of picture and left room for only
+               three products on a wide till. The photo is a 72px square now:
+               it still helps recognition, it just stopped being the card. */
+            <div className="grid grid-cols-1 gap-tight md:grid-cols-2 2xl:grid-cols-3">
               {shown.map((p) => (
-                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex min-h-[6rem] flex-col overflow-hidden rounded-sm border border-line bg-card text-left transition-colors duration-quick active:bg-ember/10">
-                  <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="tile" />
-                  <div className="flex flex-1 flex-col justify-between border-t-2 border-t-ember p-comfortable">
-                    <div className="min-w-0">
-                      <span className="line-clamp-2 block text-[16px] font-semibold leading-tight">{p.name}</span>
-                      <span className="mt-inline block truncate text-[13px] leading-tight text-faint">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
-                    </div>
-                    <span className="mt-tight shrink-0 self-end whitespace-nowrap font-mono text-[13px] tabular-nums">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
-                  </div>
+                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex items-center gap-comfortable overflow-hidden rounded-sm border border-line bg-card p-tight text-left transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
+                  <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="thumb" />
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="line-clamp-2 text-[15px] font-semibold leading-tight">{p.name}</span>
+                    <span className="mt-inline truncate text-[12px] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
+                  </span>
+                  <span className="shrink-0 self-end whitespace-nowrap font-mono text-[13px] tabular-nums">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
                 </button>
               ))}
-              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[5.5rem] flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-line text-faint active:bg-ember/10">
-                <Plus size={20} strokeWidth={1.5} /><span className="text-[12px]">{t("customAmount")}</span>
+              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-sm border border-dashed border-line text-faint transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
+                <Plus size={20} strokeWidth={1.5} /><span className="text-[13px]">{t("customAmount")}</span>
               </button>
             </div>
           )}
