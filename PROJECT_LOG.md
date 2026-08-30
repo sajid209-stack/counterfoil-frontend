@@ -927,3 +927,22 @@ the edit lease, and the past-date window.
 **two separate module instances**, so a test that patches operator state through the `@/` path
 will not be seen by a module that imported `./client`. Go through the entity module
 (`updateOperator`) instead. Two checks failed on exactly this and were not product bugs.
+
+---
+
+## Milestone 2 — done, and what is next
+
+All three parts are deployed and browser-verified on production. The end-to-end proof worth
+repeating: a manager places a **session hold** on `/holds` for "Private event" → availability
+drops that departure to zero → the till shows **14:00 FULL** → tapping it says *"This session is
+closed for sales — Private event. Release it from Holds to sell again."* Capacity, the ledger and
+the counter all agree, and the refusal names its own mechanism.
+
+**Still not started, in rough order of value:** transfers/resale + credential reissue ·
+rebooking · donation pricing · write-offs · billing · storefront + API keys · then the actual
+`client.ts` → SDK wiring and full `types.ts` ↔ OpenAPI alignment. i18n Batch 2 (products editor,
+orders, reports, settings forms, auth, profile) is still pending.
+
+**Owner decisions waiting:** whether to re-anchor the whole seed to the real date (see the
+Part 1 note — it would touch the hand-authored proofs the acceptance walks cite by literal
+date), and the Section D Jira sweep.
