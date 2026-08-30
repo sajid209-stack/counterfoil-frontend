@@ -9,7 +9,7 @@ import { BlockedNotice, Button, EmptyState, FormField, Modal, ProductThumb, useT
 import { useApiQuery } from "@/lib/useApi";
 import { addOrderPayment, checkout, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
-import { isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
+import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { taxRateFor } from "@/lib/tax";
@@ -20,7 +20,7 @@ import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { Keypad } from "../_components/Keypad";
 
-const TODAY = "2026-07-29";
+const TODAY = DEMO_TODAY;
 // Payment methods this counter takes (would come from counter config).
 const COUNTER_METHODS: { value: PaymentMethod }[] = [
   { value: "cash" },

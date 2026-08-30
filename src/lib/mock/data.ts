@@ -31,6 +31,7 @@ import type {
   TaxConfig,
 } from "@/lib/api/types";
 import { generateSales } from "./generate";
+import { demoDay } from "@/lib/schedule";
 import { buildOrderLines } from "@/lib/orderMath";
 import type { Order } from "@/lib/api/types";
 
@@ -1008,11 +1009,10 @@ export const loyaltyEntries: LoyaltyEntry[] = pointEntries;
    engine and the "why can I not sell this?" explanation has real data behind
    it: a named school group holding places, a locked-off session, a resource
    held for maintenance, and one that has already expired. */
-const holdDate = (days: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-};
+// Anchored to the DEMO clock, not the wall clock: a hold has to land on the
+// same day the product's schedule is offering, or it blocks a session nobody
+// can see.
+const holdDate = (days: number) => demoDay(days);
 const holdAt = (days: number, time: string) => `${holdDate(days)}T${time}:00+06:00`;
 
 export const holds: Hold[] = [

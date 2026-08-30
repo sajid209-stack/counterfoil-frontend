@@ -24,7 +24,7 @@ import {
   type Resource,
   type Staff,
 } from "@/lib/api";
-import { isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
+import { DEMO_TODAY, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
 import { durationOptions, formatDuration, priceSegments, productDurationPrice } from "@/lib/duration";
 import { formatMoney } from "@/lib/format";
@@ -48,7 +48,7 @@ export interface CartEntry {
 }
 
 
-const TODAY = "2026-07-29";
+const TODAY = DEMO_TODAY;
 const TOMORROW = "2026-07-30";
 const NOW_MIN = 12 * 60; // the mock clock: today, noon
 

@@ -1,6 +1,20 @@
 import type { BookingTypeCode, ProductSchedule } from "@/lib/api/types";
 
 /** ISO for a slot start on a given local date + "HH:MM" (Dhaka offset). */
+/* The demo's "today". Every seeded order, booking and hold is built around
+   this date, so the whole app has to agree on it — two components each holding
+   their own copy is how a hold ends up in a different month from the schedule
+   it is meant to block. Replacing the mock with a real backend means deleting
+   this and using the actual date. */
+export const DEMO_TODAY = "2026-07-29";
+
+/** N days from the demo's today, as an ISO date. */
+export const demoDay = (offset: number): string => {
+  const d = new Date(`${DEMO_TODAY}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + offset);
+  return d.toISOString().slice(0, 10);
+};
+
 export const slotISO = (date: string, time: string) => `${date}T${time}:00+06:00`;
 
 // Which booking types carry a schedule, and of which kind.
