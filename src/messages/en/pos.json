@@ -239,7 +239,8 @@
     "phone": "Phone",
     "cancel": "Cancel",
     "join": "Join",
-    "addedToWaitlist": "Added to the waitlist."
+    "addedToWaitlist": "Added to the waitlist.",
+    "noGuideFreeReason": "No guide is free for this departure. Free one up in Team, or pick another time."
   },
   "settle": {
     "title": "Settle a booking",

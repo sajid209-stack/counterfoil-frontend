@@ -83,5 +83,17 @@
   "outstandingLabel": "Outstanding",
   "amountLabel": "Amount",
   "amountHelp": "Up to the outstanding balance. Enter less to take a further part-payment.",
-  "methodLabel": "Method"
+  "methodLabel": "Method",
+  "lockBooking": "Lock",
+  "unlockBooking": "Unlock",
+  "lockTitle": "Lock this booking",
+  "unlockTitle": "Unlock this booking",
+  "lockDescription": "A locked booking cannot be moved, refunded or cancelled until someone unlocks it.",
+  "unlockDescription": "Unlocking is recorded against your name.",
+  "lockReason": "Why are you locking it?",
+  "lockReasonHelp": "Anyone who hits the lock will read this.",
+  "unlockReason": "Why are you unlocking it?",
+  "unlockReasonHelp": "Required — the record has to say who overrode the lock and why.",
+  "locked": "Booking locked.",
+  "unlocked": "Booking unlocked."
 }

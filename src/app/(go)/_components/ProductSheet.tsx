@@ -8,6 +8,7 @@ import { availableSeats } from "@/lib/api";
 import { useApiQuery } from "@/lib/useApi";
 import {
   applyResourceRate,
+  explainUnavailable,
   firstFreeResource,
   freeGuides,
   getDailyRemaining,
@@ -616,7 +617,15 @@ export function ProductSheet({
                 return <button key={s.time} type="button" onClick={() => setWl({ time: s.time })} className="flex h-16 flex-col items-center justify-center rounded-sm border border-warning bg-warning/10 text-warning"><span className="font-mono">{s.time}</span><span className="text-[10px]">{t("sheet.joinWaitlist")}</span></button>;
               }
               const low = !full && left <= Math.max(1, Math.floor(s.capacity * 0.2)); // ≤20% remaining
-              return <button key={s.time} type="button" disabled={full} onClick={() => { setSlotTime(s.time); if (guided) setGuideId(freeGuides(product, date, s.time)[0]); }} className={`flex h-16 flex-col items-center justify-center gap-0.5 rounded-sm border text-sm ${full ? "border-line bg-subtle text-faint" : slotTime === s.time ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}><span className="font-mono">{s.time}</span><span className="font-mono text-[11px]">{formatMoney(price, currency)}</span>{low && slotTime !== s.time ? <span className="rounded-lg bg-ember px-tight font-mono text-[10px] text-ink">{t("sheet.leftCount", { count: left })}</span> : <span className="text-[10px] opacity-70">{guideless ? t("sheet.noGuideFree") : full ? t("sheet.full") : t("sheet.leftCount", { count: left })}</span>}</button>;
+              // A full slot is TAPPABLE, not disabled (§61.14): tapping it says
+              // why — sold out, held for a named group, session closed — and
+              // what to do about it, instead of leaving staff to guess.
+              const explainFull = () => {
+                if (guideless) { setBlocked(t("sheet.noGuideFreeReason")); return; }
+                const why = explainUnavailable({ product, date, slotStart: slotISO(date, s.time), remaining: left, wanted: 1 });
+                setBlocked(why?.message ?? t("sheet.full"));
+              };
+              return <button key={s.time} type="button" onClick={() => { if (full) { explainFull(); return; } setSlotTime(s.time); if (guided) setGuideId(freeGuides(product, date, s.time)[0]); }} className={`flex h-16 flex-col items-center justify-center gap-0.5 rounded-sm border text-sm ${full ? "border-line bg-subtle text-faint" : slotTime === s.time ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}><span className="font-mono">{s.time}</span><span className="font-mono text-[11px]">{formatMoney(price, currency)}</span>{low && slotTime !== s.time ? <span className="rounded-lg bg-ember px-tight font-mono text-[10px] text-ink">{t("sheet.leftCount", { count: left })}</span> : <span className="text-[10px] opacity-70">{guideless ? t("sheet.noGuideFree") : full ? t("sheet.full") : t("sheet.leftCount", { count: left })}</span>}</button>;
             })}
           </div>
         )}

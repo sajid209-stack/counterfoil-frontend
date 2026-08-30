@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, CalendarClock, Printer, RotateCcw, Send, Wallet } from "lucide-react";
+import { ArrowLeft, CalendarClock, Lock, Printer, RotateCcw, Send, Unlock, Wallet } from "lucide-react";
 import {
   Button,
   EmptyState,
@@ -26,7 +26,10 @@ import {
   addOrderPayment,
   refundOrderLines,
   type PaymentMethod,
+  bookingEditable,
+  lockBooking,
   rescheduleBooking,
+  unlockBooking,
   writeOffOrder,
   type Booking,
   type WriteOffCategory,
@@ -79,6 +82,12 @@ export default function OrderDetailPage() {
 
   // Change date/time
   const [moveFor, setMoveFor] = useState<Booking | null>(null);
+  // Who is acting. Real auth arrives with the backend; the counter manager is
+  // the actor everywhere else in OS.
+  const ACTOR = "Nadia Islam";
+  const [lockFor, setLockFor] = useState<Booking | null>(null);
+  const [lockReason, setLockReason] = useState("");
+  const [locking, setLocking] = useState(false);
   const [moveDate, setMoveDate] = useState("");
   const [moveTime, setMoveTime] = useState("");
 
@@ -273,15 +282,33 @@ export default function OrderDetailPage() {
             <Card title={t("cardBookings")}>
               {orderBookings.map((b) => {
                 const p = productsQ.data?.data.find((x) => x.id === b.productId);
+                // ONE question decides whether this booking can be touched
+                // (§61.7/10/12) — locked, closed history, or someone else
+                // mid-edit. Every action below reads the same answer.
+                const edit = bookingEditable(b.id, ACTOR);
                 return (
-                  <div key={b.id} className="flex items-center gap-section border-b border-line py-tight text-sm last:border-0">
+                  <div key={b.id} className="flex flex-wrap items-center gap-section border-b border-line py-tight text-sm last:border-0">
                     <span className="min-w-0 flex-1 truncate">{p?.name ?? b.productId}</span>
                     <span className="font-mono text-[12px] text-muted">{b.slotStart.slice(0, 10)} {b.slotStart.slice(11, 16)} · {t("party", { size: b.partySize })}</span>
+                    {!edit.editable && (
+                      <span className="flex min-w-0 items-center gap-inline rounded-sm bg-warning/10 px-tight py-0.5 text-[12px] text-warning">
+                        <Lock size={12} strokeWidth={2} className="shrink-0" />
+                        <span className="min-w-0 break-words">{edit.reason}</span>
+                      </span>
+                    )}
                     {p?.schedule && (p.schedule.capacityPerSession ?? 0) > 0 && (
-                      <Button size="sm" variant="secondary" icon={<CalendarClock size={14} strokeWidth={1.5} />} onClick={() => { setMoveFor(b); setMoveDate(b.slotStart.slice(0, 10)); setMoveTime(""); }}>
+                      <Button size="sm" variant="secondary" disabled={!edit.editable} icon={<CalendarClock size={14} strokeWidth={1.5} />} onClick={() => { setMoveFor(b); setMoveDate(b.slotStart.slice(0, 10)); setMoveTime(""); }}>
                         {t("changeDateTime")}
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="tertiary"
+                      icon={b.lockedAt ? <Unlock size={14} strokeWidth={1.5} /> : <Lock size={14} strokeWidth={1.5} />}
+                      onClick={() => setLockFor(b)}
+                    >
+                      {b.lockedAt ? t("unlockBooking") : t("lockBooking")}
+                    </Button>
                   </div>
                 );
               })}
@@ -432,6 +459,48 @@ export default function OrderDetailPage() {
           <Button variant="secondary" className="h-12" onClick={() => resend("email")}>{t("byEmail")}</Button>
           <Button variant="secondary" className="h-12" onClick={() => resend("sms")}>{t("bySms")}</Button>
         </div>
+      </Modal>
+
+      {/* Lock / unlock a booking (§61.7, §61.8). Unlocking always takes a
+          reason, so the record says who overrode what. */}
+      <Modal
+        open={!!lockFor}
+        onClose={() => { setLockFor(null); setLockReason(""); }}
+        title={lockFor?.lockedAt ? t("unlockTitle") : t("lockTitle")}
+        description={lockFor?.lockedAt ? t("unlockDescription") : t("lockDescription")}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => { setLockFor(null); setLockReason(""); }}>{t("cancel")}</Button>
+            <Button
+              loading={locking}
+              onClick={async () => {
+                if (!lockFor) return;
+                setLocking(true);
+                const res = lockFor.lockedAt
+                  ? await unlockBooking(lockFor.id, ACTOR, lockReason)
+                  : await lockBooking(lockFor.id, ACTOR, lockReason);
+                setLocking(false);
+                if (!res.ok) { toast.error(res.error.fieldErrors?.reason ?? res.error.message); return; }
+                toast.success(lockFor.lockedAt ? t("unlocked") : t("locked"));
+                setLockFor(null);
+                setLockReason("");
+                order.reload();
+                bookingsQ.reload();
+              }}
+            >
+              {lockFor?.lockedAt ? t("unlockBooking") : t("lockBooking")}
+            </Button>
+          </>
+        }
+      >
+        <FormField
+          label={lockFor?.lockedAt ? t("unlockReason") : t("lockReason")}
+          variant="textarea"
+          rows={3}
+          value={lockReason}
+          onChange={(e) => setLockReason(e.target.value)}
+          help={lockFor?.lockedAt ? t("unlockReasonHelp") : t("lockReasonHelp")}
+        />
       </Modal>
 
       {/* Change date/time — availability is re-checked before the move. */}

@@ -870,9 +870,60 @@ open.
 Also fixed a pre-existing missing key — `pos.settle.settled` rendered raw in the toast after
 settling a booking at the till.
 
-### Part 3 (planned)
+### Part 3 ✅ — booking holds and locks (§61)
 
-- **Booking holds and locks (§61).** Manager holds on capacity/seats/resources with an expiry
-  and a named party, converting a hold into a booking, a checkout TTL hold in POS, locked
-  bookings and sessions, and one `explainUnavailable()` so a slot that looks free always says
-  why it is not.
+**Holds.** A `Hold` takes capacity off public sale without pretending to be a booking. Four
+kinds — `capacity` (n places), `session` (everything left on a slot), `resource` (a lane, field
+or court over a span), `seats` (named seats out of the picker).
+
+- **Expiry is a clock crossing, not a stored flag** — the same rule as membership lapsing.
+  `status` records what a person decided (released, converted); `holdView` resolves it against
+  now, so a checkout hold releases itself with nobody running a job.
+- **A hold always names who it is for.** `heldFor` is required and validated: an unexplained
+  block on the calendar is indistinguishable from a bug six weeks later. Even the till's own
+  holds are labelled ("Checkout in progress") and filtered out of the manager's list by default.
+- **"Stop selling this session" is a hold of everything left**, not a second flag — one
+  mechanism, so nothing has to remember to check two things.
+- `/holds` (Holding · Expired · Released · Became bookings) with place, release and a preview
+  that states in plain words exactly what is coming off sale.
+
+**Availability actually respects them.** `getSlots`, `getDailyRemaining` and `isResourceFreeFor`
+all subtract active holds; a resource hold that merely *clips* the edge of a requested span
+still blocks it (overlap, not containment).
+
+**`explainUnavailable()` — one answer for "why can I not sell this?" (§61.14).** A full slot in
+POS is now **tappable rather than disabled**: tapping it says whether it is sold out, held for a
+named group, a closed session, or a locked past date — and what to do about it. Sold-out even
+reports how many places are actually left when the party is too big.
+
+**Locks.**
+- `bookingEditable()` is the **single** question every edit path asks, so a booking that is
+  untouchable is untouchable everywhere rather than in whichever screens remembered to check.
+  It covers all three reasons: locked by a manager (§61.7), past the operator's editing window
+  (§61.10), or someone else mid-edit (§61.12).
+- Lock/unlock from the order's booking row; **unlocking always takes a reason**, so the record
+  says who overrode what.
+- A short **edit lease** (`editingBy`/`editingUntil`) gives the backend its contract for
+  preventing two staff editing one booking; with a single browser session it cannot be
+  exercised end-to-end, only unit-verified.
+- **Past-date lock** is an operator setting (`pastEditLockDays`, in Settings → Business):
+  closing history stops a mis-keyed refund landing on a month already reconciled.
+
+**Checkout holds (§61.11).** Adding a slotted item at the till places a 10-minute self-releasing
+hold, so a second till cannot sell the same seats out from under it. Completing, clearing or
+parking the cart releases them; an abandoned till gives them back on its own.
+
+**Seed:** one hold of each mechanism — a named school group holding 25 places, a session locked
+for a private event, a lane held for maintenance, one already past its expiry (proving holds
+release themselves), and one released.
+
+**Verified:** tsc + build clean, no new lint findings, all routes 200 in both locales with no
+missing-message warnings, and a **44-check harness** — derived expiry, holds subtracting from
+slot/daily/resource availability, edge-clipping overlap, every branch of `explainUnavailable`,
+place/release/convert/extend, the till's hold being hidden then released, lock refusal messages,
+the edit lease, and the past-date window.
+
+**Harness gotcha worth remembering:** under `jiti`, `@/lib/api/client` and `./client` resolve to
+**two separate module instances**, so a test that patches operator state through the `@/` path
+will not be seen by a module that imported `./client`. Go through the entity module
+(`updateOperator`) instead. Two checks failed on exactly this and were not product bugs.

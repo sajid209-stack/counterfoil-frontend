@@ -83,5 +83,17 @@
   "outstandingLabel": "বকেয়া",
   "amountLabel": "পরিমাণ",
   "amountHelp": "বকেয়া পরিমাণ পর্যন্ত। আংশিক পেমেন্টের জন্য কম লিখুন।",
-  "methodLabel": "মাধ্যম"
+  "methodLabel": "মাধ্যম",
+  "lockBooking": "লক করুন",
+  "unlockBooking": "আনলক করুন",
+  "lockTitle": "এই বুকিং লক করুন",
+  "unlockTitle": "এই বুকিং আনলক করুন",
+  "lockDescription": "লক করা বুকিং কেউ আনলক না করা পর্যন্ত সরানো, ফেরত দেওয়া বা বাতিল করা যাবে না।",
+  "unlockDescription": "আনলক করার তথ্য আপনার নামে লেখা থাকবে।",
+  "lockReason": "কেন লক করছেন?",
+  "lockReasonHelp": "যিনিই লকটি দেখবেন, তিনি এটি পড়বেন।",
+  "unlockReason": "কেন আনলক করছেন?",
+  "unlockReasonHelp": "আবশ্যক — কে কেন লক সরিয়েছেন তা রেকর্ডে থাকতে হবে।",
+  "locked": "বুকিং লক হয়েছে।",
+  "unlocked": "বুকিং আনলক হয়েছে।"
 }

@@ -48,7 +48,9 @@
     "preview": "Preview:",
     "appearance": "Appearance",
     "appearanceNote": "Per user, on this browser. Scan screens and printed tickets keep their designed look in both modes.",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "pastEditLock": "Close bookings for editing after",
+    "pastEditLockHelp": "In days. Older bookings cannot be changed or refunded. Leave empty to keep history open."
   },
   "security": {
     "title": "Security",

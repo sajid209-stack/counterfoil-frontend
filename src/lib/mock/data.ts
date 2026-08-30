@@ -10,6 +10,7 @@ import type {
   Counter,
   Customer,
   Device,
+  Hold,
   LoyaltyEntry,
   LoyaltyProgram,
   Membership,
@@ -1002,6 +1003,114 @@ if (nusrat) {
   });
 }
 export const loyaltyEntries: LoyaltyEntry[] = pointEntries;
+
+/* Holds (§61). One of each mechanism, so every branch of the availability
+   engine and the "why can I not sell this?" explanation has real data behind
+   it: a named school group holding places, a locked-off session, a resource
+   held for maintenance, and one that has already expired. */
+const holdDate = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+const holdAt = (days: number, time: string) => `${holdDate(days)}T${time}:00+06:00`;
+
+export const holds: Hold[] = [
+  {
+    id: "hld_school",
+    productId: "prd_planetarium",
+    productName: "Planetarium Show",
+    locationId: "loc_museum",
+    kind: "capacity",
+    date: holdDate(3),
+    slotStart: holdAt(3, "11:00"),
+    quantity: 25,
+    heldFor: "Sunbeams School — Class 6",
+    reason: "Confirmed by phone, paying on the day.",
+    placedBy: "Nadia Islam",
+    expiresAt: null,
+    status: "held",
+    convertedOrderId: null,
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
+    id: "hld_session_lock",
+    productId: "prd_tour",
+    productName: "Heritage Walking Tour",
+    locationId: "loc_fort",
+    kind: "session",
+    date: holdDate(2),
+    slotStart: holdAt(2, "14:00"),
+    quantity: 0,
+    heldFor: "Private event",
+    reason: "Booked out for a corporate visit — no public sales.",
+    placedBy: "Nadia Islam",
+    expiresAt: null,
+    status: "held",
+    convertedOrderId: null,
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
+    id: "hld_lane_maintenance",
+    productId: "prd_bowling",
+    productName: "Bowling Lane",
+    locationId: "loc_fort",
+    kind: "resource",
+    date: holdDate(1),
+    slotStart: holdAt(1, "09:00"),
+    slotEnd: holdAt(1, "13:00"),
+    quantity: 0,
+    resourceId: "res_lane_3",
+    resourceName: "Lane 3",
+    heldFor: "Maintenance",
+    reason: "Pinsetter service booked in.",
+    placedBy: "Rahim Uddin",
+    expiresAt: null,
+    status: "held",
+    convertedOrderId: null,
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
+    // Already past its expiry — proves holds release themselves without a job.
+    id: "hld_expired",
+    productId: "prd_garden",
+    productName: "Sculpture Garden",
+    locationId: "loc_fort",
+    kind: "capacity",
+    date: holdDate(0),
+    slotStart: null,
+    quantity: 40,
+    heldFor: "Tour operator provisional",
+    reason: "Never confirmed.",
+    placedBy: "Nadia Islam",
+    expiresAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+    status: "held",
+    convertedOrderId: null,
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
+    id: "hld_released",
+    productId: "prd_admission",
+    productName: "General Admission",
+    locationId: "loc_fort",
+    kind: "capacity",
+    date: holdDate(5),
+    slotStart: null,
+    quantity: 60,
+    heldFor: "City Tours Ltd",
+    reason: "Partner allocation, given back when they did not take it up.",
+    placedBy: "Nadia Islam",
+    expiresAt: null,
+    status: "released",
+    convertedOrderId: null,
+    createdAt: T,
+    updatedAt: T,
+  },
+];
 
 export const orders = [...sales.orders, stressOrder];
 

@@ -25,3 +25,4 @@ export * from "./promotions";
 export * from "./customers";
 export * from "./memberships";
 export * from "./loyalty";
+export * from "./holds";

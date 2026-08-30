@@ -7,7 +7,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { AlertTriangle, Archive, Pencil, Plus, Search, Trash2, UserRound, X } from "lucide-react";
 import { BlockedNotice, Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { addOrderPayment, checkout, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, quoteCart, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { addOrderPayment, checkout, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
@@ -164,7 +164,7 @@ export default function PosPage() {
   const park = () => {
     if (cart.length === 0) return;
     persistParked([...parked, { name: parkName.trim() || t("parked.guestName", { number: parked.length + 1 }), cart, discountPct, customer, customerRecord: attached, pass }]);
-    setCart([]); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0);
+    setCart([]); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0); void releaseCheckoutHolds(TILL_ID);
     setParkOpen(false); setParkName("");
     toast.success(t("cartParked"));
   };
@@ -243,9 +243,30 @@ export default function PosPage() {
     setSheet({ product: p, initial: null });
   };
 
+  // The till identifies itself so its own holds can be found and released
+  // again. A real device id lands with the backend; the counter is enough here.
+  const TILL_ID = "till_fort_main";
+
   const upsertEntry = (entry: CartEntry) => {
     setCart((c) => (c.some((e) => e.id === entry.id) ? c.map((e) => (e.id === entry.id ? entry : e)) : [...c, entry]));
     setSheet(null);
+    // §61.11 — hold the places while this cart is open, so a second till
+    // cannot sell the same seats out from under it. The hold carries its own
+    // expiry, so an abandoned cart gives them back without anyone noticing.
+    if (entry.slotDate) {
+      const seats = entry.items.reduce((sum, i) => sum + i.qty, 0);
+      if (seats > 0) {
+        void placeCheckoutHold({
+          productId: entry.productId,
+          productName: entry.productName,
+          locationId: locationsQ.data?.data[0]?.id ?? null,
+          date: entry.slotDate,
+          slotStart: entrySlotISO(entry) ?? null,
+          quantity: seats,
+          placedBy: TILL_ID,
+        });
+      }
+    }
   };
 
   // Extend a flexible booking still in the cart by one increment: the lane
@@ -538,6 +559,10 @@ export default function PosPage() {
    * Points are earned on what was actually paid, not on the list price.
    */
   const settleMemberEffects = async (orderId: string, paidAmount: number) => {
+    // The sale is real now, so the provisional hold is redundant — the booking
+    // itself takes the capacity.
+    await releaseCheckoutHolds(TILL_ID);
+
     const customerId = attached?.id;
     if (!customerId) return;
 

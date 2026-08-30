@@ -16,6 +16,7 @@ interface FormState {
   currency: string;
   defaultTimezone: string;
   taxRatePct: string;
+  pastEditLockDays: string;
   smsTemplate: string;
 }
 
@@ -24,6 +25,7 @@ const fromOperator = (o: Operator): FormState => ({
   currency: o.currency,
   defaultTimezone: o.defaultTimezone,
   taxRatePct: String(o.taxRatePct),
+  pastEditLockDays: o.pastEditLockDays == null ? "" : String(o.pastEditLockDays),
   smsTemplate: o.smsTemplate ?? DEFAULT_SMS_TEMPLATE,
 });
 
@@ -60,6 +62,7 @@ export default function BusinessSetupPage() {
       currency: state.currency,
       defaultTimezone: state.defaultTimezone,
       taxRatePct: parseFloat(state.taxRatePct) || 0,
+      pastEditLockDays: state.pastEditLockDays.trim() === "" ? null : Number(state.pastEditLockDays),
       smsTemplate: state.smsTemplate,
     });
     setSaving(false);
@@ -110,6 +113,15 @@ export default function BusinessSetupPage() {
                 options={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
               />
               <FormField label={t("business.taxRate")} variant="number" value={state.taxRatePct} onChange={(e) => set("taxRatePct", e.target.value)} />
+              {/* §61.10 — closing history stops a mis-keyed refund landing on
+                  a month that has already been reconciled. */}
+              <FormField
+                label={t("business.pastEditLock")}
+                variant="number"
+                value={state.pastEditLockDays}
+                onChange={(e) => set("pastEditLockDays", e.target.value)}
+                help={t("business.pastEditLockHelp")}
+              />
             </div>
           </div>
 

@@ -83,11 +83,14 @@ export interface Operator {
   taxRatePct: number; // STANDARD sales tax / VAT percent, e.g. 15
   reducedRatePct?: number; // reduced tax class rate, e.g. 7.5
   smsTemplate?: string; // ticket SMS body with {{placeholders}}
+  /** Bookings older than this many days cannot be edited (§61.10). Null means
+   *  history stays editable. */
+  pastEditLockDays?: number | null;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
 export type OperatorPatch = Partial<
-  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct" | "smsTemplate">
+  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct" | "smsTemplate" | "pastEditLockDays">
 >;
 
 export type TaxClass = "standard" | "reduced" | "exempt";
@@ -535,6 +538,15 @@ export interface Booking {
   noShow?: boolean; // recorded no-show (with an optional reason)
   noShowReason?: string;
   status: BookingStatus;
+  /** Locked bookings cannot be changed or cancelled (§61.7). Unlocking takes
+   *  a reason (§61.8), so the record says who overrode what and why. */
+  lockedAt?: ISODateTime | null;
+  lockedBy?: string | null;
+  lockReason?: string | null;
+  /** A soft edit lease so two staff do not edit one booking at once (§61.12).
+   *  Short-lived and advisory — the backend enforces it. */
+  editingBy?: string | null;
+  editingUntil?: ISODateTime | null;
 }
 
 // ── List / pagination / filtering ──────────────────────────────────────────
@@ -993,4 +1005,75 @@ export interface LoyaltyAccount {
   /** Points that will expire within 60 days — what a member needs warning of. */
   expiringSoon: number;
   entries: LoyaltyEntry[];
+}
+
+// ── booking.v1 · holds and locks (§61) ───────────────────────────────────────
+/** What a hold takes off sale. `session` is the whole remaining capacity of one
+ *  slot — "stop selling this departure" is a hold of everything left, so it is
+ *  the same mechanism rather than a second one. */
+export type HoldKind = "capacity" | "seats" | "resource" | "session";
+export type HoldStatus = "held" | "released" | "converted" | "expired";
+
+export interface Hold {
+  id: ID;
+  productId: ID;
+  /** Snapshot — renaming a product must not rewrite what was held. */
+  productName: string;
+  locationId: ID | null;
+  kind: HoldKind;
+  date: ISODate;
+  /** Absent for a whole-day hold on a daily-capacity product. */
+  slotStart?: ISODateTime | null;
+  slotEnd?: ISODateTime | null;
+  /** Places held. Ignored for seat and resource holds. */
+  quantity: number;
+  seatLabels?: string[];
+  resourceId?: ID | null;
+  resourceName?: string | null;
+  /** Who it is being held for — a school, a partner, or the till during
+   *  checkout. Never blank: an unexplained hold is indistinguishable from a
+   *  bug six weeks later. */
+  heldFor: string;
+  reason?: string;
+  placedBy: string;
+  /** Null means it sits until someone releases it. */
+  expiresAt?: ISODateTime | null;
+  status: HoldStatus;
+  convertedOrderId?: ID | null;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+
+export type HoldInput = Omit<
+  Hold,
+  "id" | "createdAt" | "updatedAt" | "status" | "convertedOrderId" | "productName"
+> & { productName?: string };
+
+/** A hold resolved against the clock — expiry is a date crossing, so it is
+ *  derived rather than written by a job that may not have run. */
+export interface HoldView extends Hold {
+  effectiveStatus: HoldStatus;
+  /** True while it is actually taking capacity off sale. */
+  active: boolean;
+  minutesToExpiry: number | null;
+}
+
+/** Why a slot that looks free is not sellable (§61.14). One answer, one
+ *  vocabulary — every surface that refuses a sale reads from this. */
+export type UnavailableReason =
+  | "sold_out"
+  | "held_back"
+  | "session_locked"
+  | "past_date"
+  | "closed"
+  | "out_of_service"
+  | "no_owner_free"
+  | "lead_time";
+
+export interface Unavailability {
+  reason: UnavailableReason;
+  /** Plain-language sentence naming the mechanism AND the way forward. */
+  message: string;
+  /** The hold responsible, when one is. */
+  holdId?: ID;
 }

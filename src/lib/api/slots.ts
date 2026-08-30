@@ -1,7 +1,11 @@
 import { slotISO, slotTimesOn, toMinutes } from "@/lib/schedule";
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const toTimeOfDay = (mins: number) => `${pad2(Math.floor(mins / 60) % 24)}:${pad2(mins % 60)}`;
 import { peekBookings } from "./bookings";
 import { peekOrders } from "./orders";
 import { peekResources } from "./resources";
+import { heldPlaces, isResourceHeld, isSessionLocked } from "./holds";
 import type { Minor, Product, Resource } from "./types";
 
 export interface SlotAvailability {
@@ -23,7 +27,17 @@ export function getSlots(product: Product, date: string): SlotAvailability[] {
   return slotTimesOn(sch, date).map((time) => {
     const iso = slotISO(date, time);
     const sold = booked.filter((b) => b.slotStart === iso).reduce((s, b) => s + b.partySize, 0);
-    return { time, capacity: sch.capacityPerSession, sold, remaining: Math.max(0, sch.capacityPerSession - sold) };
+    // Held-back places are not on sale (§61.1). A session hold takes the lot,
+    // which is what "stop selling this departure" means.
+    const held = isSessionLocked(product.id, date, iso)
+      ? Number.POSITIVE_INFINITY
+      : heldPlaces(product.id, date, iso);
+    return {
+      time,
+      capacity: sch.capacityPerSession,
+      sold,
+      remaining: Math.max(0, sch.capacityPerSession - sold - held),
+    };
   });
 }
 
@@ -32,7 +46,10 @@ export function getDailyRemaining(product: Product, date: string): number {
   const sch = product.schedule;
   if (!sch || sch.dailyCapacity == null) return Infinity;
   const sold = confirmedFor(product.id, date).reduce((s, b) => s + b.partySize, 0);
-  return Math.max(0, sch.dailyCapacity - sold);
+  const held = isSessionLocked(product.id, date, null)
+    ? Number.POSITIVE_INFINITY
+    : heldPlaces(product.id, date, null);
+  return Math.max(0, sch.dailyCapacity - sold - held);
 }
 
 export interface ResourceSlotCell {
@@ -162,6 +179,10 @@ export function isResourceFreeFor(
 ): boolean {
   const start = toMinutes(time);
   const end = start + minutes;
+  // A resource held back is not free, even though nothing is booked on it.
+  if (isResourceHeld(resourceId, date, slotISO(date, time), slotISO(date, toTimeOfDay(end)))) {
+    return false;
+  }
   return !ownerBusy(resourceId, date).some(
     (b) => start < b.end + bufferMinutes && b.start < end + bufferMinutes,
   );
