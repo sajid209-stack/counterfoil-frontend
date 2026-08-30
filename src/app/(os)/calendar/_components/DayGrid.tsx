@@ -68,10 +68,15 @@ export function DayGrid({
         <div className="sticky top-0 z-20 flex border-b border-line bg-card">
           <div className="sticky left-0 z-30 w-40 shrink-0 border-r border-line bg-card" />
           <div className="relative h-8 flex-1">
-            {hours.map((h) => (
+            {hours.map((h, i) => (
               <span
                 key={h}
-                className="absolute top-1.5 -translate-x-1/2 font-mono text-[11px] text-muted"
+                className={cn(
+                  "absolute top-1.5 font-mono text-[11px] text-muted",
+                  // Centring the end labels would push them outside the track
+                  // and clip them against the gutter.
+                  i === 0 ? "translate-x-0" : i === hours.length - 1 ? "-translate-x-full" : "-translate-x-1/2",
+                )}
                 style={{ left: `${pct(h * 60)}%` }}
               >
                 {String(h).padStart(2, "0")}

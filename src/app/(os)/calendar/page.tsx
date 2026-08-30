@@ -100,9 +100,7 @@ export default function CalendarPage() {
     const rows: DayLane[] = resources.map((r) => ({
       id: r.id,
       name: r.name,
-      note: r.outOfService
-        ? (r.outOfServiceReason ?? t("outOfService"))
-        : `${r.nounSingular} · ${r.locationId ? "" : ""}`.trim() || null,
+      note: r.outOfService ? (r.outOfServiceReason ?? t("outOfService")) : r.nounSingular,
       blocked: r.outOfService,
     }));
     // Guides are capacity owners too, so a departure they lead is on the day.

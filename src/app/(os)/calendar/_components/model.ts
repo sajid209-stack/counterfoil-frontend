@@ -212,7 +212,9 @@ export function packLanes(events: CalEvent[]): { event: CalEvent; lane: number; 
  *  as it does on a sold-out slot or an out-of-service lane. */
 export const TONE_CLASS: Record<EventTone, string> = {
   booked: "bg-card border-line [border-left:3px_solid_var(--color-ember)] text-fg",
-  arrived: "bg-success/10 border-success/30 [border-left:3px_solid_var(--color-success)] text-fg",
+  // The bar carries the status; the fill stays calm. A month of attended
+  // bookings tinted green is a wall of the least actionable thing on screen.
+  arrived: "bg-card border-line [border-left:3px_solid_var(--color-success)] text-fg",
   noshow: "bg-subtle border-line [border-left:3px_solid_var(--color-muted)] text-muted line-through",
   held: "border-warning/40 [border-left:3px_solid_var(--color-warning)] text-fg bg-[repeating-linear-gradient(45deg,var(--color-warning-wash),var(--color-warning-wash)_3px,transparent_3px,transparent_7px)]",
   locked: "border-danger/40 [border-left:3px_solid_var(--color-danger)] text-fg bg-[repeating-linear-gradient(45deg,var(--color-danger-wash),var(--color-danger-wash)_3px,transparent_3px,transparent_7px)]",
