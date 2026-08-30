@@ -727,8 +727,94 @@ mechanical.** Money stays integer minor units.
   **both en and bn**. Enum labels via `lib/labels.ts`.
 - Verified: `tsc --noEmit` clean · `npm run build` clean · all routes 200 in EN + বাংলা.
 
-**Next milestones (not started):** memberships; customer depth (dedupe/merge, consent, intake
-forms); holds/TTL in POS; transfers/resale + credential reissue; donation pricing; write-offs;
-rebooking; billing; storefront + API keys; then the actual `client.ts`→SDK wiring + full
-`types.ts`↔OpenAPI alignment. i18n Batch 2 (remaining OS screens: products editor, orders, reports,
-settings forms, auth, profile) also still pending.
+**Next milestones (not started):** transfers/resale + credential reissue; donation pricing;
+write-offs; rebooking; billing; storefront + API keys; then the actual `client.ts`→SDK wiring +
+full `types.ts`↔OpenAPI alignment. i18n Batch 2 (remaining OS screens: products editor, orders,
+reports, settings forms, auth, profile) also still pending.
+
+---
+
+## Design run (2026-08-24 → 28) — the Aura visual match
+
+Between Milestone 1 and Milestone 2 the app was pulled toward the Lovable "Aura UI" reference
+(counterfoilos.lovable.app — warm-orange flat + glass; see the design-reference notes): the full
+Aura shell (light sidebar, glass navbar, logo mark, settings hub), soft-shadow cards and glass
+overlays, real foil logo lockups (mode-aware), a stronger dark-mode card border, ember focus
+rings on inputs, a rebranded landing "pick your business" wall, a branded sign-in front door,
+better demo product photos + app icons, `prefers-reduced-motion` respected on interactive cards,
+and a service-worker cache bump to force the shell refresh. Shipped alongside: partial payments
+(min-deposit policy, POS pay-in-full, order take-payment), an outstanding-balances tab, the
+visual time-band pricing editor, settling a part-paid booking at the till, and a fix for
+invisible POS keypad numbers in light mode.
+
+---
+
+## Backend gap-closing — Milestone 2 (2026-08-30)
+
+Grounded in the Jira epics (`counterfoil_epics_and_stories_v2.md`, local on the owner's Desktop)
+rather than the backend source, which is not on this machine this session. §-numbers below refer
+to that document.
+
+### Part 1 ✅ — customers become records (§63)
+
+Until now a "customer" was free text on an order: two spellings of one person were two customers,
+and nothing could hang off them. `Customer` (customers.v1) is now a first-class entity.
+
+- **Matching.** `phoneKey`/`emailKey` are normalised on write — `01712-345678`,
+  `+8801712345678` and `880 1712 345678` all resolve to the same person. Phone is the strong
+  key, email next; a bare **name** match is only ever a *suggestion*, never applied on its own
+  (§63.13).
+- **Order gains `customerId`** beside the existing `customerName`, which stays a snapshot —
+  renaming a customer must not rewrite history, exactly as with product names on lines.
+- **Stats are derived, never stored** (`customerStats`): orders, spend, visits, no-shows, owing,
+  upcoming, first/last seen. The backend computes these from the ledger; a cached copy here
+  would drift. The list endpoint returns them (`listCustomerRows` → `CustomerWithStats`) so
+  screens ask for rows rather than computing totals themselves.
+- **Merge (§63.7).** The survivor keeps its own contact details, fills its blanks from the loser,
+  unions consents and notes in time order, and takes over the loser's orders. The loser is *not*
+  deleted — it becomes a tombstone (`mergedIntoId`) so any surviving reference still resolves
+  (`resolveCustomer` follows the chain). A duplicate finder ranks phone/email matches **high** and
+  name-only **medium**.
+- **Consent is an append-only log** (§63.8): every decision carries channel, granted, capturedAt
+  and source (counter/online/import/manager); the latest entry per channel is the answer. The
+  seed proves it — Tanvir Ahmed granted email in January and withdrew it in June.
+- **Erasure (§63.11).** Identity gone irreversibly; the row and every order survive for the
+  accounts, reading "Erased customer".
+- **Screens.** `/customers` rebuilt (search across name/phone/email, Everyone/Flagged/Email
+  consent/SMS consent segments, CSV export of the filtered group §63.9–10, the duplicate merge
+  tool) and a new `/customers/[id]` with a flag banner, six stat tiles, and Activity · Details ·
+  Consent · Notes tabs, plus flag/merge/erase actions. Order detail links to the record.
+- **POS.** The customer chip is now a **picker** — it searches existing records first, matches a
+  walk-up on their phone in any format, creates only when nothing matches, and surfaces a
+  **flagged customer's reason at the till** (that is the point of a staff-attention flag).
+  Parked carts carry the attached record.
+- **Seed.** A 20-person roster attached to 105 of 151 orders, with deliberate duplicates —
+  Farhana Haque/Hoque share a phone (high), two unrelated Imran Hossains share only a name
+  (medium) — a real consent trail, a corporate tag + note on Zahid Chowdhury, and a flagged
+  Sabbir Alam. Past bookings now resolve to **checked-in / partly checked-in / no-show**, so the
+  Visits and No-shows tiles carry real numbers instead of reading zero for everyone.
+- i18n: `customers` namespace rewritten and `pos.customerModal` extended, both **en and bn**.
+
+**Verified:** `tsc --noEmit` and `npm run build` clean, no new lint findings, all routes 200 in
+both locales with no missing-message warnings, and a **23-check harness over the data layer**
+(phone normalisation, duplicate ranking, walk-up matching, match-or-create fill-without-overwrite,
+merge order repointing + tombstone resolution, consent latest-wins, erase keeping order rows)
+passing. Browser-verified on production: list, duplicate finder, and the flagged customer detail.
+
+**Known, pre-existing, NOT introduced here:** the mock seed is anchored to **2026-07-29**
+(`NOW` in `lib/mock/generate.ts`) and does not follow the real date, so every seeded booking is
+now in the past and the customer "Upcoming" tile reads 0. This affects the dashboard, Schedule
+and Check-In equally. Re-anchoring the seed to the current date would touch the hand-authored
+proofs whose literal dates the acceptance walks cite (turf sharing on 2026-08-01, the Saturday
+guide conflict, the credits pass) — an owner decision, not a silent change.
+
+### Parts 2–3 (planned)
+
+- **Part 2 — memberships and loyalty (§16, §17).** Membership tiers (price, billing period,
+  benefits, included visits, family/group), memberships held by a customer, member pricing at
+  POS (`PromotionSource` already has a `membership` arm), admitting a member at the gate,
+  active/lapsed/expiring management; loyalty programme with earn/spend/expiry.
+- **Part 3 — booking holds and locks (§61).** Manager holds on capacity/seats/resources with an
+  expiry and a named party, converting a hold into a booking, a checkout TTL hold in POS, locked
+  bookings and sessions, and one `explainUnavailable()` so a slot that looks free always says
+  why it is not.

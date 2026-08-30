@@ -76,6 +76,13 @@ const ROSTER: { name: string; phone: string | null; email: string | null }[] = [
   { name: "Imran Hossain", phone: "01977-221100", email: "i.hossain84@yahoo.com" },
 ];
 
+const NO_SHOW_REASONS = [
+  "Did not arrive",
+  "Called to say they were stuck in traffic",
+  "No contact",
+  "Arrived after the session had started",
+];
+
 const STATUS_WEIGHTS: [OrderStatus, number][] = [
   ["paid", 70], ["pending", 6], ["partial", 6], ["refunded", 10], ["cancelled", 8],
 ];
@@ -247,7 +254,24 @@ export function generateSales({
         const taken = sold.get(key) ?? 0;
         if (taken + party <= cap) {
           sold.set(key, taken + party);
-          bookingMade = { id: `bkg_${seq}`, orderId: `ord_${seq}`, productId: product.id, locationId: location.id, slotStart: slotISO(date, time), partySize: party, status: "confirmed" };
+          // A booking in the past has already resolved: most parties turned
+          // up (some only partly), a few did not. Without this every customer
+          // reads zero visits and zero no-shows, which is not what a month of
+          // trading looks like.
+          const start = Date.parse(slotISO(date, time));
+          const resolved: Partial<Booking> = {};
+          if (start < NOW) {
+            const roll = rand();
+            if (roll < 0.08) {
+              resolved.noShow = true;
+              resolved.noShowReason = pick(NO_SHOW_REASONS);
+            } else if (roll < 0.18 && party > 1) {
+              resolved.checkedIn = int(1, party - 1); // part of the group came
+            } else {
+              resolved.checkedIn = party;
+            }
+          }
+          bookingMade = { id: `bkg_${seq}`, orderId: `ord_${seq}`, productId: product.id, locationId: location.id, slotStart: slotISO(date, time), partySize: party, status: "confirmed", ...resolved };
           bookings.push(bookingMade);
           const first = lines.find((l) => l.productId === product.id);
           if (first) first.booking = { date, startTime: time, guests: party, durationMinutes: sch.sessionMinutes || sch.slotMinutes || undefined };
