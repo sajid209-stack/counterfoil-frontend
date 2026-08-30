@@ -257,6 +257,7 @@ export default function CalendarPage() {
                 weekday: new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(d),
                 day: String(d.getDate()),
               })}
+              moreLabel={(n) => t("more", { count: n })}
             />
           ) : (
             <MonthGrid

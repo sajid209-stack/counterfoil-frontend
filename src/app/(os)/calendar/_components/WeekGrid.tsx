@@ -14,6 +14,10 @@ import {
 } from "./model";
 
 const HOUR_PX = 52;
+/** Past this many side-by-side events a week column stops being readable —
+ *  the extras collapse into a "+N" that drops into the day view, where lanes
+ *  have room to breathe. */
+const MAX_LANES = 3;
 
 /** The week as columns of days over a shared hour gutter — the shape everyone
  *  already knows from every calendar they have ever used. */
@@ -25,6 +29,7 @@ export function WeekGrid({
   onSelect,
   onPickDay,
   dayLabel,
+  moreLabel,
 }: {
   weekStartDate: Date;
   events: CalEvent[];
@@ -34,6 +39,7 @@ export function WeekGrid({
   onPickDay?: (date: Date) => void;
   /** Renders the column header, so the page owns date formatting. */
   dayLabel: (d: Date) => { weekday: string; day: string };
+  moreLabel: (count: number) => string;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i));
   const openMin = openHour * 60;
@@ -51,7 +57,10 @@ export function WeekGrid({
   const allDay = events.filter((e) => e.allDay);
 
   return (
-    <div className="overflow-x-auto">
+    // Both axes scroll in ONE container so the day headers can stick to its
+    // top. Sticky against the page would let them scroll away, which is the
+    // one thing a calendar header must never do.
+    <div className="max-h-[70vh] overflow-auto">
       <div className="min-w-[52rem]">
         {/* ── day headers ─────────────────────────────────────────────────── */}
         <div className="sticky top-0 z-20 flex border-b border-line bg-card">
@@ -129,6 +138,14 @@ export function WeekGrid({
             const mine = events.filter((e) => !e.allDay && sameDay(e.start, d));
             const packed = packLanes(mine);
             const today = sameDay(d, now);
+            const overflow = packed.filter((p) => p.lane >= MAX_LANES - 1 && p.lanes > MAX_LANES);
+            const visible = packed.filter((p) => !overflow.includes(p));
+            const overflowTop = overflow.length
+              ? Math.min(...overflow.map((p) => minutesOf(p.event.start)))
+              : 0;
+            const overflowBottom = overflow.length
+              ? Math.max(...overflow.map((p) => minutesOf(p.event.end)))
+              : 0;
             return (
               <div key={isoDate(d)} className="relative flex-1 border-r border-line last:border-r-0">
                 {hours.map((h) => (
@@ -148,7 +165,25 @@ export function WeekGrid({
                   />
                 )}
 
-                {packed.map(({ event, lane, lanes }) => {
+                {/* Anything beyond MAX_LANES becomes one "+N" tile rather than a
+                    row of unreadable slivers. */}
+                {overflow.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={onPickDay ? () => onPickDay(d) : undefined}
+                    className="absolute z-10 overflow-hidden rounded-xs border border-strong bg-subtle px-1 text-left text-[10px] font-medium text-muted"
+                    style={{
+                      top: `${((overflowTop - openMin) / span) * 100}%`,
+                      height: `calc(${((overflowBottom - overflowTop) / span) * 100}% - 2px)`,
+                      left: `${((MAX_LANES - 1) / MAX_LANES) * 100}%`,
+                      width: `calc(${(1 / MAX_LANES) * 100}% - 2px)`,
+                    }}
+                  >
+                    {moreLabel(overflow.length)}
+                  </button>
+                )}
+
+                {visible.map(({ event, lane, lanes }) => {
                   const s = Math.max(openMin, minutesOf(event.start));
                   const e = Math.min(closeMin, minutesOf(event.end));
                   if (e <= s) return null;
@@ -165,8 +200,8 @@ export function WeekGrid({
                       style={{
                         top: `${((s - openMin) / span) * 100}%`,
                         height: `calc(${((e - s) / span) * 100}% - 2px)`,
-                        left: `${(lane / lanes) * 100}%`,
-                        width: `calc(${(1 / lanes) * 100}% - 2px)`,
+                        left: `${(lane / Math.min(lanes, MAX_LANES)) * 100}%`,
+                        width: `calc(${(1 / Math.min(lanes, MAX_LANES)) * 100}% - 2px)`,
                       }}
                     >
                       <span className="flex items-center gap-0.5 truncate text-[10px] font-medium leading-tight">

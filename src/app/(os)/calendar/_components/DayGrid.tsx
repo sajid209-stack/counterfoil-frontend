@@ -60,8 +60,9 @@ export function DayGrid({
   }
 
   return (
-    // The grid scrolls inside its own card; the page never scrolls sideways.
-    <div className="overflow-x-auto">
+    // The grid scrolls inside its own card on both axes, so the hour axis can
+    // stick to the top of it. The page itself never scrolls sideways.
+    <div className="max-h-[70vh] overflow-auto">
       <div style={{ minWidth: width + 160 }}>
         {/* ── the one shared axis ─────────────────────────────────────────── */}
         <div className="sticky top-0 z-20 flex border-b border-line bg-card">
