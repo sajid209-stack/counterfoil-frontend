@@ -604,6 +604,15 @@ export function ProductSheet({
           </div>
         )}
 
+        {/* A refusal from the slot grid explains itself right above the grid,
+            where the tap happened — the flexible branch has its own notice
+            beside the lane timeline. */}
+        {blocked && !resourceMode && !flexible && (
+          <div className="mb-section">
+            <BlockedNotice message={blocked} onDismiss={() => setBlocked(null)} />
+          </div>
+        )}
+
         {/* Non-resource slot grid (planetarium/tour) */}
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && (
           <div className="mb-section grid grid-cols-3 gap-tight sm:grid-cols-4">
