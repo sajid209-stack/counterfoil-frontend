@@ -8,6 +8,7 @@
 import { buildOrderLines, taxRateOf, type LineInput } from "@/lib/orderMath";
 import type {
   Booking,
+  Customer,
   Location,
   Order,
   OrderStatus,
@@ -46,6 +47,35 @@ function slotTimes(s: ProductSchedule): string[] {
   return out;
 }
 
+/* The customer roster. Two thirds of counter sales stay anonymous walk-ups —
+   that is honest, and it keeps the "match a walk-up to an existing customer"
+   flow meaningful. Deliberate duplicates are seeded so the merge tool has real
+   work to do: Farhana Haque/Hoque share a phone (high confidence), and there
+   are two unrelated Imran Hossains (name only — medium, must not auto-merge). */
+const ROSTER: { name: string; phone: string | null; email: string | null }[] = [
+  { name: "Ayesha Siddika", phone: "01711-204488", email: "ayesha.siddika@gmail.com" },
+  { name: "Tanvir Ahmed", phone: "01812-556677", email: "tanvir.ahmed@outlook.com" },
+  { name: "Nusrat Jahan", phone: "01913-889900", email: "nusrat.j@gmail.com" },
+  { name: "Rafiqul Islam", phone: "01715-334455", email: null },
+  { name: "Sadia Rahman", phone: "01677-112233", email: "sadia.rahman@yahoo.com" },
+  { name: "Imran Hossain", phone: "01819-445566", email: "imran.hossain@gmail.com" },
+  { name: "Farhana Haque", phone: "01711-000111", email: "farhana.haque@gmail.com" },
+  { name: "Mahmudul Karim", phone: "01521-778899", email: null },
+  { name: "Shirin Akter", phone: "01911-667788", email: "shirin.akter@gmail.com" },
+  { name: "Zahid Chowdhury", phone: "01713-990011", email: "zahid.c@company.com.bd" },
+  { name: "Rumana Begum", phone: null, email: "rumana.begum@gmail.com" },
+  { name: "Sabbir Alam", phone: "01818-223344", email: "sabbir.alam@gmail.com" },
+  { name: "Nabila Anjum", phone: "01670-556699", email: "nabila.anjum@gmail.com" },
+  { name: "Kamrul Hasan", phone: "01712-445599", email: null },
+  { name: "Tasnim Ferdous", phone: "01914-772211", email: "tasnim.f@gmail.com" },
+  { name: "Arif Mahmud", phone: "01716-338822", email: "arif.mahmud@gmail.com" },
+  { name: "Sumaiya Islam", phone: "01521-119933", email: "sumaiya.islam@gmail.com" },
+  { name: "Habibur Rahman", phone: "01811-664422", email: null },
+  // ── the duplicates ──────────────────────────────────────────────────────
+  { name: "Farhana Hoque", phone: "+8801711000111", email: null },
+  { name: "Imran Hossain", phone: "01977-221100", email: "i.hossain84@yahoo.com" },
+];
+
 const STATUS_WEIGHTS: [OrderStatus, number][] = [
   ["paid", 70], ["pending", 6], ["partial", 6], ["refunded", 10], ["cancelled", 8],
 ];
@@ -59,7 +89,7 @@ export function generateSales({
   taxRatePct: number;
   reducedRatePct?: number;
   count?: number;
-}): { orders: Order[]; tickets: Ticket[]; bookings: Booking[] } {
+}): { orders: Order[]; tickets: Ticket[]; bookings: Booking[]; customers: Customer[] } {
   const rand = mulberry32(0x0c0ffee7);
   const pick = <T>(a: T[]): T => a[Math.floor(rand() * a.length)];
   const int = (lo: number, hi: number) => lo + Math.floor(rand() * (hi - lo + 1));
@@ -84,6 +114,28 @@ export function generateSales({
     for (const [st, w] of STATUS_WEIGHTS) { if ((r -= w) <= 0) return st; }
     return "paid";
   };
+
+  const digitsOf = (v: string | null) => {
+    const d = v?.replace(/\D/g, "") ?? "";
+    return d.length >= 6 ? d.slice(-10) : null;
+  };
+  const customers: Customer[] = ROSTER.map((r, idx) => ({
+    id: `cus_${String(idx + 1).padStart(3, "0")}`,
+    name: r.name,
+    email: r.email,
+    phone: r.phone,
+    phoneKey: digitsOf(r.phone),
+    emailKey: r.email ? r.email.toLowerCase() : null,
+    consents: [],
+    notes: [],
+    flag: null,
+    tags: [],
+    mergedIntoId: null,
+    erasedAt: null,
+    status: "active" as const,
+    createdAt: new Date(NOW - 200 * DAY).toISOString(),
+    updatedAt: new Date(NOW - 200 * DAY).toISOString(),
+  }));
 
   const orders: Order[] = [];
   const tickets: Ticket[] = [];
@@ -206,7 +258,14 @@ export function generateSales({
     orders.push({
       id: `ord_${seq}`, reference, status, channel,
       locationId: location.id, counterId: null, staffId: seller?.id ?? null,
-      customerName: channel === "online" ? `Guest ${seq}` : null,
+      // Online sales always identify the buyer; at the counter most people
+      // stay anonymous unless staff attached them (the POS customer chip).
+      ...(() => {
+        const named = channel === "online" || rand() < 0.35;
+        if (!named) return { customerId: null, customerName: null };
+        const c = pick(customers);
+        return { customerId: c.id, customerName: c.name };
+      })(),
       lines, payments, ...totals, createdAt, updatedAt: createdAt,
     });
 
@@ -223,5 +282,5 @@ export function generateSales({
     }
   }
 
-  return { orders, tickets, bookings };
+  return { orders, tickets, bookings, customers };
 }

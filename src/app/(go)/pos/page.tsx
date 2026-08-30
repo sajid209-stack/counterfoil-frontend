@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { Archive, Pencil, Plus, Search, Trash2, UserRound, X } from "lucide-react";
+import { AlertTriangle, Archive, Pencil, Plus, Search, Trash2, UserRound, X } from "lucide-react";
 import { BlockedNotice, Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { addOrderPayment, checkout, findCreditPass, findOrderByReference, getManualDiscountPolicy, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, quoteCart, type AppliedPromotion, type CheckoutLine, type CreditPass, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
@@ -15,6 +15,7 @@ import { behaviourSubtitle } from "@/lib/behaviour";
 import { taxRateFor } from "@/lib/tax";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { Keypad } from "../_components/Keypad";
 
@@ -118,11 +119,13 @@ export default function PosPage() {
   const [passLoading, setPassLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [customTax, setCustomTax] = useState<"standard" | "reduced" | "exempt">("standard");
-  const [customer, setCustomer] = useState("");
+  // The attached customer RECORD (Milestone 2). `customer` stays as the name
+  // snapshot the cart and receipt read, so nothing downstream had to change.
+  const [attached, setAttached] = useState<AttachedCustomer | null>(null);
+  const customer = attached?.name ?? "";
   const [customerOpen, setCustomerOpen] = useState(false);
-  const [customerDraft, setCustomerDraft] = useState("");
   // Parked carts survive navigation within the session (sessionStorage).
-  type Parked = { name: string; cart: CartEntry[]; discountPct: number; customer: string; pass: CreditPass | null };
+  type Parked = { name: string; cart: CartEntry[]; discountPct: number; customer: string; customerRecord?: AttachedCustomer | null; pass: CreditPass | null };
   const [parked, setParked] = useState<Parked[]>(() => {
     try { return JSON.parse(sessionStorage.getItem("pos_parked") ?? "[]"); } catch { return []; }
   });
@@ -140,15 +143,15 @@ export default function PosPage() {
   const persistParked = (list: Parked[]) => { setParked(list); sessionStorage.setItem("pos_parked", JSON.stringify(list)); };
   const park = () => {
     if (cart.length === 0) return;
-    persistParked([...parked, { name: parkName.trim() || t("parked.guestName", { number: parked.length + 1 }), cart, discountPct, customer, pass }]);
-    setCart([]); setDiscountPct(0); setCustomer(""); setPass(null); setAppliedCoupon(null); setDiscountReason("");
+    persistParked([...parked, { name: parkName.trim() || t("parked.guestName", { number: parked.length + 1 }), cart, discountPct, customer, customerRecord: attached, pass }]);
+    setCart([]); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason("");
     setParkOpen(false); setParkName("");
     toast.success(t("cartParked"));
   };
   const resume = (i: number) => {
     const p = parked[i];
     if (!p) return;
-    setCart(p.cart); setDiscountPct(p.discountPct); setCustomer(p.customer); setPass(p.pass);
+    setCart(p.cart); setDiscountPct(p.discountPct); setAttached(p.customerRecord ?? (p.customer ? { id: null, name: p.customer } : null)); setPass(p.pass);
     persistParked(parked.filter((_, x) => x !== i));
     setParkOpen(false);
   };
@@ -429,7 +432,7 @@ export default function PosPage() {
       lines: sale.lines.map((l) => ({ name: l.tierId && l.tierName !== l.productName ? `${l.productName} · ${l.tierName}` : l.productName, qty: l.quantity, amount: l.subtotal, child: !!l.parentLineId })),
       subtotal, lineDiscountTotal, orderDiscount, tax, total,
     };
-    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, orderDiscount, bookings, method, credits, customerName: customer || null, receipt };
+    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, orderDiscount, bookings, method, credits, customerName: customer || null, customerId: attached?.id ?? null, receipt };
     return { lines, bookings, credits, payload, receipt };
   };
 
@@ -453,7 +456,7 @@ export default function PosPage() {
   // Non-cash settle: no change step; runs after the wallet flow confirms.
   const settleInline = async (txnNote?: string, txnRef?: string) => {
     const { lines, bookings, credits, payload, receipt } = buildSale();
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow, credits });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow, credits });
     if (res.ok) {
       if (txnNote) await logOrderAction(res.data.order.id, txnNote);
       sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, code: res.data.firstTicketCode, change: 0, balance, receipt, payments: [{ method, amount: dueNow }] }));
@@ -465,7 +468,7 @@ export default function PosPage() {
   const completeCash = async (tenderedMinor: number, changeMinor: number) => {
     const { lines, bookings, credits, payload, receipt } = buildSale();
     setCashSaving(true);
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow, credits });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow, credits });
     setCashSaving(false);
     if (res.ok) {
       sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, code: res.data.firstTicketCode, change: changeMinor, balance, receipt, payments: [{ method: "cash", amount: dueNow, tendered: tenderedMinor, change: changeMinor }] }));
@@ -532,7 +535,7 @@ export default function PosPage() {
           {cartOpen && (
             <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-sm border border-line px-tight text-[12px] text-muted lg:hidden">{t("cart.close")}</button>
           )}
-          <button type="button" onClick={() => { setCustomerDraft(customer); setCustomerOpen(true); }} className={`flex h-12 items-center gap-inline rounded-sm border px-tight text-[12px] ${customer ? "border-inverse text-fg" : "border-line text-faint"}`}>
+          <button type="button" onClick={() => setCustomerOpen(true)} className={`flex h-12 items-center gap-inline rounded-sm border px-tight text-[12px] ${customer ? "border-inverse text-fg" : "border-line text-faint"}`}>
             <UserRound size={14} strokeWidth={1.5} />{customer || t("cart.customer")}
           </button>
           <span className="flex-1" />
@@ -540,6 +543,15 @@ export default function PosPage() {
             <Archive size={14} strokeWidth={1.5} />{t("cart.park")}
           </button>
         </div>
+        {attached?.flagReason && (
+          <div className="flex items-start gap-tight border-b border-line bg-warning/10 px-comfortable py-tight">
+            <AlertTriangle size={14} strokeWidth={1.5} className="mt-px shrink-0 text-warning" />
+            <p className="min-w-0 break-words text-[12px] text-warning">
+              <span className="font-medium">{t("customerModal.flagged")}: </span>
+              {attached.flagReason}
+            </p>
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto p-comfortable">
           {cart.length === 0 ? (
             <EmptyState title={t("cart.empty")} message={t("cart.emptyHint")} />
@@ -751,9 +763,7 @@ export default function PosPage() {
         </div>
       </Modal>
 
-      <Modal open={customerOpen} onClose={() => setCustomerOpen(false)} title={t("customerModal.title")} footer={<><Button variant="secondary" onClick={() => { setCustomer(""); setCustomerOpen(false); }}>{t("customerModal.remove")}</Button><Button onClick={() => { setCustomer(customerDraft.trim()); setCustomerOpen(false); }}>{t("customerModal.attach")}</Button></>}>
-        <FormField label={t("customerModal.nameLabel")} placeholder={t("customerModal.namePlaceholder")} value={customerDraft} onChange={(e) => setCustomerDraft(e.target.value)} help={t("customerModal.help")} />
-      </Modal>
+      <CustomerPicker open={customerOpen} onClose={() => setCustomerOpen(false)} attached={attached} onAttach={setAttached} />
 
       <Modal open={parkOpen} onClose={() => setParkOpen(false)} title={t("parked.title")} footer={<Button variant="secondary" onClick={() => setParkOpen(false)}>{t("parked.close")}</Button>}>
         <div className="flex flex-col gap-section">

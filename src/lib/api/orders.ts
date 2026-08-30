@@ -142,6 +142,8 @@ export interface CheckoutInput {
   counterId: string | null;
   staffId: string | null;
   customerName?: string | null;
+  /** The customer record this sale attaches to (Milestone 2). */
+  customerId?: string | null;
   lines: CheckoutLine[];
   bookings?: CheckoutBooking[]; // slot holds for scheduled products
   /** Cart-level discount in minor units — allocated across lines pro rata
@@ -202,6 +204,7 @@ export async function checkout(
     locationId: input.locationId,
     counterId: input.counterId,
     staffId: input.staffId,
+    customerId: input.customerId ?? null,
     customerName: input.customerName ?? null,
     lines,
     payments: [payment],

@@ -8,6 +8,7 @@ import type {
   BookingRule,
   Category,
   Counter,
+  Customer,
   Device,
   Location,
   Coupon,
@@ -705,11 +706,82 @@ const stressSale = buildOrderLines(
 const stressOrder: Order = {
   id: "ord_stress", reference: "CF-2026-999001", status: "paid", channel: "counter",
   locationId: "loc_fort", counterId: "cnt_fort_main", staffId: "stf_nadia",
-  customerName: "Mohammad Abdur Rahman Chowdhury · 01712-345678",
+  customerId: "cus_stress",
+  customerName: "Mohammad Abdur Rahman Chowdhury",
   lines: stressSale.lines, payments: [{ id: "CF-2026-999001-P0", method: "cash", amount: stressSale.totals.total, tendered: stressSale.totals.total, change: 0, status: "confirmed", createdAt: "2026-07-29T11:05:00+06:00" }],
   ...stressSale.totals,
   createdAt: "2026-07-29T11:05:00+06:00", updatedAt: "2026-07-29T11:05:00+06:00",
 };
+
+/* Customers: the deterministic roster the generator attached to orders, plus
+   the hand-authored detail a screen needs to be real — a marketing consent
+   trail, an internal note, and one flagged guest. The stress order's customer
+   is added here so the long-name overflow case has a record too. */
+const cus = structuredClone(sales.customers);
+const findCustomer = (name: string) => cus.find((c) => c.name === name);
+
+const consent = (
+  name: string,
+  channel: "email" | "sms",
+  granted: boolean,
+  capturedAt: string,
+  source: "counter" | "online" | "import" | "manager",
+) => findCustomer(name)?.consents.push({ channel, granted, capturedAt, source });
+
+consent("Ayesha Siddika", "email", true, "2026-03-14T10:20:00+06:00", "online");
+consent("Ayesha Siddika", "sms", true, "2026-03-14T10:20:00+06:00", "online");
+consent("Tanvir Ahmed", "email", true, "2026-01-08T16:05:00+06:00", "counter");
+// Withdrawn later — the log keeps both decisions; the latest one is what counts.
+consent("Tanvir Ahmed", "email", false, "2026-06-22T09:40:00+06:00", "manager");
+consent("Nusrat Jahan", "sms", true, "2026-05-02T11:15:00+06:00", "counter");
+consent("Sadia Rahman", "email", true, "2026-02-19T13:30:00+06:00", "import");
+consent("Zahid Chowdhury", "email", true, "2026-04-11T08:55:00+06:00", "online");
+consent("Nabila Anjum", "sms", false, "2026-06-30T17:45:00+06:00", "counter");
+
+const zahid = findCustomer("Zahid Chowdhury");
+if (zahid) {
+  zahid.tags = ["corporate"];
+  zahid.notes.push({
+    at: "2026-04-11T09:00:00+06:00",
+    who: "Nadia Islam",
+    text: "Books the whole gallery for company visits — invoice to the company, not the card.",
+  });
+}
+
+const sabbir = findCustomer("Sabbir Alam");
+if (sabbir) {
+  sabbir.flag = {
+    reason: "Repeated no-shows on booked tours. Take payment in full at booking.",
+    at: "2026-06-18T14:10:00+06:00",
+    who: "Nadia Islam",
+  };
+}
+
+const rumana = findCustomer("Rumana Begum");
+if (rumana) {
+  rumana.tags = ["member"];
+}
+
+// The overflow stress case, as a customer record.
+cus.push({
+  id: "cus_stress",
+  name: "Mohammad Abdur Rahman Chowdhury",
+  email: "mohammad.abdur.rahman.chowdhury@averylongdomainname.com.bd",
+  phone: "01712-345678",
+  phoneKey: "1712345678",
+  emailKey: "mohammad.abdur.rahman.chowdhury@averylongdomainname.com.bd",
+  consents: [{ channel: "sms", granted: true, capturedAt: "2026-07-29T11:05:00+06:00", source: "counter" }],
+  notes: [],
+  flag: null,
+  tags: [],
+  mergedIntoId: null,
+  erasedAt: null,
+  status: "active",
+  createdAt: "2026-07-29T11:05:00+06:00",
+  updatedAt: "2026-07-29T11:05:00+06:00",
+});
+
+export const customers: Customer[] = cus;
 
 export const orders = [...sales.orders, stressOrder];
 

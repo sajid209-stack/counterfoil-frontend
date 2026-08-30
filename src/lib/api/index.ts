@@ -22,3 +22,4 @@ export * from "./paymentAccounts";
 export * from "./taxConfig";
 export * from "./layouts";
 export * from "./promotions";
+export * from "./customers";

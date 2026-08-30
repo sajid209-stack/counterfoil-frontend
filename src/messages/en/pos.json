@@ -78,11 +78,22 @@
   },
   "customerModal": {
     "title": "Customer",
+    "description": "Search first — attaching the record they already have keeps their history in one place.",
+    "searchPlaceholder": "Name or phone…",
+    "noMatches": "Nobody matches that. Add them as a new customer below.",
+    "spend": "{orders} orders · {spent}",
+    "newCustomer": "New customer",
+    "nameLabel": "Name",
+    "namePlaceholder": "Anika Rahman",
+    "phoneLabel": "Phone",
+    "phonePlaceholder": "01711-234567",
+    "phoneHelp": "This is what matches them next time. Any format works.",
+    "backToSearch": "Back to search",
+    "attach": "Attach to this sale",
+    "attached": "Attached {name}.",
     "remove": "Remove",
-    "attach": "Attach",
-    "nameLabel": "Name or phone",
-    "namePlaceholder": "Anika · 01711…",
-    "help": "Optional — shows on the order and at Check-In."
+    "close": "Close",
+    "flagged": "Staff note"
   },
   "parked": {
     "title": "Parked carts",

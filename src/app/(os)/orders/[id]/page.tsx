@@ -236,7 +236,23 @@ export default function OrderDetailPage() {
           <div className="grid gap-section sm:grid-cols-3">
             <Card title={t("cardPlaced")}>
               <p className="text-sm">{formatDateTime(o.createdAt)}</p>
-              <p className="mt-inline font-mono text-[12px] text-faint">{channelLabel(o.channel)}{o.customerName ? ` · ${o.customerName}` : ""}</p>
+              <p className="mt-inline font-mono text-[12px] text-faint">
+                {channelLabel(o.channel)}
+                {o.customerName && (
+                  <>
+                    {" · "}
+                    {/* A named buyer with a record links to it; a bare name (an
+                        older order, or an anonymous walk-up) stays plain text. */}
+                    {o.customerId ? (
+                      <Link href={`/customers/${o.customerId}`} className="text-ember underline underline-offset-2">
+                        {o.customerName}
+                      </Link>
+                    ) : (
+                      o.customerName
+                    )}
+                  </>
+                )}
+              </p>
             </Card>
             <Card title={t("cardTotal")}>
               <p className="font-mono text-2xl">{formatMoney(o.total)}</p>

@@ -480,6 +480,11 @@ export interface Order {
   counterId: ID | null;
   staffId: ID | null;
   shiftId?: ID | null;
+  /** The customer record this sale is attached to (Milestone 2). Null for a
+   *  true anonymous walk-up. */
+  customerId?: ID | null;
+  /** Snapshot of the name at time of sale — renaming a customer must not
+   *  rewrite history, exactly as with product names on lines. */
   customerName: string | null;
   lines: OrderLine[];
   payments: Payment[];
@@ -769,4 +774,92 @@ export interface PromotionQuote {
   netTotal: Minor;
   applied: AppliedPromotion[];
   rejected: { code: string; reason: string }[];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Milestone 2 — customers, memberships, holds.
+// Same rule as Milestone 1: field names/enums mirror the backend contracts so
+// the client.ts → SDK swap stays mechanical. Money is INTEGER minor units.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── customers.v1 · the person behind the sale ────────────────────────────────
+/** Where a consent decision was captured — an audit trail requirement, not
+ *  decoration: "who told us we could email them, and when". */
+export type ConsentSource = "counter" | "online" | "import" | "manager";
+export type ConsentChannel = "email" | "sms";
+
+export interface MarketingConsent {
+  channel: ConsentChannel;
+  granted: boolean;
+  capturedAt: ISODateTime;
+  source: ConsentSource;
+}
+
+export interface CustomerNote {
+  at: ISODateTime;
+  who: string;
+  text: string;
+}
+
+/** Staff-attention flag (§63.12) — shown wherever the customer appears. */
+export interface CustomerFlag {
+  reason: string;
+  at: ISODateTime;
+  who: string;
+}
+
+export interface Customer {
+  id: ID;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  /** Normalised match keys — how a walk-up purchase finds an existing record.
+   *  Derived on write; the backend indexes these. */
+  phoneKey: string | null;
+  emailKey: string | null;
+  consents: MarketingConsent[];
+  notes: CustomerNote[];
+  flag: CustomerFlag | null;
+  tags: string[];
+  /** Set when this record was merged INTO another. The row survives as a
+   *  tombstone so historical orders still resolve to the surviving customer. */
+  mergedIntoId: ID | null;
+  /** Personal data erased on request (§63.11). The row stays — financial
+   *  history must not lose its rows — but the identity is gone. */
+  erasedAt: ISODateTime | null;
+  status: Lifecycle;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+
+export type CustomerInput = Pick<Customer, "name"> &
+  Partial<Pick<Customer, "email" | "phone" | "tags">>;
+export type CustomerPatch = Partial<Pick<Customer, "name" | "email" | "phone" | "tags" | "status">>;
+
+/** Derived, never stored — the backend computes these from the ledger, so the
+ *  frontend must too, or the two will disagree. */
+export interface CustomerStats {
+  orders: number;
+  spent: Minor;
+  /** Bookings the customer actually turned up to. */
+  visits: number;
+  noShows: number;
+  firstSeen: ISODateTime | null;
+  lastSeen: ISODateTime | null;
+  outstanding: Minor;
+  upcoming: number;
+}
+
+/** A customer as the list screen receives them — record plus the totals the
+ *  backend computes alongside. */
+export interface CustomerWithStats extends Customer {
+  stats: CustomerStats;
+}
+
+/** A possible duplicate pair, ranked by how sure the match is. */
+export interface DuplicateMatch {
+  a: Customer;
+  b: Customer;
+  on: "phone" | "email" | "name";
+  confidence: "high" | "medium";
 }

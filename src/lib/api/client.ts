@@ -65,6 +65,7 @@ const store: Record<string, Row[]> = {
   seatLayouts: structuredClone(seed.seatLayouts),
   promotions: structuredClone(seed.promotions),
   coupons: structuredClone(seed.coupons),
+  customers: structuredClone(seed.customers),
 };
 
 // ── Operator + demo-business switching ──────────────────────────────────────
@@ -111,7 +112,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
 /** Empty the operator's data for the golden path ("Start fresh"). */
 export function startFresh(): void {
   operatorState = { ...structuredClone(seed.operator), name: "" };
-  for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts"]) {
+  for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers"]) {
     (store as Record<string, unknown[]>)[k] = [];
   }
 }
