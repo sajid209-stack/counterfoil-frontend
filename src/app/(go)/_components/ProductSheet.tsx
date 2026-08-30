@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar, BlockedNotice, Button, ChoiceCard, FormField, ProductThumb, ResourceTimeline, useToast } from "@/components/ui";
 import { availableSeats } from "@/lib/api";
+import { SessionList } from "./SessionList";
+import { SlotMatrix } from "./SlotMatrix";
 import { useApiQuery } from "@/lib/useApi";
 import {
   applyResourceRate,
@@ -371,27 +373,31 @@ export function ProductSheet({
         )}
         {!openToday && needsSchedule(bt) && <p className="mb-section text-[13px] text-danger">{t("sheet.closedOnDate")}</p>}
 
-        {/* Resource fixed-slot: fields × times matrix */}
+        {/* Resource fixed-slot: resources × times (see SlotMatrix) */}
         {resourceMode && !flexible && openToday && (
-          <div className="mb-section overflow-x-auto">
-            <table className="w-full border-collapse text-center text-[12px]">
-              <thead><tr><th className="p-inline text-left font-mono text-faint">{matrix[0]?.resource.nounSingular ?? ""}</th>{(matrix[0]?.slots ?? []).map((s) => <th key={s.time} className="p-inline font-mono text-faint">{s.time}</th>)}</tr></thead>
-              <tbody>
-                {matrix.map((row) => (
-                  <tr key={row.resource.id}>
-                    <td className="p-inline text-left font-medium">{row.resource.name}</td>
-                    {row.slots.map((s) => {
-                      const price = applyResourceRate(resolveProductPrice(product, date, s.time, basePrice), product.schedule?.sessionMinutes ?? 60, row.resource);
-                      const selected = resourceId === row.resource.id && slotTime === s.time;
-                      if (!s.available) {
-                        return <td key={s.time} className="p-inline"><div className="flex h-12 items-center justify-center rounded-xs border border-line bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] font-mono text-[10px] text-muted">{row.resource.outOfService ? "—" : t("sheet.booked")}</div></td>;
-                      }
-                      return <td key={s.time} className="p-inline"><button type="button" onClick={() => { setResourceId(row.resource.id); setSlotTime(s.time); }} className={`flex h-12 w-full items-center justify-center rounded-xs border font-mono text-[11px] ${selected ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{formatMoney(price, currency)}</button></td>;
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <>
+            <SlotMatrix
+              currency={currency}
+              resourceNoun={matrix[0]?.resource.nounSingular ?? t("sheet.resource")}
+              selectedResourceId={resourceId}
+              selectedTime={slotTime}
+              onSelect={(rid, time) => { setResourceId(rid); setSlotTime(time); setBlocked(null); }}
+              onBlocked={setBlocked}
+              rows={matrix.map((row) => ({
+                id: row.resource.id,
+                name: row.resource.name,
+                outOfService: row.resource.outOfService,
+                cells: row.slots.map((sl) => ({
+                  time: sl.time,
+                  available: sl.available,
+                  price: applyResourceRate(
+                    resolveProductPrice(product, date, sl.time, basePrice),
+                    product.schedule?.sessionMinutes ?? 60,
+                    row.resource,
+                  ),
+                })),
+              }))}
+            />
             {resourceId && slotTime && (() => {
               const row = matrix.find((r) => r.resource.id === resourceId);
               const price = applyResourceRate(resolveProductPrice(product, date, slotTime, basePrice), product.schedule?.sessionMinutes ?? 60, row?.resource);
@@ -410,7 +416,7 @@ export function ProductSheet({
                 </>
               );
             })()}
-          </div>
+          </>
         )}
 
         {/* Resource flexible: duration + lane (Any = best fit) + only-valid starts */}
@@ -613,30 +619,45 @@ export function ProductSheet({
           </div>
         )}
 
-        {/* Non-resource slot grid (planetarium/tour) */}
+        {/* Fixed sessions — rows, not tiles (see SessionList). */}
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && (
-          <div className="mb-section grid grid-cols-3 gap-tight sm:grid-cols-4">
-            {slots.map((s) => {
+          <SessionList
+            currency={currency}
+            selected={slotTime}
+            sessions={slots.map((s) => {
               const left = s.remaining - seatsInCart(product.id, slotISO(date, s.time));
               // A departure needs a free guide as well as seats.
               const guideless = guided && guides.length > 0 && freeGuides(product, date, s.time).length === 0;
-              const full = left <= 0 || guideless;
-              const price = resolveProductPrice(product, date, s.time, basePrice);
-              if (full && product.waitlistEnabled) {
-                return <button key={s.time} type="button" onClick={() => setWl({ time: s.time })} className="flex h-16 flex-col items-center justify-center rounded-sm border border-warning bg-warning/10 text-warning"><span className="font-mono">{s.time}</span><span className="text-[10px]">{t("sheet.joinWaitlist")}</span></button>;
-              }
-              const low = !full && left <= Math.max(1, Math.floor(s.capacity * 0.2)); // ≤20% remaining
-              // A full slot is TAPPABLE, not disabled (§61.14): tapping it says
-              // why — sold out, held for a named group, session closed — and
-              // what to do about it, instead of leaving staff to guess.
-              const explainFull = () => {
-                if (guideless) { setBlocked(t("sheet.noGuideFreeReason")); return; }
-                const why = explainUnavailable({ product, date, slotStart: slotISO(date, s.time), remaining: left, wanted: 1 });
-                setBlocked(why?.message ?? t("sheet.full"));
+              const free = guided ? freeGuides(product, date, s.time) : [];
+              return {
+                time: s.time,
+                price: resolveProductPrice(product, date, s.time, basePrice),
+                capacity: s.capacity,
+                left: guideless ? 0 : left,
+                blockedReason: guideless ? t("sheet.noGuideFree") : null,
+                meta: guided && free.length
+                  ? t("sheet.ledByName", { name: team.find((x) => x.id === free[0])?.name ?? "" })
+                  : null,
+                waitlist: !!product.waitlistEnabled,
               };
-              return <button key={s.time} type="button" onClick={() => { if (full) { explainFull(); return; } setSlotTime(s.time); if (guided) setGuideId(freeGuides(product, date, s.time)[0]); }} className={`flex h-16 flex-col items-center justify-center gap-0.5 rounded-sm border text-sm ${full ? "border-line bg-subtle text-faint" : slotTime === s.time ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}><span className="font-mono">{s.time}</span><span className="font-mono text-[11px]">{formatMoney(price, currency)}</span>{low && slotTime !== s.time ? <span className="rounded-lg bg-ember px-tight font-mono text-[10px] text-ink">{t("sheet.leftCount", { count: left })}</span> : <span className="text-[10px] opacity-70">{guideless ? t("sheet.noGuideFree") : full ? t("sheet.full") : t("sheet.leftCount", { count: left })}</span>}</button>;
             })}
-          </div>
+            onSelect={(time) => {
+              setSlotTime(time);
+              if (guided) setGuideId(freeGuides(product, date, time)[0]);
+            }}
+            onWaitlist={(time) => setWl({ time })}
+            onBlocked={(reason) => {
+              const slot = slots.find((x) => x.time === slotTime);
+              const why = explainUnavailable({
+                product,
+                date,
+                slotStart: slotISO(date, slot?.time ?? ""),
+                remaining: 0,
+                wanted: 1,
+              });
+              setBlocked(why?.message ?? reason);
+            }}
+          />
         )}
 
         {/* Guided: pick who leads — busy guides (on ANY product) can't be chosen */}

@@ -240,7 +240,11 @@
     "cancel": "Cancel",
     "join": "Join",
     "addedToWaitlist": "Added to the waitlist.",
-    "noGuideFreeReason": "No guide is free for this departure. Free one up in Team, or pick another time."
+    "noGuideFreeReason": "No guide is free for this departure. Free one up in Team, or pick another time.",
+    "ledByName": "Led by {name}",
+    "slotTaken": "{time} on {name} is already booked. Pick another time or another one.",
+    "ratePer": "{amount} per {noun}, per slot",
+    "rateUplift": "peak slots {amounts}"
   },
   "settle": {
     "title": "Settle a booking",
