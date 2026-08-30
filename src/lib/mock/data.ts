@@ -10,6 +10,10 @@ import type {
   Counter,
   Customer,
   Device,
+  LoyaltyEntry,
+  LoyaltyProgram,
+  Membership,
+  MembershipTier,
   Location,
   Coupon,
   LayoutSeat,
@@ -782,6 +786,222 @@ cus.push({
 });
 
 export const customers: Customer[] = cus;
+
+/* ── Memberships and loyalty (Milestone 2 part 2) ───────────────────────────
+   Three tiers that between them exercise every mechanism a screen has to
+   handle: an unlimited individual annual, a family membership covering four
+   people, and a monthly tier whose discount is scoped to one category rather
+   than everything. The memberships held cover every state — active, expiring
+   within the month, lapsed, paused and cancelled — so the list screen has
+   something in each tab without anyone having to fabricate it. */
+export const membershipTiers: MembershipTier[] = [
+  {
+    id: "mtr_friend",
+    name: "Friend of the Museum",
+    description: "Unlimited entry all year, 10% off everything else, and two guest passes.",
+    price: 350000,
+    billingPeriod: "annual",
+    autoRenew: true,
+    renewalNoticeDays: 14,
+    discountBps: 1000,
+    discountScope: "all",
+    discountCategoryIds: [],
+    discountProductIds: [],
+    includedVisits: null,
+    includedProductIds: ["prd_admission"],
+    maxMembers: 1,
+    guestPassesPerPeriod: 2,
+    status: "active",
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
+    id: "mtr_family",
+    name: "Family Membership",
+    description: "Covers four named people. Unlimited entry, 15% off tours and events.",
+    price: 900000,
+    billingPeriod: "annual",
+    autoRenew: true,
+    renewalNoticeDays: 21,
+    discountBps: 1500,
+    discountScope: "categories",
+    discountCategoryIds: ["cat_tours", "cat_events"],
+    discountProductIds: [],
+    includedVisits: null,
+    includedProductIds: ["prd_admission"],
+    maxMembers: 4,
+    guestPassesPerPeriod: 4,
+    status: "active",
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
+    id: "mtr_explorer",
+    name: "Explorer",
+    description: "Six visits a month and 5% off guided tours. Cancel any time.",
+    price: 80000,
+    billingPeriod: "monthly",
+    autoRenew: true,
+    renewalNoticeDays: 5,
+    discountBps: 500,
+    discountScope: "categories",
+    discountCategoryIds: ["cat_tours"],
+    discountProductIds: [],
+    includedVisits: 6,
+    includedProductIds: ["prd_admission", "prd_garden"],
+    maxMembers: 1,
+    guestPassesPerPeriod: 0,
+    status: "active",
+    createdAt: T,
+    updatedAt: T,
+  },
+];
+
+// Dates are written relative to the real today so the states stay true however
+// long this seed lives — a membership seeded as "expiring soon" must not
+// quietly become "lapsed" a month later.
+const dayShift = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
+const membershipRow = (
+  id: string,
+  seq: number,
+  customerName: string,
+  tierId: string,
+  tierName: string,
+  startedDays: number,
+  expiresDays: number,
+  extra: Partial<Membership> = {},
+): Membership => ({
+  id,
+  customerId: cus.find((c) => c.name === customerName)?.id ?? "cus_001",
+  tierId,
+  tierName,
+  code: `CF-M-${String(seq).padStart(6, "0")}`,
+  status: "active",
+  startedAt: dayShift(startedDays),
+  expiresAt: dayShift(expiresDays),
+  autoRenew: true,
+  visitsUsed: 0,
+  guestPassesUsed: 0,
+  members: [],
+  orderId: null,
+  pausedAt: null,
+  cancelledAt: null,
+  createdAt: T,
+  updatedAt: T,
+  ...extra,
+});
+
+export const memberships: Membership[] = [
+  // Active, most of the year still to run.
+  membershipRow("mbs_001", 1, "Ayesha Siddika", "mtr_friend", "Friend of the Museum", -95, 270),
+  // A family membership with its four named people.
+  membershipRow("mbs_002", 2, "Zahid Chowdhury", "mtr_family", "Family Membership", -140, 225, {
+    members: [
+      { name: "Zahid Chowdhury" },
+      { name: "Rehana Chowdhury" },
+      { name: "Tahmid Chowdhury", note: "Child" },
+      { name: "Zara Chowdhury", note: "Child" },
+    ],
+    guestPassesUsed: 1,
+  }),
+  // Expiring inside the notice window — the case the Expiring tab exists for.
+  membershipRow("mbs_003", 3, "Nusrat Jahan", "mtr_explorer", "Explorer", -348, 12, {
+    visitsUsed: 4,
+  }),
+  // Ran out last month and was never renewed.
+  membershipRow("mbs_004", 4, "Rafiqul Islam", "mtr_explorer", "Explorer", -400, -26, {
+    visitsUsed: 6,
+    autoRenew: false,
+  }),
+  // Paused while the member is abroad; resuming pushes the expiry out.
+  membershipRow("mbs_005", 5, "Shirin Akter", "mtr_friend", "Friend of the Museum", -200, 165, {
+    status: "paused",
+    pausedAt: new Date(Date.now() - 18 * 86400000).toISOString(),
+  }),
+  // Cancelled with a reason on the record.
+  membershipRow("mbs_006", 6, "Sabbir Alam", "mtr_explorer", "Explorer", -300, 40, {
+    status: "cancelled",
+    autoRenew: false,
+    cancelledAt: new Date(Date.now() - 9 * 86400000).toISOString(),
+    cancelReason: "Moving out of Dhaka.",
+  }),
+];
+
+export const loyaltyProgram: LoyaltyProgram = {
+  enabled: true,
+  pointsPerUnit: 1, // one point per taka spent
+  pointValue: 25, // 100 points = ৳25
+  minRedeemPoints: 100,
+  expiryMonths: 12,
+};
+
+/* The points ledger. Built from the orders these customers actually placed, so
+   a balance can be traced back to a sale rather than appearing from nowhere.
+   One entry is deliberately close to expiry, and one member has already spent
+   points, so the "expiring soon" and "spent" paths both have real data. */
+const loyaltyMembers = [
+  "Ayesha Siddika",
+  "Zahid Chowdhury",
+  "Nusrat Jahan",
+  "Tasnim Ferdous",
+  "Arif Mahmud",
+  "Kamrul Hasan",
+];
+const pointEntries: LoyaltyEntry[] = [];
+let pointSeq = 0;
+for (const name of loyaltyMembers) {
+  const customer = cus.find((c) => c.name === name);
+  if (!customer) continue;
+  const theirOrders = sales.orders
+    .filter((o) => o.customerId === customer.id && o.status === "paid")
+    .slice(0, 4);
+  for (const o of theirOrders) {
+    pointSeq += 1;
+    pointEntries.push({
+      id: `lyp_${String(pointSeq).padStart(4, "0")}`,
+      customerId: customer.id,
+      kind: "earn",
+      points: Math.floor(o.total / 100),
+      orderId: o.id,
+      at: o.createdAt,
+      // Earned a year ago on this seed's clock, so most have a while to run —
+      // except Ayesha's oldest, deliberately inside the 60-day warning window.
+      expiresAt: dayShift(name === "Ayesha Siddika" && theirOrders[0].id === o.id ? 34 : 300),
+    });
+  }
+}
+// Someone who has already spent points, and a manager goodwill adjustment.
+const tasnim = cus.find((c) => c.name === "Tasnim Ferdous");
+if (tasnim) {
+  pointSeq += 1;
+  pointEntries.push({
+    id: `lyp_${String(pointSeq).padStart(4, "0")}`,
+    customerId: tasnim.id,
+    kind: "spend",
+    points: 200,
+    at: new Date(Date.now() - 21 * 86400000).toISOString(),
+    note: "Spent at the counter",
+  });
+}
+const nusrat = cus.find((c) => c.name === "Nusrat Jahan");
+if (nusrat) {
+  pointSeq += 1;
+  pointEntries.push({
+    id: `lyp_${String(pointSeq).padStart(4, "0")}`,
+    customerId: nusrat.id,
+    kind: "adjust",
+    points: 250,
+    note: "Goodwill after a cancelled session.",
+    at: new Date(Date.now() - 40 * 86400000).toISOString(),
+    expiresAt: dayShift(320),
+  });
+}
+export const loyaltyEntries: LoyaltyEntry[] = pointEntries;
 
 export const orders = [...sales.orders, stressOrder];
 

@@ -50,7 +50,14 @@
     "dueNow": "Due now",
     "balanceAtArrival": "Balance at arrival",
     "payInFull": "Pay in full now",
-    "settleBooking": "Settle a booking"
+    "settleBooking": "Settle a booking",
+    "sellMembership": "Membership",
+    "spendPoints": "Spend points ({count})",
+    "pointsApplied": "{count} points applied",
+    "memberRate": "{pct}% member price",
+    "memberVisits": "{count} included visits left",
+    "memberDiscount": "{tier} member price",
+    "pointsSpent": "{count} points"
   },
   "charge": "Charge",
   "chargeAmount": "Charge {amount} — {method}",
@@ -246,6 +253,28 @@
     "outstanding": "Outstanding",
     "take": "Take {amount}",
     "fullyPaid": "Fully paid — nothing outstanding.",
-    "lookupAnother": "Look up another booking"
+    "lookupAnother": "Look up another booking",
+    "settled": "Balance of {amount} taken."
+  },
+  "membership": {
+    "title": "Sell a membership",
+    "description": "The member gets their price from the next sale onwards.",
+    "close": "Close",
+    "needCustomerTitle": "Attach a customer first",
+    "needCustomerBody": "A membership belongs to someone. Use the Customer button at the top of the cart.",
+    "lineLabel": "Membership",
+    "issued": "Membership issued — {code}."
+  },
+  "points": {
+    "title": "Spend points",
+    "description": "{balance} points, worth {worth}.",
+    "none": "Spend none",
+    "apply": "Take off {value}",
+    "slider": "How many points to spend",
+    "line": "{points} points = {value} off",
+    "allUsable": "All {count} usable",
+    "belowMinimum": "Points can be spent from {min} upwards.",
+    "nothingToSpendOn": "There is nothing left on this sale to spend points against.",
+    "expiringSoon": "{count} of these expire within 60 days."
   }
 }

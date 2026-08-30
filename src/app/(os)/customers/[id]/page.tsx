@@ -33,6 +33,8 @@ import {
   getCustomerStats,
   hasConsent,
   listCustomerRows,
+  loyaltyAccount,
+  membershipsFor,
   listOrders,
   mergeCustomers,
   setCustomerConsent,
@@ -43,12 +45,13 @@ import {
   type Order,
 } from "@/lib/api";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
+import { MembershipTab } from "./MembershipTab";
 
 // Who is acting. Real auth lands with the backend; until then the counter
 // manager is the actor, exactly as the rest of OS assumes.
 const ACTOR = "Nadia Islam";
 
-type Tab = "activity" | "details" | "consent" | "notes";
+type Tab = "activity" | "membership" | "details" | "consent" | "notes";
 
 export default function CustomerDetailPage() {
   const t = useTranslations("customers");
@@ -95,8 +98,16 @@ export default function CustomerDetailPage() {
     );
   }
 
+  const memberships = membershipsFor(customer.id);
+  const points = loyaltyAccount(customer.id);
+
   const tabs = [
     { value: "activity", label: t("tabActivity"), count: orders.length },
+    {
+      value: "membership",
+      label: t("tabMembership"),
+      count: memberships.filter((m) => m.effectiveStatus === "active").length,
+    },
     { value: "details", label: t("tabDetails") },
     { value: "consent", label: t("tabConsent") },
     { value: "notes", label: t("tabNotes"), count: customer.notes.length },
@@ -159,6 +170,15 @@ export default function CustomerDetailPage() {
         <Tabs items={tabs} value={tab} onChange={(v) => setTab(v as Tab)} />
 
         {tab === "activity" && <ActivityTab orders={orders} loading={ordersQ.loading} stats={stats} />}
+        {tab === "membership" && (
+          <MembershipTab
+            key={`${memberships.length}-${points.balance}`}
+            customerId={customer.id}
+            memberships={memberships}
+            points={points}
+            onChanged={reloadAll}
+          />
+        )}
         {tab === "details" && (
           <DetailsTab key={customer.updatedAt} customer={customer} onSaved={reloadAll} />
         )}

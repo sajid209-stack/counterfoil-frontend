@@ -7,7 +7,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { AlertTriangle, Archive, Pencil, Plus, Search, Trash2, UserRound, X } from "lucide-react";
 import { BlockedNotice, Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { addOrderPayment, checkout, findCreditPass, findOrderByReference, getManualDiscountPolicy, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, quoteCart, type AppliedPromotion, type CheckoutLine, type CreditPass, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { addOrderPayment, checkout, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, quoteCart, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
@@ -16,6 +16,7 @@ import { taxRateFor } from "@/lib/tax";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
+import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { Keypad } from "../_components/Keypad";
 
@@ -124,6 +125,25 @@ export default function PosPage() {
   const [attached, setAttached] = useState<AttachedCustomer | null>(null);
   const customer = attached?.name ?? "";
   const [customerOpen, setCustomerOpen] = useState(false);
+
+  // ── Membership + points (Milestone 2). Both hang off the ATTACHED customer,
+  //    so removing the customer removes the benefit — no stale member price.
+  const benefitQ = useApiQuery(() => getMemberBenefit(attached?.id ?? null), [attached?.id]);
+  const benefit = attached?.id ? (benefitQ.data ?? null) : null;
+  const pointsQ = useApiQuery(
+    () =>
+      attached?.id
+        ? getLoyaltyAccount(attached.id)
+        : Promise.resolve({ ok: true as const, data: null }),
+    [attached?.id],
+  );
+  const pointsAccount = attached?.id ? (pointsQ.data ?? null) : null;
+  const programQ = useApiQuery(() => getLoyaltyProgram(), []);
+  const program = programQ.data;
+  const [pointsToSpend, setPointsToSpend] = useState(0);
+  const [pointsOpen, setPointsOpen] = useState(false);
+  const [membershipOpen, setMembershipOpen] = useState(false);
+
   // Parked carts survive navigation within the session (sessionStorage).
   type Parked = { name: string; cart: CartEntry[]; discountPct: number; customer: string; customerRecord?: AttachedCustomer | null; pass: CreditPass | null };
   const [parked, setParked] = useState<Parked[]>(() => {
@@ -144,7 +164,7 @@ export default function PosPage() {
   const park = () => {
     if (cart.length === 0) return;
     persistParked([...parked, { name: parkName.trim() || t("parked.guestName", { number: parked.length + 1 }), cart, discountPct, customer, customerRecord: attached, pass }]);
-    setCart([]); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason("");
+    setCart([]); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0);
     setParkOpen(false); setParkName("");
     toast.success(t("cartParked"));
   };
@@ -257,6 +277,24 @@ export default function PosPage() {
     setCustomOpen(false); setCustomName(""); setCustomAmount(""); setCustomTax("standard");
   };
 
+  // A membership sells as its own cart line. It is not a catalogue product, so
+  // it carries its own tax rate exactly as the custom-amount entry does; the
+  // membership itself is issued once the sale actually completes.
+  const addMembershipToCart = (tier: MembershipTier) => {
+    setCart((c) => [
+      ...c,
+      {
+        id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`,
+        productId: `membership_${tier.id}`,
+        productName: tier.name,
+        taxRatePct: operator?.taxRatePct ?? 0,
+        items: [
+          { tierId: "membership", tierName: t("membership.lineLabel"), unitPrice: tier.price, qty: 1 },
+        ],
+      },
+    ]);
+  };
+
   // ── Credits pass coverage: eligible items are paid by credits, oldest cart
   //    entries first, until the pass runs out. Covered items sell at 0.
   const coverage = (() => {
@@ -365,7 +403,35 @@ export default function PosPage() {
   // cashier policy caps; the coupon is pre-authorised.
   const manualDiscount = Math.round((Math.max(0, preBase) * discountPct) / 100);
   const couponDiscount = Math.min(appliedCoupon?.discount ?? 0, Math.max(0, preBase - manualDiscount));
-  const orderDiscount = manualDiscount + couponDiscount;
+
+  // ── The member price (§16.9). Applied only to what the tier actually covers,
+  //    and never to the sale of a membership itself. Like the coupon, this is
+  //    an entitlement, NOT a cashier discount — so it must not count toward
+  //    the manual-discount cap.
+  const memberCovers = (productId: string) => {
+    if (!benefit || productId.startsWith("membership_")) return false;
+    if (benefit.productIds === null && benefit.categoryIds.length === 0) return true;
+    if (benefit.productIds?.includes(productId)) return true;
+    const cat = productById(productId)?.categoryId;
+    return !!cat && benefit.categoryIds.includes(cat);
+  };
+  const memberEligibleBase = benefit
+    ? saleInputs
+        .filter((l) => memberCovers(l.productId))
+        .reduce((sum, l) => sum + l.unitPrice * l.quantity - (l.lineDiscount ?? 0), 0)
+    : 0;
+  const memberDiscount = benefit
+    ? Math.round((Math.max(0, memberEligibleBase) * benefit.discountBps) / 10000)
+    : 0;
+
+  // ── Points spent against this sale (§17.7). Bounded by what is left to pay
+  //    after everything else, so points can never create change owed.
+  const beforePoints = Math.max(0, preBase - manualDiscount - couponDiscount - memberDiscount);
+  const pointsDiscount = program?.enabled
+    ? Math.min(pointsToSpend * program.pointValue, beforePoints)
+    : 0;
+
+  const orderDiscount = manualDiscount + couponDiscount + memberDiscount + pointsDiscount;
   const sale = buildOrderLines(saleInputs, orderDiscount, "PREVIEW");
   const subtotal = sale.totals.subtotal;
   const lineDiscountTotal = sale.totals.lineDiscountTotal;
@@ -414,6 +480,15 @@ export default function PosPage() {
   const balance = payInFull ? 0 : depositBalance;
   const dueNow = total - balance;
 
+  // The most points that can usefully go on THIS sale: bounded by the balance,
+  // the programme minimum, and what is left to pay once points are excluded.
+  const maxPointsForSale = (() => {
+    if (!pointsAccount || !program?.enabled || program.pointValue <= 0) return 0;
+    if (pointsAccount.balance < program.minRedeemPoints) return 0;
+    const payable = Math.max(0, beforePoints);
+    return Math.min(pointsAccount.balance, Math.floor(payable / program.pointValue));
+  })();
+
   const applyPass = async () => {
     setPassLoading(true);
     const res = await findCreditPass(passCode);
@@ -453,12 +528,38 @@ export default function PosPage() {
     await settleInline();
   };
 
+  /**
+   * Everything that has to happen once a sale actually lands: issue any
+   * membership that was in the cart, deduct the points that were spent, and
+   * credit the points the sale earned.
+   *
+   * These run AFTER checkout succeeds, never before — a membership issued
+   * against a sale that then failed would be a membership nobody paid for.
+   * Points are earned on what was actually paid, not on the list price.
+   */
+  const settleMemberEffects = async (orderId: string, paidAmount: number) => {
+    const customerId = attached?.id;
+    if (!customerId) return;
+
+    for (const entry of cart) {
+      if (!entry.productId.startsWith("membership_")) continue;
+      const tierId = entry.productId.slice("membership_".length);
+      const issued = await issueMembership({ customerId, tierId, orderId });
+      if (issued.ok) toast.success(t("membership.issued", { code: issued.data.code }));
+      else toast.error(issued.error.message);
+    }
+
+    if (pointsToSpend > 0) await spendPoints(customerId, pointsToSpend, orderId);
+    await earnPoints(customerId, paidAmount, orderId);
+  };
+
   // Non-cash settle: no change step; runs after the wallet flow confirms.
   const settleInline = async (txnNote?: string, txnRef?: string) => {
     const { lines, bookings, credits, payload, receipt } = buildSale();
     const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow, credits });
     if (res.ok) {
       if (txnNote) await logOrderAction(res.data.order.id, txnNote);
+      await settleMemberEffects(res.data.order.id, dueNow);
       sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, code: res.data.firstTicketCode, change: 0, balance, receipt, payments: [{ method, amount: dueNow }] }));
       router.push("/pos/complete");
     } else toast.error(res.error.message);
@@ -471,6 +572,7 @@ export default function PosPage() {
     const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow, credits });
     setCashSaving(false);
     if (res.ok) {
+      await settleMemberEffects(res.data.order.id, dueNow);
       sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, code: res.data.firstTicketCode, change: changeMinor, balance, receipt, payments: [{ method: "cash", amount: dueNow, tendered: tenderedMinor, change: changeMinor }] }));
       setCashOpen(false);
       router.push("/pos/complete");
@@ -644,10 +746,35 @@ export default function PosPage() {
             <button type="button" onClick={() => setSettleOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[12px]">{t("summary.settleBooking")}</button>
           </div>
 
+          {/* Membership + points. Both need a customer attached, so the row
+              says so rather than offering a control that cannot work. */}
+          <div className="mb-tight flex flex-wrap items-center gap-tight">
+            <button type="button" onClick={() => setMembershipOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[12px]">{t("summary.sellMembership")}</button>
+            {pointsAccount && program?.enabled && (
+              <button type="button" onClick={() => setPointsOpen(true)} className="h-12 min-w-0 rounded-xs border border-line px-tight text-[12px]">
+                <span className="truncate">{pointsToSpend > 0 ? t("summary.pointsApplied", { count: pointsToSpend }) : t("summary.spendPoints", { count: pointsAccount.balance })}</span>
+              </button>
+            )}
+          </div>
+
+          {/* The member price is an entitlement, so say whose it is. */}
+          {benefit && (
+            <div className="mb-tight rounded-sm border-l-2 border-ember bg-ember/5 px-comfortable py-tight">
+              <p className="min-w-0 break-words text-[12px]">
+                <span className="font-medium">{benefit.tierName}</span>
+                {" · "}
+                {t("summary.memberRate", { pct: benefit.discountBps / 100 })}
+                {benefit.visitsLeft != null && ` · ${t("summary.memberVisits", { count: benefit.visitsLeft })}`}
+              </p>
+            </div>
+          )}
+
           <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.subtotal")}</span><span className="font-mono">{formatMoney(subtotal, currency)}</span></div>
           {lineDiscountTotal > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.lineDiscounts")}</span><span className="font-mono text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
           {manualDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.discountPct", { pct: discountPct })}</span><span className="font-mono text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
           {couponDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{appliedCoupon?.code ?? appliedCoupon?.name}</span><span className="font-mono text-danger">−{formatMoney(couponDiscount, currency)}</span></div>}
+          {memberDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span className="min-w-0 truncate">{t("summary.memberDiscount", { tier: benefit?.tierName ?? "" })}</span><span className="shrink-0 font-mono text-danger">−{formatMoney(memberDiscount, currency)}</span></div>}
+          {pointsDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.pointsSpent", { count: pointsToSpend })}</span><span className="font-mono text-danger">−{formatMoney(pointsDiscount, currency)}</span></div>}
           {creditsValue > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.passCredits", { count: creditsUsed })}</span><span className="font-mono text-success">−{formatMoney(creditsValue, currency)}</span></div>}
           <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.vat")}</span><span className="font-mono">{formatMoney(tax, currency)}</span></div>
           <div className="mt-tight flex items-baseline justify-between text-lg font-medium"><span>{t("summary.total")}</span><AnimatedMoney value={total} currency={currency} /></div>
@@ -764,6 +891,25 @@ export default function PosPage() {
       </Modal>
 
       <CustomerPicker open={customerOpen} onClose={() => setCustomerOpen(false)} attached={attached} onAttach={setAttached} />
+
+      <MembershipSheet
+        open={membershipOpen}
+        onClose={() => setMembershipOpen(false)}
+        hasCustomer={!!attached?.id}
+        onPick={(tier) => {
+          addMembershipToCart(tier);
+          setMembershipOpen(false);
+        }}
+      />
+      <PointsSheet
+        open={pointsOpen}
+        onClose={() => setPointsOpen(false)}
+        account={pointsAccount}
+        program={program}
+        maxPoints={maxPointsForSale}
+        current={pointsToSpend}
+        onApply={setPointsToSpend}
+      />
 
       <Modal open={parkOpen} onClose={() => setParkOpen(false)} title={t("parked.title")} footer={<Button variant="secondary" onClick={() => setParkOpen(false)}>{t("parked.close")}</Button>}>
         <div className="flex flex-col gap-section">

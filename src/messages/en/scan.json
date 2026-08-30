@@ -17,5 +17,7 @@
   "admitAll": "Admit all {count}",
   "everyoneIn": "Everyone's in — ticket redeemed.",
   "scanNext": "Scan the next ticket",
-  "readyNext": "Ready for the next scan in a moment — or tap anywhere"
+  "readyNext": "Ready for the next scan in a moment — or tap anywhere",
+  "memberUnlimited": "Unlimited entry",
+  "memberVisitsLeft": "{count} visits left"
 }

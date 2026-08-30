@@ -23,3 +23,5 @@ export * from "./taxConfig";
 export * from "./layouts";
 export * from "./promotions";
 export * from "./customers";
+export * from "./memberships";
+export * from "./loyalty";

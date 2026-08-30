@@ -863,3 +863,134 @@ export interface DuplicateMatch {
   on: "phone" | "email" | "name";
   confidence: "high" | "medium";
 }
+
+// ── membership.v1 · membership tiers and the memberships people hold ─────────
+export type BillingPeriod = "monthly" | "quarterly" | "annual" | "lifetime";
+
+/** What a tier's discount applies to. "all" is the common case; the other two
+ *  exist because operators sell "20% off tours, full price on the cafe". */
+export type MembershipDiscountScope = "all" | "categories" | "products";
+
+export interface MembershipTier {
+  id: ID;
+  name: string;
+  description: string;
+  price: Minor;
+  billingPeriod: BillingPeriod;
+  /** Renewal is a property of the tier the member signed up to (§16.11). */
+  autoRenew: boolean;
+  /** How many days before renewal the member is told (§16.12). */
+  renewalNoticeDays: number;
+  /** Member price = list price less this, wherever the scope applies (§16.4). */
+  discountBps: number;
+  discountScope: MembershipDiscountScope;
+  discountCategoryIds: ID[];
+  discountProductIds: ID[];
+  /** Visits included in each period; null means unlimited (§16.5). */
+  includedVisits: number | null;
+  /** Which products an included visit can be spent on. Empty = any. */
+  includedProductIds: ID[];
+  /** 1 = individual. Above 1 is a family or group membership (§16.6). */
+  maxMembers: number;
+  guestPassesPerPeriod: number;
+  status: Lifecycle;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+export type MembershipTierInput = Omit<MembershipTier, "id" | "createdAt" | "updatedAt">;
+
+export type MembershipStatus = "active" | "lapsed" | "paused" | "cancelled";
+
+/** A named person a family membership covers. */
+export interface MembershipMember {
+  name: string;
+  note?: string;
+}
+
+export interface Membership {
+  id: ID;
+  customerId: ID;
+  tierId: ID;
+  /** Snapshot — renaming a tier must not rewrite what someone bought. */
+  tierName: string;
+  /** What the gate scans (§16.10). */
+  code: string;
+  status: MembershipStatus;
+  startedAt: ISODate;
+  /** End of the current period. Lifetime memberships carry a far date. */
+  expiresAt: ISODate;
+  autoRenew: boolean;
+  /** Included visits spent in the current period (§16.15). */
+  visitsUsed: number;
+  guestPassesUsed: number;
+  members: MembershipMember[];
+  /** The sale that created it, when sold through POS. */
+  orderId?: ID | null;
+  pausedAt?: ISODateTime | null;
+  cancelledAt?: ISODateTime | null;
+  cancelReason?: string;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+
+/** A membership resolved against today — what a screen actually needs to
+ *  show. Derived, because "lapsed" is a date crossing, not a stored flag. */
+export interface MembershipView extends Membership {
+  /** Effective status once the expiry date is taken into account. */
+  effectiveStatus: MembershipStatus;
+  daysToExpiry: number;
+  expiringSoon: boolean;
+  visitsLeft: number | null;
+  customerName: string;
+}
+
+/** What the till needs to price a sale for a member. */
+export interface MemberBenefit {
+  membershipId: ID;
+  tierName: string;
+  discountBps: number;
+  /** Product ids the discount applies to; null means everything. */
+  productIds: ID[] | null;
+  /** Category ids the discount applies to. The till expands these against the
+   *  catalogue it already has loaded; the api layer only knows ids. */
+  categoryIds: ID[];
+  visitsLeft: number | null;
+  includedProductIds: ID[];
+}
+
+// ── loyalty.v1 · points earned and spent ─────────────────────────────────────
+export interface LoyaltyProgram {
+  enabled: boolean;
+  /** Points earned per whole currency unit spent (per taka, not per paisa). */
+  pointsPerUnit: number;
+  /** What one point is worth when spent, in minor units. */
+  pointValue: Minor;
+  minRedeemPoints: number;
+  /** Points expire this many months after they were earned; null = never. */
+  expiryMonths: number | null;
+}
+
+export type LoyaltyEntryKind = "earn" | "spend" | "expire" | "adjust";
+
+export interface LoyaltyEntry {
+  id: ID;
+  customerId: ID;
+  kind: LoyaltyEntryKind;
+  /** Always positive; `kind` carries the direction. */
+  points: number;
+  orderId?: ID | null;
+  note?: string;
+  at: ISODateTime;
+  /** Set on "earn" entries when the programme expires points. */
+  expiresAt?: ISODate | null;
+}
+
+export interface LoyaltyAccount {
+  customerId: ID;
+  balance: number;
+  lifetimeEarned: number;
+  lifetimeSpent: number;
+  /** Points that will expire within 60 days — what a member needs warning of. */
+  expiringSoon: number;
+  entries: LoyaltyEntry[];
+}

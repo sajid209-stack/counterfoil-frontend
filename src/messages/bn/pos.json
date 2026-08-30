@@ -50,7 +50,14 @@
     "dueNow": "এখন দেয়",
     "balanceAtArrival": "আগমনে বাকি",
     "payInFull": "এখনই সম্পূর্ণ পরিশোধ",
-    "settleBooking": "বুকিং নিষ্পত্তি"
+    "settleBooking": "বুকিং নিষ্পত্তি",
+    "sellMembership": "সদস্যপদ",
+    "spendPoints": "পয়েন্ট খরচ ({count})",
+    "pointsApplied": "{count} পয়েন্ট প্রয়োগ হয়েছে",
+    "memberRate": "{pct}% সদস্য মূল্য",
+    "memberVisits": "আর {count} বার অন্তর্ভুক্ত প্রবেশ",
+    "memberDiscount": "{tier} সদস্য মূল্য",
+    "pointsSpent": "{count} পয়েন্ট"
   },
   "charge": "চার্জ",
   "chargeAmount": "চার্জ {amount} — {method}",
@@ -246,6 +253,28 @@
     "outstanding": "বকেয়া",
     "take": "{amount} নিন",
     "fullyPaid": "সম্পূর্ণ পরিশোধিত — কোনো বকেয়া নেই।",
-    "lookupAnother": "অন্য বুকিং খুঁজুন"
+    "lookupAnother": "অন্য বুকিং খুঁজুন",
+    "settled": "{amount} বকেয়া নেওয়া হয়েছে।"
+  },
+  "membership": {
+    "title": "সদস্যপদ বিক্রি করুন",
+    "description": "পরের বিক্রি থেকেই সদস্য তাঁর মূল্য পাবেন।",
+    "close": "বন্ধ",
+    "needCustomerTitle": "আগে একজন গ্রাহক যুক্ত করুন",
+    "needCustomerBody": "সদস্যপদ কারও নামে হয়। কার্টের উপরে থাকা গ্রাহক বোতামটি ব্যবহার করুন।",
+    "lineLabel": "সদস্যপদ",
+    "issued": "সদস্যপদ দেওয়া হয়েছে — {code}।"
+  },
+  "points": {
+    "title": "পয়েন্ট খরচ করুন",
+    "description": "{balance} পয়েন্ট, মূল্য {worth}।",
+    "none": "কিছু খরচ করবেন না",
+    "apply": "{value} ছাড় দিন",
+    "slider": "কত পয়েন্ট খরচ হবে",
+    "line": "{points} পয়েন্ট = {value} ছাড়",
+    "allUsable": "ব্যবহারযোগ্য সব {count}টি",
+    "belowMinimum": "{min} পয়েন্ট থেকে খরচ করা যায়।",
+    "nothingToSpendOn": "এই বিক্রিতে পয়েন্ট খরচ করার মতো কিছু বাকি নেই।",
+    "expiringSoon": "এর মধ্যে {count}টির মেয়াদ ৬০ দিনের মধ্যে শেষ হবে।"
   }
 }

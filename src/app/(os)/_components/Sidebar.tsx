@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, Ticket, TicketPercent, UsersRound } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, Ticket, TicketPercent, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -28,6 +28,7 @@ export function Sidebar({
     { label: t("calendar"), href: "/calendar", icon: CalendarDays },
     { label: t("orders"), href: "/orders", icon: ReceiptText },
     { label: t("customers"), href: "/customers", icon: UsersRound },
+    { label: t("memberships"), href: "/memberships", icon: BadgeCheck },
     { label: t("products"), href: "/products", icon: Ticket },
     { label: t("reports"), href: "/reports/sales", icon: ChartNoAxesColumn },
     { label: t("promotions"), href: "/promotions", icon: TicketPercent },

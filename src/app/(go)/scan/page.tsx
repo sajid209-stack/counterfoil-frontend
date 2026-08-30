@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { ScanLine } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { findTicketByCode, listTickets, peekProducts, redeemTicket, ticketAdmits } from "@/lib/api";
+import { findTicketByCode, listTickets, peekProducts, redeemTicket, scanMembership, ticketAdmits } from "@/lib/api";
 
 export default function ScanPage() {
   const router = useRouter();
@@ -17,8 +17,35 @@ export default function ScanPage() {
   const submit = async (value: string) => {
     const c = value.trim();
     if (!c) return;
-    const ticket = findTicketByCode(c);
     let outcome: { accept: boolean; code: string; reason: string; group?: { ticketId: string; tierName: string; admits: number; admitted: number } };
+
+    // A membership card scans at the same gate as a ticket (§16.10), so the
+    // one input takes both. Membership codes are CF-M-…; anything else falls
+    // through to the ticket path.
+    if (/^cf-m-/i.test(c)) {
+      const res = await scanMembership(c);
+      if (!res.ok) {
+        outcome = { accept: false, code: c, reason: t("notFound") };
+      } else {
+        const { membership, admitted, reason } = res.data;
+        const visits =
+          membership.visitsLeft == null
+            ? t("memberUnlimited")
+            : t("memberVisitsLeft", { count: membership.visitsLeft });
+        outcome = admitted
+          ? {
+              accept: true,
+              code: membership.code,
+              reason: `${membership.customerName} · ${membership.tierName} · ${visits}`,
+            }
+          : { accept: false, code: membership.code, reason: reason ?? t("notFound") };
+      }
+      sessionStorage.setItem("scan_result", JSON.stringify(outcome));
+      router.push("/scan/result");
+      return;
+    }
+
+    const ticket = findTicketByCode(c);
     if (!ticket) outcome = { accept: false, code: c, reason: t("notFound") };
     else if (ticket.status === "redeemed") outcome = { accept: false, code: ticket.code, reason: t("alreadyRedeemed") };
     else if (ticket.status === "void") outcome = { accept: false, code: ticket.code, reason: t("voidRefunded") };

@@ -16,6 +16,7 @@ import type {
   ApiResult,
   ListParams,
   ListResponse,
+  LoyaltyProgram,
   ManualDiscountPolicy,
   Operator,
   TaxConfig,
@@ -66,6 +67,9 @@ const store: Record<string, Row[]> = {
   promotions: structuredClone(seed.promotions),
   coupons: structuredClone(seed.coupons),
   customers: structuredClone(seed.customers),
+  membershipTiers: structuredClone(seed.membershipTiers),
+  memberships: structuredClone(seed.memberships),
+  loyaltyEntries: structuredClone(seed.loyaltyEntries),
 };
 
 // ── Operator + demo-business switching ──────────────────────────────────────
@@ -82,6 +86,14 @@ export const getTaxConfigState = (): TaxConfig => taxConfigState;
 export function patchTaxConfigState(patch: Partial<TaxConfig>): TaxConfig {
   taxConfigState = { ...taxConfigState, ...patch };
   return taxConfigState;
+}
+
+// The loyalty programme is a singleton per operator (loyalty.v1 program).
+let loyaltyProgramState: LoyaltyProgram = structuredClone(seed.loyaltyProgram);
+export const getLoyaltyProgramState = (): LoyaltyProgram => loyaltyProgramState;
+export function patchLoyaltyProgramState(patch: Partial<LoyaltyProgram>): LoyaltyProgram {
+  loyaltyProgramState = { ...loyaltyProgramState, ...patch };
+  return loyaltyProgramState;
 }
 
 // Manual-discount policy is a singleton (per-location in the backend).
@@ -112,7 +124,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
 /** Empty the operator's data for the golden path ("Start fresh"). */
 export function startFresh(): void {
   operatorState = { ...structuredClone(seed.operator), name: "" };
-  for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers"]) {
+  for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries"]) {
     (store as Record<string, unknown[]>)[k] = [];
   }
 }
