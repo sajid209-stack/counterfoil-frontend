@@ -946,3 +946,87 @@ orders, reports, settings forms, auth, profile) is still pending.
 **Owner decisions waiting:** whether to re-anchor the whole seed to the real date (see the
 Part 1 note — it would touch the hand-authored proofs the acceptance walks cite by literal
 date), and the Section D Jira sweep.
+
+---
+
+## Design pass (2026-08-30) — calendar, time pickers, cards, brand
+
+Owner review of the deployed app raised four things. Reference material: the
+owner's **`khandakerjunainahsuha-star/counterfoil-pos`** repo — a Lovable
+Vite/React exploration with seventeen vertical-specific POS designs (bowling,
+karting, laser tag, cinemas, spas, coworking…). It is a *visual* reference, not
+a target architecture.
+
+### 1. The calendar was not a calendar ✅
+
+Day, Week and Month all rendered the same vertical list — one card per day, one
+booking per card — and the day view stacked a timeline per resource with the
+**6→23 hour axis repeated under every single row**.
+
+- New `calendar/_components`: `model.ts` (one `CalEvent` view model + lane
+  packing), `DayGrid`, `WeekGrid`, `MonthGrid`. The grids know nothing about
+  bookings or products; they position rectangles, which is what stops the three
+  views drifting apart.
+- **Day**: one shared sticky hour axis, resources as lanes. Guides get lanes too
+  (they are capacity owners) and there is a "Not assigned" lane for timed entry.
+  Switchable to group by product.
+- **Week**: 7 columns over a shared hour gutter; all-day items in their own
+  strip; at most 3 side-by-side events per column, the rest collapsing to "+N"
+  that drops into Day view.
+- **Month**: a proper 7-column date grid with chips and "+N more".
+- **Overlap packing** — without it two bookings at one time draw on top of each
+  other and one is invisible.
+- **Holds appear on the calendar**, hatched: a manager needs to see capacity
+  that is spoken for as well as sold. New `--color-warning-wash` /
+  `--color-danger-wash` tokens keep the hatching readable behind text in both
+  modes. There is a key along the bottom.
+- Grids own their scroll on both axes so headers actually stick.
+
+### 2. Fixed vs variable time ✅
+
+Two different clumsy things wearing one coat.
+
+- **Fixed sessions** (planetarium, tours) were a grid of small time tiles, which
+  made every session look identical and hid the number a cashier decides on.
+  New `SessionList`: rows with the time leading, an occupancy bar, the count and
+  the price. Bar goes ember at 80% sold, count amber at 20% left — the app's
+  existing low-availability language, not LaserTag's traffic lights.
+- **Resource slots** (turf, courts) printed the price into *every cell*:
+  "৳1,500.00" twenty-eight times inside a table that scrolled sideways to reach
+  the afternoon. New `SlotMatrix`: cells carry the **time** and their state; the
+  price is stated once underneath and appears in a cell only where it differs
+  from the base rate. A taken slot explains itself rather than being dead.
+- The flexible/duration path (bowling) already matched the reference's shape —
+  selected-lane timeline, duration stepper, valid starts — and was left alone.
+
+### 3. Product cards ✅
+
+The 4:3 photo band *was* the card: ~250px of picture with name, subtitle and
+price crushed into a strip beneath, and only three products visible on a wide
+till. Now a row with a **72px thumbnail** (owner asked for a thumbnail, "make it
+slightly bigger"), two or three columns. Ten products visible where three were.
+
+### 4. Brand — Go streaks were everywhere ✅
+
+The orange motion streaks **are** the Counterfoil Go identity. They were on the
+OS sidebar, landing, sign-in, the favicon and every PWA icon, branding the whole
+platform as the till. Worse, OS had no real wordmark at all — it set
+"Counterfoil" in Manrope extrabold with a capital C, a lookalike rather than the
+drawn lowercase logotype.
+
+- Generated `logo-counterfoil.png` / `-dark`, `mark-plain.png` / `-dark` and new
+  app icons from the brand asset in the reference repo (foil **without**
+  streaks + the real wordmark). Verified: light artwork is pure black, dark is
+  pure white.
+- `Logo` renders real artwork for both marques and its doc comment now states
+  which surface gets which. `LogoMark`, favicon and PWA icons use the plain
+  mark; the manifest is named "Counterfoil" and starts at the landing page, so
+  its icon is the platform's.
+- The Go lockup stays only in `(go)/layout`. Service worker bumped to v3.
+
+**Still open for the owner:** the seed photography. Several images are weak —
+one is watermarked stock ("JAMIE SWEED"), the Day Pass Bundle is a flat red
+rectangle, crops are inconsistent. At 72px they are far less prominent, but
+replacing them is a content decision, not a code one. `ProductThumb` already
+falls back to a per-booking-type glyph, so dropping an image is enough to get a
+clean icon.
