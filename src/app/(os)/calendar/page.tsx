@@ -1,114 +1,294 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { EmptyState, PageShell, ResourceTimeline, StatusPill, Tabs } from "@/components/ui";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button, PageShell, Tabs } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { listBookings, listLocations, listProducts, listResources, ownerBusyDetailed, type Booking } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import {
+  listBookings,
+  listHolds,
+  listProducts,
+  listResources,
+  listStaff,
+} from "@/lib/api";
+import { DEMO_TODAY } from "@/lib/schedule";
+import { DayGrid, type DayLane } from "./_components/DayGrid";
+import { WeekGrid } from "./_components/WeekGrid";
+import { MonthGrid } from "./_components/MonthGrid";
+import {
+  addDays,
+  bookingsToEvents,
+  holdsToEvents,
+  isoDate,
+  sameDay,
+  startOfDay,
+  weekStart,
+  type CalEvent,
+} from "./_components/model";
 
-const NOW = new Date("2026-07-29T12:00:00+06:00");
-const TODAY = "2026-07-29";
-const dayKey = (iso: string) => iso.slice(0, 10);
-const time = (iso: string) =>
-  new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
+type View = "day" | "week" | "month";
+
+/** The demo's today. Real deployments read the actual date; see lib/schedule. */
+const openingDate = () => startOfDay(new Date(`${DEMO_TODAY}T12:00:00`));
+
+const WEEKDAYS_MON_FIRST = [1, 2, 3, 4, 5, 6, 0];
 
 export default function CalendarPage() {
   const t = useTranslations("calendar");
-  const [view, setView] = useState("month");
-  const [resourceDate, setResourceDate] = useState(TODAY);
+  const router = useRouter();
+
+  const [view, setView] = useState<View>("week");
+  const [cursor, setCursor] = useState<Date>(openingDate);
+  const [groupBy, setGroupBy] = useState<"resource" | "product">("resource");
+
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
-  const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
-  const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const resourcesQ = useApiQuery(() => listResources({ pageSize: 100, filters: { status: "active" } }), []);
+  const productsQ = useApiQuery(() => listProducts({ pageSize: 200 }), []);
+  const resourcesQ = useApiQuery(
+    () => listResources({ pageSize: 100, filters: { status: "active" } }),
+    [],
+  );
+  const staffQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
+  const holdsQ = useApiQuery(() => listHolds({ pageSize: 500, filters: { effectiveStatus: "held" } }), []);
 
-  const productName = (id: string) => productsQ.data?.data.find((p) => p.id === id)?.name ?? "—";
-  const locationName = (id: string) => locationsQ.data?.data.find((l) => l.id === id)?.name ?? "—";
+  const products = useMemo(() => productsQ.data?.data ?? [], [productsQ.data]);
+  const resources = useMemo(() => resourcesQ.data?.data ?? [], [resourcesQ.data]);
+  const staff = useMemo(() => staffQ.data?.data ?? [], [staffQ.data]);
 
-  const grouped = useMemo(() => {
-    const all = (bookingsQ.data?.data ?? []).filter((b) => b.status === "confirmed");
-    const now = NOW.getTime();
-    const windowMs = view === "day" ? 1 : view === "week" ? 7 : 31;
-    const from = now - (view === "month" ? 15 : 0) * 86400000;
-    const to = now + windowMs * 86400000;
-    const inWindow = all.filter((b) => {
-      const t = Date.parse(b.slotStart);
-      return t >= from && t <= to;
-    });
-    const map = new Map<string, Booking[]>();
-    inWindow.forEach((b) => {
-      const k = dayKey(b.slotStart);
-      map.set(k, [...(map.get(k) ?? []), b]);
-    });
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [bookingsQ.data, view]);
+  const events = useMemo<CalEvent[]>(
+    () => [
+      ...bookingsToEvents(bookingsQ.data?.data ?? [], products, resources, staff),
+      ...holdsToEvents(holdsQ.data?.data ?? []),
+    ],
+    [bookingsQ.data, holdsQ.data, products, resources, staff],
+  );
 
-  const loading = bookingsQ.loading || productsQ.loading || locationsQ.loading;
+  const loading =
+    bookingsQ.loading || productsQ.loading || resourcesQ.loading || holdsQ.loading;
+
+  // ── the visible window ────────────────────────────────────────────────────
+  const dayEvents = useMemo(
+    () => events.filter((e) => sameDay(e.start, cursor)),
+    [events, cursor],
+  );
+  const wkStart = useMemo(() => weekStart(cursor), [cursor]);
+  const weekEvents = useMemo(() => {
+    const end = addDays(wkStart, 7);
+    return events.filter((e) => e.start >= wkStart && e.start < end);
+  }, [events, wkStart]);
+  const monthEvents = useMemo(
+    () =>
+      events.filter(
+        (e) =>
+          e.start.getMonth() === cursor.getMonth() &&
+          e.start.getFullYear() === cursor.getFullYear(),
+      ),
+    [events, cursor],
+  );
+
+  // ── day lanes ─────────────────────────────────────────────────────────────
+  const lanes = useMemo<DayLane[]>(() => {
+    if (groupBy === "product") {
+      // Only products that actually have something on this day — an empty row
+      // per catalogue item would bury the day in blank lanes.
+      const ids = [...new Set(dayEvents.map((e) => e.productId))];
+      return ids
+        .map((id) => ({ id, name: products.find((p) => p.id === id)?.name ?? id }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+    const rows: DayLane[] = resources.map((r) => ({
+      id: r.id,
+      name: r.name,
+      note: r.outOfService
+        ? (r.outOfServiceReason ?? t("outOfService"))
+        : `${r.nounSingular} · ${r.locationId ? "" : ""}`.trim() || null,
+      blocked: r.outOfService,
+    }));
+    // Guides are capacity owners too, so a departure they lead is on the day.
+    const guideIds = [
+      ...new Set(
+        dayEvents
+          .map((e) => e.ownerId)
+          .filter((id): id is string => !!id && !resources.some((r) => r.id === id)),
+      ),
+    ];
+    for (const id of guideIds) {
+      rows.push({ id, name: staff.find((s) => s.id === id)?.name ?? id, note: t("guideLane") });
+    }
+    if (dayEvents.some((e) => e.ownerId == null)) {
+      rows.push({ id: "__none__", name: t("noResource"), note: t("noResourceNote") });
+    }
+    return rows;
+  }, [groupBy, dayEvents, products, resources, staff, t]);
+
+  // In product grouping the lane key is the product, not the capacity owner.
+  const laneEvents = useMemo(
+    () =>
+      groupBy === "product"
+        ? dayEvents.map((e) => ({ ...e, ownerId: e.productId }))
+        : dayEvents.map((e) => ({ ...e, ownerId: e.ownerId ?? "__none__" })),
+    [dayEvents, groupBy],
+  );
+
+  // ── navigation ────────────────────────────────────────────────────────────
+  const step = (dir: 1 | -1) =>
+    setCursor((c) =>
+      view === "day"
+        ? addDays(c, dir)
+        : view === "week"
+          ? addDays(c, dir * 7)
+          : new Date(c.getFullYear(), c.getMonth() + dir, 1),
+    );
+
+  const rangeLabel = useMemo(() => {
+    const fmt = (d: Date, opts: Intl.DateTimeFormatOptions) =>
+      new Intl.DateTimeFormat("en-GB", opts).format(d);
+    if (view === "day") {
+      return fmt(cursor, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    }
+    if (view === "week") {
+      const end = addDays(wkStart, 6);
+      const sameMonth = wkStart.getMonth() === end.getMonth();
+      return `${fmt(wkStart, { day: "numeric", ...(sameMonth ? {} : { month: "short" }) })} – ${fmt(end, { day: "numeric", month: "short", year: "numeric" })}`;
+    }
+    return fmt(cursor, { month: "long", year: "numeric" });
+  }, [view, cursor, wkStart]);
+
+  const openEvent = (e: CalEvent) => {
+    if (e.kind === "hold") router.push("/holds");
+    else if (e.orderId) router.push(`/orders/${e.orderId}`);
+  };
+
+  const weekdayLabels = WEEKDAYS_MON_FIRST.map((d) =>
+    new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(new Date(2026, 6, 5 + d)),
+  );
 
   return (
-    <PageShell title={t("title")} description={t("description")}>
-      <Tabs
-        items={[
-          { value: "day", label: t("tabDay") },
-          { value: "week", label: t("tabWeek") },
-          { value: "month", label: t("tabMonth") },
-        ]}
-        value={view}
-        onChange={setView}
-        className="mb-major"
-      />
-
-      {/* The day by resource — the same timeline the POS sheet shows, so the
-          manager and the counter see the same picture. */}
-      {view === "day" && (resourcesQ.data?.data.length ?? 0) > 0 && (
-        <div className="mb-major card-surface p-major">
-          <div className="mb-section flex items-center justify-between">
-            <h2 className="type-h2 text-base">{t("byResource", { noun: resourcesQ.data!.data[0].nounSingular.toLowerCase() })}</h2>
-            <input type="date" value={resourceDate} onChange={(e) => setResourceDate(e.target.value)} className="h-11 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse" />
+    <PageShell
+      title={t("title")}
+      description={t("description")}
+      actions={
+        <div className="flex flex-wrap items-center gap-tight">
+          <Button variant="secondary" size="sm" onClick={() => setCursor(openingDate())}>
+            {t("today")}
+          </Button>
+          <div className="flex items-center gap-inline">
+            <button
+              type="button"
+              aria-label={t("previous")}
+              onClick={() => step(-1)}
+              className="flex h-9 w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
+            >
+              <ChevronLeft size={16} strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              aria-label={t("next")}
+              onClick={() => step(1)}
+              className="flex h-9 w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
+            >
+              <ChevronRight size={16} strokeWidth={1.5} />
+            </button>
           </div>
-          <div className="flex flex-col gap-section">
-            {resourcesQ.data!.data.map((r) => (
-              <div key={r.id} className="grid items-center gap-tight sm:grid-cols-[8rem_1fr]">
-                <div>
-                  <p className="text-sm font-medium">{r.name}</p>
-                  {r.outOfService && <p className="text-[11px] text-danger">{r.outOfServiceReason ? t("outOfServiceReason", { reason: r.outOfServiceReason }) : t("outOfService")}</p>}
-                </div>
-                <ResourceTimeline spans={ownerBusyDetailed(r.id, resourceDate)} openMin={6 * 60} closeMin={23 * 60} hatched={r.outOfService} />
-              </div>
+          <input
+            type="date"
+            value={isoDate(cursor)}
+            onChange={(e) => e.target.value && setCursor(startOfDay(new Date(`${e.target.value}T12:00:00`)))}
+            className="h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
+          />
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-section">
+        <div className="flex flex-wrap items-center justify-between gap-tight">
+          <Tabs
+            items={[
+              { value: "day", label: t("tabDay") },
+              { value: "week", label: t("tabWeek") },
+              { value: "month", label: t("tabMonth") },
+            ]}
+            value={view}
+            onChange={(v) => setView(v as View)}
+          />
+          <span className="font-mono text-[13px] text-muted">{rangeLabel}</span>
+        </div>
+
+        {view === "day" && resources.length > 0 && (
+          <div className="flex flex-wrap gap-inline">
+            {(["resource", "product"] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setGroupBy(g)}
+                className={`h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
+                  groupBy === g
+                    ? "border-ember bg-ember/10 text-brand-foreground"
+                    : "border-line text-muted hover:bg-subtle"
+                }`}
+              >
+                {t(g === "resource" ? "groupByResource" : "groupByProduct")}
+              </button>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
-      ) : grouped.length === 0 ? (
-        <EmptyState title={t("emptyTitle")} message={t("emptyMessage")} />
-      ) : (
-        <div className="flex flex-col gap-section">
-          {grouped.map(([date, items]) => (
-            <div key={date} className="card-surface p-major">
-              <div className="mb-tight flex items-center justify-between">
-                <h2 className="type-h2 text-base">{formatDate(date)}</h2>
-                <span className="font-mono text-[12px] text-faint">{items.length === 1 ? t("bookingCount", { count: items.length }) : t("bookingCountPlural", { count: items.length })}</span>
-              </div>
-              <div className="flex flex-col gap-inline">
-                {items
-                  .sort((a, b) => a.slotStart.localeCompare(b.slotStart))
-                  .map((b) => (
-                    <div key={b.id} className="flex items-center gap-section border-t border-line py-tight text-sm first:border-0">
-                      <span className="w-14 font-mono text-[13px]">{time(b.slotStart)}</span>
-                      <span className="flex-1">{productName(b.productId)}</span>
-                      <span className="text-[12px] text-faint">{locationName(b.locationId)}</span>
-                      <span className="font-mono text-[12px] text-muted">{t("party", { size: b.partySize })}</span>
-                      <StatusPill status="confirmed" />
-                    </div>
-                  ))}
-              </div>
-            </div>
+        <div className="card-surface overflow-hidden">
+          {loading ? (
+            <div aria-busy="true" className="h-[28rem] animate-pulse bg-line/40" />
+          ) : view === "day" ? (
+            <DayGrid
+              date={cursor}
+              lanes={lanes}
+              events={laneEvents}
+              onSelect={openEvent}
+              emptyLabel={t("nothingToday")}
+            />
+          ) : view === "week" ? (
+            <WeekGrid
+              weekStartDate={wkStart}
+              events={weekEvents}
+              onSelect={openEvent}
+              onPickDay={(d) => {
+                setCursor(d);
+                setView("day");
+              }}
+              dayLabel={(d) => ({
+                weekday: new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(d),
+                day: String(d.getDate()),
+              })}
+            />
+          ) : (
+            <MonthGrid
+              month={cursor}
+              events={monthEvents}
+              weekdayLabels={weekdayLabels}
+              moreLabel={(n) => t("more", { count: n })}
+              onSelect={openEvent}
+              onPickDay={(d) => {
+                setCursor(d);
+                setView("day");
+              }}
+            />
+          )}
+        </div>
+
+        {/* What the shading means. A calendar without a key is a puzzle. */}
+        <div className="flex flex-wrap items-center gap-section text-[12px] text-muted">
+          {[
+            { tone: "border-l-ember", label: t("keyBooked") },
+            { tone: "border-l-success", label: t("keyArrived") },
+            { tone: "border-l-muted", label: t("keyNoShow") },
+            { tone: "border-l-warning", label: t("keyHeld") },
+            { tone: "border-l-danger", label: t("keyLocked") },
+          ].map((k) => (
+            <span key={k.label} className="flex items-center gap-tight">
+              <span className={`h-3 w-3 rounded-xs border border-line border-l-[3px] ${k.tone}`} />
+              {k.label}
+            </span>
           ))}
         </div>
-      )}
+      </div>
     </PageShell>
   );
 }

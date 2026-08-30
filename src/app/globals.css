@@ -293,6 +293,13 @@
   --color-subtle: #efece5;     /* secondary/muted surface ← neutral-100 */
   --color-inverse: #141413;    /* inverse surface ← neutral-950 */
   --color-inverse-fg: #f5f2eb; /* text on inverse ← neutral-50  */
+
+  /* Washes: the faintest tint of a status colour, for hatching a blocked
+     region without shouting. Hatching is the app's "you cannot have this"
+     signal (out-of-service lanes, sold-out slots, held capacity) and it has to
+     stay readable behind text in both modes. */
+  --color-warning-wash: #f3e3c4;
+  --color-danger-wash: #f3d4d0;
 }
 
 /* Dark: tonal direction reverses — content lightens, surfaces deepen.
@@ -326,6 +333,9 @@
   --color-info-foreground: #60a5fa;
   --color-destructive: #ef4444;         /* red-500   */
   --color-destructive-foreground: #141413;
+
+  --color-warning-wash: #4a3a1a;
+  --color-danger-wash: #4a2724;
 }
 .dark body { background: var(--color-surface); color: var(--color-fg); }
 
