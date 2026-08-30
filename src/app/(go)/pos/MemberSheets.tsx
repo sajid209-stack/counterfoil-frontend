@@ -90,10 +90,43 @@ export function PointsSheet({
   current: number;
   onApply: (points: number) => void;
 }) {
+  if (!account || !program) return null;
+  return (
+    <PointsSheetBody
+      // Remount whenever the sheet opens or the usable ceiling moves, so the
+      // slider always starts at what is actually spendable on THIS sale
+      // rather than at whatever was true when the till first rendered.
+      key={`${open}-${maxPoints}`}
+      open={open}
+      onClose={onClose}
+      account={account}
+      program={program}
+      maxPoints={maxPoints}
+      current={current}
+      onApply={onApply}
+    />
+  );
+}
+
+function PointsSheetBody({
+  open,
+  onClose,
+  account,
+  program,
+  maxPoints,
+  current,
+  onApply,
+}: {
+  open: boolean;
+  onClose: () => void;
+  account: LoyaltyAccount;
+  program: LoyaltyProgram;
+  maxPoints: number;
+  current: number;
+  onApply: (points: number) => void;
+}) {
   const t = useTranslations("pos");
   const [draft, setDraft] = useState(current || maxPoints);
-
-  if (!account || !program) return null;
 
   const value = draft * program.pointValue;
   const belowMin = draft > 0 && draft < program.minRedeemPoints;

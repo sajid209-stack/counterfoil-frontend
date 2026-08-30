@@ -172,6 +172,9 @@ function PickerBody({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          // Staff have a queue in front of them: one tap opens the sheet and
+          // the keyboard is already where they need it.
+          autoFocus
           placeholder={t("customerModal.searchPlaceholder")}
           className="h-12 w-full rounded-sm border border-line bg-card pl-9 pr-comfortable text-sm outline-none focus:border-ember"
         />

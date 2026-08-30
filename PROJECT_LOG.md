@@ -808,13 +808,71 @@ and Check-In equally. Re-anchoring the seed to the current date would touch the 
 proofs whose literal dates the acceptance walks cite (turf sharing on 2026-08-01, the Saturday
 guide conflict, the credits pass) — an owner decision, not a silent change.
 
-### Parts 2–3 (planned)
+### Part 2 ✅ — memberships and loyalty (§16, §17)
 
-- **Part 2 — memberships and loyalty (§16, §17).** Membership tiers (price, billing period,
-  benefits, included visits, family/group), memberships held by a customer, member pricing at
-  POS (`PromotionSource` already has a `membership` arm), admitting a member at the gate,
-  active/lapsed/expiring management; loyalty programme with earn/spend/expiry.
-- **Part 3 — booking holds and locks (§61).** Manager holds on capacity/seats/resources with an
-  expiry and a named party, converting a hold into a booking, a checkout TTL hold in POS, locked
+**Memberships (membership.v1).** `MembershipTier` carries price, billing period, auto-renew +
+notice days, a discount scoped to everything / chosen categories / chosen products, included
+visits, guest passes, and how many people it covers (family memberships).
+
+- **Lapsing is a date crossing, not a stored flag.** `status` records what a *person* decided
+  (paused, cancelled); `effectiveStatus` (in `viewOf`) resolves that against today. Nothing
+  depends on a nightly job having run, and the mock cannot drift from the backend on this.
+  The tier name is snapshotted onto the membership for the same reason product names are
+  snapshotted onto order lines.
+- Issue · **renew** (from the later of today and the current expiry, so renewing early never
+  shortens and renewing late never back-dates; a new period restores visits and guest passes) ·
+  pause · **resume** (extends the expiry by the days it sat paused — the member paid for that
+  time) · cancel with a required reason.
+- **The gate (§16.10):** a `CF-M-` code scans at the same input as a ticket. Limited tiers spend
+  an included visit; unlimited ones do not count down; lapsed, paused, cancelled and used-up
+  memberships are refused **with the reason**, never a bare no.
+- **Screens:** `/memberships` (Active · Expiring · Lapsed · Paused · Cancelled, each with a live
+  count, plus row actions) and `/settings/memberships` (tier editor with the mandatory concrete
+  preview). Both read counts through the api layer rather than peeking at the store.
+
+**Loyalty (loyalty.v1).** The balance is **never stored** — it is an append-only ledger replayed
+on read, as the backend does it. A stored balance and a ledger disagree exactly once, and then
+nobody can tell which is right. Expiry is applied at read time rather than written as rows, so
+the mock does not invent entries the real ledger will not have.
+
+- Points round **down** so an unpaid point is never awarded. Redemption is capped by the balance,
+  the programme minimum **and the sale**, so points can never create change owed.
+- `/settings/loyalty` states the programme in the operator's own numbers ("Spend ৳1,000 and earn
+  1,000 points, worth ৳250 off a future visit") and shows outstanding points as the money they
+  already are.
+
+**At the till and on the record.**
+- POS gains **member pricing** (applied only to what the tier covers, never to a membership sale,
+  and — like a coupon — *not* counted against the cashier discount cap, because it is an
+  entitlement rather than a discount), a **points sheet**, and **selling a membership**. All
+  three hang off the attached customer, so removing the customer removes the benefit.
+- Membership issue, points spend and points earn all run **after** checkout succeeds. A
+  membership issued against a sale that then failed is a membership nobody paid for.
+- Customer detail gains a **Membership & points** tab (§63.4) with issue/renew/pause/resume/
+  cancel and a manual points adjustment that demands a reason.
+
+**Seed:** three tiers exercising every mechanism (unlimited individual annual · four-person
+family · monthly with limited visits and a category-scoped discount), six memberships covering
+every state, and a points ledger built from real orders — including one entry deliberately
+inside the 60-day expiry warning.
+
+**Verified:** tsc + build clean, no new lint findings, all routes 200 in both locales with no
+missing-message warnings, and a **38-check harness** (derived lapsing, expiring windows, benefit
+gating by state, gate refusals, renew/pause/resume arithmetic, ledger replay, redemption caps)
+passing alongside part 1's 23. Browser-verified on production: the memberships list with correct
+derived states, the customer Membership & points tab, and the **full till path** — attaching
+Ayesha by phone, ৳800 − ৳80 member price, VAT ৳108 on the discounted base, total ৳828, and the
+points sheet capping at **2,880 usable** (৳720 payable ÷ ৳0.25 a point) rather than her 9,999
+balance. Two defects were found by that walk and fixed: the points slider opened at zero because
+its state was captured before a customer was attached, and the customer search did not focus on
+open.
+
+Also fixed a pre-existing missing key — `pos.settle.settled` rendered raw in the toast after
+settling a booking at the till.
+
+### Part 3 (planned)
+
+- **Booking holds and locks (§61).** Manager holds on capacity/seats/resources with an expiry
+  and a named party, converting a hold into a booking, a checkout TTL hold in POS, locked
   bookings and sessions, and one `explainUnavailable()` so a slot that looks free always says
   why it is not.
