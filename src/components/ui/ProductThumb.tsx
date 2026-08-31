@@ -48,28 +48,25 @@ export function ProductThumb({
   images,
   name,
   bookingType,
-  size = "tile",
+  size = "thumb",
   className,
 }: {
   images?: ProductImage[];
   name: string;
   bookingType?: BookingTypeCode;
-  /** tile = full-width card band; thumb = the POS grid square; chip = small
-   *  square beside a title */
-  size?: "tile" | "thumb" | "chip";
+  /** thumb = the POS grid square; chip = small square beside a title */
+  size?: "thumb" | "chip";
   className?: string;
 }) {
   const [broken, setBroken] = useState(false);
   const src = images?.[0]?.url;
   const Icon = fallbackIcon(bookingType);
-  const iconSize = size === "chip" ? 18 : size === "thumb" ? 24 : 28;
+  const iconSize = size === "chip" ? 18 : 24;
 
   const shape =
     size === "chip"
       ? "h-10 w-10 shrink-0 rounded-xs"
-      : size === "thumb"
-        ? "h-[72px] w-[72px] shrink-0 rounded-xs"
-        : "aspect-[4/3] w-full rounded-xs";
+      : "h-[72px] w-[72px] shrink-0 rounded-xs";
 
   if (src && !broken) {
     return (
