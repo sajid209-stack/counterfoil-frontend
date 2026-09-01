@@ -2,19 +2,22 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight, Plus, Landmark, Trophy, Disc3, Flower2, Clapperboard, type LucideIcon } from "lucide-react";
 import { loadDemoBusiness, startFreshBusiness } from "@/lib/api";
 import { DEMOS } from "@/lib/demos";
 import { Logo } from "@/components/ui";
 
-// Each demo business gets a representative image so the picker reads as a wall
-// of real venues, not a settings list.
-const DEMO_IMAGE: Record<string, string> = {
-  museum: "/seed/admission.jpg",
-  turf: "/seed/football.jpg",
-  bowling: "/seed/bowling.jpg",
-  spa: "/seed/massage.jpg",
-  cinema: "/seed/film.jpg",
+// Each demo business is marked by its own glyph rather than a photograph. The
+// stock shots this wall used to carry showed the wrong places — a Californian
+// fort standing in for the Dhaka museum, a watermarked shirt for the turf — and
+// a wall only reads as a wall if every card is treated the same way. A drawn
+// mark is honest about being a demo and stays on-brand in both modes.
+const DEMO_GLYPH: Record<string, LucideIcon> = {
+  museum: Landmark,
+  turf: Trophy,
+  bowling: Disc3,
+  spa: Flower2,
+  cinema: Clapperboard,
 };
 
 export default function Home() {
@@ -63,11 +66,13 @@ export default function Home() {
               onClick={() => explore(d.id)}
               className="card-surface card-interactive group relative flex flex-col overflow-hidden p-0 text-left"
             >
-              {/* Banner */}
-              <div className="relative h-28 w-full overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={DEMO_IMAGE[d.id] ?? "/seed/admission.jpg"} alt="" className="h-full w-full object-cover transition-transform duration-considered group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/50 to-transparent" />
+              {/* Banner — the vertical's glyph on a warm ground. */}
+              <div className="relative flex h-28 w-full items-center justify-center overflow-hidden bg-subtle">
+                <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-ember/10 blur-3xl" />
+                {(() => {
+                  const Glyph = DEMO_GLYPH[d.id] ?? Landmark;
+                  return <Glyph aria-hidden size={32} strokeWidth={1.5} className="relative text-muted transition-transform duration-considered group-hover:scale-110" />;
+                })()}
               </div>
 
               {/* Ticket perforation — the counterfoil tear. The two notches sit

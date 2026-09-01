@@ -82,10 +82,14 @@ export function ProductThumb({
   }
 
   return (
+    // In dark mode --color-subtle and --color-card are the same value, so the
+    // tile has no edge of its own — the 1px line is what keeps it reading as a
+    // tile rather than a glyph floating on the row (dark elevation = surface
+    // step + line). muted, not faint: faint on subtle is unreadable in dark.
     <div
       className={cn(
         shape,
-        "flex items-center justify-center bg-subtle text-faint",
+        "flex items-center justify-center border border-line bg-subtle text-muted",
         className,
       )}
       aria-hidden
