@@ -327,7 +327,7 @@ export default function DashboardPage() {
       }
     >
       {loading ? (
-        <div className="grid grid-cols-2 gap-tight lg:grid-cols-4" aria-busy="true">
+        <div className="grid grid-cols-1 gap-tight min-[420px]:grid-cols-2 xl:grid-cols-4" aria-busy="true">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className={`${card} animate-pulse p-section`}><div className="h-3 w-1/2 rounded-xs bg-line" /><div className="mt-tight h-8 w-2/3 rounded-xs bg-line" /></div>
           ))}
@@ -364,13 +364,13 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-tight lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-tight min-[420px]:grid-cols-2 xl:grid-cols-4">
           <div className={`${card} p-section`}>
             <div className="flex items-center gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><TrendingUp size={18} strokeWidth={1.5} /></span>
               <p className="type-label text-[12px] text-faint">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
             </div>
-            <p className="mt-comfortable whitespace-nowrap font-mono text-3xl tabular-nums">{formatMoney(revenueAnimated)}</p>
+            <p className="mt-comfortable whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(revenueAnimated)}</p>
             <div className="mt-inline"><DeltaPill now={revenue} then={revenuePrev} /></div>
             <Sparkline points={week} />
           </div>
@@ -379,7 +379,7 @@ export default function DashboardPage() {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><Users size={18} strokeWidth={1.5} /></span>
               <p className="type-label text-[12px] text-faint">{t("capacitySold")}</p>
             </div>
-            <p className="mt-comfortable whitespace-nowrap font-mono text-3xl tabular-nums">{sold} <span className="text-lg text-faint">/ {capacity}</span></p>
+            <p className="mt-comfortable whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{sold} <span className="text-lg text-faint">/ {capacity}</span></p>
             <div className="mt-inline flex items-center gap-tight">
               <span className="font-mono text-[12px] tabular-nums text-muted">{soldPct}%</span>
               <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className={`block h-full ${soldPct >= 80 ? "bg-ember" : "bg-strong"}`} style={{ width: `${Math.min(100, soldPct)}%` }} /></span>
@@ -391,7 +391,7 @@ export default function DashboardPage() {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><UserCheck size={18} strokeWidth={1.5} /></span>
               <p className="type-label text-[12px] text-faint">{t("arrived")}</p>
             </div>
-            <p className="mt-comfortable whitespace-nowrap font-mono text-3xl tabular-nums">{arrived} <span className="text-lg text-faint">{t("arrivedOf", { total: sold })}</span></p>
+            <p className="mt-comfortable whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{arrived} <span className="text-lg text-faint">{t("arrivedOf", { total: sold })}</span></p>
             <p className={`mt-inline font-mono text-[12px] tabular-nums ${noShowPct >= 30 ? "text-danger" : "text-muted"}`}>{t("noShow", { pct: noShowPct })}</p>
           </div>
           <div className={`${card} p-section`}>
@@ -399,7 +399,7 @@ export default function DashboardPage() {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><CalendarClock size={18} strokeWidth={1.5} /></span>
               <p className="type-label text-[12px] text-faint">{t("bookedAhead")}</p>
             </div>
-            <p className="mt-comfortable whitespace-nowrap font-mono text-3xl tabular-nums">{formatMoney(ahead)}</p>
+            <p className="mt-comfortable whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(ahead)}</p>
             <div className="mt-inline"><DeltaPill now={ahead} then={aheadPrev} /></div>
           </div>
         </div>
