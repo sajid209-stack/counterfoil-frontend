@@ -76,5 +76,9 @@
   "cancelSession": "Cancel session",
   "noBookingsYet": "No bookings are on this session yet.",
   "cancelWarning": "{count} booking is on this session — they will be released. Refunds are handled from Orders.",
-  "cancelWarningPlural": "{count} bookings are on this session — they will be released. Refunds are handled from Orders."
+  "cancelWarningPlural": "{count} bookings are on this session — they will be released. Refunds are handled from Orders.",
+  "freeSlot": "{count} unbooked hour today",
+  "freeSlots": "{count} unbooked hours today",
+  "andMoreSessions": "{count} more",
+  "viewCalendar": "View in Calendar"
 }

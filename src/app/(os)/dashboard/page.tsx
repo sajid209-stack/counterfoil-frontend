@@ -153,25 +153,42 @@ export default function DashboardPage() {
   const aheadPrev = bookedAhead(8, 14);
 
   // ── Today's sessions — management, never selling ─────────────────────────
-  interface Session { key: string; time: string; slotISO: string; label: string; who?: string; sold: number; cap: number; state: "OPEN" | "FULL" | "OUT"; product: Product; adjustable: boolean }
-  const sessions = useMemo<Session[]>(() => {
+  // A scheduled session and an unbooked resource hour are not the same thing.
+  // A planetarium show at 0/40 runs whether or not anyone bought a seat, so it
+  // is always the manager's business. A free turf hour is not a session at all
+  // — it is capacity nobody has taken yet, and there is a row of it for every
+  // field × every hour. Listing both together (and then taking the nine
+  // EARLIEST) filled this panel with empty turf slots, each offering to cancel
+  // bookings that did not exist, and buried the one session with real numbers.
+  //
+  // So: scheduled sessions always appear; a resource hour appears only once
+  // somebody has booked it. The free hours are counted into one honest line
+  // rather than dropped silently. Out-of-service resources are deliberately
+  // absent — Needs attention already names them, once, instead of once an hour.
+  interface Session { key: string; time: string; slotISO: string; label: string; who?: string; sold: number; cap: number; state: "OPEN" | "FULL"; product: Product; adjustable: boolean; booked: boolean }
+  const { sessions, freeSlots, hiddenCount } = useMemo(() => {
     const out: Session[] = [];
+    let free = 0;
     for (const p of products) {
       if (isResourceType(p.bookingType) && !p.flexibleDurations) {
         for (const r of getResourceMatrix(p, TODAY)) {
+          if (r.resource.outOfService) continue;
           for (const s of r.slots) {
             if (toMinutes(s.time) < NOW_MIN) continue;
-            out.push({ key: `${p.id}|${r.resource.id}|${s.time}`, time: s.time, slotISO: `${TODAY}T${s.time}:00+06:00`, label: p.name, who: r.resource.name, sold: s.available ? 0 : 1, cap: 1, state: r.resource.outOfService ? "OUT" : s.available ? "OPEN" : "FULL", product: p, adjustable: false });
+            if (s.available) { free++; continue; }
+            out.push({ key: `${p.id}|${r.resource.id}|${s.time}`, time: s.time, slotISO: `${TODAY}T${s.time}:00+06:00`, label: p.name, who: r.resource.name, sold: 1, cap: 1, state: "FULL", product: p, adjustable: false, booked: true });
           }
         }
       } else if (isSlotBased(p.bookingType)) {
         for (const s of getSlots(p, TODAY)) {
           if (toMinutes(s.time) < NOW_MIN) continue;
-          out.push({ key: `${p.id}|${s.time}`, time: s.time, slotISO: `${TODAY}T${s.time}:00+06:00`, label: p.name, who: p.schedule?.guideIds.length ? t("guided") : undefined, sold: s.sold, cap: s.capacity, state: s.remaining <= 0 ? "FULL" : "OPEN", product: p, adjustable: true });
+          out.push({ key: `${p.id}|${s.time}`, time: s.time, slotISO: `${TODAY}T${s.time}:00+06:00`, label: p.name, who: p.schedule?.guideIds.length ? t("guided") : undefined, sold: s.sold, cap: s.capacity, state: s.remaining <= 0 ? "FULL" : "OPEN", product: p, adjustable: true, booked: s.sold > 0 });
         }
       }
     }
-    return out.sort((a, b) => a.time.localeCompare(b.time)).slice(0, 9);
+    // Busiest first among equals at a time, so the ones carrying people lead.
+    out.sort((a, b) => a.time.localeCompare(b.time) || b.sold - a.sold);
+    return { sessions: out.slice(0, 9), freeSlots: free, hiddenCount: Math.max(0, out.length - 9) };
   }, [products, t]);
 
   const sessionBookings = (s: Session): Booking[] =>
@@ -415,12 +432,16 @@ export default function DashboardPage() {
                           </span>
                         )}
                         {u.state !== "OPEN" && (
-                          <span className="shrink-0 rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight font-mono text-[10px] text-muted dark:bg-[repeating-linear-gradient(45deg,#3a3a36,#3a3a36_2px,transparent_2px,transparent_5px)]">{u.state === "OUT" ? t("outOfService") : t("full")}</span>
+                          <span className="shrink-0 rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight font-mono text-[10px] text-muted dark:bg-[repeating-linear-gradient(45deg,#3a3a36,#3a3a36_2px,transparent_2px,transparent_5px)]">{t("full")}</span>
                         )}
                         {u.adjustable && (
                           <button type="button" onClick={() => setCapModal({ product: u.product, value: u.product.schedule?.dailyCapacity ?? u.product.schedule?.capacityPerSession ?? 0 })} className="shrink-0 text-[12px] text-muted hover:text-fg">{t("adjust")}</button>
                         )}
-                        <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="shrink-0 text-[12px] text-danger/80 hover:text-danger">{t("cancel")}</button>
+                        {/* Cancelling closes a scheduled session; a booked resource
+                            hour is cancelled by releasing its booking, not here. */}
+                        {u.adjustable && (
+                          <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="shrink-0 text-[12px] text-danger/80 hover:text-danger">{t("cancel")}</button>
+                        )}
                       </div>
                       {open && (
                         <div className="border-t border-line bg-subtle px-section py-tight">
@@ -440,6 +461,22 @@ export default function DashboardPage() {
                     </div>
                   );
                 })
+              )}
+              {/* The hours that did not earn a row still exist — say so, and
+                  send the manager where they can actually be seen. */}
+              {(freeSlots > 0 || hiddenCount > 0) && (
+                <button
+                  type="button"
+                  onClick={() => router.push("/calendar")}
+                  className="flex min-h-11 w-full items-center gap-tight border-t border-line px-section text-left text-[12px] text-muted hover:text-ember"
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    {hiddenCount > 0 ? t("andMoreSessions", { count: hiddenCount }) : null}
+                    {hiddenCount > 0 && freeSlots > 0 ? " · " : null}
+                    {freeSlots > 0 ? (freeSlots === 1 ? t("freeSlot", { count: freeSlots }) : t("freeSlots", { count: freeSlots })) : null}
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap">{t("viewCalendar")} →</span>
+                </button>
               )}
             </div>
 
