@@ -1169,3 +1169,91 @@ Untranslated files: all 7 auth pages · the 13-file products editor · the landi
 · `settings/layout` + `settings/page` · Go `login` / `pos/payment` / `Keypad` ·
 `OrderLinesDetail`. (The calendar grids take their strings as props from a
 translated parent — they are fine.)
+
+---
+
+## Revenue chart (2026-09-01) — the Aura chart, on an honest axis
+
+Owner asked for a proper chart on the dashboard, with the Lovable reference
+(counterfoilos.lovable.app) and a screenshot of it as the visual target.
+
+### The chart ✅
+
+New **`AreaChart`** in `components/ui/charts.tsx`, not a fifth copy of
+`LineChart`. What earns a separate component is the **axis**: a sparkline
+answers "which way is it going", this answers "how much, and against what",
+which needs gridlines and figures down the side. Shape follows the reference —
+big figure with the delta beside it, range toggles top-right, filled ember area
+over a neutral comparison line, dashed gridlines, legend underneath, hover
+guide + tooltip.
+
+- **Draws at measured 1:1 width** (`ResizeObserver`) instead of scaling a fixed
+  `viewBox`. The other charts here scale their text along with the drawing, so a
+  10px label renders at 5px on a phone.
+- **The svg is absolutely positioned inside a fixed-height box** so it
+  contributes nothing to min-content. Measuring a container the drawing can
+  itself widen is a feedback loop — any ancestor with the default
+  `min-width:auto` lets the chart set the column width, which sets the chart
+  width. It latched at 841px inside a 320px viewport before this.
+- `formatMoneyCompact` in `lib/format.ts` — "৳45k", not "৳45,000.00" five times
+  up the side.
+- `ChartPoint` gains `title` (tooltip) beside `label` (axis tick), so the axis
+  can stay terse while the tooltip is unambiguous.
+
+### Where the reference could not be copied, and why
+
+**Ranges are 7D · 14D · 30D, not 1M/3M/6M/1Y.** Measured, not assumed: the seed
+holds **151 orders across 31 days** (2026-06-29 → 07-29) because
+`generate.ts` caps the order offset at 29. A 1Y range would draw a flat line
+through ten months that never had a sale.
+
+**The comparison series is drawn only when the ledger covers the window behind
+it.** Comparing 30 days to the 30 before them needs *sixty* days of history;
+with thirty, the previous window is empty but for its last day or two — which
+does not read as growth, it read as **+15663%**. So 7D and 14D compare (−13%,
++2%); 30D says "Last 30 days" and omits both the phantom line and the
+meaningless delta. Real order history switches it on by itself, with no code
+change.
+
+Both limits are the demo clock and the 30-day seed showing through. **If the
+owner wants the reference's 12-month chart, the seed has to carry 12 months of
+orders** — which would move today's revenue, reports, top products and customer
+stats, so it is a seed decision, not a chart one.
+
+### A latent layout bug the chart surfaced ✅
+
+The dashboard's grid columns had the default `min-width:auto`, so they sized to
+their content: at a **320px viewport the left column was 875px** and
+`main.scrollWidth` was **891**, with everything past 320 silently swallowed by
+`overflow-x-hidden` on `main`. The page never scrolled sideways, so rule 5 held
+and nobody saw it — the F12 sweep checks `scrollWidth ≤ innerWidth` on the
+document, which this passes while hiding 571px.
+
+- `min-w-0` on both dashboard columns (the mechanism this codebase already
+  uses) → `main.scrollWidth` is now **exactly 320**. No hidden overflow.
+- That exposed rows built from too many fixed-width children: once the column
+  really was 288px, the **session name and the activity product collapsed to
+  zero width** — a session row without the session. Both rows now wrap, with a
+  floor on the name; the payment-mix label truncates so its money stays whole.
+
+**Worth stealing for other screens:** `main`'s `overflow-x-hidden` means the
+document-level x-scroll check cannot see this class of bug. Comparing
+`main.scrollWidth` against the viewport finds it. Other routes have not been
+audited this way.
+
+### Verification
+
+- Each range checked for series count, delta and subtitle: 7D → 3 paths /
+  ▼13% / "vs. previous 7 days"; 14D → 3 paths / ▲2%; 30D → 2 paths / no delta /
+  "Last 30 days".
+- Tooltip reads **17 Jul · ৳68,261.25**, matching that day in the ledger
+  (6826125 minor units) — the chart's peak.
+- **Silent-clipping detector** (nowrap elements cut without an ellipsis) clean
+  at ten widths 320→1440.
+- Overflow sweep: 10 routes × light/dark × 320/390/1440, no page x-scroll, no
+  console errors. `tsc` and `npm run build` clean.
+- No new lint findings — the `react-hooks/immutability` error in `DonutChart`
+  and the dashboard `exhaustive-deps` warnings are pre-existing (confirmed
+  against a stash).
+- i18n parity **0 missing / 0 extra**, six new keys in en and bn, no
+  missing-message warnings in either locale.
