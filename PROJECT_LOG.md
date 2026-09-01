@@ -1030,3 +1030,142 @@ rectangle, crops are inconsistent. At 72px they are far less prominent, but
 replacing them is a content decision, not a code one. `ProductThumb` already
 falls back to a per-booking-type glyph, so dropping an image is enough to get a
 clean icon.
+
+---
+
+## Design pass (2026-09-01) — seed photography, the sessions panel, hero clipping
+
+Branch `design/seed-photography-and-dashboard`. Owner reviewed the findings and
+chose the scope on the photography before any of it was touched.
+
+### 1. The seed photography showed the wrong place ✅
+
+Bigger than the last session's note recorded. Of seventeen images, **twelve were
+the wrong subject** and two carried a visible CC watermark — the museum ran on a
+photograph of a Californian adobe fort, the "Old Dhaka" walking tour on a German
+half-timbered street, the spa on a hotel swimming pool, yoga on a single wild
+flower. The watermarked shirt ("JAMIE SWEED") and the red-bordered cabinet were
+also **demo-business cards on the landing page**, so the front door showed the
+wrong continent before anyone clicked anything.
+
+A photograph of the wrong place is worse than none: it reads as carelessness
+about the operator's actual venue. The seed already proved the alternative —
+`prd_donation` has no image, and its fallback glyph was the calmest cell on the
+till.
+
+- Twelve images deleted; those products carry `images: []` and take the
+  per-booking-type glyph. **Kept the five that are what they claim:** bowling,
+  cricket, planetarium, tour, winter.
+- **The landing needed code, not just deletion** — its demo cards used a bare
+  `<img>` with no fallback, so deletion alone would have left five broken
+  images. Each demo now carries its own glyph (Landmark · Trophy · Disc3 ·
+  Flower2 · Clapperboard) on a warm ground. **All five get the same treatment**
+  rather than one surviving photo plus four placeholders: a wall only reads as a
+  wall if every card is built the same way.
+- Fixed a dark-mode defect the change exposed: `--color-subtle` and
+  `--color-card` are **the same value in dark**, so the fallback tile had no
+  edge and the glyph floated on the row. It now carries a 1px line (dark
+  elevation = surface step + line, per Delta D) and sits at `muted` — `faint`
+  was unreadable against it.
+
+**Still open:** whether to commission real photography of actual venues. Five
+products keep a photo; the rest are glyphs. That reads as deliberate, so there
+is no rush.
+
+### 2. "Today's sessions" was listing capacity, not sessions ✅
+
+The panel enumerated every schedulable slot × every resource and then took the
+nine **earliest**. Because the turf runs hourly across two products on two
+fields, the manager's cockpit opened on eight empty turf hours — `12:00 Cricket ·
+Field 1`, `12:00 Cricket · Field 2`, `12:00 Football · Field 1` — each offering
+to **Cancel** bookings that did not exist, with the one session carrying real
+numbers pushed to row five.
+
+The fix is a distinction, not a cleverer sort. **A scheduled session and an
+unbooked resource hour are not the same kind of thing.** A planetarium show at
+0/40 runs whether or not anyone bought a seat, so it is always the manager's
+business. A free turf hour is not a session at all; it is capacity nobody has
+taken, and there is one of it per field per hour.
+
+- Scheduled (slot-based) sessions always appear; a resource hour appears once
+  somebody has booked it.
+- The free hours are **collapsed into one honest line**, not silently dropped —
+  "16 more · 34 unbooked hours today · View in Calendar".
+- Out-of-service resources are left out entirely: **Needs attention already
+  names them once**, rather than once an hour.
+- **Cancel** now appears only on scheduled sessions, where closing the session
+  is a real action. A booked resource hour is released through its booking, so
+  offering Cancel there offered something the button could not do.
+
+### 3. The hero was cutting the numbers it exists to show ✅
+
+Revenue and Booked-ahead are `nowrap` at `text-3xl` in a two-column grid. On a
+phone the card is narrower than the number, so **"৳41,653.00" rendered as
+"৳41,653"** and "৳53,411.75" spilled past the card edge — measured clipping at
+320, 360, 390, 414 and 420px, and again in the **1024–1279 band** where
+`lg:grid-cols-4` made four columns before there was room for them.
+
+The page never scrolled sideways, so the overflow rule held and this went
+unnoticed for three sessions. It is the worse failure: a truncated figure is not
+a cramped layout, it is **a different number**, shown with no sign anything is
+missing. An ellipsis at least admits it.
+
+- Hero collapses to one column below 420px rather than shrinking the type;
+  four columns from `xl`, not `lg`; `text-2xl` small / `text-3xl` from `sm`.
+- Trade-off accepted: the tiles stack on a phone, so the sessions list starts
+  lower. Legible numbers beat a compact band that lies about them.
+
+### Verification (this session)
+
+Everything below was **measured in a real browser**, not inferred — a headless
+Chromium harness in the scratchpad, not the repo.
+
+- **Zero page x-scroll**: 10 routes × light/dark × 320/390/1440 = 60 loads, no
+  console errors.
+- **Silent-clipping detector**: every `nowrap` element checked for
+  `scrollWidth > clientWidth` *without* an ellipsis (a deliberate ellipsis is
+  not a defect), across ten widths 320→1440. Clean — and the same check
+  correctly reports the clipping on the parent commit, so it is not
+  vacuously green.
+- `tsc --noEmit` clean · `npm run build` clean · no new lint findings (the 5
+  `react-hooks/exhaustive-deps` warnings on the dashboard are pre-existing;
+  confirmed against a stash).
+- **i18n parity**: 29 namespaces, **0 keys missing in bn, 0 extra**. Four new
+  dashboard keys authored in both.
+
+### What this session did NOT do
+
+- **Did not re-anchor the demo clock.** `DEMO_TODAY` stays 2026-07-29; still the
+  owner's call (it would touch the hand-authored proofs the acceptance walks
+  cite by literal date).
+- **Did not start i18n Batch 2.** Findings recorded below so the next session
+  starts from measurement rather than a survey.
+
+### i18n Batch 2 — measured, so the scope is known
+
+Key parity is perfect, which hides the real gap: **the keys were never wired
+up**. Four namespaces are empty `{}` files — `products`, `auth`, `errors`,
+`resources`. Rendered Bangla by route:
+
+| Route | Bangla |
+|---|---|
+| Landing (`app/page.tsx`) | **0%** |
+| Sign-in | **0%** |
+| Products list | 20% |
+| POS | 23% |
+| Calendar | 25% |
+| Orders | 65% |
+
+The products list is the clearest case: fully-Bangla sidebar, entirely English
+body — title, filters, every column header. A bilingual mongrel reads worse than
+either language alone.
+
+Separately and deeper than missing keys: **all date formatting is hardcoded
+`en-GB`** — 10 sites including shared `lib/format.ts` — so dates stay English
+even on screens that are otherwise fully translated. Fixing `format.ts` to take
+the active locale is the highest-value single change in the batch.
+
+Untranslated files: all 7 auth pages · the 13-file products editor · the landing
+· `settings/layout` + `settings/page` · Go `login` / `pos/payment` / `Keypad` ·
+`OrderLinesDetail`. (The calendar grids take their strings as props from a
+translated parent — they are fine.)
