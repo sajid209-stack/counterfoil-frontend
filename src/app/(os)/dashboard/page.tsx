@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, TrendingUp, UserCheck, Users } from "lucide-react";
-import { Button, Modal, PageShell, useToast } from "@/components/ui";
+import { AreaChart, Button, Modal, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   cancelSessionBookings,
@@ -26,12 +26,13 @@ import {
   type Product,
 } from "@/lib/api";
 import { isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatMoneyCompact } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 
 const TODAY = "2026-07-29";
 const NOW_MIN = 12 * 60; // mock clock: noon
 const dayShift = (d: string, n: number) => new Date(Date.parse(`${d}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** Count-up over 320ms for the hero figures. */
 function useCountUp(target: number, ms = 320) {
@@ -91,6 +92,7 @@ export default function DashboardPage() {
 
   const [locationId, setLocationId] = useState<string>("all");
   const [scope, setScope] = useState<"today" | "week">("today");
+  const [trendDays, setTrendDays] = useState<7 | 14 | 30>(30);
   const [openSession, setOpenSession] = useState<string | null>(null); // inline bookings
   const [capModal, setCapModal] = useState<{ product: Product; value: number } | null>(null);
   const [cancelModal, setCancelModal] = useState<{ product: Product; time: string; slotISO: string; affected: number } | null>(null);
@@ -115,6 +117,44 @@ export default function DashboardPage() {
   const revenuePrev = revenueIn(prevDays);
   const revenueAnimated = useCountUp(revenue);
   const week = useMemo(() => Array.from({ length: 7 }, (_, i) => revenueIn([dayShift(TODAY, i - 6)])), [orders]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Revenue trend ────────────────────────────────────────────────────────
+  // The ranges stop at 30 days because that is how much history exists: the
+  // seed writes orders across the last 30 days only (generate.ts), so a 3M or
+  // 1Y range would draw a flat line through months that never had a sale. The
+  // day is the unit here, not the month, for the same reason.
+  //
+  // The comparison series has to earn its place too. Comparing 30 days against
+  // the 30 before them needs SIXTY days of history; with thirty, the previous
+  // window is empty except for its last day or two, which does not read as
+  // "we grew" — it reads as +15663%. So the comparison is drawn only when the
+  // ledger actually covers the window behind, and is otherwise absent rather
+  // than wrong. Real order history will switch it on by itself.
+  const earliestOrder = useMemo(
+    () => orders.filter(paidish).reduce<string | null>((min, o) => {
+      const d = o.createdAt.slice(0, 10);
+      return min === null || d < min ? d : min;
+    }, null),
+    [orders],
+  );
+  const comparable = earliestOrder != null && dayShift(TODAY, -(2 * trendDays - 1)) >= earliestOrder;
+
+  const trend = useMemo(() => {
+    const days = trendDays;
+    return Array.from({ length: days }, (_, i) => {
+      const date = dayShift(TODAY, i - (days - 1));
+      const d = new Date(`${date}T12:00:00Z`);
+      return {
+        label: d.getUTCDate().toString(),
+        title: `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`,
+        value: revenueIn([date]),
+        ...(comparable ? { compare: revenueIn([dayShift(date, -days)]) } : {}),
+      };
+    });
+  }, [orders, trendDays, comparable]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const trendTotal = trend.reduce((s, p) => s + p.value, 0);
+  const trendPrev = trend.reduce((s, p) => s + (p.compare ?? 0), 0);
 
   // ── Hero: capacity — the number no other system can show ─────────────────
   const capacityFor = (days: string[]) => {
@@ -407,8 +447,50 @@ export default function DashboardPage() {
 
       {!loading && (
         <div className="mt-major grid gap-tight lg:grid-cols-3">
-          {/* Left ⅔ — Today's sessions (management, never selling) + activity */}
-          <div className="flex flex-col gap-tight lg:col-span-2">
+          {/* Left ⅔ — revenue trend, then Today's sessions (management, never
+              selling) + activity */}
+          <div className="flex min-w-0 flex-col gap-tight lg:col-span-2">
+            <div className={`${card} p-section`}>
+              <div className="flex flex-wrap items-start justify-between gap-tight">
+                <div className="min-w-0">
+                  <p className="type-label text-[11px] text-muted">{t("revenueTrend")}</p>
+                  <div className="mt-inline flex flex-wrap items-baseline gap-tight">
+                    <span className="whitespace-nowrap font-mono text-2xl tabular-nums">{formatMoney(trendTotal)}</span>
+                    <DeltaPill now={trendTotal} then={trendPrev} />
+                  </div>
+                  <p className="mt-inline text-[12px] text-faint">
+                    {comparable ? t("vsPreviousDays", { count: trendDays }) : t("lastDaysLong", { count: trendDays })}
+                  </p>
+                </div>
+                {/* Ranges the seed can actually fill — see the trend memo. */}
+                <div className="flex shrink-0 gap-inline rounded-sm bg-subtle p-0.5">
+                  {([7, 14, 30] as const).map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setTrendDays(d)}
+                      aria-pressed={trendDays === d}
+                      className={`min-h-8 rounded-xs px-tight font-mono text-[11px] tabular-nums transition-colors duration-quick ${
+                        trendDays === d ? "bg-ember text-inverse-fg" : "text-muted hover:text-fg"
+                      }`}
+                    >
+                      {t("lastDays", { count: d })}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-section">
+                <AreaChart
+                  points={trend}
+                  fmt={(v) => formatMoney(v)}
+                  fmtAxis={(v) => formatMoneyCompact(v)}
+                  height={240}
+                  valueLabel={comparable ? t("thisPeriod") : t("revenueTrend")}
+                  compareLabel={t("previousPeriod")}
+                />
+              </div>
+            </div>
+
             <div className={card}>
               <p className="type-label border-b border-line px-section py-tight text-[11px] text-muted">{t("todaysSessions")}</p>
               {sessions.length === 0 ? (
@@ -419,12 +501,17 @@ export default function DashboardPage() {
                   const list = sessionBookings(u);
                   return (
                     <div key={u.key} className="border-b border-line last:border-0">
-                      <div className="flex min-h-12 items-center gap-section px-section">
+                      {/* Wraps rather than crushes. The row carries a time, a
+                          name, an occupancy and two actions; at 320px those
+                          fixed widths leave the name nothing, and a session
+                          row without the session is not a row. The name keeps
+                          a floor and the meta drops to a second line. */}
+                      <div className="flex min-h-12 flex-wrap items-center gap-x-section gap-y-inline px-section py-tight">
                         <button type="button" aria-label={t("bookings")} onClick={() => setOpenSession(open ? null : u.key)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-faint hover:text-fg">
                           {open ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}
                         </button>
                         <span className="w-12 shrink-0 font-mono text-sm tabular-nums">{u.time}</span>
-                        <span className="min-w-0 flex-1 truncate text-sm">{u.label}{u.who ? <span className="text-faint"> · {u.who}</span> : null}</span>
+                        <span className="min-w-[9rem] flex-1 truncate text-sm">{u.label}{u.who ? <span className="text-faint"> · {u.who}</span> : null}</span>
                         {u.cap > 1 && (
                           <span className="flex shrink-0 items-center gap-tight">
                             <span className="whitespace-nowrap font-mono text-[12px] tabular-nums text-muted">{u.sold}/{u.cap}</span>
@@ -482,11 +569,14 @@ export default function DashboardPage() {
 
             <div className={card}>
               <p className="type-label border-b border-line px-section py-tight text-[11px] text-muted">{t("liveActivity")}</p>
+              {/* Same shape as a session row, and the same reason for wrapping:
+                  five fixed-width children do not fit a 288px card, and h-12
+                  would clip the wrap. */}
               {activity.map((a) => (
-                <div key={a.id} className="flex h-12 items-center gap-section border-b border-line px-section last:border-0">
+                <div key={a.id} className="flex min-h-12 flex-wrap items-center gap-x-section gap-y-inline border-b border-line px-section py-tight last:border-0">
                   <span className={`w-12 shrink-0 text-[12px] ${a.isRefund ? "text-danger" : "text-muted"}`}>{a.what}</span>
                   <span className="shrink-0 font-mono text-[12px] text-faint">{a.ref}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm">{a.product}</span>
+                  <span className="min-w-[8rem] flex-1 truncate text-sm">{a.product}</span>
                   <span className="shrink-0 whitespace-nowrap font-mono text-[13px] tabular-nums">{formatMoney(a.amount)}</span>
                   <span className="w-16 shrink-0 text-right font-mono text-[11px] text-faint">{a.rel}</span>
                 </div>
@@ -495,7 +585,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Right ⅓ — priority order */}
-          <div className="flex flex-col gap-tight">
+          <div className="flex min-w-0 flex-col gap-tight">
             <div className={`${card} p-section`}>
               <p className="type-label mb-tight text-[11px] text-muted">{t("needsAttention")}</p>
               {attention.length === 0 ? (
@@ -536,7 +626,7 @@ export default function DashboardPage() {
               <p className="type-label mb-tight text-[11px] text-muted">{t("paymentMix")}</p>
               {mix.length === 0 ? <p className="text-[13px] text-faint">{t("noPayments")}</p> : mix.map((m) => (
                 <div key={m.label} className="mb-tight last:mb-0">
-                  <div className="flex justify-between text-[12px]"><span>{m.label}</span><span className="font-mono tabular-nums">{formatMoney(m.amount)}</span></div>
+                  <div className="flex justify-between gap-tight text-[12px]"><span className="min-w-0 truncate">{m.label}</span><span className="shrink-0 whitespace-nowrap font-mono tabular-nums">{formatMoney(m.amount)}</span></div>
                   <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-inverse" style={{ width: `${(m.amount / mixMax) * 100}%` }} /></div>
                 </div>
               ))}

@@ -25,5 +25,5 @@ export { ProductThumb } from "./ProductThumb";
 export { Qr } from "./Qr";
 export { TicketCard } from "./TicketCard";
 export type { TicketCardData } from "./TicketCard";
-export { BarChart, DonutChart, HBarChart, LineChart } from "./charts";
+export { AreaChart, BarChart, DonutChart, HBarChart, LineChart } from "./charts";
 export type { ChartPoint } from "./charts";

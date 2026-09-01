@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 /* Lightweight SVG charts on the token palette — ember for the primary series,
    neutrals for comparison. Every chart: hover tooltip with exact figures in
    DM Mono, and an inherited empty state handled by the caller. */
 
 export interface ChartPoint {
+  /** Short axis tick — kept terse because it repeats along the bottom. */
   label: string;
+  /** Full name for the tooltip, where there is room to be unambiguous
+   *  ("17 Jul" rather than a bare "17"). Falls back to `label`. */
+  title?: string;
   value: number;
   compare?: number;
 }
@@ -21,6 +25,186 @@ const useTip = () => {
   ) : null;
   return { tip, setTip, node };
 };
+
+/** The rendered width in CSS pixels. The other charts here scale a fixed
+ *  viewBox, which also scales their text — at 320px a 10px label renders at
+ *  5px. A chart carrying an axis has to draw at 1:1 so the labels stay the
+ *  size they were set in. */
+function useWidth<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    setW(el.getBoundingClientRect().width);
+    const ro = new ResizeObserver(([entry]) => setW(entry.contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w] as const;
+}
+
+/** Round the axis top up to a readable step so ticks land on 15k, not 14.7k. */
+function niceScale(max: number, ticks: number) {
+  if (!(max > 0)) return { top: 1, step: 1 };
+  const raw = max / ticks;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const n = raw / mag;
+  const step = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
+  return { top: step * ticks, step };
+}
+
+/**
+ * The dashboard's revenue chart: a filled area for the current period over a
+ * plain line for the one before it, on a labelled axis.
+ *
+ * Deliberately not a second copy of LineChart — the difference that matters is
+ * the axis. A sparkline answers "which way is it going"; this answers "how
+ * much, and against what", which needs gridlines and money on the left.
+ */
+export function AreaChart({
+  points,
+  fmt,
+  fmtAxis,
+  height = 260,
+  ticks = 4,
+  valueLabel,
+  compareLabel,
+}: {
+  points: ChartPoint[];
+  /** Exact value, for the tooltip. */
+  fmt: (v: number) => string;
+  /** Short value, for the axis. Defaults to `fmt`. */
+  fmtAxis?: (v: number) => string;
+  height?: number;
+  ticks?: number;
+  valueLabel: string;
+  compareLabel?: string;
+}) {
+  const [box, w] = useWidth<HTMLDivElement>();
+  const gradId = useId();
+  const [hover, setHover] = useState<number | null>(null);
+  const axis = fmtAxis ?? fmt;
+  const hasCompare = points.some((p) => p.compare != null);
+
+  // Gutters: left for the money labels, bottom for the period labels.
+  const padL = 52, padR = 10, padT = 10, padB = 26;
+  const plotW = Math.max(0, w - padL - padR);
+  const plotH = Math.max(0, height - padT - padB);
+  const { top, step } = niceScale(Math.max(...points.map((p) => Math.max(p.value, p.compare ?? 0)), 0), ticks);
+
+  const x = (i: number) => padL + (points.length === 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
+  const y = (v: number) => padT + (1 - v / top) * plotH;
+
+  const line = (get: (p: ChartPoint) => number | undefined) =>
+    points.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(get(p) ?? 0).toFixed(1)}`).join(" ");
+  const area = `${line((p) => p.value)} L${x(points.length - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${x(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
+
+  // Thin the x labels to what actually fits, so they never collide.
+  const every = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor(plotW / 52))));
+  const gridline = Array.from({ length: ticks + 1 }, (_, i) => i * step);
+  const active = hover != null ? points[hover] : null;
+
+  return (
+    <div ref={box} className="relative w-full">
+      {/* Tooltip — follows the hovered column, flipping side near the edges so
+          it never leaves the card. */}
+      {active && w > 0 && (
+        <div
+          className="pointer-events-none absolute z-10 rounded-xs border border-line bg-card px-tight py-inline shadow-sm"
+          style={{
+            left: Math.min(Math.max(x(hover!), 62), w - 62),
+            top: 0,
+            transform: "translateX(-50%)",
+          }}
+        >
+          <p className="font-mono text-[10px] text-faint">{active.title ?? active.label}</p>
+          <p className="whitespace-nowrap font-mono text-[11px] tabular-nums">{fmt(active.value)}</p>
+          {active.compare != null && (
+            <p className="whitespace-nowrap font-mono text-[10px] tabular-nums text-muted">{fmt(active.compare)}</p>
+          )}
+        </div>
+      )}
+
+      {/* The svg is taken out of flow and sized from the box, never the other
+          way round. Measuring a container that the svg itself can widen is a
+          feedback loop: any ancestor with the default min-width:auto lets the
+          drawing set the column width, which sets the drawing width. Absolute
+          positioning means this chart contributes nothing to min-content and
+          is safe to drop into a flex or grid child anywhere. */}
+      <div className="relative w-full" style={{ height }}>
+      {w > 0 && (
+        <svg className="absolute left-0 top-0" width={w} height={height} role="img" aria-label={valueLabel}>
+          <defs>
+            {/* The fill is what makes this read as volume rather than a wire. */}
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-ember)" stopOpacity="0.22" />
+              <stop offset="100%" stopColor="var(--color-ember)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {gridline.map((v) => (
+            <g key={v}>
+              <line
+                x1={padL} x2={padL + plotW} y1={y(v)} y2={y(v)}
+                stroke="var(--color-line)" strokeWidth="1" strokeDasharray="3 4"
+              />
+              <text x={padL - 10} y={y(v) + 3} textAnchor="end" className="fill-[var(--color-muted)] font-mono text-[10px]">
+                {axis(v)}
+              </text>
+            </g>
+          ))}
+
+          {hasCompare && <path d={line((p) => p.compare)} fill="none" stroke="var(--color-muted)" strokeWidth="1.5" />}
+          <path d={area} fill={`url(#${gradId})`} />
+          <path d={line((p) => p.value)} fill="none" stroke="var(--color-ember)" strokeWidth="2" strokeLinejoin="round" />
+
+          {points.map((p, i) => (i % every === 0 || i === points.length - 1 ? (
+            <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor="middle" className="fill-[var(--color-muted)] font-mono text-[10px]">
+              {p.label}
+            </text>
+          ) : null))}
+
+          {/* Hover guide, drawn over the series so it reads as a cursor. */}
+          {active && (
+            <g>
+              <line x1={x(hover!)} x2={x(hover!)} y1={padT} y2={padT + plotH} stroke="var(--color-strong)" strokeWidth="1" />
+              {active.compare != null && <circle cx={x(hover!)} cy={y(active.compare)} r="3" fill="var(--color-muted)" />}
+              <circle cx={x(hover!)} cy={y(active.value)} r="4" fill="var(--color-ember)" stroke="var(--color-card)" strokeWidth="1.5" />
+            </g>
+          )}
+
+          {/* One hit column per point — a whole-height target, so the tooltip
+              answers a vertical sweep rather than demanding the exact pixel. */}
+          {points.map((p, i) => (
+            <rect
+              key={`h${i}`}
+              x={x(i) - (plotW / Math.max(1, points.length - 1)) / 2}
+              y={padT}
+              width={Math.max(6, plotW / Math.max(1, points.length - 1))}
+              height={plotH}
+              fill="transparent"
+              onMouseEnter={() => setHover(i)}
+              onMouseLeave={() => setHover(null)}
+            />
+          ))}
+        </svg>
+      )}
+      </div>
+
+      <div className="mt-tight flex items-center gap-section">
+        <span className="flex items-center gap-inline text-[12px] text-muted">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ember" />{valueLabel}
+        </span>
+        {hasCompare && compareLabel && (
+          <span className="flex items-center gap-inline text-[12px] text-muted">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted" />{compareLabel}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 /** Line chart with an optional dashed comparison series. */
 export function LineChart({ points, fmt, height = 160 }: { points: ChartPoint[]; fmt: (v: number) => string; height?: number }) {

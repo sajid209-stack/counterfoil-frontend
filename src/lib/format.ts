@@ -10,6 +10,21 @@ export function formatMoney(minor: Minor, currency = "BDT"): string {
   return `${symbol}${amount}`;
 }
 
+/** Minor units → a short axis label. 4500000 → "৳45k", 250000 → "৳2.5k".
+ *  Chart axes need the magnitude, not the paisa — "৳45,000.00" repeated up a
+ *  y-axis is noise that crowds out the plot. */
+export function formatMoneyCompact(minor: Minor, currency = "BDT"): string {
+  const symbol = currency === "BDT" ? "৳" : `${currency} `;
+  const major = minor / 100;
+  const abs = Math.abs(major);
+  if (abs >= 1_000_000) return `${symbol}${trim(major / 1_000_000)}m`;
+  if (abs >= 1_000) return `${symbol}${trim(major / 1_000)}k`;
+  return `${symbol}${trim(major)}`;
+}
+
+/** At most one decimal, and never a trailing ".0" — 45 not 45.0, 2.5 stays 2.5. */
+const trim = (n: number): string => String(Math.round(n * 10) / 10);
+
 /** ISO datetime → "29 Jul 2026". Empty/nullish → "—". */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";

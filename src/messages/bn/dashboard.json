@@ -80,5 +80,11 @@
   "freeSlot": "আজ {count}টি অবুক ঘণ্টা",
   "freeSlots": "আজ {count}টি অবুক ঘণ্টা",
   "andMoreSessions": "আরও {count}টি",
-  "viewCalendar": "ক্যালেন্ডারে দেখুন"
+  "viewCalendar": "ক্যালেন্ডারে দেখুন",
+  "revenueTrend": "আয়ের ধারা",
+  "vsPreviousDays": "পূর্ববর্তী {count} দিনের তুলনায়",
+  "lastDays": "{count}দি",
+  "thisPeriod": "এই সময়কাল",
+  "previousPeriod": "পূর্ববর্তী সময়কাল",
+  "lastDaysLong": "গত {count} দিন"
 }

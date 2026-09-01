@@ -80,5 +80,11 @@
   "freeSlot": "{count} unbooked hour today",
   "freeSlots": "{count} unbooked hours today",
   "andMoreSessions": "{count} more",
-  "viewCalendar": "View in Calendar"
+  "viewCalendar": "View in Calendar",
+  "revenueTrend": "Revenue trend",
+  "vsPreviousDays": "vs. previous {count} days",
+  "lastDays": "{count}D",
+  "thisPeriod": "This period",
+  "previousPeriod": "Previous period",
+  "lastDaysLong": "Last {count} days"
 }
