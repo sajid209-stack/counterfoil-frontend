@@ -1571,3 +1571,99 @@ This is the class of bug the revenue-chart session flagged and never audited:
 `main` carries `overflow-x-hidden`, so the document-level x-scroll check passes
 while content is silently swallowed. **The dashboard is clean at every width.**
 Fixing the other four is a separate piece of work on unrelated screens.
+
+---
+
+## Notices (2026-09-03) — the rail items get the reference's anatomy
+
+Owner supplied a screenshot of the Aura reference's Notices card and asked for
+that treatment. The previous session had matched the card's frame but not its
+items, and said so in a code comment: *"the reference also carries a bold title,
+a description and a timestamp per notice; these items have none of those — one
+sentence and a link is the whole record."* That was true of the **shape the
+items were built in**, not of the data behind them. So the items were rebuilt.
+
+### The item model
+
+`{ text, href?, tone }` became:
+
+```ts
+type Notice = {
+  tone: "warning" | "info";
+  Icon: LucideIcon;
+  title: string;
+  body: string;
+  at?: string;                              // only where a real moment exists
+  action?: { label: string; href: string };
+};
+```
+
+Every one of the seven rules now supplies a title, a description and a named
+action. Nothing was invented to fill the shape:
+
+| Rule | Title | Body | Timestamp |
+|---|---|---|---|
+| Cash variance | Cash short at close | the existing sentence | shift close, yesterday 22:00 |
+| Resource out of service | *{name}* is out of service | **the recorded reason** | `resource.updatedAt` |
+| No sessions after a date | Bookings will stop | the existing sentence | — |
+| Sales window ends | Sales window ends | the existing sentence | — |
+| Waitlist | Waitlist waiting | the existing sentence | — |
+| Arrivals owing | Balance due on arrival | the existing sentence | — |
+| Device unseen | Device has gone quiet | the existing sentence | `device.lastSeenAt` |
+
+- **`at` is set only where the record carries a real moment.** A device's last
+  contact and a resource's last edit are events. A waitlist depth and an unpaid
+  balance are live derivations, so they get **no timestamp rather than a
+  fabricated one** — which is the same rule the previous session applied, just
+  applied per-field instead of to the whole card.
+- **The out-of-service reason became the description**, which is what it always
+  was — it had been concatenated into one sentence with the name. Where no
+  reason was recorded the body says so; an empty line reads as a rendering
+  fault. `resourceOutOfService` / `resourceOutOfServiceReason` are gone.
+- **The glyph is now picked per RULE, not per tone** — Banknote, Wrench,
+  CalendarOff, Clock, Users, Receipt, WifiOff. A cash variance, a dead device
+  and a closing sales window are different kinds of problem, and the icon says
+  which before anyone reads a word. Tone still comes off severity, so the
+  existing "never guess tone from the wording" rule is intact.
+- **Action links are neutral**, as the reference draws them: the tint and the
+  border already carry severity, and amber-on-amber is both a second shout and
+  the weaker contrast of the two.
+
+### `relTime` is now shared
+
+The feed's local "12 min ago" helper is hoisted to a `useCallback` the rail uses
+too, so one notion of *ago* governs the page. It parses the instant rather than
+comparing strings — the seed spells timestamps two ways (see the 2026-09-02
+entry).
+
+### Column balance had to be re-derived
+
+Giving each notice a title, a description and an action grew that card from
+**331px to 546px**, which pushed the two columns from Δ22px to **Δ180px** — the
+conformance check passed at its 180px tolerance while the left column visibly
+ended a screenful early. The feed gives the same back: **8 rows → 6**, Δ**33px**.
+
+The tolerance is now **80px**, so the next drift of this kind fails instead of
+scraping through. The feed's row count exists to balance the rail — the comment
+on `.slice(0, 6)` says so, and says to re-measure if either card's anatomy
+changes again.
+
+### Not done
+
+**No "View all" in the header.** The reference has one; Counterfoil has no
+notices index, and these items are derived live from six different sources
+(shifts, resources, products, waitlist, bookings, devices). A button to a page
+that does not exist is worse than none — the same rule the activity card's
+footer follows. Each notice carries its own action to the page that can fix it,
+which is the better affordance anyway.
+
+**No success-tone notice.** The reference has a green "Stripe connected". No
+rule here produces a positive event, and inventing one to fill the palette
+would be decoration.
+
+### Verification
+
+Three harnesses, **10 + 23 + 41 checks, all passing**, plus `tsc`, build, lint
+back at the 5 pre-existing warnings (two dead glyph imports removed), and i18n
+parity clean across 29 namespaces — 14 new keys authored in en and bn, 2
+orphans dropped.

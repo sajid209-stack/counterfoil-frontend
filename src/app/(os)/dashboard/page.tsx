@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, CircleCheck, Info, ListFilter, Megaphone, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, CircleCheck, ListFilter, Megaphone, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, Banknote, CalendarOff, Clock, WifiOff, Wrench, type LucideIcon } from "lucide-react";
 import { AreaChart, Button, Modal, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -86,6 +86,21 @@ const ACTIVITY_BADGE: Record<ActivityKind, { Icon: LucideIcon; className: string
   sale: { Icon: Receipt, className: "text-muted" },
   refund: { Icon: RotateCcw, className: "text-danger" },
   customer: { Icon: UserRoundPlus, className: "text-ember" },
+};
+
+/** A rail notice, with the anatomy the reference draws: a glyph, a bold title,
+ *  a description, an optional timestamp and an optional action. `at` is set
+ *  ONLY where the underlying record carries a real moment — a device's last
+ *  contact, a resource's last edit. A waitlist depth and an unpaid balance are
+ *  live derivations, not events, so they get no timestamp rather than a
+ *  fabricated one. */
+type Notice = {
+  tone: "warning" | "info";
+  Icon: LucideIcon;
+  title: string;
+  body: string;
+  at?: string;
+  action?: { label: string; href: string };
 };
 
 function DeltaPill({ now, then }: { now: number; then: number }) {
@@ -297,6 +312,15 @@ export default function DashboardPage() {
     setCancelModal(null);
   };
 
+  /** "12 min ago" / "3 hr ago" / "2 d ago", measured from the demo clock.
+   *  Shared by the activity feed and the rail so one notion of "ago" governs
+   *  the page. Parses the instant rather than comparing the string — the seed
+   *  spells timestamps two ways. */
+  const relTime = useCallback((iso: string) => {
+    const mins = Math.max(0, Math.round((Date.parse(`${TODAY}T12:00:00+06:00`) - Date.parse(iso)) / 60000));
+    return mins < 60 ? t("minAgo", { count: mins }) : mins < 1440 ? t("hrAgo", { count: Math.round(mins / 60) }) : t("dAgo", { count: Math.round(mins / 1440) });
+  }, [t]);
+
   // ── Live activity ────────────────────────────────────────────────────────
   // The feed is not an order log. What a manager wants from it is "what has
   // happened here lately", and a customer record appearing is one of those
@@ -305,11 +329,6 @@ export default function DashboardPage() {
   // carries its own kind, which is what the badge and the filter read off;
   // nothing here guesses tone from wording.
   const activity = useMemo(() => {
-    const rel = (iso: string) => {
-      const mins = Math.max(0, Math.round((Date.parse(`${TODAY}T12:00:00+06:00`) - Date.parse(iso)) / 60000));
-      return mins < 60 ? t("minAgo", { count: mins }) : mins < 1440 ? t("hrAgo", { count: Math.round(mins / 60) }) : t("dAgo", { count: Math.round(mins / 1440) });
-    };
-
     const events: ActivityItem[] = [];
 
     for (const o of orders) {
@@ -356,14 +375,15 @@ export default function DashboardPage() {
       // 12-minute-old event below a 55-minute-old one. Ordering orders among
       // themselves hid this; merging two sources exposes it.
       .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
-      // Eight, not six: the feed moved from a short slot under the session
-      // list to the tall right-hand slot, and six rows left it ending 169px
-      // short of the column beside it. The reference's two columns finish
-      // level, which is most of why the page reads as settled rather than
-      // ragged.
-      .slice(0, 8)
-      .map((e) => ({ ...e, rel: rel(e.at) }));
-  }, [orders, customers, activityFilter, t]);
+      // Six. This count exists to balance the rail against the column beside
+      // it — the reference's two columns finish level, which is most of why
+      // its page reads as settled rather than ragged. It was eight while
+      // Notices was a one-line-per-item card; giving each notice a title, a
+      // description and an action grew that card by 215px, and the feed gives
+      // the same back. Re-measure this if either card's anatomy changes again.
+      .slice(0, 6)
+      .map((e) => ({ ...e, rel: relTime(e.at) }));
+  }, [orders, customers, activityFilter, relTime, t]);
 
   // ── Right rail ───────────────────────────────────────────────────────────
   // Tone is read off WHICH RULE FIRED, never guessed from the wording: money
@@ -372,22 +392,52 @@ export default function DashboardPage() {
   // and this is the only honest way to supply one — the items carry no
   // severity field of their own.
   const attention = useMemo(() => {
-    const items: { text: string; href?: string; tone: "warning" | "info" }[] = [];
+    const items: Notice[] = [];
     // Cash variance on a closed shift — derived from the mock shift record.
-    items.push({ text: t("cashShort", { location: "Fort Main Gate", amount: "৳2,000" }), href: "/reports/sales", tone: "warning" });
-    resources.filter((r) => r.outOfService).forEach((r) => items.push({ text: r.outOfServiceReason ? t("resourceOutOfServiceReason", { name: r.name, reason: r.outOfServiceReason }) : t("resourceOutOfService", { name: r.name }), href: "/settings/resources", tone: "warning" }));
+    // Its moment is real: a shift closes at a time, and that is yesterday.
+    items.push({
+      tone: "warning", Icon: Banknote,
+      title: t("noticeCashTitle"),
+      body: t("cashShort", { location: "Fort Main Gate", amount: "৳2,000" }),
+      at: `${dayShift(TODAY, -1)}T22:00:00+06:00`,
+      action: { label: t("noticeReviewTakings"), href: "/reports/sales" },
+    });
+    resources.filter((r) => r.outOfService).forEach((r) => items.push({
+      tone: "warning", Icon: Wrench,
+      title: t("noticeOutOfServiceTitle", { name: r.name }),
+      // The reason IS the description. Where none was recorded, say so — an
+      // empty line would read as a rendering fault.
+      body: r.outOfServiceReason ?? t("noticeNoReason"),
+      at: r.updatedAt,
+      action: { label: t("noticeManage"), href: "/settings/resources" },
+    }));
     // The silent failure: nothing bookable beyond a date.
     for (const p of products) {
       if (p.courseDates?.length) {
         const last = [...p.courseDates].sort().at(-1)!;
-        if (last <= dayShift(TODAY, 30)) items.push({ text: t("noSessionsAfter", { name: p.name, date: last }), href: `/products/${p.id}`, tone: "warning" });
+        if (last <= dayShift(TODAY, 30)) items.push({
+          tone: "warning", Icon: CalendarOff,
+          title: t("noticeNoSessionsTitle"),
+          body: t("noSessionsAfter", { name: p.name, date: last }),
+          action: { label: t("noticeAddDates"), href: `/products/${p.id}` },
+        });
       }
       if (p.windowMode === "fixed" && p.windowEnd && p.windowEnd <= dayShift(TODAY, 30)) {
-        items.push({ text: t("stopsSelling", { name: p.name, date: p.windowEnd }), href: `/products/${p.id}`, tone: "warning" });
+        items.push({
+          tone: "warning", Icon: Clock,
+          title: t("noticeStopsSellingTitle"),
+          body: t("stopsSelling", { name: p.name, date: p.windowEnd }),
+          action: { label: t("noticeOpenProduct"), href: `/products/${p.id}` },
+        });
       }
     }
     const wl = peekWaitlist().length;
-    if (wl > 0) items.push({ text: wl === 1 ? t("waitlistWaiting", { count: wl }) : t("waitlistWaitingPlural", { count: wl }), href: "/schedule", tone: "info" });
+    if (wl > 0) items.push({
+      tone: "info", Icon: Users,
+      title: t("noticeWaitlistTitle"),
+      body: wl === 1 ? t("waitlistWaiting", { count: wl }) : t("waitlistWaitingPlural", { count: wl }),
+      action: { label: t("noticeMakeOffer"), href: "/schedule" },
+    });
     // Arrivals today still owing a balance.
     const owing = bookings
       .filter((b) => b.status === "confirmed" && b.slotStart.slice(0, 10) === TODAY)
@@ -395,10 +445,22 @@ export default function DashboardPage() {
       .filter((o): o is Order => !!o && o.status === "partial");
     if (owing.length) {
       const due = owing.reduce((s, o) => s + (o.total - o.payments.reduce((x, p) => x + p.amount, 0)), 0);
-      items.push({ text: owing.length === 1 ? t("arrivalsOwe", { count: owing.length, amount: formatMoney(due) }) : t("arrivalsOwePlural", { count: owing.length, amount: formatMoney(due) }), href: "/checkin", tone: "warning" });
+      items.push({
+        tone: "warning", Icon: Receipt,
+        title: t("noticeOwingTitle"),
+        body: owing.length === 1 ? t("arrivalsOwe", { count: owing.length, amount: formatMoney(due) }) : t("arrivalsOwePlural", { count: owing.length, amount: formatMoney(due) }),
+        action: { label: t("noticeTakePayment"), href: "/checkin" },
+      });
     }
     (devicesQ.data?.data ?? []).forEach((d) => {
-      if (!d.lastSeenAt || d.lastSeenAt.slice(0, 10) <= dayShift(TODAY, -7)) items.push({ text: t("deviceNotSeen", { name: d.name }), href: "/settings/devices", tone: "info" });
+      if (!d.lastSeenAt || d.lastSeenAt.slice(0, 10) <= dayShift(TODAY, -7)) items.push({
+        tone: "info", Icon: WifiOff,
+        title: t("noticeDeviceTitle"),
+        body: t("deviceNotSeen", { name: d.name }),
+        // Only if the device has ever checked in. "Never seen" has no moment.
+        at: d.lastSeenAt ?? undefined,
+        action: { label: t("noticeManage"), href: "/settings/devices" },
+      });
     });
     return items;
   }, [resources, products, bookings, orders, devicesQ.data, t]);
@@ -723,42 +785,58 @@ export default function DashboardPage() {
                   </span>
                 )}
               </div>
-              {/* Each notice is its own bordered, tone-tinted box with a
-                  severity glyph, as the reference draws them. The reference
-                  also carries a bold title, a description and a timestamp per
-                  notice; these items have none of those — one sentence and a
-                  link is the whole record — so the structure is matched and
-                  the missing fields are left out rather than invented. */}
+              {/* The reference's notice anatomy, now that the items can carry
+                  it: a glyph, a bold title with the moment beside it, the
+                  description under, and the action as a link at the bottom.
+                  The glyph is picked per RULE, not per tone — a cash variance,
+                  a dead device and a closing sales window are different kinds
+                  of problem and the icon is the cheapest way to say which
+                  before anyone reads a word. Tone still comes off severity.
+                  The timestamp appears only where the record has one; a
+                  waitlist depth is a live count, not an event. */}
               {attention.length === 0 ? (
                 <p className="text-sm text-success">{t("allClear")}</p>
               ) : (
                 <div className="flex flex-col gap-tight">
                   {attention.map((a, i) => {
                     const warn = a.tone === "warning";
-                    const Glyph = warn ? AlertTriangle : Info;
                     return (
-                      <button
+                      <div
                         key={i}
-                        type="button"
-                        // Declared, not inferred: this is a whole sentence in a
-                        // clickable box, so it takes the Body role rather than
-                        // the Button role. The type audit reads this attribute
-                        // instead of guessing from chrome and word count.
-                        data-type-role="body"
-                        onClick={() => a.href && router.push(a.href)}
                         className={cn(
-                          "group flex w-full items-start gap-tight rounded-md border p-comfortable text-left text-sm transition-colors duration-quick",
-                          warn
-                            ? "border-warning/25 bg-warning/5 hover:border-warning/45"
-                            : "border-line bg-subtle/40 hover:border-strong",
+                          "rounded-md border p-comfortable transition-colors duration-quick",
+                          warn ? "border-warning/25 bg-warning/5" : "border-line bg-subtle/40",
                         )}
                       >
-                        <Glyph size={16} strokeWidth={1.5} className={cn("mt-0.5 shrink-0", warn ? "text-warning" : "text-muted")} />
-                        <span className="min-w-0 flex-1">{a.text}</span>
-                        {a.href && (
-                          <ArrowRight size={14} strokeWidth={1.5} className="mt-0.5 shrink-0 text-muted transition-colors duration-quick group-hover:text-fg" />
-                        )}
-                      </button>
+                        <div className="flex items-start gap-tight">
+                          <a.Icon size={16} strokeWidth={1.5} className={cn("mt-0.5 shrink-0", warn ? "text-warning" : "text-muted")} />
+                          <div className="min-w-0 flex-1">
+                            {/* Title and moment share a baseline and wrap
+                                together — at 363px a long resource name has to
+                                be able to take the line without shoving the
+                                timestamp out of the card. */}
+                            <p className="flex flex-wrap items-baseline gap-x-tight gap-y-0">
+                              <span className="min-w-0 text-sm font-semibold">{a.title}</span>
+                              {a.at && <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{relTime(a.at)}</span>}
+                            </p>
+                            <p className="mt-inline text-sm text-muted">{a.body}</p>
+                            {a.action && (
+                              <button
+                                type="button"
+                                onClick={() => router.push(a.action!.href)}
+                                // Neutral, as the reference draws it: the tint
+                                // and the border already carry the severity, and
+                                // amber-on-amber is both a second shout and the
+                                // weaker contrast of the two.
+                                className="mt-tight inline-flex items-center gap-inline text-sm font-medium text-fg transition-colors duration-quick hover:text-ember"
+                              >
+                                {a.action.label}
+                                <ArrowRight size={13} strokeWidth={1.75} className="shrink-0" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
