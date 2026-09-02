@@ -68,6 +68,8 @@
   "tomorrow": "আগামীকাল ",
   "unsold": "{amount} অবিক্রীত",
   "openShifts": "এখন চলমান শিফট",
+  "operations": "পরিচালনার সংক্ষিপ্ত চিত্র",
+  "viewAll": "সব দেখুন",
   "paymentMix": "আজকের পেমেন্ট মিশ্রণ",
   "noPayments": "এখনো কোনো পেমেন্ট নেই।",
   "topProducts": "আজকের শীর্ষ প্রোডাক্ট",

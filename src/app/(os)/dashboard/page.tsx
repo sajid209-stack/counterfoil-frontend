@@ -356,7 +356,12 @@ export default function DashboardPage() {
       // 12-minute-old event below a 55-minute-old one. Ordering orders among
       // themselves hid this; merging two sources exposes it.
       .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
-      .slice(0, 6)
+      // Eight, not six: the feed moved from a short slot under the session
+      // list to the tall right-hand slot, and six rows left it ending 169px
+      // short of the column beside it. The reference's two columns finish
+      // level, which is most of why the page reads as settled rather than
+      // ragged.
+      .slice(0, 8)
       .map((e) => ({ ...e, rel: rel(e.at) }));
   }, [orders, customers, activityFilter, t]);
 
@@ -475,7 +480,7 @@ export default function DashboardPage() {
       }
     >
       {loading ? (
-        <div className="grid grid-cols-1 gap-tight min-[420px]:grid-cols-2 xl:grid-cols-4" aria-busy="true">
+        <div className="grid grid-cols-1 gap-major min-[420px]:grid-cols-2 xl:grid-cols-4" aria-busy="true">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className={`${card} animate-pulse p-section`}><div className="h-3 w-1/2 rounded-xs bg-line" /><div className="mt-tight h-8 w-2/3 rounded-xs bg-line" /></div>
           ))}
@@ -512,7 +517,7 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-tight min-[420px]:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-major min-[420px]:grid-cols-2 xl:grid-cols-4">
           {/* Aura stat-tile anatomy, measured off the reference: the tinted
               icon square and the delta pill share the top row (pill hard
               right), the label sits under them, then the figure, then one
@@ -560,10 +565,12 @@ export default function DashboardPage() {
       )}
 
       {!loading && (
-        <div className="mt-major grid gap-tight lg:grid-cols-3">
-          {/* Left ⅔ — revenue trend, then Today's sessions (management, never
-              selling) + activity */}
-          <div className="flex min-w-0 flex-col gap-tight lg:col-span-2">
+        <>
+        <div className="mt-wide grid gap-wide lg:grid-cols-3">
+          {/* Left ⅔ — the trend, then the operational strip, then the ranked
+              list. The reference's left column reads big picture → today's
+              state → detail, top to bottom. */}
+          <div className="flex min-w-0 flex-col gap-wide lg:col-span-2">
             <div className={`${card} p-major`}>
               <div className="flex flex-wrap items-start justify-between gap-tight">
                 <div className="min-w-0">
@@ -604,104 +611,179 @@ export default function DashboardPage() {
                 />
               </div>
             </div>
-
-            <div className={card}>
-              <p className="type-label border-b border-line px-section py-tight text-[11px] text-muted">{t("todaysSessions")}</p>
-              {sessions.length === 0 ? (
-                <p className="px-section py-major text-[13px] text-muted">{t("noMoreSessions")}</p>
-              ) : (
-                sessions.map((u) => {
-                  const open = openSession === u.key;
-                  const list = sessionBookings(u);
-                  return (
-                    <div key={u.key} className="border-b border-line last:border-0">
-                      {/* Wraps rather than crushes. The row carries a time, a
-                          name, an occupancy and two actions; at 320px those
-                          fixed widths leave the name nothing, and a session
-                          row without the session is not a row. The name keeps
-                          a floor and the meta drops to a second line. */}
-                      <div className="flex min-h-12 flex-wrap items-center gap-x-section gap-y-inline px-section py-tight">
-                        <button type="button" aria-label={t("bookings")} onClick={() => setOpenSession(open ? null : u.key)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-muted hover:text-fg">
-                          {open ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}
-                        </button>
-                        <span className="w-12 shrink-0 font-mono text-sm tabular-nums">{u.time}</span>
-                        <span className="min-w-[9rem] flex-1 truncate text-sm">{u.label}{u.who ? <span className="text-muted"> · {u.who}</span> : null}</span>
-                        {u.cap > 1 && (
-                          <span className="flex shrink-0 items-center gap-tight">
-                            <span className="whitespace-nowrap font-mono text-[12px] tabular-nums text-muted">{u.sold}/{u.cap}</span>
-                            <span className="h-0.5 w-16 overflow-hidden rounded-full bg-line"><span className={`block h-full ${u.sold / u.cap >= 0.8 ? "bg-ember" : "bg-strong"}`} style={{ width: `${(u.sold / u.cap) * 100}%` }} /></span>
-                          </span>
-                        )}
-                        {u.state !== "OPEN" && (
-                          <span className="shrink-0 rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight font-mono text-[10px] text-muted dark:bg-[repeating-linear-gradient(45deg,#3a3a36,#3a3a36_2px,transparent_2px,transparent_5px)]">{t("full")}</span>
-                        )}
-                        {u.adjustable && (
-                          <button type="button" onClick={() => setCapModal({ product: u.product, value: u.product.schedule?.dailyCapacity ?? u.product.schedule?.capacityPerSession ?? 0 })} className="shrink-0 text-[12px] text-muted hover:text-fg">{t("adjust")}</button>
-                        )}
-                        {/* Cancelling closes a scheduled session; a booked resource
-                            hour is cancelled by releasing its booking, not here. */}
-                        {u.adjustable && (
-                          <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="shrink-0 text-[12px] text-danger hover:opacity-80">{t("cancel")}</button>
-                        )}
-                      </div>
-                      {open && (
-                        <div className="border-t border-line bg-subtle px-section py-tight">
-                          {list.length === 0 ? (
-                            <p className="text-[12px] text-muted">{t("noBookingsOnSession")}</p>
-                          ) : (
-                            list.map((b) => (
-                              <div key={b.id} className="flex h-9 items-center gap-section text-[13px]">
-                                <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted">{b.orderId}</span>
-                                <span className="font-mono text-[12px] tabular-nums">{t("partyLine", { size: b.partySize })}</span>
-                                <span className="font-mono text-[12px] tabular-nums text-muted">{t("checkedInLine", { count: b.checkedIn ?? 0 })}</span>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      )}
+            {/* The reference groups the small operational readouts into one
+                strip in the wide column rather than stacking them down the
+                narrow rail. Same three readouts, same numbers — Open shifts,
+                Payment mix, Idle capacity — but at two-thirds width they get
+                room to be read side by side, and the rail is freed for the two
+                panels a manager dwells on. Nothing was dropped to achieve it. */}
+            <div className={`${card} p-major`}>
+              <div className="mb-section flex items-baseline justify-between gap-tight">
+                <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("operations")}</h2>
+                <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{t("today")}</span>
+              </div>
+              {/* The three panels do not want equal widths. A shift is a name and
+                  a clock, the mix is four short bars, but an idle row carries a
+                  product name — and products here are called things like "Grand
+                  Heritage Architectural Walking Tour of Old Dhaka". Splitting the
+                  strip in equal thirds truncated those to "17:00 Gra…", which is
+                  not a session anyone can identify. Weighting the columns gives
+                  the one column with prose the room prose needs. */}
+              <div className="grid gap-major md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
+                <div className="min-w-0">
+                  <p className="type-label mb-tight text-[11px] text-muted">{t("openShifts")}</p>
+                  {/* Mock shift record — the Shift entity is a backend-lane item. */}
+                  {/* Stacked, not a justified row: at this width the name and the
+                      figures collided and "Gate" wrapped onto a line by itself. */}
+                  <p className="truncate text-[13px]">Nadia Islam · Fort Main Gate</p>
+                  <p className="mt-0.5 font-mono text-[12px] tabular-nums text-muted">3:24 · ৳47,850</p>
+                </div>
+                <div className="min-w-0 md:border-l md:border-line md:pl-major">
+                  <p className="type-label mb-tight text-[11px] text-muted">{t("paymentMix")}</p>
+                  {mix.length === 0 ? <p className="text-[13px] text-muted">{t("noPayments")}</p> : mix.map((m) => (
+                    <div key={m.label} className="mb-tight last:mb-0">
+                      <div className="flex justify-between gap-tight text-[12px]"><span className="min-w-0 truncate">{m.label}</span><span className="shrink-0 whitespace-nowrap font-mono tabular-nums">{formatMoney(m.amount)}</span></div>
+                      <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-ember" style={{ width: `${(m.amount / mixMax) * 100}%` }} /></div>
                     </div>
-                  );
-                })
-              )}
-              {/* The hours that did not earn a row still exist — say so, and
-                  send the manager where they can actually be seen. */}
-              {(freeSlots > 0 || hiddenCount > 0) && (
-                <button
-                  type="button"
-                  onClick={() => router.push("/calendar")}
-                  className="flex min-h-11 w-full items-center gap-tight border-t border-line px-section text-left text-[12px] text-muted hover:text-ember"
-                >
-                  <span className="min-w-0 flex-1 truncate">
-                    {hiddenCount > 0 ? t("andMoreSessions", { count: hiddenCount }) : null}
-                    {hiddenCount > 0 && freeSlots > 0 ? " · " : null}
-                    {freeSlots > 0 ? (freeSlots === 1 ? t("freeSlot", { count: freeSlots }) : t("freeSlots", { count: freeSlots })) : null}
-                  </span>
-                  <span className="shrink-0 whitespace-nowrap">{t("viewCalendar")} →</span>
-                </button>
+                  ))}
+                </div>
+                <div className="min-w-0 md:border-l md:border-line md:pl-major">
+                  <p className="type-label mb-tight text-[11px] text-muted">{t("idleCapacity")}</p>
+                  {idle.length === 0 ? (
+                    <p className="text-[13px] text-muted">{t("nothingUnderFill")}</p>
+                  ) : (
+                    idle.map((x, i) => (
+                      // "৳32,400.00 unsold" on all four rows spent a third of the
+                      // column repeating a word the panel label already says. The
+                      // figure alone reads the same to the eye; the full phrasing
+                      // moves to the accessible name, where it is not redundant.
+                      <button key={i} type="button" onClick={() => router.push(x.href)} aria-label={`${x.text} — ${t("unsold", { amount: formatMoney(x.value) })}`} className="flex w-full items-baseline justify-between gap-tight border-b border-line py-tight text-left text-[13px] last:border-0 hover:text-ember">
+                        <span className="min-w-0 truncate">{x.text}</span>
+                        <span className="shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums text-muted">{formatMoney(x.value)}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className={`${card} p-major`}>
+              <div className="mb-comfortable flex items-baseline justify-between gap-tight">
+                <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("topProducts")}</h2>
+                <button type="button" onClick={() => router.push("/reports/sales")} className="shrink-0 whitespace-nowrap text-[12px] text-muted transition-colors duration-quick hover:text-fg">{t("viewAll")}</button>
+              </div>
+              {/* The reference's "Top verticals" row: icon square, name and
+                  money on the first line, then a full-width bar with the
+                  trailing figure at its end. The bar is the point — a ranked
+                  list of numbers makes you compare digits; a bar makes the
+                  ranking visible without reading any of them. */}
+              {top.length === 0 ? <p className="text-[13px] text-muted">{t("nothingSold")}</p> : (
+                <div className="flex flex-col gap-comfortable">
+                  {top.map(([name, row]) => (
+                    <div key={name} className="flex items-center gap-tight">
+                      {/* 1px line, not just a fill: --color-subtle and
+                          --color-card are the SAME value in dark, so a bare
+                          tinted square has no edge there and the glyph floats.
+                          Same fix ProductThumb needed. */}
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-line bg-subtle text-muted">
+                        <Package size={16} strokeWidth={1.5} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline justify-between gap-tight text-[13px]">
+                          <span className="min-w-0 truncate">{name}</span>
+                          <span className="shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums">{formatMoney(row.rev)}</span>
+                        </div>
+                        <div className="mt-inline flex items-center gap-tight">
+                          <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
+                            <span className="block h-full bg-ember" style={{ width: `${topMax > 0 ? Math.max(4, (row.rev / topMax) * 100) : 0}%` }} />
+                          </span>
+                          <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-muted">{t("qtyTimes", { qty: row.qty })}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
+          </div>
 
+          {/* Right ⅓ — exactly two panels, as the reference has it: what
+              needs a decision, and what just happened. Five stacked cards
+              made the rail a dumping ground, and nothing in it read as
+              important because everything was the same size. */}
+          <div className="flex min-w-0 flex-col gap-wide">
+            <div className={`${card} p-major`}>
+              {/* The reference's Notices card: a leading icon, the title at
+                  reading size, and a count badge — not a small-caps label. */}
+              <div className="mb-comfortable flex items-center gap-tight">
+                <Megaphone size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
+                <h2 className="min-w-0 flex-1 truncate text-base font-semibold tracking-[-0.4px]">{t("needsAttention")}</h2>
+                {attention.length > 0 && (
+                  <span className="shrink-0 rounded-full bg-subtle px-tight py-0.5 font-mono text-[11px] tabular-nums text-muted">
+                    {attention.length}
+                  </span>
+                )}
+              </div>
+              {/* Each notice is its own bordered, tone-tinted box with a
+                  severity glyph, as the reference draws them. The reference
+                  also carries a bold title, a description and a timestamp per
+                  notice; these items have none of those — one sentence and a
+                  link is the whole record — so the structure is matched and
+                  the missing fields are left out rather than invented. */}
+              {attention.length === 0 ? (
+                <p className="text-[13px] text-success">{t("allClear")}</p>
+              ) : (
+                <div className="flex flex-col gap-tight">
+                  {attention.map((a, i) => {
+                    const warn = a.tone === "warning";
+                    const Glyph = warn ? AlertTriangle : Info;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => a.href && router.push(a.href)}
+                        className={cn(
+                          "group flex w-full items-start gap-tight rounded-md border p-comfortable text-left text-[13px] transition-colors duration-quick",
+                          warn
+                            ? "border-warning/25 bg-warning/5 hover:border-warning/45"
+                            : "border-line bg-subtle/40 hover:border-strong",
+                        )}
+                      >
+                        <Glyph size={16} strokeWidth={1.5} className={cn("mt-0.5 shrink-0", warn ? "text-warning" : "text-muted")} />
+                        <span className="min-w-0 flex-1">{a.text}</span>
+                        {a.href && (
+                          <ArrowRight size={14} strokeWidth={1.5} className="mt-0.5 shrink-0 text-muted transition-colors duration-quick group-hover:text-fg" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
             <div className={card}>
               {/* Header at reading size, as the reference sets it — this and
                   Notices are the two panels a manager actually reads, so they
                   get a heading rather than a small-caps field label. The filter
                   sits on the heading row, where the reference puts it. */}
               <div className="flex items-baseline justify-between gap-tight px-major pb-tight pt-major">
-                <h2 className="min-w-0 truncate text-[15px] font-semibold">{t("liveActivity")}</h2>
+                <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("liveActivity")}</h2>
                 {/* A native select, not a bespoke popover: it is one control,
                     it names the active filter instead of hiding it behind the
                     word "Filter", and it arrives keyboard- and screen-reader-
                     correct on a touch device without a line of focus-trap
-                    code. bg-card rather than transparent because the dropdown
-                    list inherits the control's background — transparent
-                    renders dark-on-dark in dark mode. */}
+                    code. The control is transparent and the BACKGROUND SITS ON
+                    THE OPTIONS: card-surface is white at 72%, so an opaque
+                    bg-card control read as a white box floating in the header,
+                    while a transparent one would drop the popup to
+                    dark-on-dark. Painting the options directly satisfies both —
+                    the control disappears into the card, the list stays
+                    legible in either theme. */}
                 <div className="relative flex shrink-0 items-center text-muted focus-within:text-fg hover:text-fg">
                   <ListFilter size={13} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-0" />
                   <select
                     aria-label={t("filterActivity")}
                     value={activityFilter}
                     onChange={(e) => setActivityFilter(e.target.value as ActivityFilter)}
-                    className="cursor-pointer appearance-none rounded-xs bg-card py-inline pl-[19px] pr-0 text-[12px] text-current outline-none transition-colors duration-quick"
+                    className="cursor-pointer appearance-none rounded-xs bg-transparent py-inline pl-[19px] pr-0 text-[12px] text-current outline-none transition-colors duration-quick [&>option]:bg-card [&>option]:text-fg"
                   >
                     <option value="all">{t("filterAll")}</option>
                     <option value="sales">{t("filterSales")}</option>
@@ -756,129 +838,92 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right ⅓ — priority order */}
-          <div className="flex min-w-0 flex-col gap-tight">
-            <div className={`${card} p-major`}>
-              {/* The reference's Notices card: a leading icon, the title at
-                  reading size, and a count badge — not a small-caps label. */}
-              <div className="mb-comfortable flex items-center gap-tight">
-                <Megaphone size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
-                <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold">{t("needsAttention")}</h2>
-                {attention.length > 0 && (
-                  <span className="shrink-0 rounded-full bg-subtle px-tight py-0.5 font-mono text-[11px] tabular-nums text-muted">
-                    {attention.length}
-                  </span>
+        {/* Full-width closer, where the reference puts its table: the session
+            list is the widest thing on the page and was being squeezed into
+            two thirds of it. */}
+        <div className="mt-wide">
+              <div className={card}>
+                <div className="flex items-baseline justify-between gap-tight border-b border-line px-major py-comfortable">
+                <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("todaysSessions")}</h2>
+                <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{dateLabel}</span>
+              </div>
+                {sessions.length === 0 ? (
+                  <p className="px-section py-major text-[13px] text-muted">{t("noMoreSessions")}</p>
+                ) : (
+                  sessions.map((u) => {
+                    const open = openSession === u.key;
+                    const list = sessionBookings(u);
+                    return (
+                      <div key={u.key} className="border-b border-line last:border-0">
+                        {/* Wraps rather than crushes. The row carries a time, a
+                            name, an occupancy and two actions; at 320px those
+                            fixed widths leave the name nothing, and a session
+                            row without the session is not a row. The name keeps
+                            a floor and the meta drops to a second line. */}
+                        <div className="flex min-h-12 flex-wrap items-center gap-x-section gap-y-inline px-section py-tight">
+                          <button type="button" aria-label={t("bookings")} onClick={() => setOpenSession(open ? null : u.key)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-muted hover:text-fg">
+                            {open ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}
+                          </button>
+                          <span className="w-12 shrink-0 font-mono text-sm tabular-nums">{u.time}</span>
+                          <span className="min-w-[9rem] flex-1 truncate text-sm">{u.label}{u.who ? <span className="text-muted"> · {u.who}</span> : null}</span>
+                          {u.cap > 1 && (
+                            <span className="flex shrink-0 items-center gap-tight">
+                              <span className="whitespace-nowrap font-mono text-[12px] tabular-nums text-muted">{u.sold}/{u.cap}</span>
+                              <span className="h-0.5 w-16 overflow-hidden rounded-full bg-line"><span className={`block h-full ${u.sold / u.cap >= 0.8 ? "bg-ember" : "bg-strong"}`} style={{ width: `${(u.sold / u.cap) * 100}%` }} /></span>
+                            </span>
+                          )}
+                          {u.state !== "OPEN" && (
+                            <span className="shrink-0 rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight font-mono text-[10px] text-muted dark:bg-[repeating-linear-gradient(45deg,#3a3a36,#3a3a36_2px,transparent_2px,transparent_5px)]">{t("full")}</span>
+                          )}
+                          {u.adjustable && (
+                            <button type="button" onClick={() => setCapModal({ product: u.product, value: u.product.schedule?.dailyCapacity ?? u.product.schedule?.capacityPerSession ?? 0 })} className="shrink-0 text-[12px] text-muted hover:text-fg">{t("adjust")}</button>
+                          )}
+                          {/* Cancelling closes a scheduled session; a booked resource
+                              hour is cancelled by releasing its booking, not here. */}
+                          {u.adjustable && (
+                            <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="shrink-0 text-[12px] text-danger hover:opacity-80">{t("cancel")}</button>
+                          )}
+                        </div>
+                        {open && (
+                          <div className="border-t border-line bg-subtle px-section py-tight">
+                            {list.length === 0 ? (
+                              <p className="text-[12px] text-muted">{t("noBookingsOnSession")}</p>
+                            ) : (
+                              list.map((b) => (
+                                <div key={b.id} className="flex h-9 items-center gap-section text-[13px]">
+                                  <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted">{b.orderId}</span>
+                                  <span className="font-mono text-[12px] tabular-nums">{t("partyLine", { size: b.partySize })}</span>
+                                  <span className="font-mono text-[12px] tabular-nums text-muted">{t("checkedInLine", { count: b.checkedIn ?? 0 })}</span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+                {/* The hours that did not earn a row still exist — say so, and
+                    send the manager where they can actually be seen. */}
+                {(freeSlots > 0 || hiddenCount > 0) && (
+                  <button
+                    type="button"
+                    onClick={() => router.push("/calendar")}
+                    className="flex min-h-11 w-full items-center gap-tight border-t border-line px-section text-left text-[12px] text-muted hover:text-ember"
+                  >
+                    <span className="min-w-0 flex-1 truncate">
+                      {hiddenCount > 0 ? t("andMoreSessions", { count: hiddenCount }) : null}
+                      {hiddenCount > 0 && freeSlots > 0 ? " · " : null}
+                      {freeSlots > 0 ? (freeSlots === 1 ? t("freeSlot", { count: freeSlots }) : t("freeSlots", { count: freeSlots })) : null}
+                    </span>
+                    <span className="shrink-0 whitespace-nowrap">{t("viewCalendar")} →</span>
+                  </button>
                 )}
               </div>
-              {/* Each notice is its own bordered, tone-tinted box with a
-                  severity glyph, as the reference draws them. The reference
-                  also carries a bold title, a description and a timestamp per
-                  notice; these items have none of those — one sentence and a
-                  link is the whole record — so the structure is matched and
-                  the missing fields are left out rather than invented. */}
-              {attention.length === 0 ? (
-                <p className="text-[13px] text-success">{t("allClear")}</p>
-              ) : (
-                <div className="flex flex-col gap-tight">
-                  {attention.map((a, i) => {
-                    const warn = a.tone === "warning";
-                    const Glyph = warn ? AlertTriangle : Info;
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => a.href && router.push(a.href)}
-                        className={cn(
-                          "group flex w-full items-start gap-tight rounded-md border p-comfortable text-left text-[13px] transition-colors duration-quick",
-                          warn
-                            ? "border-warning/25 bg-warning/5 hover:border-warning/45"
-                            : "border-line bg-subtle/40 hover:border-strong",
-                        )}
-                      >
-                        <Glyph size={16} strokeWidth={1.5} className={cn("mt-0.5 shrink-0", warn ? "text-warning" : "text-muted")} />
-                        <span className="min-w-0 flex-1">{a.text}</span>
-                        {a.href && (
-                          <ArrowRight size={14} strokeWidth={1.5} className="mt-0.5 shrink-0 text-muted transition-colors duration-quick group-hover:text-fg" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className={`${card} p-major`}>
-              <p className="type-label mb-tight text-[11px] text-muted">{t("idleCapacity")}</p>
-              {idle.length === 0 ? (
-                <p className="text-[13px] text-muted">{t("nothingUnderFill")}</p>
-              ) : (
-                idle.map((x, i) => (
-                  <button key={i} type="button" onClick={() => router.push(x.href)} className="flex w-full items-center justify-between gap-tight border-b border-line py-tight text-left text-[13px] last:border-0 hover:text-ember">
-                    <span className="min-w-0 truncate">{x.text}</span>
-                    <span className="shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums text-muted">{t("unsold", { amount: formatMoney(x.value) })}</span>
-                  </button>
-                ))
-              )}
-            </div>
-
-            <div className={`${card} p-major`}>
-              <p className="type-label mb-tight text-[11px] text-muted">{t("openShifts")}</p>
-              {/* Mock shift record — the Shift entity is a backend-lane item. */}
-              <div className="flex items-center justify-between text-[13px]">
-                <span>Nadia Islam · Fort Main Gate</span>
-                <span className="font-mono text-[12px] tabular-nums text-muted">3:24 · ৳47,850</span>
-              </div>
-            </div>
-
-            <div className={`${card} p-major`}>
-              <p className="type-label mb-tight text-[11px] text-muted">{t("paymentMix")}</p>
-              {mix.length === 0 ? <p className="text-[13px] text-muted">{t("noPayments")}</p> : mix.map((m) => (
-                <div key={m.label} className="mb-tight last:mb-0">
-                  <div className="flex justify-between gap-tight text-[12px]"><span className="min-w-0 truncate">{m.label}</span><span className="shrink-0 whitespace-nowrap font-mono tabular-nums">{formatMoney(m.amount)}</span></div>
-                  <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-ember" style={{ width: `${(m.amount / mixMax) * 100}%` }} /></div>
-                </div>
-              ))}
-            </div>
-
-            {/* Useful, not urgent — below the fold. */}
-            <div className={`${card} p-major`}>
-              <p className="type-label mb-tight text-[11px] text-muted">{t("topProducts")}</p>
-              {/* The reference's "Top verticals" row: icon square, name and
-                  money on the first line, then a full-width bar with the
-                  trailing figure at its end. The bar is the point — a ranked
-                  list of numbers makes you compare digits; a bar makes the
-                  ranking visible without reading any of them. */}
-              {top.length === 0 ? <p className="text-[13px] text-muted">{t("nothingSold")}</p> : (
-                <div className="flex flex-col gap-comfortable">
-                  {top.map(([name, row]) => (
-                    <div key={name} className="flex items-center gap-tight">
-                      {/* 1px line, not just a fill: --color-subtle and
-                          --color-card are the SAME value in dark, so a bare
-                          tinted square has no edge there and the glyph floats.
-                          Same fix ProductThumb needed. */}
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-line bg-subtle text-muted">
-                        <Package size={16} strokeWidth={1.5} />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline justify-between gap-tight text-[13px]">
-                          <span className="min-w-0 truncate">{name}</span>
-                          <span className="shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums">{formatMoney(row.rev)}</span>
-                        </div>
-                        <div className="mt-inline flex items-center gap-tight">
-                          <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
-                            <span className="block h-full bg-ember" style={{ width: `${topMax > 0 ? Math.max(4, (row.rev / topMax) * 100) : 0}%` }} />
-                          </span>
-                          <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-muted">{t("qtyTimes", { qty: row.qty })}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
+        </>
       )}
 
       {/* Adjust capacity — the decision a manager makes when a session is full. */}

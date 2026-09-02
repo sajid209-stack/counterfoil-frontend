@@ -133,6 +133,12 @@
   --spacing-comfortable: 12px;
   --spacing-section: 16px;
   --spacing-major: 24px;
+  /* The gutter between dashboard regions. Measured off the Aura reference
+     (counterfoilos.lovable.app): 24px between the stat tiles, 32px between the
+     two body columns and between stacked cards. 24 is the inside of a group,
+     32 is the space between groups — the step is what makes the page read as
+     regions rather than one undifferentiated stack. */
+  --spacing-wide: 32px;
   --spacing-hero: 48px;
 
   /* ── Radii — ONLY these four exist in the entire system ────────────────

@@ -68,6 +68,8 @@
   "tomorrow": "Tomorrow ",
   "unsold": "{amount} unsold",
   "openShifts": "Open shifts now",
+  "operations": "Operations at a glance",
+  "viewAll": "View all",
   "paymentMix": "Payment mix today",
   "noPayments": "No payments yet.",
   "topProducts": "Top products today",

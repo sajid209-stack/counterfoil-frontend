@@ -1373,3 +1373,98 @@ Driven in headless Chromium (harness in the scratchpad, not the repo) —
 - The demo clock is still `2026-07-29`, so "185 d ago" appears at the bottom of
   the Customers filter once the five recent additions run out. Honest, and the
   seed re-anchoring remains the owner's call.
+
+---
+
+## Dashboard layout (2026-09-02) — organised to the Aura reference's skeleton
+
+Owner asked for the dashboard's sections and cards to be organised like
+counterfoilos.lovable.app, researched properly rather than eyeballed. The
+reference was rendered in a headless browser and **measured**, and those numbers
+became the acceptance criteria.
+
+### What the reference actually does (measured at 1440)
+
+Content column 1120 inside 32px page padding. **Two grids:** four 262px stat
+tiles at **24px** gap, and a body grid of **three 352px columns at 32px** gap
+with the main content spanning two and the rail spanning one. Cards are radius
+12, `rgba(255,255,255,.72)`, a 1px hairline, **no shadow** — which the Aura run
+had already matched exactly. Section titles are **16px/600 at -0.4px**, each
+with exactly **one** right-hand affordance: a scope chip (`Today`,
+`This month`), a count badge (`4`), or an action (`Filter`, `View all`).
+
+Order down the page: stat tiles → chart (2) + Notices (1) → ops strip (2) +
+Activity (1, tall) → a ranked list (2) → **one full-width table**. Its two
+columns finish level.
+
+### The gap was organisation, not styling
+
+| | Reference | Was | Now |
+|---|---|---|---|
+| Stat-tile gap | 24px | **8px** | 24px |
+| Body / stack gap | 32px | **8px** | 32px |
+| Right rail | 2 cards | **5 cards** | 2 cards |
+| Full-width closer | 1 | **0** | 1 |
+| Section titles | 16/600/-0.4 | 15/600/-0.16 | 16/600/-0.4 |
+| Column height delta | 0 | — | 22px |
+
+- **The 8px gutters were the whole problem.** Everything was crammed into one
+  undifferentiated stack, so nothing read as a region. Added
+  `--spacing-wide: 32px` — 24 is the inside of a group, 32 is between groups,
+  and it is the step between them that makes regions legible.
+- **The rail had become a dumping ground**: Needs attention, Idle capacity,
+  Open shifts, Payment mix and Top products stacked in 379px, all the same
+  size, so nothing in it read as important. It is now the reference's two
+  panels — what needs a decision, and what just happened.
+- **Top products** moved to the wide column (the reference's "Top verticals"
+  slot). **Live activity** moved from the bottom of the left column to the tall
+  rail slot, and its feed went 6 → 8 rows, which is what closes the columns to
+  within 22px.
+- **Today's sessions** became the full-width closer. It is the widest thing on
+  the page and was being squeezed into two thirds of it.
+- **Operations at a glance** is new only as a container: Open shifts, Payment
+  mix and Idle capacity keep every number they had, laid side by side in the
+  wide column instead of stacked down the narrow one. **Nothing was dropped to
+  free the rail.**
+
+### Three defects the metrics could not see
+
+The conformance harness passed 22/22 while the page still had visible faults —
+they were found by rendering it and looking.
+
+1. **Equal thirds truncated the idle rows to `17:00 Gra…`.** Products here are
+   called things like "Grand Heritage Architectural Walking Tour of Old Dhaka".
+   The strip is now weighted `0.85fr / 1fr / 1.35fr` — prose gets the room prose
+   needs.
+2. **`৳32,400.00 unsold` on all four idle rows** spent a third of the column
+   repeating a word the panel label already says. The figure alone reads the
+   same; the full phrasing moved to `aria-label`, where it is not redundant.
+3. **The activity filter painted a white box on the card.** `card-surface` is
+   white at **72%**, so an opaque `bg-card` control did not disappear into it —
+   but a transparent one drops the option popup to dark-on-dark. Fixed by
+   painting the **options** rather than the control. A check now asserts that no
+   borderless control's background differs from its card's.
+
+### Verification
+
+Two headless-Chromium harnesses, **23 + 41 checks, all passing**: grid gaps and
+column counts against the reference's measured values, rail card count, one
+full-width closer, every card radius 12, every `<h2>` 16px/600, column balance
+within 180px, cards carry a transition, no control paints a box, and — at
+**320 · 390 · 768 · 1024 · 1280 · 1440**, light and dark, en and bn — no page
+x-scroll, no hidden overflow inside `main`, no silently clipped text and no
+console errors. `tsc` and `npm run build` clean; lint holds at the 5 pre-existing
+`exhaustive-deps` warnings. i18n parity across all **29** namespaces: 0 missing,
+0 extra.
+
+### Deliberately not copied
+
+The reference's stat tiles are Total revenue · Counterfoils issued · Active
+customers · AOV. Counterfoil's stay **Revenue · Capacity sold · Arrived ·
+Booked ahead**, because nothing is sold from OS and capacity is the distinctive
+angle — the organisation was the ask, not the content. Its 1M/3M/6M/1Y ranges
+still cannot be copied either: the seed holds 31 days.
+
+**Note for the next session:** `npx prettier` was run once on the dashboard and
+reformatted the whole file (1093 insertions against a ~340-line change). There
+is **no prettier config in this repo** — do not run it.
