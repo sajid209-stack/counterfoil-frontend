@@ -86,5 +86,6 @@
   "lastDays": "{count}D",
   "thisPeriod": "This period",
   "previousPeriod": "Previous period",
-  "lastDaysLong": "Last {count} days"
+  "lastDaysLong": "Last {count} days",
+  "viewAllActivity": "View all activity"
 }

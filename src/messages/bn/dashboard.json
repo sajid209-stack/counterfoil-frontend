@@ -86,5 +86,6 @@
   "lastDays": "{count}দি",
   "thisPeriod": "এই সময়কাল",
   "previousPeriod": "পূর্ববর্তী সময়কাল",
-  "lastDaysLong": "গত {count} দিন"
+  "lastDaysLong": "গত {count} দিন",
+  "viewAllActivity": "সব কার্যকলাপ দেখুন"
 }

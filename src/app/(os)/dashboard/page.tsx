@@ -422,7 +422,7 @@ export default function DashboardPage() {
               line of context. We had the label beside the icon and the delta
               stranded below the number, which buried the comparison and left
               the top-right corner empty on every tile. */}
-          <div className={`${card} p-section`}>
+          <div className={`${card} p-major`}>
             <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><TrendingUp size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={revenue} then={revenuePrev} />
@@ -431,7 +431,7 @@ export default function DashboardPage() {
             <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(revenueAnimated)}</p>
             <Sparkline points={week} />
           </div>
-          <div className={`${card} p-section`}>
+          <div className={`${card} p-major`}>
             <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><Users size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={sold} then={soldPrev} />
@@ -443,7 +443,7 @@ export default function DashboardPage() {
               <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className={`block h-full ${soldPct >= 80 ? "bg-ember" : "bg-strong"}`} style={{ width: `${Math.min(100, soldPct)}%` }} /></span>
             </div>
           </div>
-          <div className={`${card} p-section`}>
+          <div className={`${card} p-major`}>
             <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><UserCheck size={18} strokeWidth={1.5} /></span>
             </div>
@@ -451,7 +451,7 @@ export default function DashboardPage() {
             <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{arrived} <span className="text-lg text-faint">{t("arrivedOf", { total: sold })}</span></p>
             <p className={`mt-tight font-mono text-[12px] tabular-nums ${noShowPct >= 30 ? "text-danger" : "text-muted"}`}>{t("noShow", { pct: noShowPct })}</p>
           </div>
-          <div className={`${card} p-section`}>
+          <div className={`${card} p-major`}>
             <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><CalendarClock size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={ahead} then={aheadPrev} />
@@ -467,7 +467,7 @@ export default function DashboardPage() {
           {/* Left ⅔ — revenue trend, then Today's sessions (management, never
               selling) + activity */}
           <div className="flex min-w-0 flex-col gap-tight lg:col-span-2">
-            <div className={`${card} p-section`}>
+            <div className={`${card} p-major`}>
               <div className="flex flex-wrap items-start justify-between gap-tight">
                 <div className="min-w-0">
                   <p className="type-label text-[11px] text-muted">{t("revenueTrend")}</p>
@@ -585,7 +585,10 @@ export default function DashboardPage() {
             </div>
 
             <div className={card}>
-              <p className="type-label border-b border-line px-section py-tight text-[11px] text-muted">{t("liveActivity")}</p>
+              {/* Header at reading size, as the reference sets it — this and
+                  Notices are the two panels a manager actually reads, so they
+                  get a heading rather than a small-caps field label. */}
+              <h2 className="px-major pb-tight pt-major text-[15px] font-semibold">{t("liveActivity")}</h2>
               {/* The reference's activity row: a tinted round icon badge, then
                   two stacked lines, with the timestamp held right. Every field
                   the flat row carried is still here — what/ref lead the title,
@@ -593,9 +596,14 @@ export default function DashboardPage() {
                   hierarchy scans far faster than five columns of equal weight,
                   and it stops needing to wrap at 288px. */}
               {activity.map((a) => (
-                <div key={a.id} className="flex items-start gap-tight border-b border-line px-section py-comfortable last:border-0">
-                  <span className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full ${a.isRefund ? "bg-danger/10 text-danger" : "bg-ember/10 text-ember"}`}>
-                    {a.isRefund ? <RotateCcw size={14} strokeWidth={1.5} /> : <Receipt size={14} strokeWidth={1.5} />}
+                <div key={a.id} className="flex items-start gap-section px-major py-comfortable">
+                  {/* Outlined, not filled. Measured on the reference: 32px,
+                      6px radius, card background, 1px hairline — the colour
+                      lives in the glyph, not behind it. A filled tint block
+                      per row reads as four coloured chips stacked up; an
+                      outlined badge stays quiet and lets the text lead. */}
+                  <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-sm border border-line bg-card ${a.isRefund ? "text-danger" : "text-ember"}`}>
+                    {a.isRefund ? <RotateCcw size={15} strokeWidth={1.5} /> : <Receipt size={15} strokeWidth={1.5} />}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="flex items-baseline gap-inline text-[13px]">
@@ -610,12 +618,25 @@ export default function DashboardPage() {
                   <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-faint">{a.rel}</span>
                 </div>
               ))}
+              {/* The reference closes this card with a full-width outlined
+                  button. It goes to Orders because that is genuinely where
+                  this feed comes from — every row is a sale or a refund — and
+                  a button to a page that does not exist is worse than none. */}
+              <div className="px-major pb-major pt-tight">
+                <button
+                  type="button"
+                  onClick={() => router.push("/orders")}
+                  className="min-h-9 w-full rounded-sm border border-line bg-card/60 text-sm font-medium transition-colors duration-quick hover:border-strong hover:bg-card"
+                >
+                  {t("viewAllActivity")}
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Right ⅓ — priority order */}
           <div className="flex min-w-0 flex-col gap-tight">
-            <div className={`${card} p-section`}>
+            <div className={`${card} p-major`}>
               {/* The reference's Notices card: a leading icon, the title at
                   reading size, and a count badge — not a small-caps label. */}
               <div className="mb-comfortable flex items-center gap-tight">
@@ -664,7 +685,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className={`${card} p-section`}>
+            <div className={`${card} p-major`}>
               <p className="type-label mb-tight text-[11px] text-muted">{t("idleCapacity")}</p>
               {idle.length === 0 ? (
                 <p className="text-[13px] text-faint">{t("nothingUnderFill")}</p>
@@ -678,7 +699,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className={`${card} p-section`}>
+            <div className={`${card} p-major`}>
               <p className="type-label mb-tight text-[11px] text-muted">{t("openShifts")}</p>
               {/* Mock shift record — the Shift entity is a backend-lane item. */}
               <div className="flex items-center justify-between text-[13px]">
@@ -687,7 +708,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className={`${card} p-section`}>
+            <div className={`${card} p-major`}>
               <p className="type-label mb-tight text-[11px] text-muted">{t("paymentMix")}</p>
               {mix.length === 0 ? <p className="text-[13px] text-faint">{t("noPayments")}</p> : mix.map((m) => (
                 <div key={m.label} className="mb-tight last:mb-0">
@@ -698,7 +719,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Useful, not urgent — below the fold. */}
-            <div className={`${card} p-section`}>
+            <div className={`${card} p-major`}>
               <p className="type-label mb-tight text-[11px] text-muted">{t("topProducts")}</p>
               {/* The reference's "Top verticals" row: icon square, name and
                   money on the first line, then a full-width bar with the
