@@ -48,7 +48,7 @@ function AnimatedMoney({ value, currency }: { value: number; currency: string })
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
-  return <span className="font-mono text-2xl tabular-nums">{formatMoney(shown, currency)}</span>;
+  return <span className="text-2xl">{formatMoney(shown, currency)}</span>;
 }
 
 export default function PosPage() {
@@ -619,7 +619,7 @@ export default function PosPage() {
             {query && <button type="button" onClick={() => setQuery("")} className="text-[12px] text-faint hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
-            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable font-mono text-[12px] text-ember">
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable text-[12px] text-ember">
               {t("parkedBadge", { count: parked.length })}
             </button>
           )}
@@ -627,7 +627,7 @@ export default function PosPage() {
         {/* Category chips */}
         <div className="flex gap-inline overflow-x-auto pb-inline">
           {[{ id: "all", name: t("categoryAll") }, ...categories].map((c) => (
-            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 shrink-0 rounded-sm border px-comfortable text-sm ${category === c.id ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{c.name}</button>
+            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 shrink-0 rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ember bg-ember text-white" : "border-line bg-card"}`}>{c.name}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -640,13 +640,20 @@ export default function PosPage() {
                it still helps recognition, it just stopped being the card. */
             <div className="grid grid-cols-1 gap-tight md:grid-cols-2 2xl:grid-cols-3">
               {shown.map((p) => (
-                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="flex items-center gap-comfortable overflow-hidden rounded-sm border border-line bg-card p-tight text-left transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
+                /* The price used to sit beside the text column, so at two
+                   columns on a 1024 till the name had ~96px to live in and
+                   wrapped to two lines while the subtitle truncated to
+                   "Open entry · no …". Moving it onto the subtitle's row gives
+                   the name the full width beside the thumbnail. */
+                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="card-surface flex items-center gap-comfortable overflow-hidden p-tight text-left transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
                   <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="thumb" />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="line-clamp-2 text-[15px] font-semibold leading-tight">{p.name}</span>
-                    <span className="mt-inline truncate text-[12px] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
+                    <span className="mt-inline flex items-baseline gap-tight">
+                      <span className="min-w-0 flex-1 truncate text-[12px] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
+                      <span className="shrink-0 whitespace-nowrap text-[13px] font-medium">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
+                    </span>
                   </span>
-                  <span className="shrink-0 self-end whitespace-nowrap font-mono text-[13px] tabular-nums">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
                 </button>
               ))}
               <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-sm border border-dashed border-line text-faint transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
@@ -689,22 +696,22 @@ export default function PosPage() {
               {cart.map((e) => (
                 <div key={e.id} className="flex items-start gap-tight border-b border-line pb-tight last:border-0">
                   <div className="min-w-0 flex-1 cursor-pointer" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
-                    <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap font-mono tabular-nums">{formatMoney(entryTotal(e), currency)}</span></div>
-                    <div className="font-mono text-[11px] text-faint">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
-                    {entryCoveredQty(e) > 0 && <div className="font-mono text-[11px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
-                    {(e.lineDiscountPct ?? 0) > 0 && <div className="font-mono text-[11px] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>}
-                    {entryBalance(e) > 0 && <div className="font-mono text-[11px] text-faint">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
+                    <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(entryTotal(e), currency)}</span></div>
+                    <div className="text-[11px] text-faint">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
+                    {entryCoveredQty(e) > 0 && <div className="text-[11px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
+                    {(e.lineDiscountPct ?? 0) > 0 && <div className="text-[11px] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>}
+                    {entryBalance(e) > 0 && <div className="text-[11px] text-faint">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                   </div>
                   <button
                     type="button"
                     aria-label={t("cart.lineDiscountLabel")}
                     onClick={() => setCart((c) => c.map((x) => (x.id === e.id ? { ...x, lineDiscountPct: ((x.lineDiscountPct ?? 0) + 5) % 20 } : x)))}
-                    className={`flex h-12 w-12 items-center justify-center rounded-sm border font-mono text-[11px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 ? "border-ember text-ember" : "border-line"}`}
+                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[11px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 ? "border-ember text-ember" : "border-line"}`}
                   >
                     {(e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
                   </button>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight font-mono text-[11px] active:bg-ember/10">
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight text-[11px] active:bg-ember/10">
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
@@ -721,7 +728,7 @@ export default function PosPage() {
           <div className="mb-tight flex items-center justify-between">
             <span className="text-[13px] text-muted">{t("summary.discount")}</span>
             <div className="flex items-center gap-inline">
-              {[0, 5, 10, 15].map((d) => <button key={d} type="button" onClick={() => setDiscountPct(d)} className={`h-12 min-w-12 rounded-xs border px-tight font-mono text-[12px] ${discountPct === d ? "border-inverse bg-inverse text-inverse-fg" : "border-line"}`}>{d}%</button>)}
+              {[0, 5, 10, 15].map((d) => <button key={d} type="button" onClick={() => setDiscountPct(d)} className={`h-12 min-w-12 rounded-xs border px-tight text-[13px] font-medium ${discountPct === d ? "border-ember bg-ember text-white" : "border-line"}`}>{d}%</button>)}
             </div>
           </div>
           {overLimit && (
@@ -743,7 +750,7 @@ export default function PosPage() {
           <div className="mb-tight flex items-center justify-between gap-tight">
             <span className="shrink-0 text-[13px] text-muted">{pt("list.coupon")}</span>
             {appliedCoupon ? (
-              <span className="flex min-w-0 items-center gap-inline font-mono text-[11px] text-success">
+              <span className="flex min-w-0 items-center gap-inline text-[11px] text-success">
                 <span className="truncate">{appliedCoupon.code ?? appliedCoupon.name}</span>
                 <button type="button" aria-label={pt("pos.remove")} onClick={() => { setAppliedCoupon(null); setCouponError(null); }} className="text-danger">✕</button>
               </span>
@@ -763,7 +770,7 @@ export default function PosPage() {
           <div className="mb-tight flex items-center justify-between">
             <span className="text-[13px] text-muted">{t("summary.pass")}</span>
             {pass ? (
-              <span className="flex items-center gap-inline font-mono text-[11px]">
+              <span className="flex items-center gap-inline text-[11px]">
                 <span>{t("summary.passUsage", { code: pass.code, used: creditsUsed, left: pass.remaining - creditsUsed })}</span>
                 <button type="button" aria-label={t("summary.removePass")} onClick={() => setPass(null)} className="text-danger">✕</button>
               </span>
@@ -796,14 +803,14 @@ export default function PosPage() {
             </div>
           )}
 
-          <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.subtotal")}</span><span className="font-mono">{formatMoney(subtotal, currency)}</span></div>
-          {lineDiscountTotal > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.lineDiscounts")}</span><span className="font-mono text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
-          {manualDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.discountPct", { pct: discountPct })}</span><span className="font-mono text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
-          {couponDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{appliedCoupon?.code ?? appliedCoupon?.name}</span><span className="font-mono text-danger">−{formatMoney(couponDiscount, currency)}</span></div>}
-          {memberDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span className="min-w-0 truncate">{t("summary.memberDiscount", { tier: benefit?.tierName ?? "" })}</span><span className="shrink-0 font-mono text-danger">−{formatMoney(memberDiscount, currency)}</span></div>}
-          {pointsDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.pointsSpent", { count: pointsToSpend })}</span><span className="font-mono text-danger">−{formatMoney(pointsDiscount, currency)}</span></div>}
-          {creditsValue > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.passCredits", { count: creditsUsed })}</span><span className="font-mono text-success">−{formatMoney(creditsValue, currency)}</span></div>}
-          <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.vat")}</span><span className="font-mono">{formatMoney(tax, currency)}</span></div>
+          <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.subtotal")}</span><span className="">{formatMoney(subtotal, currency)}</span></div>
+          {lineDiscountTotal > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.lineDiscounts")}</span><span className="text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
+          {manualDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.discountPct", { pct: discountPct })}</span><span className="text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
+          {couponDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{appliedCoupon?.code ?? appliedCoupon?.name}</span><span className="text-danger">−{formatMoney(couponDiscount, currency)}</span></div>}
+          {memberDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span className="min-w-0 truncate">{t("summary.memberDiscount", { tier: benefit?.tierName ?? "" })}</span><span className="shrink-0 text-danger">−{formatMoney(memberDiscount, currency)}</span></div>}
+          {pointsDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.pointsSpent", { count: pointsToSpend })}</span><span className="text-danger">−{formatMoney(pointsDiscount, currency)}</span></div>}
+          {creditsValue > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.passCredits", { count: creditsUsed })}</span><span className="text-success">−{formatMoney(creditsValue, currency)}</span></div>}
+          <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.vat")}</span><span className="">{formatMoney(tax, currency)}</span></div>
           <div className="mt-tight flex items-baseline justify-between text-lg font-medium"><span>{t("summary.total")}</span><AnimatedMoney value={total} currency={currency} /></div>
           {depositBalance > 0 && (
             <>
@@ -815,8 +822,8 @@ export default function PosPage() {
               </button>
               {balance > 0 && (
                 <>
-                  <div className="flex justify-between text-[13px]"><span>{t("summary.dueNow")}</span><span className="font-mono">{formatMoney(dueNow, currency)}</span></div>
-                  <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="font-mono">{formatMoney(balance, currency)}</span></div>
+                  <div className="flex justify-between text-[13px]"><span>{t("summary.dueNow")}</span><span className="">{formatMoney(dueNow, currency)}</span></div>
+                  <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>
                 </>
               )}
             </>
@@ -833,12 +840,12 @@ export default function PosPage() {
                 {n > 1 && (
                   <span
                     aria-hidden
-                    className="absolute inset-y-inline rounded-xs bg-inverse transition-[left] duration-quick ease-counterfoil"
+                    className="absolute inset-y-inline rounded-xs bg-ember transition-[left] duration-quick ease-counterfoil"
                     style={{ width: `calc(${pct}% - 8px)`, left: `calc(${idx * pct}% + 4px)` }}
                   />
                 )}
                 {availableMethods.map((m) => (
-                  <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[13px] transition-colors duration-quick ${method === m.value ? "font-medium text-inverse-fg" : "text-muted"}`}>{enumL.method(m.value)}</button>
+                  <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[13px] transition-colors duration-quick ${method === m.value ? "font-medium text-white" : "text-muted"}`}>{enumL.method(m.value)}</button>
                 ))}
               </div>
             );
@@ -855,7 +862,7 @@ export default function PosPage() {
       {!cartOpen && (
         <button type="button" onClick={() => setCartOpen(true)} className="fixed inset-x-tight bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 flex h-14 items-center justify-between rounded-sm bg-inverse px-section text-inverse-fg shadow-lg rail:bottom-tight lg:hidden">
           <span className="text-sm">{customer ? t("phoneSummaryCustomer", { count: cart.length, customer }) : t("phoneSummary", { count: cart.length })}</span>
-          <span className="font-mono text-sm">{t("viewCart", { amount: formatMoney(dueNow, currency) })}</span>
+          <span className="text-sm">{t("viewCart", { amount: formatMoney(dueNow, currency) })}</span>
         </button>
       )}
 
@@ -880,21 +887,21 @@ export default function PosPage() {
                   <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-10 w-10 items-center justify-center rounded-sm active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
                 </div>
 
-                <div className="rounded-sm border border-line bg-card p-section">
-                  <div className="flex justify-between text-muted"><span>{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</span><span className="font-mono text-lg">{formatMoney(dueNow, currency)}</span></div>
-                  {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-faint"><span>{t("summary.balanceAtArrival")}</span><span className="font-mono">{formatMoney(balance, currency)}</span></div>}
-                  <div className="mt-tight flex justify-between"><span>{t("cash.tendered")}</span><span className="font-mono text-lg">{formatMoney(tenderedMinor, currency)}</span></div>
+                <div className="card-surface p-section">
+                  <div className="flex justify-between text-muted"><span>{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</span><span className="text-lg">{formatMoney(dueNow, currency)}</span></div>
+                  {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-faint"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>}
+                  <div className="mt-tight flex justify-between"><span>{t("cash.tendered")}</span><span className="text-lg">{formatMoney(tenderedMinor, currency)}</span></div>
                   <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-faint"}`}>
                     <span className="text-xl">{t("cash.change")}</span>
-                    <span className="font-mono text-5xl tabular-nums">{enough ? formatMoney(changeMinor, currency) : "—"}</span>
+                    <span className="text-5xl">{enough ? formatMoney(changeMinor, currency) : "—"}</span>
                   </div>
                 </div>
 
                 {/* Quick chips: exact, then the common notes in the drawer. */}
                 <div className="mt-section flex gap-tight">
-                  <button type="button" onClick={() => setTenderTaka(String(Math.ceil(dueNow / 100)))} className="h-12 flex-1 rounded-sm border border-inverse bg-card font-mono text-sm active:bg-ember/10">{t("cash.exact")}</button>
+                  <button type="button" onClick={() => setTenderTaka(String(Math.ceil(dueNow / 100)))} className="h-12 flex-1 rounded-sm border border-inverse bg-card text-sm active:bg-ember/10">{t("cash.exact")}</button>
                   {[500, 1000, 2000].map((amt) => (
-                    <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-line bg-card font-mono text-sm active:bg-ember/10">৳{amt}</button>
+                    <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-line bg-card text-sm active:bg-ember/10">৳{amt}</button>
                   ))}
                 </div>
 
@@ -954,7 +961,7 @@ export default function PosPage() {
                 <div key={i} className="flex items-center justify-between rounded-sm border border-line p-comfortable">
                   <div>
                     <p className="text-sm font-medium">{p.name}</p>
-                    <p className="font-mono text-[12px] text-faint">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
+                    <p className="text-[12px] text-faint">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
                   </div>
                   <Button size="sm" onClick={() => resume(i)} disabled={cart.length > 0} >{t("parked.resume")}</Button>
                 </div>
@@ -977,12 +984,12 @@ export default function PosPage() {
             <div className="rounded-sm bg-subtle p-comfortable text-sm">
               <div className="flex items-center justify-between">
                 <span className="font-mono">{settleOrder.reference}</span>
-                <span className="font-mono text-[12px] text-muted">{enumL.status(settleOrder.status)}</span>
+                <span className="text-[12px] text-muted">{enumL.status(settleOrder.status)}</span>
               </div>
               {settleOrder.customerName && <p className="mt-inline text-muted">{settleOrder.customerName}</p>}
-              <div className="mt-tight flex justify-between"><span className="text-muted">{t("settle.total")}</span><span className="font-mono tabular-nums">{formatMoney(settleOrder.total, currency)}</span></div>
-              <div className="flex justify-between"><span className="text-muted">{t("settle.paid")}</span><span className="font-mono tabular-nums">{formatMoney(settlePaid, currency)}</span></div>
-              <div className="flex justify-between font-medium"><span>{t("settle.outstanding")}</span><span className="font-mono tabular-nums text-warning">{formatMoney(settleOutstanding, currency)}</span></div>
+              <div className="mt-tight flex justify-between"><span className="text-muted">{t("settle.total")}</span><span className="tabular-nums">{formatMoney(settleOrder.total, currency)}</span></div>
+              <div className="flex justify-between"><span className="text-muted">{t("settle.paid")}</span><span className="tabular-nums">{formatMoney(settlePaid, currency)}</span></div>
+              <div className="flex justify-between font-medium"><span>{t("settle.outstanding")}</span><span className="tabular-nums text-warning">{formatMoney(settleOutstanding, currency)}</span></div>
             </div>
             {settleOutstanding > 0 ? (
               <>
@@ -1039,7 +1046,7 @@ export default function PosPage() {
                 <span key={i} className={`aspect-square ${((i * 7 + 3) % 5 < 2 || i % 9 === 0) ? "bg-fg" : "bg-card"}`} />
               ))}
             </div>
-            <p className="text-center font-mono text-lg tabular-nums">{formatMoney(dueNow, currency)}</p>
+            <p className="text-center text-lg">{formatMoney(dueNow, currency)}</p>
             <p className="text-center text-[13px] text-muted">{t("wallet.qrInstruction")}</p>
             <div className="flex gap-tight">
               <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
