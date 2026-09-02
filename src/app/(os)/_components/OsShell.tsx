@@ -118,19 +118,18 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           container, so overflow-y stays visible and sticky resolves against the
           viewport. The x-overflow guard (rule 5) is unchanged. */}
       <main className="flex min-w-0 flex-1 flex-col overflow-x-clip">
-        {/* Mobile — the same floating panel, inset and rounded like the
-            desktop one so the two read as one component. */}
-        <div data-scrolled={scrolled} className="glass-float sticky top-tight z-30 mx-comfortable flex items-center gap-tight px-section py-tight md:hidden">
+        {/* Mobile — the same edge-to-edge pane as desktop, so the two read as
+            one component at different widths. */}
+        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-30 flex items-center gap-tight px-section py-tight md:hidden">
           <Logo size={26} />
           <span className="flex-1" />
           <LocaleToggle />
           <ModeButton />
         </div>
 
-        {/* Desktop — the floating glass panel: search · locale · theme ·
-            operator. Inset from the edges (top-comfortable / mx-section) so
-            the warm canvas frames it and page content passes beneath. */}
-        <div data-scrolled={scrolled} className="glass-float sticky top-comfortable z-20 mx-section hidden h-14 items-center gap-tight px-section md:flex">
+        {/* Desktop — the glass pane: search · locale · theme · operator. Full
+            bleed and flat, flush to the top; the page scrolls underneath it. */}
+        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-20 hidden h-14 items-center gap-tight px-major md:flex">
           <div className="ml-auto flex items-center gap-tight">
             <div className="hidden items-center gap-tight rounded-sm border border-line bg-card/60 px-comfortable py-tight text-sm text-muted transition-colors duration-quick hover:bg-card focus-within:ring-2 focus-within:ring-ember/20 lg:flex lg:w-64">
               <Search size={16} strokeWidth={1.5} className="text-faint" />

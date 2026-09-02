@@ -283,31 +283,27 @@
     box-shadow: var(--shadow-pop);
   }
 
+  /* The navigation glass — edge to edge, flat, no radius and no side borders,
+     held down by a single hairline. It is a PANE the page passes under, not a
+     card sitting on top of one: a floating rounded panel reads as another card
+     competing with the content cards, which is exactly what the reference
+     avoids. The blur has plenty to reveal because content scrolls beneath the
+     full width of it. */
   .glass-navbar {
-    background-color: color-mix(in srgb, var(--color-surface) 72%, transparent);
+    background-color: color-mix(in srgb, var(--color-surface) var(--glass-nav), transparent);
     @apply backdrop-blur-[18px] backdrop-saturate-[1.2];
-    border-bottom: 1px solid var(--color-line);
-  }
-
-  /* The floating navigation panel — the one deliberate glass element. Unlike
-     .glass-navbar (edge-to-edge, bottom rule) this is inset from the edges and
-     rounded, so the warm canvas runs round it and content slides underneath.
-     That gap is the whole effect; without it the blur has nothing to reveal. */
-  .glass-float {
-    background-color: color-mix(in srgb, var(--color-card) var(--glass-nav), transparent);
-    @apply backdrop-blur-[18px] backdrop-saturate-[1.2];
-    border: 1px solid color-mix(in srgb, var(--color-line) 60%, transparent);
-    border-radius: 16px;
-    box-shadow: var(--shadow-sm);
+    border-bottom: 1px solid transparent;
     transition: background-color var(--duration-standard) var(--ease-counterfoil),
-      box-shadow var(--duration-standard) var(--ease-counterfoil);
+      border-color var(--duration-standard) var(--ease-counterfoil);
   }
 
-  /* Scrolled: firm up slightly so text stays legible over passing content.
-     Opacity only — the bar must not change size or the page jumps. */
-  .glass-float[data-scrolled="true"] {
-    background-color: color-mix(in srgb, var(--color-card) var(--glass-nav-scrolled), transparent);
-    box-shadow: var(--shadow-md);
+  /* Scrolled: firm up and draw the hairline, so the bar separates from what is
+     now travelling under it. At rest, sitting on the page's own colour, it
+     needs no line at all. Opacity and border only — never size, or the page
+     jumps as you scroll. */
+  .glass-navbar[data-scrolled="true"] {
+    background-color: color-mix(in srgb, var(--color-surface) var(--glass-nav-scrolled), transparent);
+    border-bottom-color: color-mix(in srgb, var(--color-line) 70%, transparent);
   }
 }
 
@@ -322,15 +318,11 @@
   background-color: var(--color-card);
   border-color: var(--color-line);
 }
-/* Dark glass keeps the translucency — a floating bar has to read as floating
-   in both modes — but takes a light hairline, since a dark border on a dark
+/* Dark keeps the translucency — the bar has to read as a pane in both modes —
+   but takes a light hairline once scrolled, since a dark border on a dark
    canvas draws no edge at all. */
-.dark .glass-float {
-  border-color: color-mix(in srgb, var(--color-fg) 12%, transparent);
-  box-shadow: none;
-}
-.dark .glass-float[data-scrolled="true"] {
-  box-shadow: 0 6px 24px -8px rgb(0 0 0 / 0.5);
+.dark .glass-navbar[data-scrolled="true"] {
+  border-bottom-color: color-mix(in srgb, var(--color-fg) 14%, transparent);
 }
 .dark .card-interactive:hover {
   box-shadow: none;
