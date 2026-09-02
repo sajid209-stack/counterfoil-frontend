@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, TrendingUp, UserCheck, Users } from "lucide-react";
+import { AlertCircle, ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, Package, Receipt, RotateCcw, TrendingUp, UserCheck, Users } from "lucide-react";
 import { AreaChart, Button, Modal, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -330,6 +330,9 @@ export default function DashboardPage() {
     }));
     return [...m.entries()].sort((a, b) => b[1].rev - a[1].rev).slice(0, 5);
   }, [orders]);
+  // Bars are scaled to the best seller, not to the total — the question the
+  // list answers is "how do these compare with each other".
+  const topMax = Math.max(...top.map(([, r]) => r.rev), 1);
 
   // ── Setup checklist (replaces the hero until finished) ───────────────────
   const steps = [
@@ -577,16 +580,28 @@ export default function DashboardPage() {
 
             <div className={card}>
               <p className="type-label border-b border-line px-section py-tight text-[11px] text-muted">{t("liveActivity")}</p>
-              {/* Same shape as a session row, and the same reason for wrapping:
-                  five fixed-width children do not fit a 288px card, and h-12
-                  would clip the wrap. */}
+              {/* The reference's activity row: a tinted round icon badge, then
+                  two stacked lines, with the timestamp held right. Every field
+                  the flat row carried is still here — what/ref lead the title,
+                  product and amount share the subtitle — but a badge plus a
+                  hierarchy scans far faster than five columns of equal weight,
+                  and it stops needing to wrap at 288px. */}
               {activity.map((a) => (
-                <div key={a.id} className="flex min-h-12 flex-wrap items-center gap-x-section gap-y-inline border-b border-line px-section py-tight last:border-0">
-                  <span className={`w-12 shrink-0 text-[12px] ${a.isRefund ? "text-danger" : "text-muted"}`}>{a.what}</span>
-                  <span className="shrink-0 font-mono text-[12px] text-faint">{a.ref}</span>
-                  <span className="min-w-[8rem] flex-1 truncate text-sm">{a.product}</span>
-                  <span className="shrink-0 whitespace-nowrap font-mono text-[13px] tabular-nums">{formatMoney(a.amount)}</span>
-                  <span className="w-16 shrink-0 text-right font-mono text-[11px] text-faint">{a.rel}</span>
+                <div key={a.id} className="flex items-start gap-tight border-b border-line px-section py-comfortable last:border-0">
+                  <span className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full ${a.isRefund ? "bg-danger/10 text-danger" : "bg-ember/10 text-ember"}`}>
+                    {a.isRefund ? <RotateCcw size={14} strokeWidth={1.5} /> : <Receipt size={14} strokeWidth={1.5} />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-baseline gap-inline text-[13px]">
+                      <span className={`shrink-0 ${a.isRefund ? "text-danger" : "text-fg"}`}>{a.what}</span>
+                      <span className="min-w-0 truncate font-mono text-[12px] text-faint">{a.ref}</span>
+                    </p>
+                    <p className="mt-0.5 flex items-baseline gap-inline text-[12px] text-muted">
+                      <span className="min-w-0 truncate">{a.product}</span>
+                      <span className="shrink-0 whitespace-nowrap font-mono tabular-nums">· {formatMoney(a.amount)}</span>
+                    </p>
+                  </div>
+                  <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-faint">{a.rel}</span>
                 </div>
               ))}
             </div>
@@ -596,14 +611,28 @@ export default function DashboardPage() {
           <div className="flex min-w-0 flex-col gap-tight">
             <div className={`${card} p-section`}>
               <p className="type-label mb-tight text-[11px] text-muted">{t("needsAttention")}</p>
+              {/* The reference states each notice as its own bordered box with
+                  an icon rather than a text row on a divider — a list of
+                  problems reads as a list of problems, not as prose. One icon
+                  and one tone throughout: these items carry no severity in the
+                  data, and inventing a hierarchy the model does not have would
+                  be a lie told in colour. */}
               {attention.length === 0 ? (
                 <p className="text-[13px] text-success">{t("allClear")}</p>
               ) : (
-                attention.map((a, i) => (
-                  <button key={i} type="button" onClick={() => a.href && router.push(a.href)} className="block w-full border-b border-line py-tight text-left text-[13px] last:border-0 hover:text-ember">
-                    {a.text}
-                  </button>
-                ))
+                <div className="flex flex-col gap-tight">
+                  {attention.map((a, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => a.href && router.push(a.href)}
+                      className="flex w-full items-start gap-tight rounded-sm border border-warning/25 bg-warning/5 p-tight text-left text-[13px] transition-colors duration-quick hover:border-warning/40"
+                    >
+                      <AlertCircle size={15} strokeWidth={1.5} className="mt-0.5 shrink-0 text-warning" />
+                      <span className="min-w-0 flex-1">{a.text}</span>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -635,7 +664,7 @@ export default function DashboardPage() {
               {mix.length === 0 ? <p className="text-[13px] text-faint">{t("noPayments")}</p> : mix.map((m) => (
                 <div key={m.label} className="mb-tight last:mb-0">
                   <div className="flex justify-between gap-tight text-[12px]"><span className="min-w-0 truncate">{m.label}</span><span className="shrink-0 whitespace-nowrap font-mono tabular-nums">{formatMoney(m.amount)}</span></div>
-                  <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-inverse" style={{ width: `${(m.amount / mixMax) * 100}%` }} /></div>
+                  <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-ember" style={{ width: `${(m.amount / mixMax) * 100}%` }} /></div>
                 </div>
               ))}
             </div>
@@ -643,13 +672,38 @@ export default function DashboardPage() {
             {/* Useful, not urgent — below the fold. */}
             <div className={`${card} p-section`}>
               <p className="type-label mb-tight text-[11px] text-muted">{t("topProducts")}</p>
-              {top.length === 0 ? <p className="text-[13px] text-faint">{t("nothingSold")}</p> : top.map(([name, row]) => (
-                <div key={name} className="flex h-9 items-center justify-between gap-tight border-b border-line text-[13px] last:border-0">
-                  <span className="min-w-0 flex-1 truncate">{name}</span>
-                  <span className="shrink-0 font-mono text-[11px] text-faint">{t("qtyTimes", { qty: row.qty })}</span>
-                  <span className="shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums">{formatMoney(row.rev)}</span>
+              {/* The reference's "Top verticals" row: icon square, name and
+                  money on the first line, then a full-width bar with the
+                  trailing figure at its end. The bar is the point — a ranked
+                  list of numbers makes you compare digits; a bar makes the
+                  ranking visible without reading any of them. */}
+              {top.length === 0 ? <p className="text-[13px] text-faint">{t("nothingSold")}</p> : (
+                <div className="flex flex-col gap-comfortable">
+                  {top.map(([name, row]) => (
+                    <div key={name} className="flex items-center gap-tight">
+                      {/* 1px line, not just a fill: --color-subtle and
+                          --color-card are the SAME value in dark, so a bare
+                          tinted square has no edge there and the glyph floats.
+                          Same fix ProductThumb needed. */}
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-line bg-subtle text-muted">
+                        <Package size={16} strokeWidth={1.5} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline justify-between gap-tight text-[13px]">
+                          <span className="min-w-0 truncate">{name}</span>
+                          <span className="shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums">{formatMoney(row.rev)}</span>
+                        </div>
+                        <div className="mt-inline flex items-center gap-tight">
+                          <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
+                            <span className="block h-full bg-ember" style={{ width: `${topMax > 0 ? Math.max(4, (row.rev / topMax) * 100) : 0}%` }} />
+                          </span>
+                          <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-faint">{t("qtyTimes", { qty: row.qty })}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
