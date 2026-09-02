@@ -44,14 +44,24 @@ export function Sidebar({
       title={collapsed ? label : undefined}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group flex items-center gap-tight rounded-sm py-tight text-sm font-medium transition-colors duration-quick",
+        // The reference's nav item is a FLAT tonal fill — bg neutral-100, 6px,
+        // 8/12 padding, 14px/500, no shadow and no ring. Ours was a raised
+        // white card (shadow-sm + ring-1) which made the selected row read as
+        // an object sitting on the sidebar rather than part of it; that is the
+        // "not smooth" of it. 12px gap, as the reference sets.
+        "group flex items-center gap-comfortable rounded-sm py-tight text-sm font-medium transition-colors duration-quick",
         collapsed ? "justify-center px-0" : "px-comfortable",
         active
-          ? "bg-card text-fg shadow-sm ring-1 ring-line/70"
+          ? "bg-subtle text-fg"
           : "text-muted hover:bg-subtle/60 hover:text-fg",
       )}
     >
-      {Icon && <Icon size={20} strokeWidth={1.5} className={active ? "text-ember" : "text-muted group-hover:text-fg"} />}
+      {/* 18px, not 20 — the reference draws these at 16. Stroke stays 1.5: the
+          reference uses 2, but 1.5 on a 24 grid is the brand icon spec, and a
+          typeface-level brand rule outranks matching a reference exactly. The
+          active glyph takes the foreground colour, with ember left to the dot,
+          so one accent marks the row rather than two. */}
+      {Icon && <Icon size={18} strokeWidth={1.5} className={active ? "text-fg" : "text-muted group-hover:text-fg"} />}
       {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
       {!collapsed && active && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-ember" />}
     </Link>
