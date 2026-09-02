@@ -135,11 +135,14 @@
   --spacing-major: 24px;
   --spacing-hero: 48px;
 
-  /* ── Radii — ONLY these four exist in the entire system ──────────────── */
+  /* ── Radii — ONLY these four exist in the entire system ────────────────
+     sm/md/lg read straight off the Aura reference's own scale (measured from
+     counterfoilos.lovable.app: --radius-sm 6px, --radius-md 12px,
+     --radius-lg 20px). md was already right; sm was 8 and lg was 24. */
   --radius-xs: 3px;
-  --radius-sm: 8px;
+  --radius-sm: 6px;
   --radius-md: 12px;
-  --radius-lg: 24px;
+  --radius-lg: 20px;
 
   /* ── Motion ──────────────────────────────────────────────────────────── */
   --duration-instant: 0ms;
@@ -169,9 +172,18 @@
     background-color: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    /* The reference tracks everything slightly tight (-0.16px at 16px, and
+       -0.6px on its 24px figures). It is most of why that UI reads as
+       compact and current rather than merely clean. */
+    letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     overscroll-behavior: none;
+  }
+
+  /* Display figures tighten further, as the reference's do. */
+  .type-figure {
+    letter-spacing: -0.025em;
   }
 
   /* Chrome is not selectable; content (booking refs etc.) stays selectable. */
@@ -223,12 +235,16 @@
      (menus, modals, sheets) and sticky headers. */
 @layer components {
   .card-surface {
-    background-color: var(--color-card);
-    /* Lovable "Aura" cards: shadow-led separation, a barely-there hairline,
-       generous 16px corners. */
-    border: 1px solid color-mix(in srgb, var(--color-line) 60%, transparent);
-    border-radius: 16px;
-    box-shadow: var(--shadow-card);
+    /* Aura cards, measured rather than guessed (counterfoilos.lovable.app):
+       background rgba(255,255,255,0.72) · border 1px at 50% · radius 12px ·
+       box-shadow NONE. The reference is flat glass, not shadow-led — depth
+       comes from a translucent card lifting off the warm page beneath it and
+       a hairline holding the edge. We had it the other way round: opaque
+       white on a soft diffused shadow at 16px. */
+    background-color: color-mix(in srgb, var(--color-card) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-line) 50%, transparent);
+    border-radius: 12px;
+    box-shadow: none;
     transition: box-shadow var(--duration-quick) var(--ease-counterfoil),
       border-color var(--duration-quick) var(--ease-counterfoil),
       transform var(--duration-quick) var(--ease-counterfoil);
@@ -265,6 +281,11 @@
    so the hairline must be full-strength here (no shadow to lean on). */
 .dark .card-surface {
   box-shadow: none;
+  /* Opaque in dark on purpose. The light card is translucent so the warm page
+     shows through and lifts it; doing that here would blend the card DOWN
+     towards the darker surface behind it and flatten the very step that
+     carries elevation in dark mode. Full-strength hairline, no shadow. */
+  background-color: var(--color-card);
   border-color: var(--color-line);
 }
 .dark .card-interactive:hover {

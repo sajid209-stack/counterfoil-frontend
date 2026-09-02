@@ -96,8 +96,40 @@ export function AreaChart({
   const x = (i: number) => padL + (points.length === 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
   const y = (v: number) => padT + (1 - v / top) * plotH;
 
-  const line = (get: (p: ChartPoint) => number | undefined) =>
-    points.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(get(p) ?? 0).toFixed(1)}`).join(" ");
+  // The reference draws its series as smooth curves, not straight segments —
+  // a monotone cubic, so the curve never overshoots into inventing a peak
+  // between two points that the data does not contain. (A plain Catmull-Rom
+  // would bulge past a local maximum and read as revenue nobody earned.)
+  const curve = (get: (p: ChartPoint) => number | undefined) => {
+    const pts = points.map((p, i) => [x(i), y(get(p) ?? 0)] as const);
+    if (pts.length < 2) return pts.length ? `M${pts[0][0]},${pts[0][1]}` : "";
+    const slope: number[] = [];
+    const d: number[] = [];
+    for (let i = 0; i < pts.length - 1; i++) d.push((pts[i + 1][1] - pts[i][1]) / (pts[i + 1][0] - pts[i][0]));
+    slope[0] = d[0];
+    for (let i = 1; i < pts.length - 1; i++) {
+      // A sign change is a turning point: flatten it so the curve turns there
+      // rather than sailing through.
+      slope[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+    }
+    slope[pts.length - 1] = d[d.length - 1];
+    for (let i = 0; i < d.length; i++) {
+      // Fritsch–Carlson limiter — keeps each segment monotone.
+      if (d[i] === 0) { slope[i] = 0; slope[i + 1] = 0; continue; }
+      const a = slope[i] / d[i], b = slope[i + 1] / d[i];
+      const s = a * a + b * b;
+      if (s > 9) { const tau = 3 / Math.sqrt(s); slope[i] = tau * a * d[i]; slope[i + 1] = tau * b * d[i]; }
+    }
+    let path = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const h = (pts[i + 1][0] - pts[i][0]) / 3;
+      path += ` C${(pts[i][0] + h).toFixed(1)},${(pts[i][1] + slope[i] * h).toFixed(1)}`
+            + ` ${(pts[i + 1][0] - h).toFixed(1)},${(pts[i + 1][1] - slope[i + 1] * h).toFixed(1)}`
+            + ` ${pts[i + 1][0].toFixed(1)},${pts[i + 1][1].toFixed(1)}`;
+    }
+    return path;
+  };
+  const line = curve;
   const area = `${line((p) => p.value)} L${x(points.length - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${x(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
 
   // Thin the x labels to what actually fits, so they never collide.

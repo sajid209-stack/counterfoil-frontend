@@ -58,8 +58,10 @@ function DeltaPill({ now, then }: { now: number; then: number }) {
   const pct = Math.round(((now - then) / then) * 100);
   const up = pct >= 0;
   return (
-    <span className={`inline-flex items-center gap-inline rounded-lg px-tight py-0.5 font-mono text-[11px] ${up ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
-      {up ? "▲" : "▼"} {Math.abs(pct)}%
+    // Fully-rounded with a diagonal arrow, as the reference draws it — the
+    // triangle read as a status marker, the arrow reads as direction.
+    <span className={`inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 font-mono text-[11px] ${up ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
+      {up ? "↗" : "↘"} {Math.abs(pct)}%
     </span>
   );
 }
@@ -405,42 +407,48 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-tight min-[420px]:grid-cols-2 xl:grid-cols-4">
+          {/* Aura stat-tile anatomy, measured off the reference: the tinted
+              icon square and the delta pill share the top row (pill hard
+              right), the label sits under them, then the figure, then one
+              line of context. We had the label beside the icon and the delta
+              stranded below the number, which buried the comparison and left
+              the top-right corner empty on every tile. */}
           <div className={`${card} p-section`}>
-            <div className="flex items-center gap-tight">
+            <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><TrendingUp size={18} strokeWidth={1.5} /></span>
-              <p className="type-label text-[12px] text-faint">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
+              <DeltaPill now={revenue} then={revenuePrev} />
             </div>
-            <p className="mt-comfortable whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(revenueAnimated)}</p>
-            <div className="mt-inline"><DeltaPill now={revenue} then={revenuePrev} /></div>
+            <p className="mt-comfortable type-label text-[12px] text-faint">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
+            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(revenueAnimated)}</p>
             <Sparkline points={week} />
           </div>
           <div className={`${card} p-section`}>
-            <div className="flex items-center gap-tight">
+            <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><Users size={18} strokeWidth={1.5} /></span>
-              <p className="type-label text-[12px] text-faint">{t("capacitySold")}</p>
-            </div>
-            <p className="mt-comfortable whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{sold} <span className="text-lg text-faint">/ {capacity}</span></p>
-            <div className="mt-inline flex items-center gap-tight">
-              <span className="font-mono text-[12px] tabular-nums text-muted">{soldPct}%</span>
-              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className={`block h-full ${soldPct >= 80 ? "bg-ember" : "bg-strong"}`} style={{ width: `${Math.min(100, soldPct)}%` }} /></span>
               <DeltaPill now={sold} then={soldPrev} />
             </div>
+            <p className="mt-comfortable type-label text-[12px] text-faint">{t("capacitySold")}</p>
+            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{sold} <span className="text-lg text-faint">/ {capacity}</span></p>
+            <div className="mt-tight flex items-center gap-tight">
+              <span className="font-mono text-[12px] tabular-nums text-muted">{soldPct}%</span>
+              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className={`block h-full ${soldPct >= 80 ? "bg-ember" : "bg-strong"}`} style={{ width: `${Math.min(100, soldPct)}%` }} /></span>
+            </div>
           </div>
           <div className={`${card} p-section`}>
-            <div className="flex items-center gap-tight">
+            <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><UserCheck size={18} strokeWidth={1.5} /></span>
-              <p className="type-label text-[12px] text-faint">{t("arrived")}</p>
             </div>
-            <p className="mt-comfortable whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{arrived} <span className="text-lg text-faint">{t("arrivedOf", { total: sold })}</span></p>
-            <p className={`mt-inline font-mono text-[12px] tabular-nums ${noShowPct >= 30 ? "text-danger" : "text-muted"}`}>{t("noShow", { pct: noShowPct })}</p>
+            <p className="mt-comfortable type-label text-[12px] text-faint">{t("arrived")}</p>
+            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{arrived} <span className="text-lg text-faint">{t("arrivedOf", { total: sold })}</span></p>
+            <p className={`mt-tight font-mono text-[12px] tabular-nums ${noShowPct >= 30 ? "text-danger" : "text-muted"}`}>{t("noShow", { pct: noShowPct })}</p>
           </div>
           <div className={`${card} p-section`}>
-            <div className="flex items-center gap-tight">
+            <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><CalendarClock size={18} strokeWidth={1.5} /></span>
-              <p className="type-label text-[12px] text-faint">{t("bookedAhead")}</p>
+              <DeltaPill now={ahead} then={aheadPrev} />
             </div>
-            <p className="mt-comfortable whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(ahead)}</p>
-            <div className="mt-inline"><DeltaPill now={ahead} then={aheadPrev} /></div>
+            <p className="mt-comfortable type-label text-[12px] text-faint">{t("bookedAhead")}</p>
+            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(ahead)}</p>
           </div>
         </div>
       )}
