@@ -535,7 +535,7 @@ export default function DashboardPage() {
           <div className="relative grid h-11 grid-cols-2 rounded-sm bg-line/60 p-inline">
             <span aria-hidden className="absolute inset-y-inline rounded-xs bg-ember transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />
             {(["today", "week"] as const).map((s) => (
-              <button key={s} type="button" onClick={() => setScope(s)} className={`relative z-10 px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-ink" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
+              <button key={s} type="button" onClick={() => setScope(s)} className={`relative z-10 px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-white" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
             ))}
           </div>
         </div>
@@ -663,7 +663,7 @@ export default function DashboardPage() {
                       // the pairing the colour system fixes as literal in both
                       // themes; measured at 5.3:1 light and 7.1:1 dark.
                       className={`min-h-8 rounded-xs px-tight text-[13px] font-medium transition-colors duration-quick ${
-                        trendDays === d ? "bg-ember text-ink" : "text-muted hover:text-fg"
+                        trendDays === d ? "bg-ember text-white" : "text-muted hover:text-fg"
                       }`}
                     >
                       {t("lastDays", { count: d })}
