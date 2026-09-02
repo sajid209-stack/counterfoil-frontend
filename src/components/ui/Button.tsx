@@ -61,7 +61,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       aria-busy={loading || undefined}
       className={cn(
         "inline-flex items-center justify-center gap-tight rounded-sm font-medium",
-        "transition-colors duration-quick ease-counterfoil",
+        // Press feedback: a button that changes only on hover gives a touch
+        // user nothing at the moment they commit. Transform is composited, so
+        // this costs no layout. The global prefers-reduced-motion block turns
+        // the transition off; the scale is small enough to be unobjectionable
+        // even applied instantly.
+        "transition-[colors,transform] duration-quick ease-counterfoil",
+        "active:scale-[0.98] disabled:active:scale-100",
         "outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed",
         variant === "link" ? "" : SIZES[size],

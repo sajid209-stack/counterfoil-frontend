@@ -270,7 +270,10 @@
   }
   .card-interactive:hover {
     border-color: var(--color-strong);
-    box-shadow: var(--shadow-pop);
+    /* shadow-sm, not shadow-pop. Cards are flat now — resting shadow none —
+       so lifting a hovered card onto an overlay-strength shadow was a leftover
+       from the shadow-led treatment and read as the card detaching. */
+    box-shadow: var(--shadow-sm);
   }
   .card-interactive:active {
     transform: scale(0.995);
@@ -343,7 +346,7 @@
   --color-card: #ffffff;       /* card         ← white       */
   --color-sheet: #ffffff;      /* popover      ← white       */
   --color-fg: #22211f;         /* foreground   ← neutral-900 */
-  --color-muted: #706c65;      /* muted-fg     ← neutral-600 */
+  --color-muted: #6b675f;      /* muted-fg   ← neutral-600, nudged darker: at #706c65 it fell to 4.43:1 on --color-subtle (AA needs 4.5) */
   --color-faint: #b8b3a8;      /* disabled-fg  ← neutral-400 */
   --color-line: #e2ded5;       /* border       ← neutral-200 */
   --color-strong: #d1cdc3;     /* stronger border ← neutral-300 */

@@ -387,7 +387,7 @@ export default function DashboardPage() {
         <div className={`${card} mb-major p-major`}>
           <div className="mb-section flex items-center justify-between">
             <h2 className="type-h2 text-base">{t("finishSetup")}</h2>
-            <span className="font-mono text-[12px] text-faint">{t("stepProgress", { complete, total: steps.length })}</span>
+            <span className="font-mono text-[12px] text-muted">{t("stepProgress", { complete, total: steps.length })}</span>
           </div>
           <div className="mb-major h-1.5 w-full overflow-hidden rounded-full bg-line">
             <div className="h-full bg-ember transition-all" style={{ width: `${(complete / steps.length) * 100}%` }} />
@@ -402,10 +402,10 @@ export default function DashboardPage() {
                   </span>
                   <span className="min-w-0 flex-1 text-sm font-medium">{s.label}</span>
                   {done ? (
-                    <span className="font-mono text-[11px] text-faint">{s.done ? t("stepDone") : t("stepSkipped")}</span>
+                    <span className="font-mono text-[11px] text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
                   ) : (
                     <div className="flex items-center gap-tight">
-                      <button type="button" onClick={() => skip(s.key)} className="text-[12px] text-faint hover:text-fg">{t("skip")}</button>
+                      <button type="button" onClick={() => skip(s.key)} className="text-[12px] text-muted hover:text-fg">{t("skip")}</button>
                       <Button size="sm" icon={<ArrowRight size={14} strokeWidth={1.5} />} onClick={() => router.push(s.href)}>{t("start")}</Button>
                     </div>
                   )}
@@ -427,7 +427,7 @@ export default function DashboardPage() {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><TrendingUp size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={revenue} then={revenuePrev} />
             </div>
-            <p className="mt-comfortable type-label text-[12px] text-faint">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
+            <p className="mt-comfortable type-label text-[12px] text-muted">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
             <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(revenueAnimated)}</p>
             <Sparkline points={week} />
           </div>
@@ -436,8 +436,8 @@ export default function DashboardPage() {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><Users size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={sold} then={soldPrev} />
             </div>
-            <p className="mt-comfortable type-label text-[12px] text-faint">{t("capacitySold")}</p>
-            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{sold} <span className="text-lg text-faint">/ {capacity}</span></p>
+            <p className="mt-comfortable type-label text-[12px] text-muted">{t("capacitySold")}</p>
+            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{sold} <span className="text-lg text-muted">/ {capacity}</span></p>
             <div className="mt-tight flex items-center gap-tight">
               <span className="font-mono text-[12px] tabular-nums text-muted">{soldPct}%</span>
               <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className={`block h-full ${soldPct >= 80 ? "bg-ember" : "bg-strong"}`} style={{ width: `${Math.min(100, soldPct)}%` }} /></span>
@@ -447,8 +447,8 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><UserCheck size={18} strokeWidth={1.5} /></span>
             </div>
-            <p className="mt-comfortable type-label text-[12px] text-faint">{t("arrived")}</p>
-            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{arrived} <span className="text-lg text-faint">{t("arrivedOf", { total: sold })}</span></p>
+            <p className="mt-comfortable type-label text-[12px] text-muted">{t("arrived")}</p>
+            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{arrived} <span className="text-lg text-muted">{t("arrivedOf", { total: sold })}</span></p>
             <p className={`mt-tight font-mono text-[12px] tabular-nums ${noShowPct >= 30 ? "text-danger" : "text-muted"}`}>{t("noShow", { pct: noShowPct })}</p>
           </div>
           <div className={`${card} p-major`}>
@@ -456,7 +456,7 @@ export default function DashboardPage() {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><CalendarClock size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={ahead} then={aheadPrev} />
             </div>
-            <p className="mt-comfortable type-label text-[12px] text-faint">{t("bookedAhead")}</p>
+            <p className="mt-comfortable type-label text-[12px] text-muted">{t("bookedAhead")}</p>
             <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(ahead)}</p>
           </div>
         </div>
@@ -475,7 +475,7 @@ export default function DashboardPage() {
                     <span className="whitespace-nowrap font-mono text-2xl tabular-nums">{formatMoney(trendTotal)}</span>
                     <DeltaPill now={trendTotal} then={trendPrev} />
                   </div>
-                  <p className="mt-inline text-[12px] text-faint">
+                  <p className="mt-inline text-[12px] text-muted">
                     {comparable ? t("vsPreviousDays", { count: trendDays }) : t("lastDaysLong", { count: trendDays })}
                   </p>
                 </div>
@@ -488,7 +488,7 @@ export default function DashboardPage() {
                       onClick={() => setTrendDays(d)}
                       aria-pressed={trendDays === d}
                       className={`min-h-8 rounded-xs px-tight font-mono text-[11px] tabular-nums transition-colors duration-quick ${
-                        trendDays === d ? "bg-ember text-inverse-fg" : "text-muted hover:text-fg"
+                        trendDays === d ? "bg-ember text-ink" : "text-muted hover:text-fg"
                       }`}
                     >
                       {t("lastDays", { count: d })}
@@ -511,7 +511,7 @@ export default function DashboardPage() {
             <div className={card}>
               <p className="type-label border-b border-line px-section py-tight text-[11px] text-muted">{t("todaysSessions")}</p>
               {sessions.length === 0 ? (
-                <p className="px-section py-major text-[13px] text-faint">{t("noMoreSessions")}</p>
+                <p className="px-section py-major text-[13px] text-muted">{t("noMoreSessions")}</p>
               ) : (
                 sessions.map((u) => {
                   const open = openSession === u.key;
@@ -524,11 +524,11 @@ export default function DashboardPage() {
                           row without the session is not a row. The name keeps
                           a floor and the meta drops to a second line. */}
                       <div className="flex min-h-12 flex-wrap items-center gap-x-section gap-y-inline px-section py-tight">
-                        <button type="button" aria-label={t("bookings")} onClick={() => setOpenSession(open ? null : u.key)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-faint hover:text-fg">
+                        <button type="button" aria-label={t("bookings")} onClick={() => setOpenSession(open ? null : u.key)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-muted hover:text-fg">
                           {open ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}
                         </button>
                         <span className="w-12 shrink-0 font-mono text-sm tabular-nums">{u.time}</span>
-                        <span className="min-w-[9rem] flex-1 truncate text-sm">{u.label}{u.who ? <span className="text-faint"> · {u.who}</span> : null}</span>
+                        <span className="min-w-[9rem] flex-1 truncate text-sm">{u.label}{u.who ? <span className="text-muted"> · {u.who}</span> : null}</span>
                         {u.cap > 1 && (
                           <span className="flex shrink-0 items-center gap-tight">
                             <span className="whitespace-nowrap font-mono text-[12px] tabular-nums text-muted">{u.sold}/{u.cap}</span>
@@ -544,13 +544,13 @@ export default function DashboardPage() {
                         {/* Cancelling closes a scheduled session; a booked resource
                             hour is cancelled by releasing its booking, not here. */}
                         {u.adjustable && (
-                          <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="shrink-0 text-[12px] text-danger/80 hover:text-danger">{t("cancel")}</button>
+                          <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="shrink-0 text-[12px] text-danger hover:opacity-80">{t("cancel")}</button>
                         )}
                       </div>
                       {open && (
                         <div className="border-t border-line bg-subtle px-section py-tight">
                           {list.length === 0 ? (
-                            <p className="text-[12px] text-faint">{t("noBookingsOnSession")}</p>
+                            <p className="text-[12px] text-muted">{t("noBookingsOnSession")}</p>
                           ) : (
                             list.map((b) => (
                               <div key={b.id} className="flex h-9 items-center gap-section text-[13px]">
@@ -608,14 +608,14 @@ export default function DashboardPage() {
                   <div className="min-w-0 flex-1">
                     <p className="flex items-baseline gap-inline text-[13px]">
                       <span className={`shrink-0 ${a.isRefund ? "text-danger" : "text-fg"}`}>{a.what}</span>
-                      <span className="min-w-0 truncate font-mono text-[12px] text-faint">{a.ref}</span>
+                      <span className="min-w-0 truncate font-mono text-[12px] text-muted">{a.ref}</span>
                     </p>
                     <p className="mt-0.5 flex items-baseline gap-inline text-[12px] text-muted">
                       <span className="min-w-0 truncate">{a.product}</span>
                       <span className="shrink-0 whitespace-nowrap font-mono tabular-nums">· {formatMoney(a.amount)}</span>
                     </p>
                   </div>
-                  <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-faint">{a.rel}</span>
+                  <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-muted">{a.rel}</span>
                 </div>
               ))}
               {/* The reference closes this card with a full-width outlined
@@ -676,7 +676,7 @@ export default function DashboardPage() {
                         <Glyph size={16} strokeWidth={1.5} className={cn("mt-0.5 shrink-0", warn ? "text-warning" : "text-muted")} />
                         <span className="min-w-0 flex-1">{a.text}</span>
                         {a.href && (
-                          <ArrowRight size={14} strokeWidth={1.5} className="mt-0.5 shrink-0 text-faint transition-colors duration-quick group-hover:text-fg" />
+                          <ArrowRight size={14} strokeWidth={1.5} className="mt-0.5 shrink-0 text-muted transition-colors duration-quick group-hover:text-fg" />
                         )}
                       </button>
                     );
@@ -688,7 +688,7 @@ export default function DashboardPage() {
             <div className={`${card} p-major`}>
               <p className="type-label mb-tight text-[11px] text-muted">{t("idleCapacity")}</p>
               {idle.length === 0 ? (
-                <p className="text-[13px] text-faint">{t("nothingUnderFill")}</p>
+                <p className="text-[13px] text-muted">{t("nothingUnderFill")}</p>
               ) : (
                 idle.map((x, i) => (
                   <button key={i} type="button" onClick={() => router.push(x.href)} className="flex w-full items-center justify-between gap-tight border-b border-line py-tight text-left text-[13px] last:border-0 hover:text-ember">
@@ -710,7 +710,7 @@ export default function DashboardPage() {
 
             <div className={`${card} p-major`}>
               <p className="type-label mb-tight text-[11px] text-muted">{t("paymentMix")}</p>
-              {mix.length === 0 ? <p className="text-[13px] text-faint">{t("noPayments")}</p> : mix.map((m) => (
+              {mix.length === 0 ? <p className="text-[13px] text-muted">{t("noPayments")}</p> : mix.map((m) => (
                 <div key={m.label} className="mb-tight last:mb-0">
                   <div className="flex justify-between gap-tight text-[12px]"><span className="min-w-0 truncate">{m.label}</span><span className="shrink-0 whitespace-nowrap font-mono tabular-nums">{formatMoney(m.amount)}</span></div>
                   <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-ember" style={{ width: `${(m.amount / mixMax) * 100}%` }} /></div>
@@ -726,7 +726,7 @@ export default function DashboardPage() {
                   trailing figure at its end. The bar is the point — a ranked
                   list of numbers makes you compare digits; a bar makes the
                   ranking visible without reading any of them. */}
-              {top.length === 0 ? <p className="text-[13px] text-faint">{t("nothingSold")}</p> : (
+              {top.length === 0 ? <p className="text-[13px] text-muted">{t("nothingSold")}</p> : (
                 <div className="flex flex-col gap-comfortable">
                   {top.map(([name, row]) => (
                     <div key={name} className="flex items-center gap-tight">
@@ -746,7 +746,7 @@ export default function DashboardPage() {
                           <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
                             <span className="block h-full bg-ember" style={{ width: `${topMax > 0 ? Math.max(4, (row.rev / topMax) * 100) : 0}%` }} />
                           </span>
-                          <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-faint">{t("qtyTimes", { qty: row.qty })}</span>
+                          <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-muted">{t("qtyTimes", { qty: row.qty })}</span>
                         </div>
                       </div>
                     </div>
@@ -775,7 +775,7 @@ export default function DashboardPage() {
                 <button type="button" aria-label={t("more")} onClick={() => setCapModal((m) => m && { ...m, value: m.value + 1 })} className="h-11 w-11 rounded-sm border border-line text-lg">+</button>
               </div>
             </div>
-            <p className="text-[12px] text-faint">{t("capacityNote")}</p>
+            <p className="text-[12px] text-muted">{t("capacityNote")}</p>
           </div>
         )}
       </Modal>
