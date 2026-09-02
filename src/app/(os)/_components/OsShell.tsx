@@ -71,9 +71,25 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   const operatorQ = useApiQuery(() => getOperator(), []);
   const [moreOpen, setMoreOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  // The bar firms up once anything has scrolled under it. Passive listener,
+  // and it only ever flips a boolean — no layout is read on scroll.
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     setCollapsed(localStorage.getItem("os_sidebar_collapsed") === "1");
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    // First read on the next frame rather than synchronously in the effect
+    // body — a sync setState here cascades a render, and the frame also lets a
+    // browser-restored scroll position settle before we read it.
+    const raf = requestAnimationFrame(onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
   const toggleCollapsed = () => {
     setCollapsed((c) => {
@@ -94,17 +110,27 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
-        {/* Mobile — glass top bar. Sticky so it stays as content scrolls. */}
-        <div className="glass-navbar sticky top-0 z-30 flex items-center gap-tight px-section py-tight md:hidden">
+      {/* overflow-x-CLIP, not hidden. `overflow-x: hidden` forces overflow-y to
+          `auto`, which makes this element a scroll container — and a sticky
+          child then sticks to THIS scrollport while the page scrolls on <html>,
+          so the top bar rides up and away. Measured: it left the viewport at
+          top:-688. `clip` clips on x exactly the same way but creates no scroll
+          container, so overflow-y stays visible and sticky resolves against the
+          viewport. The x-overflow guard (rule 5) is unchanged. */}
+      <main className="flex min-w-0 flex-1 flex-col overflow-x-clip">
+        {/* Mobile — the same floating panel, inset and rounded like the
+            desktop one so the two read as one component. */}
+        <div data-scrolled={scrolled} className="glass-float sticky top-tight z-30 mx-comfortable flex items-center gap-tight px-section py-tight md:hidden">
           <Logo size={26} />
           <span className="flex-1" />
           <LocaleToggle />
           <ModeButton />
         </div>
 
-        {/* Desktop — slim glass navbar: search · locale · theme · operator. */}
-        <div className="glass-navbar sticky top-0 z-20 hidden h-16 items-center gap-tight px-major md:flex">
+        {/* Desktop — the floating glass panel: search · locale · theme ·
+            operator. Inset from the edges (top-comfortable / mx-section) so
+            the warm canvas frames it and page content passes beneath. */}
+        <div data-scrolled={scrolled} className="glass-float sticky top-comfortable z-20 mx-section hidden h-14 items-center gap-tight px-section md:flex">
           <div className="ml-auto flex items-center gap-tight">
             <div className="hidden items-center gap-tight rounded-sm border border-line bg-card/60 px-comfortable py-tight text-sm text-muted transition-colors duration-quick hover:bg-card focus-within:ring-2 focus-within:ring-ember/20 lg:flex lg:w-64">
               <Search size={16} strokeWidth={1.5} className="text-faint" />

@@ -157,6 +157,21 @@
      lines (neutralised in .dark below), per the color system. */
   --shadow-card: 0 1px 2px rgb(20 20 19 / 0.03), 0 10px 28px -10px rgb(20 20 19 / 0.10);
   --shadow-pop: 0 12px 36px -10px rgb(20 20 19 / 0.18), 0 3px 8px -2px rgb(20 20 19 / 0.08);
+  /* Named steps so nothing hand-rolls a shadow: cards none · dropdowns sm/md ·
+     dialogs md/lg · floating navigation sm. */
+  --shadow-sm: 0 2px 8px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 6px 20px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 12px 40px rgb(0 0 0 / 0.08);
+
+  /* ── Glass — one blur, three opacities, so "glassy" is a token not a
+     judgement call. Applied ONLY to navigation, floating controls and
+     overlays; content surfaces stay flat (backdrop-filter on dozens of
+     elements is expensive and reads as glassmorphism). ─────────────────── */
+  --glass-blur: 18px;
+  --glass-saturate: 120%;
+  --glass-nav: 68%;          /* navigation at rest       */
+  --glass-nav-scrolled: 78%; /* once content passes under */
+  --glass-overlay: 82%;      /* menus, sheets, dialogs    */
 }
 
 @layer base {
@@ -263,17 +278,36 @@
 
   .glass {
     background-color: color-mix(in srgb, var(--color-card) 78%, transparent);
-    backdrop-filter: blur(16px) saturate(1.4);
-    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    @apply backdrop-blur-[18px] backdrop-saturate-[1.2];
     border: 1px solid var(--color-line);
     box-shadow: var(--shadow-pop);
   }
 
   .glass-navbar {
     background-color: color-mix(in srgb, var(--color-surface) 72%, transparent);
-    backdrop-filter: blur(16px) saturate(1.4);
-    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    @apply backdrop-blur-[18px] backdrop-saturate-[1.2];
     border-bottom: 1px solid var(--color-line);
+  }
+
+  /* The floating navigation panel — the one deliberate glass element. Unlike
+     .glass-navbar (edge-to-edge, bottom rule) this is inset from the edges and
+     rounded, so the warm canvas runs round it and content slides underneath.
+     That gap is the whole effect; without it the blur has nothing to reveal. */
+  .glass-float {
+    background-color: color-mix(in srgb, var(--color-card) var(--glass-nav), transparent);
+    @apply backdrop-blur-[18px] backdrop-saturate-[1.2];
+    border: 1px solid color-mix(in srgb, var(--color-line) 60%, transparent);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: background-color var(--duration-standard) var(--ease-counterfoil),
+      box-shadow var(--duration-standard) var(--ease-counterfoil);
+  }
+
+  /* Scrolled: firm up slightly so text stays legible over passing content.
+     Opacity only — the bar must not change size or the page jumps. */
+  .glass-float[data-scrolled="true"] {
+    background-color: color-mix(in srgb, var(--color-card) var(--glass-nav-scrolled), transparent);
+    box-shadow: var(--shadow-md);
   }
 }
 
@@ -287,6 +321,16 @@
      carries elevation in dark mode. Full-strength hairline, no shadow. */
   background-color: var(--color-card);
   border-color: var(--color-line);
+}
+/* Dark glass keeps the translucency — a floating bar has to read as floating
+   in both modes — but takes a light hairline, since a dark border on a dark
+   canvas draws no edge at all. */
+.dark .glass-float {
+  border-color: color-mix(in srgb, var(--color-fg) 12%, transparent);
+  box-shadow: none;
+}
+.dark .glass-float[data-scrolled="true"] {
+  box-shadow: 0 6px 24px -8px rgb(0 0 0 / 0.5);
 }
 .dark .card-interactive:hover {
   box-shadow: none;
