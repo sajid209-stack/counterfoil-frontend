@@ -126,23 +126,45 @@ export function generateSales({
     const d = v?.replace(/\D/g, "") ?? "";
     return d.length >= 6 ? d.slice(-10) : null;
   };
-  const customers: Customer[] = ROSTER.map((r, idx) => ({
-    id: `cus_${String(idx + 1).padStart(3, "0")}`,
-    name: r.name,
-    email: r.email,
-    phone: r.phone,
-    phoneKey: digitsOf(r.phone),
-    emailKey: r.email ? r.email.toLowerCase() : null,
-    consents: [],
-    notes: [],
-    flag: null,
-    tags: [],
-    mergedIntoId: null,
-    erasedAt: null,
-    status: "active" as const,
-    createdAt: new Date(NOW - 200 * DAY).toISOString(),
-    updatedAt: new Date(NOW - 200 * DAY).toISOString(),
-  }));
+  // The roster is not all founding members. Seeding every customer at one
+  // timestamp 200 days back is tidy and wrong in one visible way: a customer
+  // record is created at a moment, and "customer added" is a live-activity
+  // event. A roster with no recent additions can never produce one, so the
+  // dashboard feed could only ever be sales. The newest four are therefore
+  // minutes-to-days old — a counter sale that took a name, an online signup —
+  // and the rest keep their long backdate, staggered a day apart so "newest
+  // first" is a real ordering rather than a 21-way tie.
+  //
+  // These offsets are computed from idx, never from rand(): the seeded PRNG is
+  // consumed in strict sequence by everything below, and drawing from it here
+  // would shift every order, price and booking in the fixture.
+  const RECENT_MIN = [12, 96, 380, 1810]; // newest-first, minutes before NOW
+  const customerCreatedAt = (idx: number) => {
+    const fromEnd = ROSTER.length - 1 - idx;
+    return fromEnd < RECENT_MIN.length
+      ? new Date(NOW - RECENT_MIN[fromEnd] * 60000).toISOString()
+      : new Date(NOW - (200 - idx) * DAY).toISOString();
+  };
+  const customers: Customer[] = ROSTER.map((r, idx) => {
+    const createdAt = customerCreatedAt(idx);
+    return {
+      id: `cus_${String(idx + 1).padStart(3, "0")}`,
+      name: r.name,
+      email: r.email,
+      phone: r.phone,
+      phoneKey: digitsOf(r.phone),
+      emailKey: r.email ? r.email.toLowerCase() : null,
+      consents: [],
+      notes: [],
+      flag: null,
+      tags: [],
+      mergedIntoId: null,
+      erasedAt: null,
+      status: "active" as const,
+      createdAt,
+      updatedAt: createdAt,
+    };
+  });
 
   const orders: Order[] = [];
   const tickets: Ticket[] = [];
@@ -287,7 +309,17 @@ export function generateSales({
       ...(() => {
         const named = channel === "online" || rand() < 0.35;
         if (!named) return { customerId: null, customerName: null };
-        const c = pick(customers);
+        // Only someone who already existed can be on the sale. Now that the
+        // newest few records are hours old, an unfiltered pick would attach
+        // them to orders that predate them by weeks. pick() draws exactly one
+        // rand() whatever the array length, so narrowing it here changes WHICH
+        // customer lands on an order and nothing else in the sequence.
+        // Compared as instants, not as text: both sides are .toISOString() by
+        // construction today, but the seed elsewhere spells timestamps with a
+        // local offset, and a string compare across the two forms is nonsense.
+        const bornBy = Date.parse(createdAt);
+        const existing = customers.filter((x) => Date.parse(x.createdAt) <= bornBy);
+        const c = pick(existing.length ? existing : customers);
         return { customerId: c.id, customerName: c.name };
       })(),
       lines, payments, ...totals, createdAt, updatedAt: createdAt,

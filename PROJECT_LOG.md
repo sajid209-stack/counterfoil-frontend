@@ -1257,3 +1257,119 @@ audited this way.
   against a stash).
 - i18n parity **0 missing / 0 extra**, six new keys in en and bn, no
   missing-message warnings in either locale.
+
+---
+
+## Live activity (2026-09-02) — the feed becomes a feed
+
+Branch `design/seed-photography-and-dashboard`. Owner supplied a reference
+screenshot of an Activity card carrying four event kinds (paid · new customer ·
+draft saved · refund issued) and a Filter control, and asked for the dashboard's
+card to match it.
+
+### The card ✅
+
+The panel was a second, smaller Orders table: six rows, every one an order,
+labelled only `Sale` or `Refund`. What a manager wants from it is *"what has
+happened here lately"*, and a customer record appearing is one of those things.
+
+- **Orders and customers merge into one time-ordered stream.** Each row carries
+  its own `kind` (`paid · sale · refund · customer`); the badge, its colour and
+  the filter all read off that field, so none of them infers a category from
+  rendered text.
+- **Four distinct glyphs, and colour is never the only carrier**: CircleCheck /
+  success for paid, RotateCcw / danger for a refund, Receipt / muted for a sale
+  that has not completed, UserRoundPlus / ember for a new customer. The title
+  states the event in words regardless.
+- **Titles follow the reference**: `CF-2026-001053 paid`, `Refund issued`,
+  `New customer added`; subject and money share the subtitle.
+- **A partial refund shows what went back**, summed from the lines — reading
+  `o.total` there overstates it, often by an order of magnitude.
+- **Filter** = All · Sales · Refunds · Customers, a **native select** rather
+  than a bespoke popover: one control, it names the active filter instead of
+  hiding it behind the word "Filter", and it arrives keyboard- and
+  screen-reader-correct on touch with no focus-trap code. It carries `bg-card`
+  because the dropdown list inherits the control's background — transparent
+  renders dark-on-dark in dark mode.
+- **"View all activity" follows the filter** (`/customers` when the rows are
+  customer events, else `/orders`). The old comment promised the button went
+  where the rows came from; with a filter that promise needed keeping.
+- Merge tombstones and erased records are skipped: one is a pointer at the
+  survivor, the other has no identity left to name. Both stay in the ledger;
+  neither is an event.
+
+**"Draft saved" was not built.** `OrderStatus` is
+`paid | pending | partial | refunded | partly_refunded | cancelled` — there is
+no draft in the model, and the nearest real things are a pending order or a
+hold. Owner chose to skip it rather than invent a state the rest of the app
+cannot back up.
+
+### Two defects found on the way, both pre-existing hazards
+
+**1. The seed made "customer added" unreachable.** Every customer was stamped
+`NOW - 200 * DAY` — one identical timestamp for the whole roster — so a
+customer event could never place in a feed of the six most recent things, and
+the new row type would have been invisible. The roster is now staggered: the
+newest four are 12 min / 1.6 hr / 6.3 hr / 1.25 d old, the rest keep a
+long backdate a day apart so "newest first" is a real ordering rather than a
+21-way tie.
+
+Two constraints shaped the fix. The offsets are computed **from `idx`, never
+from `rand()`** — the seeded PRNG is consumed in strict sequence by everything
+below, and drawing from it there would shift every order, price and booking in
+the fixture. And the order/customer attachment now filters to customers who
+**already existed** at the order's `createdAt`, or the newest records would
+appear on sales predating them by weeks; `pick()` draws exactly one `rand()`
+whatever the array length, so narrowing it moves *which* customer lands on an
+order and nothing else.
+
+Verified rather than asserted: an order/booking fingerprint (id · status ·
+total · tax · createdAt · line composition, and every booking's slot/party/
+resource) computed against the parent commit is **identical** — 151 orders,
+৳698,370.75, 305 tickets, 33 bookings, the same status distribution and the
+same 95 named orders. Only the customer-assignment hash and the customer
+`createdAt` values move, which is exactly the intended change.
+
+**2. Timestamps are not spelled the same way across the seed, so the feed sorted
+wrong.** Generated records are `.toISOString()` (`…T05:05:00.000Z`);
+hand-authored ones carry a local offset (`cus_stress` is
+`…T11:05:00+06:00`). The old `b.createdAt.localeCompare(a.createdAt)` only ever
+ordered orders among themselves, all in one format, so it held. Merging two
+sources put a 12-minute-old event **below** a 55-minute-old one — caught in the
+browser, not by reading the code. The feed now sorts on
+`Date.parse(b.at) - Date.parse(a.at)`.
+
+**Worth remembering:** any other screen sorting mixed-source ISO strings
+lexicographically has the same latent bug. Not audited this session.
+
+### Verification
+
+Driven in headless Chromium (harness in the scratchpad, not the repo) —
+**41 checks, all passing**:
+
+- Feed ordering is monotonic newest-first under **all four filters**, and each
+  filter admits only its own kinds (refunds → only `rotate-ccw` badges,
+  customers → only `user-round-plus`, sales → neither).
+- "View all activity" lands on `/customers` from the customers filter.
+- **Bangla**: heading, all four filter options and row titles render translated
+  ("নতুন গ্রাহক যোগ হয়েছে", "CF-2026-001075 বাতিল"); no missing-message warnings.
+- **Dark**: theme applied, badge colours resolve to the dark tokens, the filter
+  select has an opaque background.
+- **320 · 360 · 390 · 420 · 768 · 1024 · 1280px**: no page x-scroll, no hidden
+  overflow inside `main` (the check that catches what `overflow-x-hidden`
+  swallows), and the silent-clipping detector clean. No console errors at any
+  width, locale or theme.
+- `tsc --noEmit` clean · `npm run build` clean · lint back to the **5
+  pre-existing** `exhaustive-deps` warnings (the new `customers` list is
+  memoised, so it adds none).
+- i18n parity: 14 keys added in **both** en and bn; the now-orphaned `refund`
+  and `sale` keys removed from both. **0 missing, 0 extra.**
+
+### Not done
+
+- **Rows are not clickable.** The model knows each event's record, but the
+  reference draws static rows and the card's rows were never interactive;
+  linking them is a separate decision about hit targets.
+- The demo clock is still `2026-07-29`, so "185 d ago" appears at the bottom of
+  the Customers filter once the five recent additions run out. Honest, and the
+  seed re-anchoring remains the owner's call.
