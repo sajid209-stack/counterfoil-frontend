@@ -88,7 +88,11 @@ export function AreaChart({
   const hasCompare = points.some((p) => p.compare != null);
 
   // Gutters: left for the money labels, bottom for the period labels.
-  const padL = 52, padR = 10, padT = 10, padB = 26;
+  // Gutters sized for 12px labels. They were 10px in DM Mono, which is below
+  // the type spec's caption floor and rendered ৳ badly — the Bengali taka sign
+  // is not in the UI face, so it falls through per-glyph, and at 10px the
+  // substituted glyph crowded the digits beside it.
+  const padL = 58, padR = 10, padT = 10, padB = 28;
   const plotW = Math.max(0, w - padL - padR);
   const plotH = Math.max(0, height - padT - padB);
   const { top, step } = niceScale(Math.max(...points.map((p) => Math.max(p.value, p.compare ?? 0)), 0), ticks);
@@ -150,10 +154,10 @@ export function AreaChart({
             transform: "translateX(-50%)",
           }}
         >
-          <p className="font-mono text-[10px] text-faint">{active.title ?? active.label}</p>
-          <p className="whitespace-nowrap font-mono text-[11px] tabular-nums">{fmt(active.value)}</p>
+          <p className="text-[12px] text-faint">{active.title ?? active.label}</p>
+          <p className="whitespace-nowrap text-[13px] font-medium">{fmt(active.value)}</p>
           {active.compare != null && (
-            <p className="whitespace-nowrap font-mono text-[10px] tabular-nums text-muted">{fmt(active.compare)}</p>
+            <p className="whitespace-nowrap text-[12px] text-muted">{fmt(active.compare)}</p>
           )}
         </div>
       )}
@@ -181,7 +185,7 @@ export function AreaChart({
                 x1={padL} x2={padL + plotW} y1={y(v)} y2={y(v)}
                 stroke="var(--color-line)" strokeWidth="1" strokeDasharray="3 4"
               />
-              <text x={padL - 10} y={y(v) + 3} textAnchor="end" className="fill-[var(--color-muted)] font-mono text-[10px]">
+              <text x={padL - 10} y={y(v) + 4} textAnchor="end" className="fill-[var(--color-muted)] text-[12px]">
                 {axis(v)}
               </text>
             </g>
@@ -192,7 +196,7 @@ export function AreaChart({
           <path d={line((p) => p.value)} fill="none" stroke="var(--color-ember)" strokeWidth="2" strokeLinejoin="round" />
 
           {points.map((p, i) => (i % every === 0 || i === points.length - 1 ? (
-            <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor="middle" className="fill-[var(--color-muted)] font-mono text-[10px]">
+            <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor="middle" className="fill-[var(--color-muted)] text-[12px]">
               {p.label}
             </text>
           ) : null))}
@@ -224,16 +228,21 @@ export function AreaChart({
       )}
       </div>
 
-      <div className="mt-tight flex items-center gap-section">
-        <span className="flex items-center gap-inline text-[12px] text-muted">
-          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ember" />{valueLabel}
-        </span>
-        {hasCompare && compareLabel && (
+      {/* A legend distinguishes series. With one series there is nothing to
+          distinguish, and the swatch just restates the card's own title under
+          the chart — so it appears only when a comparison is actually drawn.
+          The series stays named for screen readers either way, via the svg's
+          aria-label. */}
+      {hasCompare && compareLabel && (
+        <div className="mt-tight flex items-center gap-section">
+          <span className="flex items-center gap-inline text-[12px] text-muted">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ember" />{valueLabel}
+          </span>
           <span className="flex items-center gap-inline text-[12px] text-muted">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted" />{compareLabel}
           </span>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

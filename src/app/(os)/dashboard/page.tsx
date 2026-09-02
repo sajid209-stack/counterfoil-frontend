@@ -636,8 +636,12 @@ export default function DashboardPage() {
             <div className={`${card} p-major`}>
               <div className="flex flex-wrap items-start justify-between gap-tight">
                 <div className="min-w-0">
-                  <p className="type-label text-[12px] text-muted">{t("revenueTrend")}</p>
-                  <div className="mt-inline flex flex-wrap items-baseline gap-tight">
+                  {/* A real heading, as every other card on the page now has —
+                      this was the last small-caps field label pretending to be
+                      a card title, which left the widest card as the only one
+                      without a title at reading size. */}
+                  <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("revenueTrend")}</h2>
+                  <div className="mt-tight flex flex-wrap items-baseline gap-tight">
                     <span className="whitespace-nowrap text-[28px] font-semibold">{formatMoney(trendTotal)}</span>
                     <DeltaPill now={trendTotal} then={trendPrev} />
                   </div>
@@ -653,8 +657,15 @@ export default function DashboardPage() {
                       type="button"
                       onClick={() => setTrendDays(d)}
                       aria-pressed={trendDays === d}
+                      // Ink, not ember. Solid ember with ink text is this
+                      // system's primary-CTA treatment, and a range selector is
+                      // not a call to action — it was the loudest thing in a
+                      // card whose point is the line underneath it, and it
+                      // competed with the ember the series is drawn in. The
+                      // page header's scope toggle already selects with ink;
+                      // this is the same kind of control, so it reads the same.
                       className={`min-h-8 rounded-xs px-tight text-[13px] font-medium transition-colors duration-quick ${
-                        trendDays === d ? "bg-ember text-ink" : "text-muted hover:text-fg"
+                        trendDays === d ? "bg-inverse text-inverse-fg" : "text-muted hover:text-fg"
                       }`}
                     >
                       {t("lastDays", { count: d })}

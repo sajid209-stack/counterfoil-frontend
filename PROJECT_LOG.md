@@ -1667,3 +1667,61 @@ Three harnesses, **10 + 23 + 41 checks, all passing**, plus `tsc`, build, lint
 back at the 5 pre-existing warnings (two dead glyph imports removed), and i18n
 parity clean across 29 namespaces — 14 new keys authored in en and bn, 2
 orphans dropped.
+
+---
+
+## Revenue chart (2026-09-03) — brought onto the dashboard's own theme
+
+Owner screenshotted the Revenue trend card and asked for it to sit with the
+theme the Activity and Notices cards now set. Measured rather than eyeballed:
+the card was the last one still on the pre-Inter, pre-16px-title conventions.
+
+### What was actually wrong
+
+- **The axis was DM Mono at 10px.** Two problems in one: below the type spec's
+  12px caption floor, and mono after the dashboard was swept to Inter. The
+  visible symptom was the **৳ sign rendering badly** — the Bengali taka sign is
+  not in the UI face, so it falls through per-glyph to Hind Siliguri, and at
+  10px the substituted glyph crowded the digits beside it. Now **Inter 12px**,
+  with the gutters widened to match (`padL` 52 → 58, `padB` 26 → 28).
+- **The card had no `<h2>` at all** — a 12px small-caps field label was standing
+  in for a title, which left the widest card on the page as the only one
+  without a title at reading size. Now a 16px/600 heading like every other
+  card, with the range toggles as its single right-hand affordance: the same
+  header pattern as Operations at a glance, Top products, Live activity and
+  Notices.
+- **The active range was solid ember with ink text**, which is this system's
+  **primary-CTA treatment**. A range selector is not a call to action, and it
+  was the loudest thing in a card whose entire point is the line underneath —
+  competing with the ember the series itself is drawn in. It now selects with
+  **ink**, exactly as the page header's scope toggle already does; same kind of
+  control, same reading. In dark it inverts to a light chip.
+- **The legend restated the card's own title.** One series, one swatch, reading
+  "Revenue trend" directly under a card titled Revenue trend. A legend
+  distinguishes series, so it now appears **only when a comparison is actually
+  drawn** — which is 7D and 14D, never 30D (the seed holds 31 days, so the
+  previous window is empty; see the 2026-09-01 entry). The series stays named
+  for screen readers via the svg's `aria-label` either way.
+- **The tooltip was mono at 10/11/10px.** Now Inter at 12/13/12.
+
+### Verification
+
+A new chart harness drives both states: at 30D no legend and the subtitle reads
+"Last 30 days"; at 7D the comparison path is drawn, the legend returns and the
+subtitle reads "vs. previous 7 days"; hovering produces a tooltip that is Inter
+and at or above the 12px floor at every line. All pass.
+
+Alongside it the three standing harnesses — type **10/10**, layout **23/23**
+(columns Δ49px), behaviour **41/41** — plus `tsc` and build clean.
+
+**Lint baseline unchanged and worth restating**: `charts.tsx` reports 1 error,
+`react-hooks/immutability` on `DonutChart`'s `acc += frac` at line 345. Every
+hunk in this change is inside `AreaChart` (lines 91–244), so it is the
+pre-existing error the 2026-09-01 entry already recorded, not a new one.
+
+### Still on the old conventions
+
+`BarChart`, `LineChart`, `HBarChart` and `DonutChart` keep mono axis labels at
+8–11px. They appear on Reports, not the dashboard, and were out of scope here —
+the same boundary the Inter sweep drew. Bringing them across is the natural
+companion to that follow-up.
