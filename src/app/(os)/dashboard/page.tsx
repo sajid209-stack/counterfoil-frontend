@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AlertCircle, ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, Package, Receipt, RotateCcw, TrendingUp, UserCheck, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, Info, Megaphone, Package, Receipt, RotateCcw, TrendingUp, UserCheck, Users } from "lucide-react";
 import { AreaChart, Button, Modal, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -28,6 +28,7 @@ import {
 import { isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
 import { formatMoney, formatMoneyCompact } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
+import { cn } from "@/lib/cn";
 
 const TODAY = "2026-07-29";
 const NOW_MIN = 12 * 60; // mock clock: noon
@@ -263,23 +264,28 @@ export default function DashboardPage() {
     }), [orders, t]);
 
   // ── Right rail ───────────────────────────────────────────────────────────
+  // Tone is read off WHICH RULE FIRED, never guessed from the wording: money
+  // discrepancies and things about to stop selling are warnings; a waitlist or
+  // a quiet device is information. The reference tints its notices by severity
+  // and this is the only honest way to supply one — the items carry no
+  // severity field of their own.
   const attention = useMemo(() => {
-    const items: { text: string; href?: string }[] = [];
+    const items: { text: string; href?: string; tone: "warning" | "info" }[] = [];
     // Cash variance on a closed shift — derived from the mock shift record.
-    items.push({ text: t("cashShort", { location: "Fort Main Gate", amount: "৳2,000" }), href: "/reports/sales" });
-    resources.filter((r) => r.outOfService).forEach((r) => items.push({ text: r.outOfServiceReason ? t("resourceOutOfServiceReason", { name: r.name, reason: r.outOfServiceReason }) : t("resourceOutOfService", { name: r.name }), href: "/settings/resources" }));
+    items.push({ text: t("cashShort", { location: "Fort Main Gate", amount: "৳2,000" }), href: "/reports/sales", tone: "warning" });
+    resources.filter((r) => r.outOfService).forEach((r) => items.push({ text: r.outOfServiceReason ? t("resourceOutOfServiceReason", { name: r.name, reason: r.outOfServiceReason }) : t("resourceOutOfService", { name: r.name }), href: "/settings/resources", tone: "warning" }));
     // The silent failure: nothing bookable beyond a date.
     for (const p of products) {
       if (p.courseDates?.length) {
         const last = [...p.courseDates].sort().at(-1)!;
-        if (last <= dayShift(TODAY, 30)) items.push({ text: t("noSessionsAfter", { name: p.name, date: last }), href: `/products/${p.id}` });
+        if (last <= dayShift(TODAY, 30)) items.push({ text: t("noSessionsAfter", { name: p.name, date: last }), href: `/products/${p.id}`, tone: "warning" });
       }
       if (p.windowMode === "fixed" && p.windowEnd && p.windowEnd <= dayShift(TODAY, 30)) {
-        items.push({ text: t("stopsSelling", { name: p.name, date: p.windowEnd }), href: `/products/${p.id}` });
+        items.push({ text: t("stopsSelling", { name: p.name, date: p.windowEnd }), href: `/products/${p.id}`, tone: "warning" });
       }
     }
     const wl = peekWaitlist().length;
-    if (wl > 0) items.push({ text: wl === 1 ? t("waitlistWaiting", { count: wl }) : t("waitlistWaitingPlural", { count: wl }), href: "/schedule" });
+    if (wl > 0) items.push({ text: wl === 1 ? t("waitlistWaiting", { count: wl }) : t("waitlistWaitingPlural", { count: wl }), href: "/schedule", tone: "info" });
     // Arrivals today still owing a balance.
     const owing = bookings
       .filter((b) => b.status === "confirmed" && b.slotStart.slice(0, 10) === TODAY)
@@ -287,10 +293,10 @@ export default function DashboardPage() {
       .filter((o): o is Order => !!o && o.status === "partial");
     if (owing.length) {
       const due = owing.reduce((s, o) => s + (o.total - o.payments.reduce((x, p) => x + p.amount, 0)), 0);
-      items.push({ text: owing.length === 1 ? t("arrivalsOwe", { count: owing.length, amount: formatMoney(due) }) : t("arrivalsOwePlural", { count: owing.length, amount: formatMoney(due) }), href: "/checkin" });
+      items.push({ text: owing.length === 1 ? t("arrivalsOwe", { count: owing.length, amount: formatMoney(due) }) : t("arrivalsOwePlural", { count: owing.length, amount: formatMoney(due) }), href: "/checkin", tone: "warning" });
     }
     (devicesQ.data?.data ?? []).forEach((d) => {
-      if (!d.lastSeenAt || d.lastSeenAt.slice(0, 10) <= dayShift(TODAY, -7)) items.push({ text: t("deviceNotSeen", { name: d.name }), href: "/settings/devices" });
+      if (!d.lastSeenAt || d.lastSeenAt.slice(0, 10) <= dayShift(TODAY, -7)) items.push({ text: t("deviceNotSeen", { name: d.name }), href: "/settings/devices", tone: "info" });
     });
     return items;
   }, [resources, products, bookings, orders, devicesQ.data, t]);
@@ -610,28 +616,50 @@ export default function DashboardPage() {
           {/* Right ⅓ — priority order */}
           <div className="flex min-w-0 flex-col gap-tight">
             <div className={`${card} p-section`}>
-              <p className="type-label mb-tight text-[11px] text-muted">{t("needsAttention")}</p>
-              {/* The reference states each notice as its own bordered box with
-                  an icon rather than a text row on a divider — a list of
-                  problems reads as a list of problems, not as prose. One icon
-                  and one tone throughout: these items carry no severity in the
-                  data, and inventing a hierarchy the model does not have would
-                  be a lie told in colour. */}
+              {/* The reference's Notices card: a leading icon, the title at
+                  reading size, and a count badge — not a small-caps label. */}
+              <div className="mb-comfortable flex items-center gap-tight">
+                <Megaphone size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
+                <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold">{t("needsAttention")}</h2>
+                {attention.length > 0 && (
+                  <span className="shrink-0 rounded-full bg-subtle px-tight py-0.5 font-mono text-[11px] tabular-nums text-muted">
+                    {attention.length}
+                  </span>
+                )}
+              </div>
+              {/* Each notice is its own bordered, tone-tinted box with a
+                  severity glyph, as the reference draws them. The reference
+                  also carries a bold title, a description and a timestamp per
+                  notice; these items have none of those — one sentence and a
+                  link is the whole record — so the structure is matched and
+                  the missing fields are left out rather than invented. */}
               {attention.length === 0 ? (
                 <p className="text-[13px] text-success">{t("allClear")}</p>
               ) : (
                 <div className="flex flex-col gap-tight">
-                  {attention.map((a, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => a.href && router.push(a.href)}
-                      className="flex w-full items-start gap-tight rounded-sm border border-warning/25 bg-warning/5 p-tight text-left text-[13px] transition-colors duration-quick hover:border-warning/40"
-                    >
-                      <AlertCircle size={15} strokeWidth={1.5} className="mt-0.5 shrink-0 text-warning" />
-                      <span className="min-w-0 flex-1">{a.text}</span>
-                    </button>
-                  ))}
+                  {attention.map((a, i) => {
+                    const warn = a.tone === "warning";
+                    const Glyph = warn ? AlertTriangle : Info;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => a.href && router.push(a.href)}
+                        className={cn(
+                          "group flex w-full items-start gap-tight rounded-md border p-comfortable text-left text-[13px] transition-colors duration-quick",
+                          warn
+                            ? "border-warning/25 bg-warning/5 hover:border-warning/45"
+                            : "border-line bg-subtle/40 hover:border-strong",
+                        )}
+                      >
+                        <Glyph size={16} strokeWidth={1.5} className={cn("mt-0.5 shrink-0", warn ? "text-warning" : "text-muted")} />
+                        <span className="min-w-0 flex-1">{a.text}</span>
+                        {a.href && (
+                          <ArrowRight size={14} strokeWidth={1.5} className="mt-0.5 shrink-0 text-faint transition-colors duration-quick group-hover:text-fg" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
