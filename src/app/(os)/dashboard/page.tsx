@@ -95,7 +95,7 @@ function DeltaPill({ now, then }: { now: number; then: number }) {
   return (
     // Fully-rounded with a diagonal arrow, as the reference draws it — the
     // triangle read as a status marker, the arrow reads as direction.
-    <span className={`inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 font-mono text-[11px] ${up ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
+    <span className={`inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-[11px] ${up ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
       {up ? "↗" : "↘"} {Math.abs(pct)}%
     </span>
   );
@@ -473,7 +473,7 @@ export default function DashboardPage() {
           <div className="relative grid h-11 grid-cols-2 rounded-sm bg-line/60 p-inline">
             <span aria-hidden className="absolute inset-y-inline rounded-xs bg-inverse transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />
             {(["today", "week"] as const).map((s) => (
-              <button key={s} type="button" onClick={() => setScope(s)} className={`relative z-10 px-comfortable text-[13px] transition-colors duration-quick ${scope === s ? "font-medium text-inverse-fg" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
+              <button key={s} type="button" onClick={() => setScope(s)} className={`relative z-10 px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-inverse-fg" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
             ))}
           </div>
         </div>
@@ -489,7 +489,7 @@ export default function DashboardPage() {
         <div className={`${card} mb-major p-major`}>
           <div className="mb-section flex items-center justify-between">
             <h2 className="type-h2 text-base">{t("finishSetup")}</h2>
-            <span className="font-mono text-[12px] text-muted">{t("stepProgress", { complete, total: steps.length })}</span>
+            <span className="text-[12px] text-muted">{t("stepProgress", { complete, total: steps.length })}</span>
           </div>
           <div className="mb-major h-1.5 w-full overflow-hidden rounded-full bg-line">
             <div className="h-full bg-ember transition-all" style={{ width: `${(complete / steps.length) * 100}%` }} />
@@ -499,12 +499,12 @@ export default function DashboardPage() {
               const done = s.done || skipped[s.key];
               return (
                 <div key={s.key} className="flex items-center gap-section rounded-sm border border-line p-comfortable">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono text-[13px] ${done ? "bg-success text-white" : "bg-line text-muted"}`}>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] ${done ? "bg-success text-white" : "bg-line text-muted"}`}>
                     {done ? <Check size={16} strokeWidth={2} /> : i + 1}
                   </span>
                   <span className="min-w-0 flex-1 text-sm font-medium">{s.label}</span>
                   {done ? (
-                    <span className="font-mono text-[11px] text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
+                    <span className="text-[11px] text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
                   ) : (
                     <div className="flex items-center gap-tight">
                       <button type="button" onClick={() => skip(s.key)} className="text-[12px] text-muted hover:text-fg">{t("skip")}</button>
@@ -530,7 +530,7 @@ export default function DashboardPage() {
               <DeltaPill now={revenue} then={revenuePrev} />
             </div>
             <p className="mt-comfortable type-label text-[12px] text-muted">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
-            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(revenueAnimated)}</p>
+            <p className="type-figure mt-inline whitespace-nowrap text-[28px] font-semibold sm:text-[32px]">{formatMoney(revenueAnimated)}</p>
             <Sparkline points={week} />
           </div>
           <div className={`${card} p-major`}>
@@ -539,9 +539,9 @@ export default function DashboardPage() {
               <DeltaPill now={sold} then={soldPrev} />
             </div>
             <p className="mt-comfortable type-label text-[12px] text-muted">{t("capacitySold")}</p>
-            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{sold} <span className="text-lg text-muted">/ {capacity}</span></p>
+            <p className="type-figure mt-inline whitespace-nowrap text-[28px] font-semibold sm:text-[32px]">{sold} <span className="text-lg text-muted">/ {capacity}</span></p>
             <div className="mt-tight flex items-center gap-tight">
-              <span className="font-mono text-[12px] tabular-nums text-muted">{soldPct}%</span>
+              <span className="text-[12px] text-muted">{soldPct}%</span>
               <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className={`block h-full ${soldPct >= 80 ? "bg-ember" : "bg-strong"}`} style={{ width: `${Math.min(100, soldPct)}%` }} /></span>
             </div>
           </div>
@@ -550,8 +550,8 @@ export default function DashboardPage() {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><UserCheck size={18} strokeWidth={1.5} /></span>
             </div>
             <p className="mt-comfortable type-label text-[12px] text-muted">{t("arrived")}</p>
-            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{arrived} <span className="text-lg text-muted">{t("arrivedOf", { total: sold })}</span></p>
-            <p className={`mt-tight font-mono text-[12px] tabular-nums ${noShowPct >= 30 ? "text-danger" : "text-muted"}`}>{t("noShow", { pct: noShowPct })}</p>
+            <p className="type-figure mt-inline whitespace-nowrap text-[28px] font-semibold sm:text-[32px]">{arrived} <span className="text-lg text-muted">{t("arrivedOf", { total: sold })}</span></p>
+            <p className={`mt-tight text-[12px] ${noShowPct >= 30 ? "text-danger" : "text-muted"}`}>{t("noShow", { pct: noShowPct })}</p>
           </div>
           <div className={`${card} p-major`}>
             <div className="flex items-start justify-between gap-tight">
@@ -559,7 +559,7 @@ export default function DashboardPage() {
               <DeltaPill now={ahead} then={aheadPrev} />
             </div>
             <p className="mt-comfortable type-label text-[12px] text-muted">{t("bookedAhead")}</p>
-            <p className="type-figure mt-inline whitespace-nowrap font-mono text-2xl tabular-nums sm:text-3xl">{formatMoney(ahead)}</p>
+            <p className="type-figure mt-inline whitespace-nowrap text-[28px] font-semibold sm:text-[32px]">{formatMoney(ahead)}</p>
           </div>
         </div>
       )}
@@ -574,9 +574,9 @@ export default function DashboardPage() {
             <div className={`${card} p-major`}>
               <div className="flex flex-wrap items-start justify-between gap-tight">
                 <div className="min-w-0">
-                  <p className="type-label text-[11px] text-muted">{t("revenueTrend")}</p>
+                  <p className="type-label text-[12px] text-muted">{t("revenueTrend")}</p>
                   <div className="mt-inline flex flex-wrap items-baseline gap-tight">
-                    <span className="whitespace-nowrap font-mono text-2xl tabular-nums">{formatMoney(trendTotal)}</span>
+                    <span className="whitespace-nowrap text-[28px] font-semibold">{formatMoney(trendTotal)}</span>
                     <DeltaPill now={trendTotal} then={trendPrev} />
                   </div>
                   <p className="mt-inline text-[12px] text-muted">
@@ -591,7 +591,7 @@ export default function DashboardPage() {
                       type="button"
                       onClick={() => setTrendDays(d)}
                       aria-pressed={trendDays === d}
-                      className={`min-h-8 rounded-xs px-tight font-mono text-[11px] tabular-nums transition-colors duration-quick ${
+                      className={`min-h-8 rounded-xs px-tight text-[13px] font-medium transition-colors duration-quick ${
                         trendDays === d ? "bg-ember text-ink" : "text-muted hover:text-fg"
                       }`}
                     >
@@ -631,24 +631,24 @@ export default function DashboardPage() {
                   the one column with prose the room prose needs. */}
               <div className="grid gap-major md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
                 <div className="min-w-0">
-                  <p className="type-label mb-tight text-[11px] text-muted">{t("openShifts")}</p>
+                  <p className="type-label mb-tight text-[12px] text-muted">{t("openShifts")}</p>
                   {/* Mock shift record — the Shift entity is a backend-lane item. */}
                   {/* Stacked, not a justified row: at this width the name and the
                       figures collided and "Gate" wrapped onto a line by itself. */}
                   <p className="truncate text-[13px]">Nadia Islam · Fort Main Gate</p>
-                  <p className="mt-0.5 font-mono text-[12px] tabular-nums text-muted">3:24 · ৳47,850</p>
+                  <p className="mt-0.5 text-[12px] text-muted">3:24 · ৳47,850</p>
                 </div>
                 <div className="min-w-0 md:border-l md:border-line md:pl-major">
-                  <p className="type-label mb-tight text-[11px] text-muted">{t("paymentMix")}</p>
+                  <p className="type-label mb-tight text-[12px] text-muted">{t("paymentMix")}</p>
                   {mix.length === 0 ? <p className="text-[13px] text-muted">{t("noPayments")}</p> : mix.map((m) => (
                     <div key={m.label} className="mb-tight last:mb-0">
-                      <div className="flex justify-between gap-tight text-[12px]"><span className="min-w-0 truncate">{m.label}</span><span className="shrink-0 whitespace-nowrap font-mono tabular-nums">{formatMoney(m.amount)}</span></div>
+                      <div className="flex justify-between gap-tight text-[12px]"><span className="min-w-0 truncate">{m.label}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(m.amount)}</span></div>
                       <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-ember" style={{ width: `${(m.amount / mixMax) * 100}%` }} /></div>
                     </div>
                   ))}
                 </div>
                 <div className="min-w-0 md:border-l md:border-line md:pl-major">
-                  <p className="type-label mb-tight text-[11px] text-muted">{t("idleCapacity")}</p>
+                  <p className="type-label mb-tight text-[12px] text-muted">{t("idleCapacity")}</p>
                   {idle.length === 0 ? (
                     <p className="text-[13px] text-muted">{t("nothingUnderFill")}</p>
                   ) : (
@@ -659,7 +659,7 @@ export default function DashboardPage() {
                       // moves to the accessible name, where it is not redundant.
                       <button key={i} type="button" onClick={() => router.push(x.href)} aria-label={`${x.text} — ${t("unsold", { amount: formatMoney(x.value) })}`} className="flex w-full items-baseline justify-between gap-tight border-b border-line py-tight text-left text-[13px] last:border-0 hover:text-ember">
                         <span className="min-w-0 truncate">{x.text}</span>
-                        <span className="shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums text-muted">{formatMoney(x.value)}</span>
+                        <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{formatMoney(x.value)}</span>
                       </button>
                     ))
                   )}
@@ -690,13 +690,13 @@ export default function DashboardPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-tight text-[13px]">
                           <span className="min-w-0 truncate">{name}</span>
-                          <span className="shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums">{formatMoney(row.rev)}</span>
+                          <span className="shrink-0 whitespace-nowrap text-[12px]">{formatMoney(row.rev)}</span>
                         </div>
                         <div className="mt-inline flex items-center gap-tight">
                           <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
                             <span className="block h-full bg-ember" style={{ width: `${topMax > 0 ? Math.max(4, (row.rev / topMax) * 100) : 0}%` }} />
                           </span>
-                          <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-muted">{t("qtyTimes", { qty: row.qty })}</span>
+                          <span className="shrink-0 whitespace-nowrap text-[11px] text-muted">{t("qtyTimes", { qty: row.qty })}</span>
                         </div>
                       </div>
                     </div>
@@ -718,7 +718,7 @@ export default function DashboardPage() {
                 <Megaphone size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
                 <h2 className="min-w-0 flex-1 truncate text-base font-semibold tracking-[-0.4px]">{t("needsAttention")}</h2>
                 {attention.length > 0 && (
-                  <span className="shrink-0 rounded-full bg-subtle px-tight py-0.5 font-mono text-[11px] tabular-nums text-muted">
+                  <span className="shrink-0 rounded-full bg-subtle px-tight py-0.5 text-[11px] text-muted">
                     {attention.length}
                   </span>
                 )}
@@ -730,7 +730,7 @@ export default function DashboardPage() {
                   link is the whole record — so the structure is matched and
                   the missing fields are left out rather than invented. */}
               {attention.length === 0 ? (
-                <p className="text-[13px] text-success">{t("allClear")}</p>
+                <p className="text-sm text-success">{t("allClear")}</p>
               ) : (
                 <div className="flex flex-col gap-tight">
                   {attention.map((a, i) => {
@@ -740,9 +740,14 @@ export default function DashboardPage() {
                       <button
                         key={i}
                         type="button"
+                        // Declared, not inferred: this is a whole sentence in a
+                        // clickable box, so it takes the Body role rather than
+                        // the Button role. The type audit reads this attribute
+                        // instead of guessing from chrome and word count.
+                        data-type-role="body"
                         onClick={() => a.href && router.push(a.href)}
                         className={cn(
-                          "group flex w-full items-start gap-tight rounded-md border p-comfortable text-left text-[13px] transition-colors duration-quick",
+                          "group flex w-full items-start gap-tight rounded-md border p-comfortable text-left text-sm transition-colors duration-quick",
                           warn
                             ? "border-warning/25 bg-warning/5 hover:border-warning/45"
                             : "border-line bg-subtle/40 hover:border-strong",
@@ -816,10 +821,10 @@ export default function DashboardPage() {
                         <span className="min-w-0 truncate">{a.subject}</span>
                         {/* A customer row has no money on it, and a zero would
                             be a fact the event does not carry. */}
-                        {a.amount !== null && <span className="shrink-0 whitespace-nowrap font-mono tabular-nums">· {formatMoney(a.amount)}</span>}
+                        {a.amount !== null && <span className="shrink-0 whitespace-nowrap">· {formatMoney(a.amount)}</span>}
                       </p>
                     </div>
-                    <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-muted">{a.rel}</span>
+                    <span className="shrink-0 whitespace-nowrap text-[11px] text-muted">{a.rel}</span>
                   </div>
                 );
               })}
@@ -866,24 +871,24 @@ export default function DashboardPage() {
                           <button type="button" aria-label={t("bookings")} onClick={() => setOpenSession(open ? null : u.key)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-muted hover:text-fg">
                             {open ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}
                           </button>
-                          <span className="w-12 shrink-0 font-mono text-sm tabular-nums">{u.time}</span>
+                          <span className="w-12 shrink-0 text-sm">{u.time}</span>
                           <span className="min-w-[9rem] flex-1 truncate text-sm">{u.label}{u.who ? <span className="text-muted"> · {u.who}</span> : null}</span>
                           {u.cap > 1 && (
                             <span className="flex shrink-0 items-center gap-tight">
-                              <span className="whitespace-nowrap font-mono text-[12px] tabular-nums text-muted">{u.sold}/{u.cap}</span>
+                              <span className="whitespace-nowrap text-[12px] text-muted">{u.sold}/{u.cap}</span>
                               <span className="h-0.5 w-16 overflow-hidden rounded-full bg-line"><span className={`block h-full ${u.sold / u.cap >= 0.8 ? "bg-ember" : "bg-strong"}`} style={{ width: `${(u.sold / u.cap) * 100}%` }} /></span>
                             </span>
                           )}
                           {u.state !== "OPEN" && (
-                            <span className="shrink-0 rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight font-mono text-[10px] text-muted dark:bg-[repeating-linear-gradient(45deg,#3a3a36,#3a3a36_2px,transparent_2px,transparent_5px)]">{t("full")}</span>
+                            <span className="shrink-0 rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight text-[10px] text-muted dark:bg-[repeating-linear-gradient(45deg,#3a3a36,#3a3a36_2px,transparent_2px,transparent_5px)]">{t("full")}</span>
                           )}
                           {u.adjustable && (
-                            <button type="button" onClick={() => setCapModal({ product: u.product, value: u.product.schedule?.dailyCapacity ?? u.product.schedule?.capacityPerSession ?? 0 })} className="shrink-0 text-[12px] text-muted hover:text-fg">{t("adjust")}</button>
+                            <button type="button" onClick={() => setCapModal({ product: u.product, value: u.product.schedule?.dailyCapacity ?? u.product.schedule?.capacityPerSession ?? 0 })} className="shrink-0 text-[13px] font-medium text-muted hover:text-fg">{t("adjust")}</button>
                           )}
                           {/* Cancelling closes a scheduled session; a booked resource
                               hour is cancelled by releasing its booking, not here. */}
                           {u.adjustable && (
-                            <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="shrink-0 text-[12px] text-danger hover:opacity-80">{t("cancel")}</button>
+                            <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="shrink-0 text-[13px] font-medium text-danger hover:opacity-80">{t("cancel")}</button>
                           )}
                         </div>
                         {open && (
@@ -894,8 +899,8 @@ export default function DashboardPage() {
                               list.map((b) => (
                                 <div key={b.id} className="flex h-9 items-center gap-section text-[13px]">
                                   <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted">{b.orderId}</span>
-                                  <span className="font-mono text-[12px] tabular-nums">{t("partyLine", { size: b.partySize })}</span>
-                                  <span className="font-mono text-[12px] tabular-nums text-muted">{t("checkedInLine", { count: b.checkedIn ?? 0 })}</span>
+                                  <span className="text-[12px]">{t("partyLine", { size: b.partySize })}</span>
+                                  <span className="text-[12px] text-muted">{t("checkedInLine", { count: b.checkedIn ?? 0 })}</span>
                                 </div>
                               ))
                             )}
@@ -910,8 +915,9 @@ export default function DashboardPage() {
                 {(freeSlots > 0 || hiddenCount > 0) && (
                   <button
                     type="button"
+                    data-type-role="button"
                     onClick={() => router.push("/calendar")}
-                    className="flex min-h-11 w-full items-center gap-tight border-t border-line px-section text-left text-[12px] text-muted hover:text-ember"
+                    className="flex min-h-11 w-full items-center gap-tight border-t border-line px-section text-left text-[13px] font-medium text-muted hover:text-ember"
                   >
                     <span className="min-w-0 flex-1 truncate">
                       {hiddenCount > 0 ? t("andMoreSessions", { count: hiddenCount }) : null}
@@ -939,7 +945,7 @@ export default function DashboardPage() {
               <span className="text-sm">{capModal.product.schedule?.dailyCapacity ? t("placesPerDay") : t("placesPerSession")}</span>
               <div className="flex items-center gap-tight">
                 <button type="button" aria-label={t("fewer")} onClick={() => setCapModal((m) => m && { ...m, value: Math.max(1, m.value - 1) })} className="h-11 w-11 rounded-sm border border-line text-lg">−</button>
-                <span className="w-10 text-center font-mono tabular-nums">{capModal.value}</span>
+                <span className="w-10 text-center">{capModal.value}</span>
                 <button type="button" aria-label={t("more")} onClick={() => setCapModal((m) => m && { ...m, value: m.value + 1 })} className="h-11 w-11 rounded-sm border border-line text-lg">+</button>
               </div>
             </div>

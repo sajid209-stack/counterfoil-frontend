@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope, DM_Mono, Hind_Siliguri } from "next/font/google";
+import { Inter, DM_Mono, Hind_Siliguri } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { ToastProvider } from "@/components/ui";
@@ -7,10 +7,15 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { PwaSetup } from "@/components/PwaSetup";
 import "./globals.css";
 
-// Manrope is a variable font — the full weight axis (300–800) is available
-// without enumerating weights. Exposed as a CSS variable for the token layer.
-const manrope = Manrope({
-  variable: "--font-manrope",
+// Inter is a variable font — the full weight axis is available without
+// enumerating weights. Exposed as a CSS variable for the token layer.
+//
+// The type spec names Inter for every UI role, so it replaces Manrope as the
+// sans face. Its tabular figures are switched on globally in globals.css:
+// half this product is money and counts in columns, and Inter's proportional
+// figures would let those columns dance as the digits change.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
 });
@@ -24,7 +29,7 @@ const dmMono = DM_Mono({
   display: "swap",
 });
 
-// Bangla UI face. Latin glyphs stay on Manrope via the --font-sans stack;
+// Bangla UI face. Latin glyphs stay on Inter via the --font-sans stack;
 // Bengali codepoints fall through to Hind Siliguri per-glyph (no lang switch).
 const hindSiliguri = Hind_Siliguri({
   variable: "--font-hind-siliguri",
@@ -65,7 +70,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${manrope.variable} ${dmMono.variable} ${hindSiliguri.variable} h-full`}
+      className={`${inter.variable} ${dmMono.variable} ${hindSiliguri.variable} h-full`}
     >
       <body className="min-h-full antialiased">
         <ThemeProvider>

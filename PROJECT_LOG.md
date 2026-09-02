@@ -1468,3 +1468,106 @@ still cannot be copied either: the seed holds 31 days.
 **Note for the next session:** `npx prettier` was run once on the dashboard and
 reformatted the whole file (1093 insertions against a ~340-line change). There
 is **no prettier config in this repo** — do not run it.
+
+---
+
+## Typography (2026-09-03) — Inter, and one type system
+
+Owner supplied a type spec: Inter throughout, with a role table (page title
+28/600 · section title 18–20/600 · card title 14–16/600 · body 14/400 · body
+emphasis 14/500 · navigation 14/500 · caption 12/400–500 · dashboard metric
+28–32/600 · table text 13–14/400–500 · button 13–14/500). Applied to the
+dashboard, with the face swapped globally.
+
+### Inter replaces Manrope
+
+`layout.tsx` now loads Inter as `--font-inter`; `--font-sans` points at it with
+Hind Siliguri still behind for Bengali codepoints. **Tabular figures are on
+globally** (`font-variant-numeric: tabular-nums` on body): Inter's default
+figures are proportional, so a column of money re-flows as its digits change
+and a `1` leaves a gap the eye reads as misalignment. Every screen here is money
+and counts in columns, so lining figures are the default rather than an opt-in —
+which also let 20 scattered `tabular-nums` utilities come out of the dashboard.
+
+`type-h1` dropped 700 → **600**: the spec sets every heading role at semibold,
+and a bold page title above semibold card titles read as two systems.
+
+### DM Mono is now only for identifiers
+
+The spec has **no mono row**, and it names Inter for Table text and Caption —
+which is what the times, counts, money and relative timestamps are. So
+`font-mono` came off 20 of the dashboard's 21 uses. The one kept is the bare
+order id in an expanded session row.
+
+That line is the project's own: `layout.tsx` has always said DM Mono is for
+"booking refs, status codes, IDs". Money and clock times are neither. The
+headline metrics were the clearest case — `৳41,653.00` was **DM Mono 400**,
+against a spec that asks for 600.
+
+**Note:** other screens still use DM Mono for money and times. Only the
+dashboard was swept, since that was the scope. The app is now inconsistent
+between the dashboard and everywhere else until the same sweep runs elsewhere.
+
+### What moved
+
+| Role | Was | Now |
+|---|---|---|
+| Page title | 24px/700 Manrope | **28px/600** |
+| Dashboard metric | 24–30px/**400 DM Mono** | **28–32px/600 Inter** |
+| Field labels (`type-label`) | 11px | **12px** (the caption floor) |
+| Notice rows | 13px/400 | **14px/400** (Body) |
+| Row actions (Adjust/Cancel) | 12px/400 | **13px/500** (Button) |
+| Chart ranges (7D/14D/30D) | 11px/400 mono | **13px/500** |
+| Session-list footer | 12px/400 | **13px/500** |
+| Scope toggle | 500 active / **400 inactive** | 500 both — the ink pill carries selection, not the weight |
+
+### Roles are declared, not guessed
+
+The audit spent four iterations misclassifying two elements: a notice is a whole
+sentence inside a tinted clickable box (Body, not Button), and the session-list
+footer is a control however long its summary line runs (Button, not Body). Every
+heuristic that fixed one broke the other.
+
+The fix was to stop inferring: those two carry **`data-type-role`**, and the
+audit prefers a declared role over its own guess. Worth copying — DOM shape
+genuinely cannot distinguish some roles, and guessing harder is not the answer.
+
+### Two deliberate deviations
+
+- **The mobile tab bar stays at 11px**, against Navigation's 14px. Five tabs
+  across 390px is a tab-bar convention, not the sidebar's role; 14px would not
+  fit. The audit now only measures elements visible at the viewport under test,
+  so the hidden desktop copy no longer reports.
+- **Section title (18–20px) is unused on the dashboard.** The page has a page
+  title and card titles and no level between them. It applies wherever a screen
+  grows real section headings.
+
+### Verification
+
+Three harnesses, **10 + 23 + 41 checks, all passing**: every role on spec by
+family, size and weight; the layout conformance from the previous session
+unchanged; feed behaviour unchanged. `tsc` and build clean, lint holds at the 5
+pre-existing warnings, i18n parity clean across 29 namespaces.
+
+The metrics grew from 24/30px mono to 28/32px Inter, which is exactly what
+caused the hero-clipping defect two sessions ago — the silent-clipping detector
+is clean at 320 · 360 · 390 · 420 · 768 · 1024 · 1280 · 1440.
+
+### Pre-existing overflow found, NOT introduced here
+
+A sweep of 13 routes × 390/1440 found **hidden overflow inside `main`** on four
+routes. Measured against production (the previous commit, still on Manrope) to
+attribute it: **the same four routes overflow before and after.** Inter being
+marginally wider made three slightly worse.
+
+| Route | Before | After |
+|---|---|---|
+| `/` (390 and 1440) | 160px | 160px |
+| `/customers` (390) | 76px | **90px** |
+| `/memberships` (390) | 62px | **68px** |
+| `/reports/sales` (390) | 16px | **18px** |
+
+This is the class of bug the revenue-chart session flagged and never audited:
+`main` carries `overflow-x-hidden`, so the document-level x-scroll check passes
+while content is silently swallowed. **The dashboard is clean at every width.**
+Fixing the other four is a separate piece of work on unrelated screens.

@@ -31,7 +31,7 @@ export function PageShell({
             </p>
           )}
           {/* References and long names must wrap, never bleed out of the header. */}
-          <h1 className="type-h1 break-words text-2xl">{title}</h1>
+          <h1 className="type-h1 break-words text-[28px]">{title}</h1>
           {description && (
             <p className="type-body mt-inline max-w-2xl text-[13px] text-muted">
               {description}

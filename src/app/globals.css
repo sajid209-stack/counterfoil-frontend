@@ -124,7 +124,7 @@
   /* ── Type ──────────────────────────────────────────────────────────────
      DM Mono is not decorative: it carries booking refs, status codes, dates,
      IDs and BT codes (e.g. CF-2026-008479, CONFIRMED) everywhere. */
-  --font-sans: var(--font-manrope), var(--font-hind-siliguri), system-ui, sans-serif;
+  --font-sans: var(--font-inter), var(--font-hind-siliguri), system-ui, sans-serif;
   --font-mono: var(--font-dm-mono), ui-monospace, monospace;
 
   /* ── Spacing — base 8 ──────────────────────────────────────────────── */
@@ -193,6 +193,11 @@
     background-color: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    /* Tabular figures everywhere. Inter's default figures are proportional, so
+       a column of money re-flows as its digits change and "1" leaves a gap the
+       eye reads as a misalignment. Every screen here is money and counts in
+       columns, so lining tabular figures are the default, not an opt-in. */
+    font-variant-numeric: tabular-nums;
     /* The reference tracks everything slightly tight (-0.16px at 16px, and
        -0.6px on its 24px figures). It is most of why that UI reads as
        compact and current rather than merely clean. */
@@ -224,7 +229,9 @@
   }
 
   .type-h1 {
-    font-weight: 700;
+    /* 600, not 700: the type spec sets every heading role at semibold, and a
+       bold page title against semibold card titles read as two systems. */
+    font-weight: 600;
     letter-spacing: -0.02em;
     line-height: 1.15;
   }
