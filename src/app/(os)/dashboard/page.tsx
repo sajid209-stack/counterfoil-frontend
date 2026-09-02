@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, CircleCheck, ListFilter, Megaphone, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, Banknote, CalendarOff, Clock, WifiOff, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, Banknote, CalendarOff, Clock, WifiOff, Wrench, type LucideIcon } from "lucide-react";
 import { AreaChart, Button, Modal, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -785,10 +785,12 @@ export default function DashboardPage() {
               important because everything was the same size. */}
           <div className="flex min-w-0 flex-col gap-wide">
             <div className={`${card} p-major`}>
-              {/* The reference's Notices card: a leading icon, the title at
-                  reading size, and a count badge — not a small-caps label. */}
+              {/* Title and count, no leading icon. Every notice already carries
+                  its own glyph, so a second one on the header was a decoration
+                  competing with the ones that mean something — and it left this
+                  card the only one on the page whose title did not start at the
+                  same x as its neighbours'. */}
               <div className="mb-comfortable flex items-center gap-tight">
-                <Megaphone size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
                 <h2 className="min-w-0 flex-1 truncate text-base font-semibold tracking-[-0.4px]">{t("needsAttention")}</h2>
                 {attention.length > 0 && (
                   <span className="shrink-0 rounded-full bg-subtle px-tight py-0.5 text-[11px] text-muted">
