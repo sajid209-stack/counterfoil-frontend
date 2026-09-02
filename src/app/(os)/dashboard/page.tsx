@@ -533,9 +533,9 @@ export default function DashboardPage() {
           )}
           {/* Scope, not actions — a dashboard is a place to look. */}
           <div className="relative grid h-11 grid-cols-2 rounded-sm bg-line/60 p-inline">
-            <span aria-hidden className="absolute inset-y-inline rounded-xs bg-inverse transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />
+            <span aria-hidden className="absolute inset-y-inline rounded-xs bg-ember transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />
             {(["today", "week"] as const).map((s) => (
-              <button key={s} type="button" onClick={() => setScope(s)} className={`relative z-10 px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-inverse-fg" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
+              <button key={s} type="button" onClick={() => setScope(s)} className={`relative z-10 px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-ink" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
             ))}
           </div>
         </div>
@@ -657,15 +657,13 @@ export default function DashboardPage() {
                       type="button"
                       onClick={() => setTrendDays(d)}
                       aria-pressed={trendDays === d}
-                      // Ink, not ember. Solid ember with ink text is this
-                      // system's primary-CTA treatment, and a range selector is
-                      // not a call to action — it was the loudest thing in a
-                      // card whose point is the line underneath it, and it
-                      // competed with the ember the series is drawn in. The
-                      // page header's scope toggle already selects with ink;
-                      // this is the same kind of control, so it reads the same.
+                      // Ember marks the selection, matching the page header's
+                      // scope toggle — one selected-state treatment across the
+                      // dashboard rather than two. Ink text on ember, which is
+                      // the pairing the colour system fixes as literal in both
+                      // themes; measured at 5.3:1 light and 7.1:1 dark.
                       className={`min-h-8 rounded-xs px-tight text-[13px] font-medium transition-colors duration-quick ${
-                        trendDays === d ? "bg-inverse text-inverse-fg" : "text-muted hover:text-fg"
+                        trendDays === d ? "bg-ember text-ink" : "text-muted hover:text-fg"
                       }`}
                     >
                       {t("lastDays", { count: d })}
