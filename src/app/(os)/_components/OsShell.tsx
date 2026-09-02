@@ -127,10 +127,34 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           <ModeButton />
         </div>
 
-        {/* Desktop — the glass pane: search · locale · theme · operator. Full
-            bleed and flat, flush to the top; the page scrolls underneath it. */}
-        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-20 hidden h-14 items-center gap-tight px-major md:flex">
-          <div className="ml-auto flex items-center gap-tight">
+        {/* Desktop — the glass pane now carries the PAGE HEADER as well as the
+            chrome. Measured on the Aura reference: its sticky header is a
+            65px bar holding the page title and its subtitle on the left with
+            search, actions and the avatar on the right — one bar, not a bar
+            above a header.
+
+            Counterfoil had them as two stacked blocks: a 56px pane whose left
+            737px were empty, and a separate page header under it, which put
+            the first card 183px down. The title moves into that empty space
+            and the two collapse into one.
+
+            #os-page-header is a portal target, not a prop chain: PageShell is
+            rendered by ~30 route files inside {children}, so the alternative
+            was threading title/description/actions through every one of them,
+            or a context whose `actions` node changes identity on every render
+            and would set state in a loop. A portal has neither problem, and
+            PageShell stays the single owner of what a page header is. */}
+        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-20 hidden items-start justify-between gap-major px-major py-comfortable md:flex">
+          <div id="os-page-header" className="min-w-0 flex-1" />
+          {/* The controls stack in two right-aligned rows: chrome above, the
+              page's own actions below. On one row they do not fit — measured
+              at 1440 the title needs ~400px and the controls ~846px inside a
+              1152px pane — and putting the actions beside the title instead
+              squeezed it to 275px and wrapped "Lalbagh Heritage Attractions"
+              onto two lines. Two rows keeps the title on one line and the bar
+              at 120px, where the old bar-plus-header pair cost 183px. */}
+          <div className="flex shrink-0 flex-col items-end gap-tight">
+          <div className="flex shrink-0 items-center gap-tight">
             <div className="hidden items-center gap-tight rounded-sm border border-line bg-card/60 px-comfortable py-tight text-sm text-muted transition-colors duration-quick hover:bg-card focus-within:ring-2 focus-within:ring-ember/20 lg:flex lg:w-64">
               <Search size={16} strokeWidth={1.5} className="text-faint" />
               <input
@@ -145,6 +169,10 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             <span className="ml-inline grid h-9 w-9 place-items-center rounded-sm bg-subtle text-[11px] font-bold text-fg ring-1 ring-line">
               {(operatorQ.data?.name ?? "CF").slice(0, 2).toUpperCase()}
             </span>
+          </div>
+          {/* Empty on pages that declare no actions — it collapses, and the
+              bar loses the second row with it. */}
+          <div id="os-page-actions" className="flex items-center gap-tight empty:hidden" />
           </div>
         </div>
 

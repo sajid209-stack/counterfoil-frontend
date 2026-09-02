@@ -1725,3 +1725,76 @@ pre-existing error the 2026-09-01 entry already recorded, not a new one.
 8–11px. They appear on Reports, not the dashboard, and were out of scope here —
 the same boundary the Inter sweep drew. Bringing them across is the natural
 companion to that follow-up.
+
+---
+
+## Page header (2026-09-03) — into the sticky bar, app-wide
+
+Owner boxed the breadcrumb / title / date block and asked for it in the top nav
+bar, researched properly. Measured the reference first.
+
+### What the reference does
+
+`counterfoilos.lovable.app` has a **sticky `<header>`, 65px**, `position:sticky
+top:0 z:30`, background `rgba(243,241,236,0.7)` with
+`backdrop-filter: saturate(1.8) blur(14px)` and a 1px bottom border. Inside it,
+**left**: `<h1>` 15px/600 with a 12px/400 subtitle stacked under it. **Right**:
+search + ⌘K, two 40px icon buttons, a primary action, a 40px avatar. One bar —
+not a bar above a header.
+
+### What Counterfoil had
+
+A 56px glass pane whose **left 737px were empty** (`ml-auto` pushed every
+control right), and a separate page header below it. First card at **183px**.
+
+### The move
+
+The header now portals into the bar. `#os-page-header` takes the breadcrumb,
+title and description; `#os-page-actions` takes the page's action slot.
+
+- **A portal, not props or context.** `PageShell` is rendered by ~30 route
+  files inside `{children}`, so threading title/description/actions up would
+  mean touching every one of them. Context was the other option and is worse
+  here: `actions` is a ReactNode whose identity changes every render, so a
+  context setter would setState in a loop. A portal has neither problem and
+  `PageShell` stays the single owner of what a page header is.
+- **The actions get their own slot** rather than sitting beside the title.
+  Measured: on one row the title needs ~400px and the controls ~846px inside a
+  1152px pane, so they do not fit; and putting the actions beside the title
+  squeezed it to 275px and **wrapped "Lalbagh Heritage Attractions" onto two
+  lines**, which is what made the first attempt 144px tall. The controls now
+  stack in two right-aligned rows — chrome above, page actions below — and the
+  title keeps one line.
+
+**Result: bar 121px, first card at 145px** (was 56px + separate header =
+183px). Verified sticky: after scrolling 900px the bar is at `top:0` and the
+title is still on screen.
+
+### Two bugs found on the way
+
+1. **The actions vanished on mobile.** The desktop bar is `display:none` below
+   md but still **in the DOM**, so `getElementById` resolved and the portal
+   dropped the controls into a hidden container. Worse, the hidden copy was
+   *first in document order*, so anything selecting "the location select" got
+   the invisible one — it broke a harness selector, which is how it surfaced.
+   The portal is now gated on the md media query, so exactly one copy exists at
+   any width. Confirmed against production: mobile geometry is identical
+   (`groupW 157 · btnH 39`), including the pre-existing "This week" wrap, which
+   was **already there before this change** and is not new.
+2. **Two `set-state-in-effect` lint errors, one of them mine.** `OsShell:79`
+   is pre-existing (confirmed by stashing). `PageShell` was reading the media
+   query and the slot elements with `useEffect` + `setState`. Both are external
+   stores, so both now use **`useSyncExternalStore`** — the media query with a
+   real subscription, the slots with a no-op one, since those nodes live as long
+   as the shell and never change identity. PageShell lints clean; OsShell holds
+   at its one pre-existing error.
+
+### Verification
+
+All 11 OS routes put **exactly one** `<h1>` in the bar (`/dashboard`,
+`/calendar`, `/orders`, `/customers`, `/products`, `/promotions`, `/holds`,
+`/memberships`, `/reports/sales`, `/settings`, `/settings/team`), bars 104–125px
+depending on whether the page declares a description and actions. The four
+standing harnesses are unchanged — type 10/10, layout 23/23, behaviour 41/41 —
+and the 13-route × 390/1440 sweep reports the same four pre-existing `main`
+overflows with identical numbers, so this did not touch them.
