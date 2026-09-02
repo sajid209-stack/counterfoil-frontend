@@ -467,6 +467,9 @@ export default function DashboardPage() {
 
   // Idle capacity — unsold places in the next 48h, priced.
   const idle = useMemo(() => {
+    // The whole list, not the top few: the card now states what idle capacity
+    // is WORTH across the window, and a total taken after slice(0, 4) would
+    // have been the total of four rows pretending to be the total of all.
     const out: { text: string; value: number; href: string }[] = [];
     for (const d of [TODAY, dayShift(TODAY, 1)]) {
       for (const p of products) {
@@ -480,7 +483,7 @@ export default function DashboardPage() {
         }
       }
     }
-    return out.sort((a, b) => b.value - a.value).slice(0, 4);
+    return out.sort((a, b) => b.value - a.value);
   }, [products, t]);
 
   const mix = useMemo(() => {
@@ -488,7 +491,54 @@ export default function DashboardPage() {
     orders.filter((o) => paidish(o) && o.createdAt.slice(0, 10) === TODAY).forEach((o) => o.payments.forEach((p) => m.set(p.method, (m.get(p.method) ?? 0) + p.amount)));
     return [...m.entries()].map(([k, v]) => ({ label: enumL.method(k), amount: v })).sort((a, b) => b.amount - a.amount);
   }, [orders, enumL]);
-  const mixMax = Math.max(...mix.map((m) => m.amount), 1);
+  const mixTotal = mix.reduce((a, m) => a + m.amount, 0);
+  const idleTotal = idle.reduce((a, x) => a + x.value, 0);
+
+  /** "Operations at a glance" — four readings of the same shape.
+   *
+   *  The card used to hold three different shapes side by side: a fact, a bar
+   *  chart and a list. They had nothing in common, so their heights did not
+   *  agree, the left column ended in a void while the right ran on, and the
+   *  list's four rows were the same product truncated to "17:00 Grand Heritage
+   *  Architect…" four times over. The reference's version is one shape —
+   *  label, figure, sub-line — repeated four times, with the sub-lines
+   *  bottom-aligned so the base is straight whatever the figures do. */
+  const ops = useMemo(() => [
+    {
+      key: "shifts",
+      label: t("openShifts"),
+      // Mock shift record — the Shift entity is a backend-lane item.
+      value: "1",
+      // Name only: at a quarter of 757px the location pushed this into an
+      // ellipsis, and it was the one truncated string in the card.
+      sub: "Nadia Islam",
+      href: undefined,
+    },
+    {
+      key: "mix",
+      label: t("paymentMix"),
+      // The leading method's share leads, because "which way is the money
+      // coming in" is the question; the bar under it carries the rest.
+      value: mixTotal > 0 ? `${mix[0].label} ${Math.round((mix[0].amount / mixTotal) * 100)}%` : "—",
+      sub: null,
+      href: "/reports/sales",
+    },
+    {
+      key: "idle",
+      label: t("idleCapacity"),
+      value: formatMoneyCompact(idleTotal),
+      sub: idle.length === 1 ? t("idleSessions", { count: idle.length }) : t("idleSessionsPlural", { count: idle.length }),
+      href: "/calendar",
+    },
+    {
+      key: "free",
+      label: t("unbookedHours"),
+      value: String(freeSlots),
+      sub: t("todayLower"),
+      href: "/calendar",
+    },
+  ], [mix, mixTotal, idle, idleTotal, freeSlots, t]);
+
 
   const top = useMemo(() => {
     const m = new Map<string, { qty: number; rev: number }>();
@@ -498,7 +548,7 @@ export default function DashboardPage() {
       // F11: line NET totals — add-on child lines count as their own product.
       m.set(l.productName, { qty: cur.qty + l.quantity, rev: cur.rev + (l.taxableAmount ?? l.unitPrice * l.quantity) });
     }));
-    return [...m.entries()].sort((a, b) => b[1].rev - a[1].rev).slice(0, 5);
+    return [...m.entries()].sort((a, b) => b[1].rev - a[1].rev).slice(0, 6);
   }, [orders]);
   // Bars are scaled to the best seller, not to the total — the question the
   // list answers is "how do these compare with each other".
@@ -676,7 +726,12 @@ export default function DashboardPage() {
                   points={trend}
                   fmt={(v) => formatMoney(v)}
                   fmtAxis={(v) => formatMoneyCompact(v)}
-                  height={240}
+                  // 300, not 240. Tightening the operations strip from 260px to
+                  // 174px left the wide column ending 136px above the rail, and
+                  // of everything that could take the space back the trend line
+                  // is the one that gets better for having it — 30 days of
+                  // revenue in 240px was the most cramped thing on the page.
+                  height={300}
                   valueLabel={comparable ? t("thisPeriod") : t("revenueTrend")}
                   compareLabel={t("previousPeriod")}
                 />
@@ -690,51 +745,55 @@ export default function DashboardPage() {
                 panels a manager dwells on. Nothing was dropped to achieve it. */}
             <div className={`${card} p-major`}>
               <div className="mb-section flex items-baseline justify-between gap-tight">
+                {/* No scope chip. The reference carries "Today" because all four
+                    of its readings are today's; ours are not — a shift is open
+                    now, idle capacity looks 48h ahead — so a blanket "Today"
+                    would contradict the label directly under it. Each cell
+                    states its own window where it differs. */}
                 <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("operations")}</h2>
-                <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{t("today")}</span>
               </div>
-              {/* The three panels do not want equal widths. A shift is a name and
-                  a clock, the mix is four short bars, but an idle row carries a
-                  product name — and products here are called things like "Grand
-                  Heritage Architectural Walking Tour of Old Dhaka". Splitting the
-                  strip in equal thirds truncated those to "17:00 Gra…", which is
-                  not a session anyone can identify. Weighting the columns gives
-                  the one column with prose the room prose needs. */}
-              <div className="grid gap-major md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1.35fr)]">
-                <div className="min-w-0">
-                  <p className="type-label mb-tight text-[12px] text-muted">{t("openShifts")}</p>
-                  {/* Mock shift record — the Shift entity is a backend-lane item. */}
-                  {/* Stacked, not a justified row: at this width the name and the
-                      figures collided and "Gate" wrapped onto a line by itself. */}
-                  <p className="truncate text-[13px]">Nadia Islam · Fort Main Gate</p>
-                  <p className="mt-0.5 text-[12px] text-muted">3:24 · ৳47,850</p>
-                </div>
-                <div className="min-w-0 md:border-l md:border-line md:pl-major">
-                  <p className="type-label mb-tight text-[12px] text-muted">{t("paymentMix")}</p>
-                  {mix.length === 0 ? <p className="text-[13px] text-muted">{t("noPayments")}</p> : mix.map((m) => (
-                    <div key={m.label} className="mb-tight last:mb-0">
-                      <div className="flex justify-between gap-tight text-[12px]"><span className="min-w-0 truncate">{m.label}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(m.amount)}</span></div>
-                      <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-line"><div className="h-full bg-ember" style={{ width: `${(m.amount / mixMax) * 100}%` }} /></div>
-                    </div>
-                  ))}
-                </div>
-                <div className="min-w-0 md:border-l md:border-line md:pl-major">
-                  <p className="type-label mb-tight text-[12px] text-muted">{t("idleCapacity")}</p>
-                  {idle.length === 0 ? (
-                    <p className="text-[13px] text-muted">{t("nothingUnderFill")}</p>
+              {/* One shape, four times — label, figure, sub-line — with the
+                  sub-lines pushed to the bottom of their cell so the base of
+                  the card is straight however tall the figures run. Measured
+                  off the reference: its four cells put the label at y=99, the
+                  figure at y=128 and the sub at y=184, which is only possible
+                  if the sub is bottom-aligned rather than following the figure. */}
+              <div className="grid gap-major sm:grid-cols-2 lg:grid-cols-4">
+                {ops.map((o) => {
+                  const body = (
+                    <>
+                      <p className="type-label text-[12px] text-muted">{o.label}</p>
+                      <p className="mt-tight truncate text-[20px] font-semibold tracking-[-0.5px]">{o.value}</p>
+                      <div className="mt-auto pt-tight">
+                        {o.key === "mix" ? (
+                          // The mix is a proportion, so it keeps a picture of
+                          // one. A single stacked bar occupies exactly the
+                          // height of the sub-line it replaces, so the row
+                          // rhythm holds while carrying more than a sentence
+                          // of percentages would.
+                          mixTotal > 0 ? (
+                            <span className="flex h-1.5 w-full overflow-hidden rounded-full bg-line" role="img" aria-label={mix.map((m) => `${m.label} ${formatMoney(m.amount)}`).join(", ")}>
+                              {mix.map((m, i) => (
+                                <span key={m.label} className="h-full bg-ember" style={{ width: `${(m.amount / mixTotal) * 100}%`, opacity: 1 - i * 0.35 }} />
+                              ))}
+                            </span>
+                          ) : (
+                            <span className="text-[12px] text-muted">{t("noPayments")}</span>
+                          )
+                        ) : (
+                          <span className="block truncate text-[12px] text-muted">{o.sub}</span>
+                        )}
+                      </div>
+                    </>
+                  );
+                  return o.href ? (
+                    <button key={o.key} type="button" onClick={() => router.push(o.href!)} className="group flex min-h-[84px] min-w-0 flex-col text-left">
+                      {body}
+                    </button>
                   ) : (
-                    idle.map((x, i) => (
-                      // "৳32,400.00 unsold" on all four rows spent a third of the
-                      // column repeating a word the panel label already says. The
-                      // figure alone reads the same to the eye; the full phrasing
-                      // moves to the accessible name, where it is not redundant.
-                      <button key={i} type="button" onClick={() => router.push(x.href)} aria-label={`${x.text} — ${t("unsold", { amount: formatMoney(x.value) })}`} className="flex w-full items-baseline justify-between gap-tight border-b border-line py-tight text-left text-[13px] last:border-0 hover:text-ember">
-                        <span className="min-w-0 truncate">{x.text}</span>
-                        <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{formatMoney(x.value)}</span>
-                      </button>
-                    ))
-                  )}
-                </div>
+                    <div key={o.key} className="flex min-h-[84px] min-w-0 flex-col">{body}</div>
+                  );
+                })}
               </div>
             </div>
             <div className={`${card} p-major`}>
