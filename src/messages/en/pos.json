@@ -281,5 +281,15 @@
     "belowMinimum": "Points can be spent from {min} upwards.",
     "nothingToSpendOn": "There is nothing left on this sale to spend points against.",
     "expiringSoon": "{count} of these expire within 60 days."
+  },
+  "live": {
+    "soldOutToday": "Sold out today",
+    "noneLeftToday": "None left today",
+    "busyNow": "All busy now",
+    "leftOfTotal": "{left} of {total} left today",
+    "nextAt": "Next {time} · {left} left",
+    "freeOfTotal": "{free} of {total} free",
+    "startsOn": "Starts {date}",
+    "providersFree": "{free} of {total} free"
   }
 }

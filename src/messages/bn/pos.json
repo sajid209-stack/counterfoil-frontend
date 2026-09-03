@@ -281,5 +281,15 @@
     "belowMinimum": "{min} পয়েন্ট থেকে খরচ করা যায়।",
     "nothingToSpendOn": "এই বিক্রিতে পয়েন্ট খরচ করার মতো কিছু বাকি নেই।",
     "expiringSoon": "এর মধ্যে {count}টির মেয়াদ ৬০ দিনের মধ্যে শেষ হবে।"
+  },
+  "live": {
+    "soldOutToday": "আজ শেষ",
+    "noneLeftToday": "আজ আর নেই",
+    "busyNow": "সব ব্যস্ত",
+    "leftOfTotal": "আজ {left}/{total} বাকি",
+    "nextAt": "পরবর্তী {time} · {left} বাকি",
+    "freeOfTotal": "{free}/{total} খালি",
+    "startsOn": "শুরু {date}",
+    "providersFree": "{free}/{total} জন খালি"
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
@@ -12,6 +12,7 @@ import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
+import { posLiveState } from "@/lib/posState";
 import { taxRateFor } from "@/lib/tax";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -605,6 +606,21 @@ export default function PosPage() {
   };
 
   const slotLabel = (e: CartEntry) => (!e.slotDate ? "" : e.slotTime ? ` · ${e.slotTime} ${e.slotDate === TODAY ? t("slotToday") : e.slotDate}` : ` · ${e.slotDate === TODAY ? t("slotToday") : e.slotDate}`);
+
+  /** The till's clock, in minutes — the demo clock, same as everywhere else. */
+  const nowMinutes = 12 * 60;
+  /** Phrasing for the live-state line. The deriver picks WHICH question to
+   *  answer; these translate the answer. */
+  const liveWords = useMemo(() => ({
+    soldOutToday: t("live.soldOutToday"),
+    noneLeftToday: t("live.noneLeftToday"),
+    busyNow: t("live.busyNow"),
+    leftOfTotal: (left: number, total: number) => t("live.leftOfTotal", { left, total }),
+    nextAt: (time: string, left: number) => t("live.nextAt", { time, left }),
+    freeOfTotal: (free: number, total: number) => t("live.freeOfTotal", { free, total }),
+    startsOn: (d: string) => t("live.startsOn", { date: d }),
+    providersFree: (free: number, total: number) => t("live.providersFree", { free, total }),
+  }), [t]);
   const methodLabel = enumL.method(method);
 
   return (
@@ -658,6 +674,21 @@ export default function PosPage() {
                       <span className="min-w-0 flex-1 truncate text-[12px] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
                       <span className="shrink-0 whitespace-nowrap text-[13px] font-medium">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
                     </span>
+                    {/* What this product is doing RIGHT NOW, stated per booking
+                        type — the next departure and its seats, how many lanes
+                        are free, how much of today's allowance is left. The
+                        till had all of it behind a tap; the counterfoil-pos
+                        reference puts it on the list, because it is what the
+                        counter is actually asked. */}
+                    {(() => {
+                      const live = posLiveState(p, DEMO_TODAY, nowMinutes, liveWords);
+                      if (!live) return null;
+                      return (
+                        <span className={`mt-inline block truncate text-[12px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-ember" : "text-success"}`}>
+                          {live.text}
+                        </span>
+                      );
+                    })()}
                   </span>
                 </button>
               ))}
