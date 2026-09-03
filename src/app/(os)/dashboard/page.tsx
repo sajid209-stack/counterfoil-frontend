@@ -116,17 +116,6 @@ function DeltaPill({ now, then }: { now: number; then: number }) {
   );
 }
 
-function Sparkline({ points }: { points: number[] }) {
-  const max = Math.max(...points, 1);
-  const w = 140, h = 28;
-  const path = points.map((v, i) => `${(i / (points.length - 1)) * w},${h - (v / max) * (h - 4) - 2}`).join(" ");
-  return (
-    <svg width={w} height={h} className="mt-tight text-ember" aria-hidden>
-      <polyline points={path} fill="none" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
 export default function DashboardPage() {
   const router = useRouter();
   const t = useTranslations("dashboard");
@@ -176,7 +165,6 @@ export default function DashboardPage() {
   const revenue = revenueIn(scopeDays);
   const revenuePrev = revenueIn(prevDays);
   const revenueAnimated = useCountUp(revenue);
-  const week = useMemo(() => Array.from({ length: 7 }, (_, i) => revenueIn([dayShift(TODAY, i - 6)])), [orders]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Revenue trend ────────────────────────────────────────────────────────
   // The ranges stop at 30 days because that is how much history exists: the
@@ -630,48 +618,66 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-major min-[420px]:grid-cols-2 xl:grid-cols-4">
-          {/* Aura stat-tile anatomy, measured off the reference: the tinted
-              icon square and the delta pill share the top row (pill hard
-              right), the label sits under them, then the figure, then one
-              line of context. We had the label beside the icon and the delta
-              stranded below the number, which buried the comparison and left
-              the top-right corner empty on every tile. */}
-          <div className={`${card} p-major`}>
+          {/* Aura stat-tile anatomy, measured off the reference at 262x170:
+              the tinted icon square and the delta pill share the top row (pill
+              hard right), then the label, the figure, and ONE line of context —
+              its four tiles put that line at y=133 on every one of them.
+              Ours had four different things in that slot: a sparkline, a
+              progress bar, a sentence, and on Booked ahead nothing at all,
+              which left a void under the figure. It is a sentence on all four
+              now, bottom-aligned so the tiles share a base.
+
+              The labels are sentence case, not small-caps. The reference sets
+              them at 12px/500 unstyled, and uppercase with tracking was the
+              single most visible difference between the two sets of tiles.
+
+              The delta pill stays CONDITIONAL. DeltaPill returns null when
+              there is no prior period to compare against, which in this seed
+              is three tiles out of four. The reference shows a pill on all
+              four because it has twelve months behind it; inventing one here
+              to fill the corner would be inventing the comparison. */}
+          <div className={`${card} flex flex-col p-major`}>
             <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><TrendingUp size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={revenue} then={revenuePrev} />
             </div>
-            <p className="mt-comfortable type-label text-[12px] text-muted">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
+            <p className="mt-comfortable text-[12px] font-medium text-muted">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
             <p className="type-figure mt-inline whitespace-nowrap text-[28px] font-semibold sm:text-[32px]">{formatMoney(revenueAnimated)}</p>
-            <Sparkline points={week} />
+            {/* The sparkline went: it drew the same seven days the revenue
+                trend chart draws in full immediately below it, and it was the
+                reason this tile's context slot held a picture where the other
+                three held words. */}
+            <p className="mt-auto pt-tight text-[12px] text-muted">{t("vsLastWeek")}</p>
           </div>
-          <div className={`${card} p-major`}>
+          <div className={`${card} flex flex-col p-major`}>
             <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><Users size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={sold} then={soldPrev} />
             </div>
-            <p className="mt-comfortable type-label text-[12px] text-muted">{t("capacitySold")}</p>
+            <p className="mt-comfortable text-[12px] font-medium text-muted">{t("capacitySold")}</p>
             <p className="type-figure mt-inline whitespace-nowrap text-[28px] font-semibold sm:text-[32px]">{sold} <span className="text-lg text-muted">/ {capacity}</span></p>
-            <div className="mt-tight flex items-center gap-tight">
-              <span className="text-[12px] text-muted">{soldPct}%</span>
-              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-line"><span className={`block h-full ${soldPct >= 80 ? "bg-ember" : "bg-strong"}`} style={{ width: `${Math.min(100, soldPct)}%` }} /></span>
-            </div>
+            {/* The fill bar restated the figure directly above it — "5 / 772"
+                already IS the ratio — and it was the only bar in the row. */}
+            <p className="mt-auto pt-tight text-[12px] text-muted">{t("pctSold", { pct: soldPct })}</p>
           </div>
-          <div className={`${card} p-major`}>
+          <div className={`${card} flex flex-col p-major`}>
             <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><UserCheck size={18} strokeWidth={1.5} /></span>
             </div>
-            <p className="mt-comfortable type-label text-[12px] text-muted">{t("arrived")}</p>
+            <p className="mt-comfortable text-[12px] font-medium text-muted">{t("arrived")}</p>
             <p className="type-figure mt-inline whitespace-nowrap text-[28px] font-semibold sm:text-[32px]">{arrived} <span className="text-lg text-muted">{t("arrivedOf", { total: sold })}</span></p>
-            <p className={`mt-tight text-[12px] ${noShowPct >= 30 ? "text-danger" : "text-muted"}`}>{t("noShow", { pct: noShowPct })}</p>
+            <p className={`mt-auto pt-tight text-[12px] ${noShowPct >= 30 ? "text-danger" : "text-muted"}`}>{t("noShow", { pct: noShowPct })}</p>
           </div>
-          <div className={`${card} p-major`}>
+          <div className={`${card} flex flex-col p-major`}>
             <div className="flex items-start justify-between gap-tight">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><CalendarClock size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={ahead} then={aheadPrev} />
             </div>
-            <p className="mt-comfortable type-label text-[12px] text-muted">{t("bookedAhead")}</p>
+            {/* "Booked ahead · next 7 days" was a label carrying its own window
+                because there was no context line to put it on. Now there is. */}
+            <p className="mt-comfortable text-[12px] font-medium text-muted">{t("bookedAhead")}</p>
             <p className="type-figure mt-inline whitespace-nowrap text-[28px] font-semibold sm:text-[32px]">{formatMoney(ahead)}</p>
+            <p className="mt-auto pt-tight text-[12px] text-muted">{t("next7Days")}</p>
           </div>
         </div>
       )}
