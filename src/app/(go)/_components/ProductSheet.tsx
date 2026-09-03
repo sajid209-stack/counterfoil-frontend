@@ -28,7 +28,7 @@ import {
 } from "@/lib/api";
 import { DEMO_TODAY, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
-import { durationOptions, formatDuration, priceSegments, productDurationPrice } from "@/lib/duration";
+import { durationOptions, formatDuration, formatDurationShort, priceSegments, productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { formatMoney } from "@/lib/format";
 
@@ -289,18 +289,20 @@ export function ProductSheet({
     const cap = dateCap(value);
     const low = cap && cap.total > 0 && cap.left <= Math.max(1, Math.floor(cap.total * 0.2));
     return (
-      <ChoiceCard key={value} selected={date === value} onClick={() => { setDate(value); setSlotTime(undefined); setResourceId(undefined); }} // pr-section, not px-tight, on every card: ChoiceCard draws its selected
-        // check absolutely in the top-right, and at 76px wide it landed on top
-        // of the day label — "TODAY" rendered as "TODA✓". Reserving the corner
-        // uniformly keeps the five cards aligned with each other.
-        className="flex min-h-[76px] min-w-[84px] flex-col items-center justify-center py-tight pl-section pr-section">
-        {/* Day name small, DATE big, month small — the reference's date card,
-            and the shape a person actually scans a date strip by. It ran as one
-            13px "29 Jul" line, which reads as a label rather than a date. */}
-        <span className="text-[12px] uppercase tracking-wide text-muted">{label === t("sheet.today") || label === t("sheet.tomorrow") ? label : label.split(" ")[0]}</span>
-        <span className="text-[22px] font-semibold leading-tight">{value.slice(8, 10)}</span>
-        <span className="text-[12px] text-muted">{new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
-        {cap && <span className={`text-[12px] ${low ? "font-medium text-ember" : "text-muted"}`}>{cap.left} left</span>}
+      <ChoiceCard key={value} selected={date === value} onClick={() => { setDate(value); setSlotTime(undefined); setResourceId(undefined); }} // px-7, symmetric: ChoiceCard draws its selected check absolutely
+        // 8px in from the top-right at 16px square, so it owns the corner out
+        // to 24px. Anything reaching in there gets written over — "TODAY" once
+        // rendered as "TODA✓", and a measurement sweep found "Tomorrow",
+        // "Lane 1" and the provider names doing the same. Every selectable card
+        // in this sheet now keeps 28px clear on that side.
+        className="flex min-h-[62px] min-w-[96px] shrink-0 flex-col items-center justify-center gap-0.5 py-tight px-7">
+        {/* Two lines, not three. The day is what a person scans the strip by
+            and the date confirms it; running DAY / 29 / Jul down three lines
+            made an 84px card that wrapped the strip onto a second row and
+            stranded "More dates" beside the orphan. */}
+        <span className="whitespace-nowrap text-[13px] font-medium leading-tight">{label === t("sheet.today") || label === t("sheet.tomorrow") ? label : label.split(" ")[0]}</span>
+        <span className="whitespace-nowrap text-[12px] leading-tight text-muted">{value.slice(8, 10)} {new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
+        {cap && <span className={`whitespace-nowrap text-[12px] leading-tight ${low ? "font-medium text-ember" : "text-muted"}`}>{cap.left} left</span>}
       </ChoiceCard>
     );
   };
@@ -406,7 +408,13 @@ export function ProductSheet({
         </div>
 
         {(needsSchedule(bt) || provider) && !course && (
-          <div className="mb-section flex flex-wrap items-center gap-tight">
+          <div className="mb-section">
+            <p className="mb-tight text-[12px] font-medium uppercase tracking-wide text-muted">{t("sheet.dateLabel")}</p>
+            {/* One row that scrolls, never a grid that wraps. Five chips plus
+                the calendar cannot fit a phone's width, and wrapping put a
+                lone card on a second row with "More dates" stranded next to
+                it in dead space. */}
+            <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {/* Date chips first — the next bookable days; calendar behind "More dates". */}
             {(() => {
               const chips: string[] = [];
@@ -421,10 +429,11 @@ export function ProductSheet({
               });
             })()}
             {moreDates ? (
-              <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setSlotTime(undefined); setResourceId(undefined); }} className="h-12 rounded-sm border border-line bg-card px-comfortable text-sm" />
+              <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setSlotTime(undefined); setResourceId(undefined); }} className="h-auto shrink-0 self-stretch rounded-sm border border-line bg-card px-comfortable text-sm" />
             ) : (
-              <button type="button" onClick={() => setMoreDates(true)} className="h-12 rounded-sm px-tight text-[13px] text-faint active:text-fg">{t("sheet.moreDates")}</button>
+              <button type="button" onClick={() => setMoreDates(true)} className="shrink-0 self-stretch whitespace-nowrap rounded-sm px-tight text-[13px] text-faint active:text-fg">{t("sheet.moreDates")}</button>
             )}
+            </div>
           </div>
         )}
         {!openToday && needsSchedule(bt) && <p className="mb-section text-[13px] text-danger">{t("sheet.closedOnDate")}</p>}
@@ -544,13 +553,13 @@ export function ProductSheet({
               )}
 
               <span className="type-label text-[12px] text-muted">{t("sheet.duration")}</span>
-              <div className="flex flex-wrap gap-tight">{flexOptions.map((d) => <button key={d} type="button" onClick={() => pickDuration(d)} className={`h-12 flex-1 whitespace-nowrap rounded-sm border px-tight text-sm ${duration === d ? "border-ember bg-ember/10 font-medium text-ember" : "border-line bg-card"}`}>{formatDuration(d)}{slotTime ? <span className="ml-inline text-[12px] opacity-70">{formatMoney(priceFor(slotTime, d, laneOf(resourceId)), currency)}</span> : null}</button>)}</div>
+              <div className="flex flex-wrap gap-tight">{flexOptions.map((d) => <button key={d} type="button" onClick={() => pickDuration(d)} className={`h-12 flex-1 whitespace-nowrap rounded-sm border px-tight text-sm ${duration === d ? "border-ember bg-ember/10 font-medium text-ember" : "border-line bg-card"}`}>{formatDurationShort(d)}{slotTime ? <span className="ml-inline text-[12px] opacity-70">{formatMoney(priceFor(slotTime, d, laneOf(resourceId)), currency)}</span> : null}</button>)}</div>
 
               <span className="type-label text-[12px] text-muted">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>
-              <div className="flex flex-wrap gap-tight">
-                <ChoiceCard selected={!resourceId} onClick={() => setResourceId(undefined)} className="flex h-14 items-center px-comfortable text-sm">{t("sheet.any")}</ChoiceCard>
+              <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <ChoiceCard selected={!resourceId} onClick={() => setResourceId(undefined)} className="flex h-14 items-center pl-comfortable pr-7 text-sm">{t("sheet.any")}</ChoiceCard>
                 {lanes.map((r) => (
-                  <ChoiceCard key={r.id} selected={resourceId === r.id} disabled={r.outOfService} onClick={() => setResourceId(r.id)} className="flex min-h-14 max-w-56 flex-col items-start justify-center px-comfortable py-inline">
+                  <ChoiceCard key={r.id} selected={resourceId === r.id} disabled={r.outOfService} onClick={() => setResourceId(r.id)} className="flex min-h-14 max-w-56 flex-col items-start justify-center py-inline pl-comfortable pr-7">
                     <span className="block max-w-full truncate text-sm leading-tight">{r.name}{rateLabel(r) ? <span className="ml-inline whitespace-nowrap text-[12px] text-faint">{rateLabel(r)}</span> : null}</span>
                     <span className="block max-w-full truncate text-[12px] leading-tight text-muted">{liveState(r)}</span>
                   </ChoiceCard>
@@ -641,7 +650,7 @@ export function ProductSheet({
               {product.providerPickable && providers.map((p) => {
                 const nextFree = providerTimes.find((t) => (date !== TODAY || toMinutes(t) >= NOW_MIN) && isOwnerFree(p.id, date, t, providerDuration));
                 return (
-                  <ChoiceCard key={p.id} selected={providerId === p.id} onClick={() => setProviderId(p.id)} className="flex min-w-44 items-center gap-tight p-comfortable">
+                  <ChoiceCard key={p.id} selected={providerId === p.id} onClick={() => setProviderId(p.id)} className="flex min-w-44 items-center gap-tight py-comfortable pl-comfortable pr-7">
                     <Avatar name={p.name} />
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium">{p.name}</span>
@@ -651,7 +660,7 @@ export function ProductSheet({
                   </ChoiceCard>
                 );
               })}
-              <ChoiceCard selected={!providerId} onClick={() => setProviderId(undefined)} className="flex min-w-32 items-center justify-center p-comfortable text-sm">{t("sheet.firstAvailable")}</ChoiceCard>
+              <ChoiceCard selected={!providerId} onClick={() => setProviderId(undefined)} className="flex min-w-32 items-center justify-center px-7 py-comfortable text-sm">{t("sheet.firstAvailable")}</ChoiceCard>
             </div>
             <span className="type-label mt-tight text-[12px] text-faint">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>
             <div className="flex flex-wrap gap-inline">
@@ -738,7 +747,7 @@ export function ProductSheet({
               {guides.map((g) => {
                 const free = slotGuides.includes(g.id);
                 return (
-                  <ChoiceCard key={g.id} selected={guideId === g.id} disabled={!free} onClick={() => setGuideId(g.id)} className="flex items-center gap-tight p-comfortable">
+                  <ChoiceCard key={g.id} selected={guideId === g.id} disabled={!free} onClick={() => setGuideId(g.id)} className="flex items-center gap-tight py-comfortable pl-comfortable pr-7">
                     <Avatar name={g.name} size={32} />
                     <span className="text-sm">{g.name}{!free && <span className="ml-inline text-[12px]">{t("sheet.busy")}</span>}</span>
                   </ChoiceCard>

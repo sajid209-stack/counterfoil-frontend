@@ -1798,3 +1798,89 @@ depending on whether the page declares a description and actions. The four
 standing harnesses are unchanged — type 10/10, layout 23/23, behaviour 41/41 —
 and the 13-route × 390/1440 sweep reports the same four pre-existing `main`
 overflows with identical numbers, so this did not touch them.
+
+---
+
+## Selection sheets (2026-09-03) — the nine patterns get the mockup's chrome
+
+Owner asked for the selection-systems UI only, taking the treatment from the
+standalone Figma Make POS build. Both were rendered at 430px and compared per
+variant; the deltas below are the ones that survived that comparison.
+
+### The date strip was wrapping and orphaning
+
+Five 84px date cards plus the calendar button cannot fit 398px, so the strip
+wrapped: a lone card on a second row with **"More dates" stranded beside it in
+dead space**. It is on seven of the nine sheets — every date-driven pattern —
+so it was the most-seen flaw in the sheet.
+
+- The strip is now **one row that scrolls**, never a grid that wraps. A
+  partially-visible fifth chip is also the affordance that says there is more.
+- Cards went from three lines (DAY / 29 / Jul) to **two** (`Today` / `29 Jul`),
+  which is the mockup's pill and roughly halves the width each one needs. The
+  capacity line ("318 left") stays where a rule produces one.
+- The strip gains a **`DATE` section label**, so it reads as a step rather than
+  as loose chrome above the list.
+
+### The check badge was writing over the cards' own text
+
+`ChoiceCard` draws its selected check 8px in from the top-right at 16px square,
+so it owns the corner out to 24px. Anything reaching in there is overwritten.
+This was recorded once before as "TODAY" rendering as **"TODA✓"** and fixed on
+that one card by hand; it came straight back the moment the card was resized.
+
+A **measurement sweep** — open all nine sheets, select every selectable card in
+turn, and compare the badge's rect against every leaf text node's — found it
+live on five sheets: `Tomorrow`, `Lane 1`, `Lane 2`, `Lane 3` and
+`Karim Hossain`. None of those were visible in the screenshot I had been
+reading; two only appear once the card is chosen.
+
+All six selectable cards in the sheet now keep **28px clear** on that side
+(symmetric where the content is centred, right-only where it is left-aligned).
+The sweep is a standing check — it reports zero across all nine.
+
+### Session rows say what is being decided
+
+`SessionList` already led with the time and drew a fill bar; what it put in the
+corner was the **price, identical on every row**, with places-left beneath it in
+muted grey.
+
+- **Places left is now the corner figure** at 13px/500, ember at ≤20% — the
+  app's existing low-availability language, not a traffic-light scheme.
+- The bar gained **the count it is drawing** (`0/40`) beside it. A bar with no
+  figure is a shape; a figure with no bar is a number. Both cost one line.
+- **The price is stated once, under the list**, and on a row only where a
+  pricing rule actually moves it — which is exactly the rule `SlotMatrix`
+  already follows for its cells. New key `sheet.pricePerTicket`.
+
+### Duration and lane rows
+
+Duration chips read `formatDuration` ("1 hr 30 min"), so five of them wrapped.
+They now use **`formatDurationShort`** — "1:30", the mockup's chip, and a helper
+this repo already had — and all five fit one row. The lane row became a
+scrolling row for the same reason the date strip did: Lane 4 was landing alone
+on a second row, stretched full-width by `flex-1`.
+
+### Verified
+
+- **45 sheet-renders clean**: nine sheets × 320 / 390 / 430 light, 430 dark and
+  390 Bangla — no page x-scroll, nothing clipped without an ellipsis, nothing
+  under the 12px caption floor, no console errors. (The 5-tab mobile bar's 11px
+  and the seat map are the two declared exceptions, as before.)
+- **Badge-overlap sweep: zero** across all nine sheets, including cards that
+  only collide once selected.
+- Standing harnesses unchanged: sheet variants all on theme, type **10/10**,
+  dashboard layout **23/23**.
+- `tsc` and `npm run build` clean; `eslint` clean on both changed files.
+- i18n parity **0 missing / 0 extra** — three new keys authored in en and bn.
+
+**Note for the next session:** the dashboard harnesses in the scratchpad point
+at **localhost:3111**. Run the dev server on that port or they report a dead
+page as a wall of failures (Times New Roman, 500s) that look like regressions
+and are not.
+
+### Not changed
+
+The start-time stepper still reads "—" until a time is picked. It looks like a
+bug, it is not one, and it is now recorded twice — the P4 work chose it
+deliberately and the mockup has no equivalent control to copy.

@@ -258,7 +258,10 @@
     "addSeats": "{count, plural, other {# আসন যোগ করুন}} — {amount}",
     "addAppointment": "অ্যাপয়েন্টমেন্ট যোগ করুন — {amount}",
     "enrolAmount": "ভর্তি করুন — {amount}",
-    "pickTime": "সময় বাছুন"
+    "pickTime": "সময় বাছুন",
+    "dateLabel": "তারিখ",
+    "sessionLabel": "সেশন বেছে নিন",
+    "pricePerTicket": "{amount} প্রতি টিকিট"
   },
   "settle": {
     "title": "বুকিং নিষ্পত্তি",

@@ -258,7 +258,10 @@
     "addSeats": "{count, plural, one {Add # seat} other {Add # seats}} — {amount}",
     "addAppointment": "Add appointment — {amount}",
     "enrolAmount": "Enrol — {amount}",
-    "pickTime": "Choose a time"
+    "pickTime": "Choose a time",
+    "dateLabel": "Date",
+    "sessionLabel": "Select session",
+    "pricePerTicket": "{amount} per ticket"
   },
   "settle": {
     "title": "Settle a booking",
