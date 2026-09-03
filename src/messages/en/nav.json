@@ -31,5 +31,8 @@
   "switchUser": "Switch user",
   "help": "Help",
   "more": "More",
-  "search": "Search"
+  "search": "Search",
+  "vertical": "Vertical",
+  "verticalPick": "Choose a business type",
+  "verticalHint": "Switch the till to another kind of business"
 }

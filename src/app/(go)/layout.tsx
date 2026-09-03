@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
+import { DEMOS } from "@/lib/demos";
+import { getOperator, loadDemoBusiness } from "@/lib/api";
 import { LocaleToggle } from "@/components/LocaleProvider";
 import { Logo, Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -55,6 +57,9 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
   const [salesOpen, setSalesOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
+  // Which vertical is loaded — the operator name IS the demo's name, which
+  // is how the swap identifies itself.
+  const operatorQ = useApiQuery(() => getOperator(), []);
   // Don't show an empty destination: Schedule only exists for slotted catalogues.
   const hasSlotted = (productsQ.data?.data ?? []).some((p) => isSlotBased(p.bookingType));
   const tabs = TABS.filter((t) => t.href !== "/schedule" || hasSlotted);
@@ -149,7 +154,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-x-0 bottom-0 rounded-t-md border-t border-line bg-sheet p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
             <div className="mb-section flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
+                <p className="text-sm font-medium">{operatorQ.data?.name ?? "Counterfoil"}</p>
                 <p className="font-mono text-[11px] text-faint">Fort Main Gate · shift open 3:24</p>
               </div>
               <div className="flex items-center gap-tight">
@@ -159,6 +164,42 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
             </div>
+            {/* Vertical switcher — the counterfoil-pos reference puts one at the
+                top of its nav so a till can be seen as the kind of business it
+                is serving, without leaving the till. Counterfoil already had
+                the swap (loadDemoBusiness, five demos with their own product
+                sets); it was only reachable from the landing page, which meant
+                walking out of the POS to change what the POS was selling.
+
+                Each option names the booking systems that vertical actually
+                demonstrates, because "Strike Bowling" does not tell you it is
+                the flexible-duration resource example. Between the five they
+                cover all fourteen booking types the product wizard can derive. */}
+            <div className="mb-section rounded-sm border border-line bg-card p-comfortable">
+              <label htmlFor="go-vertical" className="type-label mb-tight block text-[12px] text-muted">{t("vertical")}</label>
+              <select
+                id="go-vertical"
+                className="h-12 w-full rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-ember"
+                value={DEMOS.find((d) => d.name === (operatorQ.data?.name ?? ""))?.id ?? ""}
+                onChange={(e) => {
+                  const d = DEMOS.find((x) => x.id === e.target.value);
+                  if (!d) return;
+                  loadDemoBusiness(d.name, d.currency, d.productIds);
+                  // A full reload, not router.refresh(): the swap rewrites
+                  // in-memory mock state that every already-mounted useApiQuery
+                  // has captured, and a soft refresh would leave half the till
+                  // showing the previous catalogue.
+                  window.location.reload();
+                }}
+              >
+                <option value="" disabled>{t("verticalPick")}</option>
+                {DEMOS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+              <p className="mt-tight text-[12px] text-muted">
+                {DEMOS.find((d) => d.name === (operatorQ.data?.name ?? ""))?.types ?? t("verticalHint")}
+              </p>
+            </div>
+
             <div className="grid grid-cols-3 gap-tight sm:grid-cols-4">
               {MORE_ITEMS.map((item) => {
                 const Icon = item.icon;
