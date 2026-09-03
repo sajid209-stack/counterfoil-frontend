@@ -66,7 +66,12 @@ export function ProductThumb({
   const shape =
     size === "chip"
       ? "h-10 w-10 shrink-0 rounded-xs"
-      : "h-[72px] w-[72px] shrink-0 rounded-xs";
+      // 56px on a phone, 72px from sm. The thumbnail sets the row height in the
+      // POS list — at 72 a 390px screen fits five and a half products, at 56 it
+      // fits seven. It is recognition support, not the card, so it is the part
+      // that should give. `thumb` is used only by the POS grid, so this changes
+      // nothing else.
+      : "h-14 w-14 shrink-0 rounded-xs sm:h-[72px] sm:w-[72px]";
 
   if (src && !broken) {
     return (
