@@ -1884,3 +1884,100 @@ and are not.
 The start-time stepper still reads "—" until a time is picked. It looks like a
 bug, it is not one, and it is now recorded twice — the P4 work chose it
 deliberately and the mockup has no equivalent control to copy.
+
+---
+
+## Selection sheets (2026-09-03, second pass) — the nine reference screens
+
+Owner supplied nine screenshots of the standalone build's sheets and asked for
+those designs in the POS. The exact rules were read out of that build's source
+rather than eyeballed from the images.
+
+### Availability is now a pressure, stated four ways
+
+`SessionList` said "N left" in muted grey for everything up to sold out. One
+function, `pressureOf`, now classifies a session and the label AND the bar both
+read from it — so they cannot disagree:
+
+| Left | Label | Colour |
+|---|---|---|
+| 0 | Sold out | danger |
+| ≤4 | N left | ember |
+| ≤10, or ≤20% of capacity | N seats | warning |
+| more | N seats | success |
+
+Thresholds are **absolute, not percentage**: four seats left is four seats left
+whether the room holds 15 or 400, and it is the count the counter decides on.
+The 20% clause is kept so a small room still warns in time. Every tier states
+itself **in words**, so this is not a traffic light — the colour is redundant
+with the text, never carrying it.
+
+A sold-out session that takes a waitlist now offers **"Join waitlist →" on its
+own line**, where it reads as the offer it is, instead of sitting in the corner
+where the seat count goes.
+
+### Resource × time became two questions
+
+The fields × times grid was the right shape for a wall planner and the wrong
+one for a phone: two fields across a fourteen-hour day scrolled sideways to
+reach the afternoon, taking the row labels with it. `SlotMatrix` now asks for
+the **resource first** (chips carrying a free-slot count) and shows **that
+resource's times** in a 4-across grid. Switching resource keeps a compatible
+time. Nothing is hidden: an unavailable time still says so and still explains
+itself when tapped.
+
+The **selected time is the one fill** in the pattern. Everything else selects
+as a tint, per the standing rule — but the time is the last decision and the
+thing the CTA then names, so the reference draws it solid and so do we.
+
+### Panels replacing footnotes
+
+- **Daily capacity** (BT-06) gets a panel — label, remaining, a bar and the
+  total — because a day-capped product is run by that one number and there is
+  no slot list to read it off. The bar fills to show what is **left**, matching
+  the figure beside it. The number came off the date chips entirely, where it
+  had been appearing a third time.
+- **A course** gets an affirmative "Ready to add" panel instead of a bare list
+  of dates that looked like a choice still to be made.
+- **Providers** are full-width rows: avatar, name, next free, and the rate on
+  the right — `Standard rate` or `+৳500 premium` — instead of the premium
+  concatenated into the role line where it read as part of the job title.
+- **Guides** state `Available` / `Not free` on their own line.
+
+### Two defects found by rendering it
+
+**A Fri–Sun tour opened on a Wednesday.** The date strip lists only open days,
+but `date` defaulted to today regardless — so the guided sheet opened with no
+chip selected, no departures, and "Closed on this date" where the departure
+list belongs. It now opens on the first day the product actually runs.
+
+**"Add 2 seats — ৳0.00".** The seat CTA summed the tier steppers, which a seat
+map never sets because the seat *is* the ticket. `submitSeats` had always
+priced the sale correctly from the seat rows, so the button was the only thing
+lying — and it lied about money, on the primary action. **Confirmed
+pre-existing against production before fixing** (production shows the same
+৳0.00); now ৳800.00 for two ৳400 stalls seats.
+
+### Seat legend
+
+Selected seats were a solid version of their own category colour, which differs
+from that category's available tint only in saturation — the one comparison a
+28px tile cannot carry. Selection is now **solid ember with white text**, and
+the legend gained `Selected`. That first produced a real collision: the legend
+drew category swatches solid, and Stalls is itself orange, so two identical
+orange squares meant different things. Category swatches are now drawn the way
+an available seat of that category is drawn — tinted, with its own border.
+
+### Not built, and why
+
+**No screening selector on the seat map.** The reference has one; `prd_film`
+has no schedule at all — no `slotMinutes`, no times. Showtimes would have had
+to be invented, so the sheet keeps section + seats.
+
+### Verified
+
+45 sheet-renders clean (nine sheets × 320/390/430 light, 430 dark, 390 Bangla):
+no x-scroll, nothing clipped without an ellipsis, nothing under the 12px floor,
+no console errors. Badge-overlap sweep zero. Sheet variants on theme, type
+10/10, dashboard layout 23/23. `tsc`, `build` and `eslint` clean. i18n parity
+0 missing / 0 extra, twenty new keys in en and bn.

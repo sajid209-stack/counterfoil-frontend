@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
@@ -18,16 +19,22 @@ export interface MatrixRow {
 }
 
 /**
- * Fixed slots across several resources — fields, courts, lanes.
+ * Fixed slots across several resources — fields, courts, lanes — as two
+ * questions rather than one table.
  *
- * The version this replaces printed the price into every single cell, so a
- * two-field day was "৳1,500.00" written twenty-eight times inside a table that
- * had to scroll sideways to show the afternoon. Nobody can find a free 19:00
- * in that.
+ * The grid this replaces put every resource against every time. That is the
+ * right shape for a wall planner and the wrong one for a phone: two fields
+ * across a fourteen-hour day is a table that has to scroll sideways to reach
+ * the afternoon, and the row labels scroll away with it. A counter is not
+ * comparing the whole day, it is answering "which pitch, then what time".
  *
- * Here a cell carries the TIME and its state, which is what is being chosen.
- * The price is stated once underneath, and appears in a cell only where it
- * actually differs from the base rate — which is the only time it is news.
+ * So the resource is chosen first and the times below belong to it. Nothing is
+ * hidden by that — an unavailable time still says so and still explains itself
+ * when tapped, and switching resource re-answers the same question rather than
+ * opening a different screen.
+ *
+ * The price is stated once underneath and appears on a chip only where it
+ * actually differs from the base rate, which is the only time it is news.
  */
 export function SlotMatrix({
   rows,
@@ -47,7 +54,17 @@ export function SlotMatrix({
   resourceNoun: string;
 }) {
   const t = useTranslations("pos");
-  if (rows.length === 0) return null;
+
+  /** Which resource's times are on show. It is not the same thing as the
+   *  chosen slot: a cashier browses a pitch before committing to an hour on
+   *  it, and the sale is only made when both are answered. Defaults to the
+   *  first one that has anything free, so the grid opens on something usable. */
+  const firstUsable = rows.find((r) => !r.outOfService && r.cells.some((c) => c.available)) ?? rows[0];
+  const [viewId, setViewId] = useState<string | undefined>(selectedResourceId ?? firstUsable?.id);
+  const activeId = selectedResourceId ?? viewId;
+  const active = rows.find((r) => r.id === activeId) ?? firstUsable;
+
+  if (rows.length === 0 || !active) return null;
 
   // The base rate is the one most slots charge; anything else is an uplift
   // worth calling out.
@@ -58,75 +75,90 @@ export function SlotMatrix({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <div className="overflow-x-auto">
-        <div className="min-w-max">
-          {rows.map((row) => (
-            <div key={row.id} className="mb-inline flex items-center gap-inline">
-              <span
-                className={cn(
-                  "w-24 shrink-0 truncate text-[13px] font-medium",
-                  row.outOfService && "text-danger",
-                )}
-                title={row.name}
-              >
-                {row.name}
-              </span>
-              {row.cells.map((cell) => {
-                const selected = selectedResourceId === row.id && selectedTime === cell.time;
-                const uplifted = cell.available && cell.price !== base;
-                if (!cell.available) {
-                  return (
-                    <button
-                      key={cell.time}
-                      type="button"
-                      onClick={() =>
-                        onBlocked(
-                          row.outOfService
-                            ? t("sheet.outOfService")
-                            : t("sheet.slotTaken", { time: cell.time, name: row.name }),
-                        )
-                      }
-                      className="flex h-12 w-14 shrink-0 items-center justify-center rounded-xs border border-line bg-[repeating-linear-gradient(45deg,var(--color-subtle),var(--color-subtle)_3px,transparent_3px,transparent_7px)] text-[12px] text-muted"
-                    >
-                      {row.outOfService ? "—" : t("sheet.booked")}
-                    </button>
-                  );
+      <span className="type-label text-[12px] text-muted">{resourceNoun}</span>
+      <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {rows.map((row) => {
+          const on = row.id === active.id;
+          const free = row.cells.filter((c) => c.available).length;
+          return (
+            <button
+              key={row.id}
+              type="button"
+              onClick={() => {
+                if (row.outOfService) return onBlocked(t("sheet.outOfService"));
+                setViewId(row.id);
+                // Keep a chosen time only where the new resource also has it.
+                if (selectedTime && row.cells.some((c) => c.time === selectedTime && c.available)) {
+                  onSelect(row.id, selectedTime);
                 }
-                return (
-                  <button
-                    key={cell.time}
-                    type="button"
-                    onClick={() => onSelect(row.id, cell.time)}
-                    className={cn(
-                      "flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xs border transition-colors duration-quick",
-                      selected
-                        ? "border-ember bg-ember/10 font-medium text-ember"
-                        : "border-line bg-card hover:bg-subtle active:bg-ember/10",
-                    )}
-                  >
-                    <span className="text-[12px]">{cell.time}</span>
-                    {/* Only where it is not the usual rate. */}
-                    {uplifted && (
-                      <span
-                        className={cn(
-                          // 12px, not 9. This is money, and it only appears on
-                          // the cell whose rate differs from the base rate
-                          // stated under the matrix — rare enough that equal
-                          // weight with the time costs less than a price the
-                          // cashier has to lean in to read.
-                          "text-[12px]",
-                          selected ? "opacity-80" : "text-brand-foreground",
-                        )}
-                      >
-                        {formatMoney(cell.price, currency)}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
+              }}
+              className={cn(
+                "flex min-h-12 shrink-0 flex-col items-center justify-center rounded-sm border px-comfortable py-tight text-[13px] transition-colors duration-quick",
+                row.outOfService
+                  ? "border-line bg-subtle text-faint line-through"
+                  : on
+                    ? "border-ember bg-ember/10 font-medium text-ember"
+                    : "border-line bg-card active:bg-ember/10",
+              )}
+            >
+              <span className="whitespace-nowrap">{row.name}</span>
+              {!row.outOfService && (
+                <span className={cn("whitespace-nowrap text-[12px]", on ? "opacity-80" : "text-muted")}>
+                  {free > 0 ? t("sheet.slotsFree", { count: free }) : t("sheet.fullyBooked")}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <span className="type-label mt-tight text-[12px] text-muted">{t("sheet.time")}</span>
+      <div className="grid grid-cols-4 gap-tight">
+        {active.cells.map((cell) => {
+          const selected = active.id === selectedResourceId && selectedTime === cell.time;
+          const uplifted = cell.available && cell.price !== base;
+          if (!cell.available) {
+            return (
+              <button
+                key={cell.time}
+                type="button"
+                onClick={() =>
+                  onBlocked(
+                    active.outOfService
+                      ? t("sheet.outOfService")
+                      : t("sheet.slotTaken", { time: cell.time, name: active.name }),
+                  )
+                }
+                className="flex h-12 items-center justify-center rounded-sm border border-line bg-subtle text-[13px] text-faint line-through"
+              >
+                {cell.time}
+              </button>
+            );
+          }
+          return (
+            <button
+              key={cell.time}
+              type="button"
+              onClick={() => onSelect(active.id, cell.time)}
+              className={cn(
+                "flex h-12 flex-col items-center justify-center rounded-sm border text-[13px] transition-colors duration-quick",
+                // The time is the last thing decided and the thing the CTA
+                // then names, so it is the one selection in this pattern drawn
+                // as a fill rather than a tint.
+                selected
+                  ? "border-ember bg-ember font-medium text-white"
+                  : "border-line bg-card active:bg-ember/10",
+              )}
+            >
+              <span>{cell.time}</span>
+              {uplifted && (
+                <span className={cn("text-[12px]", selected ? "opacity-90" : "text-brand-foreground")}>
+                  {formatMoney(cell.price, currency)}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* The price, said once. */}

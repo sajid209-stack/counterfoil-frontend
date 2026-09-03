@@ -18,6 +18,18 @@ export interface SessionRowData {
   waitlist?: boolean;
 }
 
+/** How hard a session is to get into, as one value the label and the bar both
+ *  read from. Absolute thresholds, not a percentage: four seats left is four
+ *  seats left whether the room holds 15 or 400, and it is the count a cashier
+ *  decides on. Every tier states itself in words as well, so the colour is
+ *  never carrying the meaning alone. */
+function pressureOf(left: number, capacity: number): "gone" | "critical" | "low" | "fine" {
+  if (left <= 0) return "gone";
+  if (left <= 4) return "critical";
+  if (left <= 10 || left <= Math.max(1, Math.floor(capacity * 0.2))) return "low";
+  return "fine";
+}
+
 /**
  * Fixed sessions as ROWS, not a grid of little time tiles.
  *
@@ -66,7 +78,8 @@ export function SessionList({
         const sold = Math.max(0, s.capacity - s.left);
         const pctSold = s.capacity > 0 ? (sold / s.capacity) * 100 : 0;
         const full = s.left <= 0 || !!s.blockedReason;
-        const low = !full && s.left <= Math.max(1, Math.floor(s.capacity * 0.2));
+        const closed = !!s.blockedReason && s.left > 0;
+        const pressure = pressureOf(s.left, s.capacity);
         const isSelected = selected === s.time;
 
         return (
@@ -109,14 +122,24 @@ export function SessionList({
                 <span
                   className={cn(
                     "ml-auto shrink-0 whitespace-nowrap text-[13px] font-medium",
-                    full ? "text-muted" : low ? "text-ember" : "text-fg",
+                    closed
+                      ? "text-muted"
+                      : pressure === "gone"
+                        ? "text-danger"
+                        : pressure === "critical"
+                          ? "text-ember"
+                          : pressure === "low"
+                            ? "text-warning"
+                            : "text-success",
                   )}
                 >
-                  {full
-                    ? s.waitlist
-                      ? t("sheet.joinWaitlist")
-                      : (s.blockedReason ?? t("sheet.full"))
-                    : t("sheet.leftCount", { count: s.left })}
+                  {closed
+                    ? (s.blockedReason ?? t("sheet.closedSession"))
+                    : pressure === "gone"
+                      ? t("sheet.soldOut")
+                      : pressure === "critical"
+                        ? t("sheet.leftCount", { count: s.left })
+                        : t("sheet.seatsLeft", { count: s.left })}
                 </span>
               </span>
 
@@ -124,7 +147,16 @@ export function SessionList({
               <span className="flex items-center gap-tight">
                 <span className="flex h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line" aria-hidden>
                   <span
-                    className={cn("h-full rounded-full", pctSold >= 80 ? "bg-ember" : "bg-strong")}
+                    className={cn(
+                      "h-full rounded-full",
+                      closed
+                        ? "bg-strong"
+                        : pressure === "gone" || pressure === "critical"
+                          ? "bg-ember"
+                          : pressure === "low"
+                            ? "bg-warning"
+                            : "bg-success",
+                    )}
                     style={{ width: `${Math.min(100, pctSold)}%` }}
                   />
                 </span>
@@ -137,6 +169,10 @@ export function SessionList({
                   </span>
                 )}
               </span>
+
+              {full && !closed && s.waitlist && (
+                <span className="text-[12px] font-medium text-ember">{t("sheet.joinWaitlist")} →</span>
+              )}
             </span>
           </button>
         );

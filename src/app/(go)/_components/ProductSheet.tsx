@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, Clock, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar, BlockedNotice, Button, ChoiceCard, FormField, ProductThumb, ResourceTimeline, useToast } from "@/components/ui";
 import { availableSeats } from "@/lib/api";
@@ -10,6 +10,7 @@ import { SlotMatrix } from "./SlotMatrix";
 import { useApiQuery } from "@/lib/useApi";
 import {
   applyResourceRate,
+  CHECKOUT_HELD_FOR,
   explainUnavailable,
   firstFreeResource,
   freeGuides,
@@ -20,6 +21,7 @@ import {
   isOwnerFree,
   isResourceFreeFor,
   joinWaitlist,
+  peekHolds,
   ownerBusyDetailed,
   type Product,
   type ProductSchedule,
@@ -127,6 +129,14 @@ export function ProductSheet({
   const seatsQ = useApiQuery(() => availableSeats(product.id), [product.id]);
   const availSeats = seatsQ.data ?? [];
   const [selectedSeats, setSelectedSeats] = useState<string[]>(initial?.seatLabels ?? []);
+  /** A seat map prices itself off the seats, not off the tier steppers — those
+   *  stay at zero because a seat IS the ticket here. The CTA was reading them
+   *  anyway and offering "Add 2 seats — ৳0.00" on a ৳800 pair. `submitSeats`
+   *  already priced the sale correctly from these same rows, so the button was
+   *  the only thing lying. */
+  const seatTotal = availSeats
+    .filter((s) => selectedSeats.includes(s.label))
+    .reduce((a, s) => a + s.price, 0);
   const activeTiers = product.tiers.filter((t) => t.active);
   const bt = product.bookingType;
   const resourceMode = isResourceType(bt);
@@ -136,7 +146,20 @@ export function ProductSheet({
   const course = bt === "BT-13";
   const sectioned = (product.sections?.length ?? 0) > 0 || bt === "BT-07";
 
-  const [date, setDate] = useState(initial?.slotDate ?? TODAY);
+  /** The first day this product actually runs. The date strip only lists open
+   *  days, so defaulting to today opened a Fri–Sun tour on a Wednesday: no
+   *  chip selected, no departures, and "Closed on this date" where the
+   *  departure list should be. The sheet now opens on something sellable. */
+  const firstBookable = (() => {
+    if (!needsSchedule(bt) && !provider) return TODAY;
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(Date.parse(`${TODAY}T12:00:00Z`) + i * 86400000).toISOString().slice(0, 10);
+      if (isOpenOn(product, d)) return d;
+    }
+    return TODAY;
+  })();
+
+  const [date, setDate] = useState(initial?.slotDate ?? firstBookable);
   const [slotTime, setSlotTime] = useState<string | undefined>(initial?.slotTime);
   const [resourceId, setResourceId] = useState<string | undefined>(initial?.resourceId);
   const [providerId, setProviderId] = useState<string | undefined>();
@@ -167,6 +190,39 @@ export function ProductSheet({
   const [waived, setWaived] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null); // BlockedNotice message
   const [moreDates, setMoreDates] = useState(false);
+
+  /** Re-opening a cart line means capacity is already spoken for: adding it
+   *  placed a self-releasing checkout hold. The counter needs to know how long
+   *  that reservation has left, because a customer changing their mind twice
+   *  can outlast it and the seats go back on sale underneath them.
+   *
+   *  Driven off the hold's real `expiresAt`, not a timer started when the
+   *  sheet opened — a countdown that disagrees with the ledger is worse than
+   *  none. A fresh selection has no hold yet, so it shows nothing rather than
+   *  promising a reservation that does not exist. */
+  const heldUntil = useMemo(() => {
+    if (!initial) return null;
+    const want = initial.slotTime ? slotISO(initial.slotDate ?? date, initial.slotTime) : null;
+    const mine = peekHolds().find(
+      (h) =>
+        h.status === "held" &&
+        h.heldFor === CHECKOUT_HELD_FOR &&
+        h.productId === product.id &&
+        (want == null || (h.slotStart ?? null) === want),
+    );
+    return mine?.expiresAt ?? null;
+  }, [initial, product.id, date]);
+
+  const [holdLeft, setHoldLeft] = useState<number>(() =>
+    heldUntil ? Math.max(0, Math.round((Date.parse(heldUntil) - Date.now()) / 1000)) : 0,
+  );
+  useEffect(() => {
+    if (!heldUntil) return;
+    const tick = () => setHoldLeft(Math.max(0, Math.round((Date.parse(heldUntil) - Date.now()) / 1000)));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [heldUntil]);
 
   const needsWaiver = !!product.policies?.waiver;
   const waiverOk = !needsWaiver || waived;
@@ -274,7 +330,11 @@ export function ProductSheet({
   // day's departures. Ember when ≤20% remains.
   const dateCap = (d: string): { left: number; total: number } | null => {
     if (bt === "BT-06" && product.schedule?.dailyCapacity) {
-      return { left: getDailyRemaining(product, d), total: product.schedule.dailyCapacity };
+      // The capacity panel below states the day's allowance in full, and it
+      // follows the selected date — so the chips do not carry it at all.
+      // Showing it on the unselected chips only would leave the strip ragged,
+      // with the chosen pill a line shorter than its neighbours.
+      return null;
     }
     if (guided || bt === "BT-03") {
       const ss = getSlots(product, d);
@@ -407,6 +467,20 @@ export function ProductSheet({
           <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-line active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
         </div>
 
+        {/* Under two minutes it stops being information and becomes a
+            deadline, so it changes register — the same threshold the rest of
+            the app uses to switch a warning to a refusal. */}
+        {heldUntil && holdLeft > 0 && (
+          <div className={`mb-section flex items-center gap-tight rounded-sm border px-comfortable py-tight text-[13px] ${holdLeft < 120 ? "border-danger/30 bg-danger/10 text-danger" : "border-warning/30 bg-warning/10 text-warning"}`}>
+            <Clock size={14} strokeWidth={1.75} className="shrink-0" />
+            <span>
+              {t(holdLeft < 120 ? "sheet.holdExpiring" : "sheet.holdRemaining", {
+                time: `${Math.floor(holdLeft / 60)}:${String(holdLeft % 60).padStart(2, "0")}`,
+              })}
+            </span>
+          </div>
+        )}
+
         {(needsSchedule(bt) || provider) && !course && (
           <div className="mb-section">
             <p className="mb-tight text-[12px] font-medium uppercase tracking-wide text-muted">{t("sheet.dateLabel")}</p>
@@ -437,6 +511,35 @@ export function ProductSheet({
           </div>
         )}
         {!openToday && needsSchedule(bt) && <p className="mb-section text-[13px] text-danger">{t("sheet.closedOnDate")}</p>}
+
+        {/* A day-capped product is run by one number, so it gets a panel rather
+            than a footnote under a date chip. The allowance is the whole
+            inventory here — there is no slot list to read it off. */}
+        {bt === "BT-06" && (product.schedule?.dailyCapacity ?? 0) > 0 && openToday && (() => {
+          const total = product.schedule?.dailyCapacity ?? 0;
+          const left = getDailyRemaining(product, date);
+          const low = left <= Math.max(1, Math.floor(total * 0.2));
+          return (
+            <div className="mb-section rounded-sm border border-line bg-subtle p-comfortable">
+              <div className="flex items-baseline justify-between gap-tight">
+                <span className="text-[13px] text-muted">{t("sheet.dailyCapacity")}</span>
+                <span className={`shrink-0 whitespace-nowrap text-[13px] font-medium ${left <= 0 ? "text-danger" : low ? "text-warning" : "text-success"}`}>
+                  {t("sheet.remainingCount", { count: left })}
+                </span>
+              </div>
+              <div className="mt-tight flex h-1.5 w-full overflow-hidden rounded-full bg-line" aria-hidden>
+                <div
+                  className={`h-full rounded-full ${left <= 0 ? "bg-danger" : low ? "bg-warning" : "bg-success"}`}
+                  // Fills to show what is LEFT, because that is what the figure
+                  // beside it says. A bar that grows as the allowance is spent
+                  // would run opposite to its own label.
+                  style={{ width: `${Math.min(100, Math.max(0, (left / total) * 100))}%` }}
+                />
+              </div>
+              <p className="mt-inline text-[12px] text-muted">{t("sheet.totalCapacity", { count: total })}</p>
+            </div>
+          );
+        })()}
 
         {/* Resource fixed-slot: resources × times (see SlotMatrix) */}
         {resourceMode && !flexible && openToday && (
@@ -646,21 +749,26 @@ export function ProductSheet({
         {/* Provider cards + appointment times (conflict-aware per provider) */}
         {provider && (
           <div className="mb-section flex flex-col gap-tight">
-            <div className="flex flex-wrap gap-tight">
+            {/* Stacked full-width rows, not a wrap grid: each row carries a
+                name, when they are next free and what they cost, and those
+                three want a consistent left edge to be comparable. */}
+            <div className="flex flex-col gap-tight">
               {product.providerPickable && providers.map((p) => {
                 const nextFree = providerTimes.find((t) => (date !== TODAY || toMinutes(t) >= NOW_MIN) && isOwnerFree(p.id, date, t, providerDuration));
                 return (
-                  <ChoiceCard key={p.id} selected={providerId === p.id} onClick={() => setProviderId(p.id)} className="flex min-w-44 items-center gap-tight py-comfortable pl-comfortable pr-7">
+                  <ChoiceCard key={p.id} selected={providerId === p.id} onClick={() => setProviderId(p.id)} className="flex w-full items-center gap-tight py-comfortable pl-comfortable pr-7">
                     <Avatar name={p.name} />
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{p.name}</span>
-                      <span className="block text-[12px] text-faint">{product.providerNoun ?? t("sheet.provider")}{premiumOf(p.id) > 0 ? ` · +${formatMoney(premiumOf(p.id), currency)}` : ""}</span>
                       <span className="block text-[12px] text-muted">{nextFree ? t("sheet.nextFree", { time: nextFree }) : t("sheet.fullyBooked")}</span>
+                    </span>
+                    <span className={`shrink-0 whitespace-nowrap text-[12px] ${premiumOf(p.id) > 0 ? "font-medium text-ember" : "text-muted"}`}>
+                      {premiumOf(p.id) > 0 ? t("sheet.premiumAmount", { amount: formatMoney(premiumOf(p.id), currency) }) : t("sheet.standardRate")}
                     </span>
                   </ChoiceCard>
                 );
               })}
-              <ChoiceCard selected={!providerId} onClick={() => setProviderId(undefined)} className="flex min-w-32 items-center justify-center px-7 py-comfortable text-sm">{t("sheet.firstAvailable")}</ChoiceCard>
+              <ChoiceCard selected={!providerId} onClick={() => setProviderId(undefined)} className="flex w-full items-center justify-center px-7 py-comfortable text-sm">{t("sheet.firstAvailable")}</ChoiceCard>
             </div>
             <span className="type-label mt-tight text-[12px] text-faint">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>
             <div className="flex flex-wrap gap-inline">
@@ -681,10 +789,18 @@ export function ProductSheet({
         )}
 
         {/* Course dates */}
+        {/* A course has nothing to configure — it runs on fixed dates and the
+            only decision left is how many places. The panel says so in the
+            affirmative rather than presenting a list that looks like a choice
+            the cashier still has to make. */}
         {course && (
-          <div className="mb-section rounded-sm border border-line bg-card p-comfortable text-sm">
-            <p className="type-label text-[12px] text-muted">{t("sheet.courseDates")}</p>
-            <p className="mt-inline text-[12px]">{(product.courseDates ?? []).join(" · ") || "—"}</p>
+          <div className="mb-section rounded-sm border border-success/30 bg-success/10 p-comfortable">
+            <p className="flex items-center gap-inline text-sm font-medium text-success">
+              <Check size={14} strokeWidth={2.5} />
+              {t("sheet.readyToAdd")}
+            </p>
+            <p className="mt-inline text-[12px] text-muted">{t("sheet.courseDates")}</p>
+            <p className="text-[12px]">{(product.courseDates ?? []).join(" · ") || "—"}</p>
           </div>
         )}
 
@@ -743,13 +859,18 @@ export function ProductSheet({
         {guided && slotTime && guides.length > 0 && openToday && (
           <div className="mb-section flex flex-col gap-tight">
             <span className="type-label text-[12px] text-muted">{t("sheet.ledBy")}</span>
-            <div className="flex flex-wrap gap-tight">
+            <div className="flex flex-col gap-tight">
               {guides.map((g) => {
                 const free = slotGuides.includes(g.id);
                 return (
-                  <ChoiceCard key={g.id} selected={guideId === g.id} disabled={!free} onClick={() => setGuideId(g.id)} className="flex items-center gap-tight py-comfortable pl-comfortable pr-7">
+                  <ChoiceCard key={g.id} selected={guideId === g.id} disabled={!free} onClick={() => setGuideId(g.id)} className="flex w-full items-center gap-tight py-comfortable pl-comfortable pr-7">
                     <Avatar name={g.name} size={32} />
-                    <span className="text-sm">{g.name}{!free && <span className="ml-inline text-[12px]">{t("sheet.busy")}</span>}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{g.name}</span>
+                      <span className={`block text-[12px] ${free ? "text-success" : "text-muted"}`}>
+                        {free ? t("sheet.guideAvailable") : t("sheet.guideBusy")}
+                      </span>
+                    </span>
                   </ChoiceCard>
                 );
               })}
@@ -757,7 +878,7 @@ export function ProductSheet({
           </div>
         )}
 
-        {bt === "BT-06" && openToday && <p className="mb-section text-[13px] text-muted">{t("sheet.leftToday", { count: dailyLeft, when: date === TODAY ? t("sheet.leftTodayWord") : t("sheet.leftThatDay") })}</p>}
+        {bt === "BT-06" && openToday && (product.schedule?.dailyCapacity ?? 0) <= 0 && <p className="mb-section text-[13px] text-muted">{t("sheet.leftToday", { count: dailyLeft, when: date === TODAY ? t("sheet.leftTodayWord") : t("sheet.leftThatDay") })}</p>}
 
         {/* Tier / section steppers (not for exclusive resource / flexible) */}
         {!resourceMode && (
@@ -781,8 +902,8 @@ export function ProductSheet({
                               disabled={!s.available}
                               onClick={() => setSelectedSeats((cur) => (cur.includes(s.label) ? cur.filter((x) => x !== s.label) : [...cur, s.label]))}
                               title={`${s.label} · ${s.categoryName} · ${formatMoney(s.price, currency)}`}
-                              style={{ gridColumnStart: s.posX + 1, gridRowStart: s.posY + 1, ...(s.available ? { background: sel ? s.color : `${s.color}33`, color: sel ? "#fff" : s.color, borderColor: s.color } : {}) }}
-                              className={`h-7 rounded-[3px] border text-[9px] leading-none ${s.available ? "" : "cursor-not-allowed border-line bg-line text-faint line-through"}`}
+                              style={{ gridColumnStart: s.posX + 1, gridRowStart: s.posY + 1, ...(s.available && !sel ? { background: `${s.color}33`, color: s.color, borderColor: s.color } : {}) }}
+                              className={`h-7 rounded-[3px] border text-[9px] leading-none ${!s.available ? "cursor-not-allowed border-line bg-line text-faint line-through" : sel ? "border-ember bg-ember font-medium text-white" : ""}`}
                             >
                               {s.label.replace(/^[A-Za-z]+/, "")}
                             </button>
@@ -793,8 +914,14 @@ export function ProductSheet({
                     <div className="mt-tight flex flex-wrap items-center justify-between gap-tight text-[12px]">
                       <div className="flex flex-wrap gap-major text-muted">
                         {cats.map((s) => (
-                          <span key={s.categoryUid} className="flex items-center gap-inline"><span className="h-3 w-3 rounded-[2px]" style={{ background: s.color }} />{s.categoryName} · <span>{formatMoney(s.price, currency)}</span></span>
+                          // The swatch is drawn the way an AVAILABLE seat of
+                          // that category is drawn — tinted, with its own
+                          // border. A solid swatch collided with the solid
+                          // ember "Selected" chip whenever a category happened
+                          // to be orange, which Stalls is.
+                          <span key={s.categoryUid} className="flex items-center gap-inline"><span className="h-3 w-3 rounded-[2px] border" style={{ background: `${s.color}33`, borderColor: s.color }} />{s.categoryName} · <span>{formatMoney(s.price, currency)}</span></span>
                         ))}
+                        <span className="flex items-center gap-inline"><span className="h-3 w-3 rounded-[2px] bg-ember" />{t("sheet.seatSelected")}</span>
                         <span className="flex items-center gap-inline"><span className="h-3 w-3 rounded-[2px] bg-line" />{seatT("picker.sold")}</span>
                       </div>
                       <span>{seatT("picker.selected", { count: selectedSeats.length })}</span>
@@ -871,7 +998,7 @@ export function ProductSheet({
                 const amount = formatMoney(total, currency);
                 if (course) return t("sheet.enrolAmount", { amount });
                 if (provider) return assignedProvider ? t("sheet.addAppointment", { amount }) : t("sheet.pickProvider");
-                if (hasLayout) return selectedSeats.length ? t("sheet.addSeats", { count: selectedSeats.length, amount: formatMoney(list.reduce((a, x) => a + (qty[x.id] ?? 0) * x.price, 0) || total, currency) }) : t("sheet.pickSeats");
+                if (hasLayout) return selectedSeats.length ? t("sheet.addSeats", { count: selectedSeats.length, amount: formatMoney(seatTotal + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0), currency) }) : t("sheet.pickSeats");
                 if (n === 0) return t("sheet.pickTickets");
                 return t("sheet.addTickets", { count: n, amount });
               })()}
