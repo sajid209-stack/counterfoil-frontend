@@ -77,7 +77,7 @@ export function SessionList({
             {/* Time leads — it is what a cashier is scanning for. */}
             <span
               className={cn(
-                "w-14 shrink-0 font-mono text-base tabular-nums",
+                "w-14 shrink-0 text-base",
                 full && !isSelected ? "text-faint" : "text-fg",
               )}
             >
@@ -98,12 +98,12 @@ export function SessionList({
             </span>
 
             <span className="flex shrink-0 flex-col items-end gap-0.5">
-              <span className="whitespace-nowrap font-mono text-[13px] tabular-nums">
+              <span className="whitespace-nowrap text-[13px]">
                 {formatMoney(s.price, currency)}
               </span>
               <span
                 className={cn(
-                  "whitespace-nowrap text-[11px]",
+                  "whitespace-nowrap text-[12px]",
                   full ? "text-muted" : low ? "text-warning" : "text-muted",
                 )}
               >

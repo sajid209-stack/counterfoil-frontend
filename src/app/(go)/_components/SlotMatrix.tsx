@@ -86,7 +86,7 @@ export function SlotMatrix({
                             : t("sheet.slotTaken", { time: cell.time, name: row.name }),
                         )
                       }
-                      className="flex h-12 w-14 shrink-0 items-center justify-center rounded-xs border border-line bg-[repeating-linear-gradient(45deg,var(--color-subtle),var(--color-subtle)_3px,transparent_3px,transparent_7px)] font-mono text-[10px] text-muted"
+                      className="flex h-12 w-14 shrink-0 items-center justify-center rounded-xs border border-line bg-[repeating-linear-gradient(45deg,var(--color-subtle),var(--color-subtle)_3px,transparent_3px,transparent_7px)] text-[12px] text-muted"
                     >
                       {row.outOfService ? "—" : t("sheet.booked")}
                     </button>
@@ -98,18 +98,23 @@ export function SlotMatrix({
                     type="button"
                     onClick={() => onSelect(row.id, cell.time)}
                     className={cn(
-                      "flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xs border font-mono transition-colors duration-quick",
+                      "flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xs border transition-colors duration-quick",
                       selected
-                        ? "border-inverse bg-inverse text-inverse-fg"
+                        ? "border-ember bg-ember/10 font-medium text-ember"
                         : "border-line bg-card hover:bg-subtle active:bg-ember/10",
                     )}
                   >
-                    <span className="text-[11px] tabular-nums">{cell.time}</span>
+                    <span className="text-[12px]">{cell.time}</span>
                     {/* Only where it is not the usual rate. */}
                     {uplifted && (
                       <span
                         className={cn(
-                          "text-[9px] tabular-nums",
+                          // 12px, not 9. This is money, and it only appears on
+                          // the cell whose rate differs from the base rate
+                          // stated under the matrix — rare enough that equal
+                          // weight with the time costs less than a price the
+                          // cashier has to lean in to read.
+                          "text-[12px]",
                           selected ? "opacity-80" : "text-brand-foreground",
                         )}
                       >

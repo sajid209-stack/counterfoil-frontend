@@ -871,7 +871,7 @@ export default function PosPage() {
         </button>
       )}
 
-      {sheet && <ProductSheet product={sheet.product} currency={currency} initial={sheet.initial} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => setSheet(null)} team={teamQ.data?.data ?? []} />}
+      {sheet && <ProductSheet product={sheet.product} currency={currency} initial={sheet.initial} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => setSheet(null)} team={teamQ.data?.data ?? []} resources={resources} />}
 
       {/* Inline cash tender — a bottom sheet over the cart, no page navigation. */}
       {cashOpen && (() => {
