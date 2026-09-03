@@ -108,25 +108,7 @@ export function patchManualDiscountPolicyState(patch: Partial<ManualDiscountPoli
 /** Swap the whole mock to a demo business: its operator, its products, and a
  *  fresh 30-day order history for them. Shared entities (locations, staff,
  *  counters, resources) stay so the demo is coherent. */
-const DEMO_KEY = "cf_demo_business";
-
-/** The chosen demo survives a reload.
- *
- *  The mock lives in module state, so a full page load rebuilds it from the
- *  seed — which meant picking a demo and then refreshing silently put the whole
- *  catalogue back, and it meant a demo switch could not reload the page to pick
- *  itself up. sessionStorage (per tab, not per browser) is the right scope: a
- *  demo is a viewing choice for this session, not a saved preference. */
-function rememberBusiness(v: { name: string; currency: string; productIds: string[] } | null) {
-  if (typeof window === "undefined") return;
-  try {
-    if (v) window.sessionStorage.setItem(DEMO_KEY, JSON.stringify(v));
-    else window.sessionStorage.removeItem(DEMO_KEY);
-  } catch { /* private mode — the demo just will not survive a reload */ }
-}
-
 export function loadBusiness(name: string, currency: string, productIds: string[]): void {
-  rememberBusiness({ name, currency, productIds });
   operatorState = { ...structuredClone(seed.operator), name, currency };
   (store as Record<string, unknown[]>).products = structuredClone(seed.products).filter((p) => productIds.includes(p.id));
   (store as Record<string, unknown[]>).resources = structuredClone(seed.resources);
@@ -142,7 +124,6 @@ export function loadBusiness(name: string, currency: string, productIds: string[
 
 /** Empty the operator's data for the golden path ("Start fresh"). */
 export function startFresh(): void {
-  rememberBusiness(null);
   operatorState = { ...structuredClone(seed.operator), name: "" };
   for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds"]) {
     (store as Record<string, unknown[]>)[k] = [];
@@ -264,16 +245,4 @@ export function createResource<T extends Row>(
       return rows();
     },
   };
-}
-
-// Restore the session's demo, if one was chosen. Runs once at module load and
-// only in the browser: on the server there is no session and the seed is right.
-if (typeof window !== "undefined") {
-  try {
-    const raw = window.sessionStorage.getItem(DEMO_KEY);
-    if (raw) {
-      const v = JSON.parse(raw) as { name: string; currency: string; productIds: string[] };
-      if (v && Array.isArray(v.productIds)) loadBusiness(v.name, v.currency, v.productIds);
-    }
-  } catch { /* corrupt entry — fall through to the full seed */ }
 }
