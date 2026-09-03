@@ -244,7 +244,17 @@
     "ledByName": "Led by {name}",
     "slotTaken": "{time} on {name} is already booked. Pick another time or another one.",
     "ratePer": "{amount} per {noun}, per slot",
-    "rateUplift": "peak slots {amounts}"
+    "rateUplift": "peak slots {amounts}",
+    "pickStart": "Choose a start time",
+    "pickFreeLane": "Choose a free lane",
+    "pickTickets": "Choose tickets",
+    "pickSeats": "Choose seats",
+    "pickProvider": "Choose who and when",
+    "addTickets": "{count, plural, one {Add # ticket} other {Add # tickets}} — {amount}",
+    "addSeats": "{count, plural, one {Add # seat} other {Add # seats}} — {amount}",
+    "addAppointment": "Add appointment — {amount}",
+    "enrolAmount": "Enrol — {amount}",
+    "pickTime": "Choose a time"
   },
   "settle": {
     "title": "Settle a booking",

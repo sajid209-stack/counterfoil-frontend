@@ -244,7 +244,17 @@
     "ledByName": "{name} নেতৃত্ব দেবেন",
     "slotTaken": "{name}-এ {time} ইতিমধ্যেই বুক হয়ে গেছে। অন্য সময় বা অন্যটি বেছে নিন।",
     "ratePer": "প্রতি {noun}, প্রতি স্লটে {amount}",
-    "rateUplift": "ব্যস্ত সময়ে {amounts}"
+    "rateUplift": "ব্যস্ত সময়ে {amounts}",
+    "pickStart": "শুরুর সময় বাছুন",
+    "pickFreeLane": "খালি লেন বাছুন",
+    "pickTickets": "টিকিট বাছুন",
+    "pickSeats": "আসন বাছুন",
+    "pickProvider": "কে ও কখন বাছুন",
+    "addTickets": "{count, plural, other {# টিকিট যোগ করুন}} — {amount}",
+    "addSeats": "{count, plural, other {# আসন যোগ করুন}} — {amount}",
+    "addAppointment": "অ্যাপয়েন্টমেন্ট যোগ করুন — {amount}",
+    "enrolAmount": "ভর্তি করুন — {amount}",
+    "pickTime": "সময় বাছুন"
   },
   "settle": {
     "title": "বুকিং নিষ্পত্তি",

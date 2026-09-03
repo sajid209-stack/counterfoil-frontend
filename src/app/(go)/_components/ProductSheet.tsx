@@ -64,6 +64,41 @@ const PROVIDER_DAY: ProductSchedule = {
 const endISO = (date: string, time: string, minutes: number) =>
   slotISO(date, toTime(toMinutes(time) + minutes));
 
+/** The one footer every selection pattern ends in.
+ *
+ *  The sheet was already a single component, but its CHROME was written three
+ *  times — the resource matrix, the flexible-duration path and the tiered path
+ *  each built their own summary line and their own full-width button. That is
+ *  how nine configuration patterns quietly become nine visual experiences: not
+ *  by anyone designing them separately, but by the shared parts being copied
+ *  until they drift. There is one definition now, and a pattern supplies only
+ *  its summary, its disabled rule and its verb.
+ *
+ *  It is sticky because the sheets that need it most are the long ones — a
+ *  96-seat map, a 13-slot start-time grid — where the total and the action
+ *  scrolled off the bottom exactly when the cashier was deciding. */
+function SheetFooter({
+  summary,
+  note,
+  disabled,
+  onAdd,
+  label,
+}: {
+  summary?: React.ReactNode;
+  note?: React.ReactNode;
+  disabled: boolean;
+  onAdd: () => void;
+  label: string;
+}) {
+  return (
+    <div className="sticky bottom-0 z-10 -mx-section mt-section border-t border-line bg-sheet px-section pb-inline pt-comfortable">
+      {note}
+      {summary && <div className="mb-tight text-[13px]">{summary}</div>}
+      <Button size="lg" fullWidth disabled={disabled} onClick={onAdd}>{label}</Button>
+    </div>
+  );
+}
+
 export function ProductSheet({
   product,
   currency,
@@ -419,6 +454,12 @@ export function ProductSheet({
                 })),
               }))}
             />
+            {/* Every other pattern opens with a disabled CTA naming what is
+                missing; the matrix opened with nothing at all, which is the one
+                place a cashier cannot tell "not ready" from "broken". */}
+            {!(resourceId && slotTime) && (
+              <SheetFooter disabled onAdd={() => {}} label={t("sheet.pickTime")} />
+            )}
             {resourceId && slotTime && (() => {
               const row = matrix.find((r) => r.resource.id === resourceId);
               const price = applyResourceRate(resolveProductPrice(product, date, slotTime, basePrice), product.schedule?.sessionMinutes ?? 60, row?.resource);
@@ -426,14 +467,15 @@ export function ProductSheet({
                 <>
                   {renderAddOns()}
                   <div className="mt-tight flex flex-col gap-tight">{renderGroup()}{renderWaiver()}</div>
-                  {/* The live selection summary. */}
-                  <p className="mt-tight text-[13px]">
-                    <span className="font-medium">{row?.resource.name}</span> · <span className="tabular-nums">{slotTime}</span> · {formatDuration(product.schedule?.sessionMinutes ?? 60)}
-                    {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""} · <span className="tabular-nums">{formatMoney(price + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0), currency)}</span>
-                  </p>
-                  <Button size="lg" fullWidth className="mt-tight" disabled={!waiverOk} onClick={() => submitResource(resourceId, row?.resource.name ?? "", slotTime, price)}>
-                    {t("sheet.addSelection", { name: row?.resource.name ?? "", time: slotTime, amount: formatMoney(price, currency) })}
-                  </Button>
+                  <SheetFooter
+                    summary={<>
+                      <span className="font-medium">{row?.resource.name}</span> · <span>{slotTime}</span> · {formatDuration(product.schedule?.sessionMinutes ?? 60)}
+                      {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""} · <span>{formatMoney(price + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0), currency)}</span>
+                    </>}
+                    disabled={!waiverOk}
+                    onAdd={() => submitResource(resourceId, row?.resource.name ?? "", slotTime, price)}
+                    label={t("sheet.addSelection", { name: row?.resource.name ?? "", time: slotTime, amount: formatMoney(price, currency) })}
+                  />
                 </>
               );
             })()}
@@ -579,9 +621,15 @@ export function ProductSheet({
                   </div>
                 );
               })()}
-              <Button size="lg" fullWidth className="mt-tight" disabled={!slotTime || !chosenLaneFree || !waiverOk} onClick={submitFlexible}>
-                {slotTime && chosenLaneFree ? t("sheet.addFlexible", { duration: formatDuration(duration), start: slotTime, end: endLabel ?? "", amount: formatMoney(priceFor(slotTime, duration, laneOf(resourceId) ?? firstFreeResource(product, date, slotTime, duration)), currency) }) : t("sheet.addToSale")}
-              </Button>
+              <SheetFooter
+                disabled={!slotTime || !chosenLaneFree || !waiverOk}
+                onAdd={submitFlexible}
+                label={slotTime && chosenLaneFree
+                  ? t("sheet.addFlexible", { duration: formatDuration(duration), start: slotTime, end: endLabel ?? "", amount: formatMoney(priceFor(slotTime, duration, laneOf(resourceId) ?? firstFreeResource(product, date, slotTime, duration)), currency) })
+                  // Says what is missing rather than sitting dead — the spec's
+                  // "always show why", applied to the button itself.
+                  : !slotTime ? t("sheet.pickStart") : !chosenLaneFree ? t("sheet.pickFreeLane") : t("sheet.addToSale")}
+              />
             </div>
           );
         })()}
@@ -801,7 +849,24 @@ export function ProductSheet({
                 {t.rich("sheet.depositNote", { pct: depositPct, b: (chunks) => <span className="font-medium text-fg">{chunks}</span> })}
               </p>
             )}
-            <Button size="lg" fullWidth className={depositPct > 0 ? "mt-tight" : "mt-section"} disabled={hasLayout ? selectedSeats.length === 0 || !waiverOk : !canAddTiered} onClick={hasLayout ? submitSeats : submitTiered}>{course ? t("sheet.enrol") : t("sheet.addToSale")}</Button>
+            <SheetFooter
+              disabled={hasLayout ? selectedSeats.length === 0 || !waiverOk : !canAddTiered}
+              onAdd={hasLayout ? submitSeats : submitTiered}
+              // The verb names the thing being bought, and carries its total.
+              // "Add to sale" told a cashier nothing they could check against.
+              label={(() => {
+                const list = sectioned ? (product.sections ?? []) : activeTiers;
+                const n = list.reduce((a, x) => a + (qty[x.id] ?? 0), 0);
+                const prem = provider && assignedProvider ? premiumOf(assignedProvider.id) : 0;
+                const total = list.reduce((a, x) => a + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0) + prem;
+                const amount = formatMoney(total, currency);
+                if (course) return t("sheet.enrolAmount", { amount });
+                if (provider) return assignedProvider ? t("sheet.addAppointment", { amount }) : t("sheet.pickProvider");
+                if (hasLayout) return selectedSeats.length ? t("sheet.addSeats", { count: selectedSeats.length, amount: formatMoney(list.reduce((a, x) => a + (qty[x.id] ?? 0) * x.price, 0) || total, currency) }) : t("sheet.pickSeats");
+                if (n === 0) return t("sheet.pickTickets");
+                return t("sheet.addTickets", { count: n, amount });
+              })()}
+            />
           </>
         )}
 
