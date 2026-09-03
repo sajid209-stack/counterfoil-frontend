@@ -57,7 +57,11 @@
     "memberRate": "{pct}% সদস্য মূল্য",
     "memberVisits": "আর {count} বার অন্তর্ভুক্ত প্রবেশ",
     "memberDiscount": "{tier} সদস্য মূল্য",
-    "pointsSpent": "{count} পয়েন্ট"
+    "pointsSpent": "{count} পয়েন্ট",
+    "none": "নেই",
+    "applyCoupon": "কুপন প্রয়োগ",
+    "passesMembership": "পাস ও সদস্যপদ",
+    "add": "যোগ করুন"
   },
   "charge": "চার্জ",
   "chargeAmount": "চার্জ {amount} — {method}",

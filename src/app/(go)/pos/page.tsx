@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { AlertTriangle, Archive, Pencil, Plus, Search, Trash2, UserRound, X } from "lucide-react";
+import { AlertTriangle, Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { addOrderPayment, checkout, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
@@ -52,6 +52,51 @@ function AnimatedMoney({ value, currency }: { value: number; currency: string })
   return <span className="text-2xl">{formatMoney(shown, currency)}</span>;
 }
 
+/** A cart action, stated as a row rather than a wall of controls.
+ *
+ *  Discount, coupon and passes each spent a permanent block of the cart on
+ *  controls that are used on a minority of sales — four discount chips, a
+ *  coupon input with its own Apply button, and four more buttons for passes and
+ *  membership. The cart is a third of the till and most of it was options
+ *  nobody had asked for yet.
+ *
+ *  Each is now a row saying what it currently IS — "5%", "WELCOME10", "Add" —
+ *  that opens its controls in place. In place, not in a modal: the selection
+ *  sheet is already a modal, and stacking a second one over the cart is the
+ *  over-modalising the brief warns about. */
+function CartRow({
+  icon: Icon,
+  label,
+  value,
+  open,
+  onToggle,
+  children,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border-b border-line last:border-b-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex min-h-12 w-full items-center gap-tight py-tight text-left"
+      >
+        <Icon size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
+        <span className="min-w-0 flex-1 truncate text-[13px]">{label}</span>
+        <span className="shrink-0 text-[13px] text-muted">{value}</span>
+        <ChevronRight size={15} strokeWidth={1.5} className={`shrink-0 text-faint transition-transform duration-quick ${open ? "rotate-90" : ""}`} />
+      </button>
+      {open && <div className="pb-tight">{children}</div>}
+    </div>
+  );
+}
+
 export default function PosPage() {
   const router = useRouter();
   const toast = useToast();
@@ -83,6 +128,10 @@ export default function PosPage() {
   const [discountPct, setDiscountPct] = useState(0);
   const [discountReason, setDiscountReason] = useState("");
   const [couponInput, setCouponInput] = useState("");
+  /** Which cart action is expanded. One at a time — the cart is narrow and
+   *  three open blocks is the wall this replaced. */
+  const [cartRow, setCartRow] = useState<"discount" | "coupon" | "passes" | null>(null);
+  const toggleRow = (r: "discount" | "coupon" | "passes") => setCartRow((c) => (c === r ? null : r));
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedPromotion | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [customOpen, setCustomOpen] = useState(false);
@@ -684,8 +733,14 @@ export default function PosPage() {
                       const live = posLiveState(p, DEMO_TODAY, nowMinutes, liveWords);
                       if (!live) return null;
                       return (
-                        <span className={`mt-inline block truncate text-[12px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-ember" : "text-success"}`}>
-                          {live.text}
+                        <span className={`mt-inline flex items-center gap-inline text-[12px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-ember" : "text-success"}`}>
+                          {/* A dot ahead of the words. At a glance across a
+                              wall of products the eye reads the colour before
+                              it reads anything, which is the point of putting
+                              the state on the tile — and the words carry it
+                              anyway, so the dot is never the only signal. */}
+                          <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
+                          <span className="min-w-0 truncate">{live.text}</span>
                         </span>
                       );
                     })()}
@@ -760,13 +815,10 @@ export default function PosPage() {
         </div>
 
         <div className="border-t border-line p-comfortable">
-          {/* Discount */}
-          <div className="mb-tight flex items-center justify-between">
-            <span className="text-[13px] text-muted">{t("summary.discount")}</span>
+          <CartRow icon={Percent} label={t("summary.discount")} value={discountPct > 0 ? `${discountPct}%` : t("summary.none")} open={cartRow === "discount"} onToggle={() => toggleRow("discount")}>
             <div className="flex items-center gap-inline">
-              {[0, 5, 10, 15].map((d) => <button key={d} type="button" onClick={() => setDiscountPct(d)} className={`h-12 min-w-12 rounded-xs border px-tight text-[13px] font-medium ${discountPct === d ? "border-ember bg-ember text-white" : "border-line"}`}>{d}%</button>)}
+              {[0, 5, 10, 15].map((d) => <button key={d} type="button" onClick={() => setDiscountPct(d)} className={`h-12 min-w-12 flex-1 rounded-xs border px-tight text-[13px] font-medium ${discountPct === d ? "border-ember bg-ember text-white" : "border-line"}`}>{d}%</button>)}
             </div>
-          </div>
           {overLimit && (
             <p className="mb-tight rounded-sm border border-line border-l-[3px] border-l-ember bg-card p-tight text-[12px]">
               {pt("pos.overPolicy", { limit: manualCapPct })}
@@ -778,12 +830,13 @@ export default function PosPage() {
               value={discountReason}
               onChange={(e) => setDiscountReason(e.target.value)}
               placeholder={pt("pos.reasonPlaceholder")}
-              className={`mb-tight h-11 w-full rounded-sm border bg-card px-comfortable text-sm outline-none placeholder:text-faint ${reasonNeeded ? "border-danger" : "border-line focus:border-inverse"}`}
+              className={`mt-tight h-11 w-full rounded-sm border bg-card px-comfortable text-sm outline-none placeholder:text-faint ${reasonNeeded ? "border-danger" : "border-line focus:border-inverse"}`}
             />
           )}
+          </CartRow>
 
-          {/* Coupon entry */}
-          <div className="mb-tight flex items-center justify-between gap-tight">
+          <CartRow icon={TicketPercent} label={pt("list.coupon")} value={appliedCoupon ? (appliedCoupon.code ?? appliedCoupon.name) : t("summary.applyCoupon")} open={cartRow === "coupon"} onToggle={() => toggleRow("coupon")}>
+          <div className="flex items-center justify-between gap-tight">
             <span className="shrink-0 text-[13px] text-muted">{pt("list.coupon")}</span>
             {appliedCoupon ? (
               <span className="flex min-w-0 items-center gap-inline text-[11px] text-success">
@@ -803,7 +856,10 @@ export default function PosPage() {
           {cartNotice && <div className="mb-tight"><BlockedNotice message={cartNotice} onDismiss={() => setCartNotice(null)} /></div>}
 
           {/* Credits pass */}
-          <div className="mb-tight flex items-center justify-between">
+          </CartRow>
+
+          <CartRow icon={Wallet} label={t("summary.passesMembership")} value={pass ? pass.code : t("summary.add")} open={cartRow === "passes"} onToggle={() => toggleRow("passes")}>
+          <div className="mb-tight flex flex-wrap items-center justify-between gap-tight">
             <span className="text-[13px] text-muted">{t("summary.pass")}</span>
             {pass ? (
               <span className="flex items-center gap-inline text-[11px]">
@@ -826,6 +882,7 @@ export default function PosPage() {
               </button>
             )}
           </div>
+          </CartRow>
 
           {/* The member price is an entitlement, so say whose it is. */}
           {benefit && (

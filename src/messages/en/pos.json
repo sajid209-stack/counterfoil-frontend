@@ -57,7 +57,11 @@
     "memberRate": "{pct}% member price",
     "memberVisits": "{count} included visits left",
     "memberDiscount": "{tier} member price",
-    "pointsSpent": "{count} points"
+    "pointsSpent": "{count} points",
+    "none": "None",
+    "applyCoupon": "Apply coupon",
+    "passesMembership": "Passes & membership",
+    "add": "Add"
   },
   "charge": "Charge",
   "chargeAmount": "Charge {amount} — {method}",
