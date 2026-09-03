@@ -281,7 +281,8 @@
     "seatAvailable": "Available",
     "seatSelected": "Selected",
     "time": "Time",
-    "slotsFree": "{count} free"
+    "slotsFree": "{count} free",
+    "departureLabel": "Departure"
   },
   "settle": {
     "title": "Settle a booking",

@@ -349,20 +349,20 @@ export function ProductSheet({
     const cap = dateCap(value);
     const low = cap && cap.total > 0 && cap.left <= Math.max(1, Math.floor(cap.total * 0.2));
     return (
-      <ChoiceCard key={value} selected={date === value} onClick={() => { setDate(value); setSlotTime(undefined); setResourceId(undefined); }} // px-7, symmetric: ChoiceCard draws its selected check absolutely
-        // 8px in from the top-right at 16px square, so it owns the corner out
-        // to 24px. Anything reaching in there gets written over — "TODAY" once
-        // rendered as "TODA✓", and a measurement sweep found "Tomorrow",
-        // "Lane 1" and the provider names doing the same. Every selectable card
-        // in this sheet now keeps 28px clear on that side.
-        className="flex min-h-[62px] min-w-[96px] shrink-0 flex-col items-center justify-center gap-0.5 py-tight px-7">
+      <ChoiceCard key={value} selected={date === value} hideCheck onClick={() => { setDate(value); setSlotTime(undefined); setResourceId(undefined); }}
+        // No corner glyph here: at ~96px the check landed on the day label
+        // ("TODAY" once rendered as "TODA✓") and the strip is where that has
+        // bitten most. Selection is carried by the doubled ember edge, the
+        // wash, and both lines going ember — which is three signals, all of
+        // which survive grayscale.
+        className="flex min-h-[62px] min-w-[92px] shrink-0 flex-col items-center justify-center gap-0.5 px-comfortable py-tight">
         {/* Two lines, not three. The day is what a person scans the strip by
             and the date confirms it; running DAY / 29 / Jul down three lines
             made an 84px card that wrapped the strip onto a second row and
             stranded "More dates" beside the orphan. */}
-        <span className="whitespace-nowrap text-[13px] font-medium leading-tight">{label === t("sheet.today") || label === t("sheet.tomorrow") ? label : label.split(" ")[0]}</span>
-        <span className="whitespace-nowrap text-[12px] leading-tight text-muted">{value.slice(8, 10)} {new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
-        {cap && <span className={`whitespace-nowrap text-[12px] leading-tight ${low ? "font-medium text-ember" : "text-muted"}`}>{cap.left} left</span>}
+        <span className={`whitespace-nowrap text-[13px] font-medium leading-tight ${date === value ? "text-ember" : ""}`}>{label === t("sheet.today") || label === t("sheet.tomorrow") ? label : label.split(" ")[0]}</span>
+        <span className={`whitespace-nowrap text-[12px] leading-tight ${date === value ? "text-ember/70" : "text-muted"}`}>{value.slice(8, 10)} {new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
+        {cap && <span className={`whitespace-nowrap text-[12px] leading-tight ${low ? "font-medium text-ember" : date === value ? "text-ember/70" : "text-muted"}`}>{cap.left} left</span>}
       </ChoiceCard>
     );
   };
@@ -464,7 +464,7 @@ export function ProductSheet({
             <h2 className="type-h2 break-words text-2xl">{product.name}</h2>
             <p className="mt-inline text-[13px] text-muted">{behaviourSubtitle(product, { resources, team })}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-line active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
+          <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg active:bg-ember/10"><X size={20} strokeWidth={1.75} /></button>
         </div>
 
         {/* Under two minutes it stops being information and becomes a
@@ -813,7 +813,15 @@ export function ProductSheet({
           </div>
         )}
 
-        {/* Fixed sessions — rows, not tiles (see SessionList). */}
+        {/* Fixed sessions — rows, not tiles (see SessionList). The list is
+            named after what it holds: a museum picks a session, a tour picks a
+            departure, and the operator's word for it is the one that should
+            appear above the rows. */}
+        {needsSchedule(bt) && !resourceMode && !flexible && openToday && (
+          <p className="mb-tight text-[12px] font-medium uppercase tracking-wide text-muted">
+            {t(guided ? "sheet.departureLabel" : "sheet.sessionLabel")}
+          </p>
+        )}
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && (
           <SessionList
             currency={currency}

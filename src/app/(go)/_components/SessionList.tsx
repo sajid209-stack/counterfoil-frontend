@@ -92,7 +92,7 @@ export function SessionList({
               onSelect(s.time);
             }}
             className={cn(
-              "flex min-h-16 w-full items-center rounded-sm border px-comfortable py-tight text-left transition-colors duration-quick",
+              "flex min-h-16 w-full items-center rounded-md border p-comfortable text-left transition-colors duration-quick",
               isSelected
                 ? "border-ember bg-ember/10"
                 : full
@@ -105,7 +105,7 @@ export function SessionList({
                 {/* Time leads — it is what a cashier is scanning for. */}
                 <span
                   className={cn(
-                    "shrink-0 text-base font-medium",
+                    "shrink-0 text-base font-semibold",
                     full && !isSelected ? "text-faint" : "text-fg",
                   )}
                 >
@@ -145,7 +145,7 @@ export function SessionList({
 
               {/* How full, at a glance — with the figure the bar is drawing. */}
               <span className="flex items-center gap-tight">
-                <span className="flex h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line" aria-hidden>
+                <span className="flex h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-line" aria-hidden>
                   <span
                     className={cn(
                       "h-full rounded-full",
@@ -164,7 +164,7 @@ export function SessionList({
                   {sold}/{s.capacity}
                 </span>
                 {s.price !== basePrice && (
-                  <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">
+                  <span className="ml-auto shrink-0 whitespace-nowrap text-[12px] text-brand-foreground">
                     {formatMoney(s.price, currency)}
                   </span>
                 )}

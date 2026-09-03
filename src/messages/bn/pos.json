@@ -281,7 +281,8 @@
     "seatAvailable": "খালি",
     "seatSelected": "নির্বাচিত",
     "time": "সময়",
-    "slotsFree": "{count} খালি"
+    "slotsFree": "{count} খালি",
+    "departureLabel": "প্রস্থান"
   },
   "settle": {
     "title": "বুকিং নিষ্পত্তি",

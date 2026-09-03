@@ -5,16 +5,23 @@ import { cn } from "@/lib/cn";
 
 /** The selectable-card pattern — used everywhere a choice is made from cards
  *  (resources, providers, wizard options, demo businesses, date strips).
- *  Selected reads in grayscale: border weight + check glyph, not tint alone. */
+ *  Selected reads in grayscale, never by tint alone. Two ways of saying it:
+ *  the default draws a check glyph in the corner; `hideCheck` swaps that for a
+ *  doubled ember edge, for cards too small to give a corner away — a date pill
+ *  is about 96px wide and the check lands on its own label. The ring is drawn
+ *  inset rather than as a second border pixel so nothing shifts on selection. */
 export function ChoiceCard({
   selected = false,
   disabled = false,
+  hideCheck = false,
   onClick,
   className,
   children,
 }: {
   selected?: boolean;
   disabled?: boolean;
+  /** Carry selection on the edge instead of a corner glyph. */
+  hideCheck?: boolean;
   onClick?: () => void;
   className?: string;
   children: React.ReactNode;
@@ -30,12 +37,14 @@ export function ChoiceCard({
         disabled
           ? "border-line bg-subtle text-faint"
           : selected
-            ? "border-ember bg-ember/5"
+            ? hideCheck
+              ? "border-ember bg-ember/10 ring-1 ring-inset ring-ember"
+              : "border-ember bg-ember/5"
             : "border-line bg-card hover:border-ember/40 hover:shadow-sm active:bg-ember/5",
         className,
       )}
     >
-      {selected && (
+      {selected && !hideCheck && (
         <span className="absolute right-tight top-tight flex h-4 w-4 items-center justify-center rounded-full bg-ember text-fg" aria-hidden>
           <Check size={11} strokeWidth={3} />
         </span>
