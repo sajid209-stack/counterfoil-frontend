@@ -1,7 +1,7 @@
 import { getDailyRemaining, getResourceMatrix, getSlots } from "@/lib/api/slots";
 import { isOwnerFree } from "@/lib/api/slots";
 import { isResourceType, isSlotBased, needsSchedule, toMinutes } from "@/lib/schedule";
-import type { Product, Resource, Staff } from "@/lib/api";
+import type { Product } from "@/lib/api";
 
 /** What the till can say about a product WITHOUT being tapped.
  *
@@ -48,7 +48,6 @@ export function posLiveState(
   date: string,
   nowMinutes: number,
   w: PosStateWords,
-  ctx: { resources?: Resource[]; team?: Staff[] } = {},
 ): PosLiveState | null {
   // A resource product is run by its resources: how many are free right now is
   // the question a counter asks, not how many places exist in the abstract.
