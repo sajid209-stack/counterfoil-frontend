@@ -14,10 +14,14 @@ import {
 } from "./model";
 
 const HOUR_PX = 52;
+const HOUR_PX_COMPACT = 44;
 /** Past this many side-by-side events a week column stops being readable —
  *  the extras collapse into a "+N" that drops into the day view, where lanes
  *  have room to breathe. */
 const MAX_LANES = 3;
+/** Seven columns inside 320px leaves ~40px each; a third abreast would be a
+ *  sliver rather than a booking. */
+const MAX_LANES_COMPACT = 2;
 
 /** The week as columns of days over a shared hour gutter — the shape everyone
  *  already knows from every calendar they have ever used. */
@@ -30,6 +34,7 @@ export function WeekGrid({
   onPickDay,
   dayLabel,
   moreLabel,
+  compact = false,
 }: {
   weekStartDate: Date;
   events: CalEvent[];
@@ -40,13 +45,17 @@ export function WeekGrid({
   /** Renders the column header, so the page owns date formatting. */
   dayLabel: (d: Date) => { weekday: string; day: string };
   moreLabel: (count: number) => string;
+  /** Phone: the columns shrink to fit rather than the week scrolling away. */
+  compact?: boolean;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i));
   const openMin = openHour * 60;
   const closeMin = closeHour * 60;
   const span = Math.max(1, closeMin - openMin);
   const hours = Array.from({ length: closeHour - openHour }, (_, i) => openHour + i);
-  const bodyHeight = (closeHour - openHour) * HOUR_PX;
+  const bodyHeight = (closeHour - openHour) * (compact ? HOUR_PX_COMPACT : HOUR_PX);
+  const maxLanes = compact ? MAX_LANES_COMPACT : MAX_LANES;
+  const gutter = compact ? "w-8" : "w-14";
 
   const now = new Date();
   const nowMin = minutesOf(now);
@@ -61,10 +70,10 @@ export function WeekGrid({
     // top. Sticky against the page would let them scroll away, which is the
     // one thing a calendar header must never do.
     <div className="max-h-[70vh] overflow-auto">
-      <div className="min-w-[52rem]">
+      <div className={compact ? "min-w-0" : "min-w-[52rem]"}>
         {/* ── day headers ─────────────────────────────────────────────────── */}
         <div className="sticky top-0 z-20 flex border-b border-line bg-card">
-          <div className="w-14 shrink-0 border-r border-line" />
+          <div className={cn(gutter, "shrink-0 border-r border-line")} />
           {days.map((d) => {
             const today = sameDay(d, now);
             const label = dayLabel(d);
@@ -94,7 +103,7 @@ export function WeekGrid({
 
         {allDay.length > 0 && (
           <div className="flex border-b border-line bg-subtle/50">
-            <div className="w-14 shrink-0 border-r border-line py-tight text-center font-mono text-[10px] text-faint">
+            <div className={cn(gutter, "shrink-0 border-r border-line py-tight text-center font-mono text-[10px] text-faint")}>
               all day
             </div>
             {days.map((d) => (
@@ -122,7 +131,7 @@ export function WeekGrid({
         {/* ── the grid ────────────────────────────────────────────────────── */}
         <div className="flex" style={{ height: bodyHeight }}>
           {/* Hour gutter, once, on the left. */}
-          <div className="relative w-14 shrink-0 border-r border-line">
+          <div className={cn("relative shrink-0 border-r border-line", gutter)}>
             {hours.map((h) => (
               <span
                 key={h}
@@ -138,7 +147,7 @@ export function WeekGrid({
             const mine = events.filter((e) => !e.allDay && sameDay(e.start, d));
             const packed = packLanes(mine);
             const today = sameDay(d, now);
-            const overflow = packed.filter((p) => p.lane >= MAX_LANES - 1 && p.lanes > MAX_LANES);
+            const overflow = packed.filter((p) => p.lane >= maxLanes - 1 && p.lanes > maxLanes);
             const visible = packed.filter((p) => !overflow.includes(p));
             const overflowTop = overflow.length
               ? Math.min(...overflow.map((p) => minutesOf(p.event.start)))
@@ -175,8 +184,8 @@ export function WeekGrid({
                     style={{
                       top: `${((overflowTop - openMin) / span) * 100}%`,
                       height: `calc(${((overflowBottom - overflowTop) / span) * 100}% - 2px)`,
-                      left: `${((MAX_LANES - 1) / MAX_LANES) * 100}%`,
-                      width: `calc(${(1 / MAX_LANES) * 100}% - 2px)`,
+                      left: `${((maxLanes - 1) / maxLanes) * 100}%`,
+                      width: `calc(${(1 / maxLanes) * 100}% - 2px)`,
                     }}
                   >
                     {moreLabel(overflow.length)}
@@ -200,17 +209,19 @@ export function WeekGrid({
                       style={{
                         top: `${((s - openMin) / span) * 100}%`,
                         height: `calc(${((e - s) / span) * 100}% - 2px)`,
-                        left: `${(lane / Math.min(lanes, MAX_LANES)) * 100}%`,
-                        width: `calc(${(1 / Math.min(lanes, MAX_LANES)) * 100}% - 2px)`,
+                        left: `${(lane / Math.min(lanes, maxLanes)) * 100}%`,
+                        width: `calc(${(1 / Math.min(lanes, maxLanes)) * 100}% - 2px)`,
                       }}
                     >
                       <span className="flex items-center gap-0.5 truncate text-[10px] font-medium leading-tight">
                         {event.locked && <Lock size={8} strokeWidth={2.5} className="shrink-0" />}
                         {event.title}
                       </span>
-                      <span className="block truncate font-mono text-[9px] leading-tight opacity-70">
-                        {hhmm(event.start)}
-                      </span>
+                      {!compact && (
+                        <span className="block truncate font-mono text-[9px] leading-tight opacity-70">
+                          {hhmm(event.start)}
+                        </span>
+                      )}
                     </button>
                   );
                 })}

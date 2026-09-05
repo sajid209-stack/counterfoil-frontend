@@ -219,3 +219,15 @@ export const TONE_CLASS: Record<EventTone, string> = {
   held: "border-warning/40 [border-left:3px_solid_var(--color-warning)] text-fg bg-[repeating-linear-gradient(45deg,var(--color-warning-wash),var(--color-warning-wash)_3px,transparent_3px,transparent_7px)]",
   locked: "border-danger/40 [border-left:3px_solid_var(--color-danger)] text-fg bg-[repeating-linear-gradient(45deg,var(--color-danger-wash),var(--color-danger-wash)_3px,transparent_3px,transparent_7px)]",
 };
+
+/** Tone → a single dot. The month view on a phone has no room for chips, so a
+ *  day states how much is on and in what state with dots, the way every phone
+ *  calendar does. Hatching cannot survive at 6px, so held and locked fall back
+ *  to their border colours — the key underneath still names them. */
+export const TONE_DOT: Record<EventTone, string> = {
+  booked: "bg-ember",
+  arrived: "bg-success",
+  noshow: "bg-muted",
+  held: "bg-warning",
+  locked: "bg-danger",
+};

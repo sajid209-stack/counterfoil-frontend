@@ -16,6 +16,10 @@ export interface DayLane {
 }
 
 const HOUR_PX = 76; // wide enough that a 30-minute booking still shows its name
+/** The phone timeline runs top to bottom, so an hour is worth vertical room. */
+const HOUR_PX_COMPACT = 56;
+/** Two abreast is the most a 320px track can show without becoming slivers. */
+const MAX_LANES_COMPACT = 2;
 
 /**
  * The day, as a real calendar.
@@ -34,6 +38,7 @@ export function DayGrid({
   closeHour = 23,
   onSelect,
   emptyLabel,
+  compact = false,
 }: {
   date: Date;
   lanes: DayLane[];
@@ -42,6 +47,8 @@ export function DayGrid({
   closeHour?: number;
   onSelect?: (event: CalEvent) => void;
   emptyLabel: string;
+  /** Phone: the axis turns vertical and the lanes stop being columns. */
+  compact?: boolean;
 }) {
   const openMin = openHour * 60;
   const closeMin = closeHour * 60;
@@ -57,6 +64,119 @@ export function DayGrid({
 
   if (lanes.length === 0) {
     return <p className="py-hero text-center text-[13px] text-faint">{emptyLabel}</p>;
+  }
+
+  /* ── phone ──────────────────────────────────────────────────────────────
+     Lanes across the screen is a desktop idea: seven resources against
+     seventeen hours needs 1,292px of track, and no phone has it. So on a
+     phone the axis turns vertical — the shape every pocket calendar uses —
+     and the lane a booking belongs to moves inside the block, where it reads
+     as part of the booking rather than as a column heading scrolled off
+     somewhere to the left.
+
+     Nothing is dropped by the turn. Lanes with no bookings would simply
+     vanish, so the ones that are out of service are named above the track:
+     "no bookings" and "closed all day" must never look the same. */
+  if (compact) {
+    const timed = events.filter((e) => !e.allDay);
+    const packed = packLanes(timed);
+    const laneName = new Map(lanes.map((l) => [l.id, l.name]));
+    const blocked = lanes.filter((l) => l.blocked);
+    const trackHeight = (closeHour - openHour) * HOUR_PX_COMPACT;
+
+    return (
+      <div>
+        {blocked.length > 0 && (
+          <div className="flex flex-col gap-tight border-b border-line px-comfortable py-tight">
+            {blocked.map((l) => (
+              <span key={l.id} className="flex items-baseline gap-tight text-[12px]">
+                <span className="font-medium text-fg">{l.name}</span>
+                <span className="min-w-0 truncate text-danger">{l.note}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {timed.length === 0 ? (
+          <p className="py-hero text-center text-[13px] text-faint">{emptyLabel}</p>
+        ) : (
+          <div className="max-h-[70vh] overflow-y-auto">
+            <div className="flex" style={{ height: trackHeight }}>
+              {/* Hours down the left, once. */}
+              <div className="relative w-11 shrink-0 border-r border-line">
+                {hours.slice(0, -1).map((h) => (
+                  <span
+                    key={h}
+                    className="absolute right-tight -translate-y-1/2 font-mono text-[11px] text-muted"
+                    style={{ top: `${pct(h * 60)}%` }}
+                  >
+                    {String(h).padStart(2, "0")}
+                  </span>
+                ))}
+              </div>
+
+              <div className="relative flex-1">
+                {hours.map((h) => (
+                  <span
+                    key={h}
+                    aria-hidden
+                    className="absolute inset-x-0 h-px bg-line/70"
+                    style={{ top: `${pct(h * 60)}%` }}
+                  />
+                ))}
+
+                {showNow && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-0 z-10 h-0.5 bg-ember"
+                    style={{ top: `${pct(nowMin)}%` }}
+                  />
+                )}
+
+                {packed.map(({ event, lane: col, lanes: cols }) => {
+                  const s = Math.max(openMin, minutesOf(event.start));
+                  const e = Math.min(closeMin, minutesOf(event.end));
+                  if (e <= s) return null;
+                  const across = Math.min(cols, MAX_LANES_COMPACT);
+                  if (col >= across) return null; // folded behind a neighbour
+                  const owner = event.ownerId ? laneName.get(event.ownerId) : null;
+                  const tall = ((e - s) / span) * trackHeight;
+                  return (
+                    <button
+                      key={event.id}
+                      type="button"
+                      onClick={onSelect ? () => onSelect(event) : undefined}
+                      title={`${event.title} · ${hhmm(event.start)}–${hhmm(event.end)}`}
+                      className={cn(
+                        "absolute overflow-hidden rounded-xs border px-tight py-0.5 text-left",
+                        TONE_CLASS[event.tone],
+                      )}
+                      style={{
+                        top: `${pct(s)}%`,
+                        height: `calc(${((e - s) / span) * 100}% - 2px)`,
+                        left: `${(col / across) * 100}%`,
+                        width: `calc(${(1 / across) * 100}% - 2px)`,
+                      }}
+                    >
+                      <span className="flex items-center gap-0.5 truncate text-[11px] font-medium leading-tight">
+                        {event.locked && <Lock size={9} strokeWidth={2.5} className="shrink-0" />}
+                        {event.title}
+                      </span>
+                      {tall > 30 && (
+                        <span className="block truncate font-mono text-[10px] leading-tight opacity-70">
+                          {hhmm(event.start)}
+                          {owner ? ` · ${owner}` : ""}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (

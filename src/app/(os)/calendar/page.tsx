@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button, PageShell, Tabs } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 import {
   listBookings,
   listHolds,
@@ -38,6 +39,12 @@ const WEEKDAYS_MON_FIRST = [1, 2, 3, 4, 5, 6, 0];
 export default function CalendarPage() {
   const t = useTranslations("calendar");
   const router = useRouter();
+
+  // Server snapshot true: the desktop grids are the heavier markup, so
+  // assuming wide means a desktop never flashes the phone layout on hydration.
+  // A phone corrects itself on mount, before paint.
+  const wide = useMediaQuery(MD, true);
+  const compact = !wide;
 
   const [view, setView] = useState<View>("week");
   const [cursor, setCursor] = useState<Date>(openingDate);
@@ -212,7 +219,7 @@ export default function CalendarPage() {
           <span className="font-mono text-[13px] text-muted">{rangeLabel}</span>
         </div>
 
-        {view === "day" && resources.length > 0 && (
+        {view === "day" && !compact && resources.length > 0 && (
           <div className="flex flex-wrap gap-inline">
             {(["resource", "product"] as const).map((g) => (
               <button
@@ -241,6 +248,7 @@ export default function CalendarPage() {
               events={laneEvents}
               onSelect={openEvent}
               emptyLabel={t("nothingToday")}
+              compact={compact}
             />
           ) : view === "week" ? (
             <WeekGrid
@@ -256,6 +264,7 @@ export default function CalendarPage() {
                 day: String(d.getDate()),
               })}
               moreLabel={(n) => t("more", { count: n })}
+              compact={compact}
             />
           ) : (
             <MonthGrid
@@ -268,6 +277,15 @@ export default function CalendarPage() {
                 setCursor(d);
                 setView("day");
               }}
+              compact={compact}
+              dayHeading={(d) =>
+                new Intl.DateTimeFormat("en-GB", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                }).format(d)
+              }
+              emptyLabel={t("nothingToday")}
             />
           )}
         </div>

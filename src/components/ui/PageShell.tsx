@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 
 // Standard page frame for OS screens: breadcrumb (derived from the path),
 // title, optional description, actions slot.
@@ -17,7 +18,6 @@ import { usePathname } from "next/navigation";
 // so the block renders inline there instead. Both branches render the SAME
 // JSX from the same props — the header has one definition, shown in one of two
 // places depending on how much room the viewport has.
-const MD = "(min-width: 48rem)"; // Tailwind md
 /** A store that never changes: subscribing to it is a no-op. */
 const noSubscribe = () => () => {};
 
@@ -50,20 +50,8 @@ export function PageShell({
   // it is a real duplicate node, and it is the FIRST one in document order, so
   // anything selecting "the location select" got the hidden one. Matching the
   // md breakpoint means exactly one copy exists at any width.
-  // useSyncExternalStore, not an effect that setStates on mount: a media query
-  // IS an external store, and subscribing to one is exactly what this hook is
-  // for. Doing it with useEffect + setState trips
-  // react-hooks/set-state-in-effect and costs a cascading render.
-  const subscribe = useCallback((onChange: () => void) => {
-    const mq = window.matchMedia(MD);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  const wide = useSyncExternalStore(
-    subscribe,
-    () => window.matchMedia(MD).matches,
-    () => false, // server: assume narrow, so the header ships in the document
-  );
+  // Server snapshot false: assume narrow, so the header ships in the document.
+  const wide = useMediaQuery(MD);
   // The slots are read the same way, and for the same reason: they are DOM
   // rendered by OsShell above this in the tree, they exist for the life of the
   // shell, and they never change identity — so subscribe is a no-op and the
