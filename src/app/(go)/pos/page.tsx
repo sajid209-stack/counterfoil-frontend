@@ -234,6 +234,16 @@ export default function PosPage() {
   const productById = (id: string) => products.find((p) => p.id === id);
 
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "";
+  /** Everything this till can actually sell, before the cashier narrows it.
+   *  The chip row is built from THIS rather than from the filtered grid, so
+   *  chips do not disappear from under the finger as someone types. */
+  const sellable = products.filter((p) => p.bookingType !== "BT-14");
+  /** Only groups that are switched on AND have something in them. An empty
+   *  chip is a control that filters the grid to nothing and tells the cashier
+   *  they have made a mistake — the seeded "Add-ons" group did exactly that. */
+  const chipCategories = categories
+    .filter((c) => c.active !== false && sellable.some((p) => p.categoryId === c.id))
+    .sort((a, b) => a.sortOrder - b.sortOrder);
   const shown = products
     .filter((p) => p.bookingType !== "BT-14") // field passes issue from Quick pass, not the grid
     .filter((p) => category === "all" || p.categoryId === category)
@@ -696,7 +706,7 @@ export default function PosPage() {
             the screen edge puts the cut on the edge itself, which is the
             affordance everyone already knows. */}
         <div className="-mx-tight flex snap-x snap-mandatory gap-inline overflow-x-auto px-tight pb-inline [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {[{ id: "all", name: t("categoryAll") }, ...categories].map((c) => (
+          {[{ id: "all", name: t("categoryAll") }, ...chipCategories].map((c) => (
             <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 shrink-0 snap-start rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ember bg-ember text-white" : "border-line bg-card"}`}>{c.name}</button>
           ))}
         </div>

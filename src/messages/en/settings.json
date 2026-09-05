@@ -279,5 +279,24 @@
     "added": "{noun} added.",
     "changesSaved": "Changes saved.",
     "add": "Add"
+  },
+  "categories": {
+    "title": "Categories",
+    "description": "The groups bookings are filed under — and the chips a cashier taps at the till.",
+    "emptyTitle": "No categories yet",
+    "emptyMessage": "Add one below, then file bookings under it on the booking's Details tab.",
+    "add": "Add category",
+    "added": "{name} added.",
+    "newPlaceholder": "New category name",
+    "nameLabel": "Category name",
+    "count": "{count, plural, =0 {nothing in it} one {# booking} other {# bookings}}",
+    "retire": "Retire",
+    "restore": "Restore",
+    "retired": "{name} retired.",
+    "restored": "{name} is back.",
+    "retireHelp": "Retiring a category hides its chip at the till. Bookings already filed under it keep their category and still sell.",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "reorderFailed": "Could not reorder. Try again."
   }
 }

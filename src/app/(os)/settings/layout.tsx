@@ -21,6 +21,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     { label: "Locations", href: "/settings/locations" },
     { label: "Counters", href: "/settings/counters" },
     { label: resourceLabel, href: "/settings/resources" },
+    { label: "Categories", href: "/settings/categories" },
     { label: "Team", href: "/settings/team" },
     { label: "Devices", href: "/settings/devices" },
     { label: "Payments", href: "/settings/payments" },
