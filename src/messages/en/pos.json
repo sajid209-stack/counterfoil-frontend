@@ -285,7 +285,9 @@
     "time": "Time",
     "slotsFree": "{count} free",
     "departureLabel": "Departure",
-    "buyNow": "Buy now — {amount}"
+    "buyNow": "Buy now — {amount}",
+    "dealPrice": "Set price for {duration} — {amount}",
+    "dealSaves": "saves {amount}"
   },
   "settle": {
     "title": "Settle a reservation",

@@ -188,6 +188,13 @@ export interface DurationConfig {
   hourlyRate?: Minor; // "hourly": one rate, prorated per increment
   basePrice?: Minor; // "base_extension": the first block (minMinutes)
   extensionPrice?: Minor; // "base_extension": each additional increment
+  /** Deal prices that beat the formula for one exact duration — "1 hr is
+   *  1,000 and every 15 min after is 250, BUT 2 hr is 1,750". A formula
+   *  cannot express a deal, and operators sell deals; kept separate from
+   *  priceList so switching pricing model never silently resurrects an old
+   *  list as a set of overrides. Ignored by the "list" model, where the list
+   *  already IS the prices. */
+  priceOverrides?: Record<number, Minor>;
   mustEndByClose: boolean; // on: latest start = close − duration
   walkInRoundMinutes: number; // "Start now" rounds to this
   leadTimeMinutes: number; // minimum notice before start

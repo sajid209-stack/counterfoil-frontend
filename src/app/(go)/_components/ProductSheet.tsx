@@ -31,7 +31,7 @@ import {
 } from "@/lib/api";
 import { DEMO_TODAY, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
-import { durationOptions, formatDuration, formatDurationShort, priceSegments, productDurationPrice } from "@/lib/duration";
+import { durationOptions, formatDuration, formatDurationShort, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
 import { formatMoney } from "@/lib/format";
@@ -813,11 +813,22 @@ export function ProductSheet({
                   : cfg
                     ? priceSegments(cfg, product.pricingRules ?? [], date, slotTime, duration)
                     : [];
-                const math = segs.length === 1
-                  ? `${formatMoney(segs[0].ratePerHour, currency)} × ${formatDuration(duration)} = ${formatMoney(total, currency)}`
-                  : segs.length > 1
-                    ? `${segs.map((s) => `${formatDuration(s.minutes)} @ ${formatMoney(s.ratePerHour, currency)}`).join(" + ")} = ${formatMoney(total, currency)}`
-                    : "";
+                // A deal duration is a price someone chose, not a sum. Printing
+                // "৳1,000 × 2 hr" beside a ৳1,750 total would be arithmetic
+                // that does not add up, so the deal says what it is instead —
+                // and what it saves, which is the thing worth telling a guest.
+                const deal = cfg ? isDealDuration(cfg, duration) : false;
+                const saving = cfg && deal ? formulaPrice(cfg, duration) - total : 0;
+                const math = deal
+                  ? t("sheet.dealPrice", {
+                      duration: formatDuration(duration),
+                      amount: formatMoney(total, currency),
+                    }) + (saving > 0 ? ` · ${t("sheet.dealSaves", { amount: formatMoney(saving, currency) })}` : "")
+                  : segs.length === 1
+                    ? `${formatMoney(segs[0].ratePerHour, currency)} × ${formatDuration(duration)} = ${formatMoney(total, currency)}`
+                    : segs.length > 1
+                      ? `${segs.map((s) => `${formatDuration(s.minutes)} @ ${formatMoney(s.ratePerHour, currency)}`).join(" + ")} = ${formatMoney(total, currency)}`
+                      : "";
                 const premium = lane?.rateOverride?.kind === "premium" ? ` (incl. ${lane.name} +${formatMoney(lane.rateOverride.amount, currency)})` : "";
                 return (
                   <div className="flex flex-col gap-inline">

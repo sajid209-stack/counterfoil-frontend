@@ -102,7 +102,7 @@ export default function ProductDetailPage() {
         href="/bookings"
         className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg"
       >
-        <ArrowLeft size={14} strokeWidth={1.5} /> Products
+        <ArrowLeft size={14} strokeWidth={1.5} /> Bookings
       </Link>
 
       {loading || !product ? (

@@ -401,7 +401,15 @@ export const products: Product[] = [
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "10:00", endTime: "22:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
     resourceIds: ["res_lane_1", "res_lane_2", "res_lane_3", "res_lane_4"], resourceExclusive: true, bufferMinutes: 0, flexibleDurations: [60, 90, 120, 150, 180], pricingBasis: "per_booking",
-    durationConfig: { minMinutes: 60, maxMinutes: 180, incrementMinutes: 30, pricingModel: "hourly", hourlyRate: 80000, mustEndByClose: true, walkInRoundMinutes: 15, leadTimeMinutes: 0 },
+    // The shape a bowling alley actually sells: an hour is a round number,
+    // you can extend in quarter-hours, and the two-hour price is a deal the
+    // formula would never produce (2 hr would be 2,000 on the arithmetic).
+    durationConfig: {
+      minMinutes: 60, maxMinutes: 180, incrementMinutes: 15,
+      pricingModel: "base_extension", basePrice: 100000, extensionPrice: 25000,
+      priceOverrides: { 120: 175000 },
+      mustEndByClose: true, walkInRoundMinutes: 15, leadTimeMinutes: 0,
+    },
     pricingRules: [{ id: "pr_bw_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 120000 }],
     addOns: [{ id: "add_bw_shoes", name: "Shoe hire", price: 10000, perPerson: true }],
     createdAt: T, updatedAt: T,

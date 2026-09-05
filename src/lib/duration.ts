@@ -96,6 +96,11 @@ export const durationConfigError = (cfg: DurationConfig): string | null => {
 
 /** The model's own price for a duration, before time-band rules. */
 export function durationBasePrice(cfg: DurationConfig, minutes: number): Minor {
+  // A deal price for this exact duration beats the formula. Two hours of
+  // bowling being cheaper than two lots of one hour is the normal shape of
+  // this business, and no per-step arithmetic can produce it.
+  const deal = cfg.priceOverrides?.[minutes];
+  if (deal != null && cfg.pricingModel !== "list") return deal;
   switch (cfg.pricingModel) {
     case "list":
       return cfg.priceList?.[minutes] ?? Math.round(((cfg.hourlyRate ?? 0) * minutes) / 60);
@@ -143,6 +148,18 @@ export function resolveDurationPrice(
   }
   const flat = (hourly * minutes) / 60;
   return Math.round((base * banded) / flat);
+}
+
+/** Does this duration carry a hand-set deal price? The till says so rather
+ *  than printing per-hour segment maths that would not add up to the total. */
+export const isDealDuration = (cfg: DurationConfig, minutes: number): boolean =>
+  cfg.pricingModel !== "list" && cfg.priceOverrides?.[minutes] != null;
+
+/** What the formula alone would have charged — shown beside a deal so the
+ *  operator (and the cashier) can see what the customer is saving. */
+export function formulaPrice(cfg: DurationConfig, minutes: number): Minor {
+  const { priceOverrides: _ignored, ...withoutDeals } = cfg;
+  return durationBasePrice(withoutDeals as DurationConfig, minutes);
 }
 
 export interface PriceSegment {

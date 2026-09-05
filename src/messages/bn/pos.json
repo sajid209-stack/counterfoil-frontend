@@ -285,7 +285,9 @@
     "time": "সময়",
     "slotsFree": "{count} খালি",
     "departureLabel": "প্রস্থান",
-    "buyNow": "এখনই কিনুন — {amount}"
+    "buyNow": "এখনই কিনুন — {amount}",
+    "dealPrice": "{duration}-এর নির্ধারিত দাম — {amount}",
+    "dealSaves": "{amount} সাশ্রয়"
   },
   "settle": {
     "title": "রিজার্ভেশন নিষ্পত্তি",
