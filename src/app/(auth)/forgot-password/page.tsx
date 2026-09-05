@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
           link is on its way. It expires in one hour.
         </p>
         <p className="text-[12px] text-faint">Nothing arrived? Check spam, or try again in a few minutes.</p>
-        <Link href="/sign-in" className="text-[13px] text-ember underline-offset-4 hover:underline">Back to sign in</Link>
+        <Link href="/sign-in" className="text-[13px] text-brand-foreground underline-offset-4 hover:underline">Back to sign in</Link>
         {/* demo shortcut to the reset screen */}
         <Link href="/reset/demo-token" className="font-mono text-[12px] text-faint hover:text-fg">(demo: open the reset link)</Link>
       </main>

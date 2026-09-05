@@ -106,7 +106,7 @@ export function SessionList({
                 <span
                   className={cn(
                     "shrink-0 text-base font-semibold",
-                    full && !isSelected ? "text-faint" : "text-fg",
+                    full && !isSelected ? "text-muted" : "text-fg",
                   )}
                 >
                   {s.time}
@@ -125,7 +125,7 @@ export function SessionList({
                       : pressure === "gone"
                         ? "text-danger"
                         : pressure === "critical"
-                          ? "text-ember"
+                          ? "text-brand-foreground"
                           : pressure === "low"
                             ? "text-warning"
                             : "text-success",
@@ -172,7 +172,7 @@ export function SessionList({
               </span>
 
               {full && !closed && s.waitlist && (
-                <span className="text-[12px] font-medium text-ember">{t("sheet.joinWaitlist")} →</span>
+                <span className="text-[12px] font-medium text-brand-foreground">{t("sheet.joinWaitlist")} →</span>
               )}
             </span>
           </button>

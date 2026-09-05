@@ -73,7 +73,7 @@ export default function KitchenSink() {
 
   return (
     <main className="mx-auto max-w-4xl px-section py-hero">
-      <p className="type-label text-[13px] text-ember">Primitives</p>
+      <p className="type-label text-[13px] text-brand-foreground">Primitives</p>
       <h1 className="type-display mt-tight text-4xl">Kitchen sink</h1>
       <p className="type-body mt-section max-w-xl text-muted">
         Every primitive in every state. These are the reusable pieces the ~15

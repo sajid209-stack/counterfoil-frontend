@@ -94,7 +94,7 @@ export default function GoLoginPage() {
                   {s.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}
                 </span>
                 <span className="max-w-full truncate text-sm text-paper">{s.name}</span>
-                <span className={`font-mono text-[12px] ${s.id === OPEN_SHIFT.staffId ? "text-ember" : "text-neutral-600"}`}>{stateLine(s)}</span>
+                <span className={`font-mono text-[12px] ${s.id === OPEN_SHIFT.staffId ? "text-brand-foreground" : "text-neutral-600"}`}>{stateLine(s)}</span>
               </button>
             ))}
             <button

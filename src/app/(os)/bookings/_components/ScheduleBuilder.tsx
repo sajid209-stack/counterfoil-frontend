@@ -129,7 +129,7 @@ export function ScheduleBuilder({
           ) : (
             <div className="flex flex-wrap gap-inline">
               {team.map((m) => (
-                <button key={m.id} type="button" onClick={() => toggleGuide(m.id)} className={`rounded-sm border px-comfortable py-tight text-[13px] ${value.guideIds.includes(m.id) ? "border-ember bg-ember/10 text-ember" : "border-line text-muted"}`}>
+                <button key={m.id} type="button" onClick={() => toggleGuide(m.id)} className={`rounded-sm border px-comfortable py-tight text-[13px] ${value.guideIds.includes(m.id) ? "border-ember bg-ember/10 text-brand-foreground" : "border-line text-muted"}`}>
                   {m.name}
                 </button>
               ))}

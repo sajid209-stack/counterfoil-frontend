@@ -241,7 +241,7 @@ export function ProductWizard({
                       {l.name}
                     </label>
                   ))}
-                  <button type="button" onClick={() => setAddLocOpen(true)} className="mt-inline flex items-center gap-inline self-start text-[13px] text-ember hover:underline"><Plus size={14} strokeWidth={1.5} /> Add a location</button>
+                  <button type="button" onClick={() => setAddLocOpen(true)} className="mt-inline flex items-center gap-inline self-start text-[13px] text-brand-foreground hover:underline"><Plus size={14} strokeWidth={1.5} /> Add a location</button>
                 </>
               )}
             </div>

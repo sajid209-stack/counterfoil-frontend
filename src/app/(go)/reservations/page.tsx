@@ -31,7 +31,7 @@ export default function GoBookingsPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-section px-section py-section">
       <div>
-        <p className="type-label text-[13px] text-ember">{t("arrivalsGateLabel")}</p>
+        <p className="type-label text-[13px] text-brand-foreground">{t("arrivalsGateLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("arrivalsTitle")}</h1>
       </div>
       <div className="relative">

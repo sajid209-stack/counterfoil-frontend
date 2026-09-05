@@ -90,7 +90,7 @@ export function BookingSetup({
       <div className="card-surface p-major">
         <div className="flex items-start justify-between gap-section">
           <p className="type-body text-sm">{value.summary}</p>
-          <button type="button" onClick={() => { setStep("q1"); onChange(null); }} className="flex shrink-0 items-center gap-inline text-[13px] text-ember hover:underline">
+          <button type="button" onClick={() => { setStep("q1"); onChange(null); }} className="flex shrink-0 items-center gap-inline text-[13px] text-brand-foreground hover:underline">
             <Pencil size={14} strokeWidth={1.5} /> Change
           </button>
         </div>

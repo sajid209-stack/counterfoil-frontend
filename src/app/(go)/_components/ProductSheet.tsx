@@ -121,7 +121,7 @@ function SheetFooter({
             aria-label={buyLabel}
             title={buyLabel}
             onClick={() => onAdd(true)}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-ember text-ember transition-colors duration-quick disabled:opacity-40 hover:bg-ember/10 active:bg-ember/20"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-ember text-brand-foreground transition-colors duration-quick disabled:opacity-40 hover:bg-ember/10 active:bg-ember/20"
           >
             <Zap size={20} strokeWidth={1.5} />
           </button>
@@ -263,7 +263,7 @@ export function ProductSheet({
   const renderWaiver = () =>
     needsWaiver ? (
       <label className="mt-tight flex cursor-pointer items-center gap-tight rounded-sm border border-line bg-card p-comfortable text-sm">
-        <input type="checkbox" checked={waived} onChange={(e) => setWaived(e.target.checked)} className="h-5 w-5 accent-ember" />
+        <input type="checkbox" checked={waived} onChange={(e) => setWaived(e.target.checked)} className="h-6 w-6 shrink-0 accent-ember" />
         {t("sheet.waiverSigned")}
       </label>
     ) : null;
@@ -295,7 +295,7 @@ export function ProductSheet({
             <div key={a.id} className="flex min-h-14 items-center gap-tight rounded-sm border border-line bg-card p-comfortable">
               <div className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{a.name}</span>
-                <span className="text-[12px] text-faint">{formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}</span>
+                <span className="text-[12px] text-muted">{formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}</span>
               </div>
               {n === 0 ? (
                 <button type="button" aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: a.perPerson ? headsFor() : 1 }))} className="h-12 w-12 shrink-0 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
@@ -390,9 +390,9 @@ export function ProductSheet({
             and the date confirms it; running DAY / 29 / Jul down three lines
             made an 84px card that wrapped the strip onto a second row and
             stranded "More dates" beside the orphan. */}
-        <span className={`whitespace-nowrap text-[13px] font-medium leading-tight ${date === value ? "text-ember" : ""}`}>{label === t("sheet.today") || label === t("sheet.tomorrow") ? label : label.split(" ")[0]}</span>
-        <span className={`whitespace-nowrap text-[12px] leading-tight ${date === value ? "text-ember/70" : "text-muted"}`}>{value.slice(8, 10)} {new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
-        {cap && <span className={`whitespace-nowrap text-[12px] leading-tight ${low ? "font-medium text-ember" : date === value ? "text-ember/70" : "text-muted"}`}>{cap.left} left</span>}
+        <span className={`whitespace-nowrap text-[13px] font-medium leading-tight ${date === value ? "text-brand-foreground" : ""}`}>{label === t("sheet.today") || label === t("sheet.tomorrow") ? label : label.split(" ")[0]}</span>
+        <span className={`whitespace-nowrap text-[12px] leading-tight ${date === value ? "text-brand-foreground/70" : "text-muted"}`}>{value.slice(8, 10)} {new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
+        {cap && <span className={`whitespace-nowrap text-[12px] leading-tight ${low ? "font-medium text-brand-foreground" : date === value ? "text-brand-foreground/70" : "text-muted"}`}>{cap.left} left</span>}
       </ChoiceCard>
     );
   };
@@ -517,7 +517,7 @@ export function ProductSheet({
     waiverOk;
 
   return (
-    <div className="fixed inset-y-0 left-0 right-0 z-50 flex flex-col justify-end lg:right-[24rem]" role="dialog" aria-modal="true">
+    <div className="fixed inset-y-0 left-0 right-0 z-50 flex flex-col justify-end lg:right-[24rem]" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
       <div className="absolute inset-0 bg-inverse/40 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div className="relative z-10 max-h-[85vh] overflow-y-auto rounded-t-md bg-sheet p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
         <div className="mx-auto w-full max-w-[680px]">
@@ -530,7 +530,7 @@ export function ProductSheet({
         <div className="mb-section flex items-start gap-comfortable">
           <ProductThumb images={product.images} name={product.name} bookingType={product.bookingType} size="thumb" />
           <div className="min-w-0 flex-1">
-            <h2 className="type-h2 break-words text-2xl">{product.name}</h2>
+            <h2 id="sheet-title" className="type-h2 break-words text-2xl">{product.name}</h2>
             <p className="mt-inline text-[13px] text-muted">{behaviourSubtitle(product, { resources, team })}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg active:bg-ember/10"><X size={20} strokeWidth={1.75} /></button>
@@ -574,7 +574,7 @@ export function ProductSheet({
             {moreDates ? (
               <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setSlotTime(undefined); setResourceId(undefined); }} className="h-auto shrink-0 self-stretch rounded-sm border border-line bg-card px-comfortable text-sm" />
             ) : (
-              <button type="button" onClick={() => setMoreDates(true)} className="shrink-0 self-stretch whitespace-nowrap rounded-sm px-tight text-[13px] text-faint active:text-fg">{t("sheet.moreDates")}</button>
+              <button type="button" onClick={() => setMoreDates(true)} className="shrink-0 self-stretch whitespace-nowrap rounded-sm px-tight text-[13px] text-muted active:text-fg">{t("sheet.moreDates")}</button>
             )}
             </div>
           </div>
@@ -754,14 +754,14 @@ export function ProductSheet({
               )}
 
               <span className="type-label text-[12px] text-muted">{t("sheet.duration")}</span>
-              <div className="flex flex-wrap gap-tight">{flexOptions.map((d) => <button key={d} type="button" onClick={() => pickDuration(d)} className={`h-12 flex-1 whitespace-nowrap rounded-sm border px-tight text-sm ${duration === d ? "border-ember bg-ember/10 font-medium text-ember" : "border-line bg-card"}`}>{formatDurationShort(d)}{slotTime ? <span className="ml-inline text-[12px] opacity-70">{formatMoney(priceFor(slotTime, d, laneOf(resourceId)), currency)}</span> : null}</button>)}</div>
+              <div className="flex flex-wrap gap-tight">{flexOptions.map((d) => <button key={d} type="button" onClick={() => pickDuration(d)} className={`h-12 flex-1 whitespace-nowrap rounded-sm border px-tight text-sm ${duration === d ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatDurationShort(d)}{slotTime ? <span className="ml-inline text-[12px] opacity-70">{formatMoney(priceFor(slotTime, d, laneOf(resourceId)), currency)}</span> : null}</button>)}</div>
 
               <span className="type-label text-[12px] text-muted">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>
               <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <ChoiceCard selected={!resourceId} onClick={() => setResourceId(undefined)} className="flex h-14 items-center pl-comfortable pr-7 text-sm">{t("sheet.any")}</ChoiceCard>
                 {lanes.map((r) => (
                   <ChoiceCard key={r.id} selected={resourceId === r.id} disabled={r.outOfService} onClick={() => setResourceId(r.id)} className="flex min-h-14 max-w-56 flex-col items-start justify-center py-inline pl-comfortable pr-7">
-                    <span className="block max-w-full truncate text-sm leading-tight">{r.name}{rateLabel(r) ? <span className="ml-inline whitespace-nowrap text-[12px] text-faint">{rateLabel(r)}</span> : null}</span>
+                    <span className="block max-w-full truncate text-sm leading-tight">{r.name}{rateLabel(r) ? <span className="ml-inline whitespace-nowrap text-[12px] text-muted">{rateLabel(r)}</span> : null}</span>
                     <span className="block max-w-full truncate text-[12px] leading-tight text-muted">{liveState(r)}</span>
                   </ChoiceCard>
                 ))}
@@ -795,9 +795,9 @@ export function ProductSheet({
                 {flexTimes.map((tt) => {
                   const st = startState(tt, duration, resourceId);
                   if (!st.ok) {
-                    return <button key={tt} type="button" onClick={() => setBlocked(t("sheet.unavailableStart", { time: tt, reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))} className="h-12 rounded-sm border border-line bg-subtle px-comfortable text-[13px] text-faint line-through" title={st.reason}>{tt}</button>;
+                    return <button key={tt} type="button" onClick={() => setBlocked(t("sheet.unavailableStart", { time: tt, reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))} className="h-12 rounded-sm border border-line bg-subtle px-comfortable text-[13px] text-muted line-through" title={st.reason}>{tt}</button>;
                   }
-                  return <button key={tt} type="button" onClick={() => { setSlotTime(tt); setBlocked(null); }} className={`h-12 rounded-sm border px-comfortable text-[13px] ${slotTime === tt ? "border-ember bg-ember/10 font-medium text-ember" : "border-line bg-card"}`}>{tt}</button>;
+                  return <button key={tt} type="button" onClick={() => { setSlotTime(tt); setBlocked(null); }} className={`h-12 rounded-sm border px-comfortable text-[13px] ${slotTime === tt ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{tt}</button>;
                 })}
               </div>
 
@@ -882,7 +882,7 @@ export function ProductSheet({
                       <span className="block truncate text-sm font-medium">{p.name}</span>
                       <span className="block text-[12px] text-muted">{nextFree ? t("sheet.nextFree", { time: nextFree }) : t("sheet.fullyBooked")}</span>
                     </span>
-                    <span className={`shrink-0 whitespace-nowrap text-[12px] ${premiumOf(p.id) > 0 ? "font-medium text-ember" : "text-muted"}`}>
+                    <span className={`shrink-0 whitespace-nowrap text-[12px] ${premiumOf(p.id) > 0 ? "font-medium text-brand-foreground" : "text-muted"}`}>
                       {premiumOf(p.id) > 0 ? t("sheet.premiumAmount", { amount: formatMoney(premiumOf(p.id), currency) }) : t("sheet.standardRate")}
                     </span>
                   </ChoiceCard>
@@ -890,12 +890,12 @@ export function ProductSheet({
               })}
               <ChoiceCard selected={!providerId} onClick={() => setProviderId(undefined)} className="flex w-full items-center justify-center px-7 py-comfortable text-sm">{t("sheet.firstAvailable")}</ChoiceCard>
             </div>
-            <span className="type-label mt-tight text-[12px] text-faint">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>
+            <span className="type-label mt-tight text-[12px] text-muted">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>
             <div className="flex flex-wrap gap-inline">
               {providerTimes.map((t) => {
                 const free = providerTimeFree(t);
                 return (
-                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable text-[13px] ${!free ? "border-line bg-subtle text-faint line-through" : slotTime === t ? "border-ember bg-ember/10 font-medium text-ember" : "border-line bg-card"}`}>{t}</button>
+                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable text-[13px] ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{t}</button>
                 );
               })}
             </div>
@@ -1018,7 +1018,7 @@ export function ProductSheet({
                 const cats = [...new Map(availSeats.map((s) => [s.categoryUid, s])).values()];
                 return (
                   <div>
-                    <div className="mb-tight rounded-xs bg-subtle py-inline text-center text-[12px] tracking-widest text-faint">{seatT("picker.screen")}</div>
+                    <div className="mb-tight rounded-xs bg-subtle py-inline text-center text-[12px] tracking-widest text-muted">{seatT("picker.screen")}</div>
                     <div className="overflow-x-auto">
                       <div data-seat-grid className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${maxCol}, 1.6rem)` }}>
                         {availSeats.map((s) => {
@@ -1031,7 +1031,7 @@ export function ProductSheet({
                               onClick={() => setSelectedSeats((cur) => (cur.includes(s.label) ? cur.filter((x) => x !== s.label) : [...cur, s.label]))}
                               title={`${s.label} · ${s.categoryName} · ${formatMoney(s.price, currency)}`}
                               style={{ gridColumnStart: s.posX + 1, gridRowStart: s.posY + 1, ...(s.available && !sel ? { background: `${s.color}33`, color: s.color, borderColor: s.color } : {}) }}
-                              className={`h-7 rounded-[3px] border text-[9px] leading-none ${!s.available ? "cursor-not-allowed border-line bg-line text-faint line-through" : sel ? "border-ember bg-ember font-medium text-white" : ""}`}
+                              className={`h-7 rounded-[3px] border text-[9px] leading-none ${!s.available ? "cursor-not-allowed border-line bg-line text-muted line-through" : sel ? "border-ember bg-ember font-medium text-ink" : ""}`}
                             >
                               {s.label.replace(/^[A-Za-z]+/, "")}
                             </button>
@@ -1061,10 +1061,10 @@ export function ProductSheet({
             <div className="flex flex-col gap-tight">
               {(sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: `${s.name}`, price: s.price, cap: s.capacity, note: "", donation: false })) : activeTiers.map((tier) => ({ id: tier.id, name: tier.name, price: tier.price, cap: undefined as number | undefined, note: [(tier.admits ?? 1) > 1 ? t("sheet.admits", { count: tier.admits ?? 1 }) : "", tier.ageNote ?? ""].filter(Boolean).join(" · "), donation: !!tier.donation }))).map((row) => (
                 <div key={row.id} className="flex items-center justify-between rounded-sm border border-line bg-card p-comfortable">
-                  <div className="min-w-0"><div className="text-sm font-medium">{row.name}</div><div className="text-[12px] text-faint">{row.donation ? t("sheet.donationMin", { amount: formatMoney(row.price, currency) }) : formatMoney(row.price, currency)}{row.cap != null ? ` · ${t("sheet.seatsCount", { count: row.cap })}` : ""}{row.note ? ` · ${row.note}` : ""}</div></div>
+                  <div className="min-w-0"><div className="text-sm font-medium">{row.name}</div><div className="text-[12px] text-maint">{row.donation ? t("sheet.donationMin", { amount: formatMoney(row.price, currency) }) : formatMoney(row.price, currency)}{row.cap != null ? ` · ${t("sheet.seatsCount", { count: row.cap })}` : ""}{row.note ? ` · ${row.note}` : ""}</div></div>
                   {row.donation ? (
                     <div className="flex items-center gap-tight">
-                      <span className="text-sm text-faint">{currency === "BDT" ? "৳" : ""}</span>
+                      <span className="text-sm text-muted">{currency === "BDT" ? "৳" : ""}</span>
                       <input
                         type="number"
                         inputMode="numeric"

@@ -111,7 +111,7 @@ export function Sidebar({
             )}
           >
             {!collapsed && t("pos")}
-            <ArrowUpRight size={16} strokeWidth={1.5} className="text-ember" />
+            <ArrowUpRight size={16} strokeWidth={1.5} className="text-brand-foreground" />
           </Link>
         </div>
 

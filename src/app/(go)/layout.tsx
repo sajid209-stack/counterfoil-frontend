@@ -73,7 +73,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
         className={cn(
           "relative flex min-w-12 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick active:bg-ember/10",
           rail ? "h-[72px] flex-none" : "h-14",
-          active ? "text-ember" : "text-faint",
+          active ? "text-brand-foreground" : "text-muted",
         )}
       >
         {/* active marker: 2px along the tab's leading edge */}
@@ -89,7 +89,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
       type="button"
       onClick={() => setMoreOpen(true)}
       className={cn(
-        "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline text-faint transition-colors duration-quick active:bg-ember/10",
+        "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline text-muted transition-colors duration-quick active:bg-ember/10",
         rail ? "h-[72px] flex-none" : "h-14",
       )}
     >
@@ -113,11 +113,11 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
             <Logo variant="go" size={30} />
           </Link>
           <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[12px] text-muted sm:block">Fort Main Gate</span>
-          <span className="hidden shrink-0 font-mono text-[12px] text-faint sm:block" title="Shift open for">⏱ 3:24</span>
+          <span className="hidden shrink-0 font-mono text-[12px] text-muted sm:block" title="Shift open for">⏱ 3:24</span>
         </div>
         <span className="flex shrink-0 items-center gap-tight">
           <ModeButton />
-          <Link href="/profile" className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-full bg-inverse font-mono text-[13px] text-inverse-fg" title="Nadia Islam — my profile">N</Link>
+          <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse font-mono text-[13px] text-inverse-fg" title="Nadia Islam — my profile">N</Link>
         </span>
       </header>
 
@@ -150,7 +150,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
             <div className="mb-section flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
-                <p className="font-mono text-[12px] text-faint">Fort Main Gate · shift open 3:24</p>
+                <p className="font-mono text-[12px] text-muted">Fort Main Gate · shift open 3:24</p>
               </div>
               <div className="flex items-center gap-tight">
                 <LocaleToggle />
@@ -189,7 +189,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
           <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">Sales</span><span>9</span></div>
           <div className="flex justify-between"><span className="font-sans text-muted">Cash in drawer</span><span>{formatMoney(485000)}</span></div>
         </div>
-        <p className="mt-section text-[12px] text-faint">Full breakdown at shift close.</p>
+        <p className="mt-section text-[12px] text-muted">Full breakdown at shift close.</p>
       </Modal>
 
       <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title="Help">

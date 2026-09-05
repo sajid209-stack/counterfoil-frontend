@@ -2290,3 +2290,89 @@ that is `aria-hidden` + `pointer-events-none` is *meant* to be clipped, and the
 44px floor is a thumb rule that applies on phones, not to a desktop pointer or
 to a link inside a sentence. An audit that cries wolf on its own conventions
 gets ignored.
+
+---
+
+## POS audit — every selection system and popup, in its open state (2026-09-06)
+
+The previous audit measured pages **at rest**, which never sees a sheet — and a
+sheet is where nearly all of the till's work happens. This one drives all
+twelve selection systems and the popups into their open state and measures them
+there, at 320 / 390 / 1024, in light and dark.
+
+**99 findings → 0.**
+
+### Colour was the whole story: 82 of the 99
+
+Two systemic misuses, not 82 separate mistakes.
+
+**1. Brand orange as a letterform.** `text-ember` is brand-500 `#f94a00` —
+**3.50:1** on white, below the 4.5:1 reading floor. It was carrying selected
+chips, active tabs, prices and live tile state across 57 sites.
+
+The codebase already had the answer: `--color-brand-foreground`, documented as
+"brand-coloured **TEXT**" and set to brand-700. It is the only brand step that
+clears AA everywhere it lands:
+
+| | on white | on the ember wash | on subtle | dark card |
+|---|---|---|---|---|
+| brand-500 `#f94a00` | 3.50 | 3.07 | 2.96 | — |
+| brand-600 `#d63d00` | 4.64 | **4.08** | **3.93** | — |
+| **brand-700 `#aa3000`** | **6.71** | **5.90** | **5.68** | 8.33 (brand-300) |
+
+brand-600 is closer to the reference orange and fails on the wash, so the token
+the project already chose wins. `text-ember` stays correct as a **fill**; it
+was never right as a letter.
+
+**2. The disabled grey on live text.** `--color-faint` is documented
+"disabled-fg" and measures **2.09:1**. It was on inactive tab labels, cart line
+detail, empty-state messages, the shift timer, lane rates, the seat map's
+SCREEN label and unavailable slot times. Those are all live: an unavailable
+slot is still tappable — that is what `explainUnavailable` is for — so its
+label has to be readable. 18 sites moved to `muted` (5.63:1); the strike-through
+and the surface still say "not this one".
+
+**3. White on ember, again.** 3.50:1 light and **2.59:1** dark, on seven sites
+including the category chip, the payment segmented control and a slot tile I
+added myself last session. Ink on ember is 5.27 / 7.11 and is the rule the
+project already set for the primary CTA. All seven now follow it.
+
+### Targets a thumb can actually hit
+
+Go is a till: it is touch at **every** width, so the `md:` shrink that suits OS
+was wrong here. The header avatar, cart lines (as short as 38px), payment
+segments (48px track, 40px buttons — the button is what you press), the waiver
+checkbox, and the dismiss glyphs on Modal, Toast and BlockedNotice (16–18px
+with no padding) all now clear 44px.
+
+### Named surfaces
+
+The product sheet carried `role="dialog"` with no accessible name, so a screen
+reader announced nine different selection systems identically. It now points at
+the `<h2>` it already renders, so the dialog announces the booking it is selling.
+
+### Three harness corrections worth keeping
+
+The measurements were wrong before they were right, and each correction is a
+rule about the design rather than about the code:
+
+- **Disabled controls are exempt from the contrast floor** (WCAG 1.4.3). Greying
+  out is how "not yet" is said; 18 findings were the check misreading the design.
+- **A checkbox inside a clickable `<label>` is not the target** — the label is.
+- **An absolutely-positioned fill is not in its label's ancestor chain**, so the
+  payment control's selected label measured against the track behind the thumb
+  rather than the thumb. Verified from the markup instead: ink on ember, 5.27:1
+  light and 7.11:1 dark.
+
+### Verified
+
+**0 findings at 320 and 390, light and dark.** At 1024 the only two entries are
+the cart and customer popups being unreachable — correct, because at tablet the
+cart is a persistent panel rather than a drawer, so there is no "View cart" to
+press.
+
+Standing harnesses hold: 45 sheet-renders clean, badge-overlap zero, type
+10/10, dashboard layout 23/23, all-routes audit down to its 21 documented
+inline-link exemptions. `tsc` and `build` clean; `eslint` identical to clean
+HEAD (the 2 errors and 3 warnings in `pos/page.tsx` are the pre-existing
+deep-link effect, confirmed by stashing). i18n parity 0 missing / 0 extra.

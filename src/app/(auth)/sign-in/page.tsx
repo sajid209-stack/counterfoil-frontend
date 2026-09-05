@@ -35,7 +35,7 @@ export default function SignInPage() {
 
       <button
         type="button"
-        className="mt-major flex h-11 w-full items-center justify-center rounded-sm bg-ember text-sm font-medium text-white transition-colors duration-quick hover:bg-brand-600 active:bg-brand-700"
+        className="mt-major flex h-11 w-full items-center justify-center rounded-sm bg-ember text-sm font-medium text-ink transition-colors duration-quick hover:bg-brand-600 active:bg-brand-700"
       >
         Sign in
       </button>

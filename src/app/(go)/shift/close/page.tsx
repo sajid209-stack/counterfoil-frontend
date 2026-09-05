@@ -22,7 +22,7 @@ export default function ShiftClosePage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
       <div>
-        <p className="type-label text-[13px] text-ember">{t("endLabel")}</p>
+        <p className="type-label text-[13px] text-brand-foreground">{t("endLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("closeTitle")}</h1>
         <p className="type-body mt-tight text-muted">{t("closeHint")}</p>
       </div>

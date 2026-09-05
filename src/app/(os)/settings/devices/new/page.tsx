@@ -39,7 +39,7 @@ export default function NewDevicePage() {
 
       {created ? (
         <div className="max-w-md card-surface p-major text-center">
-          <p className="type-label text-[13px] text-ember">{t("devices.registered")}</p>
+          <p className="type-label text-[13px] text-brand-foreground">{t("devices.registered")}</p>
           <h2 className="type-h2 mt-tight text-lg">{created.name}</h2>
           <p className="type-body mt-section text-[13px] text-muted">{t("devices.pairInstruction")}</p>
           <div className="mt-section rounded-sm bg-neutral-900 px-section py-major">

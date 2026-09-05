@@ -708,7 +708,7 @@ export default function PosPage() {
             {query && <button type="button" onClick={() => setQuery("")} className="text-[12px] text-faint hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
-            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable text-[12px] text-ember">
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable text-[12px] text-brand-foreground">
               {t("parkedBadge", { count: parked.length })}
             </button>
           )}
@@ -721,7 +721,7 @@ export default function PosPage() {
             affordance everyone already knows. */}
         <div className="-mx-tight flex snap-x snap-mandatory gap-inline overflow-x-auto px-tight pb-inline [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[{ id: "all", name: t("categoryAll") }, ...chipCategories].map((c) => (
-            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 shrink-0 snap-start rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ember bg-ember text-white" : "border-line bg-card"}`}>{c.name}</button>
+            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 min-w-12 shrink-0 snap-start rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ember bg-ember text-ink" : "border-line bg-card"}`}>{c.name}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -758,7 +758,7 @@ export default function PosPage() {
                       const live = posLiveState(p, DEMO_TODAY, nowMinutes, liveWords);
                       if (!live) return null;
                       return (
-                        <span className={`mt-inline flex items-center gap-inline text-[12px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-ember" : "text-success"}`}>
+                        <span className={`mt-inline flex items-center gap-inline text-[12px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}>
                           {/* A dot ahead of the words. At a glance across a
                               wall of products the eye reads the colour before
                               it reads anything, which is the point of putting
@@ -773,7 +773,7 @@ export default function PosPage() {
                 </button>
                 </div>
               ))}
-              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-sm border border-dashed border-line text-faint transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
+              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-sm border border-dashed border-line text-muted transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
                 <Plus size={20} strokeWidth={1.5} /><span className="text-[13px]">{t("customAmount")}</span>
               </button>
             </div>
@@ -811,7 +811,7 @@ export default function PosPage() {
               <span className="text-sm text-muted">{t("cart.customer")}</span>
             )}
           </span>
-          <span className="shrink-0 text-[13px] text-faint">{attached ? t("cart.customerChange") : t("cart.customerAdd")}</span>
+          <span className="shrink-0 text-[13px] text-muted">{attached ? t("cart.customerChange") : t("cart.customerAdd")}</span>
           <ChevronRight size={16} strokeWidth={1.5} className="shrink-0 text-faint" />
         </button>
 
@@ -832,18 +832,18 @@ export default function PosPage() {
               {cart.map((e) => (
                 <div key={e.id} className="border-b border-line pb-tight last:border-0">
                 <div className="flex items-start gap-tight">
-                  <div className="min-w-0 flex-1 cursor-pointer" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
+                  <div className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
                     <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(entryTotal(e), currency)}</span></div>
-                    <div className="text-[12px] text-faint">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
+                    <div className="text-[12px] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="text-[12px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
                     {(e.lineDiscountPct ?? 0) > 0 && <div className="text-[12px] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>}
-                    {entryBalance(e) > 0 && <div className="text-[12px] text-faint">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
+                    {entryBalance(e) > 0 && <div className="text-[12px] text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                   </div>
                   <button
                     type="button"
                     aria-label={t("cart.lineDiscountLabel")}
                     onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
-                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[12px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 ? "border-ember text-ember" : "border-line"}`}
+                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[12px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 ? "border-ember text-brand-foreground" : "border-line"}`}
                   >
                     {(e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
                   </button>
@@ -990,7 +990,7 @@ export default function PosPage() {
             const pct = 100 / n;
             const idx = Math.max(0, availableMethods.findIndex((m) => m.value === method));
             return (
-              <div className="relative mt-tight grid h-12 rounded-sm bg-line/60 p-inline" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+              <div className="relative mt-tight grid h-14 rounded-sm bg-line/60 p-inline" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
                 {n > 1 && (
                   <span
                     aria-hidden
@@ -999,7 +999,7 @@ export default function PosPage() {
                   />
                 )}
                 {availableMethods.map((m) => (
-                  <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[13px] transition-colors duration-quick ${method === m.value ? "font-medium text-white" : "text-muted"}`}>{enumL.method(m.value)}</button>
+                  <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[13px] transition-colors duration-quick ${method === m.value ? "font-medium text-ink" : "text-muted"}`}>{enumL.method(m.value)}</button>
                 ))}
               </div>
             );
@@ -1035,7 +1035,7 @@ export default function PosPage() {
                 <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line" aria-hidden />
                 <div className="mb-section flex items-center justify-between">
                   <div>
-                    <p className="type-label text-[13px] text-ember">{t("cash.label")}</p>
+                    <p className="type-label text-[13px] text-brand-foreground">{t("cash.label")}</p>
                     <h2 className="type-h2 text-lg">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</h2>
                   </div>
                   <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-10 w-10 items-center justify-center rounded-sm active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
@@ -1043,7 +1043,7 @@ export default function PosPage() {
 
                 <div className="card-surface p-section">
                   <div className="flex justify-between text-muted"><span>{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</span><span className="text-lg">{formatMoney(dueNow, currency)}</span></div>
-                  {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-faint"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>}
+                  {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>}
                   <div className="mt-tight flex justify-between"><span>{t("cash.tendered")}</span><span className="text-lg">{formatMoney(tenderedMinor, currency)}</span></div>
                   <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-faint"}`}>
                     <span className="text-xl">{t("cash.change")}</span>
@@ -1108,7 +1108,7 @@ export default function PosPage() {
             </div>
           )}
           {parked.length === 0 ? (
-            <p className="text-[13px] text-faint">{t("parked.nothing")}</p>
+            <p className="text-[13px] text-muted">{t("parked.nothing")}</p>
           ) : (
             <div className="flex flex-col gap-tight">
               {parked.map((p, i) => (

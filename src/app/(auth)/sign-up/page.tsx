@@ -11,7 +11,7 @@ export default function SignUpPage() {
 
   return (
     <div className="card-surface p-major">
-      <p className="type-label text-[13px] text-ember">Counterfoil</p>
+      <p className="type-label text-[13px] text-brand-foreground">Counterfoil</p>
 
       {phase === "form" ? (
         <>
@@ -35,7 +35,7 @@ export default function SignUpPage() {
             Create account
           </Button>
           <p className="type-body mt-section text-center text-[13px] text-faint">
-            Already have one? <Link href="/sign-in" className="text-ember hover:underline">Sign in</Link>
+            Already have one? <Link href="/sign-in" className="text-brand-foreground hover:underline">Sign in</Link>
           </p>
         </>
       ) : (

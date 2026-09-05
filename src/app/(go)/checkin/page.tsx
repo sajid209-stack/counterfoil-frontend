@@ -181,7 +181,7 @@ export default function CheckInPage() {
     <main className="mx-auto flex max-w-2xl flex-col gap-section px-section py-section">
       <div className="flex items-end justify-between gap-tight">
         <div>
-          <p className="type-label text-[13px] text-ember">{t("gateLabel")}</p>
+          <p className="type-label text-[13px] text-brand-foreground">{t("gateLabel")}</p>
           <h1 className="type-h1 mt-tight text-2xl">{t("title")}</h1>
         </div>
         <Button variant="secondary" icon={<UserPlus size={16} strokeWidth={1.5} />} onClick={() => { setWalkInProduct(productsQ.data?.data.find((p) => p.bookingType === "BT-01" && p.status === "active")?.id ?? ""); setWalkInOpen(true); }}>

@@ -253,7 +253,7 @@ export default function OrderDetailPage() {
                     {/* A named buyer with a record links to it; a bare name (an
                         older order, or an anonymous walk-up) stays plain text. */}
                     {o.customerId ? (
-                      <Link href={`/customers/${o.customerId}`} className="text-ember underline underline-offset-2">
+                      <Link href={`/customers/${o.customerId}`} className="text-brand-foreground underline underline-offset-2">
                         {o.customerName}
                       </Link>
                     ) : (

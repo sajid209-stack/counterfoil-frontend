@@ -7,7 +7,7 @@ export default function InviteAcceptPage() {
 
   return (
     <div className="card-surface p-major">
-      <p className="type-label text-[13px] text-ember">Counterfoil</p>
+      <p className="type-label text-[13px] text-brand-foreground">Counterfoil</p>
       <h1 className="type-h1 mt-inline text-2xl">Accept invitation</h1>
       <p className="type-body mt-tight text-[13px] text-muted">
         You&apos;ve been invited to join. Set a password to activate your account.

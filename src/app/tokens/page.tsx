@@ -136,7 +136,7 @@ export default function TokensPage() {
   return (
     <main className="mx-auto max-w-5xl px-section py-hero">
       <header className="mb-hero">
-        <p className="type-label text-[13px] text-ember">Design tokens</p>
+        <p className="type-label text-[13px] text-brand-foreground">Design tokens</p>
         <h1 className="type-display mt-tight text-6xl">Counterfoil</h1>
         <p className="type-body mt-section max-w-xl text-muted">
           The token layer both surfaces are built on — the canonical Counterfoil

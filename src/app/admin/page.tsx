@@ -25,7 +25,7 @@ export default function AdminPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-section bg-surface px-section py-major">
       <div>
-        <p className="font-mono text-[12px] uppercase tracking-wider text-ember">Internal · Admin console scaffold</p>
+        <p className="font-mono text-[12px] uppercase tracking-wider text-brand-foreground">Internal · Admin console scaffold</p>
         <h1 className="type-h1 mt-tight text-2xl">Operators</h1>
       </div>
 

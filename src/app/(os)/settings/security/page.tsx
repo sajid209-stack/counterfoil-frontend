@@ -65,7 +65,7 @@ export default function SecurityPage() {
           {pendingEmail ? (
             <div className="rounded-sm border border-line border-l-[3px] border-l-ember bg-subtle p-comfortable text-[13px]">
               {t("security.emailPending", { email: pendingEmail, current: email })}
-              <button type="button" onClick={() => { setEmail(pendingEmail); setPendingEmail(null); toast.success(t("security.emailConfirmed")); }} className="ml-tight text-ember underline-offset-4 hover:underline">{t("security.demoConfirm")}</button>
+              <button type="button" onClick={() => { setEmail(pendingEmail); setPendingEmail(null); toast.success(t("security.emailConfirmed")); }} className="ml-tight text-brand-foreground underline-offset-4 hover:underline">{t("security.demoConfirm")}</button>
               <button type="button" onClick={() => setPendingEmail(null)} className="ml-tight text-faint hover:text-danger">{t("common.cancel")}</button>
             </div>
           ) : (

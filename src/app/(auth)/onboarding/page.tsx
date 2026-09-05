@@ -31,7 +31,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="w-full max-w-md card-surface p-major">
-      <p className="type-label text-[13px] text-ember">Welcome</p>
+      <p className="type-label text-[13px] text-brand-foreground">Welcome</p>
       <h1 className="type-h1 mt-inline text-2xl">Name your business</h1>
       <p className="type-body mt-tight text-[13px] text-muted">
         This is what guests and your team will see.

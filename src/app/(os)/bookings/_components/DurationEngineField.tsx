@@ -93,7 +93,7 @@ export function DurationEngineField({
         <div className="flex flex-col gap-tight">
           <div className="flex items-center justify-between">
             <span className="type-label text-[12px] text-muted">Price per duration</span>
-            <button type="button" onClick={fillFromHourly} className="text-[13px] text-ember hover:underline">Fill from hourly rate</button>
+            <button type="button" onClick={fillFromHourly} className="text-[13px] text-brand-foreground hover:underline">Fill from hourly rate</button>
           </div>
           <div className="grid gap-tight sm:grid-cols-3">
             {options.map((d) => (
@@ -121,7 +121,7 @@ export function DurationEngineField({
           <div className="flex flex-wrap items-baseline justify-between gap-tight">
             <span className="type-label text-[12px] text-muted">Deal prices</span>
             {dealCount > 0 && (
-              <button type="button" onClick={() => set("priceOverrides", undefined)} className="text-[13px] text-ember hover:underline">
+              <button type="button" onClick={() => set("priceOverrides", undefined)} className="text-[13px] text-brand-foreground hover:underline">
                 Clear all {dealCount}
               </button>
             )}

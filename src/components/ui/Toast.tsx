@@ -79,7 +79,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => { t.action!.run(); remove(t.id); }}
-                className="shrink-0 text-[13px] font-medium text-ember underline-offset-4 hover:underline"
+                className="shrink-0 text-[13px] font-medium text-brand-foreground underline-offset-4 hover:underline"
               >
                 {t.action.label}
               </button>
@@ -88,7 +88,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               type="button"
               onClick={() => remove(t.id)}
               aria-label="Dismiss"
-              className="shrink-0 text-faint hover:text-fg"
+              className="-m-tight flex h-11 w-11 shrink-0 items-center justify-center text-muted hover:text-fg"
             >
               <X size={16} strokeWidth={1.5} />
             </button>

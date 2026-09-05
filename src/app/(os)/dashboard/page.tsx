@@ -85,7 +85,7 @@ const ACTIVITY_BADGE: Record<ActivityKind, { Icon: LucideIcon; className: string
   paid: { Icon: CircleCheck, className: "text-success" },
   sale: { Icon: Receipt, className: "text-muted" },
   refund: { Icon: RotateCcw, className: "text-danger" },
-  customer: { Icon: UserRoundPlus, className: "text-ember" },
+  customer: { Icon: UserRoundPlus, className: "text-brand-foreground" },
 };
 
 /** A rail notice, with the anatomy the reference draws: a glyph, a bold title,
@@ -639,7 +639,7 @@ export default function DashboardPage() {
               to fill the corner would be inventing the comparison. */}
           <div className={`${card} flex flex-col p-major`}>
             <div className="flex items-start justify-between gap-tight">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><TrendingUp size={18} strokeWidth={1.5} /></span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground"><TrendingUp size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={revenue} then={revenuePrev} />
             </div>
             <p className="mt-comfortable text-[12px] font-medium text-muted">{scope === "today" ? t("revenueToday") : t("revenueThisWeek")}</p>
@@ -652,7 +652,7 @@ export default function DashboardPage() {
           </div>
           <div className={`${card} flex flex-col p-major`}>
             <div className="flex items-start justify-between gap-tight">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><Users size={18} strokeWidth={1.5} /></span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground"><Users size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={sold} then={soldPrev} />
             </div>
             <p className="mt-comfortable text-[12px] font-medium text-muted">{t("capacitySold")}</p>
@@ -663,7 +663,7 @@ export default function DashboardPage() {
           </div>
           <div className={`${card} flex flex-col p-major`}>
             <div className="flex items-start justify-between gap-tight">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><UserCheck size={18} strokeWidth={1.5} /></span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground"><UserCheck size={18} strokeWidth={1.5} /></span>
             </div>
             <p className="mt-comfortable text-[12px] font-medium text-muted">{t("arrived")}</p>
             <p className="type-figure mt-inline whitespace-nowrap text-[28px] font-semibold sm:text-[32px]">{arrived} <span className="text-lg text-muted">{t("arrivedOf", { total: sold })}</span></p>
@@ -671,7 +671,7 @@ export default function DashboardPage() {
           </div>
           <div className={`${card} flex flex-col p-major`}>
             <div className="flex items-start justify-between gap-tight">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-ember"><CalendarClock size={18} strokeWidth={1.5} /></span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground"><CalendarClock size={18} strokeWidth={1.5} /></span>
               <DeltaPill now={ahead} then={aheadPrev} />
             </div>
             {/* "Booked ahead · next 7 days" was a label carrying its own window
@@ -720,7 +720,7 @@ export default function DashboardPage() {
                       // the pairing the colour system fixes as literal in both
                       // themes; measured at 5.3:1 light and 7.1:1 dark.
                       className={`min-h-8 rounded-xs px-tight text-[13px] font-medium transition-colors duration-quick ${
-                        trendDays === d ? "bg-ember text-white" : "text-muted hover:text-fg"
+                        trendDays === d ? "bg-ember text-ink" : "text-muted hover:text-fg"
                       }`}
                     >
                       {t("lastDays", { count: d })}

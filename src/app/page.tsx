@@ -48,7 +48,7 @@ export default function Home() {
         <div className="mt-hero max-w-2xl">
           <p className="type-label text-[12px] text-brand-foreground">Operating system for venues · tours · attractions</p>
           <h1 className="type-display mt-comfortable text-5xl sm:text-6xl">
-            See it as <span className="text-ember">your</span> business.
+            See it as <span className="text-brand-foreground">your</span> business.
           </h1>
           <p className="type-body mt-section max-w-xl text-[15px] text-muted">
             Load a demo operation configured end-to-end — tickets, bookings, pricing, the gate — and
@@ -89,7 +89,7 @@ export default function Home() {
                 <span className="type-h2 text-base">{d.name}</span>
                 <span className="type-body mt-inline text-[13px] text-muted">{d.tagline}</span>
                 <span className="mt-tight font-mono text-[12px] uppercase leading-relaxed tracking-wide text-faint">{d.types}</span>
-                <span className="mt-comfortable inline-flex items-center gap-inline text-[13px] font-medium text-ember">
+                <span className="mt-comfortable inline-flex items-center gap-inline text-[13px] font-medium text-brand-foreground">
                   Explore <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-quick group-hover:translate-x-0.5" />
                 </span>
               </div>
@@ -102,7 +102,7 @@ export default function Home() {
             onClick={fresh}
             className="card-interactive group flex min-h-[15rem] flex-col items-start justify-center gap-tight rounded-[16px] border border-dashed border-strong bg-transparent p-section text-left hover:border-ember"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-sm bg-ember/10 text-ember">
+            <span className="flex h-10 w-10 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground">
               <Plus size={20} strokeWidth={1.5} />
             </span>
             <span className="type-h2 mt-tight text-base">Start fresh</span>

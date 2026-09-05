@@ -13,7 +13,7 @@ export default function ShiftOpenPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
       <div>
-        <p className="type-label text-[13px] text-ember">{t("startLabel")}</p>
+        <p className="type-label text-[13px] text-brand-foreground">{t("startLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("openingTitle")}</h1>
         <p className="type-body mt-tight text-muted">{t("openingHint")}</p>
       </div>

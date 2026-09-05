@@ -101,7 +101,7 @@ export default function ScanPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
       <div>
-        <p className="type-label text-[13px] text-ember">{t("gateLabel")}</p>
+        <p className="type-label text-[13px] text-brand-foreground">{t("gateLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("title")}</h1>
       </div>
 

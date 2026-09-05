@@ -196,7 +196,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               onClick={() => { setMoreOpen(false); if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
               className={cn(
                 "relative flex h-14 min-w-12 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick active:bg-ember/10",
-                active ? "text-ember" : "text-faint",
+                active ? "text-brand-foreground" : "text-muted",
               )}
             >
               {active && <span aria-hidden className="absolute left-2 right-2 top-0 h-[2px] bg-ember" />}
@@ -210,7 +210,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           onClick={() => setMoreOpen((o) => !o)}
           className={cn(
             "relative flex h-14 min-w-12 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick active:bg-ember/10",
-            moreOpen ? "text-ember" : "text-faint",
+            moreOpen ? "text-brand-foreground" : "text-muted",
           )}
         >
           {moreOpen && <span aria-hidden className="absolute left-2 right-2 top-0 h-[2px] bg-ember" />}
@@ -250,7 +250,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
                       <Check size={12} strokeWidth={2.5} />
                     </span>
                   )}
-                  <Icon size={24} strokeWidth={1.5} className={active ? "text-ember" : "text-muted"} />
+                  <Icon size={24} strokeWidth={1.5} className={active ? "text-brand-foreground" : "text-muted"} />
                   <span className="text-center text-[12px] font-medium leading-tight">{t(d.key)}</span>
                 </Link>
               );

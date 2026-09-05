@@ -55,7 +55,7 @@ export default function ProfilePage() {
             <Avatar name={me?.name ?? "?"} size={56} />
             <div>
               <p className="text-lg font-medium">{me?.name ?? "…"}</p>
-              <button type="button" onClick={() => toast.info(t("photoInfo"))} className="text-[13px] text-ember underline-offset-4 hover:underline">{t("changePhoto")}</button>
+              <button type="button" onClick={() => toast.info(t("photoInfo"))} className="text-[13px] text-brand-foreground underline-offset-4 hover:underline">{t("changePhoto")}</button>
             </div>
           </div>
           <div className="grid gap-section sm:grid-cols-2">

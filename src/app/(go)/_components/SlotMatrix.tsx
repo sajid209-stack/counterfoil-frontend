@@ -97,9 +97,9 @@ export function SlotMatrix({
               className={cn(
                 "flex min-h-12 shrink-0 flex-col items-center justify-center rounded-sm border px-comfortable py-tight text-[13px] transition-colors duration-quick",
                 row.outOfService
-                  ? "border-line bg-subtle text-faint line-through"
+                  ? "border-line bg-subtle text-muted line-through"
                   : on
-                    ? "border-ember bg-ember/10 font-medium text-ember"
+                    ? "border-ember bg-ember/10 font-medium text-brand-foreground"
                     : "border-line bg-card active:bg-ember/10",
               )}
             >
@@ -130,7 +130,7 @@ export function SlotMatrix({
                       : t("sheet.slotTaken", { time: cell.time, name: active.name }),
                   )
                 }
-                className="flex min-h-12 items-center justify-center rounded-sm border border-line bg-subtle px-1 py-tight text-[13px] text-faint line-through"
+                className="flex min-h-12 items-center justify-center rounded-sm border border-line bg-subtle px-1 py-tight text-[13px] text-muted line-through"
               >
                 {cell.time}
               </button>
@@ -147,7 +147,7 @@ export function SlotMatrix({
                 // then names, so it is the one selection in this pattern drawn
                 // as a fill rather than a tint.
                 selected
-                  ? "border-ember bg-ember font-medium text-white"
+                  ? "border-ember bg-ember font-medium text-ink"
                   : "border-line bg-card active:bg-ember/10",
               )}
             >

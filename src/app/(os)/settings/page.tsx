@@ -46,7 +46,7 @@ export default function SettingsHub() {
             className="card-surface card-interactive group flex flex-col gap-comfortable p-section"
           >
             <div className="flex items-start justify-between">
-              <span className="flex h-10 w-10 items-center justify-center rounded-sm bg-ember/10 text-ember">
+              <span className="flex h-10 w-10 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground">
                 <Icon size={20} strokeWidth={1.5} />
               </span>
               <ArrowUpRight size={18} strokeWidth={1.5} className="text-faint transition-colors duration-quick group-hover:text-ember" />

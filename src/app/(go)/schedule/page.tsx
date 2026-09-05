@@ -119,7 +119,7 @@ export default function SchedulePage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-section px-section py-section">
       <div>
-        <p className="type-label text-[13px] text-ember">{t("fohLabel")}</p>
+        <p className="type-label text-[13px] text-brand-foreground">{t("fohLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("title")}</h1>
       </div>
       <div className="flex flex-wrap gap-tight">

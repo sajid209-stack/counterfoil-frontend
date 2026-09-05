@@ -18,7 +18,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   secondary:
     "bg-card text-fg border border-line hover:border-inverse disabled:text-faint disabled:border-line",
   tertiary: "bg-transparent text-fg hover:bg-line disabled:text-faint",
-  link: "bg-transparent text-ember underline underline-offset-2 hover:opacity-80 disabled:text-faint",
+  link: "bg-transparent text-brand-foreground underline underline-offset-2 hover:opacity-80 disabled:text-faint",
   destructive: "bg-danger text-white hover:opacity-90 disabled:opacity-40",
 };
 
