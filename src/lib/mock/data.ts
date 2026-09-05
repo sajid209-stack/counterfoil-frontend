@@ -377,7 +377,7 @@ export const products: Product[] = [
     updatedAt: T,
   },
   {
-    id: "prd_football", name: "Football — Turf", description: "Book a field for an hour. A team per slot.", images: [], categoryId: "cat_events", bookingType: "BT-04",
+    id: "prd_futsal", name: "Futsal", description: "Book a field for an hour — outdoor or indoor.", images: [], categoryId: "cat_events", bookingType: "BT-04",
     tiers: [{ id: "tier_fb_slot", name: "Slot", price: 150000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], dayOverrides: { 5: { startTime: "14:00", endTime: "23:00" } }, guideIds: [], exceptions: [] },
@@ -387,12 +387,30 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_cricket", name: "Cricket — Turf", description: "Same fields as football — availability is shared.", images: [{ id: "img_cricket", url: "/seed/cricket.jpg", alt: "Cricket pitch" }], categoryId: "cat_events", bookingType: "BT-04",
+    id: "prd_cricket", name: "Cricket", description: "Played on the outdoor field — which futsal shares, so booking one takes the other off sale.", images: [{ id: "img_cricket", url: "/seed/cricket.jpg", alt: "Cricket pitch" }], categoryId: "cat_events", bookingType: "BT-04",
     tiers: [{ id: "tier_cr_slot", name: "Slot", price: 150000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], dayOverrides: { 5: { startTime: "14:00", endTime: "23:00" } }, guideIds: [], exceptions: [] },
-    resourceIds: ["res_field_1", "res_field_2"], resourceExclusive: true, bufferMinutes: 15,
+    resourceIds: ["res_field_1"], resourceExclusive: true, bufferMinutes: 15,
     pricingRules: [{ id: "pr_cr_wknd", days: [5, 6], fromTime: "18:00", toTime: "23:00", price: 250000 }, { id: "pr_cr_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 200000 }],
+    createdAt: T, updatedAt: T,
+  },
+  {
+    // The turf's variable-duration booking: people take a court for as long as
+    // they want in half-hour steps, and two hours is a deal rather than twice
+    // the price of one.
+    id: "prd_badminton", name: "Badminton Court", description: "Book the court by the half hour.", images: [], categoryId: "cat_events", bookingType: "BT-05",
+    tiers: [{ id: "tier_bd_hr", name: "Per hour", price: 80000, active: true }],
+    locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
+    schedule: { slotMinutes: 30, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
+    resourceIds: ["res_badminton"], resourceExclusive: true, bufferMinutes: 0, flexibleDurations: [60, 90, 120, 150, 180], pricingBasis: "per_booking",
+    durationConfig: {
+      minMinutes: 60, maxMinutes: 180, incrementMinutes: 30,
+      pricingModel: "base_extension", basePrice: 80000, extensionPrice: 40000,
+      priceOverrides: { 120: 140000 },
+      mustEndByClose: true, walkInRoundMinutes: 15, leadTimeMinutes: 0,
+    },
+    pricingRules: [{ id: "pr_bd_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 100000 }],
     createdAt: T, updatedAt: T,
   },
   {
@@ -685,8 +703,9 @@ export const devices: Device[] = [
 
 export const resources: Resource[] = [
   { id: "res_court_1", name: "Championship Court 1 — Centre (Covered)", nounSingular: "Court", nounPlural: "Courts", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
-  { id: "res_field_1", name: "Field 1", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
-  { id: "res_field_2", name: "Field 2", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
+  { id: "res_field_1", name: "Outdoor Field", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
+  { id: "res_field_2", name: "Indoor Field", nounSingular: "Field", nounPlural: "Fields", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
+  { id: "res_badminton", name: "Badminton Court", nounSingular: "Court", nounPlural: "Courts", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_lane_1", name: "Lane 1", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_lane_2", name: "Lane 2", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
   { id: "res_lane_3", name: "Lane 3", nounSingular: "Lane", nounPlural: "Lanes", locationId: "loc_fort", outOfService: false, outOfServiceReason: null, status: "active", createdAt: T, updatedAt: T },
@@ -710,7 +729,7 @@ const stressSale = buildOrderLines(
     { productId: "prd_stress", productName: "Grand Heritage Architectural Walking Tour of Old Dhaka with Rooftop Iftar Experience", tierId: "tier_st_adult", tierName: "Adult", admits: 1, quantity: 2, unitPrice: 250000, taxClass: "standard", taxRate: 0.15, booking: { date: "2026-07-29", startTime: "17:00", endTime: "18:30", guests: 3, durationMinutes: 90 } },
     { productId: "prd_stress", productName: "Grand Heritage Architectural Walking Tour of Old Dhaka with Rooftop Iftar Experience", tierId: "tier_st_senior", tierName: "Senior Citizen (65+, valid ID required)", admits: 1, quantity: 1, unitPrice: 180000, lineDiscount: 18000, taxClass: "standard", taxRate: 0.15 },
     { productId: "addon_add_ms_oils", productName: "Premium oils", tierName: "Each", admits: 0, quantity: 1, unitPrice: 30000, parentIndex: 0, taxClass: "standard", taxRate: 0.15 },
-    { productId: "prd_football", productName: "Football — Turf", tierName: "Championship Court 1 — Centre (Covered)", admits: 4, quantity: 1, unitPrice: 150000, taxClass: "standard", taxRate: 0.15, booking: { date: "2026-07-29", startTime: "18:00", endTime: "19:00", resourceId: "res_court_1", resourceName: "Championship Court 1 — Centre (Covered)", guests: 4, durationMinutes: 60 } },
+    { productId: "prd_futsal", productName: "Futsal", tierName: "Championship Court 1 — Centre (Covered)", admits: 4, quantity: 1, unitPrice: 150000, taxClass: "standard", taxRate: 0.15, booking: { date: "2026-07-29", startTime: "18:00", endTime: "19:00", resourceId: "res_court_1", resourceName: "Championship Court 1 — Centre (Covered)", guests: 4, durationMinutes: 60 } },
     { productId: "addon_add_fb_bibs", productName: "Bib set", tierName: "Each", admits: 0, quantity: 4, unitPrice: 20000, parentIndex: 3, taxClass: "standard", taxRate: 0.15 },
     { productId: "prd_admission", productName: "General Admission", tierId: "tier_adult", tierName: "Adult", admits: 1, quantity: 2, unitPrice: 50000, taxClass: "standard", taxRate: 0.15 },
   ],
@@ -1130,10 +1149,11 @@ const yogaPassTicket = {
 };
 export const tickets = [...sales.tickets, yogaPassTicket];
 
-// Explicit turf bookings on Field 1 — created via Football but they block the
-// field for Cricket too (shared availability). Evenings mostly sold; some today.
+// Explicit turf bookings on the outdoor field — created via Futsal, but they
+// block Cricket too, because both are sold on the same piece of grass. That
+// shared-availability moment is the whole point of the turf demo.
 const bk = (id: string, field: string, date: string, time: string) => ({
-  id, orderId: "ord_seed", productId: "prd_football", locationId: "loc_fort",
+  id, orderId: "ord_seed", productId: "prd_futsal", locationId: "loc_fort",
   resourceId: field, slotStart: `${date}T${time}:00+06:00`, partySize: 1, status: "confirmed" as const,
 });
 const turfBookings = [

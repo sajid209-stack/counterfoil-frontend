@@ -10,8 +10,11 @@ export function behaviourSubtitle(
   const sch = product.schedule;
   const resNoun = () => {
     const rs = (ctx.resources ?? []).filter((r) => (product.resourceIds ?? []).includes(r.id));
-    const plural = rs[0]?.nounPlural ?? "resources";
-    return `${(product.resourceIds ?? []).length} ${plural.toLowerCase()}`;
+    const n = (product.resourceIds ?? []).length;
+    // "1 fields" reads as a bug to the operator whose single field it is, and
+    // a turf with one pitch is the common case rather than the edge one.
+    const noun = n === 1 ? (rs[0]?.nounSingular ?? "resource") : (rs[0]?.nounPlural ?? "resources");
+    return `${n} ${noun.toLowerCase()}`;
   };
 
   switch (product.bookingType) {

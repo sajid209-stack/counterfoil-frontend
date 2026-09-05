@@ -46,7 +46,14 @@ export default function ResourcesPage() {
     [search, status, sort.key, sort.order, page],
   );
 
-  const noun = data?.data[0]?.nounPlural ?? t("resources.fallbackNoun");
+  // Only borrow the operator's word when they all share one. A turf running
+  // fields AND a court was being headed "Courts" over a list of fields — the
+  // same uniformity rule the sidebar and the settings hub already apply.
+  const rows = data?.data ?? [];
+  const noun =
+    rows.length && rows.every((r) => r.nounPlural === rows[0].nounPlural)
+      ? rows[0].nounPlural
+      : t("resources.fallbackNoun");
 
   const columns: Column<Resource>[] = [
     { key: "name", header: t("common.name"), sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },

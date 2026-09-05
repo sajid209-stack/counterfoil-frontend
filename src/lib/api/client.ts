@@ -111,7 +111,16 @@ export function patchManualDiscountPolicyState(patch: Partial<ManualDiscountPoli
 export function loadBusiness(name: string, currency: string, productIds: string[]): void {
   operatorState = { ...structuredClone(seed.operator), name, currency };
   (store as Record<string, unknown[]>).products = structuredClone(seed.products).filter((p) => productIds.includes(p.id));
-  (store as Record<string, unknown[]>).resources = structuredClone(seed.resources);
+  // Only the resources this business actually books on. Copying all of them
+  // meant a turf owner opened Settings and found four bowling lanes, and a
+  // museum found fields — a demo that shows someone else's kit is not a demo
+  // of their business.
+  const usedResourceIds = new Set(
+    (store.products as { resourceIds?: string[] }[]).flatMap((p) => p.resourceIds ?? []),
+  );
+  (store as Record<string, unknown[]>).resources = structuredClone(seed.resources).filter((r) =>
+    usedResourceIds.has(r.id),
+  );
   const sales = generateSales({ products: store.products as never, locations: seed.locations, staff: seed.staff, taxRatePct: operatorState.taxRatePct, reducedRatePct: operatorState.reducedRatePct });
   // Keep the hand-authored seed rows that belong to this business: the demo
   // credits pass and the explicit turf/guide bookings (the sharing proofs).

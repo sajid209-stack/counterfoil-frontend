@@ -22,9 +22,9 @@ export const DEMOS: DemoBusiness[] = [
     id: "turf",
     name: "Victory Turf Arena",
     currency: "BDT",
-    tagline: "Two fields shared by football & cricket",
-    types: "Resource · exclusive · buffer · peak pricing",
-    productIds: ["prd_football", "prd_cricket"],
+    tagline: "Cricket, futsal and badminton across three surfaces",
+    types: "Shared field · indoor & outdoor · variable duration · peak pricing",
+    productIds: ["prd_cricket", "prd_futsal", "prd_badminton"],
   },
   {
     id: "bowling",
