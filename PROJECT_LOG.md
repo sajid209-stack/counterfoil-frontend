@@ -2065,3 +2065,96 @@ not just in code. The owner chose to rename both, so the vocabulary is now:
   both the collision fix and the right word.
 - **Verified**: 18 routes fetched and stripped of markup contain zero occurrences of
   "product"; tsc and build clean; the old paths 307 to the new ones.
+
+---
+
+## Session 2026-09-05 — five pieces, deployed one at a time
+
+Ordered by the owner. Each shipped and browser-verified before the next began.
+
+### 1. Every time slot carries its own price
+The slot matrix and the session list both printed a price only where it differed
+from the commonest rate. In practice a cashier reading a slot to a customer had to
+work out which line underneath applied to the tile in front of them. Every available
+tile and every session row now states its own price; the line underneath keeps the
+basis (per field, per slot / per ticket), which the tiles cannot say. Base-rate
+prices are muted and uplifts stay in the brand colour, so a peak slot still reads as
+the exception without hiding the rule.
+
+### 2. A phone gets a calendar, not a letter box
+The three grids had **zero responsive classes between them** — Week forced 832px and
+Month 704px inside a 390px screen, and Day laid resources across a 1,292px track.
+Each grid now has a compact branch chosen by the same `md` query the rest of the
+shell uses (extracted to `lib/useMedia`, which `PageShell` now shares):
+- **Day** turns its axis vertical and moves the lane name inside the block. Lanes
+  that are out of service are named above the track, because "no bookings" and
+  "closed all day" must never look the same.
+- **Week** keeps seven columns and lets them shrink, two abreast rather than three.
+- **Month** goes to dots and opens the chosen day as a list underneath — on a small
+  screen the grid is for choosing a day and the agenda is for reading one.
+
+Verified at 390px in a width-constrained iframe (the automation browser still ignores
+window resize — `resize_window` reports success but `innerWidth` does not change).
+
+### 3. The vocabulary rename
+Recorded in full in its own section above. Product → Booking, Booking → Reservation,
+UI only, both locales, routes moved with a redirect.
+
+### 4. Categories become editable
+Categories were a first-class entity with a create endpoint and **no screen** — the
+four seeded groups were the only four an operator could ever file anything under.
+`/settings/categories` adds rename-in-place, reorder (sortOrder IS the chip order at
+the counter) and retire. No delete: a category with bookings cannot be removed
+without orphaning them, which is why the entity has no delete endpoint either.
+
+At the till the chip row now shows only groups that are switched on **and have
+something in them**, built from the sellable catalogue rather than the filtered grid
+so chips do not vanish from under the finger while typing. The seeded "Add-ons" chip
+had nothing in it and filtered the grid to nothing.
+
+### 5. Filters on both calendars
+- **OS calendar**: selects for booking, category and resource, plus state toggles.
+  The toggles ARE the colour key — a legend explaining five states and a filter
+  acting on them are the same control, so the passive key at the bottom is gone.
+  Counts are read from the set *before* the state filter, so a count does not fall
+  to zero merely because it is switched off.
+- **Go schedule**: the same language sized for a thumb — booking as a select, Open /
+  Full / Out of service as 48px chips. Rows gained an explicit `kind`, since the
+  label is a price or a count and cannot be filtered on.
+
+### 6. Repeat weekly — "the next 7 Wednesdays at 6"
+The commonest standing sale a turf or court takes, and it used to mean walking the
+sheet seven times. The hard part is not generating dates: some will already be gone,
+and a cashier has to be able to say WHICH before taking money. Every date is tested
+against the same availability engine the grid uses; unavailable ones are listed with
+their reason, struck through and skipped, and the CTA counts only what will sell —
+*"Add 2 dates — ৳3,000.00 — skipping 1 already taken"*.
+
+`lib/recurrence.ts` stays pure: it generates dates and asks a caller-supplied
+question about each, because availability differs per booking type. Wired into the
+two paths where repeating is honest — fixed resource slots and plain timed sessions.
+Guided tours need their guide free on every date and a course already IS a series,
+so neither is offered. Each date re-prices, since a band or day override can move the
+rate at the same clock time.
+
+**Verified end to end**: 7 Wednesdays sold as 7 lines in one order, after which the
+slot reads booked and the field drops from 14 free to 12.
+
+### 7. Book now
+Most of what a counter sells has one sensible answer: the next departure, the first
+free field, one adult ticket. Each row gains a Book now control that adds it straight
+to the cart, says what it chose, and opens the cart on a phone. The rule that makes
+it safe is where it does **not** appear: seat maps, therapists, guides, courses,
+bundles, credits packs, sections and anything needing a waiver keep the sheet.
+Bowling is excluded too — the flexible sheet's own "Start now" already is this.
+The group-size default and the end-time helper are taken from the sheet rather than
+reinvented, so the shortcut and the long way round cannot sell different things.
+
+### Still open after this session
+- **Repeat** is not offered on guided tours (needs a per-date guide check) or on the
+  flexible-duration path.
+- Two **pre-existing** `react-hooks/set-state-in-effect` errors in `(go)/pos/page.tsx`
+  (the sessionStorage deep-link effect). Confirmed present before this session's
+  changes; left alone rather than risk the deep-link behaviour.
+- The seed clock is still frozen at `DEMO_TODAY = 2026-07-29` — the owner's call.
+- Seat-mapped products still have no live tile state (needs async `availableSeats`).
