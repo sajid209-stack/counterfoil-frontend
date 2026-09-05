@@ -19,5 +19,11 @@
   "scanNext": "পরের টিকিট স্ক্যান করুন",
   "readyNext": "একটু পরেই পরের স্ক্যানের জন্য প্রস্তুত — অথবা যেকোনো জায়গায় ট্যাপ করুন",
   "memberUnlimited": "সীমাহীন প্রবেশ",
-  "memberVisitsLeft": "আর {count} বার"
+  "memberVisitsLeft": "আর {count} বার",
+  "balanceDue": "বকেয়া",
+  "takeAndAdmit": "{amount} নিয়ে ঢুকতে দিন",
+  "method_cash": "নগদ",
+  "method_bkash": "বিকাশ",
+  "method_bangla_qr": "বাংলা কিউআর",
+  "method_card_terminal": "কার্ড"
 }

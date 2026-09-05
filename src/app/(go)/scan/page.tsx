@@ -6,18 +6,27 @@ import { useTranslations } from "next-intl";
 import { ScanLine } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { findTicketByCode, listTickets, peekProducts, redeemTicket, scanMembership, ticketAdmits } from "@/lib/api";
+import { findTicketByCode, getOperator, listTickets, peekOrders, peekProducts, redeemTicket, scanMembership, ticketAdmits } from "@/lib/api";
+import { formatMoney } from "@/lib/format";
 
 export default function ScanPage() {
   const router = useRouter();
   const t = useTranslations("scan");
   const [code, setCode] = useState("");
   const samplesQ = useApiQuery(() => listTickets({ pageSize: 4 }), []);
+  const opQ = useApiQuery(() => getOperator(), []);
+  const currency = opQ.data?.currency ?? "BDT";
 
   const submit = async (value: string) => {
     const c = value.trim();
     if (!c) return;
-    let outcome: { accept: boolean; code: string; reason: string; group?: { ticketId: string; tierName: string; admits: number; admitted: number } };
+    let outcome: {
+      accept: boolean;
+      code: string;
+      reason: string;
+      group?: { ticketId: string; tierName: string; admits: number; admitted: number };
+      balance?: { orderId: string; ticketId: string; amount: number; amountLabel: string; currency: string };
+    };
 
     // A membership card scans at the same gate as a ticket (§16.10), so the
     // one input takes both. Membership codes are CF-M-…; anything else falls
@@ -52,6 +61,31 @@ export default function ScanPage() {
     else {
       const admits = ticketAdmits(ticket);
       const productName = peekProducts().find((p) => p.id === ticket.productId)?.name ?? "";
+
+      // Tickets are issued at checkout regardless of how much was actually
+      // paid, so a deposit booking turns up at the gate holding a valid one.
+      // Admitting it would be giving the balance away — the gate has to ask.
+      const order = peekOrders().find((o) => o.id === ticket.orderId);
+      const due = order ? Math.max(0, order.total - order.payments.reduce((sum, p) => sum + p.amount, 0)) : 0;
+      if (due > 0 && order) {
+        outcome = {
+          accept: false,
+          code: ticket.code,
+          reason: [productName, ticket.tierName].filter(Boolean).join(" · "),
+          balance: {
+            orderId: order.id,
+            ticketId: ticket.id,
+            amount: due,
+            amountLabel: formatMoney(due, currency),
+            currency,
+          },
+          ...(admits > 1 ? { group: { ticketId: ticket.id, tierName: ticket.tierName, admits, admitted: ticket.admitted ?? 0 } } : {}),
+        };
+        sessionStorage.setItem("scan_result", JSON.stringify(outcome));
+        router.push("/scan/result");
+        return;
+      }
+
       if (admits > 1) {
         // Group ticket (a Family admits 4): the result screen takes the count.
         outcome = { accept: true, code: ticket.code, reason: `${productName} · ${ticket.tierName}`, group: { ticketId: ticket.id, tierName: ticket.tierName, admits, admitted: ticket.admitted ?? 0 } };

@@ -179,6 +179,13 @@ export function ProductForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState("details");
+  // The operator's own noun when they agree on one, so the field is headed
+  // "Fields" or "Lanes" rather than the internal word.
+  const resourceNoun =
+    resources.length && resources.every((r) => r.nounPlural === resources[0].nounPlural)
+      ? resources[0].nounPlural
+      : "Resources";
+  const resourceSingular = resources[0]?.nounSingular ?? "resource";
 
   const dirty = useMemo(() => JSON.stringify(state) !== JSON.stringify(initial), [state, initial]);
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setState((s) => ({ ...s, [k]: v }));
@@ -299,6 +306,66 @@ export function ProductForm({
                 }}
               />
             </div>
+            {/* Which spaces this booking may use, as a plain field.
+                It was only reachable inside the setup questions, and re-opening
+                those to change one lane meant re-answering the lot — so in
+                practice a booking's resource pool could not be edited at all.
+                The questions still DERIVE the booking type; this only edits the
+                pool they produced, which is the part that changes as an
+                operator adds a court. */}
+            {state.booking.resource && (
+              <div>
+                <p className="type-h2 mb-tight text-base">{resourceNoun}</p>
+                <p className="type-body mb-section text-[13px] text-muted">
+                  Which of your {resourceNoun.toLowerCase()} this booking can be sold on. Availability is worked out per {resourceSingular.toLowerCase()}, across every booking that shares it.
+                </p>
+                {resources.length === 0 ? (
+                  <p className="text-[13px] text-faint">
+                    None set up yet — add them in Settings → {resourceNoun}.
+                  </p>
+                ) : (
+                  <div className="grid gap-tight sm:grid-cols-2">
+                    {resources.map((r) => {
+                      const on = (state.booking.resource?.resourceIds ?? []).includes(r.id);
+                      return (
+                        <label
+                          key={r.id}
+                          className={`flex cursor-pointer items-center gap-comfortable rounded-sm border p-comfortable transition-colors duration-quick ${on ? "border-ember bg-ember/5" : "border-line hover:bg-subtle"}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={on}
+                            onChange={() =>
+                              setState((st) => {
+                                const cur = st.booking.resource;
+                                if (!cur) return st;
+                                const ids = cur.resourceIds.includes(r.id)
+                                  ? cur.resourceIds.filter((x) => x !== r.id)
+                                  : [...cur.resourceIds, r.id];
+                                return { ...st, booking: { ...st.booking, resource: { ...cur, resourceIds: ids } } };
+                              })
+                            }
+                            className="h-4 w-4 shrink-0 accent-ember"
+                          />
+                          <span className="flex min-w-0 flex-col">
+                            <span className="truncate text-sm font-medium">{r.name}</span>
+                            <span className="truncate text-[12px] text-muted">
+                              {r.nounSingular}
+                              {r.outOfService ? " · out of service" : ""}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                {(state.booking.resource.resourceIds ?? []).length === 0 && (
+                  <p className="mt-tight text-[12px] text-danger">
+                    Pick at least one — a booking with none cannot be sold.
+                  </p>
+                )}
+              </div>
+            )}
             {isFlexibleResource(state.booking.bookingType) && state.durationConfig && (
               <div>
                 <p className="type-h2 mb-section text-base">Durations & pricing</p>

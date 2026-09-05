@@ -54,12 +54,14 @@ export function BookingSetup({
   onCreateResource?: (name: string, noun: string) => Promise<Resource | null>;
 }) {
   const [step, setStep] = useState<Step>("q1");
-  // resource
-  const [picked, setPicked] = useState<string[]>([]);
-  const [fixed, setFixed] = useState(true);
-  const [exclusive, setExclusive] = useState(true);
-  const [basis, setBasis] = useState<"per_booking" | "per_person">("per_booking");
-  const [buffer, setBuffer] = useState(0);
+  // resource — seeded from what the booking already has, so re-opening the
+  // flow to change one answer does not silently empty the field list and make
+  // the operator re-tick every lane they own.
+  const [picked, setPicked] = useState<string[]>(value?.resource?.resourceIds ?? []);
+  const [fixed, setFixed] = useState(!value?.resource?.flexibleDurations);
+  const [exclusive, setExclusive] = useState(value?.resource?.exclusive ?? true);
+  const [basis, setBasis] = useState<"per_booking" | "per_person">(value?.resource?.basis ?? "per_booking");
+  const [buffer, setBuffer] = useState(value?.resource?.bufferMinutes ?? 0);
   const [durMin, setDurMin] = useState(60);
   const [durMax, setDurMax] = useState(180);
   const [durInc, setDurInc] = useState(30);

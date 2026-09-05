@@ -19,5 +19,11 @@
   "scanNext": "Scan the next ticket",
   "readyNext": "Ready for the next scan in a moment — or tap anywhere",
   "memberUnlimited": "Unlimited entry",
-  "memberVisitsLeft": "{count} visits left"
+  "memberVisitsLeft": "{count} visits left",
+  "balanceDue": "Balance due",
+  "takeAndAdmit": "Take {amount} and admit",
+  "method_cash": "Cash",
+  "method_bkash": "bKash",
+  "method_bangla_qr": "Bangla QR",
+  "method_card_terminal": "Card"
 }
