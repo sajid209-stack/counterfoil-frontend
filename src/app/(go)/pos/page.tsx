@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { AlertTriangle, Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, Zap, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { addOrderPayment, checkout, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
@@ -19,6 +19,7 @@ import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
+import { quickPick, type QuickPick } from "../_components/quickAdd";
 import { Keypad } from "../_components/Keypad";
 
 const TODAY = DEMO_TODAY;
@@ -327,6 +328,19 @@ export default function PosPage() {
         });
       }
     }
+  };
+
+  /** Book now: the shortcut lands as an ordinary cart line, says what it
+   *  chose, and opens the cart on a phone — where the cart is a drawer, adding
+   *  something to a panel nobody can see is not feedback. Everything remains
+   *  editable: tapping the line reopens its sheet with the choice loaded. */
+  const quickAdd = (p: Product, pick: QuickPick) => {
+    upsertEntry({ id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`, ...pick.entry });
+    setCartOpen(true);
+    const detail = [pick.label.resource, pick.label.time, formatMoney(pick.label.price, currency)]
+      .filter(Boolean)
+      .join(" · ");
+    toast.success(t("bookNowAdded", { name: p.name, detail }));
   };
 
   // Extend a flexible booking still in the cart by one increment: the lane
@@ -725,7 +739,8 @@ export default function PosPage() {
                    wrapped to two lines while the subtitle truncated to
                    "Open entry · no …". Moving it onto the subtitle's row gives
                    the name the full width beside the thumbnail. */
-                <button key={p.id} type="button" onClick={() => tapProduct(p)} className="card-surface flex items-center gap-comfortable overflow-hidden p-tight text-left transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
+                <div key={p.id} className="card-surface flex items-center overflow-hidden transition-colors duration-quick hover:bg-subtle">
+                <button type="button" onClick={() => tapProduct(p)} className="flex min-w-0 flex-1 items-center gap-comfortable p-tight text-left active:bg-ember/10">
                   <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="thumb" />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="line-clamp-2 text-[15px] font-semibold leading-tight">{p.name}</span>
@@ -756,6 +771,26 @@ export default function PosPage() {
                     })()}
                   </span>
                 </button>
+                {/* Book now — only where there IS one obvious answer. See
+                    quickAdd: anything needing a real decision keeps the sheet,
+                    because a shortcut that guesses is worse than the tap it
+                    saved. */}
+                {(() => {
+                  const pick = quickPick(p, DEMO_TODAY, nowMinutes, resources);
+                  if (!pick) return null;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => quickAdd(p, pick)}
+                      aria-label={t("bookNowFor", { name: p.name })}
+                      title={t("bookNow")}
+                      className="mr-tight flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border border-ember/40 text-ember transition-colors duration-quick hover:bg-ember/10 active:bg-ember/20"
+                    >
+                      <Zap size={18} strokeWidth={1.5} />
+                    </button>
+                  );
+                })()}
+                </div>
               ))}
               <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-sm border border-dashed border-line text-faint transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
                 <Plus size={20} strokeWidth={1.5} /><span className="text-[13px]">{t("customAmount")}</span>

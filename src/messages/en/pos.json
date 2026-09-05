@@ -344,5 +344,8 @@
     "reason_full": "Full",
     "reason_closed": "Closed",
     "reason_past": "Past"
-  }
+  },
+  "bookNow": "Book now",
+  "bookNowFor": "Book {name} now",
+  "bookNowAdded": "Added {name} — {detail}. Tap the line to change it."
 }

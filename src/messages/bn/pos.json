@@ -344,5 +344,8 @@
     "reason_full": "পূর্ণ",
     "reason_closed": "বন্ধ",
     "reason_past": "অতীত"
-  }
+  },
+  "bookNow": "এখনই বুক করুন",
+  "bookNowFor": "{name} এখনই বুক করুন",
+  "bookNowAdded": "{name} যোগ হয়েছে — {detail}। বদলাতে লাইনটিতে ট্যাপ করুন।"
 }
