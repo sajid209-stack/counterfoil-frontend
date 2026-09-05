@@ -78,10 +78,10 @@ export default function PricingPage() {
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder={t("searchPlaceholder")}
-                className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
+                className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
-            <select value={kind} onChange={(e) => { setKind(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
+            <select aria-label={t("allKinds")} value={kind} onChange={(e) => { setKind(e.target.value); setPage(1); }} className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
               <option value="">{t("allKinds")}</option>
               <option value="standard">{t("kindStandard")}</option>
               <option value="peak">{t("kindPeak")}</option>

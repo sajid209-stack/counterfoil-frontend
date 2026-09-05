@@ -26,7 +26,7 @@ export function EmptyState({
         <span className="mx-major flex-1 border-t-2 border-dashed border-line" />
       </div>
       <div className="flex items-center justify-center rounded-md border border-dashed border-line px-section py-section">
-        {action ?? <span className="font-mono text-[11px] uppercase tracking-wider text-faint">Nothing here yet</span>}
+        {action ?? <span className="font-mono text-[12px] uppercase tracking-wider text-faint">Nothing here yet</span>}
       </div>
     </div>
   );

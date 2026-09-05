@@ -107,7 +107,7 @@ export function PriceTiersField({
               aria-label="Move up"
               onClick={() => move(i, -1)}
               disabled={i === 0}
-              className="flex h-9 w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint hover:enabled:border-inverse"
+              className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint hover:enabled:border-inverse"
             >
               <ChevronUp size={16} strokeWidth={1.5} />
             </button>
@@ -116,7 +116,7 @@ export function PriceTiersField({
               aria-label="Move down"
               onClick={() => move(i, 1)}
               disabled={i === tiers.length - 1}
-              className="flex h-9 w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint hover:enabled:border-inverse"
+              className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint hover:enabled:border-inverse"
             >
               <ChevronDown size={16} strokeWidth={1.5} />
             </button>
@@ -124,7 +124,7 @@ export function PriceTiersField({
               type="button"
               aria-label="Remove tier"
               onClick={() => remove(i)}
-              className="flex h-9 w-9 items-center justify-center rounded-sm border border-line text-danger hover:border-danger"
+              className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-danger hover:border-danger"
             >
               <Trash2 size={16} strokeWidth={1.5} />
             </button>

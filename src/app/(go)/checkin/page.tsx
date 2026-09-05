@@ -31,6 +31,7 @@ const METHODS: PaymentMethod[] = ["cash", "bkash", "bangla_qr", "card_terminal"]
 
 export default function CheckInPage() {
   const t = useTranslations("checkin");
+  const tc = useTranslations("common");
   const enumL = useEnumLabels();
   const toast = useToast();
   const [date, setDate] = useState(TODAY);
@@ -173,7 +174,7 @@ export default function CheckInPage() {
   };
 
   const dateBtn = (v: string, label: string) => (
-    <button key={v} type="button" onClick={() => setDate(v)} className={`h-10 rounded-sm border px-comfortable text-sm ${date === v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{label}</button>
+    <button key={v} type="button" onClick={() => setDate(v)} className={`h-11 md:h-10 rounded-sm border px-comfortable text-sm ${date === v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{label}</button>
   );
 
   return (
@@ -189,8 +190,8 @@ export default function CheckInPage() {
       </div>
       <div className="flex flex-wrap gap-tight">
         {dateBtn(TODAY, t("today"))}{dateBtn(TOMORROW, t("tomorrow"))}
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 rounded-sm border border-line bg-card px-comfortable text-sm" />
-        <div className="flex h-10 min-w-40 flex-1 items-center gap-tight rounded-sm border border-line bg-card px-comfortable focus-within:border-inverse">
+        <input aria-label={tc("chooseDate")} type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11 md:h-10 rounded-sm border border-line bg-card px-comfortable text-sm" />
+        <div className="flex h-11 min-w-40 md:h-10 flex-1 items-center gap-tight rounded-sm border border-line bg-card px-comfortable focus-within:border-inverse">
           <Search size={15} strokeWidth={1.5} className="shrink-0 text-faint" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchPlaceholder")} className="h-full w-full bg-transparent text-sm outline-none" />
         </div>
@@ -227,14 +228,14 @@ export default function CheckInPage() {
                           <div className="flex items-center gap-tight text-sm">
                             <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted">{o?.reference ?? b.orderId}{o?.customerName ? ` · ${o.customerName}` : ""} · {t("party", { size: b.partySize })}</span>
                             {b.noShow ? (
-                              <span className="shrink-0 rounded-xs bg-danger/10 px-tight py-inline font-mono text-[10px] text-danger">{b.noShowReason ? t("noShowTagReason", { reason: b.noShowReason }) : t("noShowTag")}</span>
+                              <span className="shrink-0 rounded-xs bg-danger/10 px-tight py-inline font-mono text-[12px] text-danger">{b.noShowReason ? t("noShowTagReason", { reason: b.noShowReason }) : t("noShowTag")}</span>
                             ) : (
                               <span className="shrink-0 font-mono text-[12px]">{t("inCount", { done: b.checkedIn ?? 0, total: b.partySize })}</span>
                             )}
                           </div>
                           {/* Paid vs outstanding — the gate opens only on a settled order. */}
                           {o && (
-                            <div className="mt-inline flex flex-wrap items-center gap-tight font-mono text-[11px] tabular-nums">
+                            <div className="mt-inline flex flex-wrap items-center gap-tight font-mono text-[12px] tabular-nums">
                               <span className="text-muted">{t("paidOf", { paid: formatMoney(o.payments.reduce((s, x) => s + x.amount, 0)), total: formatMoney(o.total) })}</span>
                               {due > 0 ? <span className="rounded-xs bg-ember px-tight text-ink">{t("owes", { amount: formatMoney(due) })}</span> : <span className="text-success">{t("settled")}</span>}
                               <span className="min-w-0 truncate text-faint">· {o.payments.map((x) => `${enumL.method(x.method)} ${formatMoney(x.amount)}`).join(" + ")}</span>

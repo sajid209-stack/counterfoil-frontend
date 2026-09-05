@@ -24,7 +24,15 @@ export function Tabs({
   return (
     <div
       role="tablist"
-      className={cn("flex gap-inline border-b border-line", className)}
+      // A tab strip cannot wrap — a tab on a second row reads as a different
+      // control — so on a narrow screen it scrolls instead. Five tabs with
+      // counts ("Became reservations 0", "Cancelled 1") ran 17–71px past the
+      // edge at 390px and were being swallowed by main's overflow-x-hidden,
+      // so the last tab was simply unreachable on a phone.
+      className={cn(
+        "flex gap-inline overflow-x-auto border-b border-line [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        className,
+      )}
     >
       {items.map((it) => {
         const active = it.value === value;
@@ -36,7 +44,7 @@ export function Tabs({
             aria-selected={active}
             onClick={() => onChange(it.value)}
             className={cn(
-              "-mb-px h-10 border-b-2 px-comfortable text-sm transition-colors duration-quick",
+              "-mb-px h-11 shrink-0 whitespace-nowrap border-b-2 px-comfortable text-sm transition-colors duration-quick md:h-10",
               active
                 ? "border-inverse font-medium text-fg"
                 : "border-transparent text-faint hover:text-fg",
@@ -44,7 +52,7 @@ export function Tabs({
           >
             {it.label}
             {it.count != null && (
-              <span className="ml-inline font-mono text-[11px] text-faint">
+              <span className="ml-inline font-mono text-[12px] text-faint">
                 {it.count}
               </span>
             )}

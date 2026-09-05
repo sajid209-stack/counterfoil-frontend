@@ -695,6 +695,9 @@ export default function PosPage() {
 
   return (
     <div className="grid h-full grid-cols-1 gap-tight p-tight pb-24 lg:grid-cols-[1fr_23rem] lg:pb-tight">
+      {/* The Go chrome names this screen visually; the heading exists so a
+          screen reader lands on a named page rather than an unlabelled grid. */}
+      <h1 className="sr-only">{t("posTitle")}</h1>
       <div className="flex min-h-0 flex-col gap-tight">
         {/* Header zone: counter chip · wide search · parked badge */}
         <div className="flex items-center gap-tight">
@@ -831,21 +834,21 @@ export default function PosPage() {
                 <div className="flex items-start gap-tight">
                   <div className="min-w-0 flex-1 cursor-pointer" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
                     <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(entryTotal(e), currency)}</span></div>
-                    <div className="text-[11px] text-faint">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
-                    {entryCoveredQty(e) > 0 && <div className="text-[11px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
-                    {(e.lineDiscountPct ?? 0) > 0 && <div className="text-[11px] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>}
-                    {entryBalance(e) > 0 && <div className="text-[11px] text-faint">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
+                    <div className="text-[12px] text-faint">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
+                    {entryCoveredQty(e) > 0 && <div className="text-[12px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
+                    {(e.lineDiscountPct ?? 0) > 0 && <div className="text-[12px] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>}
+                    {entryBalance(e) > 0 && <div className="text-[12px] text-faint">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                   </div>
                   <button
                     type="button"
                     aria-label={t("cart.lineDiscountLabel")}
                     onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
-                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[11px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 ? "border-ember text-ember" : "border-line"}`}
+                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[12px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 ? "border-ember text-ember" : "border-line"}`}
                   >
                     {(e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
                   </button>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight text-[11px] active:bg-ember/10">
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight text-[12px] active:bg-ember/10">
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
@@ -897,7 +900,7 @@ export default function PosPage() {
           <div className="flex items-center justify-between gap-tight">
             <span className="shrink-0 text-[13px] text-muted">{pt("list.coupon")}</span>
             {appliedCoupon ? (
-              <span className="flex min-w-0 items-center gap-inline text-[11px] text-success">
+              <span className="flex min-w-0 items-center gap-inline text-[12px] text-success">
                 <span className="truncate">{appliedCoupon.code ?? appliedCoupon.name}</span>
                 <button type="button" aria-label={pt("pos.remove")} onClick={() => { setAppliedCoupon(null); setCouponError(null); }} className="text-danger">✕</button>
               </span>
@@ -920,7 +923,7 @@ export default function PosPage() {
           <div className="mb-tight flex flex-wrap items-center justify-between gap-tight">
             <span className="text-[13px] text-muted">{t("summary.pass")}</span>
             {pass ? (
-              <span className="flex items-center gap-inline text-[11px]">
+              <span className="flex items-center gap-inline text-[12px]">
                 <span>{t("summary.passUsage", { code: pass.code, used: creditsUsed, left: pass.remaining - creditsUsed })}</span>
                 <button type="button" aria-label={t("summary.removePass")} onClick={() => setPass(null)} className="text-danger">✕</button>
               </span>

@@ -13,5 +13,10 @@
   "confirm": "Confirm",
   "clear": "Clear",
   "language": "Language",
-  "appearance": "Appearance"
+  "appearance": "Appearance",
+  "filterByStatus": "Filter by status",
+  "chooseDate": "Choose a date",
+  "filterByLocation": "Filter by location",
+  "dateFrom": "From date",
+  "dateTo": "To date"
 }

@@ -349,5 +349,8 @@
     "reason_full": "পূর্ণ",
     "reason_closed": "বন্ধ",
     "reason_past": "অতীত"
-  }
+  },
+  "posTitle": "পয়েন্ট অব সেল",
+  "paymentTitle": "পেমেন্ট নিন",
+  "signInTitle": "সাইন ইন"
 }

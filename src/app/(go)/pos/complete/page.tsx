@@ -48,7 +48,7 @@ export default function CompletePage() {
           {/* The brand moment — a literal ticket stub with a perforated tear line. */}
           <div className="relative w-full">
             <div className="rounded-md bg-ink px-section pb-major pt-major text-paper">
-              <p className="type-label text-[11px] text-faint">{t("complete.bookingReference")}</p>
+              <p className="type-label text-[12px] text-faint">{t("complete.bookingReference")}</p>
               <p className="mt-tight break-all font-mono text-2xl tracking-tight sm:text-3xl">{info.code}</p>
             </div>
             {/* perforation */}

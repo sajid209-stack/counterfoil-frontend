@@ -213,7 +213,7 @@ export default function CustomersPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("searchPlaceholder")}
-                className="h-9 w-64 max-w-full rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
+                className="h-11 md:h-9 w-64 max-w-full rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
             <div className="flex flex-wrap gap-inline">
@@ -222,7 +222,7 @@ export default function CustomersPage() {
                   key={s.value}
                   type="button"
                   onClick={() => setSegment(s.value)}
-                  className={`h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
+                  className={`h-11 md:h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
                     segment === s.value
                       ? "border-ember bg-ember/10 text-brand-foreground"
                       : "border-line text-muted hover:bg-subtle"

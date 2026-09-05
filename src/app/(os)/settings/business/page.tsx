@@ -137,7 +137,7 @@ export default function BusinessSetupPage() {
             />
             <div className="mt-tight flex flex-wrap gap-tight text-[12px] text-muted">
               {SMS_PLACEHOLDERS.map((p) => (
-                <span key={p.key} className="rounded-xs border border-line bg-subtle px-tight py-inline font-mono text-[11px]">{p.key} <span className="font-sans text-faint">= {p.means}</span></span>
+                <span key={p.key} className="rounded-xs border border-line bg-subtle px-tight py-inline font-mono text-[12px]">{p.key} <span className="font-sans text-faint">= {p.means}</span></span>
               ))}
             </div>
             <p className="mt-section text-[12px] text-faint">{t("business.preview")}</p>

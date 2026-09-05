@@ -52,7 +52,7 @@ export default function StaffPage() {
       render: (s) => (
         <div>
           <div className="font-medium">{s.name}</div>
-          <div className="font-mono text-[11px] text-faint">{s.email ?? s.phone ?? "—"}</div>
+          <div className="font-mono text-[12px] text-faint">{s.email ?? s.phone ?? "—"}</div>
         </div>
       ),
     },
@@ -79,7 +79,7 @@ export default function StaffPage() {
     },
   ];
 
-  const selectCls = "h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
+  const selectCls = "h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
 
   return (
     <PageShell
@@ -103,14 +103,14 @@ export default function StaffPage() {
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder={t("team.searchPlaceholder")}
-                className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
+                className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
-            <select value={roleId} onChange={(e) => { setRoleId(e.target.value); setPage(1); }} className={selectCls}>
+            <select aria-label={t("team.allRoles")} value={roleId} onChange={(e) => { setRoleId(e.target.value); setPage(1); }} className={selectCls}>
               <option value="">{t("team.allRoles")}</option>
               {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
-            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={selectCls}>
+            <select aria-label={t("common.allStatuses")} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={selectCls}>
               <option value="">{t("common.allStatuses")}</option>
               <option value="active">{t("common.active")}</option>
               <option value="invited">{t("common.invited")}</option>

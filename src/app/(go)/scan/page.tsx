@@ -123,10 +123,10 @@ export default function ScanPage() {
 
       {samplesQ.data && samplesQ.data.data.length > 0 && (
         <div className="flex flex-col gap-inline">
-          <span className="type-label text-[11px] text-faint">{t("trySample")}</span>
+          <span className="type-label text-[12px] text-faint">{t("trySample")}</span>
           <div className="flex flex-wrap gap-inline">
             {samplesQ.data.data.map((t) => (
-              <button key={t.id} type="button" onClick={() => submit(t.code)} className="rounded-xs border border-line bg-card px-tight py-inline font-mono text-[11px] active:bg-ember/10">
+              <button key={t.id} type="button" onClick={() => submit(t.code)} className="rounded-xs border border-line bg-card px-tight py-inline font-mono text-[12px] active:bg-ember/10">
                 {t.code}
               </button>
             ))}

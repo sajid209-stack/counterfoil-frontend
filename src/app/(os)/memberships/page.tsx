@@ -90,7 +90,7 @@ export default function MembershipsPage() {
       render: (m) => (
         <div className="min-w-0">
           <div className="break-words font-medium">{m.customerName}</div>
-          <div className="font-mono text-[11px] text-faint">{m.code}</div>
+          <div className="font-mono text-[12px] text-faint">{m.code}</div>
         </div>
       ),
     },
@@ -237,7 +237,7 @@ export default function MembershipsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("searchPlaceholder")}
-                className="h-9 w-72 max-w-full rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
+                className="h-11 md:h-9 w-72 max-w-full rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
           }

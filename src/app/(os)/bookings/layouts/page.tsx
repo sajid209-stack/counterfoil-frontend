@@ -52,7 +52,7 @@ export default function SeatLayoutsPage() {
               <span className="font-mono text-[12px] text-muted">{l.rows}×{l.seatsPerRow} · {l.seatCount} {t("list.seats")}</span>
               <div className="mt-inline flex flex-wrap gap-inline">
                 {l.categories.map((c) => (
-                  <span key={c.uid} className="inline-flex items-center gap-inline rounded-xs px-inline py-[2px] text-[11px]" style={{ background: `${c.color}22`, color: c.color }}>
+                  <span key={c.uid} className="inline-flex items-center gap-inline rounded-xs px-inline py-[2px] text-[12px]" style={{ background: `${c.color}22`, color: c.color }}>
                     <span className="h-2 w-2 rounded-full" style={{ background: c.color }} />{c.name}
                   </span>
                 ))}

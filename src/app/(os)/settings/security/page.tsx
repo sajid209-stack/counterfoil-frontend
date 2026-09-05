@@ -81,7 +81,7 @@ export default function SecurityPage() {
           <p className="mb-section text-[13px] text-muted">
             {t("security.recoveryNote")}
           </p>
-          <select value={recovery} onChange={(e) => { setRecovery(e.target.value); if (e.target.value) toast.success(t("security.recoverySet")); }} className="h-11 w-full max-w-sm rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
+          <select aria-label={t("security.recovery")} value={recovery} onChange={(e) => { setRecovery(e.target.value); if (e.target.value) toast.success(t("security.recoverySet")); }} className="h-11 w-full max-w-sm rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
             <option value="">{t("security.noRecovery")}</option>
             {(staffQ.data?.data ?? []).filter((s) => s.roleId === "role_manager").map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
@@ -93,7 +93,7 @@ export default function SecurityPage() {
             <div key={i} className="flex h-10 items-center gap-section border-b border-line text-[13px] last:border-0">
               <span className="w-36 shrink-0 font-mono text-[12px] tabular-nums text-muted">{s.at}</span>
               <span className="min-w-0 flex-1 truncate">{s.where}</span>
-              <span className={`font-mono text-[11px] ${s.ok ? "text-success" : "text-danger"}`}>{s.ok ? t("security.ok") : t("security.failed")}</span>
+              <span className={`font-mono text-[12px] ${s.ok ? "text-success" : "text-danger"}`}>{s.ok ? t("security.ok") : t("security.failed")}</span>
             </div>
           ))}
           <Button variant="secondary" className="mt-section" onClick={() => toast.success(t("security.signedOutAll"))}>{t("security.signOutAll")}</Button>

@@ -38,7 +38,7 @@ export function Logo({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={darkSrc} alt={alt} style={{ height: size }} className="hidden w-auto dark:block" />
       {variant === "os" && (
-        <span className="self-center font-mono text-[11px] uppercase tracking-wide text-faint">
+        <span className="self-center font-mono text-[12px] uppercase tracking-wide text-faint">
           OS
         </span>
       )}

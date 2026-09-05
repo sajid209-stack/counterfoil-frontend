@@ -441,3 +441,17 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* A wide table scrolls inside its own card rather than pushing the page
+   sideways — but a container that simply cuts its last column looks broken
+   rather than scrollable. These shadows are painted by the SCROLLER itself
+   (background-attachment: local for the cover, scroll for the shadow), so
+   they appear only on the side that still has content and disappear as you
+   reach each end. No JS, no scroll listener. */
+.scroll-x-hint {
+  background:
+    linear-gradient(to right, var(--color-card) 30%, transparent) 0 0 / 44px 100% no-repeat local,
+    linear-gradient(to left, var(--color-card) 30%, transparent) 100% 0 / 44px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 0.13), transparent) 0 0 / 16px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.13), transparent) 100% 0 / 16px 100% no-repeat scroll;
+}

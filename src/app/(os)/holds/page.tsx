@@ -219,7 +219,7 @@ export default function HoldsPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t("searchPlaceholder")}
-                  className="h-9 w-72 max-w-full rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
+                  className="h-11 md:h-9 w-72 max-w-full rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
                 />
               </div>
               <label className="flex items-center gap-tight text-[13px] text-muted">
@@ -346,7 +346,7 @@ function PlaceHoldModal({
                 key={k}
                 type="button"
                 onClick={() => setKind(k)}
-                className={`min-h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
+                className={`min-h-11 md:h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
                   kind === k
                     ? "border-ember bg-ember/10 text-brand-foreground"
                     : "border-line text-muted hover:bg-subtle"
@@ -447,7 +447,7 @@ function PlaceHoldModal({
         />
 
         <div className="rounded-sm border-l-2 border-ember bg-ember/5 p-comfortable">
-          <p className="type-label text-[11px] text-muted">{t("previewLabel")}</p>
+          <p className="type-label text-[12px] text-muted">{t("previewLabel")}</p>
           <p className="mt-inline text-[13px]">
             {t(`preview_${kind}`, {
               what:

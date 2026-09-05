@@ -33,6 +33,7 @@ const KINDS: RowKind[] = ["open", "full", "out"];
 export default function SchedulePage() {
   const router = useRouter();
   const t = useTranslations("schedule");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [date, setDate] = useState(TODAY);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
@@ -124,7 +125,7 @@ export default function SchedulePage() {
       <div className="flex flex-wrap gap-tight">
         {dateBtn(TODAY, t("today"))}
         {dateBtn(TOMORROW, t("tomorrow"))}
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-12 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-sm" />
+        <input aria-label={tc("chooseDate")} type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-12 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-sm" />
       </div>
 
       <div className="flex flex-col gap-tight">
@@ -174,12 +175,12 @@ export default function SchedulePage() {
               <span className="min-w-0 flex-1 truncate text-sm">{r.label}</span>
               <span className={`font-mono text-[12px] ${r.full ? "text-faint" : "text-muted"}`}>{r.state}</span>
               {r.full ? (
-                r.product.waitlistEnabled ? <Button size="sm" variant="secondary" onClick={() => sell(r.product)}>{t("waitlist")}</Button> : <span className="w-16 text-right font-mono text-[11px] text-faint">—</span>
+                r.product.waitlistEnabled ? <Button size="sm" variant="secondary" onClick={() => sell(r.product)}>{t("waitlist")}</Button> : <span className="w-16 text-right font-mono text-[12px] text-faint">—</span>
               ) : (
                 <Button size="sm" onClick={() => sell(r.product)}>{t("sell")}</Button>
               )}
               {r.resourceId && (
-                <button type="button" aria-label={t("rowActions")} onClick={() => openOos(r.resourceId!)} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line text-faint active:bg-ember/10">
+                <button type="button" aria-label={t("rowActions")} onClick={() => openOos(r.resourceId!)} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-faint active:bg-ember/10">
                   <MoreHorizontal size={15} strokeWidth={1.5} />
                 </button>
               )}

@@ -47,7 +47,7 @@ export default function PrintReceiptPage() {
             <p className="font-mono text-[12px] text-muted">{o.reference} · {formatDate(o.createdAt)}</p>
           </div>
           <OrderLinesDetail order={o} />
-          <p className="mt-major text-center font-mono text-[10px] text-faint">{t("poweredBy")}</p>
+          <p className="mt-major text-center font-mono text-[12px] text-faint">{t("poweredBy")}</p>
         </div>
       ) : null}
     </main>

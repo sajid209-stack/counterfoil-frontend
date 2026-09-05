@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { ThemeProvider as NextThemes, useTheme } from "next-themes";
 
@@ -17,8 +17,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
  *  System) stays in Settings. Renders after mount to avoid hydration drift. */
 export function ModeButton({ className }: { className?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   if (!mounted) return <span className={`inline-block h-11 w-11 ${className ?? ""}`} aria-hidden />;
   const dark = resolvedTheme === "dark";
   return (
@@ -37,6 +36,17 @@ export function ModeButton({ className }: { className?: string }) {
 /** The appearance picker — OS Settings and the Go shift menu share it. */
 export function AppearancePicker({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
+  /* The stored theme only exists in the browser, so the server cannot know
+   * which of the three is pressed. Rendering that guess and then correcting it
+   * is exactly the hydration mismatch React warns about — and the warning is
+   * earned: for one frame the picker shows the wrong button selected. Nothing
+   * is marked until the client has actually read the preference. */
+  // "Has the client taken over?" is an external fact, not component state —
+  // the same shape PageShell uses for its media query. getServerSnapshot
+  // returns false, getSnapshot true, and nothing subscribes because the answer
+  // never changes again after hydration.
+  const ready = useSyncExternalStore(() => () => {}, () => true, () => false);
+  const current = ready ? theme : undefined;
   return (
     <div className={className}>
       <span className="type-label mb-tight block text-[12px] text-muted">Appearance</span>
@@ -46,8 +56,8 @@ export function AppearancePicker({ className }: { className?: string }) {
             key={t}
             type="button"
             onClick={() => setTheme(t)}
-            aria-pressed={theme === t}
-            className={`h-11 flex-1 rounded-sm border text-sm capitalize transition-colors duration-quick ${theme === t ? "border-ember bg-ember/5 font-medium" : "border-line bg-card"}`}
+            aria-pressed={current === t}
+            className={`h-11 flex-1 rounded-sm border text-sm capitalize transition-colors duration-quick ${current === t ? "border-ember bg-ember/5 font-medium" : "border-line bg-card"}`}
           >
             {t}
           </button>

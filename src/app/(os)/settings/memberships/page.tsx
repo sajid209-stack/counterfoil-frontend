@@ -131,7 +131,7 @@ export default function MembershipTiersPage() {
                 </Button>
               </div>
             </div>
-            <p className="mt-tight font-mono text-[11px] text-faint">
+            <p className="mt-tight font-mono text-[12px] text-faint">
               {t("membersOnTier", { count: held(tier.id) })}
             </p>
           </div>
@@ -414,7 +414,7 @@ function TierEditor({
         {/* The mandatory concrete preview, as everywhere else in this app: say
             what a member gets in the words a member would use. */}
         <div className="rounded-sm border-l-2 border-ember bg-ember/5 p-comfortable">
-          <p className="type-label text-[11px] text-muted">{t("previewLabel")}</p>
+          <p className="type-label text-[12px] text-muted">{t("previewLabel")}</p>
           <p className="mt-inline text-[13px]">
             {t("previewLine", {
               name: draft.name || t("previewFallbackName"),

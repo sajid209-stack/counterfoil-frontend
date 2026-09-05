@@ -86,7 +86,7 @@ export default function ProfilePage() {
               <span className="min-w-0 flex-1 truncate">{d.name} <span className="text-faint">· {d.where}</span></span>
               <span className="font-mono text-[12px] text-faint">{lastSeen(d)}</span>
               {d.current ? (
-                <span className="font-mono text-[11px] text-success">{t("thisDevice")}</span>
+                <span className="font-mono text-[12px] text-success">{t("thisDevice")}</span>
               ) : (
                 <Button size="sm" variant="secondary" onClick={() => { setDevices((x) => x.filter((y) => y.id !== d.id)); toast.success(t("signedOut", { name: d.name })); }}>{t("signOut")}</Button>
               )}

@@ -23,7 +23,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
 };
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: "h-9 px-comfortable text-[13px]",
+  sm: "h-11 md:h-9 px-comfortable text-[13px]", // 44px on touch, 36 from md
   md: "h-11 px-section text-sm", // 44px
   lg: "h-12 px-major text-base", // 48px — Go touch floor
 };

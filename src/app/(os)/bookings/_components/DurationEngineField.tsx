@@ -79,7 +79,7 @@ export function DurationEngineField({
           ] as const).map((o) => (
             <button key={o.v} type="button" onClick={() => set("pricingModel", o.v)} className={`flex flex-col items-start rounded-sm border px-comfortable py-tight text-left ${value.pricingModel === o.v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>
               <span className="text-sm font-medium">{o.label}</span>
-              <span className={`text-[11px] ${value.pricingModel === o.v ? "opacity-70" : "text-faint"}`}>{o.helper}</span>
+              <span className={`text-[12px] ${value.pricingModel === o.v ? "opacity-70" : "text-faint"}`}>{o.helper}</span>
             </button>
           ))}
         </div>
@@ -171,7 +171,7 @@ export function DurationEngineField({
       {/* The mandatory preview — concrete numbers before saving. */}
       {!err && options.length > 0 && (
         <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="type-label text-[11px] text-faint">Preview</p>
+          <p className="type-label text-[12px] text-faint">Preview</p>
           <p className="mt-inline font-mono text-[13px]">
             Bookable:{" "}
             {options.map((d, i) => (

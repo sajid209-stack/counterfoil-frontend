@@ -141,12 +141,12 @@ export default function SeatLayoutEditorPage() {
                 </button>
               );
             })}
-            <button type="button" onClick={() => setTool({ kind: "block" })} className={`h-10 rounded-sm border px-comfortable text-[13px] ${tool.kind === "block" ? "border-inverse bg-inverse text-inverse-fg" : "border-line"}`}>{t("editor.toolBlock")}</button>
-            <button type="button" onClick={() => setTool({ kind: "clear" })} className={`h-10 rounded-sm border px-comfortable text-[13px] ${tool.kind === "clear" ? "border-inverse bg-inverse text-inverse-fg" : "border-line"}`}>{t("editor.toolClear")}</button>
+            <button type="button" onClick={() => setTool({ kind: "block" })} className={`h-11 md:h-10 rounded-sm border px-comfortable text-[13px] ${tool.kind === "block" ? "border-inverse bg-inverse text-inverse-fg" : "border-line"}`}>{t("editor.toolBlock")}</button>
+            <button type="button" onClick={() => setTool({ kind: "clear" })} className={`h-11 md:h-10 rounded-sm border px-comfortable text-[13px] ${tool.kind === "clear" ? "border-inverse bg-inverse text-inverse-fg" : "border-line"}`}>{t("editor.toolClear")}</button>
           </div>
 
           {/* Screen marker + grid (scrolls horizontally if wide) */}
-          <div className="mb-tight rounded-xs bg-subtle py-inline text-center font-mono text-[11px] tracking-widest text-faint">{t("editor.screen")}</div>
+          <div className="mb-tight rounded-xs bg-subtle py-inline text-center font-mono text-[12px] tracking-widest text-faint">{t("editor.screen")}</div>
           <div className="overflow-x-auto">
             <div className="inline-grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${cols}, 1.75rem)` }}>
               {seats.slice().sort((a, b) => a.posY - b.posY || a.posX - b.posX).map((s) => {
@@ -169,7 +169,7 @@ export default function SeatLayoutEditorPage() {
             </div>
           </div>
 
-          <div className="mt-section flex flex-wrap gap-major text-[11px] text-muted">
+          <div className="mt-section flex flex-wrap gap-major text-[12px] text-muted">
             <span className="flex items-center gap-inline"><span className="h-3 w-3 rounded-[2px] border border-dashed border-line" />{t("editor.legendNotForSale")}</span>
             <span className="flex items-center gap-inline"><span className="h-3 w-3 rounded-[2px] bg-line" />{t("editor.legendBlocked")}</span>
           </div>

@@ -34,7 +34,7 @@ export function AddOnsField({
           <FormField label={i === 0 ? "Name" : undefined} placeholder="Shoe hire" value={a.name} onChange={(e) => update(i, { name: e.target.value })} />
           <FormField label={i === 0 ? `Price (${currency})` : undefined} variant="number" value={a.price} onChange={(e) => update(i, { price: e.target.value })} />
           <label className="flex items-center gap-inline pb-tight text-[13px]"><input type="checkbox" checked={a.perPerson} onChange={(e) => update(i, { perPerson: e.target.checked })} className="h-4 w-4 accent-ember" />per person</label>
-          <button type="button" aria-label="Remove" onClick={() => onChange(addOns.filter((_, idx) => idx !== i))} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line text-danger"><Trash2 size={16} strokeWidth={1.5} /></button>
+          <button type="button" aria-label="Remove" onClick={() => onChange(addOns.filter((_, idx) => idx !== i))} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-danger"><Trash2 size={16} strokeWidth={1.5} /></button>
         </div>
       ))}
     </div>

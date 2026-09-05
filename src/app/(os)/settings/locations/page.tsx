@@ -74,13 +74,13 @@ export default function LocationsPage() {
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder={t("locations.searchPlaceholder")}
-                className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
+                className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
-            <select
+            <select aria-label={t("common.allStatuses")}
               value={status}
               onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-              className="h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
+              className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
             >
               <option value="all">{t("common.allStatuses")}</option>
               <option value="active">{t("common.active")}</option>

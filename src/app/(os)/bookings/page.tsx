@@ -74,7 +74,7 @@ export default function ProductsPage() {
           <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="chip" />
           <div className="min-w-0">
             <div className="truncate font-medium text-fg">{p.name}</div>
-            <div className="truncate text-[11px] text-faint">{behaviourSubtitle(p, { resources: resourcesQ.data?.data ?? [], team: teamQ.data?.data ?? [] })}</div>
+            <div className="truncate text-[12px] text-faint">{behaviourSubtitle(p, { resources: resourcesQ.data?.data ?? [], team: teamQ.data?.data ?? [] })}</div>
           </div>
         </div>
       ),
@@ -90,7 +90,7 @@ export default function ProductsPage() {
       key: "channels",
       header: "Channels",
       render: (p) => (
-        <span className="font-mono text-[11px] text-muted">
+        <span className="font-mono text-[12px] text-muted">
           {p.channels.length ? p.channels.join(" · ") : "—"}
         </span>
       ),
@@ -105,7 +105,7 @@ export default function ProductsPage() {
   ];
 
   const selectCls =
-    "h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
+    "h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
 
   return (
     <PageShell
@@ -153,10 +153,11 @@ export default function ProductsPage() {
                   setPage(1);
                 }}
                 placeholder="Search bookings…"
-                className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
+                className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
             <select
+              aria-label="All categories"
               value={categoryId}
               onChange={(e) => {
                 setCategoryId(e.target.value);
@@ -172,6 +173,7 @@ export default function ProductsPage() {
               ))}
             </select>
             <select
+              aria-label="All statuses"
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value);

@@ -177,7 +177,7 @@ export function ProductWizard({
       <ol className="flex flex-wrap gap-tight">
         {STEPS.map((label, i) => (
           <li key={label} className={`flex items-center gap-inline rounded-sm px-comfortable py-tight text-[12px] ${i === step ? "bg-inverse text-inverse-fg" : i < step ? "text-fg" : "text-faint"}`}>
-            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current font-mono text-[10px]">{i < step ? <Check size={12} strokeWidth={2} /> : i + 1}</span>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current font-mono text-[12px]">{i < step ? <Check size={12} strokeWidth={2} /> : i + 1}</span>
             {label}
           </li>
         ))}

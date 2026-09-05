@@ -56,12 +56,12 @@ export default function CountersPage() {
     {
       key: "payments",
       header: t("counters.colPayments"),
-      render: (c) => <span className="font-mono text-[11px] text-muted">{c.allowedPaymentMethods.length}</span>,
+      render: (c) => <span className="font-mono text-[12px] text-muted">{c.allowedPaymentMethods.length}</span>,
     },
     { key: "status", header: t("common.status"), sortable: true, render: (c) => <StatusPill status={c.status} /> },
   ];
 
-  const selectCls = "h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
+  const selectCls = "h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
 
   return (
     <PageShell
@@ -85,14 +85,14 @@ export default function CountersPage() {
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 placeholder={t("counters.searchPlaceholder")}
-                className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
+                className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
-            <select value={locationId} onChange={(e) => { setLocationId(e.target.value); setPage(1); }} className={selectCls}>
+            <select aria-label={t("common.allLocations")} value={locationId} onChange={(e) => { setLocationId(e.target.value); setPage(1); }} className={selectCls}>
               <option value="">{t("common.allLocations")}</option>
               {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
-            <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={selectCls}>
+            <select aria-label={t("common.allStatuses")} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={selectCls}>
               <option value="all">{t("common.allStatuses")}</option>
               <option value="active">{t("common.active")}</option>
               <option value="inactive">{t("common.inactive")}</option>

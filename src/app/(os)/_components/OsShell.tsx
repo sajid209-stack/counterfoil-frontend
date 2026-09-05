@@ -162,11 +162,11 @@ export function OsShell({ children }: { children: React.ReactNode }) {
                 placeholder={t("search")}
                 className="min-w-0 flex-1 bg-transparent text-fg outline-none placeholder:text-faint"
               />
-              <kbd className="rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-[10px] text-faint">⌘K</kbd>
+              <kbd className="rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-[12px] text-faint">⌘K</kbd>
             </div>
             <LocaleToggle />
             <ModeButton />
-            <span className="ml-inline grid h-9 w-9 place-items-center rounded-sm bg-subtle text-[11px] font-bold text-fg ring-1 ring-line">
+            <span className="ml-inline grid h-9 w-9 place-items-center rounded-sm bg-subtle text-[12px] font-bold text-fg ring-1 ring-line">
               {(operatorQ.data?.name ?? "CF").slice(0, 2).toUpperCase()}
             </span>
           </div>
@@ -225,7 +225,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between border-b border-line px-section py-tight">
             <div>
               <p className="text-sm font-medium">{operatorQ.data?.name ?? "Counterfoil"}</p>
-              <p className="font-mono text-[11px] text-faint">Counterfoil OS workspace</p>
+              <p className="font-mono text-[12px] text-faint">Counterfoil OS workspace</p>
             </div>
             <button type="button" aria-label="Close" onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-sm active:bg-line">
               <X size={20} strokeWidth={1.5} />

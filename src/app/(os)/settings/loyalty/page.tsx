@@ -61,9 +61,9 @@ export default function LoyaltySettingsPage() {
 function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div className="rounded-sm border border-line p-comfortable">
-      <p className="type-label text-[11px] text-muted">{label}</p>
+      <p className="type-label text-[12px] text-muted">{label}</p>
       <p className="mt-inline font-mono text-lg tabular-nums">{value}</p>
-      {note && <p className="mt-inline text-[11px] text-muted">{note}</p>}
+      {note && <p className="mt-inline text-[12px] text-muted">{note}</p>}
     </div>
   );
 }
@@ -155,7 +155,7 @@ function ProgramForm({
       </div>
 
       <div className="rounded-sm border-l-2 border-ember bg-ember/5 p-comfortable">
-        <p className="type-label text-[11px] text-muted">{t("previewLabel")}</p>
+        <p className="type-label text-[12px] text-muted">{t("previewLabel")}</p>
         <p className="mt-inline text-[13px]">
           {draft.enabled
             ? t("previewLine", {

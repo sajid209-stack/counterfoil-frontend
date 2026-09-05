@@ -225,7 +225,7 @@ export default function KitchenSink() {
                 />
                 <input
                   placeholder="Search…"
-                  className="h-9 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
+                  className="h-11 md:h-9 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
                 />
               </div>
             </div>

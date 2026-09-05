@@ -84,7 +84,7 @@ export function MonthGrid({
       <div>
         <div className="grid grid-cols-7 border-b border-line">
           {weekdayLabels.map((w) => (
-            <div key={w} className="type-label py-tight text-center text-[10px] text-muted">
+            <div key={w} className="type-label py-tight text-center text-[12px] text-muted">
               {w.slice(0, 1)}
             </div>
           ))}
@@ -136,7 +136,7 @@ export function MonthGrid({
 
         {/* The chosen day, in full — the reason the grid can afford to be dots. */}
         <div className="border-t border-line">
-          <p className="type-label px-comfortable pt-comfortable text-[11px] text-muted">
+          <p className="type-label px-comfortable pt-comfortable text-[12px] text-muted">
             {dayHeading ? dayHeading(selectedDate) : isoDate(selectedDate)}
           </p>
           {agenda.length === 0 ? (
@@ -182,7 +182,7 @@ export function MonthGrid({
       <div className="min-w-[44rem]">
         <div className="grid grid-cols-7 border-b border-line">
           {weekdayLabels.map((w) => (
-            <div key={w} className="type-label px-tight py-tight text-[10px] text-muted">
+            <div key={w} className="type-label px-tight py-tight text-[12px] text-muted">
               {w}
             </div>
           ))}
@@ -228,7 +228,7 @@ export function MonthGrid({
                         onClick={onSelect ? () => onSelect(e) : undefined}
                         title={`${e.title} · ${hhmm(e.start)}${e.subtitle ? ` · ${e.subtitle}` : ""}`}
                         className={cn(
-                          "flex w-full items-center gap-0.5 overflow-hidden rounded-xs border px-1 py-0.5 text-left text-[10px] leading-tight",
+                          "flex w-full items-center gap-0.5 overflow-hidden rounded-xs border px-1 py-0.5 text-left text-[12px] leading-tight",
                           TONE_CLASS[e.tone],
                         )}
                       >
@@ -243,7 +243,7 @@ export function MonthGrid({
                       <button
                         type="button"
                         onClick={onPickDay ? () => onPickDay(d) : undefined}
-                        className="px-1 text-left text-[10px] text-muted transition-colors duration-quick hover:text-fg"
+                        className="px-1 text-left text-[12px] text-muted transition-colors duration-quick hover:text-fg"
                       >
                         {moreLabel(rest)}
                       </button>

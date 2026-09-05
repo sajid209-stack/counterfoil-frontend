@@ -99,7 +99,7 @@ export function ScheduleBuilder({
             const d = Number(dStr);
             return (
               <div key={d} className="flex items-center gap-tight">
-                <select value={d} onChange={(e) => moveOverride(d, Number(e.target.value))} className="h-10 rounded-sm border border-line bg-card px-tight text-sm outline-none focus:border-inverse">
+                <select value={d} onChange={(e) => moveOverride(d, Number(e.target.value))} className="h-11 md:h-10 rounded-sm border border-line bg-card px-tight text-sm outline-none focus:border-inverse">
                   {value.openDays.filter((x) => x === d || !(x in overrides)).map((x) => (
                     <option key={x} value={x}>{DAY_NAMES[x]}</option>
                   ))}
@@ -141,7 +141,7 @@ export function ScheduleBuilder({
       {/* Live preview — the most important element. */}
       {isSlotBased(bookingType) && (
         <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="type-label text-[11px] text-faint">Preview</p>
+          <p className="type-label text-[12px] text-faint">Preview</p>
           <p className="mt-inline font-mono text-[13px]">
             {slots.slice(0, 6).join(" · ")}{slots.length > 6 ? ` … ${slots[slots.length - 1]}` : ""}
           </p>

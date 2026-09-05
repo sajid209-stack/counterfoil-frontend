@@ -64,9 +64,10 @@ export default function GoLoginPage() {
   return (
     // Full-bleed ink — this screen is a moment, not a form.
     <main className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center bg-ink px-section py-major text-paper">
+      <h1 className="sr-only">Sign in</h1>
       {/* Context bar — confirm you're on the right till before signing in. */}
       <div className="w-full max-w-lg text-center">
-        <p className="font-mono text-[11px] uppercase tracking-wider text-neutral-400">
+        <p className="font-mono text-[12px] uppercase tracking-wider text-neutral-400">
           {BUSINESS} · {COUNTER_NAME} · {DEVICE_NAME}
         </p>
         <p className="mt-inline font-mono text-[12px] text-neutral-400">
@@ -93,7 +94,7 @@ export default function GoLoginPage() {
                   {s.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}
                 </span>
                 <span className="max-w-full truncate text-sm text-paper">{s.name}</span>
-                <span className={`font-mono text-[10px] ${s.id === OPEN_SHIFT.staffId ? "text-ember" : "text-neutral-600"}`}>{stateLine(s)}</span>
+                <span className={`font-mono text-[12px] ${s.id === OPEN_SHIFT.staffId ? "text-ember" : "text-neutral-600"}`}>{stateLine(s)}</span>
               </button>
             ))}
             <button

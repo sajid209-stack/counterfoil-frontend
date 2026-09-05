@@ -97,7 +97,7 @@ export function Sidebar({
       {/* Scrollable nav — overflow lives here so the header toggle stays put. */}
       <div className="flex min-h-0 flex-1 flex-col gap-major overflow-y-auto px-comfortable pb-section">
         <nav className="flex flex-col gap-inline">
-          {!collapsed && <p className="px-comfortable pb-inline font-mono text-[10px] uppercase tracking-wider text-muted">{t("overview")}</p>}
+          {!collapsed && <p className="px-comfortable pb-inline font-mono text-[12px] uppercase tracking-wider text-muted">{t("overview")}</p>}
           {OPERATE.map((n) => item(n.label, n.href, isActive(n.href), n.icon))}
         </nav>
 
@@ -116,7 +116,7 @@ export function Sidebar({
         </div>
 
         <nav className="flex flex-col gap-inline">
-          {!collapsed && <p className="px-comfortable pb-inline font-mono text-[10px] uppercase tracking-wider text-muted">{t("settings")}</p>}
+          {!collapsed && <p className="px-comfortable pb-inline font-mono text-[12px] uppercase tracking-wider text-muted">{t("settings")}</p>}
           {item(t("settings"), "/settings", pathname.startsWith("/settings"), Settings)}
         </nav>
       </div>

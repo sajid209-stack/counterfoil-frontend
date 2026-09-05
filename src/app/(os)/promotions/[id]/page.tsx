@@ -70,7 +70,7 @@ export default function PromotionEditorPage() {
           <span className="type-label mb-tight block text-[12px] text-muted">{t("editor.channels")}</span>
           <div className="flex gap-tight">
             {(["counter", "online"] as Channel[]).map((ch) => (
-              <button key={ch} type="button" onClick={() => toggleChannel(ch)} className={`h-10 rounded-sm border px-comfortable text-[13px] ${p.eligibility.channels.includes(ch) ? "border-ember bg-ember/5 font-medium" : "border-line"}`}>{t(`editor.${ch}`)}</button>
+              <button key={ch} type="button" onClick={() => toggleChannel(ch)} className={`h-11 md:h-10 rounded-sm border px-comfortable text-[13px] ${p.eligibility.channels.includes(ch) ? "border-ember bg-ember/5 font-medium" : "border-line"}`}>{t(`editor.${ch}`)}</button>
             ))}
           </div>
         </div>

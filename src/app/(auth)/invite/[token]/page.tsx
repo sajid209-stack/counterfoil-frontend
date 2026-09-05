@@ -12,7 +12,7 @@ export default function InviteAcceptPage() {
       <p className="type-body mt-tight text-[13px] text-muted">
         You&apos;ve been invited to join. Set a password to activate your account.
       </p>
-      <p className="mt-tight font-mono text-[11px] text-faint">token: {params.token}</p>
+      <p className="mt-tight font-mono text-[12px] text-faint">token: {params.token}</p>
 
       <div className="mt-major flex flex-col gap-section">
         <div className="flex flex-col gap-tight">

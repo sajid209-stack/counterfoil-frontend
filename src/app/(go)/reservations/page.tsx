@@ -54,11 +54,11 @@ export default function GoBookingsPage() {
             <div key={b.id} className="flex items-center gap-section rounded-sm border border-line bg-card p-comfortable">
               <div className="text-center">
                 <div className="font-mono text-lg">{time(b.slotStart)}</div>
-                <div className="font-mono text-[10px] text-faint">{formatDate(b.slotStart)}</div>
+                <div className="font-mono text-[12px] text-faint">{formatDate(b.slotStart)}</div>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{productName(b.productId)}</div>
-                <div className="font-mono text-[11px] text-faint">{t("partyOf", { size: b.partySize })}</div>
+                <div className="font-mono text-[12px] text-faint">{t("partyOf", { size: b.partySize })}</div>
               </div>
               <StatusPill status="confirmed" />
             </div>

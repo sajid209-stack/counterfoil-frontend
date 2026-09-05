@@ -90,7 +90,7 @@ function SwatchGrid({ swatches }: { swatches: Swatch[] }) {
               s.dark ? "text-inverse-fg" : "text-fg"
             }`}
           >
-            <span className="font-mono text-[11px] opacity-80">{s.hex}</span>
+            <span className="font-mono text-[12px] opacity-80">{s.hex}</span>
           </div>
           <div className="bg-surface px-tight py-inline">
             <span className="font-mono text-[12px]">{s.name}</span>

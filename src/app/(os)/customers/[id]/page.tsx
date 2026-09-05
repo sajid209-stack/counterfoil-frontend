@@ -137,7 +137,7 @@ export default function CustomerDetailPage() {
             <div className="min-w-0">
               <p className="text-sm font-medium">{t("flaggedTitle")}</p>
               <p className="break-words text-[13px] text-muted">{customer.flag.reason}</p>
-              <p className="mt-inline font-mono text-[11px] text-faint">
+              <p className="mt-inline font-mono text-[12px] text-faint">
                 {t("byOn", { who: customer.flag.who, when: formatDate(customer.flag.at) })}
               </p>
             </div>
@@ -200,7 +200,7 @@ function Stat({
 }) {
   return (
     <div className="card-surface p-comfortable">
-      <p className="type-label text-[11px] text-muted">{label}</p>
+      <p className="type-label text-[12px] text-muted">{label}</p>
       <p
         className={`mt-inline font-mono text-lg tabular-nums ${
           tone === "warning" ? "text-warning" : "text-fg"
@@ -412,7 +412,7 @@ function ConsentTab({ customer, onChanged }: { customer: Customer; onChanged: ()
                 {c.granted ? t("granted") : t("withdrawn")}
               </StatusPill>
               <span>{c.channel === "email" ? t("channelEmail") : t("channelSms")}</span>
-              <span className="font-mono text-[11px] text-faint">
+              <span className="font-mono text-[12px] text-faint">
                 {formatDateTime(c.capturedAt)} · {t(`source_${c.source}` as "source_counter")}
               </span>
             </li>
@@ -474,7 +474,7 @@ function NotesTab({ customer, onChanged }: { customer: Customer; onChanged: () =
           {notes.map((n, i) => (
             <li key={`${n.at}-${i}`} className="card-surface p-comfortable">
               <p className="break-words text-[13px]">{n.text}</p>
-              <p className="mt-inline font-mono text-[11px] text-faint">
+              <p className="mt-inline font-mono text-[12px] text-faint">
                 {n.who} · {formatDateTime(n.at)}
               </p>
             </li>
@@ -688,7 +688,7 @@ function MergeIntoModal({
                 <p className="text-[12px] text-muted">
                   {[c.phone, c.email].filter(Boolean).join(" · ") || t("noContact")}
                 </p>
-                <p className="font-mono text-[11px] text-faint">
+                <p className="font-mono text-[12px] text-faint">
                   {t("ordersAndSpend", {
                     orders: c.stats.orders,
                     spent: formatMoney(c.stats.spent),

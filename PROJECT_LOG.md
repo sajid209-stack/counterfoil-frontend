@@ -2187,3 +2187,106 @@ reinvented, so the shortcut and the long way round cannot sell different things.
   the cart at full width, showing the attached person's phone under their name
   — two customers share a name far more often than a phone, so that line is
   what confirms the right record. `AttachedCustomer` gained `phone`/`email`.
+
+---
+
+## UI/UX audit across all 53 routes (2026-09-06)
+
+Owner asked for every page reviewed and fixed until it reads as genuinely
+usable. Measured rather than eyeballed: a harness renders all 53 static routes
+at 390 and 1440 and asks the questions a user would notice, ranked by
+consequence rather than tidiness.
+
+- **A** — the screen lies, breaks or hides something. A clipped number is a
+  *different* number; a raw message key is a broken promise.
+- **B** — the screen is unusable for someone: too small to read, too small to
+  tap, a control that cannot be named.
+
+**1,354 findings → 24**, across four measure-fix-measure passes.
+
+### The big one: 1,184 pieces of text below the 12px floor, on 49 routes
+
+The owner's type spec sets Caption at 12px. Only the dashboard had ever been
+swept to it. Three sizes were in use across 137 sites — 10px (28), 11px (104),
+9px (5) — including money, times, table meta and every status pill.
+
+This was a mechanism problem, not 49 screen problems: **125 sites bumped to
+12px in one pass**, plus the four chart labels the log had already flagged as
+the natural companion to the Inter sweep. Two declared exceptions survive and
+are the only sub-12px text left in the app: the five-tab mobile bars (11px —
+five tabs across 390px is a tab-bar convention, and 14px does not fit) and the
+seat grids (9px on 28px tiles, a spatial diagram where each seat carries a
+full title attribute).
+
+### Content that was being silently swallowed
+
+`main` carries `overflow-x-hidden`, so a document-level scroll check passes
+while content is eaten. Five routes were losing content that way. Each had a
+different mechanism:
+
+| Route | Cause | Fix |
+|---|---|---|
+| `/holds` `/memberships` `/reports/sales` | the **tab strip** could not fit five tabs with counts at 390px | Tabs scrolls instead of overflowing; tabs no longer shrink or wrap |
+| `/customers` | a long e-mail in a **DataTable card** refused to shrink | `min-w-0` + `break-words` on the label/value pair |
+| `/reports/sales` | the wide table's `overflow-x-auto` container had the default `min-width:auto`, so it grew to the table instead of scrolling it | `min-w-0` on the scroller |
+| `/` | a decorative blur, `aria-hidden` and `pointer-events-none`, clipped by design | **not a defect** — the check now ignores decoration |
+
+A tab that has scrolled off is a tab nobody can reach, so this was the worst of
+the set: on a phone, `/holds` simply had no way to reach "Became reservations".
+
+Wide tables now also carry a **scroll affordance** (`.scroll-x-hint`) — cover
+and shadow gradients painted by the scroller itself, so they appear only on the
+side that still has content and vanish at each end. No JS, no scroll listener.
+A container that just cuts its last column looks broken rather than scrollable.
+
+### Controls sized for the hand that uses them
+
+53 controls were under the 44px thumb floor. They now grow for touch and keep
+their density from `md` up, which is the same responsive-by-form-factor rule
+the nav already follows — filters, search fields, pagination, date chips, the
+`Tabs` strip, `Button` size `sm`, and the Go header avatar.
+
+Deliberately **not** padded out: inline links inside sentences ("Design tokens
+→", "Forgot password?"), breadcrumb links, and desktop table sort headers. The
+target-size guideline exempts inline links, and padding them would break the
+prose they sit in. That is what the remaining 24 findings are.
+
+### Controls that could not be named
+
+26 selects and inputs had no accessible name — a screen reader announced "combo
+box" and nothing else. Each filter is now named **by its own first option**,
+which is the one label guaranteed to describe what it filters; date pickers and
+the opening-cash field took explicit names, and `/shift/open`'s visible label
+was **associated** rather than duplicated.
+
+`/pos` and `/login` had no `h1` at all. Both now carry an `sr-only` heading —
+the Go chrome names the screen visually, so this is for assistive tech.
+
+The Go **rail became a `<nav>`** rather than an `<aside>`: it is the primary
+navigation on a tablet in landscape, so it should be a landmark.
+
+### A hydration mismatch, and a lint error that went with it
+
+`/shift/close` warned on every load. `AppearancePicker` computed
+`aria-pressed` from the stored theme, which the server cannot know — so for one
+frame the picker showed the wrong button selected. Both it and `ModeButton` now
+resolve "has the client taken over?" through **`useSyncExternalStore`**, the
+shape `PageShell` already uses for its media query. That also cleared
+`ModeButton`'s pre-existing `react-hooks/set-state-in-effect` error.
+
+### Verified
+
+Four full passes: **1354 → 197 → 86 → 56 → 35 → 24**. Zero findings remain in
+severity A. The 24 in B are the declared inline-link exemptions above.
+
+Standing harnesses all hold: sheet variants on theme, **45 sheet-renders clean**
+across 320/390/430 light, 430 dark and 390 Bangla, badge-overlap zero, type
+**10/10**, dashboard layout **23/23**. `tsc`, `npm run build` and `eslint`
+clean. i18n parity **0 missing / 0 extra**, eight new keys authored in en and bn.
+
+**Harness note for next time:** three checks needed narrowing before they were
+worth trusting — `sr-only` text is *meant* to be clipped to 1×1, decoration
+that is `aria-hidden` + `pointer-events-none` is *meant* to be clipped, and the
+44px floor is a thumb rule that applies on phones, not to a desktop pointer or
+to a link inside a sentence. An audit that cries wolf on its own conventions
+gets ignored.

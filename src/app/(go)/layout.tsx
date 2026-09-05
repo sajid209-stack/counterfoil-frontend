@@ -112,21 +112,21 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
           <Link href="/login" className="flex h-12 shrink-0 items-center">
             <Logo variant="go" size={30} />
           </Link>
-          <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[11px] text-muted sm:block">Fort Main Gate</span>
-          <span className="hidden shrink-0 font-mono text-[11px] text-faint sm:block" title="Shift open for">⏱ 3:24</span>
+          <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[12px] text-muted sm:block">Fort Main Gate</span>
+          <span className="hidden shrink-0 font-mono text-[12px] text-faint sm:block" title="Shift open for">⏱ 3:24</span>
         </div>
         <span className="flex shrink-0 items-center gap-tight">
           <ModeButton />
-          <Link href="/profile" className="flex h-9 w-9 items-center justify-center rounded-full bg-inverse font-mono text-[13px] text-inverse-fg" title="Nadia Islam — my profile">N</Link>
+          <Link href="/profile" className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-full bg-inverse font-mono text-[13px] text-inverse-fg" title="Nadia Islam — my profile">N</Link>
         </span>
       </header>
 
       <div className="flex min-h-0 flex-1">
         {/* Tablet-landscape left rail (88px, icon over label) */}
-        <aside className="sticky top-0 hidden h-[calc(100vh-65px)] w-[88px] shrink-0 flex-col border-r border-line bg-card rail:flex">
+        <nav aria-label="Go navigation" className="sticky top-0 hidden h-[calc(100vh-65px)] w-[88px] shrink-0 flex-col border-r border-line bg-card rail:flex">
           {tabs.map((t) => tabButton(t, true))}
           {moreButton(true)}
-        </aside>
+        </nav>
 
         {/* Content clears the bottom bar (+ home indicator) except in rail mode */}
         <div className="min-w-0 flex-1 pb-[calc(56px+env(safe-area-inset-bottom))] rail:pb-0">{children}</div>
@@ -150,7 +150,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
             <div className="mb-section flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
-                <p className="font-mono text-[11px] text-faint">Fort Main Gate · shift open 3:24</p>
+                <p className="font-mono text-[12px] text-faint">Fort Main Gate · shift open 3:24</p>
               </div>
               <div className="flex items-center gap-tight">
                 <LocaleToggle />

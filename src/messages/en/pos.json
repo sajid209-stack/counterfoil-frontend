@@ -349,5 +349,8 @@
     "reason_full": "Full",
     "reason_closed": "Closed",
     "reason_past": "Past"
-  }
+  },
+  "posTitle": "Point of Sale",
+  "paymentTitle": "Take payment",
+  "signInTitle": "Sign in"
 }

@@ -44,7 +44,7 @@ function Stat({
 }) {
   return (
     <div className="rounded-sm border border-line p-comfortable">
-      <p className="type-label text-[11px] text-muted">{label}</p>
+      <p className="type-label text-[12px] text-muted">{label}</p>
       <p
         className={`mt-inline font-mono text-lg tabular-nums ${
           tone === "warning" ? "text-warning" : "text-fg"

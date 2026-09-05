@@ -26,7 +26,7 @@ export function TicketCard({ data, className }: { data: TicketCardData; classNam
       <div className="rounded-t-md bg-ink px-section pt-major pb-section text-paper print:bg-white print:text-black">
         <div className="flex items-start justify-between gap-section">
           <div className="min-w-0">
-            <p className="type-label text-[11px] text-paper/60 print:text-neutral-500">{data.business}</p>
+            <p className="type-label text-[12px] text-paper/60 print:text-neutral-500">{data.business}</p>
             <p className="mt-tight break-words text-lg font-semibold leading-tight">{data.productName}</p>
             {(data.tierName || data.admitsLabel) && (
               <p className="mt-inline font-mono text-[12px] text-paper/80 print:text-neutral-700">
@@ -55,9 +55,9 @@ export function TicketCard({ data, className }: { data: TicketCardData; classNam
 
       {/* Bottom: the code + gate hint */}
       <div className="rounded-b-md bg-ink px-section pt-section pb-major text-paper print:bg-white print:text-black">
-        <p className="type-label text-[10px] text-paper/60 print:text-neutral-500">{data.referenceLabel}</p>
+        <p className="type-label text-[12px] text-paper/60 print:text-neutral-500">{data.referenceLabel}</p>
         <p className="mt-inline break-all font-mono text-xl tracking-tight">{data.code}</p>
-        <p className="mt-tight font-mono text-[11px] text-paper/60 print:text-neutral-500">{data.gateHint}</p>
+        <p className="mt-tight font-mono text-[12px] text-paper/60 print:text-neutral-500">{data.gateHint}</p>
       </div>
     </div>
   );

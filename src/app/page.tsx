@@ -57,7 +57,7 @@ export default function Home() {
         </div>
 
         {/* Pick a business — admission-ticket cards. */}
-        <p className="type-label mt-hero text-[11px] text-faint">Pick a business to explore</p>
+        <p className="type-label mt-hero text-[12px] text-faint">Pick a business to explore</p>
         <div className="mt-tight grid gap-section sm:grid-cols-2 lg:grid-cols-3">
           {DEMOS.map((d) => (
             <button
@@ -88,7 +88,7 @@ export default function Home() {
               <div className="flex flex-1 flex-col p-section pt-tight">
                 <span className="type-h2 text-base">{d.name}</span>
                 <span className="type-body mt-inline text-[13px] text-muted">{d.tagline}</span>
-                <span className="mt-tight font-mono text-[10px] uppercase leading-relaxed tracking-wide text-faint">{d.types}</span>
+                <span className="mt-tight font-mono text-[12px] uppercase leading-relaxed tracking-wide text-faint">{d.types}</span>
                 <span className="mt-comfortable inline-flex items-center gap-inline text-[13px] font-medium text-ember">
                   Explore <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-quick group-hover:translate-x-0.5" />
                 </span>

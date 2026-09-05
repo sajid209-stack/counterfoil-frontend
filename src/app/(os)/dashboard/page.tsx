@@ -110,7 +110,7 @@ function DeltaPill({ now, then }: { now: number; then: number }) {
   return (
     // Fully-rounded with a diagonal arrow, as the reference draws it — the
     // triangle read as a status marker, the arrow reads as direction.
-    <span className={`inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-[11px] ${up ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
+    <span className={`inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-[12px] ${up ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
       {up ? "↗" : "↘"} {Math.abs(pct)}%
     </span>
   );
@@ -119,6 +119,7 @@ function DeltaPill({ now, then }: { now: number; then: number }) {
 export default function DashboardPage() {
   const router = useRouter();
   const t = useTranslations("dashboard");
+  const tc = useTranslations("common");
   const enumL = useEnumLabels();
   const toast = useToast();
   const op = useApiQuery(() => getOperator(), []);
@@ -564,7 +565,7 @@ export default function DashboardPage() {
       actions={
         <div className="flex items-center gap-tight">
           {locations.length > 1 && (
-            <select value={locationId} onChange={(e) => setLocationId(e.target.value)} className="h-11 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
+            <select aria-label={tc("filterByLocation")} value={locationId} onChange={(e) => setLocationId(e.target.value)} className="h-11 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
               <option value="all">{t("allLocations")}</option>
               {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
@@ -604,7 +605,7 @@ export default function DashboardPage() {
                   </span>
                   <span className="min-w-0 flex-1 text-sm font-medium">{s.label}</span>
                   {done ? (
-                    <span className="text-[11px] text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
+                    <span className="text-[12px] text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
                   ) : (
                     <div className="flex items-center gap-tight">
                       <button type="button" onClick={() => skip(s.key)} className="text-[12px] text-muted hover:text-fg">{t("skip")}</button>
@@ -832,7 +833,7 @@ export default function DashboardPage() {
                           <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
                             <span className="block h-full bg-ember" style={{ width: `${topMax > 0 ? Math.max(4, (row.rev / topMax) * 100) : 0}%` }} />
                           </span>
-                          <span className="shrink-0 whitespace-nowrap text-[11px] text-muted">{t("qtyTimes", { qty: row.qty })}</span>
+                          <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{t("qtyTimes", { qty: row.qty })}</span>
                         </div>
                       </div>
                     </div>
@@ -856,7 +857,7 @@ export default function DashboardPage() {
               <div className="mb-comfortable flex items-center gap-tight">
                 <h2 className="min-w-0 flex-1 truncate text-base font-semibold tracking-[-0.4px]">{t("needsAttention")}</h2>
                 {attention.length > 0 && (
-                  <span className="shrink-0 rounded-full bg-subtle px-tight py-0.5 text-[11px] text-muted">
+                  <span className="shrink-0 rounded-full bg-subtle px-tight py-0.5 text-[12px] text-muted">
                     {attention.length}
                   </span>
                 )}
@@ -978,7 +979,7 @@ export default function DashboardPage() {
                         {a.amount !== null && <span className="shrink-0 whitespace-nowrap">· {formatMoney(a.amount)}</span>}
                       </p>
                     </div>
-                    <span className="shrink-0 whitespace-nowrap text-[11px] text-muted">{a.rel}</span>
+                    <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{a.rel}</span>
                   </div>
                 );
               })}
@@ -1034,7 +1035,7 @@ export default function DashboardPage() {
                             </span>
                           )}
                           {u.state !== "OPEN" && (
-                            <span className="shrink-0 rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight text-[10px] text-muted dark:bg-[repeating-linear-gradient(45deg,#3a3a36,#3a3a36_2px,transparent_2px,transparent_5px)]">{t("full")}</span>
+                            <span className="shrink-0 rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight text-[12px] text-muted dark:bg-[repeating-linear-gradient(45deg,#3a3a36,#3a3a36_2px,transparent_2px,transparent_5px)]">{t("full")}</span>
                           )}
                           {u.adjustable && (
                             <button type="button" onClick={() => setCapModal({ product: u.product, value: u.product.schedule?.dailyCapacity ?? u.product.schedule?.capacityPerSession ?? 0 })} className="shrink-0 text-[13px] font-medium text-muted hover:text-fg">{t("adjust")}</button>

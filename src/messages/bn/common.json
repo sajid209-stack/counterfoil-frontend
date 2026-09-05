@@ -13,5 +13,10 @@
   "confirm": "নিশ্চিত করুন",
   "clear": "মুছুন",
   "language": "ভাষা",
-  "appearance": "চেহারা"
+  "appearance": "চেহারা",
+  "filterByStatus": "স্ট্যাটাস অনুসারে ফিল্টার",
+  "chooseDate": "তারিখ বেছে নিন",
+  "filterByLocation": "অবস্থান অনুসারে ফিল্টার",
+  "dateFrom": "শুরুর তারিখ",
+  "dateTo": "শেষের তারিখ"
 }

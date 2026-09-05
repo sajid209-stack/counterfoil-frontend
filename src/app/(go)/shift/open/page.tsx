@@ -19,8 +19,9 @@ export default function ShiftOpenPage() {
       </div>
 
       <div className="flex flex-col gap-tight">
-        <label className="type-label text-[12px] text-muted">{t("openingCash")}</label>
+        <label htmlFor="opening-cash" className="type-label text-[12px] text-muted">{t("openingCash")}</label>
         <input
+          id="opening-cash"
           inputMode="decimal"
           value={float}
           onChange={(e) => setFloat(e.target.value)}

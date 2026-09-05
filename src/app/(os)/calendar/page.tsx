@@ -57,6 +57,7 @@ const TONE_BAR: Record<EventTone, string> = {
 
 export default function CalendarPage() {
   const t = useTranslations("calendar");
+  const tc = useTranslations("common");
   const router = useRouter();
 
   // Server snapshot true: the desktop grids are the heavier markup, so
@@ -260,7 +261,7 @@ export default function CalendarPage() {
               type="button"
               aria-label={t("previous")}
               onClick={() => step(-1)}
-              className="flex h-9 w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
+              className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
             >
               <ChevronLeft size={16} strokeWidth={1.5} />
             </button>
@@ -268,16 +269,17 @@ export default function CalendarPage() {
               type="button"
               aria-label={t("next")}
               onClick={() => step(1)}
-              className="flex h-9 w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
+              className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
             >
               <ChevronRight size={16} strokeWidth={1.5} />
             </button>
           </div>
           <input
+            aria-label={tc("chooseDate")}
             type="date"
             value={isoDate(cursor)}
             onChange={(e) => e.target.value && setCursor(startOfDay(new Date(`${e.target.value}T12:00:00`)))}
-            className="h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
+            className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
           />
         </div>
       }
@@ -303,7 +305,7 @@ export default function CalendarPage() {
               value={bookingFilter}
               onChange={(e) => setBookingFilter(e.target.value)}
               aria-label={t("filterBooking")}
-              className="h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
+              className="h-11 md:h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
             >
               <option value="all">{t("allBookings")}</option>
               {[...products].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
@@ -315,7 +317,7 @@ export default function CalendarPage() {
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               aria-label={t("filterCategory")}
-              className="h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
+              className="h-11 md:h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
             >
               <option value="all">{t("allCategories")}</option>
               {categories.map((c) => (
@@ -328,7 +330,7 @@ export default function CalendarPage() {
                 value={ownerFilter}
                 onChange={(e) => setOwnerFilter(e.target.value)}
                 aria-label={t("filterOwner")}
-                className="h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
+                className="h-11 md:h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
               >
                 <option value="all">{t("allOwners")}</option>
                 {resources.map((r) => (
@@ -361,7 +363,7 @@ export default function CalendarPage() {
                 >
                   <span className={`h-3 w-3 rounded-xs border border-line border-l-[3px] ${TONE_BAR[tone]} ${on ? "" : "opacity-40"}`} />
                   {t(TONE_KEY[tone])}
-                  <span className="font-mono text-[11px] text-muted">{toneCounts[tone]}</span>
+                  <span className="font-mono text-[12px] text-muted">{toneCounts[tone]}</span>
                 </button>
               );
             })}
@@ -375,7 +377,7 @@ export default function CalendarPage() {
                 key={g}
                 type="button"
                 onClick={() => setGroupBy(g)}
-                className={`h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
+                className={`h-11 md:h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
                   groupBy === g
                     ? "border-ember bg-ember/10 text-brand-foreground"
                     : "border-line text-muted hover:bg-subtle"

@@ -352,7 +352,7 @@ export default function OrderDetailPage() {
                 [...(o.history ?? [])].reverse().map((h, i) => (
                   <div key={i} className="border-b border-line py-tight text-[13px] last:border-0">
                     <p>{h.text}</p>
-                    <p className="mt-inline font-mono text-[11px] text-faint">{formatDateTime(h.at)} · {h.who}</p>
+                    <p className="mt-inline font-mono text-[12px] text-faint">{formatDateTime(h.at)} · {h.who}</p>
                   </div>
                 ))
               )}
@@ -364,7 +364,7 @@ export default function OrderDetailPage() {
                 [...(o.notes ?? [])].reverse().map((n, i) => (
                   <div key={i} className="border-b border-line py-tight text-[13px] last:border-0">
                     <p>{n.text}</p>
-                    <p className="mt-inline font-mono text-[11px] text-faint">{formatDateTime(n.at)} · {n.who}</p>
+                    <p className="mt-inline font-mono text-[12px] text-faint">{formatDateTime(n.at)} · {n.who}</p>
                   </div>
                 ))
               )}
@@ -533,7 +533,7 @@ export default function OrderDetailPage() {
                       className={`flex h-12 flex-col items-center justify-center rounded-sm border font-mono text-[13px] ${moveTime === s.time ? "border-inverse bg-inverse text-inverse-fg" : fits ? "border-line bg-card" : "border-line bg-subtle text-faint"}`}
                     >
                       {s.time}
-                      <span className="text-[10px]">{fits ? t("slotLeft", { count: s.remaining }) : t("slotFull")}</span>
+                      <span className="text-[12px]">{fits ? t("slotLeft", { count: s.remaining }) : t("slotFull")}</span>
                     </button>
                   );
                 })}

@@ -59,7 +59,7 @@ export function ImageUploadField({
           className="flex h-24 w-24 flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-line text-faint hover:border-inverse hover:text-fg"
         >
           <ImagePlus size={20} strokeWidth={1.5} />
-          <span className="text-[11px]">Add</span>
+          <span className="text-[12px]">Add</span>
         </button>
         <input
           ref={inputRef}

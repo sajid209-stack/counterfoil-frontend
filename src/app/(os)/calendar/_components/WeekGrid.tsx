@@ -87,7 +87,7 @@ export function WeekGrid({
                   onPickDay && "transition-colors duration-quick hover:bg-subtle",
                 )}
               >
-                <span className="type-label text-[10px] text-muted">{label.weekday}</span>
+                <span className="type-label text-[12px] text-muted">{label.weekday}</span>
                 <span
                   className={cn(
                     "flex h-6 w-6 items-center justify-center rounded-full font-mono text-[12px]",
@@ -103,7 +103,7 @@ export function WeekGrid({
 
         {allDay.length > 0 && (
           <div className="flex border-b border-line bg-subtle/50">
-            <div className={cn(gutter, "shrink-0 border-r border-line py-tight text-center font-mono text-[10px] text-faint")}>
+            <div className={cn(gutter, "shrink-0 border-r border-line py-tight text-center font-mono text-[12px] text-faint")}>
               all day
             </div>
             {days.map((d) => (
@@ -116,7 +116,7 @@ export function WeekGrid({
                       type="button"
                       onClick={onSelect ? () => onSelect(e) : undefined}
                       className={cn(
-                        "mb-0.5 block w-full truncate rounded-xs border px-tight py-0.5 text-left text-[10px]",
+                        "mb-0.5 block w-full truncate rounded-xs border px-tight py-0.5 text-left text-[12px]",
                         TONE_CLASS[e.tone],
                       )}
                     >
@@ -135,7 +135,7 @@ export function WeekGrid({
             {hours.map((h) => (
               <span
                 key={h}
-                className="absolute right-tight -translate-y-1/2 font-mono text-[11px] text-muted"
+                className="absolute right-tight -translate-y-1/2 font-mono text-[12px] text-muted"
                 style={{ top: `${((h * 60 - openMin) / span) * 100}%` }}
               >
                 {String(h).padStart(2, "0")}
@@ -180,7 +180,7 @@ export function WeekGrid({
                   <button
                     type="button"
                     onClick={onPickDay ? () => onPickDay(d) : undefined}
-                    className="absolute z-10 overflow-hidden rounded-xs border border-strong bg-subtle px-1 text-left text-[10px] font-medium text-muted"
+                    className="absolute z-10 overflow-hidden rounded-xs border border-strong bg-subtle px-1 text-left text-[12px] font-medium text-muted"
                     style={{
                       top: `${((overflowTop - openMin) / span) * 100}%`,
                       height: `calc(${((overflowBottom - overflowTop) / span) * 100}% - 2px)`,
@@ -213,12 +213,12 @@ export function WeekGrid({
                         width: `calc(${(1 / Math.min(lanes, maxLanes)) * 100}% - 2px)`,
                       }}
                     >
-                      <span className="flex items-center gap-0.5 truncate text-[10px] font-medium leading-tight">
+                      <span className="flex items-center gap-0.5 truncate text-[12px] font-medium leading-tight">
                         {event.locked && <Lock size={8} strokeWidth={2.5} className="shrink-0" />}
                         {event.title}
                       </span>
                       {!compact && (
-                        <span className="block truncate font-mono text-[9px] leading-tight opacity-70">
+                        <span className="block truncate font-mono text-[12px] leading-tight opacity-70">
                           {hhmm(event.start)}
                         </span>
                       )}

@@ -101,6 +101,7 @@ function SalesReportInner() {
   const params = useSearchParams();
   const toast = useToast();
   const t = useTranslations("reports");
+  const tc = useTranslations("common");
   const enumL = useEnumLabels();
 
   // URL → state on first load: a filtered view is shareable.
@@ -228,21 +229,21 @@ function SalesReportInner() {
     toast.success(t("csvExported"));
   };
 
-  const selectCls = "h-9 rounded-sm border border-line bg-card px-tight text-[13px] outline-none focus:border-inverse";
+  const selectCls = "h-11 md:h-9 rounded-sm border border-line bg-card px-tight text-[13px] outline-none focus:border-inverse";
   const money = (v: number) => formatMoney(v);
 
   const filterControl = (k: FilterKey) => {
     const v = (filters as unknown as Record<string, string | undefined>)[k] ?? "";
     const on = (val: string) => set(k, val || undefined);
     switch (k) {
-      case "locationId": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyLocation")}</option>{(locationsQ.data?.data ?? []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select>;
-      case "counterId": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyCounter")}</option>{(countersQ.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>;
-      case "staffId": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyone")}</option>{(staffQ.data?.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>;
-      case "productId": return <select value={v} onChange={(e) => on(e.target.value)} className={`${selectCls} max-w-48`}><option value="">{t("filters.anyProduct")}</option>{(productsQ.data?.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>;
-      case "categoryId": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyCategory")}</option>{(categoriesQ.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>;
-      case "method": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyMethod")}</option><option value="cash">{enumL.method("cash")}</option><option value="bkash">{enumL.method("bkash")}</option><option value="bangla_qr">{enumL.method("bangla_qr")}</option><option value="card_terminal">{enumL.method("card_terminal")}</option></select>;
-      case "status": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyStatus")}</option><option value="completed">{enumL.status("completed")}</option><option value="refunded">{enumL.status("refunded")}</option><option value="partly_refunded">{enumL.status("partly_refunded")}</option><option value="void">{enumL.status("void")}</option></select>;
-      case "channel": return <select value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyChannel")}</option><option value="counter">{t("channel.counter")}</option><option value="online">{t("channel.online")}</option></select>;
+      case "locationId": return <select aria-label={t("filters.anyLocation")} value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyLocation")}</option>{(locationsQ.data?.data ?? []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select>;
+      case "counterId": return <select aria-label={t("filters.anyCounter")} value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyCounter")}</option>{(countersQ.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>;
+      case "staffId": return <select aria-label={t("filters.anyone")} value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyone")}</option>{(staffQ.data?.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>;
+      case "productId": return <select aria-label={t("filters.anyProduct")} value={v} onChange={(e) => on(e.target.value)} className={`${selectCls} max-w-48`}><option value="">{t("filters.anyProduct")}</option>{(productsQ.data?.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>;
+      case "categoryId": return <select aria-label={t("filters.anyCategory")} value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyCategory")}</option>{(categoriesQ.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>;
+      case "method": return <select aria-label={t("filters.anyMethod")} value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyMethod")}</option><option value="cash">{enumL.method("cash")}</option><option value="bkash">{enumL.method("bkash")}</option><option value="bangla_qr">{enumL.method("bangla_qr")}</option><option value="card_terminal">{enumL.method("card_terminal")}</option></select>;
+      case "status": return <select aria-label={t("filters.anyStatus")} value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyStatus")}</option><option value="completed">{enumL.status("completed")}</option><option value="refunded">{enumL.status("refunded")}</option><option value="partly_refunded">{enumL.status("partly_refunded")}</option><option value="void">{enumL.status("void")}</option></select>;
+      case "channel": return <select aria-label={t("filters.anyChannel")} value={v} onChange={(e) => on(e.target.value)} className={selectCls}><option value="">{t("filters.anyChannel")}</option><option value="counter">{t("channel.counter")}</option><option value="online">{t("channel.online")}</option></select>;
       case "minA": return <input type="number" placeholder={t("filters.minPlaceholder")} value={v} onChange={(e) => on(e.target.value)} className={`${selectCls} w-24`} />;
       case "maxA": return <input type="number" placeholder={t("filters.maxPlaceholder")} value={v} onChange={(e) => on(e.target.value)} className={`${selectCls} w-24`} />;
       case "customer": return <input placeholder={t("filters.customerPlaceholder")} value={v} onChange={(e) => on(e.target.value)} className={`${selectCls} w-40`} />;
@@ -264,36 +265,36 @@ function SalesReportInner() {
       <div className="mb-section card-surface p-comfortable">
         <div className="flex flex-wrap items-center gap-tight">
           {PRESETS.map((p) => (
-            <button key={p.value} type="button" onClick={() => setPreset(p.value)} className={`h-9 rounded-sm border px-tight text-[13px] ${filters.preset === p.value ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{t(`presets.${p.value}`)}</button>
+            <button key={p.value} type="button" onClick={() => setPreset(p.value)} className={`h-11 md:h-9 rounded-sm border px-tight text-[13px] ${filters.preset === p.value ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{t(`presets.${p.value}`)}</button>
           ))}
-          <button type="button" onClick={() => setPreset("custom")} className={`h-9 rounded-sm border px-tight text-[13px] ${filters.preset === "custom" ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{t("custom")}</button>
+          <button type="button" onClick={() => setPreset("custom")} className={`h-11 md:h-9 rounded-sm border px-tight text-[13px] ${filters.preset === "custom" ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{t("custom")}</button>
           {filters.preset === "custom" && (
             <span className="flex items-center gap-inline">
-              <input type="date" value={filters.from} onChange={(e) => set("from", e.target.value)} className={selectCls} />
+              <input aria-label={tc("dateFrom")} type="date" value={filters.from} onChange={(e) => set("from", e.target.value)} className={selectCls} />
               <span className="text-faint">→</span>
-              <input type="date" value={filters.to} onChange={(e) => set("to", e.target.value)} className={selectCls} />
+              <input aria-label={tc("dateTo")} type="date" value={filters.to} onChange={(e) => set("to", e.target.value)} className={selectCls} />
             </span>
           )}
           <input value={filters.q ?? ""} onChange={(e) => set("q", e.target.value || undefined)} placeholder={t("search")} className={`${selectCls} w-64`} />
           <span className="flex-1" />
           {views.length > 0 && (
-            <select value="" onChange={(e) => { const v = views.find((x) => x.name === e.target.value); if (v) applyView(v.qs); }} className={selectCls}>
+            <select aria-label={t("savedViews.dropdown")} value="" onChange={(e) => { const v = views.find((x) => x.name === e.target.value); if (v) applyView(v.qs); }} className={selectCls}>
               <option value="">{t("savedViews.dropdown")}</option>
               {views.map((v) => <option key={v.name} value={v.name}>{v.name}</option>)}
             </select>
           )}
-          <button type="button" onClick={() => setSaveOpen(true)} className="h-9 rounded-sm border border-line px-tight text-[13px] text-muted hover:text-fg">{t("savedViews.save")}</button>
+          <button type="button" onClick={() => setSaveOpen(true)} className="h-11 md:h-9 rounded-sm border border-line px-tight text-[13px] text-muted hover:text-fg">{t("savedViews.save")}</button>
         </div>
         <div className="mt-tight flex flex-wrap items-center gap-tight">
           {added.map((k) => (
             <span key={k} className="flex items-center gap-inline rounded-lg border border-line bg-subtle py-inline pl-tight pr-inline">
-              <span className="text-[11px] uppercase tracking-wide text-faint">{t(`filters.${k}`)}</span>
+              <span className="text-[12px] uppercase tracking-wide text-faint">{t(`filters.${k}`)}</span>
               {filterControl(k)}
               <button type="button" aria-label={t("filters.remove", { label: t(`filters.${k}`) })} onClick={() => removeFilter(k)} className="text-faint hover:text-danger"><X size={14} strokeWidth={1.5} /></button>
             </span>
           ))}
           {added.length < FILTER_DEFS.length && (
-            <select value="" onChange={(e) => { const k = e.target.value as FilterKey; if (k) setAdded((a) => [...a, k]); }} className={`${selectCls} text-muted`}>
+            <select aria-label={t("addFilter")} value="" onChange={(e) => { const k = e.target.value as FilterKey; if (k) setAdded((a) => [...a, k]); }} className={`${selectCls} text-muted`}>
               <option value="">{t("addFilter")}</option>
               {FILTER_DEFS.filter((d) => !added.includes(d.key)).map((d) => <option key={d.key} value={d.key}>{t(`filters.${d.key}`)}</option>)}
             </select>
@@ -310,7 +311,7 @@ function SalesReportInner() {
       />
 
       {tab === "transactions" && (
-        <div className="overflow-x-auto card-surface">
+        <div className="min-w-0 overflow-x-auto card-surface scroll-x-hint">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-line">
@@ -319,7 +320,7 @@ function SalesReportInner() {
                   ["time", t("columns.time"), true], ["reference", t("columns.reference"), false], ["items", t("columns.items"), false], ["customer", t("columns.customer"), false],
                   ["staff", t("columns.staff"), false], ["counter", t("columns.counter"), false], ["method", t("columns.method"), false], ["amount", t("columns.net"), true], ["status", t("columns.status"), true],
                 ] as const).map(([key, label, sortable]) => (
-                  <th key={key} className={`type-label whitespace-nowrap px-comfortable py-tight text-left text-[11px] text-muted ${key === "amount" ? "text-right" : ""}`}>
+                  <th key={key} className={`type-label whitespace-nowrap px-comfortable py-tight text-left text-[12px] text-muted ${key === "amount" ? "text-right" : ""}`}>
                     {sortable ? (
                       <button type="button" onClick={() => setSort((s) => ({ field: key as typeof s.field, dir: s.field === key && s.dir === "desc" ? "asc" : "desc" }))} className="uppercase tracking-wide hover:text-fg">
                         {label}{sort.field === key ? (sort.dir === "asc" ? " ↑" : " ↓") : ""}
@@ -363,12 +364,12 @@ function SalesReportInner() {
               <p className="mt-tight font-mono text-3xl tabular-nums">{outstanding.length}</p>
             </div>
           </div>
-          <div className="overflow-x-auto card-surface">
+          <div className="min-w-0 overflow-x-auto card-surface scroll-x-hint">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-line">
                   {([["reference", "left"], ["customer", "left"], ["time", "left"], ["total", "right"], ["paid", "right"], ["owed", "right"]] as const).map(([key, align]) => (
-                    <th key={key} className={`type-label whitespace-nowrap px-comfortable py-tight text-[11px] text-muted text-${align}`}>{t(`outstanding.col.${key}`)}</th>
+                    <th key={key} className={`type-label whitespace-nowrap px-comfortable py-tight text-[12px] text-muted text-${align}`}>{t(`outstanding.col.${key}`)}</th>
                   ))}
                 </tr>
               </thead>
@@ -405,7 +406,7 @@ function SalesReportInner() {
                 <div key={key} className={card}>
                   <p className="type-label text-[12px] text-faint">{label}</p>
                   <p className="mt-tight whitespace-nowrap font-mono text-2xl tabular-nums">{v == null ? "—" : key === "tickets" ? String(v) : formatMoney(v as number)}</p>
-                  {pv != null && v != null && <p className="mt-inline font-mono text-[11px] text-faint">{t("summary.vsPrev", { delta: d(v as number, pv as number) })}</p>}
+                  {pv != null && v != null && <p className="mt-inline font-mono text-[12px] text-faint">{t("summary.vsPrev", { delta: d(v as number, pv as number) })}</p>}
                 </div>
               ))}
             </div>
@@ -415,9 +416,9 @@ function SalesReportInner() {
               onChange={(v) => setGroupBy(v as SalesGroupBy)}
               className="mb-section"
             />
-            <div className="overflow-x-auto card-surface">
+            <div className="min-w-0 overflow-x-auto card-surface scroll-x-hint">
               <table className="w-full text-sm">
-                <thead><tr className="border-b border-line">{[t("columns.name"), t("columns.tickets"), t("columns.gross"), t("columns.refunds"), t("columns.net"), t("columns.shareOfTotal")].map((h, i) => <th key={h} className={`type-label px-comfortable py-tight text-[11px] uppercase tracking-wide text-muted ${i === 0 ? "text-left" : "text-right"}`}>{h}</th>)}</tr></thead>
+                <thead><tr className="border-b border-line">{[t("columns.name"), t("columns.tickets"), t("columns.gross"), t("columns.refunds"), t("columns.net"), t("columns.shareOfTotal")].map((h, i) => <th key={h} className={`type-label px-comfortable py-tight text-[12px] uppercase tracking-wide text-muted ${i === 0 ? "text-left" : "text-right"}`}>{h}</th>)}</tr></thead>
                 <tbody>
                   {(summaryQ.data?.rows ?? []).map((r) => (
                     <tr
@@ -455,8 +456,8 @@ function SalesReportInner() {
           <div className="flex flex-col gap-tight">
             <div className={card}>
               <div className="mb-tight flex items-center justify-between">
-                <p className="type-label text-[11px] text-muted">{t("charts.revenueOverTime")} <span className="normal-case text-faint">{t("charts.revenueOverTimeNote")}</span></p>
-                <select value={gran} onChange={(e) => setGran(e.target.value as typeof gran)} className={selectCls}>
+                <p className="type-label text-[12px] text-muted">{t("charts.revenueOverTime")} <span className="normal-case text-faint">{t("charts.revenueOverTimeNote")}</span></p>
+                <select aria-label={t("charts.auto")} value={gran} onChange={(e) => setGran(e.target.value as typeof gran)} className={selectCls}>
                   <option value="auto">{t("charts.auto")}</option><option value="hour">{t("charts.hourly")}</option><option value="day">{t("charts.daily")}</option><option value="week">{t("charts.weekly")}</option>
                 </select>
               </div>
@@ -465,15 +466,15 @@ function SalesReportInner() {
 
             <div className="grid gap-tight lg:grid-cols-3">
               <div className={card}>
-                <p className="type-label mb-tight text-[11px] text-muted">{t("charts.salesByHour")}</p>
+                <p className="type-label mb-tight text-[12px] text-muted">{t("charts.salesByHour")}</p>
                 {anQ.loading ? chartSkeleton : hasData(a?.hour_of_day) ? <BarChart points={a!.hour_of_day!} fmt={money} /> : emptyChart}
               </div>
               <div className={card}>
-                <p className="type-label mb-tight text-[11px] text-muted">{t("charts.salesByDay")}</p>
+                <p className="type-label mb-tight text-[12px] text-muted">{t("charts.salesByDay")}</p>
                 {anQ.loading ? chartSkeleton : hasData(a?.day_of_week) ? <BarChart points={a!.day_of_week!} fmt={money} /> : emptyChart}
               </div>
               <div className={card}>
-                <p className="type-label mb-tight text-[11px] text-muted">{t("charts.paymentMix")}</p>
+                <p className="type-label mb-tight text-[12px] text-muted">{t("charts.paymentMix")}</p>
                 {anQ.loading ? chartSkeleton : hasData(a?.payment_mix) ? <DonutChart points={a!.payment_mix!} fmt={money} /> : emptyChart}
               </div>
             </div>
@@ -481,21 +482,21 @@ function SalesReportInner() {
             {/* The distinctive ones — only a system that owns the sale AND the scan can draw these. */}
             <div className="grid gap-tight lg:grid-cols-3">
               <div className={card}>
-                <p className="type-label mb-tight text-[11px] text-muted">{t("charts.capacityUtilisation")}</p>
+                <p className="type-label mb-tight text-[12px] text-muted">{t("charts.capacityUtilisation")}</p>
                 {anQ.loading ? chartSkeleton : hasData(a?.capacity_utilisation) ? <LineChart points={a!.capacity_utilisation!} fmt={(v) => `${v}%`} height={120} /> : emptyChart}
               </div>
               <div className={card}>
-                <p className="type-label mb-tight text-[11px] text-muted">{t("charts.noShowRate")}</p>
+                <p className="type-label mb-tight text-[12px] text-muted">{t("charts.noShowRate")}</p>
                 {anQ.loading ? chartSkeleton : hasData(a?.no_show_rate) ? <LineChart points={a!.no_show_rate!} fmt={(v) => `${v}%`} height={120} /> : emptyChart}
               </div>
               <div className={card}>
-                <p className="type-label mb-tight text-[11px] text-muted">{t("charts.leadTime")}</p>
+                <p className="type-label mb-tight text-[12px] text-muted">{t("charts.leadTime")}</p>
                 {anQ.loading ? chartSkeleton : hasData(a?.lead_time) ? <BarChart points={a!.lead_time!} fmt={(v) => (v === 1 ? t("charts.bookings", { count: v }) : t("charts.bookingsPlural", { count: v }))} /> : emptyChart}
               </div>
             </div>
 
             <div className={card}>
-              <p className="type-label mb-tight text-[11px] text-muted">{t("charts.topProducts")}</p>
+              <p className="type-label mb-tight text-[12px] text-muted">{t("charts.topProducts")}</p>
               {anQ.loading ? chartSkeleton : hasData(a?.top_products) ? <HBarChart points={a!.top_products!} fmt={money} /> : emptyChart}
             </div>
           </div>

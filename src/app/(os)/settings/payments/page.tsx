@@ -104,14 +104,14 @@ export default function MoneySetupPage() {
                     </div>
                     <div className="mt-inline text-[12px] text-faint">{t(`provider.${provider}Helper`)} · {t(`posture.${posture}`)}</div>
                     {acct && (
-                      <div className="mt-tight flex flex-wrap gap-x-major gap-y-inline font-mono text-[11px]">
+                      <div className="mt-tight flex flex-wrap gap-x-major gap-y-inline font-mono text-[12px]">
                         <span className={acct.chargesEnabled ? "text-success" : "text-faint"}>{t("accounts.charges")}: {acct.chargesEnabled ? t("accounts.enabled") : t("accounts.off")}</span>
                         <span className={acct.payoutsEnabled ? "text-success" : "text-faint"}>{t("accounts.payouts")}: {acct.payoutsEnabled ? t("accounts.enabled") : t("accounts.off")}</span>
                       </div>
                     )}
                     {acct && acct.requirementsDue.length > 0 && (
                       <div className="mt-tight flex flex-col gap-inline">
-                        <span className="type-label text-[10px] text-warning">{t("accounts.requirementsDue")}</span>
+                        <span className="type-label text-[12px] text-warning">{t("accounts.requirementsDue")}</span>
                         {acct.requirementsDue.map((r) => (
                           <span key={r} className="flex items-center gap-inline text-[12px] text-muted"><CircleAlert size={13} strokeWidth={1.5} className="text-warning" />{t(`requirement.${r}`)}</span>
                         ))}

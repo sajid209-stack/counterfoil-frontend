@@ -107,7 +107,7 @@ export function DayGrid({
                 {hours.slice(0, -1).map((h) => (
                   <span
                     key={h}
-                    className="absolute right-tight -translate-y-1/2 font-mono text-[11px] text-muted"
+                    className="absolute right-tight -translate-y-1/2 font-mono text-[12px] text-muted"
                     style={{ top: `${pct(h * 60)}%` }}
                   >
                     {String(h).padStart(2, "0")}
@@ -158,12 +158,12 @@ export function DayGrid({
                         width: `calc(${(1 / across) * 100}% - 2px)`,
                       }}
                     >
-                      <span className="flex items-center gap-0.5 truncate text-[11px] font-medium leading-tight">
+                      <span className="flex items-center gap-0.5 truncate text-[12px] font-medium leading-tight">
                         {event.locked && <Lock size={9} strokeWidth={2.5} className="shrink-0" />}
                         {event.title}
                       </span>
                       {tall > 30 && (
-                        <span className="block truncate font-mono text-[10px] leading-tight opacity-70">
+                        <span className="block truncate font-mono text-[12px] leading-tight opacity-70">
                           {hhmm(event.start)}
                           {owner ? ` · ${owner}` : ""}
                         </span>
@@ -192,7 +192,7 @@ export function DayGrid({
               <span
                 key={h}
                 className={cn(
-                  "absolute top-1.5 font-mono text-[11px] text-muted",
+                  "absolute top-1.5 font-mono text-[12px] text-muted",
                   // Centring the end labels would push them outside the track
                   // and clip them against the gutter.
                   i === 0 ? "translate-x-0" : i === hours.length - 1 ? "-translate-x-full" : "-translate-x-1/2",
@@ -219,7 +219,7 @@ export function DayGrid({
                 {lane.note && (
                   <span
                     className={cn(
-                      "mt-0.5 break-words text-[11px] leading-tight",
+                      "mt-0.5 break-words text-[12px] leading-tight",
                       lane.blocked ? "text-danger" : "text-muted",
                     )}
                   >
@@ -277,12 +277,12 @@ export function DayGrid({
                         height: height - 2,
                       }}
                     >
-                      <span className="flex items-center gap-0.5 truncate text-[11px] font-medium leading-tight">
+                      <span className="flex items-center gap-0.5 truncate text-[12px] font-medium leading-tight">
                         {event.locked && <Lock size={9} strokeWidth={2.5} className="shrink-0" />}
                         {event.title}
                       </span>
                       {height > 28 && event.subtitle && (
-                        <span className="block truncate font-mono text-[10px] leading-tight opacity-70">
+                        <span className="block truncate font-mono text-[12px] leading-tight opacity-70">
                           {hhmm(event.start)} · {event.subtitle}
                         </span>
                       )}

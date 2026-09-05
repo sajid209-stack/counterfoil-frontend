@@ -86,7 +86,7 @@ export function PricingRulesField({
       {/* Visual day timeline */}
       <div className="card-surface p-comfortable">
         <div className="relative h-14 overflow-hidden rounded-xs bg-subtle">
-          <span className="pointer-events-none absolute inset-0 grid place-items-center text-[11px] text-muted">
+          <span className="pointer-events-none absolute inset-0 grid place-items-center text-[12px] text-muted">
             Base · {base > 0 ? formatMoney(base, currency) : "—"}
           </span>
           {rules.map((r, i) => {
@@ -105,13 +105,13 @@ export function PricingRulesField({
                   sel === i && "ring-2 ring-inverse",
                 )}
               >
-                <span className="truncate font-mono text-[11px] font-medium">{r.price ? formatMoney(toMinor(r.price), currency) : "—"}</span>
-                <span className="truncate text-[9px] opacity-80">{r.fromTime}</span>
+                <span className="truncate font-mono text-[12px] font-medium">{r.price ? formatMoney(toMinor(r.price), currency) : "—"}</span>
+                <span className="truncate text-[12px] opacity-80">{r.fromTime}</span>
               </button>
             );
           })}
         </div>
-        <div className="mt-inline flex justify-between font-mono text-[10px] text-faint">
+        <div className="mt-inline flex justify-between font-mono text-[12px] text-faint">
           {ticks.map((m, i) => <span key={i}>{fmtMin(m)}</span>)}
         </div>
       </div>
@@ -128,18 +128,18 @@ export function PricingRulesField({
           >
             <div className="flex flex-wrap gap-inline">
               {DAY_LABELS.map((label, d) => (
-                <button key={d} type="button" onClick={(e) => { e.stopPropagation(); toggleDay(i, d); }} className={cn("h-8 w-8 rounded-xs border text-[11px]", rule.days.includes(d) ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted")}>{label}</button>
+                <button key={d} type="button" onClick={(e) => { e.stopPropagation(); toggleDay(i, d); }} className={cn("h-8 w-8 rounded-xs border text-[12px]", rule.days.includes(d) ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted")}>{label}</button>
               ))}
-              <span className="ml-inline self-center text-[11px] text-faint">{rule.days.length ? "" : "any day"}</span>
+              <span className="ml-inline self-center text-[12px] text-faint">{rule.days.length ? "" : "any day"}</span>
             </div>
             <div className="flex flex-wrap items-end gap-tight">
               <FormField label="From" value={rule.fromTime} onChange={(e) => update(i, { fromTime: e.target.value })} />
               <FormField label="To" value={rule.toTime} onChange={(e) => update(i, { toTime: e.target.value })} />
               <FormField label={`Price (${currency})`} variant="number" value={rule.price} onChange={(e) => update(i, { price: e.target.value })} />
               <div className="flex items-center gap-inline pb-inline">
-                <button type="button" aria-label="Earlier in order" onClick={(e) => { e.stopPropagation(); move(i, -1); }} disabled={i === 0} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line disabled:text-faint"><ChevronUp size={16} strokeWidth={1.5} /></button>
-                <button type="button" aria-label="Later in order" onClick={(e) => { e.stopPropagation(); move(i, 1); }} disabled={i === rules.length - 1} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line disabled:text-faint"><ChevronDown size={16} strokeWidth={1.5} /></button>
-                <button type="button" aria-label="Remove band" onClick={(e) => { e.stopPropagation(); remove(i); }} className="flex h-9 w-9 items-center justify-center rounded-sm border border-line text-danger"><Trash2 size={16} strokeWidth={1.5} /></button>
+                <button type="button" aria-label="Earlier in order" onClick={(e) => { e.stopPropagation(); move(i, -1); }} disabled={i === 0} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line disabled:text-faint"><ChevronUp size={16} strokeWidth={1.5} /></button>
+                <button type="button" aria-label="Later in order" onClick={(e) => { e.stopPropagation(); move(i, 1); }} disabled={i === rules.length - 1} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line disabled:text-faint"><ChevronDown size={16} strokeWidth={1.5} /></button>
+                <button type="button" aria-label="Remove band" onClick={(e) => { e.stopPropagation(); remove(i); }} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-danger"><Trash2 size={16} strokeWidth={1.5} /></button>
               </div>
             </div>
           </div>
@@ -148,7 +148,7 @@ export function PricingRulesField({
 
       {(rules.length > 0 || base > 0) && (
         <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="type-label text-[11px] text-faint">Preview</p>
+          <p className="type-label text-[12px] text-faint">Preview</p>
           <p className="mt-inline flex flex-wrap gap-section font-mono text-[12px]">
             {EXAMPLES.map(([label, dow, time]) => (
               <span key={label}>{label} → <span className="font-medium">{formatMoney(resolveRulePrice(rulesMinor, dow, time, base), currency)}</span></span>
