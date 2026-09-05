@@ -329,5 +329,20 @@
     "freeOfTotal": "{free} of {total} free",
     "startsOn": "Starts {date}",
     "providersFree": "{free} of {total} free"
+  },
+  "repeat": {
+    "title": "Repeat weekly",
+    "once": "Just this one",
+    "weeks": "{count} weeks",
+    "more": "More weeks",
+    "fewer": "Fewer weeks",
+    "datesCount": "{count} dates",
+    "addDates": "Add {count} dates — {amount}",
+    "summary": "{count} dates · {amount}",
+    "summarySkipping": "{count} dates · {amount} — skipping {skipped} already taken",
+    "reason_taken": "Booked",
+    "reason_full": "Full",
+    "reason_closed": "Closed",
+    "reason_past": "Past"
   }
 }

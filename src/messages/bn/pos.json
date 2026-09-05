@@ -329,5 +329,20 @@
     "freeOfTotal": "{free}/{total} খালি",
     "startsOn": "শুরু {date}",
     "providersFree": "{free}/{total} জন খালি"
+  },
+  "repeat": {
+    "title": "সাপ্তাহিক পুনরাবৃত্তি",
+    "once": "শুধু এইটি",
+    "weeks": "{count} সপ্তাহ",
+    "more": "আরও সপ্তাহ",
+    "fewer": "কম সপ্তাহ",
+    "datesCount": "{count}টি তারিখ",
+    "addDates": "{count}টি তারিখ যোগ করুন — {amount}",
+    "summary": "{count}টি তারিখ · {amount}",
+    "summarySkipping": "{count}টি তারিখ · {amount} — {skipped}টি আগেই বুক হয়ে গেছে, বাদ যাচ্ছে",
+    "reason_taken": "বুক হয়ে গেছে",
+    "reason_full": "পূর্ণ",
+    "reason_closed": "বন্ধ",
+    "reason_past": "অতীত"
   }
 }

@@ -7,6 +7,7 @@ import { Avatar, BlockedNotice, Button, ChoiceCard, FormField, ProductThumb, Res
 import { availableSeats } from "@/lib/api";
 import { SessionList } from "./SessionList";
 import { SlotMatrix } from "./SlotMatrix";
+import { RepeatPicker } from "./RepeatPicker";
 import { useApiQuery } from "@/lib/useApi";
 import {
   applyResourceRate,
@@ -32,6 +33,7 @@ import { DEMO_TODAY, isFlexibleResource, isResourceType, isSlotBased, needsSched
 import { resolveProductPrice } from "@/lib/pricing";
 import { durationOptions, formatDuration, formatDurationShort, priceSegments, productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
+import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
 import { formatMoney } from "@/lib/format";
 
 export interface CartEntry {
@@ -367,7 +369,8 @@ export function ProductSheet({
     );
   };
 
-  const submitTiered = () => {
+  const submitTiered = (onDate?: string) => {
+    const when = onDate ?? date;
     const list = sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: s.name, price: s.price, donation: false })) : activeTiers.map((t) => ({ id: t.id, name: t.name, price: t.price, donation: !!t.donation }));
     const items = [...list.filter((x) => qty[x.id] > 0).map((x) => ({ tierId: x.id, tierName: x.name, unitPrice: x.donation ? Math.max(x.price, donationAmt[x.id] ?? x.price) : x.price, qty: qty[x.id] })), ...addOnItems()];
     // Owner of the session's capacity: the chosen guide or assigned provider.
@@ -377,11 +380,11 @@ export function ProductSheet({
     }
     const minutes = provider ? providerDuration : (product.schedule?.sessionMinutes || product.schedule?.slotMinutes || 60);
     onAdd({
-      id: initial?.id ?? `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`,
+      id: !onDate || onDate === date ? (initial?.id ?? newEntryId()) : newEntryId(),
       productId: product.id, productName: product.name,
-      slotDate: needsSchedule(bt) && !resourceMode ? date : provider || course ? date : undefined,
+      slotDate: needsSchedule(bt) && !resourceMode ? when : provider || course ? when : undefined,
       slotTime: (!resourceMode && slotTime) || undefined,
-      slotEnd: (guided || provider) && slotTime ? endISO(date, slotTime, minutes) : undefined,
+      slotEnd: (guided || provider) && slotTime ? endISO(when, slotTime, minutes) : undefined,
       resourceId: owner?.id,
       providerLabel: owner?.name,
       items,
@@ -408,16 +411,54 @@ export function ProductSheet({
     });
   };
 
-  const submitResource = (rId: string, rLabel: string, time: string, price: number, minutes?: number) => {
+  const submitResource = (rId: string, rLabel: string, time: string, price: number, minutes?: number, onDate?: string) => {
+    const when = onDate ?? date;
     onAdd({
-      id: initial?.id ?? `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`,
+      // Only the first date of a series can inherit an edited entry's id; the
+      // rest are new lines and must not collide with it.
+      id: !onDate || onDate === date ? (initial?.id ?? newEntryId()) : newEntryId(),
       productId: product.id, productName: product.name,
-      slotDate: date, slotTime: time, resourceId: rId, resourceLabel: rLabel,
-      slotEnd: endISO(date, time, minutes ?? product.schedule?.sessionMinutes ?? 60),
+      slotDate: when, slotTime: time, resourceId: rId, resourceLabel: rLabel,
+      slotEnd: endISO(when, time, minutes ?? product.schedule?.sessionMinutes ?? 60),
       partySize: flatBasis ? group : undefined,
       items: addOnItems(), fixedPrice: price,
     });
   };
+
+  /* ── repeat weekly ────────────────────────────────────────────────────────
+     "I want the next 7 Wednesdays at 6" is the commonest standing sale a turf
+     or a court takes, and it used to mean walking this sheet seven times.
+
+     The honest part is the check: some of those Wednesdays will already be
+     gone, and the cashier has to be able to say WHICH before taking money.
+     So every date is tested against the same availability engine the grid
+     uses, unavailable ones are listed with their reason and skipped, and the
+     CTA counts only what will actually be sold. */
+  // A new selection is a new question; carrying a count of 7 over to it would
+  // silently sell seven of something the cashier only picked once. Reset by
+  // storing the selection the count belongs to and comparing during render —
+  // an effect that setStates would cost a cascading render, which is the rule
+  // the rest of this codebase already follows.
+  const repeatKey = `${product.id}|${date}`;
+  const [repeatState, setRepeatState] = useState({ key: repeatKey, count: 1 });
+  const repeatCount = repeatState.key === repeatKey ? repeatState.count : 1;
+  const setRepeatCount = (n: number) => setRepeatState({ key: repeatKey, count: n });
+
+  const checkResourceDate = (rId: string, time: string, minutes: number) => (d: string): OccurrenceBlock | null => {
+    if (d < TODAY) return "past";
+    if (!isOpenOn(product, d)) return "closed";
+    return isResourceFreeFor(rId, d, time, minutes, product.bufferMinutes ?? 0) ? null : "taken";
+  };
+
+  const checkSlotDate = (time: string, seats: number) => (d: string): OccurrenceBlock | null => {
+    if (d < TODAY) return "past";
+    if (!isOpenOn(product, d)) return "closed";
+    const slot = getSlots(product, d).find((sl) => sl.time === time);
+    if (!slot) return "closed";
+    return slot.remaining >= Math.max(1, seats) ? null : "full";
+  };
+
+  const newEntryId = () => `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`;
 
   const submitFlexible = () => {
     if (!slotTime) return;
@@ -574,19 +615,45 @@ export function ProductSheet({
             )}
             {resourceId && slotTime && (() => {
               const row = matrix.find((r) => r.resource.id === resourceId);
-              const price = applyResourceRate(resolveProductPrice(product, date, slotTime, basePrice), product.schedule?.sessionMinutes ?? 60, row?.resource);
+              const minutes = product.schedule?.sessionMinutes ?? 60;
+              const price = applyResourceRate(resolveProductPrice(product, date, slotTime, basePrice), minutes, row?.resource);
+              const plan = planWeekly(date, repeatCount, checkResourceDate(resourceId, slotTime, minutes));
+              const dates = plan.filter((o) => o.ok).map((o) => o.date);
+              const addAll = () => {
+                for (const d of dates) {
+                  // Re-price per date: a band or a day override can move the
+                  // rate even at the same clock time.
+                  const p = applyResourceRate(resolveProductPrice(product, d, slotTime, basePrice), minutes, row?.resource);
+                  submitResource(resourceId, row?.resource.name ?? "", slotTime, p, minutes, d);
+                }
+              };
               return (
                 <>
+                  <RepeatPicker
+                    count={repeatCount}
+                    onCount={setRepeatCount}
+                    plan={plan}
+                    time={slotTime}
+                    unitPrice={price}
+                    currency={currency}
+                  />
                   {renderAddOns()}
                   <div className="mt-tight flex flex-col gap-tight">{renderGroup()}{renderWaiver()}</div>
                   <SheetFooter
                     summary={<>
-                      <span className="font-medium">{row?.resource.name}</span> · <span>{slotTime}</span> · {formatDuration(product.schedule?.sessionMinutes ?? 60)}
-                      {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""} · <span>{formatMoney(price + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0), currency)}</span>
+                      <span className="font-medium">{row?.resource.name}</span> · <span>{slotTime}</span> · {formatDuration(minutes)}
+                      {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""}
+                      {dates.length > 1 ? ` · ${t("repeat.datesCount", { count: dates.length })}` : ""}
+                      {" · "}
+                      <span>{formatMoney(price * Math.max(1, dates.length) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0), currency)}</span>
                     </>}
-                    disabled={!waiverOk}
-                    onAdd={() => submitResource(resourceId, row?.resource.name ?? "", slotTime, price)}
-                    label={t("sheet.addSelection", { name: row?.resource.name ?? "", time: slotTime, amount: formatMoney(price, currency) })}
+                    disabled={!waiverOk || dates.length === 0}
+                    onAdd={addAll}
+                    label={
+                      dates.length > 1
+                        ? t("repeat.addDates", { count: dates.length, amount: formatMoney(price * dates.length, currency) })
+                        : t("sheet.addSelection", { name: row?.resource.name ?? "", time: slotTime, amount: formatMoney(price, currency) })
+                    }
                   />
                 </>
               );
@@ -969,6 +1036,26 @@ export function ProductSheet({
               ))}
             </div>
             )}
+            {(() => {
+              const repeatable =
+                needsSchedule(bt) && !resourceMode && !provider && !course && !hasLayout && !guided && !sectioned && !!slotTime;
+              if (!repeatable || !slotTime) return null;
+              const seats = partySize || 1;
+              const plan = planWeekly(date, repeatCount, checkSlotDate(slotTime, seats));
+              const unit =
+                activeTiers.reduce((a, x) => a + (qty[x.id] ?? 0) * x.price, 0) +
+                addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0);
+              return (
+                <RepeatPicker
+                  count={repeatCount}
+                  onCount={setRepeatCount}
+                  plan={plan}
+                  time={slotTime}
+                  unitPrice={unit}
+                  currency={currency}
+                />
+              );
+            })()}
             {renderAddOns()}
             {renderWaiver()}
             {/* The live selection summary — plain language, mono numbers. */}
@@ -995,7 +1082,17 @@ export function ProductSheet({
             )}
             <SheetFooter
               disabled={hasLayout ? selectedSeats.length === 0 || !waiverOk : !canAddTiered}
-              onAdd={hasLayout ? submitSeats : submitTiered}
+              onAdd={() => {
+                if (hasLayout) return submitSeats();
+                const repeatable =
+                  needsSchedule(bt) && !resourceMode && !provider && !course && !guided && !sectioned && !!slotTime;
+                if (!repeatable || repeatCount <= 1 || !slotTime) return submitTiered();
+                for (const d of planWeekly(date, repeatCount, checkSlotDate(slotTime, partySize || 1))
+                  .filter((o) => o.ok)
+                  .map((o) => o.date)) {
+                  submitTiered(d);
+                }
+              }}
               // The verb names the thing being bought, and carries its total.
               // "Add to sale" told a cashier nothing they could check against.
               label={(() => {
