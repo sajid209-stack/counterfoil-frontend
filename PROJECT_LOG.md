@@ -2018,3 +2018,16 @@ pushes, and it will keep deploying independently of this one.
 recommendation from Phase 6, still not done). Until then every contributor's work needs a
 manual `vercel --prod` from this machine to go live, which is exactly the confusion that
 happened here. Also still open: delete the junk project `resources`.
+
+### Vercel is now connected to GitHub (2026-09-05)
+
+`vercel git connect` linked `sajid209-stack/counterfoil-frontend` to the project. **Pushes to
+`main` now build and publish to https://counterfoil-frontend.vercel.app automatically** — the
+CLI-only deploy era is over, and `vercel --prod` from the owner's machine is no longer required
+for work to go live.
+
+**Working agreement (owner's call, 2026-09-05):** contributors push **straight to `main`**. This
+is a shared work-in-progress site, not a customer-facing one, so the review gate of a PR flow
+was deliberately traded away for speed. Consequence to keep in mind: a broken build or a
+half-finished screen pushed to `main` is the live site within about a minute, and there is no
+gate to catch it. Verify before pushing rather than after.
