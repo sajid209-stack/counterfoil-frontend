@@ -59,10 +59,10 @@ export function SessionList({
 }) {
   const t = useTranslations("pos");
 
-  /** The commonest price in the list. Printing the same figure down every row
-   *  spends the corner the cashier reads for places-left; a pricing rule that
-   *  lifts one departure is the only case worth stating, so that is the only
-   *  case stated. */
+  /** The commonest price in the list, for the basis line underneath. Every row
+   *  states its own price: a cashier reading a departure to a customer should
+   *  not have to work out whether the figure at the bottom applies to the row
+   *  in front of them. */
   const basePrice = (() => {
     const tally = new Map<number, number>();
     for (const s of sessions) tally.set(s.price, (tally.get(s.price) ?? 0) + 1);
@@ -114,11 +114,9 @@ export function SessionList({
                 {s.meta && (
                   <span className="min-w-0 flex-1 truncate text-[12px] text-muted">{s.meta}</span>
                 )}
-                {/* The state of the session, in the corner the eye lands on.
-                    Places left is the number being decided on; the price is
-                    identical down the whole list unless a pricing rule moves
-                    it, so it is stated only where it actually differs — the
-                    same rule the slot matrix follows. */}
+                {/* The state of the session, in the corner the eye lands on:
+                    places left is the number being decided on. The price sits
+                    on the row below, beside the fill. */}
                 <span
                   className={cn(
                     "ml-auto shrink-0 whitespace-nowrap text-[13px] font-medium",
@@ -163,11 +161,14 @@ export function SessionList({
                 <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">
                   {sold}/{s.capacity}
                 </span>
-                {s.price !== basePrice && (
-                  <span className="ml-auto shrink-0 whitespace-nowrap text-[12px] text-brand-foreground">
-                    {formatMoney(s.price, currency)}
-                  </span>
-                )}
+                <span
+                  className={cn(
+                    "ml-auto shrink-0 whitespace-nowrap text-[12px]",
+                    s.price === basePrice ? "text-muted" : "text-brand-foreground",
+                  )}
+                >
+                  {formatMoney(s.price, currency)}
+                </span>
               </span>
 
               {full && !closed && s.waitlist && (
@@ -178,7 +179,7 @@ export function SessionList({
         );
       })}
 
-      {/* The price, said once — the slot matrix's rule, applied to rows. */}
+      {/* What the figure on each row is the price OF. */}
       {basePrice > 0 && (
         <p className="text-[12px] text-muted">
           {t("sheet.pricePerTicket", { amount: formatMoney(basePrice, currency) })}

@@ -33,8 +33,12 @@ export interface MatrixRow {
  * when tapped, and switching resource re-answers the same question rather than
  * opening a different screen.
  *
- * The price is stated once underneath and appears on a chip only where it
- * actually differs from the base rate, which is the only time it is news.
+ * Every available time carries its own price. An earlier version printed it
+ * only where it differed from the base rate, on the reasoning that a repeated
+ * figure is noise — but a cashier reading a slot to a customer should never
+ * have to work out which line underneath applies to the tile they are looking
+ * at. The rate underneath now states the basis (per what, per when); the tiles
+ * state what this one costs.
  */
 export function SlotMatrix({
   rows,
@@ -66,12 +70,10 @@ export function SlotMatrix({
 
   if (rows.length === 0 || !active) return null;
 
-  // The base rate is the one most slots charge; anything else is an uplift
-  // worth calling out.
+  // The rate most slots charge, for the basis line underneath.
   const counts = new Map<number, number>();
   for (const r of rows) for (const c of r.cells) counts.set(c.price, (counts.get(c.price) ?? 0) + 1);
   const base = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0;
-  const uplifts = [...counts.keys()].filter((p) => p !== base).sort((a, b) => a - b);
 
   return (
     <div className="mb-section flex flex-col gap-tight">
@@ -116,7 +118,6 @@ export function SlotMatrix({
       <div className="grid grid-cols-4 gap-tight">
         {active.cells.map((cell) => {
           const selected = active.id === selectedResourceId && selectedTime === cell.time;
-          const uplifted = cell.available && cell.price !== base;
           if (!cell.available) {
             return (
               <button
@@ -129,7 +130,7 @@ export function SlotMatrix({
                       : t("sheet.slotTaken", { time: cell.time, name: active.name }),
                   )
                 }
-                className="flex h-12 items-center justify-center rounded-sm border border-line bg-subtle text-[13px] text-faint line-through"
+                className="flex min-h-12 items-center justify-center rounded-sm border border-line bg-subtle px-1 py-tight text-[13px] text-faint line-through"
               >
                 {cell.time}
               </button>
@@ -141,7 +142,7 @@ export function SlotMatrix({
               type="button"
               onClick={() => onSelect(active.id, cell.time)}
               className={cn(
-                "flex h-12 flex-col items-center justify-center rounded-sm border text-[13px] transition-colors duration-quick",
+                "flex min-h-12 flex-col items-center justify-center rounded-sm border px-1 py-tight text-[13px] transition-colors duration-quick",
                 // The time is the last thing decided and the thing the CTA
                 // then names, so it is the one selection in this pattern drawn
                 // as a fill rather than a tint.
@@ -151,27 +152,22 @@ export function SlotMatrix({
               )}
             >
               <span>{cell.time}</span>
-              {uplifted && (
-                <span className={cn("text-[12px]", selected ? "opacity-90" : "text-brand-foreground")}>
-                  {formatMoney(cell.price, currency)}
-                </span>
-              )}
+              <span
+                className={cn(
+                  "whitespace-nowrap text-[12px]",
+                  selected ? "opacity-90" : cell.price === base ? "text-muted" : "text-brand-foreground",
+                )}
+              >
+                {formatMoney(cell.price, currency)}
+              </span>
             </button>
           );
         })}
       </div>
 
-      {/* The price, said once. */}
+      {/* What the figure on each tile is the price OF. */}
       <p className="text-[12px] text-muted">
         {t("sheet.ratePer", { amount: formatMoney(base, currency), noun: resourceNoun.toLowerCase() })}
-        {uplifts.length > 0 && (
-          <span className="text-brand-foreground">
-            {" · "}
-            {t("sheet.rateUplift", {
-              amounts: uplifts.map((p) => formatMoney(p, currency)).join(" / "),
-            })}
-          </span>
-        )}
       </p>
     </div>
   );
