@@ -2158,3 +2158,32 @@ reinvented, so the shortcut and the long way round cannot sell different things.
   changes; left alone rather than risk the deep-link behaviour.
 - The seed clock is still frozen at `DEMO_TODAY = 2026-07-29` — the owner's call.
 - Seat-mapped products still have no live tile state (needs async `availableSeats`).
+
+### Owner review, same day — three corrections
+
+- **Buy now moved to the sheet's CTA.** The first attempt put an express control
+  on each grid row, which was a misread: a shortcut there can only sell the
+  default, and the sale a cashier wants to settle immediately is the one they
+  have just configured. The grid shortcut and `quickAdd.ts` were removed. The
+  sheet footer now has two exits — **Add** builds a bigger sale, **Buy now**
+  adds the line and opens the payment step. On a repeated series only the last
+  date asks to pay. It opens the payment; it does not complete it: the tender
+  pad and wallet flows read their amounts on the next render (by which time the
+  line is in the cart), but a card terminal settles synchronously from a sale
+  built at call time, so that one method gets the cart and its own Charge
+  rather than a card charged for the wrong total.
+- **Percentages became typable** (`components/ui/PercentInput`). The order
+  discount was four buttons (0/5/10/15) so an agreed 12% was unenterable; the
+  line discount was one button that CYCLED 0-5-10-15-0. Both now follow the
+  rule the duration controls already had: **the field is the control and the
+  chips FILL it**. Accepts `12`, `12%`, `7.5`. It does NOT clamp to the role's
+  cap — the cart's existing over-limit notice names the cap and says to ask a
+  manager, which is an answer; a number that changes itself is not. Audited the
+  rest of the app: OS percent fields (deposit, cancellation fee) were already
+  free-typed and the cash tender chips sit beside a keypad, so these two were
+  the only preset-only value pickers left.
+- **The customer moved into the cart.** It was a 12px chip sharing the header
+  row with Close and Park, which read as chrome. It is now the first thing in
+  the cart at full width, showing the attached person's phone under their name
+  — two customers share a name far more often than a phone, so that line is
+  what confirms the right record. `AttachedCustomer` gained `phone`/`email`.
