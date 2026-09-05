@@ -21,7 +21,9 @@
     "depositNow": "{pct}% deposit now · {balance} at arrival",
     "lineDiscountLabel": "Line discount",
     "edit": "Edit",
-    "remove": "Remove"
+    "remove": "Remove",
+    "customerAdd": "Add",
+    "customerChange": "Change"
   },
   "added": "Added {name}",
   "cartParked": "Cart parked.",

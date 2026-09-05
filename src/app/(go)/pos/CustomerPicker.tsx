@@ -16,6 +16,11 @@ export interface AttachedCustomer {
   name: string;
   /** Carried onto the till so the flag reason can be shown while serving. */
   flagReason?: string | null;
+  /** Shown under the name in the cart. Two customers share a name far more
+   *  often than they share a phone, so this is what tells a cashier they
+   *  attached the right person. */
+  phone?: string | null;
+  email?: string | null;
 }
 
 /**
@@ -116,7 +121,7 @@ function PickerBody({
   }, [query]);
 
   const attach = (c: CustomerWithStats) => {
-    onAttach({ id: c.id, name: c.name, flagReason: c.flag?.reason ?? null });
+    onAttach({ id: c.id, name: c.name, flagReason: c.flag?.reason ?? null, phone: c.phone, email: c.email });
     onClose();
   };
 
@@ -128,7 +133,7 @@ function PickerBody({
       toast.error(res.error.fieldErrors?.name ?? res.error.message);
       return;
     }
-    onAttach({ id: res.data.id, name: res.data.name, flagReason: res.data.flag?.reason ?? null });
+    onAttach({ id: res.data.id, name: res.data.name, flagReason: res.data.flag?.reason ?? null, phone: res.data.phone, email: res.data.email });
     toast.success(t("customerModal.attached", { name: res.data.name }));
     onClose();
   };

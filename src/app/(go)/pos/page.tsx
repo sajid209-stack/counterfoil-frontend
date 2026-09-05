@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
 import { AlertTriangle, Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
-import { BlockedNotice, Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
+import { BlockedNotice, Button, EmptyState, FormField, Modal, PercentInput, ProductThumb, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { addOrderPayment, checkout, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
@@ -173,6 +173,10 @@ export default function PosPage() {
   // The attached customer RECORD (Milestone 2). `customer` stays as the name
   // snapshot the cart and receipt read, so nothing downstream had to change.
   const [attached, setAttached] = useState<AttachedCustomer | null>(null);
+  /** Which cart line has its discount open for editing. Tapping % used to
+   *  CYCLE 0→5→10→15→0, so reaching 12 was impossible and reaching 5 from 15
+   *  meant three more taps. It opens a field now. */
+  const [lineDiscEdit, setLineDiscEdit] = useState<string | null>(null);
   const customer = attached?.name ?? "";
   const [customerOpen, setCustomerOpen] = useState(false);
 
@@ -789,14 +793,33 @@ export default function PosPage() {
           {cartOpen && (
             <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-sm border border-line px-tight text-[12px] text-muted lg:hidden">{t("cart.close")}</button>
           )}
-          <button type="button" onClick={() => setCustomerOpen(true)} className={`flex h-12 items-center gap-inline rounded-sm border px-tight text-[12px] ${customer ? "border-inverse text-fg" : "border-line text-faint"}`}>
-            <UserRound size={14} strokeWidth={1.5} />{customer || t("cart.customer")}
-          </button>
           <span className="flex-1" />
           <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-sm border border-line px-tight text-[12px] text-muted disabled:text-faint" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
             <Archive size={14} strokeWidth={1.5} />{t("cart.park")}
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => setCustomerOpen(true)}
+          className={`flex min-h-14 w-full items-center gap-comfortable border-b border-line px-comfortable py-tight text-left transition-colors duration-quick active:bg-ember/10 ${attached ? "bg-subtle/60" : ""}`}
+        >
+          <UserRound size={18} strokeWidth={1.5} className={attached ? "shrink-0 text-fg" : "shrink-0 text-faint"} />
+          <span className="flex min-w-0 flex-1 flex-col">
+            {attached ? (
+              <>
+                <span className="truncate text-sm font-medium">{attached.name}</span>
+                {(attached.phone || attached.email) && (
+                  <span className="truncate font-mono text-[12px] text-muted">{attached.phone || attached.email}</span>
+                )}
+              </>
+            ) : (
+              <span className="text-sm text-muted">{t("cart.customer")}</span>
+            )}
+          </span>
+          <span className="shrink-0 text-[13px] text-faint">{attached ? t("cart.customerChange") : t("cart.customerAdd")}</span>
+          <ChevronRight size={16} strokeWidth={1.5} className="shrink-0 text-faint" />
+        </button>
+
         {attached?.flagReason && (
           <div className="flex items-start gap-tight border-b border-line bg-warning/10 px-comfortable py-tight">
             <AlertTriangle size={14} strokeWidth={1.5} className="mt-px shrink-0 text-warning" />
@@ -812,7 +835,8 @@ export default function PosPage() {
           ) : (
             <div className="flex flex-col gap-tight">
               {cart.map((e) => (
-                <div key={e.id} className="flex items-start gap-tight border-b border-line pb-tight last:border-0">
+                <div key={e.id} className="border-b border-line pb-tight last:border-0">
+                <div className="flex items-start gap-tight">
                   <div className="min-w-0 flex-1 cursor-pointer" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
                     <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(entryTotal(e), currency)}</span></div>
                     <div className="text-[11px] text-faint">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
@@ -823,7 +847,7 @@ export default function PosPage() {
                   <button
                     type="button"
                     aria-label={t("cart.lineDiscountLabel")}
-                    onClick={() => setCart((c) => c.map((x) => (x.id === e.id ? { ...x, lineDiscountPct: ((x.lineDiscountPct ?? 0) + 5) % 20 } : x)))}
+                    onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
                     className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[11px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 ? "border-ember text-ember" : "border-line"}`}
                   >
                     {(e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
@@ -836,6 +860,20 @@ export default function PosPage() {
                   {e.productId !== "custom" && <button type="button" aria-label={t("cart.edit")} onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line active:bg-ember/10"><Pencil size={15} strokeWidth={1.5} /></button>}
                   <button type="button" aria-label={t("cart.remove")} onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-danger active:bg-ember/10"><Trash2 size={15} strokeWidth={1.5} /></button>
                 </div>
+                {lineDiscEdit === e.id && (
+                  <div className="mt-tight rounded-sm border border-line bg-subtle/50 p-tight">
+                    <PercentInput
+                      compact
+                      label={t("cart.lineDiscountLabel")}
+                      value={e.lineDiscountPct ?? 0}
+                      chips={[5, 10, 15]}
+                      onChange={(pct) =>
+                        setCart((c) => c.map((x) => (x.id === e.id ? { ...x, lineDiscountPct: pct } : x)))
+                      }
+                    />
+                  </div>
+                )}
+                </div>
               ))}
             </div>
           )}
@@ -843,9 +881,10 @@ export default function PosPage() {
 
         <div className="border-t border-line p-comfortable">
           <CartRow icon={Percent} label={t("summary.discount")} value={discountPct > 0 ? `${discountPct}%` : t("summary.none")} open={cartRow === "discount"} onToggle={() => toggleRow("discount")}>
-            <div className="flex items-center gap-inline">
-              {[0, 5, 10, 15].map((d) => <button key={d} type="button" onClick={() => setDiscountPct(d)} className={`h-12 min-w-12 flex-1 rounded-xs border px-tight text-[13px] font-medium ${discountPct === d ? "border-ember bg-ember text-white" : "border-line"}`}>{d}%</button>)}
-            </div>
+            {/* Four buttons meant a manager who agreed 12% had no way to say
+                so and the till decided it was 10. The chips still fill the
+                field; they just stopped being the whole menu. */}
+            <PercentInput value={discountPct} onChange={setDiscountPct} chips={[5, 10, 15]} className="mb-tight" />
           {overLimit && (
             <p className="mb-tight rounded-sm border border-line border-l-[3px] border-l-ember bg-card p-tight text-[12px]">
               {pt("pos.overPolicy", { limit: manualCapPct })}
