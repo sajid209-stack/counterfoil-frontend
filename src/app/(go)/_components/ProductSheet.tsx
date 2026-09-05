@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, Clock, X } from "lucide-react";
+import { Check, Clock, X, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar, BlockedNotice, Button, ChoiceCard, FormField, ProductThumb, ResourceTimeline, useToast } from "@/components/ui";
 import { availableSeats } from "@/lib/api";
@@ -102,24 +102,31 @@ function SheetFooter({
     <div className="sticky bottom-0 z-10 -mx-section mt-section border-t border-line bg-sheet px-section pb-inline pt-comfortable">
       {note}
       {summary && <div className="mb-tight text-[13px]">{summary}</div>}
-      <Button size="lg" fullWidth disabled={disabled} onClick={() => onAdd(false)}>{label}</Button>
-      {/* Two exits, because a till serves two sales. Building a bigger one
-          keeps the sheet's Add; the single booking someone is standing there
-          to pay for takes Buy now, which adds the line AND opens the payment
-          — the step they were going to reach anyway, minus the trip through a
-          cart holding one thing. */}
-      {buyLabel && (
-        <Button
-          size="lg"
-          fullWidth
-          variant="secondary"
-          className="mt-tight"
-          disabled={disabled}
-          onClick={() => onAdd(true)}
-        >
-          {buyLabel}
-        </Button>
-      )}
+      {/* Two exits, because a till serves two sales. Add keeps building one:
+          it closes the sheet and returns to the list, ready for the next
+          thing. Buy now is for the sale that is already finished — it adds the
+          line and opens the cart, so the next tap is Charge.
+
+          Side by side rather than stacked: two full-width buttons make the
+          second look like a second thought and cost a whole row of a sheet
+          that is already long. The lightning is the same shorthand the app
+          uses for an express action, and it keeps the primary CTA at nearly
+          full width where it was. */}
+      <div className="flex items-stretch gap-tight">
+        <Button size="lg" fullWidth disabled={disabled} onClick={() => onAdd(false)}>{label}</Button>
+        {buyLabel && (
+          <button
+            type="button"
+            disabled={disabled}
+            aria-label={buyLabel}
+            title={buyLabel}
+            onClick={() => onAdd(true)}
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-ember text-ember transition-colors duration-quick disabled:opacity-40 hover:bg-ember/10 active:bg-ember/20"
+          >
+            <Zap size={20} strokeWidth={1.5} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

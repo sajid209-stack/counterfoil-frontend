@@ -311,10 +311,8 @@ export default function PosPage() {
   // again. A real device id lands with the backend; the counter is enough here.
   const TILL_ID = "till_fort_main";
 
-  /** `pay` comes from the sheet's Buy now: add this line AND go straight to
-   *  the payment step, for the single booking someone is standing there to
-   *  settle. The trip through a cart holding one thing is the step being
-   *  skipped — not the payment itself. */
+  /** `pay` comes from the sheet's Buy now: this sale is done, so land on the
+   *  cart instead of going back to the grid for another item. */
   const upsertEntry = (entry: CartEntry, pay = false) => {
     setCart((c) => (c.some((e) => e.id === entry.id) ? c.map((e) => (e.id === entry.id ? entry : e)) : [...c, entry]));
     setSheet(null);
@@ -336,16 +334,10 @@ export default function PosPage() {
       }
     }
 
-    if (pay) {
-      // On a phone the cart is a drawer, so opening it IS the feedback.
-      setCartOpen(true);
-      // The tender pad and the wallet flows read their amounts on the NEXT
-      // render, by which time this line is in the cart. A card terminal is the
-      // exception: it settles synchronously from a sale built at call time,
-      // which would not yet include this line — so it gets the cart and its
-      // own Charge rather than a card charged for the wrong total.
-      if (method !== "card_terminal") void charge();
-    }
+    // Buy now: this sale is finished, so show the cart rather than the list.
+    // Charge is then one tap away, and it stays the cashier's tap — the till
+    // never moves someone's money for them.
+    if (pay) setCartOpen(true);
   };
 
   // Extend a flexible booking still in the cart by one increment: the lane
