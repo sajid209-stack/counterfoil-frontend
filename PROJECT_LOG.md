@@ -1981,3 +1981,40 @@ no x-scroll, nothing clipped without an ellipsis, nothing under the 12px floor,
 no console errors. Badge-overlap sweep zero. Sheet variants on theme, type
 10/10, dashboard layout 23/23. `tsc`, `build` and `eslint` clean. i18n parity
 0 missing / 0 extra, twenty new keys in en and bn.
+
+---
+
+## Designer branch merged to main (2026-09-05)
+
+Ishmam's 39-commit design pass (`design/seed-photography-and-dashboard`, authored 2026-09-01→03)
+was **fast-forwarded onto `main`** and CLI-deployed to production. It is a POS + dashboard pass
+onto the Aura reference: the dashboard reorganised to the reference skeleton (stat-tile anatomy,
+Notices card, activity as a feed not a second orders table, a real revenue chart, Inter and one
+type system), the OS shell's page header moved into a sticky top bar, the sidebar's selected row
+became a tonal fill, and the POS product sheet rebuilt across all nine selection patterns with
+one shared selection footer, per-tile live state (`src/lib/posState.ts`), a three-row cart, and
+phone density. Four seed photos that showed the wrong place were dropped. `en`/`bn` `pos.json`
+and `dashboard.json` both extended. Verified before the merge: `tsc --noEmit` clean, `npm run
+build` clean; verified after: production `/pos` serves strings that did not exist on the
+previous build.
+
+### Deploy topology — why the designer's work never reached the production URL
+
+Two independent reasons, both worth remembering:
+
+1. **The work was on a branch, not `main`.** Nothing on a side branch reaches production.
+2. **This Vercel project is not connected to GitHub.** It has only ever been deployed by the
+   Vercel CLI from the owner's machine (`.vercel/project.json` →
+   `sajid209-stacks-projects/counterfoil-frontend`). A push by *anyone* — owner included —
+   publishes nothing on its own.
+
+`counterfoil-frontend-three.vercel.app` is **not in the owner's Vercel account** (confirmed
+against `vercel project ls`). The designer connected the public GitHub repo to a Vercel project
+on *their own* account; Vercel appended `-three` because `counterfoil-frontend.vercel.app` was
+already taken by this account. That project is a live mirror of whatever branch the designer
+pushes, and it will keep deploying independently of this one.
+
+**Open for the owner:** connect this repo to Vercel in the dashboard (the standing
+recommendation from Phase 6, still not done). Until then every contributor's work needs a
+manual `vercel --prod` from this machine to go live, which is exactly the confusion that
+happened here. Also still open: delete the junk project `resources`.
