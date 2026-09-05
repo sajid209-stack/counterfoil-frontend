@@ -3,7 +3,6 @@
   "settingsDescription": "Reward people for coming back. Points are money you already owe, so set the rate deliberately.",
   "save": "Save programme",
   "saved": "Points programme saved.",
-
   "fieldEnabled": "Points programme is on",
   "enabledHelp": "Off means nothing is earned and nothing can be spent. Existing balances are kept.",
   "fieldPointsPerUnit": "Points earned per ৳1 spent",
@@ -14,13 +13,11 @@
   "minRedeemHelp": "Enter 0 to allow any number.",
   "fieldExpiryMonths": "Points expire after",
   "expiryMonthsHelp": "In months. Leave empty if points never expire.",
-
   "previewLabel": "What this means",
   "previewLine": "Spend {spend} and earn {points} points, worth {worth} off a future visit.",
   "previewOff": "Nothing is being earned or spent while the programme is off.",
   "previewExpiry": "Points expire {months} months after they are earned.",
   "previewNoExpiry": "Points never expire.",
-
   "totalsTitle": "Across the programme",
   "totalMembers": "People with points",
   "totalEarned": "Earned",

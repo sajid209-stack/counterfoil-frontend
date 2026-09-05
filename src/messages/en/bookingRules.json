@@ -1,14 +1,14 @@
 {
   "title": "Booking rules",
-  "description": "Capacity, slot length, weekly pattern, and blackout dates per product and location.",
+  "description": "Capacity, slot length, weekly pattern, and blackout dates per booking and location.",
   "colName": "Name",
-  "colProduct": "Product",
+  "colProduct": "Booking",
   "colLocation": "Location",
   "colCapacity": "Capacity",
   "colSlot": "Slot",
   "colDays": "Days",
   "colStatus": "Status",
-  "allProducts": "All products",
+  "allProducts": "All bookings",
   "allLocations": "All locations",
   "slotMinutes": "{minutes}m",
   "daysOfSeven": "{count}/7",
@@ -23,7 +23,7 @@
   "editRule": "Edit rule",
   "back": "Booking rules",
   "fieldName": "Name",
-  "fieldProduct": "Product",
+  "fieldProduct": "Booking",
   "fieldLocation": "Location",
   "fieldCapacity": "Capacity (guests per slot)",
   "fieldSlot": "Slot length (minutes)",
@@ -35,5 +35,13 @@
   "archive": "Archive",
   "archived": "Rule archived.",
   "notFound": "Rule not found.",
-  "day": { "0": "Sun", "1": "Mon", "2": "Tue", "3": "Wed", "4": "Thu", "5": "Fri", "6": "Sat" }
+  "day": {
+    "0": "Sun",
+    "1": "Mon",
+    "2": "Tue",
+    "3": "Wed",
+    "4": "Thu",
+    "5": "Fri",
+    "6": "Sat"
+  }
 }

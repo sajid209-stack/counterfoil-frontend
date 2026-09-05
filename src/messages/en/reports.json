@@ -3,7 +3,7 @@
   "description": "Transactions, breakdowns and analytics — one scope, three views.",
   "exportCsv": "Export CSV",
   "csvExported": "CSV exported — filters respected.",
-  "search": "Search reference, customer, product…",
+  "search": "Search reference, customer, booking…",
   "custom": "Custom",
   "addFilter": "＋ Add filter",
   "clearAll": "Clear all",
@@ -26,7 +26,7 @@
     "locationId": "Location",
     "counterId": "Counter",
     "staffId": "Team member",
-    "productId": "Product",
+    "productId": "Booking",
     "categoryId": "Category",
     "method": "Payment method",
     "status": "Status",
@@ -38,7 +38,7 @@
     "anyLocation": "Any location",
     "anyCounter": "Any counter",
     "anyone": "Anyone",
-    "anyProduct": "Any product",
+    "anyProduct": "Any booking",
     "anyCategory": "Any category",
     "anyMethod": "Any method",
     "anyStatus": "Any status",
@@ -97,7 +97,7 @@
     "vsPrev": "{delta} vs prev"
   },
   "groupBy": {
-    "product": "Product",
+    "product": "Booking",
     "category": "Category",
     "payment_method": "Payment",
     "counter": "Counter",
@@ -117,10 +117,10 @@
     "paymentMix": "Payment mix",
     "capacityUtilisation": "Capacity utilisation",
     "noShowRate": "No-show rate",
-    "leadTime": "Booking lead time",
-    "topProducts": "Top products",
-    "bookings": "{count} booking",
-    "bookingsPlural": "{count} bookings"
+    "leadTime": "Reservation lead time",
+    "topProducts": "Top bookings",
+    "bookings": "{count} reservation",
+    "bookingsPlural": "{count} reservations"
   },
   "outstanding": {
     "totalOwed": "Total owed",

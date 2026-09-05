@@ -1,6 +1,6 @@
 {
   "title": "Calendar",
-  "description": "Bookings and held capacity, by day, week or month.",
+  "description": "Reservations and held capacity, by day, week or month.",
   "tabDay": "Day",
   "tabWeek": "Week",
   "tabMonth": "Month",
@@ -8,7 +8,7 @@
   "previous": "Previous",
   "next": "Next",
   "groupByResource": "By resource",
-  "groupByProduct": "By product",
+  "groupByProduct": "By booking",
   "outOfService": "Out of service",
   "guideLane": "Guide",
   "noResource": "Not assigned",

@@ -3,7 +3,7 @@
   "description": "লেনদেন, বিভাজন ও বিশ্লেষণ — এক পরিসর, তিন দৃশ্য।",
   "exportCsv": "CSV রপ্তানি",
   "csvExported": "CSV রপ্তানি হয়েছে — ফিল্টার বজায় রাখা হয়েছে।",
-  "search": "রেফারেন্স, গ্রাহক, পণ্য খুঁজুন…",
+  "search": "রেফারেন্স, গ্রাহক, বুকিং খুঁজুন…",
   "custom": "কাস্টম",
   "addFilter": "＋ ফিল্টার যোগ করুন",
   "clearAll": "সব মুছুন",
@@ -26,7 +26,7 @@
     "locationId": "লোকেশন",
     "counterId": "কাউন্টার",
     "staffId": "টিম সদস্য",
-    "productId": "পণ্য",
+    "productId": "বুকিং",
     "categoryId": "ক্যাটাগরি",
     "method": "পেমেন্ট মাধ্যম",
     "status": "স্ট্যাটাস",
@@ -38,7 +38,7 @@
     "anyLocation": "যেকোনো লোকেশন",
     "anyCounter": "যেকোনো কাউন্টার",
     "anyone": "যেকেউ",
-    "anyProduct": "যেকোনো পণ্য",
+    "anyProduct": "যেকোনো বুকিং",
     "anyCategory": "যেকোনো ক্যাটাগরি",
     "anyMethod": "যেকোনো মাধ্যম",
     "anyStatus": "যেকোনো স্ট্যাটাস",
@@ -97,7 +97,7 @@
     "vsPrev": "{delta} পূর্বের তুলনায়"
   },
   "groupBy": {
-    "product": "পণ্য",
+    "product": "বুকিং",
     "category": "ক্যাটাগরি",
     "payment_method": "পেমেন্ট",
     "counter": "কাউন্টার",
@@ -117,10 +117,10 @@
     "paymentMix": "পেমেন্ট মিশ্রণ",
     "capacityUtilisation": "ধারণক্ষমতার ব্যবহার",
     "noShowRate": "অনুপস্থিতির হার",
-    "leadTime": "বুকিং লিড টাইম",
-    "topProducts": "শীর্ষ পণ্য",
-    "bookings": "{count} বুকিং",
-    "bookingsPlural": "{count} বুকিং"
+    "leadTime": "রিজার্ভেশন লিড টাইম",
+    "topProducts": "শীর্ষ বুকিং",
+    "bookings": "{count} রিজার্ভেশন",
+    "bookingsPlural": "{count} রিজার্ভেশন"
   },
   "outstanding": {
     "totalOwed": "মোট বকেয়া",

@@ -41,7 +41,7 @@ const MOBILE_TABS = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
   { href: "/orders", key: "orders", icon: ReceiptText },
-  { href: "/products", key: "products", icon: Package },
+  { href: "/bookings", key: "products", icon: Package },
 ] as const;
 
 // Same grid, same order, every time — muscle memory is the point.
@@ -49,7 +49,7 @@ const DESTINATIONS = [
   { href: "/dashboard", key: "overview", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
   { href: "/orders", key: "orders", icon: ReceiptText },
-  { href: "/products", key: "products", icon: Package },
+  { href: "/bookings", key: "products", icon: Package },
   { href: "/reports/sales", key: "reports", icon: BarChart3 },
   { href: "/reports/sales?tab=analytics", key: "analytics", icon: ChartLine },
   { href: "/promotions", key: "promotions", icon: TicketPercent },

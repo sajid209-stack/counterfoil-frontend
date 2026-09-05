@@ -6,20 +6,17 @@
   "cancel": "Cancel",
   "edit": "Edit",
   "archive": "Retire",
-
   "tabActive": "Active",
   "tabExpiring": "Expiring",
   "tabLapsed": "Lapsed",
   "tabPaused": "Paused",
   "tabCancelled": "Cancelled",
-
   "colMember": "Member",
   "colTier": "Tier",
   "colStatus": "Status",
   "colVisits": "Visits",
   "colExpires": "Runs to",
   "colActions": "",
-
   "status_active": "Active",
   "status_lapsed": "Lapsed",
   "status_paused": "Paused",
@@ -28,7 +25,6 @@
   "unlimited": "Unlimited",
   "visitsLeft": "{count} left",
   "namedPeople": "Covers {count} people",
-
   "renew": "Renew",
   "renewed": "Renewed for another period.",
   "pause": "Pause",
@@ -42,14 +38,12 @@
   "cancelReason": "Why is it being cancelled?",
   "cancelReasonHelp": "This is the first thing anyone asks when the member rings up later.",
   "keepIt": "Keep it",
-
   "empty_active": "No active members",
   "empty_expiring": "Nobody is about to lapse",
   "empty_lapsed": "Nobody has lapsed",
   "empty_paused": "Nobody has paused",
   "empty_cancelled": "Nobody has cancelled",
   "emptyMessage": "Sell a membership at the counter, or from a customer's record.",
-
   "tiersTitle": "Membership tiers",
   "tiersDescription": "What you sell, what it costs, and what a member gets for it.",
   "newTier": "New tier",
@@ -59,7 +53,6 @@
   "tierArchived": "{name} retired. Existing members keep what they have.",
   "archiveTitle": "Retire {name}?",
   "archiveMessage": "It stops being sellable. {count} existing memberships keep running to their end date.",
-
   "coversPeople": "Covers {count}",
   "period_monthly": "Monthly",
   "period_quarterly": "Quarterly",
@@ -67,8 +60,7 @@
   "period_lifetime": "Lifetime",
   "scope_all": "Everything",
   "scope_categories": "Chosen categories",
-  "scope_products": "Chosen products",
-
+  "scope_products": "Chosen bookings",
   "summaryUnlimited": "Unlimited entry",
   "summaryVisits": "{count} visits each period",
   "summaryDiscountAll": "{pct}% off everything",
@@ -76,7 +68,6 @@
   "summaryGuestPasses": "{count} guest passes",
   "summaryAutoRenew": "renews automatically",
   "summaryNoRenew": "does not renew",
-
   "newTierTitle": "New membership tier",
   "editTierTitle": "Edit {name}",
   "tierEditorDescription": "Say what a member pays and what they get. The preview at the bottom is what they will be told.",
@@ -84,7 +75,6 @@
   "saveTier": "Save tier",
   "tierCreated": "{name} created.",
   "tierSaved": "Tier saved.",
-
   "fieldTierName": "Tier name",
   "fieldTierDescription": "What members are told they get",
   "tierDescriptionHelp": "One plain sentence. This is what appears at the till.",
@@ -93,28 +83,24 @@
   "fieldPeriod": "Runs for",
   "fieldMaxMembers": "People covered",
   "maxMembersHelp": "1 for an individual. More makes it a family or group membership.",
-
   "sectionEntry": "Entry",
   "fieldIncludedVisits": "Visits included each period",
   "includedVisitsHelp": "Leave empty for unlimited.",
   "fieldGuestPasses": "Guest passes each period",
   "guestPassesHelp": "Free entries a member can bring someone in on.",
   "fieldIncludedProducts": "What an included visit can be used on",
-  "includedProductsHelp": "Leave none selected to allow any product.",
-  "noProducts": "No products yet.",
+  "includedProductsHelp": "Leave none selected to allow any booking.",
+  "noProducts": "No bookings yet.",
   "noCategories": "No categories yet.",
-
   "sectionDiscount": "Member price",
   "fieldDiscount": "Discount",
   "discountHelp": "Taken off the list price wherever it applies.",
   "fieldDiscountScope": "Applies to",
-
   "sectionRenewal": "Renewal",
   "fieldAutoRenew": "Renews automatically",
   "autoRenewHelp": "Off means the member has to buy it again.",
   "fieldNoticeDays": "Tell them this many days before",
   "noticeDaysHelp": "Nobody likes being charged with no warning.",
-
   "previewLabel": "What a member is told",
   "previewLine": "{name} — {price} {period}.",
   "previewFallbackName": "This tier"

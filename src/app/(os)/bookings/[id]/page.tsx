@@ -52,14 +52,14 @@ export default function ProductDetailPage() {
     setConfirmArchive(false);
     if (res.ok) {
       const id = params.id;
-      toast.success("Product archived.", {
+      toast.success("Booking archived.", {
         label: "Undo",
         run: async () => {
           await updateProduct(id, { status: "active", archivedAt: null } as never);
           toast.success("Restored.");
         },
       });
-      router.push("/products");
+      router.push("/bookings");
     } else {
       toast.error(res.error.message);
     }
@@ -67,11 +67,11 @@ export default function ProductDetailPage() {
 
   if (!loading && (prod.error || !prod.data)) {
     return (
-      <PageShell title="Product">
+      <PageShell title="Booking">
         <EmptyState
-          title="Product not found"
+          title="Booking not found"
           message="It may have been removed."
-          action={<Button onClick={() => router.push("/products")}>Back to products</Button>}
+          action={<Button onClick={() => router.push("/bookings")}>Back to bookings</Button>}
         />
       </PageShell>
     );
@@ -82,7 +82,7 @@ export default function ProductDetailPage() {
 
   return (
     <PageShell
-      title={product?.name ?? "Product"}
+      title={product?.name ?? "Booking"}
       description={product ? behaviourSubtitle(product, { resources: resourcesQ.data?.data, team: team.data?.data }) : undefined}
       actions={
         product && !archived ? (
@@ -99,7 +99,7 @@ export default function ProductDetailPage() {
       }
     >
       <Link
-        href="/products"
+        href="/bookings"
         className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg"
       >
         <ArrowLeft size={14} strokeWidth={1.5} /> Products
@@ -123,7 +123,7 @@ export default function ProductDetailPage() {
         open={confirmArchive}
         onClose={() => setConfirmArchive(false)}
         onConfirm={doArchive}
-        title="Archive this product?"
+        title="Archive this booking?"
         message="It will be hidden from sale. You can restore it later from the backend."
         confirmLabel="Archive"
         loading={archiving}

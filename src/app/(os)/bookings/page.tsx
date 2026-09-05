@@ -109,18 +109,18 @@ export default function ProductsPage() {
 
   return (
     <PageShell
-      title="Products"
+      title="Bookings"
       description="Everything you sell — admission, tours, events, add-ons."
       actions={
         <div className="flex gap-tight">
-          <Button variant="secondary" onClick={() => router.push("/products/layouts")}>
+          <Button variant="secondary" onClick={() => router.push("/bookings/layouts")}>
             Seat layouts
           </Button>
           <Button
             icon={<Plus size={16} strokeWidth={1.5} />}
-            onClick={() => router.push("/products/new")}
+            onClick={() => router.push("/bookings/new")}
           >
-            New product
+            New booking
           </Button>
         </div>
       }
@@ -137,7 +137,7 @@ export default function ProductsPage() {
             order: s.key === key && s.order === "asc" ? "desc" : "asc",
           }))
         }
-        onRowClick={(p) => router.push(`/products/${p.id}`)}
+        onRowClick={(p) => router.push(`/bookings/${p.id}`)}
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">
@@ -152,7 +152,7 @@ export default function ProductsPage() {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                placeholder="Search products…"
+                placeholder="Search bookings…"
                 className="h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
@@ -189,14 +189,14 @@ export default function ProductsPage() {
         }
         emptyState={
           <EmptyState
-            title="No products found"
-            message="Try a different search or filter, or create a new product."
+            title="No bookings found"
+            message="Try a different search or filter, or create a new booking."
             action={
               <Button
                 icon={<Plus size={16} strokeWidth={1.5} />}
-                onClick={() => router.push("/products/new")}
+                onClick={() => router.push("/bookings/new")}
               >
-                New product
+                New booking
               </Button>
             }
           />

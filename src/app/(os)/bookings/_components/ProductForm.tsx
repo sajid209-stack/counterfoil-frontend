@@ -402,7 +402,7 @@ export function ProductForm({
           <div className="flex flex-col gap-tight text-sm">
             <p className="text-[13px] text-faint">Internal values for support and debugging. Read-only.</p>
             <AdvancedRow label="Booking type" value={state.booking.bookingType} />
-            <AdvancedRow label="Product ID" value={product.id} />
+            <AdvancedRow label="Booking ID" value={product.id} />
             <AdvancedRow label="Created" value={product.createdAt} />
             <AdvancedRow label="Updated" value={product.updatedAt} />
           </div>
@@ -412,7 +412,7 @@ export function ProductForm({
       <div className="sticky bottom-0 max-md:bottom-[calc(56px+env(safe-area-inset-bottom))] flex items-center justify-between border-t border-line bg-surface py-section">
         <span className="font-mono text-[12px] text-faint">{dirty ? "Unsaved changes" : "No changes"}</span>
         <div className="flex items-center gap-tight">
-          <Button variant="secondary" onClick={() => router.push("/products")} disabled={saving}>Cancel</Button>
+          <Button variant="secondary" onClick={() => router.push("/bookings")} disabled={saving}>Cancel</Button>
           <Button onClick={save} loading={saving} disabled={!dirty}>Save changes</Button>
         </div>
       </div>

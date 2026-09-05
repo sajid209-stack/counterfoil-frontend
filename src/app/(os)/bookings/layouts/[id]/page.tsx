@@ -37,7 +37,7 @@ export default function SeatLayoutEditorPage() {
   }, [q.data]);
 
   if (!q.loading && (q.error || !q.data)) {
-    return <PageShell title={t("editor.backToList")}><EmptyState title="Not found" action={<Button onClick={() => router.push("/products/layouts")}>{t("editor.backToList")}</Button>} /></PageShell>;
+    return <PageShell title={t("editor.backToList")}><EmptyState title="Not found" action={<Button onClick={() => router.push("/bookings/layouts")}>{t("editor.backToList")}</Button>} /></PageShell>;
   }
 
   const catOf = (uid: string | null) => categories.find((c) => c.uid === uid);
@@ -85,7 +85,7 @@ export default function SeatLayoutEditorPage() {
       title={name || t("editor.backToList")}
       actions={<Button loading={saving} onClick={save}>{t("editor.save")}</Button>}
     >
-      <button type="button" onClick={() => router.push("/products/layouts")} className="mb-section flex items-center gap-inline text-[13px] text-muted hover:text-fg">
+      <button type="button" onClick={() => router.push("/bookings/layouts")} className="mb-section flex items-center gap-inline text-[13px] text-muted hover:text-fg">
         <ArrowLeft size={14} strokeWidth={1.5} /> {t("editor.backToList")}
       </button>
 

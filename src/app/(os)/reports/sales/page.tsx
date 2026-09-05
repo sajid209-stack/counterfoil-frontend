@@ -61,7 +61,7 @@ const FILTER_DEFS: { key: FilterKey; label: string }[] = [
   { key: "locationId", label: "Location" },
   { key: "counterId", label: "Counter" },
   { key: "staffId", label: "Team member" },
-  { key: "productId", label: "Product" },
+  { key: "productId", label: "Booking" },
   { key: "categoryId", label: "Category" },
   { key: "method", label: "Payment method" },
   { key: "status", label: "Status" },

@@ -1,6 +1,6 @@
 {
   "search": {
-    "placeholder": "পণ্য খুঁজুন…",
+    "placeholder": "বুকিং খুঁজুন…",
     "clear": "মুছুন"
   },
   "counter": "Fort Main Gate",
@@ -14,7 +14,7 @@
     "parkNothing": "পার্ক করার কিছু নেই",
     "parkThis": "এই কার্ট পার্ক করুন",
     "empty": "খালি কার্ট",
-    "emptyHint": "যোগ করতে একটি পণ্যে ট্যাপ করুন।",
+    "emptyHint": "যোগ করতে একটি বুকিংে ট্যাপ করুন।",
     "groupOf": "{count} জনের দল",
     "paidWithPass": "{count}টি পাস দিয়ে পরিশোধিত",
     "lineDiscount": "−{pct}% লাইন ছাড়",
@@ -26,13 +26,13 @@
   "added": "{name} যোগ হয়েছে",
   "cartParked": "কার্ট পার্ক করা হয়েছে।",
   "extendedTo": "{time} পর্যন্ত বাড়ানো হয়েছে · {amount}।",
-  "maxBooking": "সর্বোচ্চ বুকিং {hours} ঘণ্টা — বেশি সময়ের জন্য আলাদা বুকিং করুন।",
+  "maxBooking": "সর্বোচ্চ রিজার্ভেশন {hours} ঘণ্টা — বেশি সময়ের জন্য আলাদা রিজার্ভেশন করুন।",
   "cantExtend": "বাড়ানো যাচ্ছে না — {time}-এর পরপরই {lane} বুক করা আছে। অন্য লেন বেছে নিন বা বর্তমান সময় রাখুন।",
   "theLane": "লেনটি",
   "slotToday": "আজ",
   "customEntryName": "কাস্টম পরিমাণ",
   "customTierName": "কাস্টম",
-  "bookingLine": "বুকিং",
+  "bookingLine": "রিজার্ভেশন",
   "passLineSuffix": "{tier} · পাস",
   "summary": {
     "discount": "ছাড়",
@@ -50,7 +50,7 @@
     "dueNow": "এখন দেয়",
     "balanceAtArrival": "আগমনে বাকি",
     "payInFull": "এখনই সম্পূর্ণ পরিশোধ",
-    "settleBooking": "বুকিং নিষ্পত্তি",
+    "settleBooking": "রিজার্ভেশন নিষ্পত্তি",
     "sellMembership": "সদস্যপদ",
     "spendPoints": "পয়েন্ট খরচ ({count})",
     "pointsApplied": "{count} পয়েন্ট প্রয়োগ হয়েছে",
@@ -145,7 +145,7 @@
   },
   "complete": {
     "ticketIssued": "টিকিট ইস্যু হয়েছে",
-    "bookingReference": "বুকিং রেফারেন্স",
+    "bookingReference": "রিজার্ভেশন রেফারেন্স",
     "presentAtGate": "গেটে দেখান · চেক ইন করতে স্ক্যান করুন",
     "changeDue": "ফেরত দেয়",
     "balanceDueAtArrival": "আগমনে বাকি দেয়",
@@ -285,18 +285,18 @@
     "departureLabel": "প্রস্থান"
   },
   "settle": {
-    "title": "বুকিং নিষ্পত্তি",
-    "help": "বকেয়া নিতে একটি বুকিং রেফারেন্স লিখুন।",
-    "refLabel": "বুকিং রেফারেন্স",
+    "title": "রিজার্ভেশন নিষ্পত্তি",
+    "help": "বকেয়া নিতে একটি রিজার্ভেশন রেফারেন্স লিখুন।",
+    "refLabel": "রিজার্ভেশন রেফারেন্স",
     "refPlaceholder": "যেমন CF-2026-000123",
-    "find": "বুকিং খুঁজুন",
-    "notFound": "সেই রেফারেন্সে কোনো বুকিং নেই।",
+    "find": "রিজার্ভেশন খুঁজুন",
+    "notFound": "সেই রেফারেন্সে কোনো রিজার্ভেশন নেই।",
     "total": "মোট",
     "paid": "পরিশোধিত",
     "outstanding": "বকেয়া",
     "take": "{amount} নিন",
     "fullyPaid": "সম্পূর্ণ পরিশোধিত — কোনো বকেয়া নেই।",
-    "lookupAnother": "অন্য বুকিং খুঁজুন",
+    "lookupAnother": "অন্য রিজার্ভেশন খুঁজুন",
     "settled": "{amount} বকেয়া নেওয়া হয়েছে।"
   },
   "membership": {

@@ -30,7 +30,7 @@ export function Sidebar({
     { label: t("customers"), href: "/customers", icon: UsersRound },
     { label: t("memberships"), href: "/memberships", icon: BadgeCheck },
     { label: t("holds"), href: "/holds", icon: Lock },
-    { label: t("products"), href: "/products", icon: Ticket },
+    { label: t("products"), href: "/bookings", icon: Ticket },
     { label: t("reports"), href: "/reports/sales", icon: ChartNoAxesColumn },
     { label: t("promotions"), href: "/promotions", icon: TicketPercent },
   ];

@@ -187,9 +187,9 @@ export default function KitchenSink() {
       <Block title="EmptyState">
         <EmptyState
           icon={<Inbox size={28} strokeWidth={1.5} />}
-          title="No products yet"
-          message="Create your first product to start selling at the counter or online."
-          action={<Button icon={<Plus size={16} strokeWidth={1.5} />}>New product</Button>}
+          title="No bookings yet"
+          message="Create your first booking to start selling at the counter or online."
+          action={<Button icon={<Plus size={16} strokeWidth={1.5} />}>New booking</Button>}
         />
       </Block>
 
@@ -240,7 +240,7 @@ export default function KitchenSink() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Edit product"
+        title="Edit booking"
         description="A standard modal with a header, body, and footer actions."
         footer={
           <>
@@ -265,7 +265,7 @@ export default function KitchenSink() {
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={onConfirm}
-        title="Archive this product?"
+        title="Archive this booking?"
         message="It will be hidden from sale. You can restore it later."
         confirmLabel="Archive"
         loading={confirmLoading}

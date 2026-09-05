@@ -17,9 +17,9 @@ export default function NewProductPage() {
   const loading = cats.loading || locs.loading || team.loading || resources.loading || productsQ.loading || op.loading;
 
   return (
-    <PageShell title="Create a product" description="A few steps — we'll handle the technical setup for you.">
-      <Link href="/products" className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg">
-        <ArrowLeft size={14} strokeWidth={1.5} /> Products
+    <PageShell title="Create a booking" description="A few steps — we'll handle the technical setup for you.">
+      <Link href="/bookings" className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg">
+        <ArrowLeft size={14} strokeWidth={1.5} /> Bookings
       </Link>
       {loading ? (
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>

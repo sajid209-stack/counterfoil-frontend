@@ -1,6 +1,6 @@
 {
   "search": {
-    "placeholder": "Search products…",
+    "placeholder": "Search bookings…",
     "clear": "Clear"
   },
   "counter": "Fort Main Gate",
@@ -14,7 +14,7 @@
     "parkNothing": "Nothing to park",
     "parkThis": "Park this cart",
     "empty": "Empty cart",
-    "emptyHint": "Tap a product to add it.",
+    "emptyHint": "Tap a booking to add it.",
     "groupOf": "Group of {count}",
     "paidWithPass": "{count} paid with pass",
     "lineDiscount": "−{pct}% line discount",
@@ -26,13 +26,13 @@
   "added": "Added {name}",
   "cartParked": "Cart parked.",
   "extendedTo": "Extended to {time} · {amount}.",
-  "maxBooking": "{hours} hours is the maximum booking — start a second booking for longer.",
+  "maxBooking": "{hours} hours is the maximum reservation — start a second reservation for longer.",
   "cantExtend": "Can't extend — {lane} is booked right after {time}. Try another lane or keep the current time.",
   "theLane": "the lane",
   "slotToday": "today",
   "customEntryName": "Custom amount",
   "customTierName": "Custom",
-  "bookingLine": "Booking",
+  "bookingLine": "Reservation",
   "passLineSuffix": "{tier} · pass",
   "summary": {
     "discount": "Discount",
@@ -50,7 +50,7 @@
     "dueNow": "Due now",
     "balanceAtArrival": "Balance at arrival",
     "payInFull": "Pay in full now",
-    "settleBooking": "Settle a booking",
+    "settleBooking": "Settle a reservation",
     "sellMembership": "Membership",
     "spendPoints": "Spend points ({count})",
     "pointsApplied": "{count} points applied",
@@ -145,7 +145,7 @@
   },
   "complete": {
     "ticketIssued": "Ticket issued",
-    "bookingReference": "Booking reference",
+    "bookingReference": "Reservation reference",
     "presentAtGate": "Present at the gate · scan to check in",
     "changeDue": "Change due",
     "balanceDueAtArrival": "Balance due at arrival",
@@ -285,18 +285,18 @@
     "departureLabel": "Departure"
   },
   "settle": {
-    "title": "Settle a booking",
-    "help": "Enter a booking reference to take its outstanding balance.",
-    "refLabel": "Booking reference",
+    "title": "Settle a reservation",
+    "help": "Enter a reservation reference to take its outstanding balance.",
+    "refLabel": "Reservation reference",
     "refPlaceholder": "e.g. CF-2026-000123",
-    "find": "Find booking",
-    "notFound": "No booking found for that reference.",
+    "find": "Find reservation",
+    "notFound": "No reservation found for that reference.",
     "total": "Total",
     "paid": "Paid",
     "outstanding": "Outstanding",
     "take": "Take {amount}",
     "fullyPaid": "Fully paid — nothing outstanding.",
-    "lookupAnother": "Look up another booking",
+    "lookupAnother": "Look up another reservation",
     "settled": "Balance of {amount} taken."
   },
   "membership": {

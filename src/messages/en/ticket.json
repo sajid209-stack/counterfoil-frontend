@@ -1,7 +1,7 @@
 {
   "ticketsTitle": "Tickets",
   "receiptTitle": "Receipt",
-  "referenceLabel": "Booking reference",
+  "referenceLabel": "Reservation reference",
   "gateHint": "Present at the gate · scan to check in",
   "admits": "Admits {count}",
   "print": "Print",

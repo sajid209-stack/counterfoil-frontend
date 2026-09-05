@@ -2031,3 +2031,37 @@ is a shared work-in-progress site, not a customer-facing one, so the review gate
 was deliberately traded away for speed. Consequence to keep in mind: a broken build or a
 half-finished screen pushed to `main` is the live site within about a minute, and there is no
 gate to catch it. Verify before pushing rather than after.
+
+---
+
+## The vocabulary rename (2026-09-05)
+
+The operator's word for what they sell is a **booking**, not a product. Renaming it
+collided head-on with `Booking`, which already meant the reservation on an order — the
+record that holds capacity, appears on the Check-In roster and gets locked or moved. Both
+things called "booking" would have made "cancel this booking" ambiguous **to operators**,
+not just in code. The owner chose to rename both, so the vocabulary is now:
+
+| Was | Is | What it is |
+|---|---|---|
+| Product | **Booking** | the catalogue item — the thing you sell |
+| Booking | **Reservation** | one guest's claim on capacity, hanging off an order |
+
+- **UI only. `types.ts` is untouched** — it is the contract handed to the backend lane and
+  matches their OpenAPI, so `Product` and `Booking` keep their names in code. Anyone reading
+  the code should know: **the operator's word for `Product` is "booking", and for `Booking`
+  is "reservation".**
+- **Both locales swept** (30 message files). Bangla: পণ্য → বুকিং, and বুকিং → রিজার্ভেশন.
+  রিজার্ভেশন rather than সংরক্ষণ because সংরক্ষণ is already Holds.
+- **ICU placeholders are code and were protected** — a first pass renamed `{product}` to
+  `{booking}` inside message strings, which would have broken every call site that passes
+  it. The sweep now transforms only the text between braces.
+- **"Booking rules" kept its name** — those are rules for the act of booking, and they read
+  correctly in either vocabulary.
+- **Routes moved with the word**, because the breadcrumb is derived from the path and
+  leaving `/products` would have half-done the job: `/products` → `/bookings`, with a
+  redirect in `next.config.ts` so existing links land. The Go arrivals list at
+  `(go)/bookings` — reservations, no inbound links — became `(go)/reservations`, which is
+  both the collision fix and the right word.
+- **Verified**: 18 routes fetched and stripped of markup contain zero occurrences of
+  "product"; tsc and build clean; the old paths 307 to the new ones.

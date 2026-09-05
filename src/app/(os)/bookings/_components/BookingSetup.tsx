@@ -140,7 +140,7 @@ export function BookingSetup({
           <Option title="They book a space or equipment" helper="A field, court, lane, room…" onClick={() => setStep("resource")} />
           <Option title="They book a person" helper="A therapist, instructor, coach…" onClick={() => setStep("provider")} />
           <Option title="They enrol in a course" helper="One signup, many dates." onClick={() => setStep("course")} />
-          <Option title="It combines other products" helper="A bundle sold as one ticket." onClick={() => setStep("bundle")} />
+          <Option title="It combines other bookings" helper="A bundle sold as one ticket." onClick={() => setStep("bundle")} />
           <Option title="It's a pack of credits" helper="Buy now, book later." onClick={() => setStep("credits")} />
         </>
       )}
@@ -232,7 +232,7 @@ export function BookingSetup({
 
       {step === "bundle" && (
         <div className="flex flex-col gap-section">
-          <p className="type-h2 text-base">Which products does it combine?</p>
+          <p className="type-h2 text-base">Which bookings does it combine?</p>
           <div className="flex flex-col gap-tight">
             {products.map((p) => (<label key={p.id} className="flex cursor-pointer items-center gap-tight text-sm"><input type="checkbox" checked={bundleIds.includes(p.id)} onChange={() => setBundleIds((b) => toggle(b, p.id))} className="h-4 w-4 accent-ember" />{p.name}</label>))}
           </div>

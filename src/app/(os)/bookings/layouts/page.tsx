@@ -20,7 +20,7 @@ export default function SeatLayoutsPage() {
     setCreating(true);
     const res = await createSeatLayout({ name: "New layout", locationId: null, rows: 6, seatsPerRow: 10, rowLabels: ["A", "B", "C", "D", "E", "F"], bufferAfterMinutes: 15 });
     setCreating(false);
-    if (res.ok) { toast.success(t("list.created")); router.push(`/products/layouts/${res.data.id}`); }
+    if (res.ok) { toast.success(t("list.created")); router.push(`/bookings/layouts/${res.data.id}`); }
     else toast.error(res.error.message);
   };
 
@@ -42,7 +42,7 @@ export default function SeatLayoutsPage() {
             <button
               key={l.id}
               type="button"
-              onClick={() => router.push(`/products/layouts/${l.id}`)}
+              onClick={() => router.push(`/bookings/layouts/${l.id}`)}
               className="flex flex-col gap-tight card-surface p-section text-left transition-colors duration-quick hover:border-ember/40 active:bg-ember/10"
             >
               <div className="flex items-center gap-tight">

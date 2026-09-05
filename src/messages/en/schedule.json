@@ -22,10 +22,10 @@
   "currentlyOutReason": "Currently out of service: {reason}. Returning it makes it bookable again.",
   "reasonLabel": "Reason",
   "reasonPlaceholder": "Resurfacing until Friday",
-  "reasonHelp": "Bookings stop while it's out of service.",
+  "reasonHelp": "Reservations stop while it's out of service.",
   "arrivalsGateLabel": "Gate",
   "arrivalsTitle": "Arrivals",
-  "arrivalsSearchPlaceholder": "Search by product…",
+  "arrivalsSearchPlaceholder": "Search by booking…",
   "noArrivals": "No upcoming arrivals",
   "partyOf": "Party of {size}"
 }

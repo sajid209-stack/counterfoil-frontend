@@ -1,7 +1,7 @@
 {
   "ticketsTitle": "টিকিট",
   "receiptTitle": "রসিদ",
-  "referenceLabel": "বুকিং রেফারেন্স",
+  "referenceLabel": "রিজার্ভেশন রেফারেন্স",
   "gateHint": "গেটে দেখান · চেক ইনের জন্য স্ক্যান করুন",
   "admits": "{count} জন প্রবেশ",
   "print": "প্রিন্ট",

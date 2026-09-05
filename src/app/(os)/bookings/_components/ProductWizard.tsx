@@ -161,8 +161,8 @@ export function ProductWizard({
     const res = await createProduct(input);
     setSaving(false);
     if (res.ok) {
-      toast.success(asDraft ? "Saved as draft." : "Product published.");
-      router.push(`/products/${res.data.id}`);
+      toast.success(asDraft ? "Saved as draft." : "Booking published.");
+      router.push(`/bookings/${res.data.id}`);
     } else if (res.error.code === "validation" && res.error.fieldErrors) {
       setErrors(res.error.fieldErrors);
       toast.error(res.error.message);
@@ -250,7 +250,7 @@ export function ProductWizard({
 
         {step === 4 && (
           <div className="flex flex-col gap-section">
-            <h2 className="type-h2 text-base">{name || "Untitled product"}</h2>
+            <h2 className="type-h2 text-base">{name || "Untitled booking"}</h2>
             <Row label="When">{booking?.summary ?? "—"}{schedule && isSlotBased(booking!.bookingType) ? ` · ${slotTimes(schedule).length} sessions/day` : ""}{schedule && isDailyCapped(booking!.bookingType) ? ` · ${schedule.dailyCapacity}/day` : ""}</Row>
             <Row label="Price">{tiers.map((t) => `${t.name} ${currency} ${t.price || "0"}`).join(" · ")}</Row>
             <Row label="Where">{[counter && "Counter", online && "Online"].filter(Boolean).join(" · ") || "—"}{locationIds.length ? ` · ${locationIds.length} location(s)` : ""}</Row>

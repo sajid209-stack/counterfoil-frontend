@@ -22,10 +22,10 @@
   "currentlyOutReason": "এখন সার্ভিসের বাইরে: {reason}. ফেরালে আবার বুক করা যাবে।",
   "reasonLabel": "কারণ",
   "reasonPlaceholder": "শুক্রবার পর্যন্ত সংস্কার চলছে",
-  "reasonHelp": "সার্ভিসের বাইরে থাকাকালীন বুকিং বন্ধ থাকবে।",
+  "reasonHelp": "সার্ভিসের বাইরে থাকাকালীন রিজার্ভেশন বন্ধ থাকবে।",
   "arrivalsGateLabel": "গেট",
   "arrivalsTitle": "আগমন",
-  "arrivalsSearchPlaceholder": "পণ্য দিয়ে খুঁজুন…",
+  "arrivalsSearchPlaceholder": "বুকিং দিয়ে খুঁজুন…",
   "noArrivals": "আসন্ন কোনো আগমন নেই",
   "partyOf": "{size} জনের দল"
 }

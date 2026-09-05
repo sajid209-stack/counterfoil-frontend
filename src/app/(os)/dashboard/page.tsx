@@ -407,7 +407,7 @@ export default function DashboardPage() {
           tone: "warning", Icon: CalendarOff,
           title: t("noticeNoSessionsTitle"),
           body: t("noSessionsAfter", { name: p.name, date: last }),
-          action: { label: t("noticeAddDates"), href: `/products/${p.id}` },
+          action: { label: t("noticeAddDates"), href: `/bookings/${p.id}` },
         });
       }
       if (p.windowMode === "fixed" && p.windowEnd && p.windowEnd <= dayShift(TODAY, 30)) {
@@ -415,7 +415,7 @@ export default function DashboardPage() {
           tone: "warning", Icon: Clock,
           title: t("noticeStopsSellingTitle"),
           body: t("stopsSelling", { name: p.name, date: p.windowEnd }),
-          action: { label: t("noticeOpenProduct"), href: `/products/${p.id}` },
+          action: { label: t("noticeOpenProduct"), href: `/bookings/${p.id}` },
         });
       }
     }
@@ -466,7 +466,7 @@ export default function DashboardPage() {
           if (d === TODAY && toMinutes(s.time) < NOW_MIN) continue;
           if (s.capacity > 1 && s.sold / s.capacity < 0.3) {
             const price = Math.min(...p.tiers.filter((t) => t.active).map((t) => t.price));
-            out.push({ text: `${d === TODAY ? "" : t("tomorrow")}${s.time} ${p.name} · ${s.sold}/${s.capacity}`, value: s.remaining * price, href: `/products/${p.id}` });
+            out.push({ text: `${d === TODAY ? "" : t("tomorrow")}${s.time} ${p.name} · ${s.sold}/${s.capacity}`, value: s.remaining * price, href: `/bookings/${p.id}` });
           }
         }
       }
@@ -548,7 +548,7 @@ export default function DashboardPage() {
     { key: "location", label: t("stepLocation"), done: locations.length > 0, href: "/settings/locations/new" },
     { key: "counter", label: t("stepCounter"), done: has(counters), href: "/settings/counters/new" },
     { key: "team", label: t("stepTeam"), done: has(staffQ), href: "/settings/team/new" },
-    { key: "product", label: t("stepProduct"), done: products.length > 0, href: "/products/new" },
+    { key: "product", label: t("stepProduct"), done: products.length > 0, href: "/bookings/new" },
     { key: "device", label: t("stepDevice"), done: (devicesQ.data?.page.total ?? 0) > 0, href: "/settings/devices/new" },
   ];
   const complete = steps.filter((s) => s.done || skipped[s.key]).length;
