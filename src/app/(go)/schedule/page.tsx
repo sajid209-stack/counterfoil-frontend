@@ -14,14 +14,21 @@ import { formatMoney } from "@/lib/format";
 const TODAY = "2026-07-29";
 const TOMORROW = "2026-07-30";
 
+/** What a row IS, as opposed to what it says. The label is a price or a
+ *  count and cannot be filtered on; this can. */
+type RowKind = "open" | "full" | "out";
+
 interface Row {
   time: string;
   label: string;
   state: string; // "OPEN" | "BOOKED" | "FULL" | "12/40"
   full: boolean;
+  kind: RowKind;
   product: Product;
   resourceId?: string;
 }
+
+const KINDS: RowKind[] = ["open", "full", "out"];
 
 export default function SchedulePage() {
   const router = useRouter();
@@ -40,17 +47,44 @@ export default function SchedulePage() {
       if (isResourceType(p.bookingType) && !p.flexibleDurations) {
         for (const r of getResourceMatrix(p, date)) {
           for (const s of r.slots) {
-            out.push({ time: s.time, label: `${p.name} — ${r.resource.name}`, state: r.resource.outOfService ? t("stateOut") : s.available ? formatMoney(resolveProductPrice(p, date, s.time, p.tiers[0]?.price ?? 0)) : t("stateBooked"), full: !s.available, product: p, resourceId: r.resource.id });
+            out.push({ time: s.time, label: `${p.name} — ${r.resource.name}`, state: r.resource.outOfService ? t("stateOut") : s.available ? formatMoney(resolveProductPrice(p, date, s.time, p.tiers[0]?.price ?? 0)) : t("stateBooked"), full: !s.available, kind: r.resource.outOfService ? "out" : s.available ? "open" : "full", product: p, resourceId: r.resource.id });
           }
         }
       } else if (isSlotBased(p.bookingType)) {
         for (const s of getSlots(p, date)) {
-          out.push({ time: s.time, label: p.name, state: s.remaining <= 0 ? t("stateFull") : `${s.sold}/${s.capacity}`, full: s.remaining <= 0, product: p });
+          out.push({ time: s.time, label: p.name, state: s.remaining <= 0 ? t("stateFull") : `${s.sold}/${s.capacity}`, full: s.remaining <= 0, kind: s.remaining <= 0 ? "full" : "open", product: p });
         }
       }
     }
     return out.sort((a, b) => a.time.localeCompare(b.time));
   }, [productsQ.data, date, t]);
+
+  // A day at a busy turf is a hundred rows. The two questions worth asking of
+  // it at the counter are "which one" and "what is still sellable", so those
+  // are the two controls — kinds as chips because there are three of them and
+  // a cashier is tapping, the booking as a select because the list is long.
+  const [bookingFilter, setBookingFilter] = useState("all");
+  const [kinds, setKinds] = useState<RowKind[]>(KINDS);
+  const toggleKind = (k: RowKind) =>
+    setKinds((cur) => (cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k]));
+
+  const scoped = useMemo(
+    () => rows.filter((r) => bookingFilter === "all" || r.product.id === bookingFilter),
+    [rows, bookingFilter],
+  );
+  const shownRows = useMemo(() => scoped.filter((r) => kinds.includes(r.kind)), [scoped, kinds]);
+  const kindCounts = useMemo(() => {
+    const out = { open: 0, full: 0, out: 0 } as Record<RowKind, number>;
+    for (const r of scoped) out[r.kind] += 1;
+    return out;
+  }, [scoped]);
+  /** Only the bookings that actually run on this day — offering one with
+   *  nothing on the schedule is the empty-chip mistake in a select. */
+  const bookingOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const r of rows) seen.set(r.product.id, r.product.name);
+    return [...seen].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [rows]);
 
   const sell = (p: Product) => {
     sessionStorage.setItem("pos_open_product", p.id);
@@ -78,7 +112,7 @@ export default function SchedulePage() {
   };
 
   const dateBtn = (v: string, label: string) => (
-    <button key={v} type="button" onClick={() => setDate(v)} className={`h-10 rounded-sm border px-comfortable text-sm ${date === v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{label}</button>
+    <button key={v} type="button" onClick={() => setDate(v)} className={`h-12 rounded-sm border px-comfortable text-sm ${date === v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{label}</button>
   );
 
   return (
@@ -90,16 +124,51 @@ export default function SchedulePage() {
       <div className="flex flex-wrap gap-tight">
         {dateBtn(TODAY, t("today"))}
         {dateBtn(TOMORROW, t("tomorrow"))}
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-10 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-sm" />
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-12 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-sm" />
+      </div>
+
+      <div className="flex flex-col gap-tight">
+        <select
+          value={bookingFilter}
+          onChange={(e) => setBookingFilter(e.target.value)}
+          aria-label={t("filterBooking")}
+          className="h-12 w-full rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
+        >
+          <option value="all">{t("allBookings")}</option>
+          {bookingOptions.map((o) => (
+            <option key={o.id} value={o.id}>{o.name}</option>
+          ))}
+        </select>
+        <div className="flex flex-wrap gap-tight">
+          {KINDS.map((k) => {
+            const on = kinds.includes(k);
+            return (
+              <button
+                key={k}
+                type="button"
+                aria-pressed={on}
+                onClick={() => toggleKind(k)}
+                className={`flex h-12 items-center gap-tight rounded-sm border px-comfortable text-sm transition-colors duration-quick ${
+                  on ? "border-ember bg-ember/10 text-brand-foreground" : "border-line bg-card text-muted"
+                }`}
+              >
+                {t(k === "open" ? "filterOpen" : k === "full" ? "filterFull" : "filterOut")}
+                <span className="font-mono text-[12px] opacity-70">{kindCounts[k]}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {productsQ.loading ? (
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : rows.length === 0 ? (
         <EmptyState title={t("noSessionsTitle")} message={t("noSessionsMessage")} />
+      ) : shownRows.length === 0 ? (
+        <EmptyState title={t("noMatchTitle")} message={t("noMatchMessage")} />
       ) : (
         <div className="overflow-hidden card-surface">
-          {rows.map((r, i) => (
+          {shownRows.map((r, i) => (
             <div key={i} className="flex items-center gap-section border-b border-line px-section py-tight last:border-0">
               <span className="w-14 font-mono text-sm">{r.time}</span>
               <span className="min-w-0 flex-1 truncate text-sm">{r.label}</span>

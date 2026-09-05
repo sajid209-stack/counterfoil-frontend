@@ -27,5 +27,12 @@
   "arrivalsTitle": "আগমন",
   "arrivalsSearchPlaceholder": "বুকিং দিয়ে খুঁজুন…",
   "noArrivals": "আসন্ন কোনো আগমন নেই",
-  "partyOf": "{size} জনের দল"
+  "partyOf": "{size} জনের দল",
+  "filterBooking": "বুকিং অনুযায়ী ফিল্টার",
+  "allBookings": "সব বুকিং",
+  "filterOpen": "খালি",
+  "filterFull": "পূর্ণ",
+  "filterOut": "সার্ভিসের বাইরে",
+  "noMatchTitle": "এই ফিল্টারে কিছু মেলেনি",
+  "noMatchMessage": "একটি অবস্থা আবার চালু করুন, বা অন্য বুকিং বাছুন।"
 }

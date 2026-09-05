@@ -27,5 +27,12 @@
   "arrivalsTitle": "Arrivals",
   "arrivalsSearchPlaceholder": "Search by booking…",
   "noArrivals": "No upcoming arrivals",
-  "partyOf": "Party of {size}"
+  "partyOf": "Party of {size}",
+  "filterBooking": "Filter by booking",
+  "allBookings": "All bookings",
+  "filterOpen": "Open",
+  "filterFull": "Full",
+  "filterOut": "Out of service",
+  "noMatchTitle": "Nothing matches those filters",
+  "noMatchMessage": "Switch a state back on, or choose a different booking."
 }

@@ -19,5 +19,12 @@
   "keyArrived": "Arrived",
   "keyNoShow": "No-show",
   "keyHeld": "Held back",
-  "keyLocked": "Session closed"
+  "keyLocked": "Session closed",
+  "filterBooking": "Filter by booking",
+  "allBookings": "All bookings",
+  "filterCategory": "Filter by category",
+  "allCategories": "All categories",
+  "filterOwner": "Filter by resource",
+  "allOwners": "All resources",
+  "clearFilters": "Clear filters"
 }

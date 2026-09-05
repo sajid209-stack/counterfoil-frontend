@@ -9,6 +9,7 @@ import { useApiQuery } from "@/lib/useApi";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import {
   listBookings,
+  listCategories,
   listHolds,
   listProducts,
   listResources,
@@ -27,6 +28,7 @@ import {
   startOfDay,
   weekStart,
   type CalEvent,
+  type EventTone,
 } from "./_components/model";
 
 type View = "day" | "week" | "month";
@@ -35,6 +37,23 @@ type View = "day" | "week" | "month";
 const openingDate = () => startOfDay(new Date(`${DEMO_TODAY}T12:00:00`));
 
 const WEEKDAYS_MON_FIRST = [1, 2, 3, 4, 5, 6, 0];
+
+/** The five states a slot can be in, in the order the key reads them. */
+const TONES: EventTone[] = ["booked", "arrived", "noshow", "held", "locked"];
+const TONE_KEY: Record<EventTone, string> = {
+  booked: "keyBooked",
+  arrived: "keyArrived",
+  noshow: "keyNoShow",
+  held: "keyHeld",
+  locked: "keyLocked",
+};
+const TONE_BAR: Record<EventTone, string> = {
+  booked: "border-l-ember",
+  arrived: "border-l-success",
+  noshow: "border-l-muted",
+  held: "border-l-warning",
+  locked: "border-l-danger",
+};
 
 export default function CalendarPage() {
   const t = useTranslations("calendar");
@@ -57,6 +76,7 @@ export default function CalendarPage() {
     [],
   );
   const staffQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
+  const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
   const holdsQ = useApiQuery(() => listHolds({ pageSize: 500, filters: { effectiveStatus: "held" } }), []);
 
   const products = useMemo(() => productsQ.data?.data ?? [], [productsQ.data]);
@@ -74,25 +94,82 @@ export default function CalendarPage() {
   const loading =
     bookingsQ.loading || productsQ.loading || resourcesQ.loading || holdsQ.loading;
 
+  // ── filters ───────────────────────────────────────────────────────────────
+  // Two questions a manager actually asks of a calendar: "show me just this
+  // one thing" and "show me only what is in this state". The first three are
+  // selects because they are long lists; the last is the key itself, made
+  // clickable — a legend that explains the colours and a filter that acts on
+  // them are the same control, and drawing them separately would state the
+  // same five words twice.
+  const [bookingFilter, setBookingFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [tones, setTones] = useState<EventTone[]>(TONES);
+  const categories = useMemo(() => categoriesQ.data?.data ?? [], [categoriesQ.data]);
+  const filtered =
+    bookingFilter !== "all" || categoryFilter !== "all" || ownerFilter !== "all" || tones.length !== TONES.length;
+  const resetFilters = () => {
+    setBookingFilter("all");
+    setCategoryFilter("all");
+    setOwnerFilter("all");
+    setTones(TONES);
+  };
+  const toggleTone = (tone: EventTone) =>
+    setTones((cur) => (cur.includes(tone) ? cur.filter((x) => x !== tone) : [...cur, tone]));
+
+  /** Everything the selects allow, before the state toggles narrow it. Counts
+   *  on the toggles are read from HERE, so a state's count does not drop to
+   *  zero merely because it is currently switched off. */
+  const scoped = useMemo(
+    () =>
+      events.filter((e) => {
+        if (bookingFilter !== "all" && e.productId !== bookingFilter) return false;
+        if (categoryFilter !== "all") {
+          const p = products.find((x) => x.id === e.productId);
+          if (!p || p.categoryId !== categoryFilter) return false;
+        }
+        if (ownerFilter !== "all" && e.ownerId !== ownerFilter) return false;
+        return true;
+      }),
+    [events, bookingFilter, categoryFilter, ownerFilter, products],
+  );
+  const visible = useMemo(() => scoped.filter((e) => tones.includes(e.tone)), [scoped, tones]);
+
   // ── the visible window ────────────────────────────────────────────────────
   const dayEvents = useMemo(
-    () => events.filter((e) => sameDay(e.start, cursor)),
-    [events, cursor],
+    () => visible.filter((e) => sameDay(e.start, cursor)),
+    [visible, cursor],
   );
   const wkStart = useMemo(() => weekStart(cursor), [cursor]);
   const weekEvents = useMemo(() => {
     const end = addDays(wkStart, 7);
-    return events.filter((e) => e.start >= wkStart && e.start < end);
-  }, [events, wkStart]);
+    return visible.filter((e) => e.start >= wkStart && e.start < end);
+  }, [visible, wkStart]);
   const monthEvents = useMemo(
     () =>
-      events.filter(
+      visible.filter(
         (e) =>
           e.start.getMonth() === cursor.getMonth() &&
           e.start.getFullYear() === cursor.getFullYear(),
       ),
-    [events, cursor],
+    [visible, cursor],
   );
+
+  /** How many of each state are in the window on screen — the number that
+   *  makes the toggle worth reading rather than just worth clicking. */
+  const toneCounts = useMemo(() => {
+    const inWindow = scoped.filter((e) =>
+      view === "day"
+        ? sameDay(e.start, cursor)
+        : view === "week"
+          ? e.start >= wkStart && e.start < addDays(wkStart, 7)
+          : e.start.getMonth() === cursor.getMonth() && e.start.getFullYear() === cursor.getFullYear(),
+    );
+    const out = {} as Record<EventTone, number>;
+    for (const t of TONES) out[t] = 0;
+    for (const e of inWindow) out[e.tone] += 1;
+    return out;
+  }, [scoped, view, cursor, wkStart]);
 
   // ── day lanes ─────────────────────────────────────────────────────────────
   const lanes = useMemo<DayLane[]>(() => {
@@ -219,6 +296,78 @@ export default function CalendarPage() {
           <span className="font-mono text-[13px] text-muted">{rangeLabel}</span>
         </div>
 
+        {/* ── filters ─────────────────────────────────────────────────────── */}
+        <div className="flex flex-col gap-tight">
+          <div className="flex flex-wrap items-center gap-tight">
+            <select
+              value={bookingFilter}
+              onChange={(e) => setBookingFilter(e.target.value)}
+              aria-label={t("filterBooking")}
+              className="h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
+            >
+              <option value="all">{t("allBookings")}</option>
+              {[...products].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              aria-label={t("filterCategory")}
+              className="h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
+            >
+              <option value="all">{t("allCategories")}</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+
+            {(resources.length > 0 || staff.length > 0) && (
+              <select
+                value={ownerFilter}
+                onChange={(e) => setOwnerFilter(e.target.value)}
+                aria-label={t("filterOwner")}
+                className="h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
+              >
+                <option value="all">{t("allOwners")}</option>
+                {resources.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            )}
+
+            {filtered && (
+              <Button variant="secondary" size="sm" onClick={resetFilters}>
+                {t("clearFilters")}
+              </Button>
+            )}
+          </div>
+
+          {/* The key IS the filter. Each one says what its colour means, how
+              many are in view, and switches that state off when tapped. */}
+          <div className="flex flex-wrap items-center gap-tight">
+            {TONES.map((tone) => {
+              const on = tones.includes(tone);
+              return (
+                <button
+                  key={tone}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggleTone(tone)}
+                  className={`flex items-center gap-tight rounded-sm border px-comfortable py-1 text-[12px] transition-colors duration-quick ${
+                    on ? "border-line bg-card text-fg" : "border-line bg-subtle text-faint"
+                  }`}
+                >
+                  <span className={`h-3 w-3 rounded-xs border border-line border-l-[3px] ${TONE_BAR[tone]} ${on ? "" : "opacity-40"}`} />
+                  {t(TONE_KEY[tone])}
+                  <span className="font-mono text-[11px] text-muted">{toneCounts[tone]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {view === "day" && !compact && resources.length > 0 && (
           <div className="flex flex-wrap gap-inline">
             {(["resource", "product"] as const).map((g) => (
@@ -290,21 +439,6 @@ export default function CalendarPage() {
           )}
         </div>
 
-        {/* What the shading means. A calendar without a key is a puzzle. */}
-        <div className="flex flex-wrap items-center gap-section text-[12px] text-muted">
-          {[
-            { tone: "border-l-ember", label: t("keyBooked") },
-            { tone: "border-l-success", label: t("keyArrived") },
-            { tone: "border-l-muted", label: t("keyNoShow") },
-            { tone: "border-l-warning", label: t("keyHeld") },
-            { tone: "border-l-danger", label: t("keyLocked") },
-          ].map((k) => (
-            <span key={k.label} className="flex items-center gap-tight">
-              <span className={`h-3 w-3 rounded-xs border border-line border-l-[3px] ${k.tone}`} />
-              {k.label}
-            </span>
-          ))}
-        </div>
       </div>
     </PageShell>
   );

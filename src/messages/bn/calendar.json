@@ -19,5 +19,12 @@
   "keyArrived": "এসেছেন",
   "keyNoShow": "অনুপস্থিত",
   "keyHeld": "সংরক্ষিত",
-  "keyLocked": "সেশন বন্ধ"
+  "keyLocked": "সেশন বন্ধ",
+  "filterBooking": "বুকিং অনুযায়ী ফিল্টার",
+  "allBookings": "সব বুকিং",
+  "filterCategory": "ক্যাটাগরি অনুযায়ী ফিল্টার",
+  "allCategories": "সব ক্যাটাগরি",
+  "filterOwner": "রিসোর্স অনুযায়ী ফিল্টার",
+  "allOwners": "সব রিসোর্স",
+  "clearFilters": "ফিল্টার মুছুন"
 }
