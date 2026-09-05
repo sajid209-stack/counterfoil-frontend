@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { AlertTriangle, Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, Zap, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { addOrderPayment, checkout, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
@@ -19,7 +19,6 @@ import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
-import { quickPick, type QuickPick } from "../_components/quickAdd";
 import { Keypad } from "../_components/Keypad";
 
 const TODAY = DEMO_TODAY;
@@ -308,7 +307,11 @@ export default function PosPage() {
   // again. A real device id lands with the backend; the counter is enough here.
   const TILL_ID = "till_fort_main";
 
-  const upsertEntry = (entry: CartEntry) => {
+  /** `pay` comes from the sheet's Buy now: add this line AND go straight to
+   *  the payment step, for the single booking someone is standing there to
+   *  settle. The trip through a cart holding one thing is the step being
+   *  skipped — not the payment itself. */
+  const upsertEntry = (entry: CartEntry, pay = false) => {
     setCart((c) => (c.some((e) => e.id === entry.id) ? c.map((e) => (e.id === entry.id ? entry : e)) : [...c, entry]));
     setSheet(null);
     // §61.11 — hold the places while this cart is open, so a second till
@@ -328,19 +331,17 @@ export default function PosPage() {
         });
       }
     }
-  };
 
-  /** Book now: the shortcut lands as an ordinary cart line, says what it
-   *  chose, and opens the cart on a phone — where the cart is a drawer, adding
-   *  something to a panel nobody can see is not feedback. Everything remains
-   *  editable: tapping the line reopens its sheet with the choice loaded. */
-  const quickAdd = (p: Product, pick: QuickPick) => {
-    upsertEntry({ id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`, ...pick.entry });
-    setCartOpen(true);
-    const detail = [pick.label.resource, pick.label.time, formatMoney(pick.label.price, currency)]
-      .filter(Boolean)
-      .join(" · ");
-    toast.success(t("bookNowAdded", { name: p.name, detail }));
+    if (pay) {
+      // On a phone the cart is a drawer, so opening it IS the feedback.
+      setCartOpen(true);
+      // The tender pad and the wallet flows read their amounts on the NEXT
+      // render, by which time this line is in the cart. A card terminal is the
+      // exception: it settles synchronously from a sale built at call time,
+      // which would not yet include this line — so it gets the cart and its
+      // own Charge rather than a card charged for the wrong total.
+      if (method !== "card_terminal") void charge();
+    }
   };
 
   // Extend a flexible booking still in the cart by one increment: the lane
@@ -771,25 +772,6 @@ export default function PosPage() {
                     })()}
                   </span>
                 </button>
-                {/* Book now — only where there IS one obvious answer. See
-                    quickAdd: anything needing a real decision keeps the sheet,
-                    because a shortcut that guesses is worse than the tap it
-                    saved. */}
-                {(() => {
-                  const pick = quickPick(p, DEMO_TODAY, nowMinutes, resources);
-                  if (!pick) return null;
-                  return (
-                    <button
-                      type="button"
-                      onClick={() => quickAdd(p, pick)}
-                      aria-label={t("bookNowFor", { name: p.name })}
-                      title={t("bookNow")}
-                      className="mr-tight flex h-12 w-12 shrink-0 items-center justify-center rounded-sm border border-ember/40 text-ember transition-colors duration-quick hover:bg-ember/10 active:bg-ember/20"
-                    >
-                      <Zap size={18} strokeWidth={1.5} />
-                    </button>
-                  );
-                })()}
                 </div>
               ))}
               <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-sm border border-dashed border-line text-faint transition-colors duration-quick hover:bg-subtle active:bg-ember/10">

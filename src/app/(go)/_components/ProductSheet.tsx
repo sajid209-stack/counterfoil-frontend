@@ -87,18 +87,39 @@ function SheetFooter({
   disabled,
   onAdd,
   label,
+  buyLabel,
 }: {
   summary?: React.ReactNode;
   note?: React.ReactNode;
   disabled: boolean;
-  onAdd: () => void;
+  /** `pay` = the cashier wants to settle this now, not build a bigger sale. */
+  onAdd: (pay: boolean) => void;
   label: string;
+  /** Omitted where an express sale makes no sense (nothing chosen yet). */
+  buyLabel?: string;
 }) {
   return (
     <div className="sticky bottom-0 z-10 -mx-section mt-section border-t border-line bg-sheet px-section pb-inline pt-comfortable">
       {note}
       {summary && <div className="mb-tight text-[13px]">{summary}</div>}
-      <Button size="lg" fullWidth disabled={disabled} onClick={onAdd}>{label}</Button>
+      <Button size="lg" fullWidth disabled={disabled} onClick={() => onAdd(false)}>{label}</Button>
+      {/* Two exits, because a till serves two sales. Building a bigger one
+          keeps the sheet's Add; the single booking someone is standing there
+          to pay for takes Buy now, which adds the line AND opens the payment
+          — the step they were going to reach anyway, minus the trip through a
+          cart holding one thing. */}
+      {buyLabel && (
+        <Button
+          size="lg"
+          fullWidth
+          variant="secondary"
+          className="mt-tight"
+          disabled={disabled}
+          onClick={() => onAdd(true)}
+        >
+          {buyLabel}
+        </Button>
+      )}
     </div>
   );
 }
@@ -117,7 +138,7 @@ export function ProductSheet({
   currency: string;
   initial: CartEntry | null;
   seatsInCart: (productId: string, slotStart: string) => number;
-  onAdd: (entry: CartEntry) => void;
+  onAdd: (entry: CartEntry, pay?: boolean) => void;
   onClose: () => void;
   team?: Staff[];
   /** Only for the header's behaviour line — availability still computes its
@@ -369,7 +390,7 @@ export function ProductSheet({
     );
   };
 
-  const submitTiered = (onDate?: string) => {
+  const submitTiered = (onDate?: string, pay = false) => {
     const when = onDate ?? date;
     const list = sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: s.name, price: s.price, donation: false })) : activeTiers.map((t) => ({ id: t.id, name: t.name, price: t.price, donation: !!t.donation }));
     const items = [...list.filter((x) => qty[x.id] > 0).map((x) => ({ tierId: x.id, tierName: x.name, unitPrice: x.donation ? Math.max(x.price, donationAmt[x.id] ?? x.price) : x.price, qty: qty[x.id] })), ...addOnItems()];
@@ -388,10 +409,10 @@ export function ProductSheet({
       resourceId: owner?.id,
       providerLabel: owner?.name,
       items,
-    });
+    }, pay);
   };
 
-  const submitSeats = () => {
+  const submitSeats = (pay = false) => {
     const chosen = availSeats.filter((s) => selectedSeats.includes(s.label));
     const byCat = new Map<string, { name: string; price: number; qty: number }>();
     for (const s of chosen) {
@@ -408,10 +429,10 @@ export function ProductSheet({
       productId: product.id, productName: product.name,
       items,
       seatLabels: selectedSeats,
-    });
+    }, pay);
   };
 
-  const submitResource = (rId: string, rLabel: string, time: string, price: number, minutes?: number, onDate?: string) => {
+  const submitResource = (rId: string, rLabel: string, time: string, price: number, minutes?: number, onDate?: string, pay = false) => {
     const when = onDate ?? date;
     onAdd({
       // Only the first date of a series can inherit an edited entry's id; the
@@ -422,7 +443,7 @@ export function ProductSheet({
       slotEnd: endISO(when, time, minutes ?? product.schedule?.sessionMinutes ?? 60),
       partySize: flatBasis ? group : undefined,
       items: addOnItems(), fixedPrice: price,
-    });
+    }, pay);
   };
 
   /* ── repeat weekly ────────────────────────────────────────────────────────
@@ -460,7 +481,7 @@ export function ProductSheet({
 
   const newEntryId = () => `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`;
 
-  const submitFlexible = () => {
+  const submitFlexible = (pay = false) => {
     if (!slotTime) return;
     // "Any" assigns the best-fit (first free) lane at submit.
     const lane = resourceId
@@ -469,7 +490,7 @@ export function ProductSheet({
     if (!lane) return;
     // Engine price (model + band blending), then the lane's own rate.
     const price = applyResourceRate(productDurationPrice(product, date, slotTime, duration, basePrice), duration, lane);
-    submitResource(lane.id, lane.name, slotTime, price, duration);
+    submitResource(lane.id, lane.name, slotTime, price, duration, undefined, pay);
   };
 
   const doWaitlist = async () => {
@@ -619,12 +640,14 @@ export function ProductSheet({
               const price = applyResourceRate(resolveProductPrice(product, date, slotTime, basePrice), minutes, row?.resource);
               const plan = planWeekly(date, repeatCount, checkResourceDate(resourceId, slotTime, minutes));
               const dates = plan.filter((o) => o.ok).map((o) => o.date);
-              const addAll = () => {
-                for (const d of dates) {
+              const addAll = (pay = false) => {
+                for (const [i, d] of dates.entries()) {
                   // Re-price per date: a band or a day override can move the
                   // rate even at the same clock time.
                   const p = applyResourceRate(resolveProductPrice(product, d, slotTime, basePrice), minutes, row?.resource);
-                  submitResource(resourceId, row?.resource.name ?? "", slotTime, p, minutes, d);
+                  // Only the last one asks to pay: a seven-week series is one
+                  // sale, and opening the tender seven times is not express.
+                  submitResource(resourceId, row?.resource.name ?? "", slotTime, p, minutes, d, pay && i === dates.length - 1);
                 }
               };
               return (
@@ -649,6 +672,7 @@ export function ProductSheet({
                     </>}
                     disabled={!waiverOk || dates.length === 0}
                     onAdd={addAll}
+                    buyLabel={t("sheet.buyNow", { amount: formatMoney(price * Math.max(1, dates.length) + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0), currency) })}
                     label={
                       dates.length > 1
                         ? t("repeat.addDates", { count: dates.length, amount: formatMoney(price * dates.length, currency) })
@@ -803,6 +827,17 @@ export function ProductSheet({
               <SheetFooter
                 disabled={!slotTime || !chosenLaneFree || !waiverOk}
                 onAdd={submitFlexible}
+                buyLabel={
+                  slotTime && chosenLaneFree
+                    ? t("sheet.buyNow", {
+                        amount: formatMoney(
+                          priceFor(slotTime, duration, laneOf(resourceId) ?? firstFreeResource(product, date, slotTime, duration)) +
+                            addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0),
+                          currency,
+                        ),
+                      })
+                    : undefined
+                }
                 label={slotTime && chosenLaneFree
                   ? t("sheet.addFlexible", { duration: formatDuration(duration), start: slotTime, end: endLabel ?? "", amount: formatMoney(priceFor(slotTime, duration, laneOf(resourceId) ?? firstFreeResource(product, date, slotTime, duration)), currency) })
                   // Says what is missing rather than sitting dead — the spec's
@@ -1082,16 +1117,28 @@ export function ProductSheet({
             )}
             <SheetFooter
               disabled={hasLayout ? selectedSeats.length === 0 || !waiverOk : !canAddTiered}
-              onAdd={() => {
-                if (hasLayout) return submitSeats();
+              // Offered only once the sheet has something to sell — a Buy now
+              // on an empty selection is a button that can only disappoint.
+              buyLabel={(() => {
+                const ready = hasLayout ? selectedSeats.length > 0 && waiverOk : canAddTiered;
+                if (!ready) return undefined;
+                const list = sectioned ? (product.sections ?? []) : activeTiers;
+                const prem = provider && assignedProvider ? premiumOf(assignedProvider.id) : 0;
+                const base = hasLayout
+                  ? seatTotal
+                  : list.reduce((a, x) => a + (qty[x.id] ?? 0) * x.price, 0);
+                const total = base + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0) + prem;
+                return t("sheet.buyNow", { amount: formatMoney(total, currency) });
+              })()}
+              onAdd={(pay) => {
+                if (hasLayout) return submitSeats(pay);
                 const repeatable =
                   needsSchedule(bt) && !resourceMode && !provider && !course && !guided && !sectioned && !!slotTime;
-                if (!repeatable || repeatCount <= 1 || !slotTime) return submitTiered();
-                for (const d of planWeekly(date, repeatCount, checkSlotDate(slotTime, partySize || 1))
+                if (!repeatable || repeatCount <= 1 || !slotTime) return submitTiered(undefined, pay);
+                const days = planWeekly(date, repeatCount, checkSlotDate(slotTime, partySize || 1))
                   .filter((o) => o.ok)
-                  .map((o) => o.date)) {
-                  submitTiered(d);
-                }
+                  .map((o) => o.date);
+                days.forEach((d, i) => submitTiered(d, pay && i === days.length - 1));
               }}
               // The verb names the thing being bought, and carries its total.
               // "Add to sale" told a cashier nothing they could check against.

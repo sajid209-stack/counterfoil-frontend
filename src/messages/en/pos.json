@@ -282,7 +282,8 @@
     "seatSelected": "Selected",
     "time": "Time",
     "slotsFree": "{count} free",
-    "departureLabel": "Departure"
+    "departureLabel": "Departure",
+    "buyNow": "Buy now — {amount}"
   },
   "settle": {
     "title": "Settle a reservation",
@@ -344,8 +345,5 @@
     "reason_full": "Full",
     "reason_closed": "Closed",
     "reason_past": "Past"
-  },
-  "bookNow": "Book now",
-  "bookNowFor": "Book {name} now",
-  "bookNowAdded": "Added {name} — {detail}. Tap the line to change it."
+  }
 }
