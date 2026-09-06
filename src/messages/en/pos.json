@@ -370,5 +370,15 @@
     "half": "Half",
     "belowMin": "The least this business accepts is {amount}.",
     "explain": "Taking {now} now. {later} is due at the venue."
-  }
+  },
+  "systemsLabel": "Sold as",
+  "sysOpenEntry": "Open entry",
+  "sysDatePass": "Date pass",
+  "sysSessions": "Sessions",
+  "sysTimeSlots": "Time slots",
+  "sysByDuration": "By duration",
+  "sysDailyLimit": "Daily limit",
+  "sysSeats": "Seats",
+  "sysGuided": "Guided",
+  "sysAppointments": "Appointments"
 }

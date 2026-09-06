@@ -100,7 +100,7 @@ export default function ScanResultPage() {
                 type="button"
                 onClick={() => setMethod(m)}
                 className={`h-14 rounded-sm border text-sm font-medium transition-colors duration-quick ${
-                  method === m ? "border-brand-600 bg-brand-600 text-white" : "border-strong bg-card"
+                  method === m ? "border-ember bg-ember text-white" : "border-strong bg-card"
                 }`}
               >
                 {t(`method_${m}`)}

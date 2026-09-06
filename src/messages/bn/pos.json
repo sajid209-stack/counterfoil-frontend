@@ -370,5 +370,15 @@
     "half": "অর্ধেক",
     "belowMin": "এই ব্যবসা সর্বনিম্ন {amount} নেয়।",
     "explain": "এখন {now} নেওয়া হচ্ছে। ভেন্যুতে {later} বাকি থাকবে।"
-  }
+  },
+  "systemsLabel": "যেভাবে বিক্রি হয়",
+  "sysOpenEntry": "খোলা প্রবেশ",
+  "sysDatePass": "তারিখ পাস",
+  "sysSessions": "সেশন",
+  "sysTimeSlots": "সময় স্লট",
+  "sysByDuration": "সময়কাল অনুসারে",
+  "sysDailyLimit": "দৈনিক সীমা",
+  "sysSeats": "আসন",
+  "sysGuided": "গাইডেড",
+  "sysAppointments": "অ্যাপয়েন্টমেন্ট"
 }
