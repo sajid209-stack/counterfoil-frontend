@@ -858,7 +858,15 @@ export default function PosPage() {
             </p>
           </div>
         )}
-        <div className="flex-1 overflow-y-auto p-comfortable">
+        {/* One scrolling region for the sale itself — the lines AND the rows
+            that modify them. They used to be separate: the lines were flex-1
+            between a header that grew (the customer row) and a footer that was
+            never allowed to shrink (four rows, the totals, the methods and the
+            charge bar). On a phone that arithmetic left the lines about thirty
+            pixels, so the one thing a cart exists to show was the one thing you
+            could not read. Only the payment controls are pinned now. */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="p-comfortable">
           {cart.length === 0 ? (
             <EmptyState title={t("cart.empty")} message={t("cart.emptyHint")} />
           ) : (
@@ -1110,6 +1118,10 @@ export default function PosPage() {
             </>
           )}
 
+        </div>
+        </div>
+
+        <div className="border-t border-line p-comfortable">
           {/* Payment method — segmented control with a sliding thumb. Non-cash
               methods only appear when a live PSP account is connected. */}
           {(() => {
