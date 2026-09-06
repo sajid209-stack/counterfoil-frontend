@@ -295,7 +295,11 @@
     "validFor": "যতদিন বৈধ",
     "addPass": "{count, plural, one {পাস যোগ করুন} other {# পাস যোগ করুন}} — {amount}",
     "passLine": "{label} পাস",
-    "passCount": "{count} পাস"
+    "passCount": "{count} পাস",
+    "courseRuns": "{count}টি সেশন · {days} · {range}",
+    "courseShowAll": "সব তারিখ দেখুন",
+    "courseHideAll": "তারিখ লুকান",
+    "courseStarts": "শুরু {date}"
   },
   "settle": {
     "title": "রিজার্ভেশন নিষ্পত্তি",

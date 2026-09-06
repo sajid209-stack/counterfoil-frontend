@@ -37,7 +37,13 @@ export function behaviourSubtitle(
     case "BT-07": return (product.sections ?? []).map((s) => s.name).join(" & ") || "Choose a section";
     case "BT-08": return `${(product.bundleComponentIds ?? []).length} attractions`;
     case "BT-12": return `${product.credits?.count ?? 0} credits`;
-    case "BT-13": return `${(product.courseDates ?? []).length} sessions${product.courseDates?.[0] ? ` · from ${product.courseDates[0]}` : ""}`;
+    case "BT-13": {
+      const first = product.courseDates?.[0];
+      const from = first
+        ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(new Date(`${first}T12:00:00`))
+        : "";
+      return `${(product.courseDates ?? []).length} sessions${from ? ` · from ${from}` : ""}`;
+    }
     case "BT-14": return "Quick pass";
     default: return "Set up booking";
   }

@@ -223,6 +223,7 @@ export function ProductSheet({
   const [waived, setWaived] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null); // BlockedNotice message
   const [moreDates, setMoreDates] = useState(false);
+  const [courseDatesOpen, setCourseDatesOpen] = useState(false);
   /** BT-02 sells a pass in lengths. The first is the default because it is the
    *  cheapest and the commonest, not because it is first in the array. */
   const validityOptions = bt === "BT-02" ? (product.validityOptions ?? []) : [];
@@ -1003,16 +1004,44 @@ export function ProductSheet({
             only decision left is how many places. The panel says so in the
             affirmative rather than presenting a list that looks like a choice
             the cashier still has to make. */}
-        {course && (
-          <div className="mb-section rounded-sm border border-success/30 bg-success/10 p-comfortable">
-            <p className="flex items-center gap-inline text-sm font-medium text-success">
-              <Check size={14} strokeWidth={2.5} />
-              {t("sheet.readyToAdd")}
-            </p>
-            <p className="mt-inline text-[13px] text-muted">{t("sheet.courseDates")}</p>
-            <p className="text-[13px]">{(product.courseDates ?? []).join(" · ") || "—"}</p>
-          </div>
-        )}
+        {course && (() => {
+          const dates = [...(product.courseDates ?? [])].sort();
+          const d = (iso: string) => new Date(`${iso}T12:00:00`);
+          const fmtDay = (iso: string) => new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" }).format(d(iso));
+          const weekdays = [...new Set(dates.map((x) => new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(d(x))))];
+          const range = dates.length
+            ? `${new Intl.DateTimeFormat("en-GB", { day: "numeric" }).format(d(dates[0]))}–${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(d(dates[dates.length - 1]))}`
+            : "";
+          return (
+            <div className="mb-section rounded-sm border border-success/30 bg-success/10 p-comfortable">
+              <p className="flex items-center gap-inline text-sm font-medium text-success">
+                <Check size={14} strokeWidth={2.5} />
+                {t("sheet.readyToAdd")}
+              </p>
+              {dates.length > 0 && (
+                <>
+                  <p className="mt-inline text-[13px]">
+                    {t("sheet.courseRuns", { count: dates.length, days: weekdays.join(" & "), range })}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setCourseDatesOpen((v) => !v)}
+                    className="mt-tight min-h-11 text-[13px] font-medium text-brand-foreground underline-offset-2 hover:underline"
+                  >
+                    {t(courseDatesOpen ? "sheet.courseHideAll" : "sheet.courseShowAll")}
+                  </button>
+                  {courseDatesOpen && (
+                    <ul className="mt-tight flex flex-col gap-inline">
+                      {dates.map((x) => (
+                        <li key={x} className="text-[13px] tabular-nums">{fmtDay(x)}</li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })()}
 
         {/* A refusal from the slot grid explains itself right above the grid,
             where the tap happened — the flexible branch has its own notice
@@ -1229,7 +1258,13 @@ export function ProductSheet({
               const tickets = list.reduce((a, x) => a + (qty[x.id] ?? 0), 0);
               const validityExtra = validity && (validity.priceDelta ?? 0) > 0 ? (validity.priceDelta ?? 0) * tickets : 0;
               const total = list.reduce((s, x) => s + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0) + prem + validityExtra;
-              const when = slotTime ? `${slotTime} ${date === TODAY ? t("slotToday") : date}` : (needsSchedule(bt) || provider || course) ? (date === TODAY ? t("slotToday") : date) : null;
+              // The chosen day, said the way a person says it. It printed the
+              // raw ISO ("2026-08-01") for any day that was not today, which is
+              // a machine's date format in a line read aloud to a customer.
+              const dayWords = date === TODAY
+                ? t("slotToday")
+                : new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" }).format(new Date(`${date}T12:00:00`));
+              const when = slotTime ? `${slotTime} ${dayWords}` : course ? null : (needsSchedule(bt) || provider) ? dayWords : null;
               return (
                 <div className="mt-tight flex items-baseline justify-between gap-comfortable border-t border-line pt-tight text-[13px]">
                   <span className="min-w-0 flex-1 text-muted">

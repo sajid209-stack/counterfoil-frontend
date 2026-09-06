@@ -295,7 +295,11 @@
     "validFor": "Valid for",
     "addPass": "{count, plural, one {Add pass} other {Add # passes}} — {amount}",
     "passLine": "{label} pass",
-    "passCount": "{count, plural, one {# pass} other {# pass}}"
+    "passCount": "{count, plural, one {# pass} other {# pass}}",
+    "courseRuns": "{count} sessions · {days} · {range}",
+    "courseShowAll": "Show all dates",
+    "courseHideAll": "Hide dates",
+    "courseStarts": "Starts {date}"
   },
   "settle": {
     "title": "Settle a reservation",
