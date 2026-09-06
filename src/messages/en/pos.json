@@ -345,7 +345,9 @@
     "nextAt": "Next {time} · {left} left",
     "freeOfTotal": "{free} of {total} free",
     "startsOn": "Starts {date}",
-    "providersFree": "{free} of {total} free"
+    "providersFree": "{free} of {total} free",
+    "limited": "Limited",
+    "nextDay": "Next {day} {time}"
   },
   "repeat": {
     "title": "Repeat weekly",

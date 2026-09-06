@@ -345,7 +345,9 @@
     "nextAt": "পরবর্তী {time} · {left} বাকি",
     "freeOfTotal": "{free}/{total} খালি",
     "startsOn": "শুরু {date}",
-    "providersFree": "{free}/{total} জন খালি"
+    "providersFree": "{free}/{total} জন খালি",
+    "limited": "সীমিত",
+    "nextDay": "পরেরে {day} {time}"
   },
   "repeat": {
     "title": "সাপ্তাহিক পুনরাবৃত্তি",

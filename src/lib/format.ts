@@ -10,6 +10,20 @@ export function formatMoney(minor: Minor, currency = "BDT"): string {
   return `${symbol}${amount}`;
 }
 
+/** A CATALOGUE price: "৳300", "৳1,500", but "৳1,250.50" when there are paisa.
+ *
+ *  On a product card the price is the loudest thing on the tile, and a
+ *  trailing ".00" is three characters of noise on it — the reference draws
+ *  whole prices. This drops a ZERO, never a value: anything with paisa still
+ *  shows them. Totals, the cart, receipts and reports keep `formatMoney`,
+ *  where two decimal places are an accounting convention rather than a style. */
+export function formatPriceShort(minor: Minor, currency = "BDT"): string {
+  if (minor % 100 !== 0) return formatMoney(minor, currency);
+  const amount = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(minor / 100);
+  const symbol = currency === "BDT" ? "৳" : `${currency} `;
+  return `${symbol}${amount}`;
+}
+
 /** Minor units → a short axis label. 4500000 → "৳45k", 250000 → "৳2.5k".
  *  Chart axes need the magnitude, not the paisa — "৳45,000.00" repeated up a
  *  y-axis is noise that crowds out the plot. */

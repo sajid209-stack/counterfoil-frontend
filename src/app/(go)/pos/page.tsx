@@ -14,7 +14,7 @@ import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { taxRateFor } from "@/lib/tax";
-import { formatDay, formatMoney } from "@/lib/format";
+import { formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
@@ -760,6 +760,7 @@ export default function PosPage() {
     nextAt: (time: string, left: number) => t("live.nextAt", { time, left }),
     freeOfTotal: (free: number, total: number) => t("live.freeOfTotal", { free, total }),
     startsOn: (d: string) => t("live.startsOn", { date: formatDay(d) }),
+    nextDay: (d: string, time: string) => t("live.nextDay", { day: formatDay(d, { weekday: true }), time }),
     providersFree: (free: number, total: number) => t("live.providersFree", { free, total }),
   }), [t]);
   const methodLabel = enumL.method(method);
@@ -769,13 +770,26 @@ export default function PosPage() {
       {/* The Go chrome names this screen visually; the heading exists so a
           screen reader lands on a named page rather than an unlabelled grid. */}
       <h1 className="sr-only">{t("posTitle")}</h1>
-      <div className="flex min-h-0 flex-col gap-comfortable">
+      {/* min-w-0, or this column sizes to its own min-content and the page
+          scrolls sideways. The category strip is the culprit: it is an
+          overflow-x-auto row whose min-content is the SUM of every chip, so at
+          1024 the column blew out to 1332 and the document to 1812. Pre-existing
+          (identical on production before this grid), and the same mechanism the
+          dashboard was fixed with. */}
+      <div className="flex min-h-0 min-w-0 flex-col gap-comfortable">
         {/* Header zone: counter chip · wide search · parked badge */}
         <div className="flex items-center gap-tight">
-          <span className="hidden h-[52px] shrink-0 items-center rounded-full bg-subtle px-section text-[13px] text-muted sm:flex">{t("counter")}</span>
-          <div className="go-surface flex h-[52px] min-w-0 flex-1 items-center gap-tight rounded-full px-section focus-within:ring-1 focus-within:ring-inset focus-within:ring-strong">
+          {/* The counter is named once, in the context bar. This chip repeated
+              it 40px away at the same breakpoint — the same words twice, and a
+              bite out of the search field to say them. */}
+          {/* The focus ring belongs to the PILL, not to the bare input inside it:
+              an outline on the input is a rectangle drawn inside a round
+              control, which is what it looked like. The container carries the
+              same 2px ember indicator the rest of the app uses, and it follows
+              the radius. */}
+          <div data-focus-host className="go-surface flex h-[52px] min-w-0 flex-1 items-center gap-tight rounded-full px-section focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember">
             <Search size={18} strokeWidth={1.75} className="shrink-0 text-muted" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none placeholder:text-faint" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none focus-visible:outline-none placeholder:text-faint" />
             {query && <button type="button" onClick={() => setQuery("")} className="text-[13px] text-faint hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
@@ -820,52 +834,75 @@ export default function PosPage() {
           {productsQ.loading ? (
             <div aria-busy="true" className="flex animate-pulse flex-col gap-tight p-section"><div className="h-4 w-1/3 rounded-go-sm bg-line" /><div className="h-4 w-2/3 rounded-go-sm bg-line" /><div className="h-4 w-1/2 rounded-go-sm bg-line" /></div>
           ) : (
-            /* Rows, not photo tiles. The 4:3 band pushed the name, subtitle and
-               price into a strip under 250px of picture and left room for only
-               three products on a wide till. The photo is a 72px square now:
-               it still helps recognition, it just stopped being the card. */
-            <div className="grid grid-cols-1 gap-comfortable md:grid-cols-2 2xl:grid-cols-3">
-              {shown.map((p) => (
-                /* The price used to sit beside the text column, so at two
-                   columns on a 1024 till the name had ~96px to live in and
-                   wrapped to two lines while the subtitle truncated to
-                   "Open entry · no …". Moving it onto the subtitle's row gives
-                   the name the full width beside the thumbnail. */
-                <div key={p.id} className="go-surface flex items-center overflow-hidden active:scale-[0.99]">
-                <button type="button" onClick={() => tapProduct(p)} className="flex min-w-0 flex-1 items-center gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-ember/10">
-                  <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="thumb" />
+            /* A grid of cards, two up on a phone. Each card answers the four
+               things a counter asks in the order it asks them: what is it,
+               what does it cost, and what is it doing right now.
+
+               Grid rows stretch, so cards in a row match height without any
+               content being clamped to make them match — the guidance is
+               explicit that a DISTINGUISHING NAME must not be clipped merely
+               for uniformity. The name gets three lines before it clamps, and
+               the sheet behind the card carries it in full either way. */
+            <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4">
+              {shown.map((p) => {
+                const live = posLiveState(p, DEMO_TODAY, nowMinutes, liveWords);
+                const from = Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity])));
+                return (
+                <div
+                  key={p.id}
+                  data-focus-host
+                  /* The focus ring lives on the CARD, not on the button inside
+                     it. `overflow-hidden` (which keeps the press tint inside
+                     the rounded corners) was clipping the button's outline
+                     completely, so tabbing across the product wall moved the
+                     focus and showed nothing at all. A ring is a box-shadow,
+                     so the card's own overflow cannot eat it. */
+                  className="go-surface flex overflow-hidden transition-shadow duration-quick hover:shadow-md focus-within:ring-2 focus-within:ring-ember active:scale-[0.99]"
+                >
+                <button type="button" onClick={() => tapProduct(p)} className="flex min-w-0 flex-1 flex-col gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-ember/10">
+                  <span className="flex w-full items-start justify-between gap-tight">
+                    <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="card" />
+                    {/* A status word in the corner, only where there is one to
+                        say. It stays on one line and never shrinks — a pill
+                        that wraps is worse than no pill. The meta line below
+                        still carries the number; this is the glance. */}
+                    {live && live.tone !== "ok" && (
+                      <span className={`shrink-0 whitespace-nowrap rounded-full px-tight py-inline text-[12px] font-medium ${live.tone === "none" ? "bg-danger/10 text-danger" : "bg-ember/15 text-brand-foreground"}`}>
+                        {live.tone === "none" ? t("sheet.soldOut") : t("live.limited")}
+                      </span>
+                    )}
+                  </span>
+
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="line-clamp-2 text-[15px] font-semibold leading-tight">{p.name}</span>
-                    <span className="mt-inline flex items-baseline gap-tight">
-                      <span className="min-w-0 flex-1 truncate text-[13px] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
-                      <span className="shrink-0 whitespace-nowrap text-[14px] font-semibold">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
-                    </span>
+                    <span className="line-clamp-3 text-[15px] font-semibold leading-snug">{p.name}</span>
+                    {/* The price is the figure a cashier reads out, so it is
+                        the loudest thing on the card. 20px at 700 also makes
+                        `ember` legal as a letterform: WCAG counts >=18.66px
+                        bold as large text, where the floor is 3:1 and ember
+                        measures 3.50:1 on white and 6.21:1 on the dark card.
+                        At 13px it would not have been, which is why every
+                        other price in this app uses the darker brand step. */}
+                    <span className="mt-inline text-[20px] font-bold leading-none text-ember">{formatPriceShort(from, currency)}</span>
+                    <span className="mt-tight line-clamp-2 text-[13px] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
                     {/* What this product is doing RIGHT NOW, stated per booking
                         type — the next departure and its seats, how many lanes
-                        are free, how much of today's allowance is left. The
-                        till had all of it behind a tap; the counterfoil-pos
-                        reference puts it on the list, because it is what the
-                        counter is actually asked. */}
-                    {(() => {
-                      const live = posLiveState(p, DEMO_TODAY, nowMinutes, liveWords);
-                      if (!live) return null;
-                      return (
-                        <span className={`mt-inline flex items-center gap-inline text-[13px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}>
-                          {/* A dot ahead of the words. At a glance across a
-                              wall of products the eye reads the colour before
-                              it reads anything, which is the point of putting
-                              the state on the tile — and the words carry it
-                              anyway, so the dot is never the only signal. */}
-                          <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
-                          <span className="min-w-0 truncate">{live.text}</span>
-                        </span>
-                      );
-                    })()}
+                        are free, how much of today's allowance is left. */}
+                    {live && (
+                      <span className={`mt-inline flex items-center gap-inline text-[13px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}>
+                        {/* A dot ahead of the words. Across a wall of products
+                            the eye reads the colour before it reads anything —
+                            and the words carry it anyway, so the dot is never
+                            the only signal. */}
+                        <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
+                        <span className="min-w-0 truncate">{live.text}</span>
+                      </span>
+                    )}
                   </span>
                 </button>
                 </div>
-              ))}
-              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
+                );
+              })}
+              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
                 <Plus size={20} strokeWidth={1.5} /><span className="text-[13px]">{t("customAmount")}</span>
               </button>
             </div>

@@ -399,6 +399,19 @@
   outline: 2px solid var(--color-ember);
   outline-offset: 2px;
 }
+
+/* ...except where a bare input FILLS a rounded control. The outline is drawn
+   on the input, which has no radius of its own, so it renders as a rectangle
+   inside a pill — the till's search field. Mark the control with
+   `data-focus-host` and give it the ring instead; the indicator is just as
+   visible and it follows the shape.
+
+   Unlayered on purpose: the rule above is unlayered, so it beats every
+   Tailwind utility including `focus-visible:outline-none`, and an opt-out has
+   to sit at the same level to win. */
+[data-focus-host] :focus-visible {
+  outline: none;
+}
 @theme {
   /* ── Light mode surfaces & content (color-system §Semantic Tokens) ────── */
   --color-surface: #f5f2eb;    /* background   ← neutral-50  */

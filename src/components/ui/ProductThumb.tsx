@@ -55,16 +55,21 @@ export function ProductThumb({
   name: string;
   bookingType?: BookingTypeCode;
   /** thumb = the POS grid square; chip = small square beside a title */
-  size?: "thumb" | "chip";
+  size?: "thumb" | "card" | "chip";
   className?: string;
 }) {
   const [broken, setBroken] = useState(false);
   const src = images?.[0]?.url;
   const Icon = fallbackIcon(bookingType);
-  const iconSize = size === "chip" ? 18 : 24;
+  const iconSize = size === "chip" ? 18 : size === "card" ? 20 : 24;
 
   const shape =
-    size === "chip"
+    // `card` is the Go grid tile: a 44px square in the corner of a product
+    // card, small enough that it supports recognition without becoming the
+    // card the way a 4:3 photo band once did.
+    size === "card"
+      ? "h-11 w-11 shrink-0 rounded-go-sm"
+      : size === "chip"
       // `chip` is OS (the bookings list, the dashboard) — it keeps the admin
       // app's 3px corner. Only `thumb` follows the Go radii.
       ? "h-10 w-10 shrink-0 rounded-xs"

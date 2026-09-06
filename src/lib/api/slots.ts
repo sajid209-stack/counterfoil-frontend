@@ -23,6 +23,13 @@ const confirmedFor = (productId: string, date: string) =>
 export function getSlots(product: Product, date: string): SlotAvailability[] {
   const sch = product.schedule;
   if (!sch || sch.capacityPerSession <= 0) return [];
+  // A closed day has no departures. This used to return the weekly pattern's
+  // times on ANY date with full remaining, and every caller was expected to
+  // remember `isOpenOn` separately. The sheet did; the till's product card did
+  // not, so a Fri-Sun tour advertised "Next 14:00 - 15 left" on a Wednesday
+  // while the sheet behind it could not sell before Friday. Answering it here
+  // makes every caller right at once.
+  if (!isOpenOn(product, date)) return [];
   const booked = confirmedFor(product.id, date);
   return slotTimesOn(sch, date).map((time) => {
     const iso = slotISO(date, time);

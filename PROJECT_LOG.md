@@ -2783,3 +2783,101 @@ had trusted the tooling:
   an OS decision, not a till one.
 - **The CTA can still name a section below the fold** — carried over, still the
   most substantial remaining mobile-UX item in the sheets.
+
+---
+
+## The sell wall becomes a grid of cards (2026-09-07)
+
+Owner supplied a grid-card mockup and asked for the till's product list rebuilt
+as cards, properly researched.
+
+### The card, and the order it answers in
+
+Icon tile and status pill on the first line, then **name → price → what it is →
+what it is doing right now**. That is the order a counter asks in, and it is the
+mockup's own order.
+
+Two pieces of guidance shaped the build rather than the picture:
+
+- **Essential Text Truncation (Critical)** — *distinguishing names* need
+  complete access, and must not be clamped merely to make cards uniform. So the
+  grid rows **stretch** to equal height instead of the name being cut; the name
+  gets three lines before it clamps, and the sheet behind the card carries it in
+  full. That is why the 84-character stress product sets three lines rather than
+  one.
+- **Compact Label Overflow (High)** — the status pill is `nowrap` and never
+  shrinks. A pill that wraps to two lines is worse than no pill.
+
+### The price, and why it is allowed to be ember
+
+`formatPriceShort` drops a trailing `.00` — on the loudest element of a card,
+"৳4,000.00" is three characters of noise, and the reference draws whole prices.
+It drops a **zero, never a value**: anything with paisa still shows it, and the
+cart, receipts and reports keep `formatMoney`, where two decimals are an
+accounting convention rather than a style.
+
+At **20px/700** the price is also *legal* in the brand orange. WCAG counts
+>=18.66px bold as large text, where the floor is 3:1, and `ember` measures
+**3.50:1 on white and 6.21:1 on the dark card**. Every other price in this app
+uses the darker `brand-foreground` step precisely because at 13px it would not
+clear the body floor. The size is what buys the colour.
+
+### Five defects the grid exposed, all pre-existing
+
+1. **`getSlots` never checked `isOpenOn`.** It returned the weekly pattern's
+   times for *any* date with full remaining, and each caller was expected to
+   remember the open-days check separately. The sheet did; the product card did
+   not — so a Fri–Sun tour advertised **"Next 14:00 · 15 left" on a Wednesday**
+   while the sheet behind it could not sell before Friday. Fixed at the source,
+   so every caller is right at once. The card now looks ahead and says
+   **"Next Fri 31 Jul 10:00"**, which is exactly what its own date strip offers.
+   New key `live.nextDay` in both locales.
+2. **Low availability fired at full availability.** With one court the 20%
+   threshold rounds to 1, so *1 of 1 free* counted as low and the new card
+   badged a completely free court **Limited**. `LOW` now also requires
+   `left < total`: low means some of it has gone.
+3. **The page scrolled sideways 788px at 1024 and 1280.** Attributed before it
+   was touched — `doc=1812` **identical on production**, so pre-existing, not
+   the grid. The category strip is an `overflow-x-auto` row whose min-content is
+   the SUM of every chip, and the till column had no `min-w-0`; the same
+   mechanism the dashboard was fixed with.
+4. **Keyboard focus was invisible on every product card.** `overflow-hidden`
+   (which keeps the press tint inside the rounded corners) clipped the inner
+   button's outline completely — the probe confirmed focus *was* on the card and
+   nothing was drawn. The ring moved to the card itself, where a box-shadow
+   cannot be eaten by the card's own overflow.
+
+   The same fault had a second form on the search field, which drew a **square
+   outline inside a round pill**. `focus-visible:outline-none` did nothing, and
+   the reason is worth keeping: the global `:focus-visible` rule is
+   **unlayered**, so it beats every Tailwind utility, and an opt-out has to sit
+   at the same level. Hence the unlayered `[data-focus-host]` rule.
+5. **"Fort Main Gate" was printed twice** at >=640px — once in the context bar
+   and again 40px away beside the search, taking a bite out of the field to do
+   it. The context bar is where the counter is named.
+
+### Verified
+
+- **The badge was proven end to end, not asserted**: sold Yoga Session down
+  through the real till (sheet → cart → cash → complete → New sale) and the card
+  went from *"20 of 20 left today"* to **"Limited" / "3 of 20 left today"**.
+  That walk also smoke-tested the whole redesigned flow, which issued a real
+  reservation reference.
+- **Card and sheet agree**: a probe reads each card's live line and then opens
+  its sheet and reads the bookable days. Heritage and Sculpture Garden Tour now
+  name Friday; Planetarium, which does run today, still names 12:30.
+- Grid geometry at **320 / 390 / 430 / 768 / 1024 / 1280**: 2 columns on a
+  phone, 3 from `sm`, 4 from `xl`; no page x-scroll, no clipped text, no wrapped
+  pills.
+- POS audit at 390 light, 390 dark and 320: **only the declared
+  white-on-ember exception**. The 20px ember price raises no finding, which is
+  the large-text rule doing its job.
+- 45 sheet-renders clean · 0 weak-text findings across twelve sheets ·
+  `tsc` and `build` clean · **eslint identical to clean HEAD** · i18n parity
+  0 missing / 0 extra with two new keys authored in both locales.
+
+### Not done
+
+- The icon tiles are **one neutral surface**, where the mockup tints each one a
+  different pastel. Eight hues would break the standing one-accent-per-screen
+  rule (D8), and the calm wall is what lets the ember prices carry the glance.

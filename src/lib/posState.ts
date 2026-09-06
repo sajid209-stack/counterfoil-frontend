@@ -37,11 +37,17 @@ export type PosStateWords = {
   busyNow: string;
   startsOn: (date: string) => string;
   providersFree: (free: number, total: number) => string;
+  nextDay: (day: string, time: string) => string;
 };
 
 /** Under a fifth of capacity is the app's existing low-availability threshold
- *  (Lovable findings, 2026-08-01) — reused rather than invented here. */
-const LOW = (left: number, total: number) => total > 0 && left <= Math.max(1, Math.floor(total * 0.2));
+ *  (Lovable findings, 2026-08-01) — reused rather than invented here.
+ *
+ *  `left < total` matters on a small venue: with ONE court, the threshold
+ *  rounds to 1, so a completely free court reported "1 of 1 free" as LOW and
+ *  the grid card badged it **Limited** while nothing at all had been sold.
+ *  Low availability means some of it has gone. */
+const LOW = (left: number, total: number) => total > 0 && left < total && left <= Math.max(1, Math.floor(total * 0.2));
 
 export function posLiveState(
   product: Product,
@@ -66,10 +72,21 @@ export function posLiveState(
   if (isSlotBased(product.bookingType)) {
     const slots = getSlots(product, date).filter((s) => toMinutes(s.time) >= nowMinutes);
     const open = slots.filter((s) => s.remaining > 0);
-    if (!slots.length) return null;
-    if (!open.length) return { text: w.soldOutToday, tone: "none" };
-    const next = open[0];
-    return { text: w.nextAt(next.time, next.remaining), tone: LOW(next.remaining, next.capacity) ? "low" : "ok" };
+    if (open.length) {
+      const next = open[0];
+      return { text: w.nextAt(next.time, next.remaining), tone: LOW(next.remaining, next.capacity) ? "low" : "ok" };
+    }
+    // Runs today, but nothing left to sell.
+    if (slots.length) return { text: w.soldOutToday, tone: "none" };
+    // Does not run today at all. Saying nothing wastes the line a counter
+    // scans; saying "sold out" would be a different lie. Look ahead for the
+    // first day it actually runs and name that day.
+    for (let i = 1; i <= 14; i += 1) {
+      const ahead = new Date(Date.parse(`${date}T12:00:00Z`) + i * 86400000).toISOString().slice(0, 10);
+      const upcoming = getSlots(product, ahead).filter((s) => s.remaining > 0);
+      if (upcoming.length) return { text: w.nextDay(ahead, upcoming[0].time), tone: "ok" };
+    }
+    return null;
   }
 
   // A capped product is run by the day's allowance.
