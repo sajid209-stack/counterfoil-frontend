@@ -77,7 +77,7 @@ export function SlotMatrix({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <span className="type-label text-[12px] text-muted">{resourceNoun}</span>
+      <span className="type-label text-[13px] text-muted">{resourceNoun}</span>
       <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {rows.map((row) => {
           const on = row.id === active.id;
@@ -105,7 +105,7 @@ export function SlotMatrix({
             >
               <span className="whitespace-nowrap">{row.name}</span>
               {!row.outOfService && (
-                <span className={cn("whitespace-nowrap text-[12px]", on ? "opacity-80" : "text-muted")}>
+                <span className={cn("whitespace-nowrap text-[13px]", on ? "opacity-80" : "text-muted")}>
                   {free > 0 ? t("sheet.slotsFree", { count: free }) : t("sheet.fullyBooked")}
                 </span>
               )}
@@ -114,7 +114,7 @@ export function SlotMatrix({
         })}
       </div>
 
-      <span className="type-label mt-tight text-[12px] text-muted">{t("sheet.time")}</span>
+      <span className="type-label mt-tight text-[13px] text-muted">{t("sheet.time")}</span>
       <div className="grid grid-cols-4 gap-tight">
         {active.cells.map((cell) => {
           const selected = active.id === selectedResourceId && selectedTime === cell.time;
@@ -154,7 +154,7 @@ export function SlotMatrix({
               <span>{cell.time}</span>
               <span
                 className={cn(
-                  "whitespace-nowrap text-[12px]",
+                  "whitespace-nowrap text-[13px]",
                   selected ? "opacity-90" : cell.price === base ? "text-muted" : "text-brand-foreground",
                 )}
               >
@@ -166,7 +166,7 @@ export function SlotMatrix({
       </div>
 
       {/* What the figure on each tile is the price OF. */}
-      <p className="text-[12px] text-muted">
+      <p className="text-[13px] text-muted">
         {t("sheet.ratePer", { amount: formatMoney(base, currency), noun: resourceNoun.toLowerCase() })}
       </p>
     </div>

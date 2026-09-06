@@ -2545,3 +2545,82 @@ commit, now removed. i18n parity 0 missing / 0 extra, five keys in en and bn.
 editor has no Validity section yet, so an operator cannot add or price one.
 That is the obvious follow-up and the reason the field is on the contract now.
 >>>>>>> Stashed changes
+
+---
+
+## The sheets get a reading floor (2026-09-06)
+
+Owner: *"colors and fonts aint visible enough"*, on the guided sheet, with the
+POS framed as a mobile app and a mobile web view rather than a desk tool.
+
+Consulted the design-system guidance first (`ui-ux-pro-max`, `--domain ux`),
+which returns the expected floors — 4.5:1 for body text, no grey-on-grey,
+line-height 1.5–1.75. Then **measured** every text node in the sheets rather
+than guessing which ones looked weak.
+
+### What the measurement showed
+
+The contrast audit had been passing this screen, and it was right to: nothing
+was below 4.5:1. The problem was a dimension it was not looking at.
+
+| | ratio | size/weight |
+|---|---|---|
+| "Choose tickets" (disabled CTA) | **1.56:1** | 16/500 |
+| "−" at zero | **2.09:1** | 18/400 |
+| "Led by Ayesha Siddiqua" | 4.77:1 | **12/400** |
+| "0/15", "৳800.00" | 4.77:1 | **12/400** |
+| date-pill second lines, "৳800.00 per ticket" | 5.63:1 | **12/400** |
+
+So: **the whole secondary layer was 12px at weight 400.** It clears the letter
+of AA and fails the thing the owner actually reported — a phone, held at arm's
+length, in a venue. A contrast-only check cannot see that, which is why the
+audit had been green on a screen that was visibly weak.
+
+### The rule
+
+**Nothing in a Go sheet is below 13px.** One sentence, trivially checkable, and
+it sits inside the owner's own type spec rather than against it — that spec
+puts Table text at 13–14px, and these meta lines, counts and prices are table
+text, not captions.
+
+39 sites moved: 27 content lines, then the 12 section labels. The labels went
+last and deliberately — they are **uppercase**, which is the harder case to
+read, so small-uppercase was the worst combination on the sheet rather than the
+safe exception it looked like.
+
+### The disabled states were the worst offenders
+
+A disabled CTA at **1.56:1** is the largest object on the sheet and was
+effectively blank. Greying out should say "not yet", not "not there" —
+`Button`'s disabled label moved off `faint` onto `muted`, taking it to
+**4.19:1**. WCAG exempts inactive controls, which is exactly why nothing had
+flagged it; the exemption is about compliance, not about whether a cashier can
+read the button telling them what to do next.
+
+### Measured, not assumed
+
+Two things I expected to be problems and were not, found by measuring before
+changing anything:
+
+- **The header is 56px**, not the space-eater it looked like, and the first
+  choice sits 28px into the scroller on every one of the twelve sheets.
+- Sheet *length* is the real mobile cost: session needs 1216px of scroll
+  against a 717px viewport, provider 1097px. That is inherent to eight
+  departures plus tickets, not to chrome.
+
+### Verified
+
+**0 weak-text findings across all twelve sheets** (was 25 after the first pass,
+which is how the label holdout was caught). POS audit clean at 320 and 390,
+light and dark, apart from the declared white-on-ember exception and the known
+absolutely-positioned-thumb artifact. 45 sheet-renders clean. `tsc` and `build`
+clean.
+
+### Not done
+
+**The CTA can name a section that is below the fold.** On the guided sheet it
+reads "Choose tickets" while the tickets are a scroll away. The honest fix is a
+disabled CTA that scrolls to the section it names when tapped — a standard
+form-submit-scrolls-to-first-error pattern — but it needs a target per pattern
+and `SheetFooter` currently knows nothing about the sections above it. Named
+here rather than half-built.

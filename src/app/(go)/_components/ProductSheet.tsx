@@ -296,14 +296,14 @@ export function ProductSheet({
   const renderAddOns = () =>
     (product.addOns?.length ?? 0) > 0 ? (
       <div className="mt-section flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-muted">{t("sheet.addOns")}</span>
+        <span className="type-label text-[13px] text-muted">{t("sheet.addOns")}</span>
         {(product.addOns ?? []).map((a) => {
           const n = addOnQty[a.id] ?? 0;
           return (
             <div key={a.id} className="flex min-h-14 items-center gap-tight rounded-sm border border-line bg-card p-comfortable">
               <div className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{a.name}</span>
-                <span className="text-[12px] text-muted">{formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}</span>
+                <span className="text-[13px] text-muted">{formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}</span>
               </div>
               {n === 0 ? (
                 <button type="button" aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: a.perPerson ? headsFor() : 1 }))} className="h-12 w-12 shrink-0 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
@@ -399,8 +399,8 @@ export function ProductSheet({
             made an 84px card that wrapped the strip onto a second row and
             stranded "More dates" beside the orphan. */}
         <span className={`whitespace-nowrap text-[13px] font-medium leading-tight ${date === value ? "text-brand-foreground" : ""}`}>{label === t("sheet.today") || label === t("sheet.tomorrow") ? label : label.split(" ")[0]}</span>
-        <span className={`whitespace-nowrap text-[12px] leading-tight ${date === value ? "text-brand-foreground/70" : "text-muted"}`}>{value.slice(8, 10)} {new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
-        {cap && <span className={`whitespace-nowrap text-[12px] leading-tight ${low ? "font-medium text-brand-foreground" : date === value ? "text-brand-foreground/70" : "text-muted"}`}>{cap.left} left</span>}
+        <span className={`whitespace-nowrap text-[13px] leading-tight ${date === value ? "text-brand-foreground/70" : "text-muted"}`}>{value.slice(8, 10)} {new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
+        {cap && <span className={`whitespace-nowrap text-[13px] leading-tight ${low ? "font-medium text-brand-foreground" : date === value ? "text-brand-foreground/70" : "text-muted"}`}>{cap.left} left</span>}
       </ChoiceCard>
     );
   };
@@ -564,7 +564,7 @@ export function ProductSheet({
 
         {(needsSchedule(bt) || provider || bt === "BT-02") && !course && (
           <div className="mb-section">
-            <p className="mb-tight text-[12px] font-medium uppercase tracking-wide text-muted">{t(bt === "BT-02" ? "sheet.whenLabel" : "sheet.dateLabel")}</p>
+            <p className="mb-tight text-[13px] font-medium uppercase tracking-wide text-muted">{t(bt === "BT-02" ? "sheet.whenLabel" : "sheet.dateLabel")}</p>
             {/* One row that scrolls, never a grid that wraps. Five chips plus
                 the calendar cannot fit a phone's width, and wrapping put a
                 lone card on a second row with "More dates" stranded next to
@@ -598,7 +598,7 @@ export function ProductSheet({
             that moves with no visible cause is the thing to avoid. */}
         {validityOptions.length > 1 && (
           <div className="mb-section flex flex-col gap-tight">
-            <span className="type-label text-[12px] text-muted">{t("sheet.validFor")}</span>
+            <span className="type-label text-[13px] text-muted">{t("sheet.validFor")}</span>
             <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {validityOptions.map((v) => {
                 const on = v.id === validityId;
@@ -611,7 +611,7 @@ export function ProductSheet({
                   >
                     <span>{v.label}</span>
                     {(v.priceDelta ?? 0) > 0 && (
-                      <span className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}>
+                      <span className={`text-[13px] ${on ? "opacity-80" : "text-muted"}`}>
                         +{formatMoney(v.priceDelta ?? 0, currency)}
                       </span>
                     )}
@@ -648,7 +648,7 @@ export function ProductSheet({
                   style={{ width: `${Math.min(100, Math.max(0, (left / total) * 100))}%` }}
                 />
               </div>
-              <p className="mt-inline text-[12px] text-muted">{t("sheet.totalCapacity", { count: total })}</p>
+              <p className="mt-inline text-[13px] text-muted">{t("sheet.totalCapacity", { count: total })}</p>
             </div>
           );
         })()}
@@ -804,7 +804,7 @@ export function ProductSheet({
                   the operator's own rule expressed as a control — and the one
                   price that matters, the price of THIS duration, is on the
                   summary line above the button where the decision is made. */}
-              <span className="type-label text-[12px] text-muted">{t("sheet.duration")}</span>
+              <span className="type-label text-[13px] text-muted">{t("sheet.duration")}</span>
               {(() => {
                 const i = flexOptions.indexOf(duration);
                 const prev = i > 0 ? flexOptions[i - 1] : null;
@@ -823,7 +823,7 @@ export function ProductSheet({
                     <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-sm border border-line bg-card py-tight">
                       <span className="text-base font-medium">{formatDuration(duration)}</span>
                       {slotTime && (
-                        <span className="font-mono text-[12px] text-muted">
+                        <span className="font-mono text-[13px] text-muted">
                           {formatMoney(priceFor(slotTime, duration, laneOf(resourceId)), currency)}
                         </span>
                       )}
@@ -841,13 +841,13 @@ export function ProductSheet({
                 );
               })()}
 
-              <span className="type-label text-[12px] text-muted">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>
+              <span className="type-label text-[13px] text-muted">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>
               <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <ChoiceCard selected={!resourceId} onClick={() => setResourceId(undefined)} className="flex h-14 items-center pl-comfortable pr-7 text-sm">{t("sheet.any")}</ChoiceCard>
                 {lanes.map((r) => (
                   <ChoiceCard key={r.id} selected={resourceId === r.id} disabled={r.outOfService} onClick={() => setResourceId(r.id)} className="flex min-h-14 max-w-56 flex-col items-start justify-center py-inline pl-comfortable pr-7">
-                    <span className="block max-w-full truncate text-sm leading-tight">{r.name}{rateLabel(r) ? <span className="ml-inline whitespace-nowrap text-[12px] text-muted">{rateLabel(r)}</span> : null}</span>
-                    <span className="block max-w-full truncate text-[12px] leading-tight text-muted">{liveState(r)}</span>
+                    <span className="block max-w-full truncate text-sm leading-tight">{r.name}{rateLabel(r) ? <span className="ml-inline whitespace-nowrap text-[13px] text-muted">{rateLabel(r)}</span> : null}</span>
+                    <span className="block max-w-full truncate text-[13px] leading-tight text-muted">{liveState(r)}</span>
                   </ChoiceCard>
                 ))}
               </div>
@@ -868,7 +868,7 @@ export function ProductSheet({
               {blocked && <BlockedNotice message={blocked} onDismiss={() => setBlocked(null)} />}
 
               <div className="flex items-center justify-between">
-                <span className="type-label text-[12px] text-muted">{t("sheet.startTime")}</span>
+                <span className="type-label text-[13px] text-muted">{t("sheet.startTime")}</span>
                 {/* Chips for speed, the stepper for precision (walk-in rounding). */}
                 <div className="flex items-center gap-inline">
                   <button type="button" aria-label={t("sheet.earlier")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const next = Math.max(flexTimes.length ? toMinutes(flexTimes[0]) : 0, base - round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember/10">−</button>
@@ -917,7 +917,7 @@ export function ProductSheet({
                 const premium = lane?.rateOverride?.kind === "premium" ? ` (incl. ${lane.name} +${formatMoney(lane.rateOverride.amount, currency)})` : "";
                 return (
                   <div className="flex flex-col gap-inline">
-                    {math && <p className="text-[12px] text-muted">{math}{premium}</p>}
+                    {math && <p className="text-[13px] text-muted">{math}{premium}</p>}
                     {/* The live selection summary — the CTA never enables without it. */}
                     <p className="text-[13px]">
                       <span className="font-medium">{lane?.name ?? t("sheet.anyLane")}</span> · <span className="tabular-nums">{slotTime}–{endLabel}</span> · {formatDuration(duration)}
@@ -965,9 +965,9 @@ export function ProductSheet({
                     <Avatar name={p.name} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{p.name}</span>
-                      <span className="block text-[12px] text-muted">{nextFree ? t("sheet.nextFree", { time: nextFree }) : t("sheet.fullyBooked")}</span>
+                      <span className="block text-[13px] text-muted">{nextFree ? t("sheet.nextFree", { time: nextFree }) : t("sheet.fullyBooked")}</span>
                     </span>
-                    <span className={`shrink-0 whitespace-nowrap text-[12px] ${premiumOf(p.id) > 0 ? "font-medium text-brand-foreground" : "text-muted"}`}>
+                    <span className={`shrink-0 whitespace-nowrap text-[13px] ${premiumOf(p.id) > 0 ? "font-medium text-brand-foreground" : "text-muted"}`}>
                       {premiumOf(p.id) > 0 ? t("sheet.premiumAmount", { amount: formatMoney(premiumOf(p.id), currency) }) : t("sheet.standardRate")}
                     </span>
                   </ChoiceCard>
@@ -975,7 +975,7 @@ export function ProductSheet({
               })}
               <ChoiceCard selected={!providerId} onClick={() => setProviderId(undefined)} className="flex w-full items-center justify-center px-7 py-comfortable text-sm">{t("sheet.firstAvailable")}</ChoiceCard>
             </div>
-            <span className="type-label mt-tight text-[12px] text-muted">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>
+            <span className="type-label mt-tight text-[13px] text-muted">{t("sheet.startTimeDuration", { minutes: providerDuration })}</span>
             <div className="flex flex-wrap gap-inline">
               {providerTimes.map((t) => {
                 const free = providerTimeFree(t);
@@ -985,10 +985,10 @@ export function ProductSheet({
               })}
             </div>
             {slotTime && assignedProvider && !providerId && (
-              <p className="text-[12px] text-muted">{t("sheet.firstAvailableAt", { time: slotTime, name: `${assignedProvider.name}${premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}` })}</p>
+              <p className="text-[13px] text-muted">{t("sheet.firstAvailableAt", { time: slotTime, name: `${assignedProvider.name}${premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}` })}</p>
             )}
             {slotTime && !providerTimeFree(slotTime) && (
-              <p className="text-[12px] text-danger">{t("sheet.busyAtTime", { name: providers.find((p) => p.id === providerId)?.name ?? t("sheet.everyone"), time: slotTime })}</p>
+              <p className="text-[13px] text-danger">{t("sheet.busyAtTime", { name: providers.find((p) => p.id === providerId)?.name ?? t("sheet.everyone"), time: slotTime })}</p>
             )}
           </div>
         )}
@@ -1004,8 +1004,8 @@ export function ProductSheet({
               <Check size={14} strokeWidth={2.5} />
               {t("sheet.readyToAdd")}
             </p>
-            <p className="mt-inline text-[12px] text-muted">{t("sheet.courseDates")}</p>
-            <p className="text-[12px]">{(product.courseDates ?? []).join(" · ") || "—"}</p>
+            <p className="mt-inline text-[13px] text-muted">{t("sheet.courseDates")}</p>
+            <p className="text-[13px]">{(product.courseDates ?? []).join(" · ") || "—"}</p>
           </div>
         )}
 
@@ -1023,7 +1023,7 @@ export function ProductSheet({
             departure, and the operator's word for it is the one that should
             appear above the rows. */}
         {needsSchedule(bt) && !resourceMode && !flexible && openToday && (
-          <p className="mb-tight text-[12px] font-medium uppercase tracking-wide text-muted">
+          <p className="mb-tight text-[13px] font-medium uppercase tracking-wide text-muted">
             {t(guided ? "sheet.departureLabel" : "sheet.sessionLabel")}
           </p>
         )}
@@ -1071,7 +1071,7 @@ export function ProductSheet({
         {/* Guided: pick who leads — busy guides (on ANY product) can't be chosen */}
         {guided && slotTime && guides.length > 0 && openToday && (
           <div className="mb-section flex flex-col gap-tight">
-            <span className="type-label text-[12px] text-muted">{t("sheet.ledBy")}</span>
+            <span className="type-label text-[13px] text-muted">{t("sheet.ledBy")}</span>
             <div className="flex flex-col gap-tight">
               {guides.map((g) => {
                 const free = slotGuides.includes(g.id);
@@ -1080,7 +1080,7 @@ export function ProductSheet({
                     <Avatar name={g.name} size={32} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{g.name}</span>
-                      <span className={`block text-[12px] ${free ? "text-success" : "text-muted"}`}>
+                      <span className={`block text-[13px] ${free ? "text-success" : "text-muted"}`}>
                         {free ? t("sheet.guideAvailable") : t("sheet.guideBusy")}
                       </span>
                     </span>
@@ -1103,7 +1103,7 @@ export function ProductSheet({
                 const cats = [...new Map(availSeats.map((s) => [s.categoryUid, s])).values()];
                 return (
                   <div>
-                    <div className="mb-tight rounded-xs bg-subtle py-inline text-center text-[12px] tracking-widest text-muted">{seatT("picker.screen")}</div>
+                    <div className="mb-tight rounded-xs bg-subtle py-inline text-center text-[13px] tracking-widest text-muted">{seatT("picker.screen")}</div>
                     <div className="overflow-x-auto">
                       <div data-seat-grid className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${maxCol}, 1.6rem)` }}>
                         {availSeats.map((s) => {
@@ -1124,7 +1124,7 @@ export function ProductSheet({
                         })}
                       </div>
                     </div>
-                    <div className="mt-tight flex flex-wrap items-center justify-between gap-tight text-[12px]">
+                    <div className="mt-tight flex flex-wrap items-center justify-between gap-tight text-[13px]">
                       <div className="flex flex-wrap gap-major text-muted">
                         {cats.map((s) => (
                           // The swatch is drawn the way an AVAILABLE seat of
@@ -1144,7 +1144,7 @@ export function ProductSheet({
               })()
             ) : (
             <div className="flex flex-col">
-              <span className="type-label mb-tight text-[12px] text-muted">{t("sheet.pickTickets")}</span>
+              <span className="type-label mb-tight text-[13px] text-muted">{t("sheet.pickTickets")}</span>
               {/* One panel of hairline-separated rows, not four separate cards.
                   Each row says the three things in the order they are decided:
                   what it is, who it admits, what it costs — the price on its
@@ -1157,7 +1157,7 @@ export function ProductSheet({
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium">{row.name}</div>
                     {(row.cap != null || row.note) && (
-                      <div className="mt-0.5 text-[12px] text-muted">
+                      <div className="mt-0.5 text-[13px] text-muted">
                         {[row.cap != null ? t("sheet.seatsCount", { count: row.cap }) : "", row.note].filter(Boolean).join(" · ")}
                       </div>
                     )}
