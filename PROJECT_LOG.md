@@ -2445,3 +2445,34 @@ exactly the figure that must not be the hard one to read.
 POS audit **0 findings** at 390 light across all twelve selection systems and
 the popups; dark shows only the known absolutely-positioned-thumb artifact. 45
 sheet-renders clean, badge-overlap zero. `tsc` and `build` clean.
+
+### Duration and slot handling, made consistent (2026-09-06)
+
+Audited every place in the app that chooses a duration or a time slot, after
+the till's variable-duration control changed:
+
+| Where | State |
+|---|---|
+| POS flexible sheet | **stepper**, walks the configured increment, engine-priced |
+| POS fixed slots (`SlotMatrix`) | every tile carries its own price |
+| POS sessions (`SessionList`) | every row carries its own price |
+| Quick pass (BT-14) | **was the outlier** — fixed |
+| Check-In "Extend" | already used `cfg.incrementMinutes` / `maxMinutes` |
+| Cart "+15m" extend | already read `durationConfig.incrementMinutes` |
+| Order reschedule picker | slots with remaining/full — no price to show |
+| OS `DurationEngineField` | min/max/increment, three models, deal prices |
+| OS `ScheduleBuilder`, wizard, policies | `DurationInput` (config side) |
+
+**The outlier**: the quick pass took `product.flexibleDurations`, fell back to a
+hardcoded `[30, 60, 120, 180]`, and priced as `base × hours`. An operator who
+set a 15-minute increment, a minimum, or a deal price got none of it there. It
+now reads `durationOptions(cfg)`, prices through `productDurationPrice` (models,
+bands and deals), and uses the same stepper the till uses — a pass is a span of
+time sold on a resource like any other, so it has no business owning its own
+arithmetic. The seeded Parking Pass gained a real `durationConfig`: half-hour
+steps at ৳50 (so an hour is the ৳100 its tier says) with an all-day deal of
+৳300 against a ৳400 formula.
+
+Grepped for hand-rolled duration pricing afterwards; the only remaining one is
+the quick pass's fallback for a product with no config, and the per-resource
+replacement rate in `slots.ts`, which is correct by design.

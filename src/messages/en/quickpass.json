@@ -9,5 +9,8 @@
   "duration": "Duration",
   "priceLabel": "Price (৳)",
   "priceHelp": "From the pass configuration — edit to override.",
-  "issuePass": "Issue pass · {amount}"
+  "issuePass": "Issue pass · {amount}",
+  "shorter": "Shorter",
+  "longer": "Longer",
+  "deal": "set price"
 }

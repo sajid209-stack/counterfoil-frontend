@@ -502,6 +502,15 @@ export const products: Product[] = [
     tiers: [{ id: "tier_pk", name: "Pass", price: 10000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter"], status: "active", archivedAt: null,
     flexibleDurations: [30, 60, 120, 180],
+    // A pass is a span of time like any other, so it carries the same engine:
+    // half-hour steps, ৳50 a step (so an hour is the ৳100 the tier says), and
+    // an all-day price that beats the arithmetic.
+    durationConfig: {
+      minMinutes: 30, maxMinutes: 240, incrementMinutes: 30,
+      pricingModel: "base_extension", basePrice: 5000, extensionPrice: 5000,
+      priceOverrides: { 240: 30000 },
+      mustEndByClose: false, walkInRoundMinutes: 15, leadTimeMinutes: 0,
+    },
     passIdentifierLabel: "Plate number",
     taxClass: "exempt",
     createdAt: T, updatedAt: T,

@@ -9,5 +9,8 @@
   "duration": "সময়কাল",
   "priceLabel": "দাম (৳)",
   "priceHelp": "পাস কনফিগারেশন থেকে — বদলাতে এডিট করুন।",
-  "issuePass": "পাস ইস্যু · {amount}"
+  "issuePass": "পাস ইস্যু · {amount}",
+  "shorter": "কম সময়",
+  "longer": "বেশি সময়",
+  "deal": "নির্ধারিত দাম"
 }
