@@ -51,7 +51,10 @@ export interface CartEntry {
   seatLabels?: string[]; // BT-07 seated: chosen seat labels ("A5", "A6")
   partySize?: number; // group size for flat-per-booking entries ("Group of 6")
   taxRatePct?: number; // custom-amount entries carry their own rate
-  lineDiscountPct?: number; // F11 line-level discount (cycles 0/5/10/15 in the cart)
+  lineDiscountPct?: number; // F11 line-level discount, as a percentage
+  /** …or money off this line. Whichever the cashier typed; the cart resolves
+   *  one into the other so only one of the two is ever set. */
+  lineDiscountAmount?: number;
 }
 
 
@@ -753,8 +756,50 @@ export function ProductSheet({
                 </button>
               )}
 
+              {/* Duration is a stepper, not a wall of chips.
+                  Nine buttons each carrying their own price was nine prices to
+                  read before choosing one, and it grew with the range: a court
+                  bookable 1–6 hours in quarter-hours would have shown twenty-
+                  one. The increment is already configured, so stepping by it is
+                  the operator's own rule expressed as a control — and the one
+                  price that matters, the price of THIS duration, is on the
+                  summary line above the button where the decision is made. */}
               <span className="type-label text-[12px] text-muted">{t("sheet.duration")}</span>
-              <div className="flex flex-wrap gap-tight">{flexOptions.map((d) => <button key={d} type="button" onClick={() => pickDuration(d)} className={`h-12 flex-1 whitespace-nowrap rounded-sm border px-tight text-sm ${duration === d ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatDurationShort(d)}{slotTime ? <span className="ml-inline text-[12px] opacity-70">{formatMoney(priceFor(slotTime, d, laneOf(resourceId)), currency)}</span> : null}</button>)}</div>
+              {(() => {
+                const i = flexOptions.indexOf(duration);
+                const prev = i > 0 ? flexOptions[i - 1] : null;
+                const next = i >= 0 && i < flexOptions.length - 1 ? flexOptions[i + 1] : null;
+                return (
+                  <div className="flex items-center gap-tight">
+                    <button
+                      type="button"
+                      aria-label={t("sheet.shorter")}
+                      disabled={prev == null}
+                      onClick={() => prev != null && pickDuration(prev)}
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-line text-xl disabled:opacity-40 active:bg-ember/10"
+                    >
+                      −
+                    </button>
+                    <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-sm border border-line bg-card py-tight">
+                      <span className="text-base font-medium">{formatDuration(duration)}</span>
+                      {slotTime && (
+                        <span className="font-mono text-[12px] text-muted">
+                          {formatMoney(priceFor(slotTime, duration, laneOf(resourceId)), currency)}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      aria-label={t("sheet.longer")}
+                      disabled={next == null}
+                      onClick={() => next != null && pickDuration(next)}
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-line text-xl disabled:opacity-40 active:bg-ember/10"
+                    >
+                      +
+                    </button>
+                  </div>
+                );
+              })()}
 
               <span className="type-label text-[12px] text-muted">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>
               <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

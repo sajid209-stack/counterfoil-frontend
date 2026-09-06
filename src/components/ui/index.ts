@@ -17,6 +17,7 @@ export { DataTable } from "./DataTable";
 export type { Column, DataTableProps } from "./DataTable";
 export { DurationInput } from "./DurationInput";
 export { PercentInput, parsePercent } from "./PercentInput";
+export { DiscountInput, parseDiscount, type DiscountMode } from "./DiscountInput";
 export { TimeInput } from "./TimeInput";
 export { BlockedNotice } from "./BlockedNotice";
 export { ResourceTimeline } from "./ResourceTimeline";

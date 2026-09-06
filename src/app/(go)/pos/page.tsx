@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
 import { AlertTriangle, Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
-import { BlockedNotice, Button, EmptyState, FormField, Modal, PercentInput, ProductThumb, useToast } from "@/components/ui";
+import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
@@ -129,6 +129,11 @@ export default function PosPage() {
   /** Minor amount the customer is paying up front, when the cashier sets one. */
   const [advance, setAdvance] = useState<number | null>(null);
   const [discountPct, setDiscountPct] = useState(0);
+  /** A manager says "ten percent" or "take two hundred off" — both are real,
+   *  and only one used to be expressible. The engine has always taken an
+   *  absolute amount, so this is a question of what the cashier types. */
+  const [discountMode, setDiscountMode] = useState<DiscountMode>("percent");
+  const [discountAmt, setDiscountAmt] = useState(0);
   const [discountReason, setDiscountReason] = useState("");
   const [couponInput, setCouponInput] = useState("");
   /** Which cart action is expanded. One at a time — the cart is narrow and
@@ -223,7 +228,9 @@ export default function PosPage() {
     if (cart.length === 0) return;
     persistParked([...parked, { name: parkName.trim() || t("parked.guestName", { number: parked.length + 1 }), cart, discountPct, customer, customerRecord: attached, pass }]);
     setCart([]);
-    setAdvance(null); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0); void releaseCheckoutHolds(TILL_ID);
+    setAdvance(null);
+    setDiscountPct(0);
+    setDiscountAmt(0); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0); void releaseCheckoutHolds(TILL_ID);
     setParkOpen(false); setParkName("");
     toast.success(t("cartParked"));
   };
@@ -424,7 +431,13 @@ export default function PosPage() {
       const p = productById(e.productId);
       const rate = entryTaxRate(e) / 100;
       const taxClass = e.taxRatePct != null ? (e.taxRatePct === 0 ? "exempt" : "standard") : (p?.taxClass ?? "standard");
-      const ld = e.lineDiscountPct ?? 0;
+      // A flat amount is resolved against the entry's own total, so it lands
+      // pro rata across the entry's sub-lines (a booking and its add-ons) the
+      // same way a percentage does.
+      const entryBase = entryTotal(e);
+      const ld = e.lineDiscountAmount != null && entryBase > 0
+        ? Math.min(100, (Math.min(e.lineDiscountAmount, entryBase) / entryBase) * 100)
+        : (e.lineDiscountPct ?? 0);
       const pctOf = (base: number) => (ld > 0 ? Math.round((base * ld) / 100) : 0);
       const addOnOf = (tierId: string) => p?.addOns?.find((a) => a.id === tierId);
       let parentIdx: number | null = null;
@@ -498,7 +511,10 @@ export default function PosPage() {
   // Manual (cashier) discount + a coupon-applied promotion, combined into the
   // one order discount the math engine takes. The manual portion is what the
   // cashier policy caps; the coupon is pre-authorised.
-  const manualDiscount = Math.round((Math.max(0, preBase) * discountPct) / 100);
+  const manualDiscount =
+    discountMode === "percent"
+      ? Math.round((Math.max(0, preBase) * discountPct) / 100)
+      : Math.min(Math.max(0, preBase), discountAmt);
   const couponDiscount = Math.min(appliedCoupon?.discount ?? 0, Math.max(0, preBase - manualDiscount));
 
   // ── The member price (§16.9). Applied only to what the tier actually covers,
@@ -541,7 +557,7 @@ export default function PosPage() {
   const manualEffectivePct = subtotal > 0 ? ((lineDiscountTotal + manualDiscount) / subtotal) * 100 : 0;
   const overLimit = manualEffectivePct > manualCapPct + 1e-9;
   // A reason is required (by policy) whenever a manual discount is applied.
-  const reasonNeeded = discountPct > 0 && !!policyQ.data?.requireReason && !discountReason.trim();
+  const reasonNeeded = manualDiscount > 0 && !!policyQ.data?.requireReason && !discountReason.trim();
 
   const quoteLines = (): QuoteLine[] =>
     cart.flatMap((e) => {
@@ -854,16 +870,20 @@ export default function PosPage() {
                     <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(entryTotal(e), currency)}</span></div>
                     <div className="text-[12px] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="text-[12px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
-                    {(e.lineDiscountPct ?? 0) > 0 && <div className="text-[12px] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>}
+                    {e.lineDiscountAmount ? (
+                      <div className="text-[12px] text-danger">−{formatMoney(e.lineDiscountAmount, currency)}</div>
+                    ) : (e.lineDiscountPct ?? 0) > 0 ? (
+                      <div className="text-[12px] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>
+                    ) : null}
                     {entryBalance(e) > 0 && <div className="text-[12px] text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                   </div>
                   <button
                     type="button"
                     aria-label={t("cart.lineDiscountLabel")}
                     onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
-                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[12px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 ? "border-ember text-brand-foreground" : "border-line"}`}
+                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[12px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "border-ember text-brand-foreground" : "border-line"}`}
                   >
-                    {(e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
+                    {e.lineDiscountAmount ? "৳" : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
                   </button>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
                     <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight text-[12px] active:bg-ember/10">
@@ -875,13 +895,34 @@ export default function PosPage() {
                 </div>
                 {lineDiscEdit === e.id && (
                   <div className="mt-tight rounded-sm border border-line bg-subtle/50 p-tight">
-                    <PercentInput
+                    <DiscountInput
                       compact
                       label={t("cart.lineDiscountLabel")}
-                      value={e.lineDiscountPct ?? 0}
-                      chips={[5, 10, 15]}
-                      onChange={(pct) =>
-                        setCart((c) => c.map((x) => (x.id === e.id ? { ...x, lineDiscountPct: pct } : x)))
+                      mode={e.lineDiscountAmount != null ? "amount" : "percent"}
+                      onMode={(m) =>
+                        setCart((c) =>
+                          c.map((x) =>
+                            x.id === e.id
+                              ? m === "amount"
+                                ? { ...x, lineDiscountAmount: x.lineDiscountAmount ?? 0, lineDiscountPct: undefined }
+                                : { ...x, lineDiscountPct: x.lineDiscountPct ?? 0, lineDiscountAmount: undefined }
+                              : x,
+                          ),
+                        )
+                      }
+                      value={e.lineDiscountAmount != null ? e.lineDiscountAmount : (e.lineDiscountPct ?? 0)}
+                      base={entryTotal(e)}
+                      currency={currency}
+                      onChange={(v) =>
+                        setCart((c) =>
+                          c.map((x) =>
+                            x.id === e.id
+                              ? x.lineDiscountAmount != null
+                                ? { ...x, lineDiscountAmount: v }
+                                : { ...x, lineDiscountPct: v }
+                              : x,
+                          ),
+                        )
                       }
                     />
                   </div>
@@ -893,11 +934,20 @@ export default function PosPage() {
         </div>
 
         <div className="border-t border-line p-comfortable">
-          <CartRow icon={Percent} label={t("summary.discount")} value={discountPct > 0 ? `${discountPct}%` : t("summary.none")} open={cartRow === "discount"} onToggle={() => toggleRow("discount")}>
+          <CartRow icon={Percent} label={t("summary.discount")} value={manualDiscount > 0 ? (discountMode === "percent" ? `${discountPct}%` : formatMoney(manualDiscount, currency)) : t("summary.none")} open={cartRow === "discount"} onToggle={() => toggleRow("discount")}>
             {/* Four buttons meant a manager who agreed 12% had no way to say
                 so and the till decided it was 10. The chips still fill the
-                field; they just stopped being the whole menu. */}
-            <PercentInput value={discountPct} onChange={setDiscountPct} chips={[5, 10, 15]} className="mb-tight" />
+                field; they just stopped being the whole menu — and money off
+                is now as sayable as a percentage. */}
+            <DiscountInput
+              mode={discountMode}
+              onMode={setDiscountMode}
+              value={discountMode === "percent" ? discountPct : discountAmt}
+              onChange={(v) => (discountMode === "percent" ? setDiscountPct(v) : setDiscountAmt(v))}
+              base={Math.max(0, preBase)}
+              currency={currency}
+              className="mb-tight"
+            />
           {overLimit && (
             <p className="mb-tight rounded-sm border border-line border-l-[3px] border-l-ember bg-card p-tight text-[12px]">
               {pt("pos.overPolicy", { limit: manualCapPct })}
@@ -1036,7 +1086,7 @@ export default function PosPage() {
 
           <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.subtotal")}</span><span className="">{formatMoney(subtotal, currency)}</span></div>
           {lineDiscountTotal > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.lineDiscounts")}</span><span className="text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
-          {manualDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.discountPct", { pct: discountPct })}</span><span className="text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
+          {manualDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{discountMode === "percent" ? t("summary.discountPct", { pct: discountPct }) : t("summary.discountFlat")}</span><span className="text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
           {couponDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{appliedCoupon?.code ?? appliedCoupon?.name}</span><span className="text-danger">−{formatMoney(couponDiscount, currency)}</span></div>}
           {memberDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span className="min-w-0 truncate">{t("summary.memberDiscount", { tier: benefit?.tierName ?? "" })}</span><span className="shrink-0 text-danger">−{formatMoney(memberDiscount, currency)}</span></div>}
           {pointsDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.pointsSpent", { count: pointsToSpend })}</span><span className="text-danger">−{formatMoney(pointsDiscount, currency)}</span></div>}

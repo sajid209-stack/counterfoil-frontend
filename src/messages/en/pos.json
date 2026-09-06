@@ -63,7 +63,8 @@
     "none": "None",
     "applyCoupon": "Apply coupon",
     "passesMembership": "Passes & membership",
-    "add": "Add"
+    "add": "Add",
+    "discountFlat": "Discount"
   },
   "charge": "Charge",
   "chargeAmount": "Charge {amount} — {method}",
@@ -287,7 +288,9 @@
     "departureLabel": "Departure",
     "buyNow": "Buy now — {amount}",
     "dealPrice": "Set price for {duration} — {amount}",
-    "dealSaves": "saves {amount}"
+    "dealSaves": "saves {amount}",
+    "shorter": "Shorter",
+    "longer": "Longer"
   },
   "settle": {
     "title": "Settle a reservation",
