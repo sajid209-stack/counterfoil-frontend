@@ -1116,7 +1116,7 @@ export function ProductSheet({
                               onClick={() => setSelectedSeats((cur) => (cur.includes(s.label) ? cur.filter((x) => x !== s.label) : [...cur, s.label]))}
                               title={`${s.label} · ${s.categoryName} · ${formatMoney(s.price, currency)}`}
                               style={{ gridColumnStart: s.posX + 1, gridRowStart: s.posY + 1, ...(s.available && !sel ? { background: `${s.color}33`, color: s.color, borderColor: s.color } : {}) }}
-                              className={`h-7 rounded-[3px] border text-[9px] leading-none ${!s.available ? "cursor-not-allowed border-line bg-line text-muted line-through" : sel ? "border-ember bg-ember font-medium text-ink" : ""}`}
+                              className={`h-7 rounded-[3px] border text-[9px] leading-none ${!s.available ? "cursor-not-allowed border-line bg-line text-muted line-through" : sel ? "border-brand-600 bg-brand-600 font-medium text-white" : ""}`}
                             >
                               {s.label.replace(/^[A-Za-z]+/, "")}
                             </button>

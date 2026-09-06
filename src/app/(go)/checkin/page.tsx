@@ -254,7 +254,7 @@ export default function CheckInPage() {
                           {o && (
                             <div className="mt-inline flex flex-wrap items-center gap-tight font-mono text-[12px] tabular-nums">
                               <span className="text-muted">{t("paidOf", { paid: formatMoney(o.payments.reduce((s, x) => s + x.amount, 0)), total: formatMoney(o.total) })}</span>
-                              {due > 0 ? <span className="rounded-xs bg-ember px-tight text-ink">{t("owes", { amount: formatMoney(due) })}</span> : <span className="text-success">{t("settled")}</span>}
+                              {due > 0 ? <span className="rounded-xs bg-brand-600 px-tight text-white">{t("owes", { amount: formatMoney(due) })}</span> : <span className="text-success">{t("settled")}</span>}
                               <span className="min-w-0 truncate text-faint">· {o.payments.map((x) => `${enumL.method(x.method)} ${formatMoney(x.amount)}`).join(" + ")}</span>
                             </div>
                           )}

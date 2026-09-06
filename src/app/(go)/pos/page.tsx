@@ -755,7 +755,7 @@ export default function PosPage() {
             affordance everyone already knows. */}
         <div className="-mx-tight flex snap-x snap-mandatory gap-inline overflow-x-auto px-tight pb-inline [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[{ id: "all", name: t("categoryAll") }, ...chipCategories].map((c) => (
-            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 min-w-12 shrink-0 snap-start rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ember bg-ember text-ink" : "border-line bg-card"}`}>{c.name}</button>
+            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 min-w-12 shrink-0 snap-start rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ember bg-brand-600 text-white" : "border-line bg-card"}`}>{c.name}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -1128,12 +1128,12 @@ export default function PosPage() {
                 {n > 1 && (
                   <span
                     aria-hidden
-                    className="absolute inset-y-inline rounded-xs bg-ember transition-[left] duration-quick ease-counterfoil"
+                    className="absolute inset-y-inline rounded-xs bg-brand-600 transition-[left] duration-quick ease-counterfoil"
                     style={{ width: `calc(${pct}% - 8px)`, left: `calc(${idx * pct}% + 4px)` }}
                   />
                 )}
                 {availableMethods.map((m) => (
-                  <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[13px] transition-colors duration-quick ${method === m.value ? "font-medium text-ink" : "text-muted"}`}>{enumL.method(m.value)}</button>
+                  <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[13px] transition-colors duration-quick ${method === m.value ? "font-medium text-white" : "text-muted"}`}>{enumL.method(m.value)}</button>
                 ))}
               </div>
             );
