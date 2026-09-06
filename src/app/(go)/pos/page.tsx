@@ -827,37 +827,6 @@ export default function PosPage() {
             <Archive size={14} strokeWidth={1.5} />{t("cart.park")}
           </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setCustomerOpen(true)}
-          className={`flex min-h-14 w-full items-center gap-comfortable border-b border-line px-comfortable py-tight text-left transition-colors duration-quick active:bg-ember/10 ${attached ? "bg-subtle/60" : ""}`}
-        >
-          <UserRound size={18} strokeWidth={1.5} className={attached ? "shrink-0 text-fg" : "shrink-0 text-faint"} />
-          <span className="flex min-w-0 flex-1 flex-col">
-            {attached ? (
-              <>
-                <span className="truncate text-sm font-medium">{attached.name}</span>
-                {(attached.phone || attached.email) && (
-                  <span className="truncate font-mono text-[12px] text-muted">{attached.phone || attached.email}</span>
-                )}
-              </>
-            ) : (
-              <span className="text-sm text-muted">{t("cart.customer")}</span>
-            )}
-          </span>
-          <span className="shrink-0 text-[13px] text-muted">{attached ? t("cart.customerChange") : t("cart.customerAdd")}</span>
-          <ChevronRight size={16} strokeWidth={1.5} className="shrink-0 text-faint" />
-        </button>
-
-        {attached?.flagReason && (
-          <div className="flex items-start gap-tight border-b border-line bg-warning/10 px-comfortable py-tight">
-            <AlertTriangle size={14} strokeWidth={1.5} className="mt-px shrink-0 text-warning" />
-            <p className="min-w-0 break-words text-[12px] text-warning">
-              <span className="font-medium">{t("customerModal.flagged")}: </span>
-              {attached.flagReason}
-            </p>
-          </div>
-        )}
         {/* One scrolling region for the sale itself — the lines AND the rows
             that modify them. They used to be separate: the lines were flex-1
             between a header that grew (the customer row) and a footer that was
@@ -942,6 +911,32 @@ export default function PosPage() {
         </div>
 
         <div className="border-t border-line p-comfortable">
+          {/* Who the sale is for, grouped with the other things that modify
+              it rather than sitting above the lines. It reads as one of the
+              cart's decisions — which it is — instead of a banner over them. */}
+          <div className="border-b border-line">
+            <button
+              type="button"
+              onClick={() => setCustomerOpen(true)}
+              className="flex min-h-12 w-full items-center gap-tight py-tight text-left"
+            >
+              <UserRound size={16} strokeWidth={1.5} className={`shrink-0 ${attached ? "text-fg" : "text-muted"}`} />
+              <span className="min-w-0 flex-1 truncate text-[13px]">
+                {attached ? attached.name : t("cart.customer")}
+              </span>
+              <span className="shrink-0 truncate text-[13px] text-muted">
+                {attached ? (attached.phone || attached.email || t("cart.customerChange")) : t("cart.customerAdd")}
+              </span>
+              <ChevronRight size={15} strokeWidth={1.5} className="shrink-0 text-faint" />
+            </button>
+            {attached?.flagReason && (
+              <p className="min-w-0 break-words pb-tight text-[12px] text-warning">
+                <span className="font-medium">{t("customerModal.flagged")}: </span>
+                {attached.flagReason}
+              </p>
+            )}
+          </div>
+
           <CartRow icon={Percent} label={t("summary.discount")} value={manualDiscount > 0 ? (discountMode === "percent" ? `${discountPct}%` : formatMoney(manualDiscount, currency)) : t("summary.none")} open={cartRow === "discount"} onToggle={() => toggleRow("discount")}>
             {/* Four buttons meant a manager who agreed 12% had no way to say
                 so and the till decided it was 10. The chips still fill the
