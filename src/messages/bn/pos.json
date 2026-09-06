@@ -191,7 +191,7 @@
     "closedOnDate": "এই তারিখে বন্ধ। অন্য একটি বেছে নিন।",
     "booked": "বুকড",
     "leftCount": "{count}টি বাকি",
-    "addSelection": "{name} যোগ করুন · {time} · {amount}",
+    "addSelection": "বিক্রয়ে যোগ করুন — {amount}",
     "startNow": "এখনই শুরু · {time} · {duration}{lane}",
     "noLaneFree": "কোনো লেন খালি নেই",
     "waiverFirst": "আগে ওয়েভার",
@@ -217,7 +217,7 @@
     "blockedBooked": "{start}–{end} বুক করা আছে ({label})। {end}-এর পরে শুরু, কম সময়কাল, বা অন্য {noun} চেষ্টা করুন।",
     "unavailableStart": "{time} পাওয়া যাচ্ছে না — {reason}। কম সময়কাল, অন্য শুরু, বা ভিন্ন {noun} চেষ্টা করুন।",
     "addToSale": "বিক্রিতে যোগ করুন",
-    "addFlexible": "{duration} যোগ করুন · {start}–{end} · {amount}",
+    "addFlexible": "বিক্রয়ে যোগ করুন — {amount}",
     "firstAvailable": "প্রথম উপলব্ধ",
     "startTimeDuration": "শুরুর সময় · {minutes} মিনিট",
     "provider": "প্রদানকারী",
@@ -356,7 +356,9 @@
     "reason_taken": "বুক হয়ে গেছে",
     "reason_full": "পূর্ণ",
     "reason_closed": "বন্ধ",
-    "reason_past": "অতীত"
+    "reason_past": "অতীত",
+    "offChip": "শুধু এইটি",
+    "fine": "সপ্তাহ"
   },
   "posTitle": "পয়েন্ট অব সেল",
   "paymentTitle": "পেমেন্ট নিন",

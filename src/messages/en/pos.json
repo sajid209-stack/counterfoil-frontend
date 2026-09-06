@@ -191,7 +191,7 @@
     "closedOnDate": "Closed on this date. Pick another.",
     "booked": "BOOKED",
     "leftCount": "{count} left",
-    "addSelection": "Add {name} · {time} · {amount}",
+    "addSelection": "Add to sale — {amount}",
     "startNow": "Start now · {time} · {duration}{lane}",
     "noLaneFree": "No lane free",
     "waiverFirst": "Waiver first",
@@ -217,7 +217,7 @@
     "blockedBooked": "{start}–{end} is booked ({label}). Try a start after {end}, a shorter duration, or another {noun}.",
     "unavailableStart": "{time} isn't available — {reason}. Try a shorter duration, another start, or a different {noun}.",
     "addToSale": "Add to sale",
-    "addFlexible": "Add {duration} · {start}–{end} · {amount}",
+    "addFlexible": "Add to sale — {amount}",
     "firstAvailable": "First available",
     "startTimeDuration": "Start time · {minutes} min",
     "provider": "Provider",
@@ -356,7 +356,9 @@
     "reason_taken": "Booked",
     "reason_full": "Full",
     "reason_closed": "Closed",
-    "reason_past": "Past"
+    "reason_past": "Past",
+    "offChip": "Just this one",
+    "fine": "Weeks"
   },
   "posTitle": "Point of Sale",
   "paymentTitle": "Take payment",

@@ -48,44 +48,67 @@ export function RepeatPicker({
     <div className="mb-section flex flex-col gap-tight">
       <span className="type-label text-[12px] text-muted">{t("repeat.title")}</span>
 
-      <div className="flex flex-wrap items-center gap-tight">
-        <div className="flex items-center gap-tight">
-          <button
-            type="button"
-            aria-label={t("repeat.fewer")}
-            onClick={() => onCount(Math.max(1, count - 1))}
-            disabled={count <= 1}
-            className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-lg disabled:opacity-40 active:bg-ember/10"
-          >
-            −
-          </button>
-          <span className="min-w-16 text-center font-mono text-sm">
-            {count === 1 ? t("repeat.once") : t("repeat.weeks", { count })}
-          </span>
-          <button
-            type="button"
-            aria-label={t("repeat.more")}
-            onClick={() => onCount(Math.min(max, count + 1))}
-            disabled={count >= max}
-            className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-lg disabled:opacity-40 active:bg-ember/10"
-          >
-            +
-          </button>
-        </div>
+      {/* One row at rest, one control per row when engaged.
+       *
+       *  It used to show a stepper reading "Just this one" next to three preset
+       *  chips — two controls for one value, wrapping onto two ragged rows, and
+       *  a stepper whose displayed value was a phrase rather than a number.
+       *  Most sales are not repeats, so at rest this is a single row of choices
+       *  with the off state as its own chip; the stepper only appears once
+       *  someone has actually asked to repeat, which is the only time a count
+       *  between the presets is worth reaching for. */}
+      <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <button
+          type="button"
+          onClick={() => onCount(1)}
+          className={cn(
+            "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-sm border px-comfortable text-sm transition-colors duration-quick",
+            count === 1 ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card active:bg-ember/10",
+          )}
+        >
+          {t("repeat.offChip")}
+        </button>
         {CHIPS.map((n) => (
           <button
             key={n}
             type="button"
             onClick={() => onCount(n)}
             className={cn(
-              "h-12 shrink-0 rounded-sm border px-comfortable text-sm transition-colors duration-quick",
-              count === n ? "border-ember bg-ember/10 text-brand-foreground" : "border-line bg-card active:bg-ember/10",
+              "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-sm border px-comfortable text-sm transition-colors duration-quick",
+              count === n ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card active:bg-ember/10",
             )}
           >
             {t("repeat.weeks", { count: n })}
           </button>
         ))}
       </div>
+
+      {/* Fine adjustment, only once repeating is on. The chips FILL this — the
+       *  rule the duration and percent controls already follow. */}
+      {count > 1 && (
+        <div className="flex items-center gap-tight">
+          <span className="type-label flex-1 text-[13px] text-muted">{t("repeat.fine")}</span>
+          <button
+            type="button"
+            aria-label={t("repeat.fewer")}
+            onClick={() => onCount(Math.max(1, count - 1))}
+            disabled={count <= 1}
+            className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-ember/10"
+          >
+            −
+          </button>
+          <span className="min-w-12 text-center text-sm font-medium tabular-nums">{count}</span>
+          <button
+            type="button"
+            aria-label={t("repeat.more")}
+            onClick={() => onCount(Math.min(max, count + 1))}
+            disabled={count >= max}
+            className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-ember/10"
+          >
+            +
+          </button>
+        </div>
+      )}
 
       {count > 1 && (
         <>
@@ -101,7 +124,7 @@ export function RepeatPicker({
                 <span className={cn("shrink-0", o.ok ? "text-success" : "text-faint")}>
                   {o.ok ? <Check size={14} strokeWidth={2} /> : <X size={14} strokeWidth={2} />}
                 </span>
-                <span className={cn("min-w-0 flex-1 truncate font-mono text-[13px]", !o.ok && "text-faint line-through")}>
+                <span className={cn("min-w-0 flex-1 truncate text-[13px] tabular-nums", !o.ok && "text-muted line-through")}>
                   {dayLabel(o.date)}
                   {time ? ` · ${time}` : ""}
                 </span>
