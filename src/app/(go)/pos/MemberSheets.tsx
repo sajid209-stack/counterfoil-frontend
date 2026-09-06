@@ -31,26 +31,26 @@ export function MembershipSheet({
       title={t("membership.title")}
       description={t("membership.description")}
       footer={
-        <Button variant="secondary" size="lg" onClick={onClose}>
+        <Button shape="pill" variant="secondary" size="lg" onClick={onClose}>
           {t("membership.close")}
         </Button>
       }
     >
       {!hasCustomer ? (
-        <div className="rounded-sm border-l-2 border-ember bg-ember/5 p-comfortable">
+        <div className="rounded-go border-l-2 border-ember bg-ember/5 p-comfortable">
           <p className="text-sm font-medium">{t("membership.needCustomerTitle")}</p>
           <p className="mt-inline text-[13px] text-muted">{t("membership.needCustomerBody")}</p>
         </div>
       ) : (
         <>
-          {tiersQ.loading && <div className="h-24 animate-pulse rounded-sm bg-subtle" />}
+          {tiersQ.loading && <div className="h-24 animate-pulse rounded-go bg-subtle" />}
           <ul className="flex flex-col gap-tight">
             {tiers.map((tier) => (
               <li key={tier.id}>
                 <button
                   type="button"
                   onClick={() => onPick(tier)}
-                  className="flex min-h-12 w-full items-center justify-between gap-tight rounded-sm border border-line p-comfortable text-left transition-colors duration-quick hover:bg-subtle active:bg-ember/10"
+                  className="flex min-h-12 w-full items-center justify-between gap-tight rounded-go border border-line p-comfortable text-left transition-colors duration-quick hover:bg-subtle active:bg-ember/10"
                 >
                   <span className="min-w-0">
                     <span className="block break-words text-sm font-medium">{tier.name}</span>
@@ -145,7 +145,7 @@ function PointsSheetBody({
       })}
       footer={
         <>
-          <Button
+          <Button shape="pill"
             variant="secondary"
             size="lg"
             onClick={() => {
@@ -155,7 +155,7 @@ function PointsSheetBody({
           >
             {t("points.none")}
           </Button>
-          <Button
+          <Button shape="pill"
             size="lg"
             disabled={belowMin || draft <= 0}
             onClick={() => {
@@ -183,7 +183,7 @@ function PointsSheetBody({
                   key={n}
                   type="button"
                   onClick={() => setDraft(n)}
-                  className={`h-12 rounded-sm border px-section text-sm transition-colors duration-quick ${
+                  className={`h-12 rounded-full border px-section text-sm transition-colors duration-quick ${
                     draft === n
                       ? "border-ember bg-ember/10 text-brand-foreground"
                       : "border-line text-muted"
@@ -203,7 +203,7 @@ function PointsSheetBody({
               className="w-full accent-ember"
               aria-label={t("points.slider")}
             />
-            <div className="rounded-sm border-l-2 border-ember bg-ember/5 p-comfortable">
+            <div className="rounded-go border-l-2 border-ember bg-ember/5 p-comfortable">
               <p className="font-mono text-sm">
                 {t("points.line", {
                   points: draft.toLocaleString(),

@@ -2446,7 +2446,6 @@ POS audit **0 findings** at 390 light across all twelve selection systems and
 the popups; dark shows only the known absolutely-positioned-thumb artifact. 45
 sheet-renders clean, badge-overlap zero. `tsc` and `build` clean.
 
-<<<<<<< Updated upstream
 ### Duration and slot handling, made consistent (2026-09-06)
 
 Audited every place in the app that chooses a duration or a time slot, after
@@ -2477,7 +2476,7 @@ steps at ৳50 (so an hour is the ৳100 its tier says) with an all-day deal of
 Grepped for hand-rolled duration pricing afterwards; the only remaining one is
 the quick pass's fallback for a product with no config, and the per-resource
 replacement rate in `slots.ts`, which is correct by design.
-=======
+---
 ---
 
 ## Date + Validity (BT-02) — the pattern finally asks its own two questions (2026-09-06)
@@ -2544,7 +2543,6 @@ commit, now removed. i18n parity 0 missing / 0 extra, five keys in en and bn.
 **No editor for the lengths.** They are seeded, not configurable — the product
 editor has no Validity section yet, so an operator cannot add or price one.
 That is the obvious follow-up and the reason the field is on the contract now.
->>>>>>> Stashed changes
 
 ---
 
@@ -2624,3 +2622,164 @@ disabled CTA that scrolls to the section it names when tapped — a standard
 form-submit-scrolls-to-first-error pattern — but it needs a target per pattern
 and `SheetFooter` currently knows nothing about the sections above it. Named
 here rather than half-built.
+
+---
+
+## The till, redesigned to the reference vibe (2026-09-06)
+
+Owner supplied three POS designs — a warm-orange mobile till, a purple
+("pointr") mobile till, and a green desktop one — and asked for Go rebuilt to
+that feeling: minimal, modern, calm. Keep the design system and every feature;
+put the weight on the phone, because this is going to be a mobile app and a
+mobile web view.
+
+### What the three references actually share
+
+Rendered and read rather than eyeballed for adjectives. The vibe is not a
+palette — all three use a different accent — it is six mechanics:
+
+| | Reference | Go, before |
+|---|---|---|
+| Card corner | 16–24px | **6px** |
+| Depth | soft wide shadow, no edge | 1px hairline on everything |
+| Controls | pill / circle | 6px rectangles |
+| Accent | solid CTA · solid selection · 10–15% tint | tint + border + fill, mixed |
+| Chrome | floating pill nav, floating action pill | full-bleed strips |
+| Section headings | sentence case | UPPERCASE, tracked out |
+
+The last one matters more than it looks: a 6px radius on every object is most
+of why the till read as a form and the references read as an app.
+
+### Go gets its own surface vocabulary — OS is not touched
+
+The four radii in `@theme` were measured off the Aura reference **for OS** and
+the log says only those four exist. Retuning them would have restyled the
+entire admin app for a request scoped to the till. So Go got its own names
+instead: `--radius-go` 18 · `--radius-go-sm` 14 · `--radius-go-lg` 28, plus
+`--shadow-go` / `--shadow-go-pop` and two classes, `.go-surface` (a solid card
+lifted off the warm ground, no edge) and `.go-raised` (floating chrome). The
+project's standing dark rule — elevation is a surface step plus a 1px line,
+because a shadow on near-black reads as nothing — is restated on both, since a
+Go card that leans on its shadow alone loses its edge in dark while the
+greyed-out one beside it keeps a border, which inverts the reading.
+
+`ChoiceCard` turned out to be **used only by the Go sheet**, so its radius moved
+with no OS consequence. `ProductThumb` is shared, so `chip` (which is what OS
+uses) keeps the 3px corner and only `thumb` follows the Go radii. `Button` and
+`ModeButton` got opt-in `shape` props rather than new defaults. `Modal` and
+`Toast` are shared and were left alone; `BlockedNotice` is Go-only and moved.
+
+### The shell
+
+- **The bottom bar is a floating pill** — inset 12px, 62px tall, on
+  `.go-raised`. Selection is a soft ember pill behind the whole tab with a
+  heavier icon stroke, not a 2px rule on one edge.
+- **All five labels stay.** The warm-orange reference expands only the active
+  tab and leaves the other four as bare icons, which is the single most
+  copyable thing in it — and the wrong call here. This is the primary
+  navigation of a till used under queue pressure by staff with real turnover,
+  and icon-only navigation is a known comprehension problem. The pill is the
+  part worth taking; the label removal is not. Measured after: all five fit at
+  320 · 360 · 390 · 430.
+- **A ground scrim under the bar.** Content passes *behind* a floating bar, and
+  the 12px of page on every side turns that into a sliced-looking card. A
+  gradient of the page colour lets the list dissolve instead. The column above
+  reserves the bar's height, so nothing is ever parked underneath it.
+
+### The sheets
+
+The structural move: **the sheet ground is now paper, not white**, so each
+panel reads as its own white card on it — the way the purple reference groups
+an order screen. White-on-white had needed a hairline round everything just to
+be legible.
+
+- Section headings were `type-label` — uppercase, tracked out, `muted`. That is
+  the OS **field-label** role, right beside an input on a form and wrong on
+  "Date" / "Departure" / "Choose tickets", which are headings. Now 14/600 in
+  `fg`: hierarchy from weight and colour instead of shouting, and one step
+  above the 13px body under it. Uppercase is also the harder case to read,
+  which is why the reading-floor pass had to size these up in the first place.
+- Every stepper and nudge is circular; chips, time tiles and the CTA are pills.
+- Cards **lift** when they are available and stay flat when they are not, which
+  is a second, non-colour way of saying "not this one".
+- **Sheets rise from the edge they belong to** (320ms, the project's own
+  easing) and the scrim fades. `backwards` fill, so no transform lingers to
+  create a containing block. The existing `prefers-reduced-motion` block
+  neutralises both.
+
+### The cart
+
+- **The line got its width back.** Four 48px targets sat beside the text
+  column, leaving about 200px for the name and the money together, so a name as
+  ordinary as "All-Day Re-entry Pass" truncated. The actions moved to their own
+  row; name and money now have the full card width.
+- Drag handle, tinted icon discs on the summary rows, a pill payment track with
+  a pill thumb, and Charge as a pill.
+
+### Three defects found on the way
+
+1. **A raw ISO date on the till.** `posLiveState` rendered "Starts
+   2026-08-04" on the product list — the same fault fixed in the course sheet
+   earlier today, in a place that sweep never reached. The cart's slot label had
+   it too. Both now go through a new shared `formatDay` in `lib/format.ts`,
+   which also absorbed three hand-rolled copies of the same formatter.
+2. **Schedule rows could not name what they were scheduling.** Time, state,
+   Sell and the overflow button took 310 of 358px, so every row read "Cric…" /
+   "Futs…" — on a screen whose entire job is to say which field is booked when.
+   Time and name take their own line under `sm`; from `sm` the single row has
+   the width for all of it.
+3. **`PROJECT_LOG.md` had committed merge-conflict markers** (`<<<<<<< Updated
+   upstream` at line 2449). Both sides were real, distinct entries; both kept.
+
+### A regression of mine, backed out
+
+Hiding the summary bar when the cart is empty read better and matched the
+references — and it was wrong. That bar is the **only** route into the cart on
+a phone, and the customer picker lives inside the cart, so hiding it made
+"attach the member before ringing anything up" impossible. The bar stays and
+goes quiet instead: a plain card until there is a sale, loud ember after.
+
+### Two harness corrections, both of them mine
+
+Neither was a product defect, and both would have been "fixed" in the app if I
+had trusted the tooling:
+
+- **A dark circle sat over the Sell tab in every screenshot.** It survived a
+  1× re-render, so it was not a compositing ghost — and `querySelectorAll("*")`
+  found nothing there, because it is the **Next.js dev-tools indicator**, a
+  `nextjs-portal` shadow root. Dev-only. Harnesses now hide it.
+- **The audit reported the payment control at 1.00:1.** `bgOf` walked
+  ancestors, so a fill painted by a positioned *sibling* — the segmented
+  control's thumb, under a z-10 label — was invisible, and white-on-ember
+  measured as white-on-white. It now reads the element's own fill first, then
+  the real paint stack via `elementsFromPoint`, then ancestors. **The first
+  attempt skipped the element's own background and made it worse** (a phantom
+  1.12:1 on every ember chip), which the re-run caught. Verified from the
+  markup instead: white on ember, **3.50:1 light / 2.59:1 dark** — the owner's
+  declared exception, unchanged.
+
+### Verified
+
+- **POS audit — 11 findings at 390 light, 390 dark and 320 light, and every
+  one of them is the declared white-on-ember exception.** Zero severity A,
+  zero B, across all twelve selection systems, the catalogue and the popups.
+- **45 sheet-renders clean** (nine sheets x 320/390/430 light, 430 dark, 390
+  Bangla): no page x-scroll, nothing clipped without an ellipsis, nothing under
+  the floor, no console errors.
+- **0 weak-text findings across all twelve sheets** — the 13px reading floor
+  from this morning holds through the restyle.
+- Nav labels measured, not assumed: all five fit at **320 / 360 / 390 / 430**.
+- `tsc --noEmit` clean - `npm run build` clean.
+- **eslint identical to clean HEAD** — 5 errors and 5 warnings, all
+  pre-existing, confirmed by stashing; the only difference in the whole report
+  is one line number moving where a comment was added.
+- i18n parity **0 missing / 0 extra** across 29 namespaces. No new keys: the
+  redesign is shape and surface, so every string it touches already existed in
+  both locales.
+
+### Not done
+
+- **Modal and Toast keep their OS corners.** Both are shared; softening them is
+  an OS decision, not a till one.
+- **The CTA can still name a section below the fold** — carried over, still the
+  most substantial remaining mobile-UX item in the sheets.

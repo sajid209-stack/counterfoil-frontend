@@ -14,7 +14,7 @@ import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { taxRateFor } from "@/lib/tax";
-import { formatMoney } from "@/lib/format";
+import { formatDay, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
@@ -87,7 +87,12 @@ function CartRow({
         aria-expanded={open}
         className="flex min-h-12 w-full items-center gap-tight py-tight text-left"
       >
-        <Icon size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
+        {/* The glyph sits in a soft disc, as every till reference draws it:
+            it separates the icon from the label at a glance and gives the row
+            a left edge to scan down. */}
+        <span aria-hidden className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-subtle text-muted">
+          <Icon size={16} strokeWidth={1.75} />
+        </span>
         <span className="min-w-0 flex-1 truncate text-[13px]">{label}</span>
         <span className="shrink-0 text-[13px] text-muted">{value}</span>
         <ChevronRight size={15} strokeWidth={1.5} className={`shrink-0 text-faint transition-transform duration-quick ${open ? "rotate-90" : ""}`} />
@@ -734,7 +739,14 @@ export default function PosPage() {
     } else toast.error(res.error.message);
   };
 
-  const slotLabel = (e: CartEntry) => (!e.slotDate ? "" : e.slotTime ? ` · ${e.slotTime} ${e.slotDate === TODAY ? t("slotToday") : e.slotDate}` : ` · ${e.slotDate === TODAY ? t("slotToday") : e.slotDate}`);
+  /* A cart line names its day the way a cashier reads it out. It used to
+     print the raw `2026-08-01`, which is a different sentence from "Sat 1 Aug"
+     to everyone except a database. */
+  const slotLabel = (e: CartEntry) => {
+    if (!e.slotDate) return "";
+    const day = e.slotDate === TODAY ? t("slotToday") : formatDay(e.slotDate, { weekday: true });
+    return e.slotTime ? ` · ${e.slotTime} ${day}` : ` · ${day}`;
+  };
 
   /** The till's clock, in minutes — the demo clock, same as everywhere else. */
   const nowMinutes = 12 * 60;
@@ -747,27 +759,27 @@ export default function PosPage() {
     leftOfTotal: (left: number, total: number) => t("live.leftOfTotal", { left, total }),
     nextAt: (time: string, left: number) => t("live.nextAt", { time, left }),
     freeOfTotal: (free: number, total: number) => t("live.freeOfTotal", { free, total }),
-    startsOn: (d: string) => t("live.startsOn", { date: d }),
+    startsOn: (d: string) => t("live.startsOn", { date: formatDay(d) }),
     providersFree: (free: number, total: number) => t("live.providersFree", { free, total }),
   }), [t]);
   const methodLabel = enumL.method(method);
 
   return (
-    <div className="grid h-full grid-cols-1 gap-tight p-tight pb-24 lg:grid-cols-[1fr_23rem] lg:pb-tight">
+    <div className="grid h-full grid-cols-1 gap-comfortable p-comfortable pb-[72px] lg:grid-cols-[1fr_23rem] lg:pb-comfortable">
       {/* The Go chrome names this screen visually; the heading exists so a
           screen reader lands on a named page rather than an unlabelled grid. */}
       <h1 className="sr-only">{t("posTitle")}</h1>
-      <div className="flex min-h-0 flex-col gap-tight">
+      <div className="flex min-h-0 flex-col gap-comfortable">
         {/* Header zone: counter chip · wide search · parked badge */}
         <div className="flex items-center gap-tight">
-          <span className="hidden h-12 shrink-0 items-center rounded-sm border border-line bg-card px-comfortable text-[13px] text-muted sm:flex">{t("counter")}</span>
-          <div className="flex h-12 min-w-0 flex-1 items-center gap-tight rounded-sm border border-line bg-card px-comfortable focus-within:border-inverse">
-            <Search size={16} strokeWidth={1.5} className="shrink-0 text-faint" />
+          <span className="hidden h-[52px] shrink-0 items-center rounded-full bg-subtle px-section text-[13px] text-muted sm:flex">{t("counter")}</span>
+          <div className="go-surface flex h-[52px] min-w-0 flex-1 items-center gap-tight rounded-full px-section focus-within:ring-1 focus-within:ring-inset focus-within:ring-strong">
+            <Search size={18} strokeWidth={1.75} className="shrink-0 text-muted" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none placeholder:text-faint" />
             {query && <button type="button" onClick={() => setQuery("")} className="text-[13px] text-faint hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
-            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable text-[13px] text-brand-foreground">
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-[52px] shrink-0 items-center rounded-full bg-ember/15 px-section text-[13px] font-medium text-brand-foreground">
               {t("parkedBadge", { count: parked.length })}
             </button>
           )}
@@ -778,9 +790,9 @@ export default function PosPage() {
             container rather than as "there is more this way". Bleeding it to
             the screen edge puts the cut on the edge itself, which is the
             affordance everyone already knows. */}
-        <div className="-mx-tight flex snap-x snap-mandatory gap-inline overflow-x-auto px-tight pb-inline [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="-mx-comfortable flex snap-x snap-mandatory gap-tight overflow-x-auto px-comfortable py-inline [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[{ id: "all", name: t("categoryAll") }, ...chipCategories].map((c) => (
-            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 min-w-12 shrink-0 snap-start rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ember bg-ember text-white" : "border-line bg-card"}`}>{c.name}</button>
+            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}>{c.name}</button>
           ))}
           {/* A category says what a thing IS; a system says how it is SOLD.
               Two kinds of filter in one row need a seam, or "Admission" and
@@ -796,7 +808,7 @@ export default function PosPage() {
                   key={x.id}
                   type="button"
                   onClick={() => setCategory(x.id)}
-                  className={`h-12 min-w-12 shrink-0 snap-start whitespace-nowrap rounded-sm border px-comfortable text-sm ${category === x.id ? "border-ember bg-ember font-medium text-white" : "border-line bg-card"}`}
+                  className={`h-11 min-w-11 shrink-0 snap-start whitespace-nowrap rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === x.id ? "bg-ember font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}
                 >
                   {t(x.key)}
                 </button>
@@ -806,27 +818,27 @@ export default function PosPage() {
         </div>
         <div className="flex-1 overflow-y-auto">
           {productsQ.loading ? (
-            <div aria-busy="true" className="flex animate-pulse flex-col gap-tight p-section"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
+            <div aria-busy="true" className="flex animate-pulse flex-col gap-tight p-section"><div className="h-4 w-1/3 rounded-go-sm bg-line" /><div className="h-4 w-2/3 rounded-go-sm bg-line" /><div className="h-4 w-1/2 rounded-go-sm bg-line" /></div>
           ) : (
             /* Rows, not photo tiles. The 4:3 band pushed the name, subtitle and
                price into a strip under 250px of picture and left room for only
                three products on a wide till. The photo is a 72px square now:
                it still helps recognition, it just stopped being the card. */
-            <div className="grid grid-cols-1 gap-tight md:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-comfortable md:grid-cols-2 2xl:grid-cols-3">
               {shown.map((p) => (
                 /* The price used to sit beside the text column, so at two
                    columns on a 1024 till the name had ~96px to live in and
                    wrapped to two lines while the subtitle truncated to
                    "Open entry · no …". Moving it onto the subtitle's row gives
                    the name the full width beside the thumbnail. */
-                <div key={p.id} className="card-surface flex items-center overflow-hidden transition-colors duration-quick hover:bg-subtle">
-                <button type="button" onClick={() => tapProduct(p)} className="flex min-w-0 flex-1 items-center gap-comfortable p-tight text-left active:bg-ember/10">
+                <div key={p.id} className="go-surface flex items-center overflow-hidden active:scale-[0.99]">
+                <button type="button" onClick={() => tapProduct(p)} className="flex min-w-0 flex-1 items-center gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-ember/10">
                   <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="thumb" />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="line-clamp-2 text-[15px] font-semibold leading-tight">{p.name}</span>
                     <span className="mt-inline flex items-baseline gap-tight">
                       <span className="min-w-0 flex-1 truncate text-[13px] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
-                      <span className="shrink-0 whitespace-nowrap text-[13px] font-medium">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
+                      <span className="shrink-0 whitespace-nowrap text-[14px] font-semibold">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
                     </span>
                     {/* What this product is doing RIGHT NOW, stated per booking
                         type — the next departure and its seats, how many lanes
@@ -853,7 +865,7 @@ export default function PosPage() {
                 </button>
                 </div>
               ))}
-              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-sm border border-dashed border-line text-muted transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
+              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
                 <Plus size={20} strokeWidth={1.5} /><span className="text-[13px]">{t("customAmount")}</span>
               </button>
             </div>
@@ -863,13 +875,14 @@ export default function PosPage() {
 
       {/* Cart — fixed right panel on tablet/desktop; bottom drawer on phones */}
       {/* Sheets cover the tab bar (z-50 over z-40) — nothing tappable behind a modal cart. */}
-      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] rounded-t-md pb-[env(safe-area-inset-bottom)] shadow-2xl" : "hidden"} min-h-0 flex-col border border-line bg-card lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-sm lg:pb-0 lg:shadow-none`}>
+      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] rounded-t-go-lg pb-[env(safe-area-inset-bottom)] shadow-go-pop" : "hidden"} min-h-0 flex-col bg-card lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-go lg:pb-0 lg:shadow-go`}>
+        {cartOpen && <div className="mx-auto mt-tight h-1 w-10 shrink-0 rounded-full bg-line lg:hidden" aria-hidden />}
         <div className="flex items-center gap-tight border-b border-line p-tight">
           {cartOpen && (
-            <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-sm border border-line px-tight text-[13px] text-muted lg:hidden">{t("cart.close")}</button>
+            <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-full bg-subtle px-section text-[13px] text-muted lg:hidden">{t("cart.close")}</button>
           )}
           <span className="flex-1" />
-          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-sm border border-line px-tight text-[13px] text-muted disabled:text-faint" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
+          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-full bg-subtle px-section text-[13px] text-muted disabled:text-faint" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
             <Archive size={14} strokeWidth={1.5} />{t("cart.park")}
           </button>
         </div>
@@ -888,8 +901,8 @@ export default function PosPage() {
             <div className="flex flex-col gap-tight">
               {cart.map((e) => (
                 <div key={e.id} className="border-b border-line pb-tight last:border-0">
-                <div className="flex items-start gap-tight">
-                  <div className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
+                <div className="flex flex-col gap-tight">
+                  <div className="flex min-h-11 min-w-0 cursor-pointer flex-col justify-center" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
                     <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(entryTotal(e), currency)}</span></div>
                     <div className="text-[13px] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="text-[13px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
@@ -900,24 +913,30 @@ export default function PosPage() {
                     ) : null}
                     {entryBalance(e) > 0 && <div className="text-[13px] text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                   </div>
+                  {/* The row actions sit on their own line so the name and the
+                      money get the full card width. Four 48px targets beside
+                      the text column left about 200px for both, and a name as
+                      ordinary as "All-Day Re-entry Pass" truncated in it. */}
+                  <div className="flex items-center justify-end gap-tight">
                   <button
                     type="button"
                     aria-label={t("cart.lineDiscountLabel")}
                     onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
-                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[13px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "border-ember text-brand-foreground" : "border-line"}`}
+                    className={`flex h-12 w-12 items-center justify-center rounded-full border text-[13px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "border-ember text-brand-foreground" : "border-line"}`}
                   >
                     {e.lineDiscountAmount ? "৳" : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
                   </button>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight text-[13px] active:bg-ember/10">
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-full border border-line px-comfortable text-[13px] active:bg-ember/10">
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
-                  {e.productId !== "custom" && <button type="button" aria-label={t("cart.edit")} onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line active:bg-ember/10"><Pencil size={15} strokeWidth={1.5} /></button>}
-                  <button type="button" aria-label={t("cart.remove")} onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-danger active:bg-ember/10"><Trash2 size={15} strokeWidth={1.5} /></button>
+                  {e.productId !== "custom" && <button type="button" aria-label={t("cart.edit")} onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-full border border-line active:bg-ember/10"><Pencil size={15} strokeWidth={1.5} /></button>}
+                  <button type="button" aria-label={t("cart.remove")} onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-danger active:bg-ember/10"><Trash2 size={15} strokeWidth={1.5} /></button>
+                  </div>
                 </div>
                 {lineDiscEdit === e.id && (
-                  <div className="mt-tight rounded-sm border border-line bg-subtle/50 p-tight">
+                  <div className="mt-tight rounded-go border border-line bg-subtle/50 p-tight">
                     <DiscountInput
                       compact
                       label={t("cart.lineDiscountLabel")}
@@ -966,7 +985,9 @@ export default function PosPage() {
               onClick={() => setCustomerOpen(true)}
               className="flex min-h-12 w-full items-center gap-tight py-tight text-left"
             >
-              <UserRound size={16} strokeWidth={1.5} className={`shrink-0 ${attached ? "text-fg" : "text-muted"}`} />
+              <span aria-hidden className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${attached ? "bg-ember/15 text-brand-foreground" : "bg-subtle text-muted"}`}>
+                <UserRound size={16} strokeWidth={1.75} />
+              </span>
               <span className="min-w-0 flex-1 truncate text-[13px]">
                 {attached ? attached.name : t("cart.customer")}
               </span>
@@ -998,7 +1019,7 @@ export default function PosPage() {
               className="mb-tight"
             />
           {overLimit && (
-            <p className="mb-tight rounded-sm border border-line border-l-[3px] border-l-ember bg-card p-tight text-[13px]">
+            <p className="mb-tight rounded-go border border-line border-l-[3px] border-l-ember bg-card p-tight text-[13px]">
               {pt("pos.overPolicy", { limit: manualCapPct })}
             </p>
           )}
@@ -1008,7 +1029,7 @@ export default function PosPage() {
               value={discountReason}
               onChange={(e) => setDiscountReason(e.target.value)}
               placeholder={pt("pos.reasonPlaceholder")}
-              className={`mt-tight h-11 w-full rounded-sm border bg-card px-comfortable text-sm outline-none placeholder:text-faint ${reasonNeeded ? "border-danger" : "border-line focus:border-inverse"}`}
+              className={`mt-tight h-11 w-full rounded-go-sm border bg-card px-comfortable text-sm outline-none placeholder:text-faint ${reasonNeeded ? "border-danger" : "border-line focus:border-inverse"}`}
             />
           )}
           </CartRow>
@@ -1036,12 +1057,12 @@ export default function PosPage() {
                       const n = parseFloat(raw);
                       setAdvance(Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : null);
                     }}
-                    className="h-12 min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable text-right font-mono text-sm outline-none focus:border-ember"
+                    className="h-12 min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable text-right font-mono text-sm outline-none focus:border-ember"
                   />
                   <button
                     type="button"
                     onClick={() => setAdvance(null)}
-                    className={`h-12 shrink-0 rounded-sm border px-comfortable text-[13px] ${advance == null ? "border-ember bg-ember/10 text-brand-foreground" : "border-line"}`}
+                    className={`h-12 shrink-0 rounded-full border px-comfortable text-[13px] ${advance == null ? "border-ember bg-ember/10 text-brand-foreground" : "border-line"}`}
                   >
                     {t("advance.full")}
                   </button>
@@ -1052,7 +1073,7 @@ export default function PosPage() {
                       key={i}
                       type="button"
                       onClick={() => setAdvance(amt >= total ? null : amt)}
-                      className="h-12 flex-1 rounded-sm border border-line bg-card px-tight text-[13px] active:bg-ember/10"
+                      className="h-12 flex-1 rounded-full border border-line bg-card px-tight text-[13px] active:bg-ember/10"
                     >
                       {i === 0 ? t("advance.minimum", { amount: formatMoney(amt, currency) }) : i === 1 ? t("advance.half") : t("advance.full")}
                     </button>
@@ -1082,8 +1103,8 @@ export default function PosPage() {
               </span>
             ) : (
               <span className="flex min-w-0 items-center gap-inline">
-                <input value={couponInput} onChange={(e) => { setCouponInput(e.target.value); setCouponError(null); }} placeholder={pt("pos.couponPlaceholder")} className="h-11 w-28 rounded-sm border border-line bg-card px-tight text-sm uppercase outline-none placeholder:text-faint placeholder:normal-case focus:border-inverse" />
-                <button type="button" onClick={applyCoupon} disabled={!couponInput.trim()} className="h-11 shrink-0 rounded-sm border border-inverse bg-inverse px-comfortable text-[13px] text-inverse-fg disabled:opacity-40">{pt("pos.apply")}</button>
+                <input value={couponInput} onChange={(e) => { setCouponInput(e.target.value); setCouponError(null); }} placeholder={pt("pos.couponPlaceholder")} className="h-11 w-28 rounded-full border border-line bg-card px-comfortable text-sm uppercase outline-none placeholder:text-faint placeholder:normal-case focus:border-inverse" />
+                <button type="button" onClick={applyCoupon} disabled={!couponInput.trim()} className="h-11 shrink-0 rounded-full border border-inverse bg-inverse px-section text-[13px] text-inverse-fg disabled:opacity-40">{pt("pos.apply")}</button>
               </span>
             )}
           </div>
@@ -1104,17 +1125,17 @@ export default function PosPage() {
                 <button type="button" aria-label={t("summary.removePass")} onClick={() => setPass(null)} className="text-danger">✕</button>
               </span>
             ) : (
-              <button type="button" onClick={() => setPassOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[13px]">{t("summary.redeemPass")}</button>
+              <button type="button" onClick={() => setPassOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[13px]">{t("summary.redeemPass")}</button>
             )}
-            <button type="button" onClick={() => setSettleOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[13px]">{t("summary.settleBooking")}</button>
+            <button type="button" onClick={() => setSettleOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[13px]">{t("summary.settleBooking")}</button>
           </div>
 
           {/* Membership + points. Both need a customer attached, so the row
               says so rather than offering a control that cannot work. */}
           <div className="mb-tight flex flex-wrap items-center gap-tight">
-            <button type="button" onClick={() => setMembershipOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[13px]">{t("summary.sellMembership")}</button>
+            <button type="button" onClick={() => setMembershipOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[13px]">{t("summary.sellMembership")}</button>
             {pointsAccount && program?.enabled && (
-              <button type="button" onClick={() => setPointsOpen(true)} className="h-12 min-w-0 rounded-xs border border-line px-tight text-[13px]">
+              <button type="button" onClick={() => setPointsOpen(true)} className="h-12 min-w-0 rounded-full border border-line px-comfortable text-[13px]">
                 <span className="truncate">{pointsToSpend > 0 ? t("summary.pointsApplied", { count: pointsToSpend }) : t("summary.spendPoints", { count: pointsAccount.balance })}</span>
               </button>
             )}
@@ -1123,7 +1144,7 @@ export default function PosPage() {
 
           {/* The member price is an entitlement, so say whose it is. */}
           {benefit && (
-            <div className="mb-tight rounded-sm border-l-2 border-ember bg-ember/5 px-comfortable py-tight">
+            <div className="mb-tight rounded-go border-l-2 border-ember bg-ember/5 px-comfortable py-tight">
               <p className="min-w-0 break-words text-[13px]">
                 <span className="font-medium">{benefit.tierName}</span>
                 {" · "}
@@ -1170,11 +1191,11 @@ export default function PosPage() {
             const pct = 100 / n;
             const idx = Math.max(0, availableMethods.findIndex((m) => m.value === method));
             return (
-              <div className="relative mt-tight grid h-14 rounded-sm bg-line/60 p-inline" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+              <div className="relative mt-tight grid h-14 rounded-full bg-line/60 p-inline" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
                 {n > 1 && (
                   <span
                     aria-hidden
-                    className="absolute inset-y-inline rounded-xs bg-ember transition-[left] duration-quick ease-counterfoil"
+                    className="absolute inset-y-inline rounded-full bg-ember transition-[left] duration-quick ease-counterfoil"
                     style={{ width: `calc(${pct}% - 8px)`, left: `calc(${idx * pct}% + 4px)` }}
                   />
                 )}
@@ -1185,18 +1206,35 @@ export default function PosPage() {
             );
           })()}
 
-          <Button size="lg" fullWidth className="mt-tight h-14" disabled={cart.length === 0 || overLimit || reasonNeeded} onClick={charge}>
+          <Button size="lg" shape="pill" fullWidth className="mt-tight h-14" disabled={cart.length === 0 || overLimit || reasonNeeded} onClick={charge}>
             {/* The amount never wraps; the method gives way first on narrow screens. */}
             <span className="min-w-0 truncate">{cart.length > 0 ? t("chargeAmount", { amount: formatMoney(dueNow, currency), method: methodLabel }) : t("charge")}</span>
           </Button>
         </div>
       </div>
 
-      {/* Phone summary bar — persistent door to the cart drawer */}
+      {/* Phone summary bar — the floating action pill the reference draws:
+          inset from the screen edges and sitting above the nav rather than
+          welded to the bottom of the page.
+
+          It stays put when the cart is empty and goes quiet instead of away.
+          Hiding it read better and cost real function: this is the ONLY route
+          into the cart on a phone, and the customer picker lives inside it, so
+          hiding it made "attach the member before ringing anything up"
+          impossible. Loud ember once there is a sale, a plain card until
+          then. */}
       {!cartOpen && (
-        <button type="button" onClick={() => setCartOpen(true)} className="fixed inset-x-tight bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 flex h-14 items-center justify-between rounded-sm bg-inverse px-section text-inverse-fg shadow-lg rail:bottom-tight lg:hidden">
-          <span className="text-sm">{customer ? t("phoneSummaryCustomer", { count: cart.length, customer }) : t("phoneSummary", { count: cart.length })}</span>
-          <span className="text-sm">{t("viewCart", { amount: formatMoney(dueNow, currency) })}</span>
+        <button
+          type="button"
+          onClick={() => setCartOpen(true)}
+          className={cn(
+            "fixed inset-x-comfortable z-30 flex h-14 items-center justify-between gap-comfortable rounded-full px-section shadow-go-pop transition-[transform,background-color] duration-quick active:scale-[0.99] lg:hidden",
+            cart.length > 0 ? "bg-ember text-white" : "bg-card text-muted",
+          )}
+          style={{ bottom: "calc(82px + env(safe-area-inset-bottom))" }}
+        >
+          <span className="min-w-0 truncate text-sm font-medium">{customer ? t("phoneSummaryCustomer", { count: cart.length, customer }) : t("phoneSummary", { count: cart.length })}</span>
+          <span className="shrink-0 whitespace-nowrap text-sm font-semibold">{t("viewCart", { amount: formatMoney(dueNow, currency) })}</span>
         </button>
       )}
 
@@ -1209,8 +1247,8 @@ export default function PosPage() {
         const enough = tenderedMinor >= dueNow;
         return (
           <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true">
-            <div className="absolute inset-0 bg-inverse/40 backdrop-blur-sm" onClick={() => !cashSaving && setCashOpen(false)} aria-hidden />
-            <div className="relative z-10 max-h-[90vh] overflow-y-auto rounded-t-md bg-sheet p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
+            <div className="go-sheet-scrim absolute inset-0 bg-inverse/40 backdrop-blur-sm" onClick={() => !cashSaving && setCashOpen(false)} aria-hidden />
+            <div className="relative z-10 go-sheet-panel max-h-[90vh] overflow-y-auto rounded-t-go-lg bg-sheet p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
               <div className="mx-auto w-full max-w-[520px]">
                 <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line" aria-hidden />
                 <div className="mb-section flex items-center justify-between">
@@ -1218,7 +1256,7 @@ export default function PosPage() {
                     <p className="type-label text-[13px] text-brand-foreground">{t("cash.label")}</p>
                     <h2 className="type-h2 text-lg">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</h2>
                   </div>
-                  <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-10 w-10 items-center justify-center rounded-sm active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
+                  <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-10 w-10 items-center justify-center rounded-full active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
                 </div>
 
                 <div className="card-surface p-section">
@@ -1233,9 +1271,9 @@ export default function PosPage() {
 
                 {/* Quick chips: exact, then the common notes in the drawer. */}
                 <div className="mt-section flex gap-tight">
-                  <button type="button" onClick={() => setTenderTaka(String(Math.ceil(dueNow / 100)))} className="h-12 flex-1 rounded-sm border border-inverse bg-card text-sm active:bg-ember/10">{t("cash.exact")}</button>
+                  <button type="button" onClick={() => setTenderTaka(String(Math.ceil(dueNow / 100)))} className="h-12 flex-1 rounded-full border border-inverse bg-card text-sm active:bg-ember/10">{t("cash.exact")}</button>
                   {[500, 1000, 2000].map((amt) => (
-                    <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-sm border border-line bg-card text-sm active:bg-ember/10">৳{amt}</button>
+                    <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-full border border-line bg-card text-sm active:bg-ember/10">৳{amt}</button>
                   ))}
                 </div>
 
@@ -1243,14 +1281,14 @@ export default function PosPage() {
                   <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
                 </div>
 
-                <Button size="lg" fullWidth className="mt-section h-14" disabled={!enough} loading={cashSaving} onClick={() => completeCash(tenderedMinor, changeMinor)}>{t("cash.completeSale")}</Button>
+                <Button shape="pill" size="lg" fullWidth className="mt-section h-14" disabled={!enough} loading={cashSaving} onClick={() => completeCash(tenderedMinor, changeMinor)}>{t("cash.completeSale")}</Button>
               </div>
             </div>
           </div>
         );
       })()}
 
-      <Modal open={customOpen} onClose={() => setCustomOpen(false)} title={t("custom.title")} footer={<><Button variant="secondary" onClick={() => setCustomOpen(false)}>{t("custom.cancel")}</Button><Button onClick={addCustom} disabled={!customAmount}>{t("custom.add")}</Button></>}>
+      <Modal open={customOpen} onClose={() => setCustomOpen(false)} title={t("custom.title")} footer={<><Button shape="pill" variant="secondary" onClick={() => setCustomOpen(false)}>{t("custom.cancel")}</Button><Button shape="pill" onClick={addCustom} disabled={!customAmount}>{t("custom.add")}</Button></>}>
         <div className="flex flex-col gap-section">
           <FormField label={t("custom.description")} placeholder={t("custom.descriptionPlaceholder")} value={customName} onChange={(e) => setCustomName(e.target.value)} />
           <FormField label={t("custom.amountLabel", { currency })} variant="number" value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} />
@@ -1279,12 +1317,12 @@ export default function PosPage() {
         onApply={setPointsToSpend}
       />
 
-      <Modal open={parkOpen} onClose={() => setParkOpen(false)} title={t("parked.title")} footer={<Button variant="secondary" onClick={() => setParkOpen(false)}>{t("parked.close")}</Button>}>
+      <Modal open={parkOpen} onClose={() => setParkOpen(false)} title={t("parked.title")} footer={<Button shape="pill" variant="secondary" onClick={() => setParkOpen(false)}>{t("parked.close")}</Button>}>
         <div className="flex flex-col gap-section">
           {cart.length > 0 && (
             <div className="flex items-end gap-tight">
               <FormField label={t("parked.parkAs")} placeholder={t("parked.parkAsPlaceholder")} value={parkName} onChange={(e) => setParkName(e.target.value)} className="flex-1" />
-              <Button onClick={park}>{t("parked.park")}</Button>
+              <Button shape="pill" onClick={park}>{t("parked.park")}</Button>
             </div>
           )}
           {parked.length === 0 ? (
@@ -1292,12 +1330,12 @@ export default function PosPage() {
           ) : (
             <div className="flex flex-col gap-tight">
               {parked.map((p, i) => (
-                <div key={i} className="flex items-center justify-between rounded-sm border border-line p-comfortable">
+                <div key={i} className="flex items-center justify-between rounded-go border border-line p-comfortable">
                   <div>
                     <p className="text-sm font-medium">{p.name}</p>
                     <p className="text-[13px] text-faint">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
                   </div>
-                  <Button size="sm" onClick={() => resume(i)} disabled={cart.length > 0} >{t("parked.resume")}</Button>
+                  <Button shape="pill" size="sm" onClick={() => resume(i)} disabled={cart.length > 0} >{t("parked.resume")}</Button>
                 </div>
               ))}
               {cart.length > 0 && <p className="text-[13px] text-faint">{t("parked.parkFirst")}</p>}
@@ -1311,11 +1349,11 @@ export default function PosPage() {
           <div className="flex flex-col gap-section">
             <p className="text-[13px] text-muted">{t("settle.help")}</p>
             <FormField label={t("settle.refLabel")} value={settleRef} onChange={(e) => setSettleRef(e.target.value)} placeholder={t("settle.refPlaceholder")} />
-            <Button onClick={findBooking} loading={settleLoading} disabled={!settleRef.trim()}>{t("settle.find")}</Button>
+            <Button shape="pill" onClick={findBooking} loading={settleLoading} disabled={!settleRef.trim()}>{t("settle.find")}</Button>
           </div>
         ) : (
           <div className="flex flex-col gap-section">
-            <div className="rounded-sm bg-subtle p-comfortable text-sm">
+            <div className="rounded-go bg-subtle p-comfortable text-sm">
               <div className="flex items-center justify-between">
                 <span className="font-mono">{settleOrder.reference}</span>
                 <span className="text-[13px] text-muted">{enumL.status(settleOrder.status)}</span>
@@ -1329,20 +1367,20 @@ export default function PosPage() {
               <>
                 <div className="grid grid-cols-2 gap-tight">
                   {(["cash", "bkash", "card_terminal", "bangla_qr"] as PaymentMethod[]).map((m) => (
-                    <Button key={m} variant={settleMethod === m ? "primary" : "secondary"} className="h-12" onClick={() => setSettleMethod(m)}>{enumL.method(m)}</Button>
+                    <Button shape="pill" key={m} variant={settleMethod === m ? "primary" : "secondary"} className="h-12" onClick={() => setSettleMethod(m)}>{enumL.method(m)}</Button>
                   ))}
                 </div>
-                <Button onClick={takeSettle} loading={settling}>{t("settle.take", { amount: formatMoney(settleOutstanding, currency) })}</Button>
+                <Button shape="pill" onClick={takeSettle} loading={settling}>{t("settle.take", { amount: formatMoney(settleOutstanding, currency) })}</Button>
               </>
             ) : (
-              <p className="rounded-sm bg-success/10 py-tight text-center text-sm font-medium text-success">{t("settle.fullyPaid")}</p>
+              <p className="rounded-go bg-success/10 py-tight text-center text-sm font-medium text-success">{t("settle.fullyPaid")}</p>
             )}
             <button type="button" onClick={() => { setSettleOrder(null); setSettleRef(""); }} className="text-center text-[13px] text-faint hover:text-fg">{t("settle.lookupAnother")}</button>
           </div>
         )}
       </Modal>
 
-      <Modal open={passOpen} onClose={() => setPassOpen(false)} title={t("pass.title")} footer={<><Button variant="secondary" onClick={() => setPassOpen(false)}>{t("pass.cancel")}</Button><Button onClick={applyPass} disabled={!passCode.trim()} loading={passLoading}>{t("pass.apply")}</Button></>}>
+      <Modal open={passOpen} onClose={() => setPassOpen(false)} title={t("pass.title")} footer={<><Button shape="pill" variant="secondary" onClick={() => setPassOpen(false)}>{t("pass.cancel")}</Button><Button shape="pill" onClick={applyPass} disabled={!passCode.trim()} loading={passLoading}>{t("pass.apply")}</Button></>}>
         <div className="flex flex-col gap-section">
           <FormField label={t("pass.codeLabel")} placeholder={t("pass.codePlaceholder")} value={passCode} onChange={(e) => setPassCode(e.target.value)} help={t("pass.help")} />
         </div>
@@ -1353,12 +1391,12 @@ export default function PosPage() {
       <Modal open={!!nc} onClose={() => setNc(null)} title={nc?.method === "bkash" ? t("wallet.bkashTitle") : t("wallet.qrTitle")}>
         {nc?.state === "failed" ? (
           <div className="flex flex-col gap-section">
-            <div className="rounded-sm border border-danger/40 bg-danger/10 p-comfortable text-sm text-danger">
+            <div className="rounded-go border border-danger/40 bg-danger/10 p-comfortable text-sm text-danger">
               {t("wallet.failed")}
             </div>
             <div className="flex gap-tight">
-              <Button variant="secondary" fullWidth onClick={() => setNc(null)}>{t("wallet.cancelSale")}</Button>
-              <Button fullWidth onClick={() => setNc({ ...nc, state: "pending", txn: "" })}>{t("wallet.tryAgain")}</Button>
+              <Button shape="pill" variant="secondary" fullWidth onClick={() => setNc(null)}>{t("wallet.cancelSale")}</Button>
+              <Button shape="pill" fullWidth onClick={() => setNc({ ...nc, state: "pending", txn: "" })}>{t("wallet.tryAgain")}</Button>
             </div>
           </div>
         ) : nc?.method === "bkash" ? (
@@ -1366,8 +1404,8 @@ export default function PosPage() {
             <p className="text-sm text-muted">{t("wallet.bkashInstruction", { amount: formatMoney(dueNow, currency), number: "01711-000000" })}</p>
             <FormField label={t("wallet.txnLabel")} placeholder={t("wallet.txnPlaceholder")} value={nc.txn} onChange={(e) => setNc({ ...nc, txn: e.target.value.toUpperCase() })} />
             <div className="flex gap-tight">
-              <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
-              <Button fullWidth disabled={nc.txn.trim().length < 6} onClick={async () => { const txn = nc.txn.trim(); setNc({ ...nc, state: "confirmed" }); await settleInline(t("wallet.bkashConfirmedNote", { txn }), txn); setNc(null); }}>
+              <Button shape="pill" variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
+              <Button shape="pill" fullWidth disabled={nc.txn.trim().length < 6} onClick={async () => { const txn = nc.txn.trim(); setNc({ ...nc, state: "confirmed" }); await settleInline(t("wallet.bkashConfirmedNote", { txn }), txn); setNc(null); }}>
                 {nc.state === "confirmed" ? t("wallet.confirming") : t("wallet.paymentReceived")}
               </Button>
             </div>
@@ -1375,7 +1413,7 @@ export default function PosPage() {
         ) : nc ? (
           <div className="flex flex-col gap-section">
             {/* Stand-in QR — a real terminal renders the payload from the PSP. */}
-            <div className="mx-auto grid w-40 grid-cols-8 gap-px rounded-sm border border-line bg-card p-tight" aria-label={t("wallet.qrAlt")}>
+            <div className="mx-auto grid w-40 grid-cols-8 gap-px rounded-go border border-line bg-card p-tight" aria-label={t("wallet.qrAlt")}>
               {Array.from({ length: 64 }, (_, i) => (
                 <span key={i} className={`aspect-square ${((i * 7 + 3) % 5 < 2 || i % 9 === 0) ? "bg-fg" : "bg-card"}`} />
               ))}
@@ -1383,8 +1421,8 @@ export default function PosPage() {
             <p className="text-center text-lg">{formatMoney(dueNow, currency)}</p>
             <p className="text-center text-[13px] text-muted">{t("wallet.qrInstruction")}</p>
             <div className="flex gap-tight">
-              <Button variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
-              <Button fullWidth onClick={async () => { setNc({ ...nc, state: "confirmed" }); await settleInline(t("wallet.qrConfirmedNote")); setNc(null); }}>
+              <Button shape="pill" variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
+              <Button shape="pill" fullWidth onClick={async () => { setNc({ ...nc, state: "confirmed" }); await settleInline(t("wallet.qrConfirmedNote")); setNc(null); }}>
                 {nc.state === "confirmed" ? t("wallet.confirming") : t("wallet.paymentReceived")}
               </Button>
             </div>

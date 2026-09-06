@@ -99,7 +99,7 @@ export default function ScanResultPage() {
                 key={m}
                 type="button"
                 onClick={() => setMethod(m)}
-                className={`h-14 rounded-sm border text-sm font-medium transition-colors duration-quick ${
+                className={`h-14 rounded-full border text-sm font-medium transition-colors duration-quick ${
                   method === m ? "border-ember bg-ember text-white" : "border-strong bg-card"
                 }`}
               >
@@ -111,7 +111,7 @@ export default function ScanResultPage() {
             type="button"
             disabled={busy}
             onClick={settle}
-            className="h-16 rounded-sm bg-ink text-lg font-medium text-paper disabled:opacity-50 active:opacity-90"
+            className="h-16 rounded-full bg-ink text-lg font-medium text-paper disabled:opacity-50 active:opacity-90"
           >
             {t("takeAndAdmit", { amount: owed.amountLabel })}
           </button>
@@ -137,8 +137,8 @@ export default function ScanResultPage() {
         <span className="font-mono text-sm text-paper/70">{outcome.code}</span>
         {remaining > 0 ? (
           <div className="flex flex-wrap items-center justify-center gap-tight">
-            <button type="button" disabled={busy} onClick={() => admit(1)} className="h-14 rounded-sm border-2 border-paper px-major text-lg font-medium active:bg-paper/20">{t("plusOne")}</button>
-            <button type="button" disabled={busy} onClick={() => admit(remaining)} className="h-14 rounded-sm bg-paper px-major text-lg font-medium text-ink active:bg-paper/80">
+            <button type="button" disabled={busy} onClick={() => admit(1)} className="h-14 rounded-full border-2 border-paper px-major text-lg font-medium active:bg-paper/20">{t("plusOne")}</button>
+            <button type="button" disabled={busy} onClick={() => admit(remaining)} className="h-14 rounded-full bg-paper px-major text-lg font-medium text-ink active:bg-paper/80">
               {t("admitAll", { count: remaining })}
             </button>
           </div>

@@ -92,12 +92,16 @@ export function SessionList({
               onSelect(s.time);
             }}
             className={cn(
-              "flex min-h-16 w-full items-center rounded-md border p-comfortable text-left transition-colors duration-quick",
+              "flex min-h-16 w-full items-center rounded-go border p-comfortable text-left transition-colors duration-quick",
               isSelected
                 ? "border-ember bg-ember/10"
                 : full
-                  ? "border-line bg-subtle"
-                  : "border-line bg-card hover:bg-subtle active:bg-ember/10",
+                  // Flat and *below* the page: an unavailable departure is
+                  // not an object you can pick up. In dark, `subtle` and `card`
+                  // are the same value, so it drops to the page ground instead
+                  // to keep the recession.
+                  ? "border-line bg-subtle dark:bg-surface"
+                  : "border-transparent bg-card shadow-go hover:bg-subtle active:bg-ember/10 dark:border-line",
             )}
           >
             <span className="flex min-w-0 flex-1 flex-col gap-1.5">

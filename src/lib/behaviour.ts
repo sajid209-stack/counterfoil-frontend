@@ -1,3 +1,4 @@
+import { formatDay } from "@/lib/format";
 import type { Product, Resource, Staff } from "@/lib/api/types";
 
 /** A derived, plain-language line describing how a product books — shown on POS
@@ -40,7 +41,7 @@ export function behaviourSubtitle(
     case "BT-13": {
       const first = product.courseDates?.[0];
       const from = first
-        ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(new Date(`${first}T12:00:00`))
+        ? formatDay(first)
         : "";
       return `${(product.courseDates ?? []).length} sessions${from ? ` · from ${from}` : ""}`;
     }

@@ -150,6 +150,16 @@
   --radius-md: 12px;
   --radius-lg: 20px;
 
+  /* ── Go radii — the till is a phone app, not an admin console ───────────
+     OS keeps the four Aura radii above; Go is softer because it is held in
+     a hand. Separate names rather than retuned values, so nothing in OS
+     moves when these do. 18 on cards, 14 inside them, 28 on a sheet edge
+     that meets the screen edge. Chips and primary actions are `rounded-full`
+     — a pill is the shape a thumb reads as pressable. */
+  --radius-go: 18px;
+  --radius-go-sm: 14px;
+  --radius-go-lg: 28px;
+
   /* ── Motion ──────────────────────────────────────────────────────────── */
   --duration-instant: 0ms;
   --duration-quick: 120ms;
@@ -165,6 +175,11 @@
   --shadow-pop: 0 12px 36px -10px rgb(20 20 19 / 0.18), 0 3px 8px -2px rgb(20 20 19 / 0.08);
   /* Named steps so nothing hand-rolls a shadow: cards none · dropdowns sm/md ·
      dialogs md/lg · floating navigation sm. */
+  /* Go elevation. A till card is a solid object on a warm ground: depth
+     comes from a wide, soft, low-opacity shadow, not from a hairline. Two
+     steps only — resting and floating (nav, cart bar, sheets). */
+  --shadow-go: 0 1px 2px rgb(20 20 19 / 0.04), 0 6px 16px -8px rgb(20 20 19 / 0.10);
+  --shadow-go-pop: 0 2px 6px rgb(20 20 19 / 0.06), 0 16px 40px -12px rgb(20 20 19 / 0.22);
   --shadow-sm: 0 2px 8px rgb(0 0 0 / 0.04);
   --shadow-md: 0 6px 20px rgb(0 0 0 / 0.06);
   --shadow-lg: 0 12px 40px rgb(0 0 0 / 0.08);
@@ -276,6 +291,37 @@
     transition: box-shadow var(--duration-quick) var(--ease-counterfoil),
       border-color var(--duration-quick) var(--ease-counterfoil),
       transform var(--duration-quick) var(--ease-counterfoil);
+  }
+
+  /* ── Go surface language ──────────────────────────────────────────────
+     OS cards are translucent glass on a hairline (`.card-surface`, measured
+     off the Aura reference). The till is a different object: a solid white
+     card lifted off the warm ground by a soft shadow, with no visible edge.
+     Go-only, so OS cannot regress when this moves. */
+  .go-surface {
+    background-color: var(--color-card);
+    border-radius: var(--radius-go);
+    box-shadow: var(--shadow-go);
+    transition:
+      box-shadow var(--duration-quick) var(--ease-counterfoil),
+      transform var(--duration-quick) var(--ease-counterfoil),
+      background-color var(--duration-quick) var(--ease-counterfoil);
+  }
+
+  /* Floating chrome: the nav bar, the cart pill, a sheet. */
+  .go-raised {
+    background-color: var(--color-card);
+    border-radius: var(--radius-go);
+    box-shadow: var(--shadow-go-pop);
+  }
+
+  /* Dark elevation is a surface step plus a 1px line — a shadow on near-black
+     reads as nothing at all. This is the project's standing dark rule
+     (Delta D); it is restated here so the Go classes obey it too. */
+  .dark .go-surface,
+  .dark .go-raised {
+    box-shadow: none;
+    border: 1px solid var(--color-line);
   }
 
   .card-interactive {
@@ -411,6 +457,30 @@
   --color-danger-wash: #4a2724;
 }
 .dark body { background: var(--color-surface); color: var(--color-fg); }
+
+/* ── Go sheet entrance ──────────────────────────────────────────────────
+   A bottom sheet that simply appears has come from nowhere. Rising from the
+   edge it belongs to is the one piece of motion here that carries meaning: it
+   says where the panel came from, and where a downward swipe would put it
+   back. The scrim fades so the page recedes instead of snapping dark.
+
+   `backwards`, not `both`: the finished state is the element's natural one, so
+   no transform lingers to create a containing block for anything inside. The
+   prefers-reduced-motion block below neutralises both. */
+@keyframes go-sheet-in {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes go-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.go-sheet-panel {
+  animation: go-sheet-in var(--duration-considered) var(--ease-counterfoil) backwards;
+}
+.go-sheet-scrim {
+  animation: go-scrim-in var(--duration-standard) var(--ease-counterfoil) backwards;
+}
 
 /* F8 — wrong-PIN shake (120ms, run twice). */
 @keyframes shake {

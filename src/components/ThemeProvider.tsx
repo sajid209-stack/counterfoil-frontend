@@ -15,7 +15,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 /** Header mode button: one tap flips light ↔ dark. The full picker (incl.
  *  System) stays in Settings. Renders after mount to avoid hydration drift. */
-export function ModeButton({ className }: { className?: string }) {
+export function ModeButton({ className, shape = "square" }: { className?: string; shape?: "square" | "round" }) {
   const { resolvedTheme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   if (!mounted) return <span className={`inline-block h-11 w-11 ${className ?? ""}`} aria-hidden />;
@@ -26,7 +26,7 @@ export function ModeButton({ className }: { className?: string }) {
       onClick={() => setTheme(dark ? "light" : "dark")}
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-      className={`flex h-11 w-11 items-center justify-center rounded-sm border border-line bg-card text-muted transition-colors duration-quick hover:border-ember/40 hover:text-fg active:bg-ember/10 ${className ?? ""}`}
+      className={`flex h-11 w-11 items-center justify-center text-muted transition-colors duration-quick hover:text-fg active:bg-ember/10 ${shape === "round" ? "rounded-full bg-subtle" : "rounded-sm border border-line bg-card hover:border-ember/40"} ${className ?? ""}`}
     >
       {dark ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
     </button>

@@ -40,18 +40,18 @@ export default function GoBookingsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("arrivalsSearchPlaceholder")}
-          className="h-12 w-full rounded-sm border border-line bg-card pl-10 pr-section text-sm outline-none focus:border-inverse"
+          className="h-12 w-full rounded-full border border-line bg-card pl-10 pr-section text-sm outline-none focus:border-inverse"
         />
       </div>
 
       {bookingsQ.loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-full bg-line" /><div className="h-4 w-2/3 rounded-full bg-line" /><div className="h-4 w-1/2 rounded-full bg-line" /></div>
       ) : arrivals.length === 0 ? (
         <EmptyState title={t("noArrivals")} />
       ) : (
         <div className="flex flex-col gap-tight">
           {arrivals.slice(0, 40).map((b) => (
-            <div key={b.id} className="flex items-center gap-section rounded-sm border border-line bg-card p-comfortable">
+            <div key={b.id} className="flex items-center gap-section rounded-go border border-line bg-card p-comfortable">
               <div className="text-center">
                 <div className="font-mono text-lg">{time(b.slotStart)}</div>
                 <div className="font-mono text-[13px] text-faint">{formatDate(b.slotStart)}</div>

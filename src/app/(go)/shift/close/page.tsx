@@ -27,7 +27,7 @@ export default function ShiftClosePage() {
         <p className="type-body mt-tight text-muted">{t("closeHint")}</p>
       </div>
 
-      <div className="rounded-sm border border-line bg-card p-section">
+      <div className="rounded-go border border-line bg-card p-section">
         <div className="flex justify-between text-muted"><span>{t("expected")}</span><span className="font-mono text-lg">{formatMoney(EXPECTED)}</span></div>
         <div className="mt-tight flex justify-between"><span>{t("counted")}</span><span className="font-mono text-lg">{formatMoney(countedMinor)}</span></div>
         <div className={`mt-tight flex justify-between text-xl font-medium ${tone}`}>
@@ -43,7 +43,7 @@ export default function ShiftClosePage() {
           value={counted}
           onChange={(e) => setCounted(e.target.value)}
           placeholder="0.00"
-          className="h-14 rounded-sm border border-line bg-card px-section font-mono text-2xl outline-none focus:border-inverse"
+          className="h-14 rounded-go-sm border border-line bg-card px-section font-mono text-2xl outline-none focus:border-inverse"
         />
       </div>
 
@@ -51,7 +51,7 @@ export default function ShiftClosePage() {
           counters want dark. */}
       <AppearancePicker />
 
-      <Button size="lg" fullWidth onClick={() => router.push("/login")}>{t("closeShift")}</Button>
+      <Button shape="pill" size="lg" fullWidth onClick={() => router.push("/login")}>{t("closeShift")}</Button>
     </main>
   );
 }

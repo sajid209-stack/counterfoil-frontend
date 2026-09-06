@@ -93,7 +93,7 @@ export default function GoLoginPage() {
                 key={s.id}
                 type="button"
                 onClick={() => { setWho(s); setPin(""); setAttempts(0); setLocked(false); }}
-                className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-md border border-line bg-card p-comfortable transition-colors duration-quick active:border-ember"
+                className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-go border border-line bg-card p-comfortable transition-colors duration-quick active:border-ember"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-inverse font-semibold text-inverse-fg">
                   {s.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}
@@ -105,7 +105,7 @@ export default function GoLoginPage() {
             <button
               type="button"
               onClick={() => setSomeoneElse(true)}
-              className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-md border border-dashed border-line p-comfortable text-muted active:border-ember"
+              className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-go border border-dashed border-line p-comfortable text-muted active:border-ember"
             >
               <span className="text-2xl leading-none">+</span>
               <span className="text-sm">Someone else</span>
@@ -134,7 +134,7 @@ export default function GoLoginPage() {
           {locked ? (
             <div className="mt-section flex flex-col items-center gap-tight text-center">
               <p className="text-sm text-danger">Locked for 5 minutes. Ask a manager to unlock.</p>
-              <Button variant="secondary" onClick={() => { setLocked(false); setAttempts(0); setPin(""); }}>Manager override</Button>
+              <Button shape="pill" variant="secondary" onClick={() => { setLocked(false); setAttempts(0); setPin(""); }}>Manager override</Button>
             </div>
           ) : (
             attempts > 0 && (
@@ -155,7 +155,7 @@ export default function GoLoginPage() {
         open={takeOver}
         onClose={() => setTakeOver(false)}
         title={`Take over from ${shiftOwner?.name.split(" ")[0] ?? "the current shift"}?`}
-        footer={<><Button variant="secondary" onClick={() => { setTakeOver(false); setPin(""); }}>Cancel</Button><Button onClick={() => router.push("/pos")}>Take over shift</Button></>}
+        footer={<><Button shape="pill" variant="secondary" onClick={() => { setTakeOver(false); setPin(""); }}>Cancel</Button><Button shape="pill" onClick={() => router.push("/pos")}>Take over shift</Button></>}
       >
         <p className="text-sm text-muted">
           The drawer and its sales stay attributed to {shiftOwner?.name ?? "the previous person"} up to this point. From here, everything records under {who?.name}.
@@ -167,7 +167,7 @@ export default function GoLoginPage() {
         open={someoneElse}
         onClose={() => setSomeoneElse(false)}
         title="Sign in — someone else"
-        footer={<><Button variant="secondary" onClick={() => setSomeoneElse(false)}>Cancel</Button><Button disabled={!guestName.trim()} onClick={() => { setWho({ id: "guest", name: guestName.trim() }); setSomeoneElse(false); setPin(""); setAttempts(0); setLocked(false); }}>Continue</Button></>}
+        footer={<><Button shape="pill" variant="secondary" onClick={() => setSomeoneElse(false)}>Cancel</Button><Button shape="pill" disabled={!guestName.trim()} onClick={() => { setWho({ id: "guest", name: guestName.trim() }); setSomeoneElse(false); setPin(""); setAttempts(0); setLocked(false); }}>Continue</Button></>}
       >
         <div className="flex flex-col gap-section">
           <FormField label="Name" placeholder="Full name" value={guestName} onChange={(e) => setGuestName(e.target.value)} />

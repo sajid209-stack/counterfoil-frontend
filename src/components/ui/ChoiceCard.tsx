@@ -14,6 +14,7 @@ export function ChoiceCard({
   selected = false,
   disabled = false,
   hideCheck = false,
+  raised = false,
   onClick,
   className,
   children,
@@ -22,6 +23,10 @@ export function ChoiceCard({
   disabled?: boolean;
   /** Carry selection on the edge instead of a corner glyph. */
   hideCheck?: boolean;
+  /** For cards on a coloured ground (the Go sheets sit on paper), where a
+   *  white card separated only by a hairline barely reads. Deliberately not
+   *  applied when disabled: a thing you cannot pick should not look liftable. */
+  raised?: boolean;
   onClick?: () => void;
   className?: string;
   children: React.ReactNode;
@@ -33,19 +38,21 @@ export function ChoiceCard({
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "relative rounded-md border text-left transition-all duration-quick",
+        "relative rounded-go border text-left transition-all duration-quick",
         disabled
           ? "border-line bg-subtle text-faint"
           : selected
             ? hideCheck
               ? "border-ember bg-ember/10 ring-1 ring-inset ring-ember"
               : "border-ember bg-ember/5"
-            : "border-line bg-card hover:border-ember/40 hover:shadow-sm active:bg-ember/5",
+            : raised
+              ? "border-transparent bg-card shadow-go hover:border-ember/40 active:bg-ember/5 dark:border-line"
+              : "border-line bg-card hover:border-ember/40 hover:shadow-sm active:bg-ember/5",
         className,
       )}
     >
       {selected && !hideCheck && (
-        <span className="absolute right-tight top-tight flex h-4 w-4 items-center justify-center rounded-full bg-ember text-fg" aria-hidden>
+        <span className="absolute right-tight top-tight flex h-4 w-4 items-center justify-center rounded-full bg-ember text-white" aria-hidden>
           <Check size={11} strokeWidth={3} />
         </span>
       )}

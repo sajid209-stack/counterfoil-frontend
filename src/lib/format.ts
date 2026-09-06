@@ -25,6 +25,23 @@ export function formatMoneyCompact(minor: Minor, currency = "BDT"): string {
 /** At most one decimal, and never a trailing ".0" — 45 not 45.0, 2.5 stays 2.5. */
 const trim = (n: number): string => String(Math.round(n * 10) / 10);
 
+/** A calendar day, the way a person says it: "4 Aug", or "Tue 4 Aug" with
+ *  `weekday`. Takes a plain `YYYY-MM-DD`, which is what schedules, course
+ *  dates and slot rows carry — parsed at midday so a timezone can never roll
+ *  it onto the day before. A raw ISO date shown to a cashier is a defect, not
+ *  a formatting preference, and this existed hand-rolled in five places
+ *  before it lived here. */
+export function formatDay(ymd: string | null | undefined, opts: { weekday?: boolean } = {}): string {
+  if (!ymd) return "\u2014";
+  const d = new Date(`${ymd}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return "\u2014";
+  return new Intl.DateTimeFormat("en-GB", {
+    ...(opts.weekday ? { weekday: "short" as const } : {}),
+    day: "numeric",
+    month: "short",
+  }).format(d);
+}
+
 /** ISO datetime → "29 Jul 2026". Empty/nullish → "—". */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";

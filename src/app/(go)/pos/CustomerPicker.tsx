@@ -52,7 +52,7 @@ export function CustomerPicker({
       footer={
         <>
           {attached && (
-            <Button
+            <Button shape="pill"
               variant="secondary"
               size="lg"
               onClick={() => {
@@ -63,7 +63,7 @@ export function CustomerPicker({
               {t("customerModal.remove")}
             </Button>
           )}
-          <Button variant="secondary" size="lg" onClick={onClose}>
+          <Button shape="pill" variant="secondary" size="lg" onClick={onClose}>
             {t("customerModal.close")}
           </Button>
         </>
@@ -155,10 +155,10 @@ function PickerBody({
           help={t("customerModal.phoneHelp")}
         />
         <div className="flex flex-wrap gap-tight">
-          <Button size="lg" loading={saving} disabled={!newName.trim()} onClick={createAndAttach}>
+          <Button shape="pill" size="lg" loading={saving} disabled={!newName.trim()} onClick={createAndAttach}>
             {t("customerModal.attach")}
           </Button>
-          <Button size="lg" variant="secondary" onClick={() => setCreating(false)}>
+          <Button shape="pill" size="lg" variant="secondary" onClick={() => setCreating(false)}>
             {t("customerModal.backToSearch")}
           </Button>
         </div>
@@ -181,11 +181,11 @@ function PickerBody({
           // the keyboard is already where they need it.
           autoFocus
           placeholder={t("customerModal.searchPlaceholder")}
-          className="h-12 w-full rounded-sm border border-line bg-card pl-9 pr-comfortable text-sm outline-none focus:border-ember"
+          className="h-12 w-full rounded-full border border-line bg-card pl-9 pr-comfortable text-sm outline-none focus:border-ember"
         />
       </div>
 
-      {searching && <div className="h-12 animate-pulse rounded-sm bg-subtle" />}
+      {searching && <div className="h-12 animate-pulse rounded-go bg-subtle" />}
 
       {!searching && query.trim().length >= 2 && results.length === 0 && (
         <p className="text-[13px] text-muted">{t("customerModal.noMatches")}</p>
@@ -197,7 +197,7 @@ function PickerBody({
             <button
               type="button"
               onClick={() => attach(c)}
-              className="flex min-h-12 w-full items-center justify-between gap-tight rounded-sm border border-line p-comfortable text-left transition-colors duration-quick hover:bg-subtle active:bg-ember/10"
+              className="flex min-h-12 w-full items-center justify-between gap-tight rounded-go border border-line p-comfortable text-left transition-colors duration-quick hover:bg-subtle active:bg-ember/10"
             >
               <span className="min-w-0">
                 <span className="flex items-center gap-inline">
@@ -221,7 +221,7 @@ function PickerBody({
         ))}
       </ul>
 
-      <Button
+      <Button shape="pill"
         variant="secondary"
         size="lg"
         icon={<UserPlus size={18} strokeWidth={1.5} />}

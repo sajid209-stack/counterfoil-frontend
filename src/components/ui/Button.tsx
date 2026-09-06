@@ -10,6 +10,10 @@ export type ButtonVariant =
   | "link"
   | "destructive";
 export type ButtonSize = "sm" | "md" | "lg";
+/** OS keeps the 6px corner. Go is a phone app, where a full-round primary
+ *  action is what a thumb reads as pressable — the reference draws every CTA
+ *  that way. A shape rather than a variant, so colour and role stay orthogonal. */
+export type ButtonShape = "default" | "pill";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   // Solid ember — the one brand accent for the primary action. Never an outline.
@@ -32,6 +36,7 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  shape?: ButtonShape;
   loading?: boolean;
   fullWidth?: boolean;
   /** lucide icon element, rendered before the label */
@@ -43,6 +48,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     {
       variant = "primary",
       size = "md",
+      shape = "default",
       loading = false,
       fullWidth = false,
       icon,
@@ -60,7 +66,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        "inline-flex items-center justify-center gap-tight rounded-sm font-medium",
+        "inline-flex items-center justify-center gap-tight font-medium",
+        shape === "pill" ? "rounded-full" : "rounded-sm",
         // Press feedback: a button that changes only on hover gives a touch
         // user nothing at the moment they commit. Transform is composited, so
         // this costs no layout. The global prefers-reduced-motion block turns

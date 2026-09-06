@@ -105,7 +105,7 @@ export default function ScanPage() {
         <h1 className="type-h1 mt-tight text-2xl">{t("title")}</h1>
       </div>
 
-      <div className="flex h-40 flex-col items-center justify-center gap-tight rounded-sm border border-dashed border-line text-faint">
+      <div className="flex h-40 flex-col items-center justify-center gap-tight rounded-go border border-dashed border-line text-faint">
         <ScanLine size={40} strokeWidth={1.5} />
         <span className="text-[13px]">{t("cameraHint")}</span>
       </div>
@@ -116,9 +116,9 @@ export default function ScanPage() {
           onChange={(e) => setCode(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit(code)}
           placeholder={t("codePlaceholder")}
-          className="h-12 w-full min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable font-mono text-sm outline-none focus:border-inverse"
+          className="h-12 w-full min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable font-mono text-sm outline-none focus:border-inverse"
         />
-        <Button size="lg" className="shrink-0" onClick={() => submit(code)}>{t("check")}</Button>
+        <Button shape="pill" size="lg" className="shrink-0" onClick={() => submit(code)}>{t("check")}</Button>
       </div>
 
       {samplesQ.data && samplesQ.data.data.length > 0 && (
@@ -126,7 +126,7 @@ export default function ScanPage() {
           <span className="type-label text-[13px] text-faint">{t("trySample")}</span>
           <div className="flex flex-wrap gap-inline">
             {samplesQ.data.data.map((t) => (
-              <button key={t.id} type="button" onClick={() => submit(t.code)} className="rounded-xs border border-line bg-card px-tight py-inline font-mono text-[13px] active:bg-ember/10">
+              <button key={t.id} type="button" onClick={() => submit(t.code)} className="rounded-full border border-line bg-card px-tight py-inline font-mono text-[13px] active:bg-ember/10">
                 {t.code}
               </button>
             ))}

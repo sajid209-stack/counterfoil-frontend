@@ -46,7 +46,7 @@ export function RepeatPicker({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <span className="type-label text-[13px] text-muted">{t("repeat.title")}</span>
+      <span className="text-[14px] font-semibold text-fg">{t("repeat.title")}</span>
 
       {/* One row at rest, one control per row when engaged.
        *
@@ -62,7 +62,7 @@ export function RepeatPicker({
           type="button"
           onClick={() => onCount(1)}
           className={cn(
-            "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-sm border px-comfortable text-sm transition-colors duration-quick",
+            "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-full border px-comfortable text-sm transition-colors duration-quick",
             count === 1 ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card active:bg-ember/10",
           )}
         >
@@ -74,7 +74,7 @@ export function RepeatPicker({
             type="button"
             onClick={() => onCount(n)}
             className={cn(
-              "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-sm border px-comfortable text-sm transition-colors duration-quick",
+              "flex min-h-12 shrink-0 items-center whitespace-nowrap rounded-full border px-comfortable text-sm transition-colors duration-quick",
               count === n ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card active:bg-ember/10",
             )}
           >
@@ -87,13 +87,13 @@ export function RepeatPicker({
        *  rule the duration and percent controls already follow. */}
       {count > 1 && (
         <div className="flex items-center gap-tight">
-          <span className="type-label flex-1 text-[13px] text-muted">{t("repeat.fine")}</span>
+          <span className="flex-1 text-[14px] font-semibold text-fg">{t("repeat.fine")}</span>
           <button
             type="button"
             aria-label={t("repeat.fewer")}
             onClick={() => onCount(Math.max(1, count - 1))}
             disabled={count <= 1}
-            className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-ember/10"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-ember/10"
           >
             −
           </button>
@@ -103,7 +103,7 @@ export function RepeatPicker({
             aria-label={t("repeat.more")}
             onClick={() => onCount(Math.min(max, count + 1))}
             disabled={count >= max}
-            className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-ember/10"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-lg disabled:text-muted disabled:opacity-40 active:bg-ember/10"
           >
             +
           </button>
@@ -112,7 +112,7 @@ export function RepeatPicker({
 
       {count > 1 && (
         <>
-          <ul className="flex flex-col rounded-sm border border-line">
+          <ul className="flex flex-col overflow-hidden rounded-go border border-line">
             {plan.map((o) => (
               <li
                 key={o.date}

@@ -25,11 +25,11 @@ export default function ShiftOpenPage() {
           inputMode="decimal"
           value={float}
           onChange={(e) => setFloat(e.target.value)}
-          className="h-14 rounded-sm border border-line bg-card px-section font-mono text-2xl outline-none focus:border-inverse"
+          className="h-14 rounded-go-sm border border-line bg-card px-section font-mono text-2xl outline-none focus:border-inverse"
         />
       </div>
 
-      <Button size="lg" fullWidth onClick={() => router.push("/pos")}>
+      <Button shape="pill" size="lg" fullWidth onClick={() => router.push("/pos")}>
         {t("openShift")}
       </Button>
     </main>

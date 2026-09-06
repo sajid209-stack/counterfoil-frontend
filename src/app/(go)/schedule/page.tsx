@@ -113,7 +113,7 @@ export default function SchedulePage() {
   };
 
   const dateBtn = (v: string, label: string) => (
-    <button key={v} type="button" onClick={() => setDate(v)} className={`h-12 rounded-sm border px-comfortable text-sm ${date === v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{label}</button>
+    <button key={v} type="button" onClick={() => setDate(v)} className={`h-12 rounded-full border px-comfortable text-sm ${date === v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{label}</button>
   );
 
   return (
@@ -125,7 +125,7 @@ export default function SchedulePage() {
       <div className="flex flex-wrap gap-tight">
         {dateBtn(TODAY, t("today"))}
         {dateBtn(TOMORROW, t("tomorrow"))}
-        <input aria-label={tc("chooseDate")} type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-12 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-sm" />
+        <input aria-label={tc("chooseDate")} type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-12 min-w-0 max-w-full rounded-go-sm border border-line bg-card px-comfortable text-sm" />
       </div>
 
       <div className="flex flex-col gap-tight">
@@ -133,7 +133,7 @@ export default function SchedulePage() {
           value={bookingFilter}
           onChange={(e) => setBookingFilter(e.target.value)}
           aria-label={t("filterBooking")}
-          className="h-12 w-full rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
+          className="h-12 w-full rounded-go-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
         >
           <option value="all">{t("allBookings")}</option>
           {bookingOptions.map((o) => (
@@ -149,7 +149,7 @@ export default function SchedulePage() {
                 type="button"
                 aria-pressed={on}
                 onClick={() => toggleKind(k)}
-                className={`flex h-12 items-center gap-tight rounded-sm border px-comfortable text-sm transition-colors duration-quick ${
+                className={`flex h-12 items-center gap-tight rounded-full border px-comfortable text-sm transition-colors duration-quick ${
                   on ? "border-ember bg-ember/10 text-brand-foreground" : "border-line bg-card text-muted"
                 }`}
               >
@@ -162,7 +162,7 @@ export default function SchedulePage() {
       </div>
 
       {productsQ.loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
+        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-full bg-line" /><div className="h-4 w-2/3 rounded-full bg-line" /><div className="h-4 w-1/2 rounded-full bg-line" /></div>
       ) : rows.length === 0 ? (
         <EmptyState title={t("noSessionsTitle")} message={t("noSessionsMessage")} />
       ) : shownRows.length === 0 ? (
@@ -170,20 +170,29 @@ export default function SchedulePage() {
       ) : (
         <div className="overflow-hidden card-surface">
           {shownRows.map((r, i) => (
-            <div key={i} className="flex items-center gap-section border-b border-line px-section py-tight last:border-0">
-              <span className="w-14 font-mono text-sm">{r.time}</span>
+            /* On a phone the fixed columns — time, state, Sell, overflow —
+               took 310 of 358px and left the booking NAME about 48, so every
+               row read "Cric...". Time and name get their own line under sm;
+               from sm up the single row has the width for all of it. */
+            <div key={i} className="flex flex-col gap-tight border-b border-line px-section py-comfortable last:border-0 sm:flex-row sm:items-center sm:gap-section sm:py-tight">
+              <div className="flex min-w-0 items-center gap-comfortable sm:contents">
+              <span className="w-14 shrink-0 font-mono text-sm">{r.time}</span>
               <span className="min-w-0 flex-1 truncate text-sm">{r.label}</span>
+              </div>
+              <div className="flex items-center gap-tight sm:contents">
               <span className={`font-mono text-[13px] ${r.full ? "text-faint" : "text-muted"}`}>{r.state}</span>
+              <span className="flex-1 sm:hidden" />
               {r.full ? (
-                r.product.waitlistEnabled ? <Button size="sm" variant="secondary" onClick={() => sell(r.product)}>{t("waitlist")}</Button> : <span className="w-16 text-right font-mono text-[13px] text-faint">—</span>
+                r.product.waitlistEnabled ? <Button shape="pill" size="sm" variant="secondary" onClick={() => sell(r.product)}>{t("waitlist")}</Button> : <span className="w-16 text-right font-mono text-[13px] text-faint">—</span>
               ) : (
-                <Button size="sm" onClick={() => sell(r.product)}>{t("sell")}</Button>
+                <Button shape="pill" size="sm" onClick={() => sell(r.product)}>{t("sell")}</Button>
               )}
               {r.resourceId && (
-                <button type="button" aria-label={t("rowActions")} onClick={() => openOos(r.resourceId!)} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-faint active:bg-ember/10">
+                <button type="button" aria-label={t("rowActions")} onClick={() => openOos(r.resourceId!)} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-full border border-line text-faint active:bg-ember/10">
                   <MoreHorizontal size={15} strokeWidth={1.5} />
                 </button>
               )}
+              </div>
             </div>
           ))}
         </div>
@@ -195,9 +204,9 @@ export default function SchedulePage() {
         title={oos ? (oos.outOfService ? t("oosTitleOut", { name: oos.name }) : t("oosTitleIn", { name: oos.name })) : ""}
         footer={
           oos?.outOfService ? (
-            <><Button variant="secondary" onClick={() => setOos(null)}>{t("cancel")}</Button><Button loading={oosSaving} onClick={() => saveOos(false)}>{t("returnToService")}</Button></>
+            <><Button shape="pill" variant="secondary" onClick={() => setOos(null)}>{t("cancel")}</Button><Button shape="pill" loading={oosSaving} onClick={() => saveOos(false)}>{t("returnToService")}</Button></>
           ) : (
-            <><Button variant="secondary" onClick={() => setOos(null)}>{t("cancel")}</Button><Button loading={oosSaving} onClick={() => saveOos(true)}>{t("markOutOfService")}</Button></>
+            <><Button shape="pill" variant="secondary" onClick={() => setOos(null)}>{t("cancel")}</Button><Button shape="pill" loading={oosSaving} onClick={() => saveOos(true)}>{t("markOutOfService")}</Button></>
           )
         }
       >

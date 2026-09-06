@@ -65,8 +65,8 @@ export default function QuickPassPage() {
       <main className="mx-auto flex max-w-md flex-col items-center gap-major px-section py-hero text-center">
         <CircleCheck size={48} strokeWidth={1.5} className="text-success" />
         <h1 className="type-h1 text-2xl">{t("passIssuedTitle")}</h1>
-        <div className="w-full rounded-sm bg-inverse px-section py-major"><span className="font-mono text-2xl text-inverse-fg">{code}</span></div>
-        <Button size="lg" fullWidth onClick={() => { setCode(null); setIdentifier(""); }}>{t("issueAnother")}</Button>
+        <div className="w-full rounded-go bg-inverse px-section py-major"><span className="font-mono text-2xl text-inverse-fg">{code}</span></div>
+        <Button shape="pill" size="lg" fullWidth onClick={() => { setCode(null); setIdentifier(""); }}>{t("issueAnother")}</Button>
       </main>
     );
   }
@@ -91,15 +91,15 @@ export default function QuickPassPage() {
             const pick = (d: number) => { setDuration(d); setPriceEdit(null); };
             return (
               <div className="flex items-center gap-tight">
-                <button type="button" aria-label={t("shorter")} disabled={prev == null} onClick={() => prev != null && pick(prev)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-line text-xl disabled:opacity-40 active:bg-ember/10">−</button>
-                <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-sm border border-line bg-card py-tight">
+                <button type="button" aria-label={t("shorter")} disabled={prev == null} onClick={() => prev != null && pick(prev)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-ember/10">−</button>
+                <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-go border border-line bg-card py-tight">
                   <span className="text-base font-medium">{formatDuration(duration)}</span>
                   <span className="font-mono text-[13px] text-muted">
                     {formatMoney(enginePrice, "BDT")}
                     {cfg && isDealDuration(cfg, duration) ? ` · ${t("deal")}` : ""}
                   </span>
                 </div>
-                <button type="button" aria-label={t("longer")} disabled={next == null} onClick={() => next != null && pick(next)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-line text-xl disabled:opacity-40 active:bg-ember/10">+</button>
+                <button type="button" aria-label={t("longer")} disabled={next == null} onClick={() => next != null && pick(next)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-ember/10">+</button>
               </div>
             );
           })()}
@@ -108,7 +108,7 @@ export default function QuickPassPage() {
       <FormField label={t("priceLabel")} variant="number" value={price} onChange={(e) => setPriceEdit(e.target.value)} help={priceEdit == null ? t("priceHelp") : undefined} />
       <FormField label={idLabel} placeholder={idLabel} value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
 
-      <Button size="lg" fullWidth loading={issuing} onClick={issue}>{t("issuePass", { amount: formatMoney(Math.round((parseFloat(price) || 0) * 100)) })}</Button>
+      <Button shape="pill" size="lg" fullWidth loading={issuing} onClick={issue}>{t("issuePass", { amount: formatMoney(Math.round((parseFloat(price) || 0) * 100)) })}</Button>
     </main>
   );
 }

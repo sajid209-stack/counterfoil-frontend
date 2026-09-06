@@ -71,15 +71,17 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
         aria-current={active ? "page" : undefined}
         onClick={() => { if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
         className={cn(
-          "relative flex min-w-12 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick active:bg-ember/10",
-          rail ? "h-[72px] flex-none" : "h-14",
+          "relative flex min-w-12 flex-1 flex-col items-center justify-center gap-inline rounded-full transition-colors duration-quick active:bg-ember/10",
+          rail ? "h-[64px] flex-none" : "h-[54px]",
           active ? "text-brand-foreground" : "text-muted",
         )}
       >
-        {/* active marker: 2px along the tab's leading edge */}
-        {active && <span aria-hidden className={cn("absolute bg-ember", rail ? "left-0 top-2 bottom-2 w-[2px]" : "left-2 right-2 top-0 h-[2px]")} />}
-        <Icon size={24} strokeWidth={1.5} />
-        <span className="max-w-full truncate px-inline text-[11px] font-medium">{t(tab.key)}</span>
+        {/* Selection is a soft ember pill behind the whole tab, the way the
+            reference draws it — not a 2px rule on one edge. The heavier icon
+            stroke says it a second way, so the tint is never doing it alone. */}
+        {active && <span aria-hidden className="absolute inset-0 rounded-full bg-ember/15" />}
+        <Icon size={22} strokeWidth={active ? 2.25 : 1.6} className="relative" />
+        <span className="relative max-w-full truncate text-[11px] font-medium">{t(tab.key)}</span>
       </Link>
     );
   };
@@ -89,12 +91,12 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
       type="button"
       onClick={() => setMoreOpen(true)}
       className={cn(
-        "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline text-muted transition-colors duration-quick active:bg-ember/10",
-        rail ? "h-[72px] flex-none" : "h-14",
+        "flex min-w-12 flex-1 flex-col items-center justify-center gap-inline rounded-full text-muted transition-colors duration-quick active:bg-ember/10",
+        rail ? "h-[64px] flex-none" : "h-[54px]",
       )}
     >
-      <Ellipsis size={24} strokeWidth={1.5} />
-      <span className="max-w-full truncate px-inline text-[11px] font-medium">{t("more")}</span>
+      <Ellipsis size={22} strokeWidth={1.6} />
+      <span className="max-w-full truncate text-[11px] font-medium">{t("more")}</span>
     </button>
   );
 
@@ -107,36 +109,50 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-full flex-col bg-surface">
       {/* Context bar — business · counter · shift state. Nav does NOT live here. */}
-      <header className="flex items-center justify-between gap-tight border-b border-line px-section py-tight">
+      <header className="flex items-center justify-between gap-tight px-section py-tight">
         <div className="flex min-w-0 items-center gap-tight">
           <Link href="/login" className="flex h-12 shrink-0 items-center">
             <Logo variant="go" size={30} />
           </Link>
-          <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[13px] text-muted sm:block">Fort Main Gate</span>
+          <span className="hidden shrink-0 rounded-full bg-subtle px-comfortable py-inline text-[13px] text-muted sm:block">Fort Main Gate</span>
           <span className="hidden shrink-0 font-mono text-[13px] text-muted sm:block" title="Shift open for">⏱ 3:24</span>
         </div>
         <span className="flex shrink-0 items-center gap-tight">
-          <ModeButton />
+          <ModeButton shape="round" />
           <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse font-mono text-[13px] text-inverse-fg" title="Nadia Islam — my profile">N</Link>
         </span>
       </header>
 
       <div className="flex min-h-0 flex-1">
         {/* Tablet-landscape left rail (88px, icon over label) */}
-        <nav aria-label="Go navigation" className="sticky top-0 hidden h-[calc(100vh-65px)] w-[88px] shrink-0 flex-col border-r border-line bg-card rail:flex">
+        <nav aria-label="Go navigation" className="sticky top-0 hidden h-[calc(100vh-64px)] w-[88px] shrink-0 flex-col gap-inline p-tight rail:flex">
           {tabs.map((t) => tabButton(t, true))}
           {moreButton(true)}
         </nav>
 
         {/* Content clears the bottom bar (+ home indicator) except in rail mode */}
-        <div className="min-w-0 flex-1 pb-[calc(56px+env(safe-area-inset-bottom))] rail:pb-0">{children}</div>
+        <div className="min-w-0 flex-1 pb-[calc(96px+env(safe-area-inset-bottom))] rail:pb-0">{children}</div>
       </div>
 
       {/* Bottom tab bar — phone + tablet portrait */}
+      {/* Content passes BEHIND a floating bar, and the 12px of ground on
+          every side of it turns that into a sliced-looking card. A gradient of
+          the page colour under the bar lets the list dissolve into the page
+          instead. Decorative and inert, so it is out of the a11y tree and
+          never eats a tap. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-20 h-[200px] bg-gradient-to-t from-surface from-70% to-transparent rail:hidden"
+      />
+
+      {/* A floating pill inset from the screen edges, not a full-bleed strip.
+          It clears the home indicator on its own, and the content column above
+          reserves its height (86px) so the bar never sits over a row — a fixed
+          bar that overlaps content is the standing sticky-nav failure. */}
       <nav
         aria-label="Go navigation"
-        className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-card rail:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        className="fixed inset-x-tight z-40 flex gap-inline rounded-full p-inline go-raised sm:inset-x-comfortable rail:hidden"
+        style={{ bottom: "calc(12px + env(safe-area-inset-bottom))" }}
       >
         {tabs.map((t) => tabButton(t, false))}
         {moreButton(false)}
@@ -145,8 +161,8 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
       {/* More — bottom sheet grid */}
       {moreOpen && (
         <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-inverse/40" onClick={() => setMoreOpen(false)} aria-hidden />
-          <div className="absolute inset-x-0 bottom-0 rounded-t-md border-t border-line bg-sheet p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
+          <div className="go-sheet-scrim absolute inset-0 bg-inverse/40" onClick={() => setMoreOpen(false)} aria-hidden />
+          <div className="go-sheet-panel absolute inset-x-0 bottom-0 rounded-t-go-lg bg-sheet p-section shadow-go-pop" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
             <div className="mb-section flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
@@ -154,7 +170,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
               </div>
               <div className="flex items-center gap-tight">
                 <LocaleToggle />
-                <button type="button" aria-label="Close" onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-sm active:bg-line">
+                <button type="button" aria-label="Close" onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-full active:bg-line">
                   <X size={20} strokeWidth={1.5} />
                 </button>
               </div>
@@ -169,11 +185,11 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
                   </>
                 );
                 return "href" in item && item.href ? (
-                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-sm border border-line bg-card text-fg active:bg-ember/10">
+                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-go bg-subtle text-fg transition-colors duration-quick active:bg-ember/15">
                     {inner}
                   </Link>
                 ) : (
-                  <button key={item.key} type="button" onClick={() => runItem(item)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-sm border border-line bg-card text-fg active:bg-ember/10">
+                  <button key={item.key} type="button" onClick={() => runItem(item)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-go bg-subtle text-fg transition-colors duration-quick active:bg-ember/15">
                     {inner}
                   </button>
                 );
