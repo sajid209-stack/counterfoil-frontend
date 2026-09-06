@@ -72,10 +72,10 @@ export default function GoLoginPage() {
       <h1 className="sr-only">Sign in</h1>
       {/* Context bar — confirm you're on the right till before signing in. */}
       <div className="w-full max-w-lg text-center">
-        <p className="font-mono text-[12px] uppercase tracking-wider text-muted">
+        <p className="font-mono text-[13px] uppercase tracking-wider text-muted">
           {BUSINESS} · {COUNTER_NAME} · {DEVICE_NAME}
         </p>
-        <p className="mt-inline font-mono text-[12px] text-muted">
+        <p className="mt-inline font-mono text-[13px] text-muted">
           {shiftOwner ? `Shift open — ${shiftOwner.name.split(" ")[0]}, since ${OPEN_SHIFT.since}` : "No shift open"}
           <span className="ml-tight text-faint">· demo PIN {DEMO_PIN}</span>
         </p>
@@ -86,7 +86,7 @@ export default function GoLoginPage() {
       {!who ? (
         <>
           {/* Step 1 — who are you. Faster than a PIN that must also identify. */}
-          <p className="type-label mt-major text-[12px] uppercase tracking-wide text-muted">Who&apos;s signing in?</p>
+          <p className="type-label mt-major text-[13px] uppercase tracking-wide text-muted">Who&apos;s signing in?</p>
           <div className="mt-section grid w-full max-w-lg grid-cols-2 gap-tight sm:grid-cols-3">
             {team.map((s) => (
               <button
@@ -99,7 +99,7 @@ export default function GoLoginPage() {
                   {s.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}
                 </span>
                 <span className="max-w-full truncate text-sm text-fg">{s.name}</span>
-                <span className={`font-mono text-[12px] ${s.id === OPEN_SHIFT.staffId ? "text-brand-foreground" : "text-faint"}`}>{stateLine(s)}</span>
+                <span className={`font-mono text-[13px] ${s.id === OPEN_SHIFT.staffId ? "text-brand-foreground" : "text-faint"}`}>{stateLine(s)}</span>
               </button>
             ))}
             <button

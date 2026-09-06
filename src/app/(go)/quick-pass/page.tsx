@@ -80,7 +80,7 @@ export default function QuickPassPage() {
       </div>
 
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-muted">{t("duration")}</span>
+        <span className="type-label text-[13px] text-muted">{t("duration")}</span>
           {/* The till's stepper, not a row of chips — same control for the same
               decision, and it walks the increment the booking is configured
               with instead of a list this screen invented. */}
@@ -94,7 +94,7 @@ export default function QuickPassPage() {
                 <button type="button" aria-label={t("shorter")} disabled={prev == null} onClick={() => prev != null && pick(prev)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-line text-xl disabled:opacity-40 active:bg-ember/10">−</button>
                 <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-sm border border-line bg-card py-tight">
                   <span className="text-base font-medium">{formatDuration(duration)}</span>
-                  <span className="font-mono text-[12px] text-muted">
+                  <span className="font-mono text-[13px] text-muted">
                     {formatMoney(enginePrice, "BDT")}
                     {cfg && isDealDuration(cfg, duration) ? ` · ${t("deal")}` : ""}
                   </span>

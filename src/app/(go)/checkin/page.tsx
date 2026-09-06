@@ -243,16 +243,16 @@ export default function CheckInPage() {
                       return (
                         <div key={b.id} className="rounded-sm border border-line p-tight">
                           <div className="flex items-center gap-tight text-sm">
-                            <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted">{o?.reference ?? b.orderId}{o?.customerName ? ` · ${o.customerName}` : ""} · {t("party", { size: b.partySize })}</span>
+                            <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-muted">{o?.reference ?? b.orderId}{o?.customerName ? ` · ${o.customerName}` : ""} · {t("party", { size: b.partySize })}</span>
                             {b.noShow ? (
-                              <span className="shrink-0 rounded-xs bg-danger/10 px-tight py-inline font-mono text-[12px] text-danger">{b.noShowReason ? t("noShowTagReason", { reason: b.noShowReason }) : t("noShowTag")}</span>
+                              <span className="shrink-0 rounded-xs bg-danger/10 px-tight py-inline font-mono text-[13px] text-danger">{b.noShowReason ? t("noShowTagReason", { reason: b.noShowReason }) : t("noShowTag")}</span>
                             ) : (
-                              <span className="shrink-0 font-mono text-[12px]">{t("inCount", { done: b.checkedIn ?? 0, total: b.partySize })}</span>
+                              <span className="shrink-0 font-mono text-[13px]">{t("inCount", { done: b.checkedIn ?? 0, total: b.partySize })}</span>
                             )}
                           </div>
                           {/* Paid vs outstanding — the gate opens only on a settled order. */}
                           {o && (
-                            <div className="mt-inline flex flex-wrap items-center gap-tight font-mono text-[12px] tabular-nums">
+                            <div className="mt-inline flex flex-wrap items-center gap-tight font-mono text-[13px] tabular-nums">
                               <span className="text-muted">{t("paidOf", { paid: formatMoney(o.payments.reduce((s, x) => s + x.amount, 0)), total: formatMoney(o.total) })}</span>
                               {due > 0 ? <span className="rounded-xs bg-ember px-tight text-white">{t("owes", { amount: formatMoney(due) })}</span> : <span className="text-success">{t("settled")}</span>}
                               <span className="min-w-0 truncate text-faint">· {o.payments.map((x) => `${enumL.method(x.method)} ${formatMoney(x.amount)}`).join(" + ")}</span>
@@ -289,7 +289,7 @@ export default function CheckInPage() {
       {/* Take the outstanding balance — any configured method works. */}
       <Modal open={!!payFor} onClose={() => { setPayFor(null); setPayAmount(null); }} title={payFor ? t("takeAmount", { amount: formatMoney(payDue) }) : t("takeBalanceTitle")}>
         <div className="mb-section flex flex-col gap-tight">
-          <label className="type-label text-[12px] text-muted" htmlFor="ci-amount">{t("amountLabel")}</label>
+          <label className="type-label text-[13px] text-muted" htmlFor="ci-amount">{t("amountLabel")}</label>
           <div className="flex items-center gap-tight">
             <input
               id="ci-amount"
@@ -306,7 +306,7 @@ export default function CheckInPage() {
             </button>
           </div>
           {payNow < payDue && payNow > 0 && (
-            <p className="text-[12px] text-muted">{t("partRemaining", { left: formatMoney(payDue - payNow) })}</p>
+            <p className="text-[13px] text-muted">{t("partRemaining", { left: formatMoney(payDue - payNow) })}</p>
           )}
         </div>
         <p className="mb-section text-[13px] text-muted">{t("receiptNote")}</p>
@@ -352,7 +352,7 @@ export default function CheckInPage() {
               <button type="button" aria-label={t("more")} onClick={() => setWalkInParty((g) => g + 1)} className="h-11 w-11 rounded-sm border border-line text-lg">+</button>
             </div>
           </div>
-          <p className="text-[12px] text-faint">{t("walkInHint")}</p>
+          <p className="text-[13px] text-faint">{t("walkInHint")}</p>
         </div>
       </Modal>
     </main>

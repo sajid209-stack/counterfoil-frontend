@@ -112,8 +112,8 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
           <Link href="/login" className="flex h-12 shrink-0 items-center">
             <Logo variant="go" size={30} />
           </Link>
-          <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[12px] text-muted sm:block">Fort Main Gate</span>
-          <span className="hidden shrink-0 font-mono text-[12px] text-muted sm:block" title="Shift open for">⏱ 3:24</span>
+          <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[13px] text-muted sm:block">Fort Main Gate</span>
+          <span className="hidden shrink-0 font-mono text-[13px] text-muted sm:block" title="Shift open for">⏱ 3:24</span>
         </div>
         <span className="flex shrink-0 items-center gap-tight">
           <ModeButton />
@@ -150,7 +150,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
             <div className="mb-section flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
-                <p className="font-mono text-[12px] text-muted">Fort Main Gate · shift open 3:24</p>
+                <p className="font-mono text-[13px] text-muted">Fort Main Gate · shift open 3:24</p>
               </div>
               <div className="flex items-center gap-tight">
                 <LocaleToggle />
@@ -165,7 +165,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
                 const inner = (
                   <>
                     <Icon size={24} strokeWidth={1.5} />
-                    <span className="text-[12px] font-medium">{t(item.key)}</span>
+                    <span className="text-[13px] font-medium">{t(item.key)}</span>
                   </>
                 );
                 return "href" in item && item.href ? (
@@ -189,7 +189,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
           <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">Sales</span><span>9</span></div>
           <div className="flex justify-between"><span className="font-sans text-muted">Cash in drawer</span><span>{formatMoney(485000)}</span></div>
         </div>
-        <p className="mt-section text-[12px] text-muted">Full breakdown at shift close.</p>
+        <p className="mt-section text-[13px] text-muted">Full breakdown at shift close.</p>
       </Modal>
 
       <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title="Help">

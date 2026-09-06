@@ -46,7 +46,7 @@ export function RepeatPicker({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <span className="type-label text-[12px] text-muted">{t("repeat.title")}</span>
+      <span className="type-label text-[13px] text-muted">{t("repeat.title")}</span>
 
       {/* One row at rest, one control per row when engaged.
        *
@@ -129,7 +129,7 @@ export function RepeatPicker({
                   {time ? ` · ${time}` : ""}
                 </span>
                 {!o.ok && (
-                  <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">
+                  <span className="shrink-0 whitespace-nowrap text-[13px] text-muted">
                     {t(`repeat.reason_${o.reason ?? "taken"}`)}
                   </span>
                 )}
@@ -137,7 +137,7 @@ export function RepeatPicker({
             ))}
           </ul>
 
-          <p className="text-[12px] text-muted">
+          <p className="text-[13px] text-muted">
             {blocked > 0
               ? t("repeat.summarySkipping", {
                   count: bookable,

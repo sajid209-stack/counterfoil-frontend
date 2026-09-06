@@ -154,7 +154,7 @@ export default function SchedulePage() {
                 }`}
               >
                 {t(k === "open" ? "filterOpen" : k === "full" ? "filterFull" : "filterOut")}
-                <span className="font-mono text-[12px] opacity-70">{kindCounts[k]}</span>
+                <span className="font-mono text-[13px] opacity-70">{kindCounts[k]}</span>
               </button>
             );
           })}
@@ -173,9 +173,9 @@ export default function SchedulePage() {
             <div key={i} className="flex items-center gap-section border-b border-line px-section py-tight last:border-0">
               <span className="w-14 font-mono text-sm">{r.time}</span>
               <span className="min-w-0 flex-1 truncate text-sm">{r.label}</span>
-              <span className={`font-mono text-[12px] ${r.full ? "text-faint" : "text-muted"}`}>{r.state}</span>
+              <span className={`font-mono text-[13px] ${r.full ? "text-faint" : "text-muted"}`}>{r.state}</span>
               {r.full ? (
-                r.product.waitlistEnabled ? <Button size="sm" variant="secondary" onClick={() => sell(r.product)}>{t("waitlist")}</Button> : <span className="w-16 text-right font-mono text-[12px] text-faint">—</span>
+                r.product.waitlistEnabled ? <Button size="sm" variant="secondary" onClick={() => sell(r.product)}>{t("waitlist")}</Button> : <span className="w-16 text-right font-mono text-[13px] text-faint">—</span>
               ) : (
                 <Button size="sm" onClick={() => sell(r.product)}>{t("sell")}</Button>
               )}

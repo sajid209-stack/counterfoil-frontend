@@ -167,7 +167,7 @@ export function SlotMatrix({
 
       {/* What the figure on each tile is the price OF. */}
       <p className="text-[13px] text-muted">
-        {t("sheet.ratePer", { amount: formatMoney(base, currency), noun: resourceNoun.toLowerCase() })}
+        {t("sheet.ratePer", { noun: resourceNoun.toLowerCase() })}
       </p>
     </div>
   );

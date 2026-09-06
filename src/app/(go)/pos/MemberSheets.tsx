@@ -54,7 +54,7 @@ export function MembershipSheet({
                 >
                   <span className="min-w-0">
                     <span className="block break-words text-sm font-medium">{tier.name}</span>
-                    <span className="block break-words text-[12px] text-muted">
+                    <span className="block break-words text-[13px] text-muted">
                       {tier.description}
                     </span>
                   </span>
@@ -211,12 +211,12 @@ function PointsSheetBody({
                 })}
               </p>
               {belowMin && (
-                <p className="mt-inline text-[12px] text-warning">
+                <p className="mt-inline text-[13px] text-warning">
                   {t("points.belowMinimum", { min: program.minRedeemPoints })}
                 </p>
               )}
               {account.expiringSoon > 0 && (
-                <p className="mt-inline text-[12px] text-muted">
+                <p className="mt-inline text-[13px] text-muted">
                   {t("points.expiringSoon", { count: account.expiringSoon })}
                 </p>
               )}

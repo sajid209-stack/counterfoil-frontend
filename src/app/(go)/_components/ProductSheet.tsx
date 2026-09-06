@@ -713,13 +713,18 @@ export function ProductSheet({
                   {renderAddOns()}
                   <div className="mt-tight flex flex-col gap-tight">{renderGroup()}{renderWaiver()}</div>
                   <SheetFooter
-                    summary={<>
-                      <span className="font-medium">{row?.resource.name}</span> · <span>{slotTime}</span> · {formatDuration(minutes)}
-                      {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""}
-                      {dates.length > 1 ? ` · ${t("repeat.datesCount", { count: dates.length })}` : ""}
-                      {" · "}
-                      <span>{formatMoney(price * Math.max(1, dates.length) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0), currency)}</span>
-                    </>}
+                    summary={
+                      <span className="flex items-baseline justify-between gap-comfortable">
+                        <span className="min-w-0 flex-1 text-muted">
+                          <span className="font-medium text-fg">{row?.resource.name}</span> · {slotTime} · {formatDuration(minutes)}
+                          {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""}
+                          {dates.length > 1 ? ` · ${t("repeat.datesCount", { count: dates.length })}` : ""}
+                        </span>
+                        <span className="shrink-0 font-medium tabular-nums">
+                          {formatMoney(price * Math.max(1, dates.length) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0), currency)}
+                        </span>
+                      </span>
+                    }
                     disabled={!waiverOk || dates.length === 0}
                     onAdd={addAll}
                     buyLabel={t("sheet.buyNow", { amount: formatMoney(price * Math.max(1, dates.length) + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0), currency) })}

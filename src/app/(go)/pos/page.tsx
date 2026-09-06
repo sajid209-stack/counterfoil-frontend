@@ -764,10 +764,10 @@ export default function PosPage() {
           <div className="flex h-12 min-w-0 flex-1 items-center gap-tight rounded-sm border border-line bg-card px-comfortable focus-within:border-inverse">
             <Search size={16} strokeWidth={1.5} className="shrink-0 text-faint" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none placeholder:text-faint" />
-            {query && <button type="button" onClick={() => setQuery("")} className="text-[12px] text-faint hover:text-fg">{t("search.clear")}</button>}
+            {query && <button type="button" onClick={() => setQuery("")} className="text-[13px] text-faint hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
-            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable text-[12px] text-brand-foreground">
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable text-[13px] text-brand-foreground">
               {t("parkedBadge", { count: parked.length })}
             </button>
           )}
@@ -788,7 +788,7 @@ export default function PosPage() {
           {chipSystems.length > 0 && (
             <>
               <span aria-hidden className="mx-tight my-inline w-px shrink-0 self-stretch bg-line" />
-              <span className="flex shrink-0 items-center pr-tight text-[12px] font-medium uppercase tracking-wide text-muted">
+              <span className="flex shrink-0 items-center pr-tight text-[13px] font-medium uppercase tracking-wide text-muted">
                 {t("systemsLabel")}
               </span>
               {chipSystems.map((x) => (
@@ -825,7 +825,7 @@ export default function PosPage() {
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="line-clamp-2 text-[15px] font-semibold leading-tight">{p.name}</span>
                     <span className="mt-inline flex items-baseline gap-tight">
-                      <span className="min-w-0 flex-1 truncate text-[12px] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
+                      <span className="min-w-0 flex-1 truncate text-[13px] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
                       <span className="shrink-0 whitespace-nowrap text-[13px] font-medium">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
                     </span>
                     {/* What this product is doing RIGHT NOW, stated per booking
@@ -838,7 +838,7 @@ export default function PosPage() {
                       const live = posLiveState(p, DEMO_TODAY, nowMinutes, liveWords);
                       if (!live) return null;
                       return (
-                        <span className={`mt-inline flex items-center gap-inline text-[12px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}>
+                        <span className={`mt-inline flex items-center gap-inline text-[13px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}>
                           {/* A dot ahead of the words. At a glance across a
                               wall of products the eye reads the colour before
                               it reads anything, which is the point of putting
@@ -866,10 +866,10 @@ export default function PosPage() {
       <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] rounded-t-md pb-[env(safe-area-inset-bottom)] shadow-2xl" : "hidden"} min-h-0 flex-col border border-line bg-card lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-sm lg:pb-0 lg:shadow-none`}>
         <div className="flex items-center gap-tight border-b border-line p-tight">
           {cartOpen && (
-            <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-sm border border-line px-tight text-[12px] text-muted lg:hidden">{t("cart.close")}</button>
+            <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-sm border border-line px-tight text-[13px] text-muted lg:hidden">{t("cart.close")}</button>
           )}
           <span className="flex-1" />
-          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-sm border border-line px-tight text-[12px] text-muted disabled:text-faint" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
+          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-sm border border-line px-tight text-[13px] text-muted disabled:text-faint" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
             <Archive size={14} strokeWidth={1.5} />{t("cart.park")}
           </button>
         </div>
@@ -891,25 +891,25 @@ export default function PosPage() {
                 <div className="flex items-start gap-tight">
                   <div className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
                     <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(entryTotal(e), currency)}</span></div>
-                    <div className="text-[12px] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
-                    {entryCoveredQty(e) > 0 && <div className="text-[12px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
+                    <div className="text-[13px] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
+                    {entryCoveredQty(e) > 0 && <div className="text-[13px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
                     {e.lineDiscountAmount ? (
-                      <div className="text-[12px] text-danger">−{formatMoney(e.lineDiscountAmount, currency)}</div>
+                      <div className="text-[13px] text-danger">−{formatMoney(e.lineDiscountAmount, currency)}</div>
                     ) : (e.lineDiscountPct ?? 0) > 0 ? (
-                      <div className="text-[12px] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>
+                      <div className="text-[13px] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>
                     ) : null}
-                    {entryBalance(e) > 0 && <div className="text-[12px] text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
+                    {entryBalance(e) > 0 && <div className="text-[13px] text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                   </div>
                   <button
                     type="button"
                     aria-label={t("cart.lineDiscountLabel")}
                     onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
-                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[12px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "border-ember text-brand-foreground" : "border-line"}`}
+                    className={`flex h-12 w-12 items-center justify-center rounded-sm border text-[13px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "border-ember text-brand-foreground" : "border-line"}`}
                   >
                     {e.lineDiscountAmount ? "৳" : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
                   </button>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight text-[12px] active:bg-ember/10">
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-sm border border-line px-tight text-[13px] active:bg-ember/10">
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
@@ -976,7 +976,7 @@ export default function PosPage() {
               <ChevronRight size={15} strokeWidth={1.5} className="shrink-0 text-faint" />
             </button>
             {attached?.flagReason && (
-              <p className="min-w-0 break-words pb-tight text-[12px] text-warning">
+              <p className="min-w-0 break-words pb-tight text-[13px] text-warning">
                 <span className="font-medium">{t("customerModal.flagged")}: </span>
                 {attached.flagReason}
               </p>
@@ -998,7 +998,7 @@ export default function PosPage() {
               className="mb-tight"
             />
           {overLimit && (
-            <p className="mb-tight rounded-sm border border-line border-l-[3px] border-l-ember bg-card p-tight text-[12px]">
+            <p className="mb-tight rounded-sm border border-line border-l-[3px] border-l-ember bg-card p-tight text-[13px]">
               {pt("pos.overPolicy", { limit: manualCapPct })}
             </p>
           )}
@@ -1059,12 +1059,12 @@ export default function PosPage() {
                   ))}
                 </div>
                 {advance != null && advance < advanceMin && (
-                  <p className="text-[12px] text-danger">
+                  <p className="text-[13px] text-danger">
                     {t("advance.belowMin", { amount: formatMoney(advanceMin, currency) })}
                   </p>
                 )}
                 {advanceValid && (
-                  <p className="text-[12px] text-muted">
+                  <p className="text-[13px] text-muted">
                     {t("advance.explain", { now: formatMoney(advance!, currency), later: formatMoney(total - advance!, currency) })}
                   </p>
                 )}
@@ -1076,19 +1076,19 @@ export default function PosPage() {
           <div className="flex items-center justify-between gap-tight">
             <span className="shrink-0 text-[13px] text-muted">{pt("list.coupon")}</span>
             {appliedCoupon ? (
-              <span className="flex min-w-0 items-center gap-inline text-[12px] text-success">
+              <span className="flex min-w-0 items-center gap-inline text-[13px] text-success">
                 <span className="truncate">{appliedCoupon.code ?? appliedCoupon.name}</span>
                 <button type="button" aria-label={pt("pos.remove")} onClick={() => { setAppliedCoupon(null); setCouponError(null); }} className="text-danger">✕</button>
               </span>
             ) : (
               <span className="flex min-w-0 items-center gap-inline">
                 <input value={couponInput} onChange={(e) => { setCouponInput(e.target.value); setCouponError(null); }} placeholder={pt("pos.couponPlaceholder")} className="h-11 w-28 rounded-sm border border-line bg-card px-tight text-sm uppercase outline-none placeholder:text-faint placeholder:normal-case focus:border-inverse" />
-                <button type="button" onClick={applyCoupon} disabled={!couponInput.trim()} className="h-11 shrink-0 rounded-sm border border-inverse bg-inverse px-comfortable text-[12px] text-inverse-fg disabled:opacity-40">{pt("pos.apply")}</button>
+                <button type="button" onClick={applyCoupon} disabled={!couponInput.trim()} className="h-11 shrink-0 rounded-sm border border-inverse bg-inverse px-comfortable text-[13px] text-inverse-fg disabled:opacity-40">{pt("pos.apply")}</button>
               </span>
             )}
           </div>
           {couponError && (
-            <p className="mb-tight text-[12px] text-danger">{pt(`pos.rejected.${couponError}` as never)}</p>
+            <p className="mb-tight text-[13px] text-danger">{pt(`pos.rejected.${couponError}` as never)}</p>
           )}
           {cartNotice && <div className="mb-tight"><BlockedNotice message={cartNotice} onDismiss={() => setCartNotice(null)} /></div>}
 
@@ -1099,22 +1099,22 @@ export default function PosPage() {
           <div className="mb-tight flex flex-wrap items-center justify-between gap-tight">
             <span className="text-[13px] text-muted">{t("summary.pass")}</span>
             {pass ? (
-              <span className="flex items-center gap-inline text-[12px]">
+              <span className="flex items-center gap-inline text-[13px]">
                 <span>{t("summary.passUsage", { code: pass.code, used: creditsUsed, left: pass.remaining - creditsUsed })}</span>
                 <button type="button" aria-label={t("summary.removePass")} onClick={() => setPass(null)} className="text-danger">✕</button>
               </span>
             ) : (
-              <button type="button" onClick={() => setPassOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[12px]">{t("summary.redeemPass")}</button>
+              <button type="button" onClick={() => setPassOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[13px]">{t("summary.redeemPass")}</button>
             )}
-            <button type="button" onClick={() => setSettleOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[12px]">{t("summary.settleBooking")}</button>
+            <button type="button" onClick={() => setSettleOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[13px]">{t("summary.settleBooking")}</button>
           </div>
 
           {/* Membership + points. Both need a customer attached, so the row
               says so rather than offering a control that cannot work. */}
           <div className="mb-tight flex flex-wrap items-center gap-tight">
-            <button type="button" onClick={() => setMembershipOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[12px]">{t("summary.sellMembership")}</button>
+            <button type="button" onClick={() => setMembershipOpen(true)} className="h-12 rounded-xs border border-line px-tight text-[13px]">{t("summary.sellMembership")}</button>
             {pointsAccount && program?.enabled && (
-              <button type="button" onClick={() => setPointsOpen(true)} className="h-12 min-w-0 rounded-xs border border-line px-tight text-[12px]">
+              <button type="button" onClick={() => setPointsOpen(true)} className="h-12 min-w-0 rounded-xs border border-line px-tight text-[13px]">
                 <span className="truncate">{pointsToSpend > 0 ? t("summary.pointsApplied", { count: pointsToSpend }) : t("summary.spendPoints", { count: pointsAccount.balance })}</span>
               </button>
             )}
@@ -1124,7 +1124,7 @@ export default function PosPage() {
           {/* The member price is an entitlement, so say whose it is. */}
           {benefit && (
             <div className="mb-tight rounded-sm border-l-2 border-ember bg-ember/5 px-comfortable py-tight">
-              <p className="min-w-0 break-words text-[12px]">
+              <p className="min-w-0 break-words text-[13px]">
                 <span className="font-medium">{benefit.tierName}</span>
                 {" · "}
                 {t("summary.memberRate", { pct: benefit.discountBps / 100 })}
@@ -1295,12 +1295,12 @@ export default function PosPage() {
                 <div key={i} className="flex items-center justify-between rounded-sm border border-line p-comfortable">
                   <div>
                     <p className="text-sm font-medium">{p.name}</p>
-                    <p className="text-[12px] text-faint">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
+                    <p className="text-[13px] text-faint">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
                   </div>
                   <Button size="sm" onClick={() => resume(i)} disabled={cart.length > 0} >{t("parked.resume")}</Button>
                 </div>
               ))}
-              {cart.length > 0 && <p className="text-[12px] text-faint">{t("parked.parkFirst")}</p>}
+              {cart.length > 0 && <p className="text-[13px] text-faint">{t("parked.parkFirst")}</p>}
             </div>
           )}
         </div>
@@ -1318,7 +1318,7 @@ export default function PosPage() {
             <div className="rounded-sm bg-subtle p-comfortable text-sm">
               <div className="flex items-center justify-between">
                 <span className="font-mono">{settleOrder.reference}</span>
-                <span className="text-[12px] text-muted">{enumL.status(settleOrder.status)}</span>
+                <span className="text-[13px] text-muted">{enumL.status(settleOrder.status)}</span>
               </div>
               {settleOrder.customerName && <p className="mt-inline text-muted">{settleOrder.customerName}</p>}
               <div className="mt-tight flex justify-between"><span className="text-muted">{t("settle.total")}</span><span className="tabular-nums">{formatMoney(settleOrder.total, currency)}</span></div>

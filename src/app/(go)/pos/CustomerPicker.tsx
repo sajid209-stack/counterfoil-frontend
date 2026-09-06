@@ -207,10 +207,10 @@ function PickerBody({
                   )}
                 </span>
                 {c.phone && (
-                  <span className="block font-mono text-[12px] text-muted">{c.phone}</span>
+                  <span className="block font-mono text-[13px] text-muted">{c.phone}</span>
                 )}
               </span>
-              <span className="shrink-0 whitespace-nowrap font-mono text-[12px] text-muted">
+              <span className="shrink-0 whitespace-nowrap font-mono text-[13px] text-muted">
                 {t("customerModal.spend", {
                   orders: c.stats.orders,
                   spent: formatMoney(c.stats.spent),

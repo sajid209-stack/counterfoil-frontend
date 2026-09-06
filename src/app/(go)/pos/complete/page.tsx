@@ -48,7 +48,7 @@ export default function CompletePage() {
           {/* The brand moment — a literal ticket stub with a perforated tear line. */}
           <div className="relative w-full">
             <div className="rounded-md bg-ink px-section pb-major pt-major text-paper">
-              <p className="type-label text-[12px] text-faint">{t("complete.bookingReference")}</p>
+              <p className="type-label text-[13px] text-faint">{t("complete.bookingReference")}</p>
               <p className="mt-tight break-all font-mono text-2xl tracking-tight sm:text-3xl">{info.code}</p>
             </div>
             {/* perforation */}
@@ -58,7 +58,7 @@ export default function CompletePage() {
               <span className="mx-major flex-1 border-t-2 border-dashed border-paper/40" aria-hidden />
             </div>
             <div className="rounded-md bg-ink px-section pb-major pt-tight text-paper">
-              <p className="font-mono text-[12px] text-faint">{t("complete.presentAtGate")}</p>
+              <p className="font-mono text-[13px] text-faint">{t("complete.presentAtGate")}</p>
             </div>
           </div>
 
@@ -88,7 +88,7 @@ export default function CompletePage() {
       {/* SMS preview — the exact message, rendered from the business template. */}
       <Modal open={smsOpen} onClose={() => setSmsOpen(false)} title={t("complete.smsTitle")} footer={<><Button variant="secondary" onClick={() => setSmsOpen(false)}>{t("complete.cancel")}</Button><Button onClick={() => { setSmsOpen(false); toast.success(t("complete.smsSent")); }}>{t("complete.sendSmsButton")}</Button></>}>
         <div className="rounded-md rounded-bl-xs border border-line bg-subtle p-comfortable text-left text-sm">{smsText}</div>
-        <p className="mt-tight text-left text-[12px] text-faint">{t("complete.smsMeta", { count: smsText.length })}</p>
+        <p className="mt-tight text-left text-[13px] text-faint">{t("complete.smsMeta", { count: smsText.length })}</p>
       </Modal>
     </main>
   );

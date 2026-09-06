@@ -37,7 +37,7 @@ export default function ShiftClosePage() {
       </div>
 
       <div className="flex flex-col gap-tight">
-        <label className="type-label text-[12px] text-muted">{t("countedCash")}</label>
+        <label className="type-label text-[13px] text-muted">{t("countedCash")}</label>
         <input
           inputMode="decimal"
           value={counted}
