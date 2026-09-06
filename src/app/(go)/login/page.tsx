@@ -62,45 +62,50 @@ export default function GoLoginPage() {
     s.id === OPEN_SHIFT.staffId ? `On shift since ${OPEN_SHIFT.since}` : "Off";
 
   return (
-    // Full-bleed ink — this screen is a moment, not a form.
-    <main className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center bg-ink px-section py-major text-paper">
+    /* Full-bleed and quiet — this screen is a moment, not a form. It used to
+       be hardcoded ink, which was fine while the app had one appearance and
+       wrong the moment it had two: a dark sign-in sat inside light chrome and
+       read as a rendering fault. Semantic tokens now, like everything except
+       the two surfaces that are mode-locked on purpose (a scan verdict and the
+       ticket stub). */
+    <main className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center bg-surface px-section py-major text-fg">
       <h1 className="sr-only">Sign in</h1>
       {/* Context bar — confirm you're on the right till before signing in. */}
       <div className="w-full max-w-lg text-center">
-        <p className="font-mono text-[12px] uppercase tracking-wider text-neutral-400">
+        <p className="font-mono text-[12px] uppercase tracking-wider text-muted">
           {BUSINESS} · {COUNTER_NAME} · {DEVICE_NAME}
         </p>
-        <p className="mt-inline font-mono text-[12px] text-neutral-400">
+        <p className="mt-inline font-mono text-[12px] text-muted">
           {shiftOwner ? `Shift open — ${shiftOwner.name.split(" ")[0]}, since ${OPEN_SHIFT.since}` : "No shift open"}
-          <span className="ml-tight text-neutral-600">· demo PIN {DEMO_PIN}</span>
+          <span className="ml-tight text-faint">· demo PIN {DEMO_PIN}</span>
         </p>
       </div>
 
-      <span className="type-h2 mt-major text-2xl text-paper">Counterfoil</span>
+      <span className="type-h2 mt-major text-2xl text-fg">Counterfoil</span>
 
       {!who ? (
         <>
           {/* Step 1 — who are you. Faster than a PIN that must also identify. */}
-          <p className="type-label mt-major text-[12px] uppercase tracking-wide text-neutral-400">Who&apos;s signing in?</p>
+          <p className="type-label mt-major text-[12px] uppercase tracking-wide text-muted">Who&apos;s signing in?</p>
           <div className="mt-section grid w-full max-w-lg grid-cols-2 gap-tight sm:grid-cols-3">
             {team.map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => { setWho(s); setPin(""); setAttempts(0); setLocked(false); }}
-                className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-md border border-neutral-800 bg-neutral-900 p-comfortable transition-colors duration-quick active:border-ember"
+                className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-md border border-line bg-card p-comfortable transition-colors duration-quick active:border-ember"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-paper font-semibold text-ink">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-inverse font-semibold text-inverse-fg">
                   {s.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}
                 </span>
-                <span className="max-w-full truncate text-sm text-paper">{s.name}</span>
-                <span className={`font-mono text-[12px] ${s.id === OPEN_SHIFT.staffId ? "text-brand-foreground" : "text-neutral-600"}`}>{stateLine(s)}</span>
+                <span className="max-w-full truncate text-sm text-fg">{s.name}</span>
+                <span className={`font-mono text-[12px] ${s.id === OPEN_SHIFT.staffId ? "text-brand-foreground" : "text-faint"}`}>{stateLine(s)}</span>
               </button>
             ))}
             <button
               type="button"
               onClick={() => setSomeoneElse(true)}
-              className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-md border border-dashed border-neutral-800 p-comfortable text-neutral-400 active:border-ember"
+              className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-md border border-dashed border-line p-comfortable text-muted active:border-ember"
             >
               <span className="text-2xl leading-none">+</span>
               <span className="text-sm">Someone else</span>
@@ -111,18 +116,18 @@ export default function GoLoginPage() {
         <>
           {/* Step 2 — the PIN pad. */}
           <div className="mt-major flex items-center gap-tight">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-paper font-semibold text-ink">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-inverse font-semibold text-inverse-fg">
               {who.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}
             </span>
             <span className="text-lg">{who.name}</span>
-            <button type="button" onClick={() => { setWho(null); setPin(""); setAttempts(0); setLocked(false); }} className="ml-tight text-[13px] text-neutral-400 underline-offset-4 active:underline">
+            <button type="button" onClick={() => { setWho(null); setPin(""); setAttempts(0); setLocked(false); }} className="ml-tight text-[13px] text-muted underline-offset-4 active:underline">
               Not you?
             </button>
           </div>
 
           <div className={`mt-section flex gap-comfortable ${shake ? "animate-[shake_0.12s_ease-in-out_0s_2]" : ""}`} aria-label={`${pin.length} of 4 digits entered`}>
             {[0, 1, 2, 3].map((i) => (
-              <span key={i} className={`h-4 w-4 rounded-full border-2 border-paper ${i < pin.length ? "bg-paper" : "bg-transparent"}`} />
+              <span key={i} className={`h-4 w-4 rounded-full border-2 border-fg ${i < pin.length ? "bg-fg" : "bg-transparent"}`} />
             ))}
           </div>
 
