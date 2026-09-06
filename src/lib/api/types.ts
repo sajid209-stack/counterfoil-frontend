@@ -642,6 +642,37 @@ export interface AccountLink {
 
 // ── settings.v2 · TaxConfig — tenant/location tax mode + rate ────────────────
 export type TaxMode = "inclusive" | "exclusive";
+/* ── advance payments ────────────────────────────────────────────────────────
+   Taking part of the money up front is a business decision, not a property of
+   a product: most bookings arrive by phone with a bKash advance, and the
+   operator decides whether that is allowed, and how little they will accept.
+
+   It is held PER CHANNEL because the answer genuinely differs — plenty of
+   operators will take an advance online, where the alternative is losing the
+   booking, but insist the counter collects in full. */
+export interface AdvanceRule {
+  enabled: boolean;
+  /** The least that may be collected up front. */
+  minKind: "percent" | "amount";
+  /** Percent 0–100 when minKind is "percent", otherwise a Minor amount. */
+  minValue: number;
+}
+export interface AdvancePolicy {
+  counter: AdvanceRule;
+  online: AdvanceRule;
+}
+
+/** The least payable up front under a rule, for a given order total. Returns
+ *  the full total when advances are off, so callers can compare without
+ *  branching. */
+export const advanceMinimum = (rule: AdvanceRule, total: Minor): Minor => {
+  if (!rule.enabled) return total;
+  const min = rule.minKind === "percent"
+    ? Math.round((total * rule.minValue) / 100)
+    : rule.minValue;
+  return Math.max(0, Math.min(total, min));
+};
+
 export interface TaxConfig {
   mode: TaxMode;
   rateBasisPoints: number; // 1500 = 15%

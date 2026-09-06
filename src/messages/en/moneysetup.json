@@ -56,5 +56,22 @@
     "business_profile": "Business profile",
     "bank_account": "Bank account",
     "identity_verification": "Identity verification"
+  },
+  "advance": {
+    "title": "Advance payments",
+    "description": "Whether a booking can be held on part of the money, and the least you will accept. Set per channel — plenty of operators take an advance online, where the alternative is losing the booking, but collect in full at the counter.",
+    "counter": "At the counter",
+    "counterHelp": "Cashiers taking a phone booking or a walk-in.",
+    "online": "Online",
+    "onlineHelp": "Your storefront, when customers book themselves.",
+    "allow": "Take advances",
+    "minKind": "Minimum is",
+    "percentOfTotal": "A percentage of the total",
+    "fixedAmount": "A fixed amount",
+    "minPercent": "Least accepted (%)",
+    "minAmount": "Least accepted (৳)",
+    "minHelp": "A cashier can always take more, up to the full amount.",
+    "save": "Save advance rules",
+    "saved": "Advance rules saved."
   }
 }

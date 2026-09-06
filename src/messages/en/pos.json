@@ -352,5 +352,15 @@
   },
   "posTitle": "Point of Sale",
   "paymentTitle": "Take payment",
-  "signInTitle": "Sign in"
+  "signInTitle": "Sign in",
+  "advance": {
+    "label": "Advance",
+    "full": "Pay in full",
+    "summary": "{now} now · {later} later",
+    "placeholder": "Amount taken now",
+    "minimum": "Min {amount}",
+    "half": "Half",
+    "belowMin": "The least this business accepts is {amount}.",
+    "explain": "Taking {now} now. {later} is due at the venue."
+  }
 }

@@ -113,14 +113,31 @@ export default function CheckInPage() {
     else toast.error(res.error.message);
   };
 
+  /** How much of the balance is being taken right now. Defaults to all of it,
+   *  because that is the common case — but a party settling ৳2,000 as ৳1,200
+   *  on one phone and ৳800 on another is just as normal, and each tender is
+   *  its own payment on the order rather than one rolled-up figure. */
+  const [payAmount, setPayAmount] = useState<number | null>(null);
+  const payDue = outstanding(orderOf(payFor ?? ({} as Booking)));
+  const payNow = payAmount == null ? payDue : Math.max(0, Math.min(payDue, payAmount));
+
   const takeBalance = async (method: PaymentMethod) => {
-    if (!payFor) return;
+    if (!payFor || payNow <= 0) return;
     const o = orderOf(payFor);
     if (!o) return;
-    const due = outstanding(o);
-    const res = await addOrderPayment(o.id, method, due);
-    if (res.ok) toast.success(t("balanceTaken", { amount: formatMoney(due), method: enumL.method(method) }));
-    setPayFor(null);
+    const res = await addOrderPayment(o.id, method, payNow);
+    if (res.ok) {
+      const left = outstanding(o) - payNow;
+      toast.success(
+        left > 0
+          ? t("partTaken", { amount: formatMoney(payNow), method: enumL.method(method), left: formatMoney(left) })
+          : t("balanceTaken", { amount: formatMoney(payNow), method: enumL.method(method) }),
+      );
+    }
+    // Stay open while money is still owed: the second tender is usually
+    // handed over in the same breath as the first.
+    if (outstanding(o) - payNow > 0) setPayAmount(null);
+    else setPayFor(null);
     reload();
   };
 
@@ -270,10 +287,31 @@ export default function CheckInPage() {
       )}
 
       {/* Take the outstanding balance — any configured method works. */}
-      <Modal open={!!payFor} onClose={() => setPayFor(null)} title={payFor ? t("takeAmount", { amount: formatMoney(outstanding(orderOf(payFor))) }) : t("takeBalanceTitle")}>
+      <Modal open={!!payFor} onClose={() => { setPayFor(null); setPayAmount(null); }} title={payFor ? t("takeAmount", { amount: formatMoney(payDue) }) : t("takeBalanceTitle")}>
+        <div className="mb-section flex flex-col gap-tight">
+          <label className="type-label text-[12px] text-muted" htmlFor="ci-amount">{t("amountLabel")}</label>
+          <div className="flex items-center gap-tight">
+            <input
+              id="ci-amount"
+              inputMode="decimal"
+              value={payAmount == null ? String(payDue / 100) : String(payAmount / 100)}
+              onChange={(e) => {
+                const n = parseFloat(e.target.value.trim());
+                setPayAmount(Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : 0);
+              }}
+              className="h-12 min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable text-right font-mono text-sm outline-none focus:border-ember"
+            />
+            <button type="button" onClick={() => setPayAmount(null)} className="h-12 shrink-0 rounded-sm border border-line px-comfortable text-[13px]">
+              {t("amountAll")}
+            </button>
+          </div>
+          {payNow < payDue && payNow > 0 && (
+            <p className="text-[12px] text-muted">{t("partRemaining", { left: formatMoney(payDue - payNow) })}</p>
+          )}
+        </div>
         <p className="mb-section text-[13px] text-muted">{t("receiptNote")}</p>
         <div className="grid grid-cols-2 gap-tight">
-          {METHODS.map((m) => <Button key={m} variant="secondary" className="h-12" onClick={() => takeBalance(m)}>{enumL.method(m)}</Button>)}
+          {METHODS.map((m) => <Button key={m} variant="secondary" className="h-12" disabled={payNow <= 0} onClick={() => takeBalance(m)}>{enumL.method(m)}</Button>)}
         </div>
       </Modal>
 

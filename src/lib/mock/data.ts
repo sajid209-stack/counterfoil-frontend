@@ -5,6 +5,7 @@
    Components talk to `src/lib/api/*` only. Money is minor units (paisa) in BDT.
    ────────────────────────────────────────────────────────────────────────── */
 import type {
+  AdvancePolicy,
   BookingRule,
   Category,
   Counter,
@@ -66,6 +67,14 @@ export const paymentAccounts: PaymentAccount[] = [
     updatedAt: T,
   },
 ];
+
+/** The common Bangladeshi shape: the counter takes an advance (most bookings
+ *  arrive by phone with a bKash transfer), and will accept as little as a
+ *  quarter. Online is stricter here so the two channels visibly differ. */
+export const advancePolicy: AdvancePolicy = {
+  counter: { enabled: true, minKind: "percent", minValue: 25 },
+  online: { enabled: true, minKind: "percent", minValue: 50 },
+};
 
 export const taxConfig: TaxConfig = {
   mode: "exclusive",

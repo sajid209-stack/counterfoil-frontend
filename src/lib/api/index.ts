@@ -20,6 +20,7 @@ export * from "./reports";
 export * from "./operator";
 export * from "./paymentAccounts";
 export * from "./taxConfig";
+export * from "./advancePolicy";
 export * from "./layouts";
 export * from "./promotions";
 export * from "./customers";

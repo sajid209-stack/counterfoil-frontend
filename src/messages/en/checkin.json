@@ -53,5 +53,9 @@
   "more": "More",
   "walkInHint": "Sold cash at the first active tier's price; the group lands on this day's list.",
   "perPerson": "Per person",
-  "each": "Each"
+  "each": "Each",
+  "amountLabel": "Amount to take now",
+  "amountAll": "All of it",
+  "partRemaining": "{left} will still be owed.",
+  "partTaken": "Took {amount} by {method}. {left} still owed."
 }

@@ -10,11 +10,13 @@ import {
   createAccountLink,
   createPaymentAccount,
   disablePaymentAccount,
+  getAdvancePolicy,
   getTaxConfig,
   listPaymentAccounts,
+  updateAdvancePolicy,
   updateTaxConfig,
 } from "@/lib/api";
-import type { PaymentAccount, PaymentAccountStatus, PaymentProvider, TaxConfig } from "@/lib/api";
+import type { AdvancePolicy, AdvanceRule, PaymentAccount, PaymentAccountStatus, PaymentProvider, TaxConfig } from "@/lib/api";
 
 const PROVIDERS: { provider: PaymentProvider; posture: PaymentAccount["posture"] }[] = [
   { provider: "bkash", posture: "merchant_of_record" },
@@ -42,6 +44,24 @@ export default function MoneySetupPage() {
   const [tax, setTax] = useState<TaxConfig | null>(null);
   const [savingTax, setSavingTax] = useState(false);
   useEffect(() => { if (taxQ.data) setTax(taxQ.data); }, [taxQ.data]);
+
+  const advanceQ = useApiQuery(() => getAdvancePolicy(), []);
+  // The saved policy until the operator touches it, the draft after — no
+  // effect needed to hydrate a form from a query, and no cascading render.
+  const [advDraft, setAdvDraft] = useState<AdvancePolicy | null>(null);
+  const adv = advDraft ?? advanceQ.data ?? null;
+  const [savingAdv, setSavingAdv] = useState(false);
+  const setRule = (ch: keyof AdvancePolicy, patch: Partial<AdvanceRule>) =>
+    setAdvDraft(adv ? { ...adv, [ch]: { ...adv[ch], ...patch } } : null);
+  const saveAdvance = async () => {
+    if (!adv) return;
+    setSavingAdv(true);
+    await updateAdvancePolicy(adv);
+    setSavingAdv(false);
+    toast.success(t("advance.saved"));
+    setAdvDraft(null);
+    advanceQ.reload();
+  };
 
   const connect = async (provider: PaymentProvider, posture: PaymentAccount["posture"]) => {
     setBusy(provider);
@@ -152,6 +172,60 @@ export default function MoneySetupPage() {
             </div>
           )}
           <Button className="mt-section" loading={savingTax} onClick={saveTax}><Check size={16} strokeWidth={1.5} /> {t("tax.save")}</Button>
+        </section>
+
+        {/* ── Advance payments ─────────────────────────────────────────── */}
+        <section className="card-surface p-major">
+          <h2 className="type-h2 mb-inline text-base">{t("advance.title")}</h2>
+          <p className="mb-section text-[13px] text-faint">{t("advance.description")}</p>
+          {adv && (
+            <div className="flex flex-col gap-section">
+              {(["counter", "online"] as const).map((ch) => {
+                const rule = adv[ch];
+                return (
+                  <div key={ch} className="rounded-sm border border-line p-section">
+                    <div className="flex flex-wrap items-center justify-between gap-tight">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{t(`advance.${ch}`)}</p>
+                        <p className="text-[12px] text-muted">{t(`advance.${ch}Help`)}</p>
+                      </div>
+                      <FormField
+                        label={t("advance.allow")}
+                        variant="toggle"
+                        checked={rule.enabled}
+                        onChange={(e) => setRule(ch, { enabled: (e.target as HTMLInputElement).checked })}
+                      />
+                    </div>
+                    {rule.enabled && (
+                      <div className="mt-section grid gap-section sm:grid-cols-2">
+                        <FormField
+                          label={t("advance.minKind")}
+                          variant="select"
+                          value={rule.minKind}
+                          onChange={(e) => setRule(ch, { minKind: e.target.value as AdvanceRule["minKind"] })}
+                          options={[
+                            { value: "percent", label: t("advance.percentOfTotal") },
+                            { value: "amount", label: t("advance.fixedAmount") },
+                          ]}
+                        />
+                        <FormField
+                          label={rule.minKind === "percent" ? t("advance.minPercent") : t("advance.minAmount")}
+                          variant="number"
+                          value={rule.minKind === "percent" ? String(rule.minValue) : String(rule.minValue / 100)}
+                          onChange={(e) => {
+                            const n = parseFloat(e.target.value) || 0;
+                            setRule(ch, { minValue: rule.minKind === "percent" ? Math.max(0, Math.min(100, n)) : Math.round(n * 100) });
+                          }}
+                          help={t("advance.minHelp")}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <Button className="mt-section" loading={savingAdv} onClick={saveAdvance}><Check size={16} strokeWidth={1.5} /> {t("advance.save")}</Button>
         </section>
       </div>
     </PageShell>

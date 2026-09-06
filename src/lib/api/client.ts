@@ -12,6 +12,7 @@
 import * as seed from "@/lib/mock/data";
 import { generateSales } from "@/lib/mock/generate";
 import type {
+  AdvancePolicy,
   ApiError,
   ApiResult,
   ListParams,
@@ -82,6 +83,13 @@ export function patchOperatorState(patch: Partial<Operator>): Operator {
 }
 
 // Tax config is a singleton (per settings.v2 tax-config), not a collection.
+let advancePolicyState: AdvancePolicy = structuredClone(seed.advancePolicy);
+export const getAdvancePolicyState = (): AdvancePolicy => advancePolicyState;
+export function patchAdvancePolicyState(patch: Partial<AdvancePolicy>): AdvancePolicy {
+  advancePolicyState = { ...advancePolicyState, ...patch };
+  return advancePolicyState;
+}
+
 let taxConfigState: TaxConfig = structuredClone(seed.taxConfig);
 export const getTaxConfigState = (): TaxConfig => taxConfigState;
 export function patchTaxConfigState(patch: Partial<TaxConfig>): TaxConfig {

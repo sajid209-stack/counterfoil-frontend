@@ -7,7 +7,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { AlertTriangle, Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, EmptyState, FormField, Modal, PercentInput, ProductThumb, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { addOrderPayment, checkout, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
@@ -112,6 +112,7 @@ export default function PosPage() {
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
   const payAcctsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
   const policyQ = useApiQuery(() => getManualDiscountPolicy(), []);
+  const advanceQ = useApiQuery(() => getAdvancePolicy(), []);
   // Non-cash tender needs a live PSP account (charges enabled). Cash always works.
   const nonCashOk = (payAcctsQ.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled);
   const availableMethods = COUNTER_METHODS.filter((m) => m.value === "cash" || nonCashOk);
@@ -125,13 +126,16 @@ export default function PosPage() {
   const [category, setCategory] = useState("all");
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [payInFull, setPayInFull] = useState(false);
+  /** Minor amount the customer is paying up front, when the cashier sets one. */
+  const [advance, setAdvance] = useState<number | null>(null);
   const [discountPct, setDiscountPct] = useState(0);
   const [discountReason, setDiscountReason] = useState("");
   const [couponInput, setCouponInput] = useState("");
   /** Which cart action is expanded. One at a time — the cart is narrow and
    *  three open blocks is the wall this replaced. */
-  const [cartRow, setCartRow] = useState<"discount" | "coupon" | "passes" | null>(null);
-  const toggleRow = (r: "discount" | "coupon" | "passes") => setCartRow((c) => (c === r ? null : r));
+  type CartRowKey = "discount" | "coupon" | "passes" | "advance";
+  const [cartRow, setCartRow] = useState<CartRowKey | null>(null);
+  const toggleRow = (r: CartRowKey) => setCartRow((c) => (c === r ? null : r));
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedPromotion | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [customOpen, setCustomOpen] = useState(false);
@@ -218,7 +222,8 @@ export default function PosPage() {
   const park = () => {
     if (cart.length === 0) return;
     persistParked([...parked, { name: parkName.trim() || t("parked.guestName", { number: parked.length + 1 }), cart, discountPct, customer, customerRecord: attached, pass }]);
-    setCart([]); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0); void releaseCheckoutHolds(TILL_ID);
+    setCart([]);
+    setAdvance(null); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0); void releaseCheckoutHolds(TILL_ID);
     setParkOpen(false); setParkName("");
     toast.success(t("cartParked"));
   };
@@ -569,7 +574,20 @@ export default function PosPage() {
     return Math.max(0, payable - Math.round((payable * pol.depositPct) / 100));
   };
   const depositBalance = cart.reduce((s, e) => s + entryBalance(e), 0);
-  const balance = payInFull ? 0 : depositBalance;
+
+  /* ── Advance ───────────────────────────────────────────────────────────────
+     A booking taken over the phone is usually held on a bKash transfer of
+     whatever the customer sends, which is not a percentage of anything. So
+     the cashier can type the amount, bounded below by the business rule and
+     above by the total. This sits on top of any per-booking deposit policy:
+     the deposit says what a BOOKING requires, the advance says what this
+     CUSTOMER actually handed over. */
+  const advanceRule = advanceQ.data?.counter;
+  const advanceAllowed = !!advanceRule?.enabled && cart.length > 0 && total > 0;
+  const advanceMin = advanceRule ? advanceMinimum(advanceRule, total) : total;
+  const advanceValid = advance != null && advance >= advanceMin && advance < total;
+
+  const balance = advanceValid ? total - advance : payInFull ? 0 : depositBalance;
   const dueNow = total - balance;
 
   // The most points that can usefully go on THIS sale: bounded by the balance,
@@ -895,6 +913,65 @@ export default function PosPage() {
             />
           )}
           </CartRow>
+
+          {/* An advance. Offered only where the business allows one, because a
+              control that always refuses is worse than no control. */}
+          {advanceAllowed && (
+            <CartRow
+              icon={Wallet}
+              label={t("advance.label")}
+              value={advanceValid ? t("advance.summary", { now: formatMoney(advance!, currency), later: formatMoney(total - advance!, currency) }) : t("advance.full")}
+              open={cartRow === "advance"}
+              onToggle={() => toggleRow("advance")}
+            >
+              <div className="flex flex-col gap-tight">
+                <div className="flex items-center gap-tight">
+                  <input
+                    inputMode="decimal"
+                    placeholder={t("advance.placeholder")}
+                    aria-label={t("advance.label")}
+                    value={advance == null ? "" : String(advance / 100)}
+                    onChange={(e) => {
+                      const raw = e.target.value.trim();
+                      if (!raw) return setAdvance(null);
+                      const n = parseFloat(raw);
+                      setAdvance(Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : null);
+                    }}
+                    className="h-12 min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable text-right font-mono text-sm outline-none focus:border-ember"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setAdvance(null)}
+                    className={`h-12 shrink-0 rounded-sm border px-comfortable text-[13px] ${advance == null ? "border-ember bg-ember/10 text-brand-foreground" : "border-line"}`}
+                  >
+                    {t("advance.full")}
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-tight">
+                  {[advanceMin, Math.round(total / 2), total].map((amt, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setAdvance(amt >= total ? null : amt)}
+                      className="h-12 flex-1 rounded-sm border border-line bg-card px-tight text-[13px] active:bg-ember/10"
+                    >
+                      {i === 0 ? t("advance.minimum", { amount: formatMoney(amt, currency) }) : i === 1 ? t("advance.half") : t("advance.full")}
+                    </button>
+                  ))}
+                </div>
+                {advance != null && advance < advanceMin && (
+                  <p className="text-[12px] text-danger">
+                    {t("advance.belowMin", { amount: formatMoney(advanceMin, currency) })}
+                  </p>
+                )}
+                {advanceValid && (
+                  <p className="text-[12px] text-muted">
+                    {t("advance.explain", { now: formatMoney(advance!, currency), later: formatMoney(total - advance!, currency) })}
+                  </p>
+                )}
+              </div>
+            </CartRow>
+          )}
 
           <CartRow icon={TicketPercent} label={pt("list.coupon")} value={appliedCoupon ? (appliedCoupon.code ?? appliedCoupon.name) : t("summary.applyCoupon")} open={cartRow === "coupon"} onToggle={() => toggleRow("coupon")}>
           <div className="flex items-center justify-between gap-tight">

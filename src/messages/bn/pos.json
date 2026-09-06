@@ -352,5 +352,15 @@
   },
   "posTitle": "পয়েন্ট অব সেল",
   "paymentTitle": "পেমেন্ট নিন",
-  "signInTitle": "সাইন ইন"
+  "signInTitle": "সাইন ইন",
+  "advance": {
+    "label": "অগ্রিম",
+    "full": "পুরো টাকা",
+    "summary": "এখন {now} · পরে {later}",
+    "placeholder": "এখন নেওয়া অঙ্ক",
+    "minimum": "সর্বনিম্ন {amount}",
+    "half": "অর্ধেক",
+    "belowMin": "এই ব্যবসা সর্বনিম্ন {amount} নেয়।",
+    "explain": "এখন {now} নেওয়া হচ্ছে। ভেন্যুতে {later} বাকি থাকবে।"
+  }
 }
