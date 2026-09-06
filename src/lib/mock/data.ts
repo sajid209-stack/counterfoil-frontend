@@ -251,6 +251,14 @@ export const products: Product[] = [
     schedule: null,
     maxPerOrder: 10,
     validityDays: 90,
+    // Three lengths, priced apart: a season pass that costs the same as a week
+    // is not a pass anyone would sell. The delta is charged per ticket as its
+    // own line, so the receipt says what the extra bought.
+    validityOptions: [
+      { id: "val_7", label: "7 days", days: 7 },
+      { id: "val_30", label: "30 days", days: 30, priceDelta: 20000 },
+      { id: "val_season", label: "Season", days: null, priceDelta: 50000 },
+    ],
     windowMode: "fixed",
     windowStart: "2026-12-01",
     windowEnd: "2027-02-28",

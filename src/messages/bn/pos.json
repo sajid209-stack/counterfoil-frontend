@@ -290,7 +290,12 @@
     "dealPrice": "{duration}-এর নির্ধারিত দাম — {amount}",
     "dealSaves": "{amount} সাশ্রয়",
     "shorter": "কম সময়",
-    "longer": "বেশি সময়"
+    "longer": "বেশি সময়",
+    "whenLabel": "কখন",
+    "validFor": "যতদিন বৈধ",
+    "addPass": "{count, plural, one {পাস যোগ করুন} other {# পাস যোগ করুন}} — {amount}",
+    "passLine": "{label} পাস",
+    "passCount": "{count} পাস"
   },
   "settle": {
     "title": "রিজার্ভেশন নিষ্পত্তি",

@@ -256,6 +256,20 @@ export interface ProductSchedule {
   exceptions: ScheduleException[];
 }
 
+/** One length a BT-02 pass can be sold for. */
+export interface ValidityOption {
+  id: ID;
+  /** The operator's own words — "7 days", "Season". Shown as the chip. */
+  label: string;
+  /** Days from the chosen start date; null means the product's whole window
+   *  (a season pass runs to windowEnd rather than a rolling count). */
+  days: number | null;
+  /** Charged per ticket on top of the tier price, as a line of its own — the
+   *  same shape the provider premium already uses, so the receipt says what
+   *  the extra was for. Omit or 0 when every length costs the same. */
+  priceDelta?: number;
+}
+
 export interface Product {
   id: ID;
   name: string;
@@ -272,6 +286,11 @@ export interface Product {
   minAge?: number;
   validityMode?: "unlimited" | "days" | "same_day"; // BT-01 validity after purchase
   validityDays?: number; // BT-01 ("days" mode) / BT-02 window length
+  /** BT-02: the lengths this pass is sold in. The customer picks one at the
+   *  till and it sets the pass's expiry from the chosen start date. Absent or
+   *  empty means the product has a single fixed answer, which is what
+   *  windowMode/validityDays below already describe. */
+  validityOptions?: ValidityOption[];
   windowMode?: "rolling" | "fixed"; // BT-02: N days from purchase vs season dates
   windowStart?: ISODate; // BT-02 fixed/season window
   windowEnd?: ISODate;

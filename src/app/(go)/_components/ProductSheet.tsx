@@ -31,7 +31,7 @@ import {
 } from "@/lib/api";
 import { DEMO_TODAY, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
-import { durationOptions, formatDuration, formatDurationShort, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
+import { durationOptions, formatDuration, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
 import { formatMoney } from "@/lib/format";
@@ -223,6 +223,11 @@ export function ProductSheet({
   const [waived, setWaived] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null); // BlockedNotice message
   const [moreDates, setMoreDates] = useState(false);
+  /** BT-02 sells a pass in lengths. The first is the default because it is the
+   *  cheapest and the commonest, not because it is first in the array. */
+  const validityOptions = bt === "BT-02" ? (product.validityOptions ?? []) : [];
+  const [validityId, setValidityId] = useState<string | undefined>(validityOptions[0]?.id);
+  const validity = validityOptions.find((v) => v.id === validityId);
 
   /** Re-opening a cart line means capacity is already spoken for: adding it
    *  placed a self-releasing checkout hold. The counter needs to know how long
@@ -406,6 +411,10 @@ export function ProductSheet({
     const items = [...list.filter((x) => qty[x.id] > 0).map((x) => ({ tierId: x.id, tierName: x.name, unitPrice: x.donation ? Math.max(x.price, donationAmt[x.id] ?? x.price) : x.price, qty: qty[x.id] })), ...addOnItems()];
     // Owner of the session's capacity: the chosen guide or assigned provider.
     const owner = guided ? guides.find((g) => g.id === guideId) : assignedProvider;
+    if (validity && (validity.priceDelta ?? 0) > 0) {
+      const tickets = list.reduce((a, x) => a + (qty[x.id] ?? 0), 0);
+      if (tickets > 0) items.push({ tierId: `val_${validity.id}`, tierName: t("sheet.passLine", { label: validity.label }), unitPrice: validity.priceDelta ?? 0, qty: tickets });
+    }
     if (provider && assignedProvider && premiumOf(assignedProvider.id) > 0) {
       items.push({ tierId: `prem_${assignedProvider.id}`, tierName: t("sheet.premium", { name: assignedProvider.name.split(" ")[0] }), unitPrice: premiumOf(assignedProvider.id), qty: 1 });
     }
@@ -553,9 +562,9 @@ export function ProductSheet({
           </div>
         )}
 
-        {(needsSchedule(bt) || provider) && !course && (
+        {(needsSchedule(bt) || provider || bt === "BT-02") && !course && (
           <div className="mb-section">
-            <p className="mb-tight text-[12px] font-medium uppercase tracking-wide text-muted">{t("sheet.dateLabel")}</p>
+            <p className="mb-tight text-[12px] font-medium uppercase tracking-wide text-muted">{t(bt === "BT-02" ? "sheet.whenLabel" : "sheet.dateLabel")}</p>
             {/* One row that scrolls, never a grid that wraps. Five chips plus
                 the calendar cannot fit a phone's width, and wrapping put a
                 lone card on a second row with "More dates" stranded next to
@@ -582,6 +591,37 @@ export function ProductSheet({
             </div>
           </div>
         )}
+        {/* How long the pass runs. The lengths come from the product, so an
+            operator who sells only one length gets no picker at all rather
+            than a row with a single chip in it. A length that costs more says
+            so on its own chip — the duration chips do the same, and a total
+            that moves with no visible cause is the thing to avoid. */}
+        {validityOptions.length > 1 && (
+          <div className="mb-section flex flex-col gap-tight">
+            <span className="type-label text-[12px] text-muted">{t("sheet.validFor")}</span>
+            <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {validityOptions.map((v) => {
+                const on = v.id === validityId;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setValidityId(v.id)}
+                    className={`flex min-h-12 shrink-0 flex-col items-center justify-center whitespace-nowrap rounded-sm border px-comfortable py-tight text-sm transition-colors duration-quick ${on ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card active:bg-ember/10"}`}
+                  >
+                    <span>{v.label}</span>
+                    {(v.priceDelta ?? 0) > 0 && (
+                      <span className={`text-[12px] ${on ? "opacity-80" : "text-muted"}`}>
+                        +{formatMoney(v.priceDelta ?? 0, currency)}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {!openToday && needsSchedule(bt) && <p className="mb-section text-[13px] text-danger">{t("sheet.closedOnDate")}</p>}
 
         {/* A day-capped product is run by one number, so it gets a panel rather
@@ -1181,13 +1221,16 @@ export function ProductSheet({
               const itemsLabel = list.filter((x) => (qty[x.id] ?? 0) > 0).map((x) => `${qty[x.id]} ${x.name}`).join(" · ");
               const owner = guided ? guides.find((g) => g.id === guideId)?.name : provider ? assignedProvider?.name : undefined;
               const prem = provider && assignedProvider ? premiumOf(assignedProvider.id) : 0;
-              const total = list.reduce((s, x) => s + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0) + prem;
+              const tickets = list.reduce((a, x) => a + (qty[x.id] ?? 0), 0);
+              const validityExtra = validity && (validity.priceDelta ?? 0) > 0 ? (validity.priceDelta ?? 0) * tickets : 0;
+              const total = list.reduce((s, x) => s + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0) + prem + validityExtra;
               const when = slotTime ? `${slotTime} ${date === TODAY ? t("slotToday") : date}` : (needsSchedule(bt) || provider || course) ? (date === TODAY ? t("slotToday") : date) : null;
               return (
                 <div className="mt-tight flex items-baseline justify-between gap-comfortable border-t border-line pt-tight text-[13px]">
                   <span className="min-w-0 flex-1 text-muted">
                     {when && <><span className="tabular-nums">{when}</span> · </>}
-                    {itemsLabel}
+                    {bt === "BT-02" && validity ? t("sheet.passCount", { count: tickets }) : itemsLabel}
+                    {validity ? <> · <span className="font-medium text-fg">{validity.label}</span></> : null}
                     {owner ? <> · <span className="font-medium text-fg">{owner}</span>{provider ? ` · ${formatDuration(providerDuration)}` : ""}</> : null}
                   </span>
                   <span className="shrink-0 font-medium tabular-nums">{formatMoney(total, currency)}</span>
@@ -1230,8 +1273,11 @@ export function ProductSheet({
                 const list = sectioned ? (product.sections ?? []) : activeTiers;
                 const n = list.reduce((a, x) => a + (qty[x.id] ?? 0), 0);
                 const prem = provider && assignedProvider ? premiumOf(assignedProvider.id) : 0;
-                const total = list.reduce((a, x) => a + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0) + prem;
+                const ticketCount = list.reduce((a, x) => a + (qty[x.id] ?? 0), 0);
+                const valExtra = validity && (validity.priceDelta ?? 0) > 0 ? (validity.priceDelta ?? 0) * ticketCount : 0;
+                const total = list.reduce((a, x) => a + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0) + prem + valExtra;
                 const amount = formatMoney(total, currency);
+                if (bt === "BT-02" && ticketCount > 0) return t("sheet.addPass", { count: ticketCount, amount });
                 if (course) return t("sheet.enrolAmount", { amount });
                 if (provider) return assignedProvider ? t("sheet.addAppointment", { amount }) : t("sheet.pickProvider");
                 if (hasLayout) return selectedSeats.length ? t("sheet.addSeats", { count: selectedSeats.length, amount: formatMoney(seatTotal + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0), currency) }) : t("sheet.pickSeats");

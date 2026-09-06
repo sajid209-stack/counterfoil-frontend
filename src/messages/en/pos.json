@@ -290,7 +290,12 @@
     "dealPrice": "Set price for {duration} — {amount}",
     "dealSaves": "saves {amount}",
     "shorter": "Shorter",
-    "longer": "Longer"
+    "longer": "Longer",
+    "whenLabel": "When",
+    "validFor": "Valid for",
+    "addPass": "{count, plural, one {Add pass} other {Add # passes}} — {amount}",
+    "passLine": "{label} pass",
+    "passCount": "{count, plural, one {# pass} other {# pass}}"
   },
   "settle": {
     "title": "Settle a reservation",

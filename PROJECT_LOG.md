@@ -2446,6 +2446,7 @@ POS audit **0 findings** at 390 light across all twelve selection systems and
 the popups; dark shows only the known absolutely-positioned-thumb artifact. 45
 sheet-renders clean, badge-overlap zero. `tsc` and `build` clean.
 
+<<<<<<< Updated upstream
 ### Duration and slot handling, made consistent (2026-09-06)
 
 Audited every place in the app that chooses a duration or a time slot, after
@@ -2476,3 +2477,71 @@ steps at ৳50 (so an hour is the ৳100 its tier says) with an all-day deal of
 Grepped for hand-rolled duration pricing afterwards; the only remaining one is
 the quick pass's fallback for a product with no config, and the per-resource
 replacement rate in `slots.ts`, which is correct by design.
+=======
+---
+
+## Date + Validity (BT-02) — the pattern finally asks its own two questions (2026-09-06)
+
+Owner supplied the Winter Exhibition Pass sheet as the reference. Rendering the
+existing one first turned up the real finding: **the sheet asked for neither a
+date nor a validity.** Its subtitle said *"Book a date · valid a while"* and
+what it showed was two ticket steppers. The pattern named after two questions
+was asking neither.
+
+Two reasons, both structural:
+
+- The date strip is gated on `needsSchedule(bt) || provider`, and BT-02 is in
+  neither set — it has no schedule, so it fell through.
+- Validity was **one configured answer, not a choice**: `windowMode` +
+  `validityDays` on the product, set once by the operator and never surfaced.
+
+### Validity became a list
+
+`ValidityOption { id, label, days, priceDelta? }` on `Product.validityOptions`.
+`days: null` means the product's whole window, which is what a season pass is —
+it runs to `windowEnd` rather than counting forward. **`types.ts` changed, so
+this is contract for the backend lane**, alongside the existing
+`windowMode`/`validityDays` which still describe a product sold in one length
+only. An operator offering a single length gets no picker at all rather than a
+row with one chip in it.
+
+Seeded on the Winter Exhibition Pass: 7 days, 30 days (+৳200), Season (+৳500).
+
+**The price deltas are a deliberate departure from the reference,** which draws
+three lengths at one price. A season pass that costs the same as a week is not
+a pass anyone would sell, and the demo would have shown an operator something
+they could never ship. The extra is charged **per ticket as its own line** —
+exactly the shape `providerPremiums` already uses — so the receipt says what the
+money bought instead of a tier quietly costing more than its own printed price.
+Each chip states its own extra, for the same reason the duration chips do: a
+total that moves with no visible cause is the thing to avoid.
+
+### The sheet
+
+- **WHEN** — the date strip, now gated for BT-02 too. It is a different question
+  here than on a session sheet: not *which departure* but *when does this
+  start*, so the label differs from the `DATE` used elsewhere.
+- **VALID FOR** — the lengths, as a scrolling chip row.
+- **CHOOSE TICKETS** — the shared tier panel from this morning.
+- The summary reads **"2 pass · 7 days"** rather than a tier breakdown, because
+  what a pass buyer is choosing is a length, and the CTA says **"Add 2 passes"**
+  rather than "Add 2 tickets".
+
+### Verified
+
+The money moves and reaches the sale: 7 days ৳1,300 → 30 days ৳1,700 (+৳200×2)
+→ Season ৳2,300 (+৳500×2), and the cart line reads *"1 Adult · 1 Child · 2
+Season pass"* with subtotal ৳2,300, VAT ৳345, total ৳2,645.
+
+POS audit **0 findings** at 390 light across all twelve selection systems and
+the popups; dark shows only the known absolutely-positioned-thumb artifact. 45
+sheet-renders clean. `tsc`, `build` and `eslint` clean — the one warning was a
+`formatDurationShort` import left dead by the teammate's duration-stepper
+commit, now removed. i18n parity 0 missing / 0 extra, five keys in en and bn.
+
+### Not built
+
+**No editor for the lengths.** They are seeded, not configurable — the product
+editor has no Validity section yet, so an operator cannot add or price one.
+That is the obvious follow-up and the reason the field is on the contract now.
+>>>>>>> Stashed changes
