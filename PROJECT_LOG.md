@@ -2376,3 +2376,72 @@ Standing harnesses hold: 45 sheet-renders clean, badge-overlap zero, type
 inline-link exemptions. `tsc` and `build` clean; `eslint` identical to clean
 HEAD (the 2 errors and 3 warnings in `pos/page.tsx` are the pre-existing
 deep-link effect, confirmed by stashing). i18n parity 0 missing / 0 extra.
+
+---
+
+## The ticket-tier rows, rebuilt to the reference (2026-09-06)
+
+Owner supplied a screenshot of the General Admission sheet and asked for that
+design. It is the **tiered rows**, which the open-entry, date-validity,
+fixed-session, guided, daily-capacity and sectioned patterns all share — so
+this is one change across six selection systems, not one screen.
+
+### What the rows were
+
+Four separate bordered cards, each with the name on one line and **price,
+capacity and age note concatenated into a single grey run-on**:
+
+> `৳1,400.00 · admits 4 · 2 adults + 2 children`
+
+Three facts of three different kinds, in one colour, at one size, in one line —
+so none of them read. The price in particular is the number a cashier says out
+loud, and it was the least prominent thing in the row.
+
+### What they are now
+
+One panel of hairline-separated rows. Each row states the three things in the
+order they are decided:
+
+- **the name** — 14px/500
+- **who it admits** — 12px muted, its own line, only when there is one
+- **the price** — 13px/500 in the brand text colour, its own line
+
+with the stepper on the right. Hairlines instead of four card borders also stop
+the group reading as four unrelated objects.
+
+Above it, a **`CHOOSE TICKETS` section label**, so the list is announced the way
+`DATE` announces the date strip rather than starting unheaded.
+
+### The summary became a receipt line
+
+`1 Adult · 1 Child · ৳800.00` was a sentence with the money buried at the end of
+it. It is now what-you-are-buying on the left and what-it-costs on the right,
+over a hairline — the shape a receipt has and the one the eye already scans for.
+Every pattern's summary gets this, so the time, the guide and the duration still
+appear where they apply.
+
+### Two fixes found on the way
+
+- **`text-maint` — a class that does not exist.** My own sub-12px sweep two
+  entries ago replaced the fragment `text-[12px] text-f` with `text-[12px]
+  text-m`, which caught `text-faint` mid-word and produced a no-op class. The
+  tier meta line had been rendering with no colour rule at all since then. Gone
+  with the rewrite, and worth remembering: **never pattern-match on a class-name
+  prefix.**
+- **The `−` accepted taps at zero.** It now disables at zero in both the tier
+  and add-on steppers, which also takes it out of the tab order. A control that
+  can be pressed and does nothing is a control that has to be tested by pressing.
+
+### One deliberate difference from the reference
+
+The reference draws the price in **bright brand orange**. Here it is the brand
+**text** step: `#f94a00` measures 3.50:1 on white and fails the reading floor,
+while `--color-brand-foreground` clears it at 6.71:1 light and 8.33:1 dark. It
+is the same decision the POS colour audit made earlier today, and the price is
+exactly the figure that must not be the hard one to read.
+
+### Verified
+
+POS audit **0 findings** at 390 light across all twelve selection systems and
+the popups; dark shows only the known absolutely-positioned-thumb artifact. 45
+sheet-renders clean, badge-overlap zero. `tsc` and `build` clean.

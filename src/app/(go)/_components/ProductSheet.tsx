@@ -304,7 +304,7 @@ export function ProductSheet({
                 <button type="button" aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: a.perPerson ? headsFor() : 1 }))} className="h-12 w-12 shrink-0 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
               ) : (
                 <div className="flex shrink-0 items-center gap-tight">
-                  <button type="button" aria-label={t("sheet.less")} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">−</button>
+                  <button type="button" aria-label={t("sheet.less")} disabled={(addOnQty[a.id] ?? 0) === 0} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">−</button>
                   <span className="w-6 text-center">{n}</span>
                   <button type="button" aria-label={t("sheet.more")} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: (q[a.id] ?? 0) + 1 }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
                 </div>
@@ -1103,10 +1103,28 @@ export function ProductSheet({
                 );
               })()
             ) : (
-            <div className="flex flex-col gap-tight">
-              {(sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: `${s.name}`, price: s.price, cap: s.capacity, note: "", donation: false })) : activeTiers.map((tier) => ({ id: tier.id, name: tier.name, price: tier.price, cap: undefined as number | undefined, note: [(tier.admits ?? 1) > 1 ? t("sheet.admits", { count: tier.admits ?? 1 }) : "", tier.ageNote ?? ""].filter(Boolean).join(" · "), donation: !!tier.donation }))).map((row) => (
-                <div key={row.id} className="flex items-center justify-between rounded-sm border border-line bg-card p-comfortable">
-                  <div className="min-w-0"><div className="text-sm font-medium">{row.name}</div><div className="text-[12px] text-maint">{row.donation ? t("sheet.donationMin", { amount: formatMoney(row.price, currency) }) : formatMoney(row.price, currency)}{row.cap != null ? ` · ${t("sheet.seatsCount", { count: row.cap })}` : ""}{row.note ? ` · ${row.note}` : ""}</div></div>
+            <div className="flex flex-col">
+              <span className="type-label mb-tight text-[12px] text-muted">{t("sheet.pickTickets")}</span>
+              {/* One panel of hairline-separated rows, not four separate cards.
+                  Each row says the three things in the order they are decided:
+                  what it is, who it admits, what it costs — the price on its
+                  own line in the brand colour, because it is the number the
+                  operator reads back to the customer. Cramming price, capacity
+                  and age note into one grey run-on line buried all three. */}
+              <div className="overflow-hidden rounded-sm border border-line bg-card">
+              {(sectioned ? (product.sections ?? []).map((s) => ({ id: s.id, name: `${s.name}`, price: s.price, cap: s.capacity, note: "", donation: false })) : activeTiers.map((tier) => ({ id: tier.id, name: tier.name, price: tier.price, cap: undefined as number | undefined, note: [(tier.admits ?? 1) > 1 ? t("sheet.admits", { count: tier.admits ?? 1 }) : "", tier.ageNote ?? ""].filter(Boolean).join(" · "), donation: !!tier.donation }))).map((row, rowIdx) => (
+                <div key={row.id} className={`flex items-center justify-between gap-comfortable p-comfortable ${rowIdx > 0 ? "border-t border-line" : ""}`}>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium">{row.name}</div>
+                    {(row.cap != null || row.note) && (
+                      <div className="mt-0.5 text-[12px] text-muted">
+                        {[row.cap != null ? t("sheet.seatsCount", { count: row.cap }) : "", row.note].filter(Boolean).join(" · ")}
+                      </div>
+                    )}
+                    <div className="mt-0.5 text-[13px] font-medium tabular-nums text-brand-foreground">
+                      {row.donation ? t("sheet.donationMin", { amount: formatMoney(row.price, currency) }) : formatMoney(row.price, currency)}
+                    </div>
+                  </div>
                   {row.donation ? (
                     <div className="flex items-center gap-tight">
                       <span className="text-sm text-muted">{currency === "BDT" ? "৳" : ""}</span>
@@ -1125,13 +1143,14 @@ export function ProductSheet({
                     </div>
                   ) : (
                     <div className="flex items-center gap-tight">
-                      <button type="button" aria-label={t("sheet.less")} onClick={() => setQty((q) => ({ ...q, [row.id]: Math.max(0, (q[row.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">−</button>
+                      <button type="button" aria-label={t("sheet.less")} disabled={(qty[row.id] ?? 0) === 0} onClick={() => setQty((q) => ({ ...q, [row.id]: Math.max(0, (q[row.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">−</button>
                       <span className="w-8 text-center">{qty[row.id] ?? 0}</span>
                       <button type="button" aria-label={t("sheet.more")} onClick={() => setQty((q) => ({ ...q, [row.id]: (q[row.id] ?? 0) + 1 }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
                     </div>
                   )}
                 </div>
               ))}
+              </div>
             </div>
             )}
             {(() => {
@@ -1165,12 +1184,14 @@ export function ProductSheet({
               const total = list.reduce((s, x) => s + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0) + prem;
               const when = slotTime ? `${slotTime} ${date === TODAY ? t("slotToday") : date}` : (needsSchedule(bt) || provider || course) ? (date === TODAY ? t("slotToday") : date) : null;
               return (
-                <p className="mt-tight text-[13px]">
-                  {when && <><span className="tabular-nums">{when}</span> · </>}
-                  {itemsLabel}
-                  {owner ? <> · <span className="font-medium">{owner}</span>{provider ? ` · ${formatDuration(providerDuration)}` : ""}</> : null}
-                  {" · "}<span className="tabular-nums">{formatMoney(total, currency)}</span>
-                </p>
+                <div className="mt-tight flex items-baseline justify-between gap-comfortable border-t border-line pt-tight text-[13px]">
+                  <span className="min-w-0 flex-1 text-muted">
+                    {when && <><span className="tabular-nums">{when}</span> · </>}
+                    {itemsLabel}
+                    {owner ? <> · <span className="font-medium text-fg">{owner}</span>{provider ? ` · ${formatDuration(providerDuration)}` : ""}</> : null}
+                  </span>
+                  <span className="shrink-0 font-medium tabular-nums">{formatMoney(total, currency)}</span>
+                </div>
               );
             })()}
             {depositPct > 0 && (
