@@ -3319,3 +3319,102 @@ biggest-bottom-most element the heuristic guessed at — showed **+7px clear**.
 Classic's nav is a full-bleed strip at `bottom:0`, not the floating pill, so its
 own 64px offset is correct by design and always was. Three tills, three
 different offsets, and only one of them was wrong.
+
+---
+
+## The cart (2026-09-07)
+
+Owner asked for the cart researched and improved. Four rules from the guidance
+database drove it, plus three defects the work surfaced.
+
+### Removing a line is undoable
+
+**Confirmation Dialogs (High)** — *prevent accidental destructive actions*. The
+trash button deleted a line instantly with no way back, and at a till that line
+is a whole configured booking: date, slot, guide, tiers, rebuilt from scratch
+while a queue waits.
+
+A confirm dialog on every removal is the wrong trade for that queue, so this
+takes the other route the rule allows and the app already uses elsewhere: do it
+immediately and offer **Undo**. `Toast` already carried an `action` — nothing new
+was needed but the call. The line returns **at its original index**, not on the
+end, because a cart that reshuffles under a cashier is its own bug. Verified by
+removing the middle of three lines and undoing it.
+
+### An empty cart stops describing a sale that does not exist
+
+**Empty States (Medium)** — *guide users when no content exists*. The empty cart
+showed Subtotal ৳0.00 over VAT ৳0.00 over Total ৳0.00, a live-looking payment
+selector and a dead Charge button. Five controls, no sale. All hidden until
+there is a line.
+
+The **customer row stays**, because attaching a member before ringing anything
+up is a real flow and this drawer is its only route on a phone — the same reason
+the summary pill was kept in the last session.
+
+### Toasts stop covering the thing you are about to press
+
+**Confirmation Messages (Medium)** says confirm a successful action; it does not
+say cover the primary one. "Added X" was landing on top of Charge at the exact
+moment a cashier reaches for it, because on a phone the bottom is where every
+control lives — nav pill, cart pill, and inside the open cart the payment
+selector and Charge. The top of a phone is empty by comparison. Toasts are now
+top on mobile and bottom-left from `md`, where nothing competes.
+
+### The pencil was the line tap, twice
+
+The line's text block already carried `role="button"` and opened the same sheet
+with the same argument. Two controls, one action, 48px of a phone cart each
+time. A **chevron** replaces it: it says *this row opens* rather than *this row
+has an edit button*, and it is the language the five rows below already speak.
+
+The header also states the sale's size ("3 items"). Once the drawer is open the
+phone summary pill is gone, so that was the only place the cart could not say
+how big it was.
+
+### Three defects found on the way
+
+1. **Charge was 650px below the fold at tablet landscape** — a very plausible
+   till setup. Attributed before it was touched: `y=1549`, `docScroll=1629`,
+   **identical on production**, so pre-existing. The page scrolls at `lg` and
+   the product column is taller than the viewport, so the cart column ran down
+   with it. The cart is now `sticky` with its own height, and Charge is on
+   screen at rest (y=820 of 900) and stays pinned while browsing.
+
+   Worth remembering: the first attempt left `lg:static` on the element
+   alongside the new `lg:sticky`. Two position utilities at one breakpoint, and
+   which one wins is stylesheet order, not intent.
+2. **The Total row was sliced mid-glyph** by the pinned payment bar, which
+   reads as a rendering fault rather than "there is more below". New
+   `.scroll-y-hint` mirrors the existing `.scroll-x-hint` onto the other axis —
+   painted by the scroller itself, so each shadow shows only on the side that
+   still has content. No JS, no scroll listener.
+3. **`--color-subtle` and `--color-card` are the same value in dark**, so every
+   soft pill and icon disc added this session vanished there: Close and Park
+   read as bare labels and the summary-row glyphs floated with no disc.
+
+   The first fix — a `bg-line` fill in dark — traded one problem for another and
+   the audit caught it: `muted` on `line` is **3.85:1**, under the floor. The
+   pills now take a **border** in dark instead of a fill, which keeps the label
+   on `card` at **5.13:1** and still gives the control an edge. The icon discs
+   keep the fill: an icon answers to the 3:1 non-text floor, which 3.85 clears.
+
+### Verified
+
+- **Undo behaviour, end to end**: three lines, remove the middle, Undo offered,
+  line restored at index 1.
+- POS audit at 390 light, 390 dark and 320: **only the declared white-on-ember
+  exception**, zero A, zero B.
+- 45 sheet-renders clean · 0 weak-text findings across twelve sheets · grid
+  geometry unchanged at six widths with no x-scroll · `tsc` and `build` clean ·
+  **eslint identical to clean HEAD** · i18n parity 0 missing / 0 extra, two new
+  keys in both locales and one orphan (`cart.edit`) removed with the control it
+  belonged to.
+
+### Not done
+
+- **Discount, Coupon and Passes still show on an empty cart.** All three
+  allocate across lines, so they have nothing to act on — but each opens a
+  working sheet and hiding them would remove a route rather than a redundancy.
+  The three that were actively misleading (the ৳0.00 stack, the payment
+  selector, the dead Charge) are the ones that went.

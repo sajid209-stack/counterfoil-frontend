@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { AlertTriangle, Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Archive, ChevronRight, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
@@ -91,7 +91,7 @@ function CartRow({
         {/* The glyph sits in a soft disc, as every till reference draws it:
             it separates the icon from the label at a glance and gives the row
             a left edge to scan down. */}
-        <span aria-hidden className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-subtle text-muted">
+        <span aria-hidden className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-subtle text-muted dark:bg-line">
           <Icon size={16} strokeWidth={1.75} />
         </span>
         <span className="min-w-0 flex-1 truncate text-[13px]">{label}</span>
@@ -875,14 +875,19 @@ export default function PosPage() {
 
       {/* Cart — fixed right panel on tablet/desktop; bottom drawer on phones */}
       {/* Sheets cover the tab bar (z-50 over z-40) — nothing tappable behind a modal cart. */}
-      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] rounded-t-go-lg pb-[env(safe-area-inset-bottom)] shadow-go-pop" : "hidden"} min-h-0 flex-col bg-card lg:static lg:z-auto lg:flex lg:max-h-none lg:rounded-go lg:pb-0 lg:shadow-go`}>
+      <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] rounded-t-go-lg pb-[env(safe-area-inset-bottom)] shadow-go-pop" : "hidden"} min-h-0 flex-col bg-card lg:z-auto lg:flex lg:rounded-go lg:pb-0 lg:shadow-go lg:sticky lg:top-comfortable lg:h-[calc(100dvh-88px)] lg:max-h-none lg:self-start`}>
         {cartOpen && <div className="mx-auto mt-tight h-1 w-10 shrink-0 rounded-full bg-line lg:hidden" aria-hidden />}
         <div className="flex items-center gap-tight border-b border-line p-tight">
           {cartOpen && (
-            <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-full bg-subtle px-section text-[13px] text-muted lg:hidden">{t("cart.close")}</button>
+            <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-full bg-subtle px-section text-[13px] text-muted dark:border dark:border-line dark:bg-transparent lg:hidden">{t("cart.close")}</button>
           )}
-          <span className="flex-1" />
-          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-full bg-subtle px-section text-[13px] text-muted disabled:text-faint" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
+          {/* The drawer had two buttons and no name. Once it is open the
+              phone summary pill is gone, so this is the only place the sale
+              states its own size. */}
+          <span className="min-w-0 flex-1 truncate px-tight text-center text-[13px] font-medium text-muted">
+            {cart.length > 0 ? t("phoneSummary", { count: cart.length }) : ""}
+          </span>
+          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-full bg-subtle px-section text-[13px] text-muted disabled:text-faint dark:border dark:border-line dark:bg-transparent" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
             <Archive size={14} strokeWidth={1.5} />{t("cart.park")}
           </button>
         </div>
@@ -893,7 +898,7 @@ export default function PosPage() {
             charge bar). On a phone that arithmetic left the lines about thirty
             pixels, so the one thing a cart exists to show was the one thing you
             could not read. Only the payment controls are pinned now. */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="scroll-y-hint flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="p-comfortable">
           {cart.length === 0 ? (
             <EmptyState title={t("cart.empty")} message={t("cart.emptyHint")} />
@@ -903,7 +908,13 @@ export default function PosPage() {
                 <div key={e.id} className="border-b border-line pb-tight last:border-0">
                 <div className="flex flex-col gap-tight">
                   <div className="flex min-h-11 min-w-0 cursor-pointer flex-col justify-center" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
-                    <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(entryTotal(e), currency)}</span></div>
+                    <div className="flex items-center justify-between gap-tight text-sm font-medium">
+                      <span className="min-w-0 truncate">{e.productName}</span>
+                      <span className="flex shrink-0 items-center gap-inline whitespace-nowrap">
+                        {formatMoney(entryTotal(e), currency)}
+                        {e.productId !== "custom" && <ChevronRight size={15} strokeWidth={1.5} className="text-muted" aria-hidden />}
+                      </span>
+                    </div>
                     <div className="text-[13px] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="text-[13px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
                     {e.lineDiscountAmount ? (
@@ -931,8 +942,25 @@ export default function PosPage() {
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
-                  {e.productId !== "custom" && <button type="button" aria-label={t("cart.edit")} onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-full border border-line active:bg-ember/10"><Pencil size={15} strokeWidth={1.5} /></button>}
-                  <button type="button" aria-label={t("cart.remove")} onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-danger active:bg-ember/10"><Trash2 size={15} strokeWidth={1.5} /></button>
+                  <button
+                    type="button"
+                    aria-label={t("cart.remove")}
+                    onClick={() => {
+                      const at = cart.findIndex((x) => x.id === e.id);
+                      const line = e;
+                      setCart((c) => c.filter((x) => x.id !== e.id));
+                      toast.success(t("cart.removed", { name: e.productName }), {
+                        label: t("cart.undo"),
+                        run: () => setCart((c) => {
+                          if (c.some((x) => x.id === line.id)) return c;
+                          const next = [...c];
+                          next.splice(Math.min(at, next.length), 0, line);
+                          return next;
+                        }),
+                      });
+                    }}
+                    className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-danger active:bg-ember/10"
+                  ><Trash2 size={15} strokeWidth={1.5} /></button>
                   </div>
                 </div>
                 {lineDiscEdit === e.id && (
@@ -985,7 +1013,7 @@ export default function PosPage() {
               onClick={() => setCustomerOpen(true)}
               className="flex min-h-12 w-full items-center gap-tight py-tight text-left"
             >
-              <span aria-hidden className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${attached ? "bg-ember/15 text-brand-foreground" : "bg-subtle text-muted"}`}>
+              <span aria-hidden className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${attached ? "bg-ember/15 text-brand-foreground" : "bg-subtle text-muted dark:bg-line"}`}>
                 <UserRound size={16} strokeWidth={1.75} />
               </span>
               <span className="min-w-0 flex-1 truncate text-[13px]">
@@ -1158,6 +1186,13 @@ export default function PosPage() {
             </div>
           )}
 
+          {/* A sale that does not exist yet has no arithmetic to show.
+              Subtotal 0.00 over VAT 0.00 over Total 0.00 is three lines
+              describing nothing, on the screen where a cashier is trying to
+              start. The customer row above stays, because attaching a member
+              before ringing anything up is a real flow and this drawer is its
+              only route on a phone. */}
+          {cart.length > 0 && (<>
           <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.subtotal")}</span><span className="">{formatMoney(subtotal, currency)}</span></div>
           {lineDiscountTotal > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.lineDiscounts")}</span><span className="text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
           {manualDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{discountMode === "percent" ? t("summary.discountPct", { pct: discountPct }) : t("summary.discountFlat")}</span><span className="text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
@@ -1183,11 +1218,12 @@ export default function PosPage() {
               )}
             </>
           )}
+          </>)}
 
         </div>
         </div>
 
-        <div className="border-t border-line p-comfortable">
+        <div className={`border-t border-line p-comfortable ${cart.length === 0 ? "hidden" : ""}`}>
           {/* Payment method — segmented control with a sliding thumb. Non-cash
               methods only appear when a live PSP account is connected. */}
           {(() => {

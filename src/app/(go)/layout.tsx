@@ -120,7 +120,7 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
           <Link href="/login" className="flex h-12 shrink-0 items-center">
             <Logo variant="go" size={30} />
           </Link>
-          <span className="hidden shrink-0 rounded-full bg-subtle px-comfortable py-inline text-[13px] text-muted sm:block">Fort Main Gate</span>
+          <span className="hidden shrink-0 rounded-full bg-subtle px-comfortable py-inline text-[13px] text-muted dark:border dark:border-line dark:bg-transparent sm:block">Fort Main Gate</span>
           <span className="hidden shrink-0 font-mono text-[13px] text-muted sm:block" title="Shift open for">⏱ 3:24</span>
         </div>
         {/* Only on a till, and only where there is room for it. */}
@@ -193,11 +193,11 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
                   </>
                 );
                 return "href" in item && item.href ? (
-                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-go bg-subtle text-fg transition-colors duration-quick active:bg-ember/15">
+                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-go bg-subtle text-fg transition-colors duration-quick active:bg-ember/15 dark:bg-line">
                     {inner}
                   </Link>
                 ) : (
-                  <button key={item.key} type="button" onClick={() => runItem(item)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-go bg-subtle text-fg transition-colors duration-quick active:bg-ember/15">
+                  <button key={item.key} type="button" onClick={() => runItem(item)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-go bg-subtle text-fg transition-colors duration-quick active:bg-ember/15 dark:bg-line">
                     {inner}
                   </button>
                 );

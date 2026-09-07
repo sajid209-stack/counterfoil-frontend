@@ -20,10 +20,11 @@
     "lineDiscount": "−{pct}% লাইন ছাড়",
     "depositNow": "{pct}% জমা এখন · আগমনে {balance}",
     "lineDiscountLabel": "লাইন ছাড়",
-    "edit": "সম্পাদনা",
     "remove": "সরান",
     "customerAdd": "যোগ করুন",
-    "customerChange": "পরিবর্তন"
+    "customerChange": "পরিবর্তন",
+    "removed": "{name} সরানো হয়েছে",
+    "undo": "ফিরিয়ে আনুন"
   },
   "added": "{name} যোগ হয়েছে",
   "cartParked": "কার্ট পার্ক করা হয়েছে।",
