@@ -3847,3 +3847,47 @@ Contrast measured across every text node in the card, both themes: **zero**
 below its threshold. The today pill is `text-ink` on ember at 5.30:1, not white
 at 3.50:1. `tsc`, `build` and `eslint` clean on every file touched; i18n parity
 0 missing / 0 extra across 30 namespaces.
+
+## The calendar, second pass — wrap, one row, and the filter that looked like an empty week (2026-09-07)
+
+### Wrap before truncating
+
+The rule for a name that distinguishes one booking from another says to wrap or
+stack it, and only then to clip. A 45-minute block is 39px tall — two lines of
+12px text — so the title now takes both when the block is tall and is not
+already spending its second line on the subtitle.
+
+Desktop week clipping **16 → 12**, with nine blocks now on two lines. "Private
+eve" reads "Private event"; "Bowling" in a narrow Friday column reads "Bowling
+Lane". What still clips is genuinely long — "Grand Heritage Architecture Tour"
+in a 53px three-abreast column — and that is what the detail panel is for.
+
+### One row for the day view too
+
+"By resource / By booking" had a row of its own, which is the whole reason the
+day view carried 32% chrome against the week's 26%. It is a filter on how the
+day is grouped, so it sits on the filter row. Day chrome **32% → 26%**.
+
+### An empty grid caused by a filter looked like an empty week
+
+The worst of the three was Day: switch every state off and the card collapsed to
+88px of bare hour axis under a lone "Show 8 empty". Week and Month drew a
+perfectly ordinary empty grid — and *that* is the real defect, because a week
+with nothing in it and a week whose contents you have filtered away are the
+same picture.
+
+Now, when the window is empty and something is filtering: "No bookings match
+these filters — nothing in this view is in one of the states you have left
+switched on", with the way back. The toolbar's own Clear filters stands down
+while that notice is up rather than offering the same button twice. Day names
+its empty state instead of showing an axis over nothing.
+
+### Verified
+
+Keyboard end to end: Tab reaches an event block with a 2px ember focus ring,
+Enter opens the detail panel (`aria-modal`), Escape closes it. Contrast across
+every text node in the card, both themes: **zero** below threshold. Detail panel
+still resolves a clipped 81px "Planetarium Show" in full. Filters: closed at
+rest, `aria-expanded` tracks, 35 nodes → 7, badge "Filters (1)"; the phone gets
+the tone key folded in beside the selects. `tsc`, `build`, `eslint` clean on
+every file touched; i18n parity 0 / 0 across 30 namespaces.

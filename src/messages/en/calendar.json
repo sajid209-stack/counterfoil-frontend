@@ -39,5 +39,7 @@
   "filtersActive": "Filters ({count})",
   "showEmptyLanes": "Show {count} empty",
   "hideEmptyLanes": "Hide empty",
-  "nowLabel": "Now"
+  "nowLabel": "Now",
+  "noMatch": "No bookings match these filters.",
+  "noMatchHint": "Nothing in this view is in one of the states you have left switched on."
 }

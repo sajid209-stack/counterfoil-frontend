@@ -298,6 +298,9 @@ export function WeekGrid({
                      better off with the name: a 29px block showing nothing but
                      a tick says less than one reading "Yog". */
                   const roomForIcon = across < 3;
+                  /* Two lines for the name when the block is tall and is not
+                     already spending its second line on the subtitle. */
+                  const canWrap = tall >= TWO_LINE_PX && !roomForTwo;
                   return (
                     <button
                       key={event.id}
@@ -320,16 +323,23 @@ export function WeekGrid({
                         width: `calc(${(1 / Math.min(lanes, maxLanes)) * 100}% - 2px)`,
                       }}
                     >
-                      <span className="flex items-center gap-0.5 truncate text-[12px] font-medium leading-tight">
+                      <span className="flex items-start gap-0.5 text-[12px] font-medium leading-tight">
                         {roomForIcon && event.locked && (
-                          <Lock size={9} strokeWidth={2.5} className="shrink-0" />
+                          <Lock size={9} strokeWidth={2.5} className="mt-0.5 shrink-0" />
                         )}
                         {/* Arrived is a green bar and nothing else, which is
                             status by colour alone; the tick is the word. */}
                         {roomForIcon && event.tone === "arrived" && (
-                          <Check size={9} strokeWidth={3} className="shrink-0 text-success" />
+                          <Check size={9} strokeWidth={3} className="mt-0.5 shrink-0 text-success" />
                         )}
-                        {event.title}
+                        {/* Wrap before truncating. The rule for a name that
+                            distinguishes one booking from another says to wrap
+                            or stack it, and a 45-minute block is 39px tall —
+                            two lines of 12px. "Grand Heritage Ar…" becomes
+                            "Grand Heritage / Architecture Tour". */}
+                        <span className={cn("min-w-0", canWrap ? "line-clamp-2" : "truncate")}>
+                          {event.title}
+                        </span>
                       </span>
                       {roomForTwo && (
                         <span className="block truncate text-[12px] leading-tight text-muted">

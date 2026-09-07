@@ -274,6 +274,12 @@ export default function CalendarPage() {
     else if (e.orderId) router.push(`/orders/${e.orderId}`);
   };
 
+  /* An empty grid caused by a filter looks exactly like a genuinely empty
+     week, which is the one thing it must not do. When the window has nothing
+     in it AND something is filtering, say so and offer the way back. */
+  const inWindow = view === "day" ? dayEvents : view === "week" ? weekEvents : monthEvents;
+  const emptyByFilter = !loading && inWindow.length === 0 && filtered;
+
   /** The key IS the filter: each chip says what its colour means, how many
    *  are in view, and switches that state off when tapped. Drawing a legend
    *  and a filter separately would state the same five words twice. */
@@ -397,7 +403,30 @@ export default function CalendarPage() {
 
             {!compact && toneKey}
 
-            {filtered && (
+            {view === "day" && !compact && resources.length > 0 && (
+              <span className="flex items-center gap-inline">
+                {(["resource", "product"] as const).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    aria-pressed={groupBy === g}
+                    onClick={() => setGroupBy(g)}
+                    className={cn(
+                      "h-11 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick md:h-9",
+                      groupBy === g
+                        ? "border-ember bg-ember/10 text-brand-foreground"
+                        : "border-line text-muted hover:bg-subtle",
+                    )}
+                  >
+                    {t(g === "resource" ? "groupByResource" : "groupByProduct")}
+                  </button>
+                ))}
+              </span>
+            )}
+
+            {/* Not while the empty-state notice below is offering the same
+                button — two ways out of one situation, side by side. */}
+            {filtered && !emptyByFilter && (
               <Button variant="secondary" size="sm" onClick={resetFilters}>
                 {t("clearFilters")}
               </Button>
@@ -448,22 +477,18 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {view === "day" && !compact && resources.length > 0 && (
-          <div className="flex flex-wrap gap-inline">
-            {(["resource", "product"] as const).map((g) => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => setGroupBy(g)}
-                className={`h-11 md:h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
-                  groupBy === g
-                    ? "border-ember bg-ember/10 text-brand-foreground"
-                    : "border-line text-muted hover:bg-subtle"
-                }`}
-              >
-                {t(g === "resource" ? "groupByResource" : "groupByProduct")}
-              </button>
-            ))}
+        {emptyByFilter && (
+          <div
+            role="status"
+            className="flex flex-wrap items-center gap-comfortable rounded-sm border border-line bg-subtle px-comfortable py-tight"
+          >
+            <span className="min-w-0 text-[13px]">
+              <span className="font-medium">{t("noMatch")}</span>{" "}
+              <span className="text-muted">{t("noMatchHint")}</span>
+            </span>
+            <Button variant="secondary" size="sm" onClick={resetFilters}>
+              {t("clearFilters")}
+            </Button>
           </div>
         )}
 

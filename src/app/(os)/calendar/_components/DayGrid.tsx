@@ -124,6 +124,23 @@ export function DayGrid({
     );
   }
 
+  /* Every lane folded away leaves an hour axis over nothing, plus a "Show 8
+     empty" that reads as the only content on the page. Say what happened. */
+  if (shownLanes.length === 0) {
+    return (
+      <>
+        <p className="py-hero text-center text-[13px] text-faint">{emptyLabel}</p>
+        <EmptyLaneToggle
+          count={emptyLanes.length}
+          open={showEmpty}
+          onToggle={() => setShowEmpty((v) => !v)}
+          showLabel={showEmptyLabel}
+          hideLabel={hideEmptyLabel}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <DayTrack
@@ -140,19 +157,43 @@ export function DayGrid({
         now={now}
         onSelect={onSelect}
       />
-      {emptyLanes.length > 0 && (
-        <div className="border-t border-line px-comfortable py-tight">
-          <button
-            type="button"
-            aria-expanded={showEmpty}
-            onClick={() => setShowEmpty((v) => !v)}
-            className="flex h-9 items-center rounded-sm px-tight text-[13px] text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg"
-          >
-            {showEmpty ? hideEmptyLabel : showEmptyLabel(emptyLanes.length)}
-          </button>
-        </div>
-      )}
+      <EmptyLaneToggle
+        count={emptyLanes.length}
+        open={showEmpty}
+        onToggle={() => setShowEmpty((v) => !v)}
+        showLabel={showEmptyLabel}
+        hideLabel={hideEmptyLabel}
+      />
     </>
+  );
+}
+
+/** "Show 6 empty" / "Hide empty" — the lanes the day did not touch. */
+function EmptyLaneToggle({
+  count,
+  open,
+  onToggle,
+  showLabel,
+  hideLabel,
+}: {
+  count: number;
+  open: boolean;
+  onToggle: () => void;
+  showLabel: (count: number) => string;
+  hideLabel: string;
+}) {
+  if (count === 0) return null;
+  return (
+    <div className="border-t border-line px-comfortable py-tight">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={onToggle}
+        className="flex h-9 items-center rounded-sm px-tight text-[13px] text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg"
+      >
+        {open ? hideLabel : showLabel(count)}
+      </button>
+    </div>
   );
 }
 
@@ -296,17 +337,28 @@ function DayTrack({
                         height: height - 2,
                       }}
                     >
-                      <span className="flex items-center gap-0.5 truncate text-[12px] font-medium leading-tight">
+                      <span className="flex items-start gap-0.5 text-[12px] font-medium leading-tight">
                         {/* Only where the name still gets a look in. A 29px
                             block reduced to a lone green tick says less than
                             the same block reading "Yog". */}
                         {wide > 60 && event.locked && (
-                          <Lock size={9} strokeWidth={2.5} className="shrink-0" />
+                          <Lock size={9} strokeWidth={2.5} className="mt-0.5 shrink-0" />
                         )}
                         {wide > 60 && event.tone === "arrived" && (
-                          <Check size={9} strokeWidth={3} className="shrink-0 text-success" />
+                          <Check size={9} strokeWidth={3} className="mt-0.5 shrink-0 text-success" />
                         )}
-                        {event.title}
+                        {/* Wrap before truncating, where the lane is tall
+                            enough to have a second line to give. */}
+                        <span
+                          className={cn(
+                            "min-w-0",
+                            height >= 40 && !(height > 28 && wide > 150 && event.subtitle)
+                              ? "line-clamp-2"
+                              : "truncate",
+                          )}
+                        >
+                          {event.title}
+                        </span>
                       </span>
                       {/* The start time is what the block's own left edge
                           already says, and printing it stole the line from the

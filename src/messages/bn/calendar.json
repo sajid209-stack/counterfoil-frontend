@@ -39,5 +39,7 @@
   "filtersActive": "ফিল্টার ({count})",
   "showEmptyLanes": "{count}টি খালি দেখান",
   "hideEmptyLanes": "খালি লুকান",
-  "nowLabel": "এখন"
+  "nowLabel": "এখন",
+  "noMatch": "এই ফিল্টারের সাথে কোনো বুকিং মেলেনি।",
+  "noMatchHint": "আপনি যে অবস্থাগুলি চালু রেখেছেন, এই ভিউয়ে তার কিছুই নেই।"
 }
