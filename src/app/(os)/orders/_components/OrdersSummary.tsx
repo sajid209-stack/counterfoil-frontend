@@ -76,11 +76,14 @@ export function OrdersSummary({
       {cards.map((c) => (
         <div
           key={c.key}
+          // Cancelled and refunded orders are still excluded from the money.
+          // The sentence saying so came off the card at the owner's request;
+          // the caveat itself is not wrong, so it lives here.
+          title={c.note ?? undefined}
           className={cn(
-            // Top-aligned, not centred: only one card carries a caveat line, and
-            // centring made its figure sit 13px above the other three so the
-            // four numbers no longer shared a baseline.
-            "card-surface flex min-h-[4.75rem] flex-col justify-start gap-tight px-comfortable py-comfortable",
+            // Same height and alignment as the calendar's cards — one shape
+            // for "a figure about the window you are looking at", used twice.
+            "card-surface flex min-h-[5.25rem] flex-col justify-center gap-tight px-comfortable py-comfortable",
             compact && "min-w-[10rem] shrink-0",
           )}
         >
@@ -95,11 +98,6 @@ export function OrdersSummary({
               )}
             >
               {c.value}
-            </span>
-          )}
-          {c.note && !loading && (
-            <span className="truncate text-[12px] text-muted" title={c.note}>
-              {c.note}
             </span>
           )}
         </div>

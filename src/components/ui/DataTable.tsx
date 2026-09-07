@@ -120,7 +120,12 @@ export function DataTable<T>({
           ))}
       </div>
 
-      <div className="hidden max-h-[70vh] overflow-auto card-surface scroll-x-hint md:block">
+      {/* Solid, not `card-surface`. That class is deliberately translucent —
+          72% card over the warm page — which is right for a card floating on
+          the ground and wrong for a dense grid of text: the body read as warm
+          off-white while the sticky `thead`, which sets `bg-card`, read as
+          white, so the header and its own rows did not match. */}
+      <div className="hidden max-h-[70vh] overflow-auto rounded-md border border-line bg-card scroll-x-hint md:block">
         <table className="w-full border-collapse text-sm" style={minWidth ? { minWidth } : undefined}>
                   {/* `line`, not `neutral-200`: the raw primitive is a palette entry
             that is never redefined for dark, so this rule painted a light
@@ -192,9 +197,34 @@ export function DataTable<T>({
                 <tr
                   key={getRowId(row)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  /* A clickable row that only listens for clicks is unreachable
+                     without a pointer. The phone card below has always been
+                     focusable and key-operable; the desktop row never was, on
+                     every table in the app. `tr` is kept as a `tr` rather than
+                     given a button role, so screen-reader table navigation
+                     still works — it just becomes a stop on the tab order with
+                     a focus ring of its own. */
+                  tabIndex={onRowClick ? 0 : undefined}
+                  onKeyDown={
+                    onRowClick
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onRowClick(row);
+                          }
+                        }
+                      : undefined
+                  }
                   className={cn(
                     "h-12 border-b border-line last:border-0",
-                    onRowClick && "cursor-pointer transition-colors duration-quick hover:bg-subtle",
+                    onRowClick &&
+                      // The ring itself comes from the app's one unlayered :focus-visible
+                      // rule, which already paints ember at 2px. Utilities here only
+                      // fought it: `outline-[var(--color-ember)]` is ambiguous to
+                      // Tailwind, which cannot tell a colour from a width, so it
+                      // emitted the wrong property and the row fell back to the
+                      // browser default.
+                      "cursor-pointer transition-colors duration-quick hover:bg-subtle focus-visible:bg-subtle",
                   )}
                 >
                   {columns.map((col) => (

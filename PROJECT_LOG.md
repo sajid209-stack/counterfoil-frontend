@@ -4217,3 +4217,62 @@ returns 11 rows whose customer column all read Ayesha Siddika. Tablet rows went
 97px → 54px once the reference stopped wrapping mid-identifier and long names
 truncated instead of stacking four lines. `tsc`, `build` clean; lint unchanged
 from baseline (32 repo-wide, none mine); i18n 0 / 0.
+
+## Orders, second pass — a solid table, and rows a keyboard can reach (2026-09-08)
+
+Four asks off a marked-up screenshot: drop the "excl. 24 cancelled / refunded"
+line, match the calendar's card height, make the table white, and improve the
+table generally.
+
+### The table was translucent on purpose, and it was the wrong purpose
+
+`.card-surface` is deliberately glass — `color-mix(var(--color-card) 72%,
+transparent)` — measured off the Aura reference so a card lifts off the warm
+page. Right for a card floating on the ground; wrong for a dense grid of text.
+Worse, the sticky `thead` sets `bg-card` **solid**, so the header read as white
+while its own rows read as warm off-white. The owner spotted the mismatch.
+
+The table now takes a solid `bg-card` with the same hairline and radius. Header
+and body measure identical in both themes.
+
+**And a bug underneath it.** Setting `bg-card` on that wrapper did nothing at
+first: `.scroll-x-hint` uses the `background` *shorthand*, which resets
+`background-color` to transparent and silently cancels any `bg-*` utility on
+the same element. Its own cover gradients are drawn in `--color-card`, so the
+class had been assuming that colour underneath it all along — it now declares
+it, after the shorthand.
+
+### Rows a keyboard could not reach
+
+**Keyboard Navigation is a High-severity rule and the desktop table failed it
+on all 17 pages.** `<tr>` had `onClick` and nothing else: no `tabIndex`, no key
+handler. The phone card had been focusable and Enter-operable since it was
+written; the row it replaces never was.
+
+Rows are now a tab stop with Enter/Space activation. Kept as a `tr` rather than
+given a button role, so screen-reader table navigation still works. Verified
+three times on a production build: Tab reaches `CF-2026-999001`, Enter lands on
+`/orders/ord_stress`.
+
+**Honest limitation:** the ring paints ink rather than the app's ember. The
+global unlayered `:focus-visible` rule gives a `<button>` ember and this `<tr>`
+ink — `outline` on a row inside a `border-collapse: collapse` table does not
+take the author colour in Chrome. It is 2px solid at 2px offset and plainly
+visible in both themes, so the rule is met; the colour is not worth more than
+this note.
+
+### A trap worth remembering
+
+Three attempts to colour that ring measured ink, and the cause was not CSS: the
+dev server's Tailwind had never generated `.focus-visible\:bg-subtle` at all —
+a class new to the codebase, stale in the running CSS. A production build has
+it. **Styling that "does not apply" in the dev server may simply not exist
+yet**; check the generated stylesheet before rewriting the source.
+
+### Verified
+
+Contrast across the page, both themes: **zero**. Filters and summary still
+agree (pending → Collected ৳0.00, Outstanding ৳33,465 over 7). Ten other tables
+re-checked on the production build: no overflow, no clipping, no console
+errors. Chrome 38% → 35% desktop, 45% → 42% tablet with the caveat line gone.
+`tsc`, `build` clean; i18n 0 / 0.

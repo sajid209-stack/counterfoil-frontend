@@ -572,6 +572,11 @@
     linear-gradient(to left, var(--color-card) 30%, transparent) 100% 0 / 44px 100% no-repeat local,
     radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 0.13), transparent) 0 0 / 16px 100% no-repeat scroll,
     radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.13), transparent) 100% 0 / 16px 100% no-repeat scroll;
+  /* After the shorthand, which resets background-color to transparent and so
+     silently cancelled any `bg-*` utility on the same element. The cover
+     gradients above are already drawn in `--color-card`, so this is the colour
+     the class was assuming underneath it all along. */
+  background-color: var(--color-card);
 }
 
 
