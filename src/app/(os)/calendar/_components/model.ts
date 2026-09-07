@@ -273,14 +273,30 @@ export function packLanes(events: CalEvent[]): { event: CalEvent; lane: number; 
 
 /** Tone → the classes an event block wears. Hatching means blocked, the same
  *  as it does on a sold-out slot or an out-of-service lane. */
+/**
+ * Tone → the classes a block wears.
+ *
+ * Filled, not flagged. This used to be a white card with a 3px bar down one
+ * edge, on the argument that "the bar carries the status and the fill stays
+ * calm". The owner asked for the opposite and was right about the effect: a
+ * grid of white rectangles reads as a table, and a grid of tinted ones reads
+ * as a schedule you can scan without moving your eyes to the left edge of
+ * every block to find out what it is.
+ *
+ * The washes are pale enough to carry body text — measured, not eyeballed —
+ * so the text stays `fg` rather than going to a status colour that would then
+ * have to be checked against five different grounds.
+ *
+ * Hatching survives on the two blocked tones. It is the app's "you cannot have
+ * this" signal, used the same way on out-of-service lanes and sold-out slots,
+ * and it is texture over the fill rather than instead of it.
+ */
 export const TONE_CLASS: Record<EventTone, string> = {
-  booked: "bg-card border-line [border-left:3px_solid_var(--color-ember)] text-fg",
-  // The bar carries the status; the fill stays calm. A month of attended
-  // bookings tinted green is a wall of the least actionable thing on screen.
-  arrived: "bg-card border-line [border-left:3px_solid_var(--color-success)] text-fg",
-  noshow: "bg-subtle border-line [border-left:3px_solid_var(--color-muted)] text-muted line-through",
-  held: "border-warning/40 [border-left:3px_solid_var(--color-warning)] text-fg bg-[repeating-linear-gradient(45deg,var(--color-warning-wash),var(--color-warning-wash)_3px,transparent_3px,transparent_7px)]",
-  locked: "border-danger/40 [border-left:3px_solid_var(--color-danger)] text-fg bg-[repeating-linear-gradient(45deg,var(--color-danger-wash),var(--color-danger-wash)_3px,transparent_3px,transparent_7px)]",
+  booked: "bg-ember-wash border-ember/25 text-fg",
+  arrived: "bg-success-wash border-success/25 text-fg",
+  noshow: "bg-muted-wash border-line text-muted line-through",
+  held: "border-warning/35 text-fg bg-warning-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
+  locked: "border-danger/35 text-fg bg-danger-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
 };
 
 /** Tone → a single dot. The month view on a phone has no room for chips, so a
@@ -294,3 +310,57 @@ export const TONE_DOT: Record<EventTone, string> = {
   held: "bg-warning",
   locked: "bg-danger",
 };
+
+/** What the cards above the grid count. */
+export interface WindowStats {
+  bookings: number;
+  arrived: number;
+  noshow: number;
+  holds: number;
+}
+
+/**
+ * Totals for one window, so the cards above the grid can state what the period
+ * on screen actually contains and how it compares with the one before it.
+ *
+ * Counted from the events the SELECT filters allow but before the state
+ * toggles narrow them: switching "no-show" off is a way of looking at the
+ * grid, not a claim that there were no no-shows, and a headline figure that
+ * moved when you did that would be lying.
+ */
+export function windowStats(events: CalEvent[], from: Date, to: Date): WindowStats {
+  const inRange = events.filter((e) => e.start >= from && e.start < to);
+  return {
+    bookings: inRange.filter((e) => e.kind === "booking").length,
+    arrived: inRange.filter((e) => e.tone === "arrived").length,
+    noshow: inRange.filter((e) => e.tone === "noshow").length,
+    holds: inRange.filter((e) => e.kind === "hold").length,
+  };
+}
+
+/** Percentage change, or null when the previous period had nothing to compare
+ *  against — "+100%" against a week that did not trade is not a fact. */
+export function delta(current: number, previous: number): number | null {
+  if (previous === 0) return null;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+/** Hover handlers for an event block, or nothing at all on a touch screen.
+ *  `mouseenter` fires on tap there, which would open a card under the finger
+ *  at the same instant the tap opens the panel behind it. */
+export function peekHandlers(
+  event: CalEvent,
+  onPeek?: (event: CalEvent | null, anchor: DOMRect | null) => void,
+) {
+  if (!onPeek) return {};
+  return {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+      if (!window.matchMedia("(hover: hover)").matches) return;
+      onPeek(event, e.currentTarget.getBoundingClientRect());
+    },
+    onMouseLeave: () => onPeek(null, null),
+    // Scrolling the grid moves the block out from under a card that is
+    // positioned in viewport coordinates, so the card goes when it does.
+    onWheel: () => onPeek(null, null),
+  };
+}

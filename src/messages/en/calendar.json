@@ -41,5 +41,13 @@
   "hideEmptyLanes": "Hide empty",
   "nowLabel": "Now",
   "noMatch": "No bookings match these filters.",
-  "noMatchHint": "Nothing in this view is in one of the states you have left switched on."
+  "noMatchHint": "Nothing in this view is in one of the states you have left switched on.",
+  "peekHint": "Click for full details",
+  "statBookings": "Bookings",
+  "statArrived": "Attended",
+  "statNoShow": "No-shows",
+  "statHolds": "Held capacity",
+  "vsDay": "vs previous day",
+  "vsWeek": "vs last week",
+  "vsMonth": "vs last month"
 }

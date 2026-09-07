@@ -21,6 +21,8 @@ import { DayGrid, type DayLane } from "./_components/DayGrid";
 import { WeekGrid } from "./_components/WeekGrid";
 import { MonthGrid } from "./_components/MonthGrid";
 import { EventDetail } from "./_components/EventDetail";
+import { EventPeek } from "./_components/EventPeek";
+import { CalendarStats } from "./_components/CalendarStats";
 import {
   addDays,
   bookingsToEvents,
@@ -30,6 +32,7 @@ import {
   startOfDay,
   tradingWindow,
   weekStart,
+  windowStats,
   type CalEvent,
   type EventTone,
 } from "./_components/model";
@@ -50,12 +53,16 @@ const TONE_KEY: Record<EventTone, string> = {
   held: "keyHeld",
   locked: "keyLocked",
 };
-const TONE_BAR: Record<EventTone, string> = {
-  booked: "border-l-ember",
-  arrived: "border-l-success",
-  noshow: "border-l-muted",
-  held: "border-l-warning",
-  locked: "border-l-danger",
+/** The legend swatch is a miniature of the block itself. When blocks were
+ *  white with a coloured edge this was a square with a coloured edge; now that
+ *  they are filled, so is this. A key that does not look like the thing it
+ *  explains is a key you have to learn twice. */
+const TONE_SWATCH: Record<EventTone, string> = {
+  booked: "bg-ember-wash border-ember/40",
+  arrived: "bg-success-wash border-success/40",
+  noshow: "bg-muted-wash border-line",
+  held: "bg-warning-wash border-warning/40",
+  locked: "bg-danger-wash border-danger/40",
 };
 
 export default function CalendarPage() {
@@ -83,6 +90,14 @@ export default function CalendarPage() {
    *  rather than navigating, because at week density the block cannot show
    *  its own name and a page load is a heavy way to ask "what is this?". */
   const [detail, setDetail] = useState<CalEvent | null>(null);
+  /** The block the pointer is over, and where it is. Hover answers "what is
+   *  that one?" without the click that the full panel costs. */
+  const [peek, setPeek] = useState<CalEvent | null>(null);
+  const [peekAt, setPeekAt] = useState<DOMRect | null>(null);
+  const onPeek = (e: CalEvent | null, anchor: DOMRect | null) => {
+    setPeek(e);
+    setPeekAt(anchor);
+  };
 
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 200 }), []);
@@ -274,6 +289,28 @@ export default function CalendarPage() {
     else if (e.orderId) router.push(`/orders/${e.orderId}`);
   };
 
+  /* What the period on screen holds, and how it compares with the one before
+     it. Counted from `scoped` — the select filters apply, the state toggles do
+     not, because switching "no-show" off is a way of looking at the grid
+     rather than a claim that there were none. */
+  const [statsNow, statsPrev] = useMemo(() => {
+    const bounds = (offset: number): [Date, Date] => {
+      if (view === "day") {
+        const from = startOfDay(addDays(cursor, offset));
+        return [from, addDays(from, 1)];
+      }
+      if (view === "week") {
+        const from = addDays(wkStart, offset * 7);
+        return [from, addDays(from, 7)];
+      }
+      const from = new Date(cursor.getFullYear(), cursor.getMonth() + offset, 1);
+      return [from, new Date(cursor.getFullYear(), cursor.getMonth() + offset + 1, 1)];
+    };
+    const [a, b] = bounds(0);
+    const [pa, pb] = bounds(-1);
+    return [windowStats(scoped, a, b), windowStats(scoped, pa, pb)];
+  }, [scoped, view, cursor, wkStart]);
+
   /* An empty grid caused by a filter looks exactly like a genuinely empty
      week, which is the one thing it must not do. When the window has nothing
      in it AND something is filtering, say so and offer the way back. */
@@ -298,8 +335,8 @@ export default function CalendarPage() {
       >
         <span
           className={cn(
-            "h-3 w-3 rounded-xs border border-line border-l-[3px]",
-            TONE_BAR[tone],
+            "h-3.5 w-3.5 rounded-xs border",
+            TONE_SWATCH[tone],
             !on && "opacity-40",
           )}
         />
@@ -319,6 +356,19 @@ export default function CalendarPage() {
       description={t("description")}
     >
       <div className="flex flex-col gap-section">
+        <CalendarStats
+          now={statsNow}
+          previous={statsPrev}
+          comparisonLabel={t(view === "day" ? "vsDay" : view === "week" ? "vsWeek" : "vsMonth")}
+          compact={compact}
+          labels={{
+            bookings: t("statBookings"),
+            arrived: t("statArrived"),
+            noshow: t("statNoShow"),
+            holds: t("statHolds"),
+          }}
+        />
+
         {/* The range and the control that changes it, together. They were 60px
             apart — arrows in the page header, the label they move down beside
             the tabs — so you read where you are in one place and moved it in
@@ -504,6 +554,7 @@ export default function CalendarPage() {
               openHour={openHour}
               closeHour={closeHour}
               onSelect={setDetail}
+              onPeek={onPeek}
               emptyLabel={t("nothingToday")}
               showEmptyLabel={(n) => t("showEmptyLanes", { count: n })}
               hideEmptyLabel={t("hideEmptyLanes")}
@@ -520,6 +571,7 @@ export default function CalendarPage() {
               emptyLabel={t("nothingToday")}
               roomy={roomy}
               onSelect={setDetail}
+              onPeek={onPeek}
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
@@ -539,6 +591,7 @@ export default function CalendarPage() {
               weekdayLabels={weekdayLabels}
               moreLabel={(n) => t("more", { count: n })}
               onSelect={setDetail}
+              onPeek={onPeek}
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
@@ -569,6 +622,19 @@ export default function CalendarPage() {
             }).format(d)
           }
           t={t}
+        />
+
+        <EventPeek
+          event={detail ? null : peek}
+          anchor={peekAt}
+          t={t}
+          dayLabel={(d) =>
+            new Intl.DateTimeFormat("en-GB", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            }).format(d)
+          }
         />
       </div>
     </PageShell>

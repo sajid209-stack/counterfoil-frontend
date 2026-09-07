@@ -10,6 +10,7 @@ import {
   isoDate,
   minutesOf,
   packLanes,
+  peekHandlers,
   sameDay,
   TONE_CLASS,
   TONE_DOT,
@@ -38,6 +39,7 @@ export function WeekGrid({
   openHour = 6,
   closeHour = 23,
   onSelect,
+  onPeek,
   onPickDay,
   dayLabel,
   moreLabel,
@@ -54,6 +56,7 @@ export function WeekGrid({
   openHour?: number;
   closeHour?: number;
   onSelect?: (event: CalEvent) => void;
+  onPeek?: (event: CalEvent | null, anchor: DOMRect | null) => void;
   onPickDay?: (date: Date) => void;
   /** Renders the column header, so the page owns date formatting. */
   dayLabel: (d: Date) => { weekday: string; day: string };
@@ -188,8 +191,9 @@ export function WeekGrid({
                       key={e.id}
                       type="button"
                       onClick={onSelect ? () => onSelect(e) : undefined}
+                      {...peekHandlers(e, onPeek)}
                       className={cn(
-                        "mb-0.5 block w-full truncate rounded-xs border px-tight py-0.5 text-left text-[12px]",
+                        "mb-0.5 block w-full truncate rounded-sm border px-tight py-0.5 text-left text-[12px]",
                         TONE_CLASS[e.tone],
                       )}
                     >
@@ -236,10 +240,11 @@ export function WeekGrid({
             return (
               <div
                 key={isoDate(d)}
-                className={cn(
-                  "relative flex-1 border-r border-line last:border-r-0",
-                  today && "bg-ember/5",
-                )}
+                /* No tint on today's column any more. It was ember, and now
+                   so is every booked block — Wednesday's bookings were sinking
+                   into their own background. The header pill and the brand
+                   weekday above mark the day emphatically enough. */
+                className="relative flex-1 border-r border-line last:border-r-0"
               >
                 {hours.map((h) => (
                   <span
@@ -271,7 +276,7 @@ export function WeekGrid({
                   <button
                     type="button"
                     onClick={onPickDay ? () => onPickDay(d) : undefined}
-                    className="absolute z-10 overflow-hidden rounded-xs border border-strong bg-subtle px-1 text-left text-[12px] font-medium text-muted"
+                    className="absolute z-10 overflow-hidden rounded-sm border border-strong bg-subtle px-1 text-left text-[12px] font-medium text-muted"
                     style={{
                       top: `${((overflowTop - openMin) / span) * 100}%`,
                       height: `calc(${((overflowBottom - overflowTop) / span) * 100}% - 2px)`,
@@ -306,6 +311,7 @@ export function WeekGrid({
                       key={event.id}
                       type="button"
                       onClick={onSelect ? () => onSelect(event) : undefined}
+                    {...peekHandlers(event, onPeek)}
                       title={`${event.title} · ${hhmm(event.start)}–${hhmm(event.end)}`}
                       /* The visible text truncates at this density; the
                          accessible name never does. */
@@ -313,7 +319,7 @@ export function WeekGrid({
                         event.subtitle ? `, ${event.subtitle}` : ""
                       }`}
                       className={cn(
-                        "absolute overflow-hidden rounded-xs border px-1 py-0.5 text-left",
+                        "absolute overflow-hidden rounded-sm border px-1 py-0.5 text-left",
                         TONE_CLASS[event.tone],
                       )}
                       style={{
@@ -342,7 +348,7 @@ export function WeekGrid({
                         </span>
                       </span>
                       {roomForTwo && (
-                        <span className="block truncate text-[12px] leading-tight text-muted">
+                        <span className="block truncate text-[12px] leading-tight opacity-70">
                           {event.subtitle ?? hhmm(event.start)}
                         </span>
                       )}
@@ -454,7 +460,7 @@ function CompactWeek({
                 type="button"
                 onClick={onSelect ? () => onSelect(e) : undefined}
                 className={cn(
-                  "flex w-full items-start gap-comfortable rounded-xs border px-comfortable py-tight text-left",
+                  "flex w-full items-start gap-comfortable rounded-sm border px-comfortable py-tight text-left",
                   TONE_CLASS[e.tone],
                 )}
               >
@@ -472,7 +478,7 @@ function CompactWeek({
                     <span className="min-w-0 break-words">{e.title}</span>
                   </span>
                   {e.subtitle && (
-                    <span className="mt-0.5 block break-words text-[12px] leading-tight text-muted">
+                    <span className="mt-0.5 block break-words text-[12px] leading-tight opacity-70">
                       {e.subtitle}
                     </span>
                   )}

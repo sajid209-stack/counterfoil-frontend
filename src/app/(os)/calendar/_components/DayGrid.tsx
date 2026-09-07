@@ -8,6 +8,7 @@ import {
   hhmm,
   minutesOf,
   packLanes,
+  peekHandlers,
   sameDay,
   TONE_CLASS,
   type CalEvent,
@@ -52,6 +53,7 @@ export function DayGrid({
   openHour = 6,
   closeHour = 23,
   onSelect,
+  onPeek,
   emptyLabel,
   showEmptyLabel,
   hideEmptyLabel,
@@ -65,6 +67,7 @@ export function DayGrid({
   openHour?: number;
   closeHour?: number;
   onSelect?: (event: CalEvent) => void;
+  onPeek?: (event: CalEvent | null, anchor: DOMRect | null) => void;
   emptyLabel: string;
   showEmptyLabel: (count: number) => string;
   hideEmptyLabel: string;
@@ -119,6 +122,7 @@ export function DayGrid({
         nowMin={nowMin}
         now={now}
         onSelect={onSelect}
+        onPeek={onPeek}
         emptyLabel={emptyLabel}
       />
     );
@@ -156,6 +160,7 @@ export function DayGrid({
         nowMin={nowMin}
         now={now}
         onSelect={onSelect}
+        onPeek={onPeek}
       />
       <EmptyLaneToggle
         count={emptyLanes.length}
@@ -211,6 +216,7 @@ function DayTrack({
   nowMin,
   now,
   onSelect,
+  onPeek,
 }: {
   hours: number[];
   lanes: DayLane[];
@@ -224,6 +230,7 @@ function DayTrack({
   nowMin: number;
   now: Date;
   onSelect?: (event: CalEvent) => void;
+  onPeek?: (event: CalEvent | null, anchor: DOMRect | null) => void;
 }) {
   /* Open where the day happens rather than at its left edge. */
   const scroller = useRef<HTMLDivElement>(null);
@@ -321,12 +328,13 @@ function DayTrack({
                       key={event.id}
                       type="button"
                       onClick={onSelect ? () => onSelect(event) : undefined}
+                    {...peekHandlers(event, onPeek)}
                       title={`${event.title} · ${hhmm(event.start)}–${hhmm(event.end)}${event.subtitle ? ` · ${event.subtitle}` : ""}`}
                       aria-label={`${event.title}, ${hhmm(event.start)}–${hhmm(event.end)}${
                         event.subtitle ? `, ${event.subtitle}` : ""
                       }`}
                       className={cn(
-                        "absolute overflow-hidden rounded-xs border px-tight text-left transition-shadow duration-quick",
+                        "absolute overflow-hidden rounded-sm border px-tight text-left transition-shadow duration-quick",
                         TONE_CLASS[event.tone],
                         onSelect && "hover:shadow-sm",
                       )}
@@ -364,7 +372,7 @@ function DayTrack({
                           already says, and printing it stole the line from the
                           party size and the lane, which it does not. */}
                       {height > 28 && wide > 150 && event.subtitle && (
-                        <span className="block truncate text-[12px] leading-tight text-muted">
+                        <span className="block truncate text-[12px] leading-tight opacity-70">
                           {event.subtitle}
                         </span>
                       )}
@@ -390,6 +398,7 @@ function CompactDay({
   nowMin,
   now,
   onSelect,
+  onPeek,
   emptyLabel,
 }: {
   lanes: DayLane[];
@@ -400,6 +409,7 @@ function CompactDay({
   nowMin: number;
   now: Date;
   onSelect?: (event: CalEvent) => void;
+  onPeek?: (event: CalEvent | null, anchor: DOMRect | null) => void;
   emptyLabel: string;
 }) {
   const openMin = openHour * 60;
@@ -489,11 +499,12 @@ function CompactDay({
                     key={event.id}
                     type="button"
                     onClick={onSelect ? () => onSelect(event) : undefined}
+                    {...peekHandlers(event, onPeek)}
                     aria-label={`${event.title}, ${hhmm(event.start)}–${hhmm(event.end)}${
                       owner ? `, ${owner}` : ""
                     }`}
                     className={cn(
-                      "absolute overflow-hidden rounded-xs border px-tight py-0.5 text-left",
+                      "absolute overflow-hidden rounded-sm border px-tight py-0.5 text-left",
                       TONE_CLASS[event.tone],
                     )}
                     style={{
@@ -511,7 +522,7 @@ function CompactDay({
                       {event.title}
                     </span>
                     {tall > 30 && owner && (
-                      <span className="block truncate text-[12px] leading-tight text-muted">
+                      <span className="block truncate text-[12px] leading-tight opacity-70">
                         {owner}
                       </span>
                     )}

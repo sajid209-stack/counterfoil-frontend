@@ -432,6 +432,15 @@
      stay readable behind text in both modes. */
   --color-warning-wash: #f3e3c4;
   --color-danger-wash: #f3d4d0;
+
+  /* Calendar blocks are filled in their status colour rather than flagged with
+     a bar on one edge, so every tone needs a tint pale enough to read body text
+     on. Written out rather than taken as an alpha of the base colour: the
+     status colours are 700/800-level, and 10% of a dark green over paper is a
+     grey-green rather than a pastel. */
+  --color-ember-wash: #ffe4d6;
+  --color-success-wash: #d8efdf;
+  --color-muted-wash: #eae8e3;
 }
 
 /* Dark: tonal direction reverses — content lightens, surfaces deepen.
@@ -468,6 +477,13 @@
 
   --color-warning-wash: #4a3a1a;
   --color-danger-wash: #4a2724;
+
+  /* Dark keeps the same idea the other way up: a tint of the status colour
+     dropped into the card, not a pastel lifted onto it. A pastel here would
+     glow. */
+  --color-ember-wash: #4a2a17;
+  --color-success-wash: #17362a;
+  --color-muted-wash: #2b2a27;
 }
 .dark body { background: var(--color-surface); color: var(--color-fg); }
 
@@ -539,3 +555,11 @@
     radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.13), transparent) 100% 0 / 16px 100% no-repeat scroll;
 }
 
+
+/* The hover card over a calendar block. A card that simply appears reads as a
+   glitch; 120ms of rise is enough to say it belongs to the block under the
+   pointer. Guarded by motion-safe at the call site. */
+@keyframes peek-in {
+  from { opacity: 0; transform: translateY(4px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}

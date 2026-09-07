@@ -3,7 +3,16 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { hhmm, isoDate, monthMatrix, sameDay, TONE_CLASS, TONE_DOT, type CalEvent } from "./model";
+import {
+  hhmm,
+  isoDate,
+  monthMatrix,
+  peekHandlers,
+  sameDay,
+  TONE_CLASS,
+  TONE_DOT,
+  type CalEvent,
+} from "./model";
 
 /** How many chips fit in a cell before the rest collapse into "+N more". */
 const MAX_CHIPS = 3;
@@ -20,6 +29,7 @@ export function MonthGrid({
   weekdayLabels,
   moreLabel,
   onSelect,
+  onPeek,
   onPickDay,
   compact = false,
   dayHeading,
@@ -34,6 +44,7 @@ export function MonthGrid({
   weekdayLabels: string[];
   moreLabel: (count: number) => string;
   onSelect?: (event: CalEvent) => void;
+  onPeek?: (event: CalEvent | null, anchor: DOMRect | null) => void;
   onPickDay?: (date: Date) => void;
   /** Phone: cells carry dots, and the chosen day opens as a list underneath. */
   compact?: boolean;
@@ -150,8 +161,9 @@ export function MonthGrid({
                   <button
                     type="button"
                     onClick={onSelect ? () => onSelect(e) : undefined}
+                    {...peekHandlers(e, onPeek)}
                     className={cn(
-                      "flex w-full items-start gap-comfortable rounded-xs border px-comfortable py-tight text-left",
+                      "flex w-full items-start gap-comfortable rounded-sm border px-comfortable py-tight text-left",
                       TONE_CLASS[e.tone],
                     )}
                   >
@@ -228,6 +240,7 @@ export function MonthGrid({
                         key={e.id}
                         type="button"
                         onClick={onSelect ? () => onSelect(e) : undefined}
+                        {...peekHandlers(e, onPeek)}
                         title={`${e.title} · ${hhmm(e.start)}${e.subtitle ? ` · ${e.subtitle}` : ""}`}
                         /* The chip truncates at this density; the accessible
                            name does not, and clicking opens the full detail. */
@@ -235,7 +248,7 @@ export function MonthGrid({
                           e.subtitle ? `, ${e.subtitle}` : ""
                         }`}
                         className={cn(
-                          "flex w-full items-center gap-0.5 overflow-hidden rounded-xs border px-1 py-0.5 text-left text-[12px] leading-tight",
+                          "flex w-full items-center gap-0.5 overflow-hidden rounded-sm border px-1 py-0.5 text-left text-[12px] leading-tight",
                           TONE_CLASS[e.tone],
                         )}
                       >

@@ -3978,3 +3978,81 @@ about to take, labelled "To collect".
 problems**; `(go)/pos` is **identical before and after** (7 problems both sides,
 confirmed by stashing), so none of this touched its documented baseline. i18n
 parity 0 missing / 0 extra with the new keys in both locales.
+
+## The calendar, third pass — filled blocks, cards and a hover card (2026-09-08)
+
+Five reference shots and four asks: dashboard cards with the important numbers,
+full-colour blocks instead of a bar down one edge, a popup on hover, and a
+smoother surface generally.
+
+### Filled, not flagged
+
+The code argued against this in a comment — "the bar carries the status and the
+fill stays calm; a month of attended bookings tinted green is a wall of the
+least actionable thing on screen". The owner asked for the opposite and is
+right about the effect: a grid of white rectangles reads as a table, a grid of
+tinted ones reads as a schedule. The comment now records that the decision
+changed and why.
+
+New `--color-*-wash` tokens per tone in both themes, written out rather than
+taken as an alpha of the base colour — the status colours are 700/800-level and
+10% of a dark green over paper is a grey-green, not a pastel. Hatching survives
+on the two blocked tones as texture *over* the fill: it is the app's "you
+cannot have this" signal, used the same way on out-of-service lanes.
+
+**Colour still means status, not service.** In the references it means service
+(Yoga pink, Zumba yellow) with status as a separate dropdown — but here the
+five-state key *is* the filter, so a fill that disagreed with the legend would
+break the one control that explains the colours. Flagged for the owner as the
+alternative it is.
+
+### Two things the fill broke, caught by measuring
+
+- **Dark mode contrast fell to 4.1:1** on every block subtitle. `text-muted` is
+  tuned against the card, not against a tinted fill. Subtitles went back to a
+  dimmed inherit, which composites against whatever fill it is actually sitting
+  on: 6.2:1 dark, 6.3:1 light, and zero failures across both themes.
+- **Today's column tint was ember, and so is every booked block now**, so
+  Wednesday's bookings sank into their own background. The column tint is gone;
+  the header pill and brand weekday still mark the day.
+
+### Cards
+
+Four figures for the window on screen — bookings, attended, no-shows, held
+capacity — each against the previous equivalent window, so they move when you
+step a week rather than reporting a fixed "last 7 days" unrelated to where you
+navigated. Counted before the state toggles apply: switching "no-show" off is a
+way of looking at the grid, not a claim that there were none.
+
+The first build cost 144px of desktop and 280px of phone — **81% of a phone was
+chrome**. Rebuilt at two lines: the period line went because the toolbar states
+the range directly beneath it, and the comparison moved up beside the delta it
+qualifies. Phone gets one scrolling row rather than two rows of cards. Desktop
+36%, phone 58% — still more than the 26/47% before the cards, which is the
+honest price of having them.
+
+### The hover card
+
+Blocks are 53–165px wide, so most cannot say their own name. Clicking already
+opened the full panel; hover now answers the cheaper question without one.
+Placed beside the block, flipped when it would run off the right, clamped
+inside the window, and derived from props rather than held in state.
+
+**Pointer only.** `mouseenter` fires on tap, which would put a card under the
+finger at the same moment the tap opens the panel behind it. Verified on an
+emulated iPhone: tap gives `{peek: false, dialog: true}`.
+
+### Verified
+
+Contrast across every text node in the grid, both themes: zero below threshold.
+Peek: full name, status in words, range, day and party, nothing clipped, inside
+the viewport at both a middle and a right-edge block, clears on leave. Keyboard
+unchanged — Tab to a block, 2px ember ring, Enter opens, Escape closes. Filter
+empty-state notice still fires in all three views. `tsc`, `build` and `eslint`
+clean; i18n parity 0 / 0 across 30 namespaces.
+
+**Harness note:** the stat cards are `.card-surface` too, so every probe that
+said `querySelector(".card-surface")` silently began measuring a stat card
+instead of the grid — one of them reported "0 low-contrast" while measuring the
+wrong element entirely. All four now take the tallest card. A harness that
+quietly changes what it measures is worse than one that fails.
