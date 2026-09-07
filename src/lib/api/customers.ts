@@ -279,14 +279,54 @@ export const getCustomerStats = async (id: ID): Promise<ApiResult<CustomerStats>
 /** The list the Customers screen renders. The backend returns these totals on
  *  the list endpoint, so the screen must not compute them itself — it asks for
  *  rows and gets rows. */
+/** The stats are derived per row, so the resource cannot sort on them — by the
+ *  time it orders anything they do not exist yet. These are ordered here
+ *  instead, after they are attached. */
+const STAT_SORTS: Record<string, (a: CustomerWithStats, b: CustomerWithStats) => number> = {
+  spent: (a, b) => a.stats.spent - b.stats.spent,
+  orders: (a, b) => a.stats.orders - b.stats.orders,
+  visits: (a, b) => a.stats.visits - b.stats.visits,
+  noShows: (a, b) => a.stats.noShows - b.stats.noShows,
+  outstanding: (a, b) => a.stats.outstanding - b.stats.outstanding,
+  // Never seen sorts as "longest ago", which is where a lapsed customer
+  // belongs — not at the top next to yesterday's visitor.
+  lastSeen: (a, b) => (a.stats.lastSeen ?? "").localeCompare(b.stats.lastSeen ?? ""),
+};
+
 export async function listCustomerRows(
   params?: ListParams,
 ): Promise<ApiResult<ListResponse<CustomerWithStats>>> {
-  const res = await resource.list(params);
-  if (!res.ok) return res as ApiResult<ListResponse<CustomerWithStats>>;
+  const statSort = params?.sort ? STAT_SORTS[params.sort] : undefined;
+
+  if (!statSort) {
+    const res = await resource.list(params);
+    if (!res.ok) return res as ApiResult<ListResponse<CustomerWithStats>>;
+    return ok({
+      ...res.data,
+      data: res.data.data.map((c) => ({ ...c, stats: customerStats(c.id) })),
+    });
+  }
+
+  /* Sorting by a derived column: take the whole filtered set unpaged, attach
+     stats, order, and only then cut the page. Sorting the page instead of the
+     set would order twelve rows out of five hundred and call it a ranking —
+     the "top customers" question would be answered with whoever happened to be
+     on screen. A real backend does this in the query. */
+  const all = await resource.list({ ...params, page: 1, pageSize: Number.MAX_SAFE_INTEGER, sort: undefined });
+  if (!all.ok) return all as ApiResult<ListResponse<CustomerWithStats>>;
+  const rows = all.data.data.map((c) => ({ ...c, stats: customerStats(c.id) }));
+  rows.sort(params?.order === "desc" ? (a, b) => statSort(b, a) : statSort);
+
+  const page = params?.page ?? 1;
+  const pageSize = params?.pageSize ?? 20;
   return ok({
-    ...res.data,
-    data: res.data.data.map((c) => ({ ...c, stats: customerStats(c.id) })),
+    data: rows.slice((page - 1) * pageSize, page * pageSize),
+    page: {
+      page,
+      pageSize,
+      total: rows.length,
+      totalPages: Math.max(1, Math.ceil(rows.length / pageSize)),
+    },
   });
 }
 

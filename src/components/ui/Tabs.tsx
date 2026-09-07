@@ -47,12 +47,15 @@ export function Tabs({
               "-mb-px h-11 shrink-0 whitespace-nowrap border-b-2 px-comfortable text-sm transition-colors duration-quick md:h-10",
               active
                 ? "border-inverse font-medium text-fg"
-                : "border-transparent text-faint hover:text-fg",
+                // An unselected tab is a control you are meant to read and
+                // click, not a disabled one. `faint` is the disabled
+                // foreground and measured 1.87:1 here.
+                : "border-transparent text-muted hover:text-fg",
             )}
           >
             {it.label}
             {it.count != null && (
-              <span className="ml-inline font-mono text-[12px] text-faint">
+              <span className="ml-inline font-mono text-[12px] text-muted">
                 {it.count}
               </span>
             )}

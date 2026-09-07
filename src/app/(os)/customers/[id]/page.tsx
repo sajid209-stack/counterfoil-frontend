@@ -24,7 +24,9 @@ import {
   useToast,
   type Column,
 } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
+import { CustomerIdentity } from "../_components/CustomerIdentity";
 import {
   addCustomerNote,
   eraseCustomerData,
@@ -62,14 +64,14 @@ export default function CustomerDetailPage() {
   const [tab, setTab] = useState<Tab>("activity");
   const customerQ = useApiQuery(() => getCustomer(params.id), [params.id]);
   const statsQ = useApiQuery(() => getCustomerStats(params.id), [params.id]);
-  const ordersQ = useApiQuery(() => listOrders({ pageSize: 500 }), [params.id]);
+  const ordersQ = useApiQuery(
+    () => listOrders({ pageSize: 200, filters: { customerId: params.id }, sort: "createdAt", order: "desc" }),
+    [params.id],
+  );
 
   const customer = customerQ.data;
   const stats = statsQ.data;
-  const orders = useMemo(
-    () => (ordersQ.data?.data ?? []).filter((o) => o.customerId === params.id),
-    [ordersQ.data, params.id],
-  );
+  const orders = useMemo(() => ordersQ.data?.data ?? [], [ordersQ.data]);
 
   const reloadAll = () => {
     customerQ.reload();
@@ -122,7 +124,10 @@ export default function CustomerDetailPage() {
   return (
     <PageShell
       title={customer.name}
-      description={[customer.phone, customer.email].filter(Boolean).join(" · ") || t("noContact")}
+      /* The identity card below says all of this properly, with the contact
+         details as links and the tags the record actually carries. Repeating
+         it as a subtitle string was the page's only statement of who this is. */
+      description={t("description")}
       actions={
         <div className="flex flex-wrap items-center gap-tight">
           <Button
@@ -156,26 +161,51 @@ export default function CustomerDetailPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-tight sm:grid-cols-3 lg:grid-cols-6">
-          <Stat label={t("statSpent")} value={formatMoney(stats.spent)} />
-          <Stat label={t("statOrders")} value={String(stats.orders)} />
-          <Stat label={t("statVisits")} value={String(stats.visits)} />
+        <CustomerIdentity
+          customer={customer}
+          since={
+            stats.lastSeen
+              ? t("sinceAndSeen", {
+                  since: formatDate(customer.createdAt),
+                  last: formatDate(stats.lastSeen),
+                })
+              : t("customerSince", { when: formatDate(customer.createdAt) })
+          }
+          labels={{
+            noContact: t("noContact"),
+            flagged: t("flaggedLabel"),
+            archived: t("archivedLabel"),
+          }}
+        />
+
+        {/* Six figures at equal weight, four of them usually zero, made the
+            page state "nothing happened" as loudly as it stated the money. The
+            two that carry the relationship lead; a count of nothing goes quiet
+            rather than shouting. */}
+        {/* Six across at `lg` gave each card 122px against a 240px sidebar, and a
+            five-figure sum needs about 134. Three until there is real room. */}
+        <div className="grid grid-cols-2 gap-tight sm:grid-cols-3 xl:grid-cols-6">
+          <Stat label={t("statSpent")} value={formatMoney(stats.spent)} lead />
+          <Stat label={t("statOrders")} value={String(stats.orders)} lead={stats.orders > 0} />
+          <Stat label={t("statVisits")} value={String(stats.visits)} muted={stats.visits === 0} />
           <Stat
             label={t("statNoShows")}
             value={String(stats.noShows)}
             tone={stats.noShows > 0 ? "warning" : undefined}
+            muted={stats.noShows === 0}
           />
           <Stat
             label={t("statOutstanding")}
             value={formatMoney(stats.outstanding)}
             tone={stats.outstanding > 0 ? "warning" : undefined}
+            muted={stats.outstanding === 0}
           />
-          <Stat label={t("statUpcoming")} value={String(stats.upcoming)} />
+          <Stat label={t("statUpcoming")} value={String(stats.upcoming)} muted={stats.upcoming === 0} />
         </div>
 
         <Tabs items={tabs} value={tab} onChange={(v) => setTab(v as Tab)} />
 
-        {tab === "activity" && <ActivityTab orders={orders} loading={ordersQ.loading} stats={stats} />}
+        {tab === "activity" && <ActivityTab orders={orders} loading={ordersQ.loading} />}
         {tab === "membership" && (FEATURES.memberships || FEATURES.loyalty) && (
           <MembershipTab
             key={`${memberships.length}-${points.balance}`}
@@ -199,18 +229,28 @@ function Stat({
   label,
   value,
   tone,
+  lead = false,
+  muted = false,
 }: {
   label: string;
   value: string;
   tone?: "warning";
+  /** The figures that describe the relationship rather than qualify it. */
+  lead?: boolean;
+  /** A count of nothing, stated without emphasis. */
+  muted?: boolean;
 }) {
   return (
-    <div className="card-surface p-comfortable">
-      <p className="type-label text-[12px] text-muted">{label}</p>
+    <div className="card-surface px-comfortable py-tight">
+      <p className="type-label truncate text-[12px] text-muted">{label}</p>
       <p
-        className={`mt-inline font-mono text-lg tabular-nums ${
-          tone === "warning" ? "text-warning" : "text-fg"
-        }`}
+        className={cn(
+          // Was text-lg for everything, which clipped a five-figure sum into
+          // its own card at tablet width.
+          "font-mono tabular-nums",
+          lead ? "text-lg" : "text-base",
+          tone === "warning" ? "text-warning" : muted ? "text-muted" : "text-fg",
+        )}
       >
         {value}
       </p>
@@ -219,15 +259,9 @@ function Stat({
 }
 
 // ── activity ────────────────────────────────────────────────────────────────
-function ActivityTab({
-  orders,
-  loading,
-  stats,
-}: {
-  orders: Order[];
-  loading: boolean;
-  stats: { firstSeen: string | null; lastSeen: string | null };
-}) {
+/* The "first seen / last seen" line that used to sit here now lives on the
+   identity card, next to the tenure it belongs with. */
+function ActivityTab({ orders, loading }: { orders: Order[]; loading: boolean }) {
   const t = useTranslations("customers");
   const router = useRouter();
 
@@ -273,14 +307,6 @@ function ActivityTab({
 
   return (
     <div className="flex flex-col gap-section">
-      {(stats.firstSeen || stats.lastSeen) && (
-        <p className="text-[13px] text-muted">
-          {t("seenBetween", {
-            first: stats.firstSeen ? formatDate(stats.firstSeen) : "—",
-            last: stats.lastSeen ? formatDate(stats.lastSeen) : "—",
-          })}
-        </p>
-      )}
       <DataTable
         columns={columns}
         rows={orders}

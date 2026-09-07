@@ -4276,3 +4276,81 @@ agree (pending → Collected ৳0.00, Outstanding ৳33,465 over 7). Ten other t
 re-checked on the production build: no overflow, no clipping, no console
 errors. Chrome 38% → 35% desktop, 45% → 42% tablet with the caveat line gone.
 `tsc`, `build` clean; i18n 0 / 0.
+
+## Customers — a list that ranks, and a record with a face (2026-09-08)
+
+### The list could not answer the question it exists to answer
+
+**Nothing was sortable.** Not spend, not orders, not last visit. A customer
+list is opened to find out who matters, and this one answered alphabetically.
+The top customer — Sabbir Alam at ৳70,426 — was not on the first page.
+
+The obstacle was real rather than an oversight: `listCustomerRows` calls
+`resource.list` and *then* attaches stats, so by the time the resource orders
+anything the numbers do not exist. Sorting a derived column now takes the whole
+filtered set unpaged, attaches stats, orders, and only then cuts the page.
+Sorting the page instead would rank twelve rows out of five hundred and call it
+a ranking. Default is **spend, descending**.
+
+Also: `pageSize: 500` with every row drawn. Paginated at 25.
+
+### Consent was status by colour alone
+
+Two identical 14px glyphs, grey against green. A granted channel now carries a
+tinted chip with a word — `Email`, `SMS` — and a withheld one is simply absent,
+which is the plainest difference there is. Withheld reads `None`.
+
+### What the group is worth
+
+Four figures over everything the filters match, including **Reachable — "5 of
+21"**. That is the number that decides whether a campaign is worth building,
+and it was nowhere. Export was quietly wrong in the same way: it wrote the
+*page*, not the group. Both now read the full set.
+
+### The record had no face
+
+The detail page opened straight onto six equal figures, four of them usually
+zero. The name was the page title, the contact a joined subtitle string, and
+**the tags the list shows on every row were nowhere on the record itself** —
+which is backwards: a list abbreviates, a record is where the whole thing
+lives.
+
+`CustomerIdentity`: initials mark, flag and lifecycle and tags, tenure and last
+seen, and the phone and e-mail as `tel:` / `mailto:` links. Reading a number
+off a CRM and typing it into a phone by hand is not a workflow to hand anyone
+twice.
+
+The name is deliberately **not** repeated in the card — the page heading two
+lines above is already the name.
+
+The six figures no longer carry equal weight: spend and orders lead, a count of
+nothing goes quiet. `lg:grid-cols-6` gave each card 122px against a 240px
+sidebar and a five-figure sum needs 134, so six-across waits for `xl`. The
+"first seen / last seen" line moved onto the record beside the tenure it
+duplicated.
+
+The page also pulled **500 orders and filtered them in the component**;
+`customerId` is a filter now, and the query asks for what it wants, newest
+first.
+
+### Shared, at the third use
+
+`StatStrip` — the calendar and the orders list had each grown their own copy of
+this card row. A third would have been the point they started drifting rather
+than merely duplicating. Orders migrated to it; its bespoke copy is deleted.
+
+### One more `text-faint`
+
+`Tabs` used the disabled-foreground token for **unselected tab labels and their
+counts** — 1.87:1, on every tabbed page in the app. An unselected tab is a
+control you are meant to read and click. That is the fifth instance of this
+same mistake found by measuring rather than looking.
+
+### Verified
+
+Sorting: default spend-descending is monotonic, ascending is monotonic and puts
+never-bought customers last, name sort is A–Z, count reads 1–21 of 21. Contrast
+across both pages, both themes: **zero**. Ten other tables unaffected. Orders
+re-verified after the `StatStrip` migration — all four figures, filters still
+agreeing. `tsc`, `build`, `eslint` clean; i18n 0 / 0 after removing three keys
+these changes orphaned.

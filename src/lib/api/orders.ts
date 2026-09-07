@@ -12,6 +12,9 @@ const resource = createResource<Order>("orders", "Order", {
     if (f.status && o.status !== f.status) return false;
     if (f.channel && o.channel !== f.channel) return false;
     if (f.locationId && o.locationId !== f.locationId) return false;
+    // The customer page was pulling five hundred orders and filtering them
+    // in the component; the question belongs in the query.
+    if (f.customerId && o.customerId !== f.customerId) return false;
     // "When" is the question an orders list is asked most often, and sorting
     // by date cannot answer it — you can put today at the top but you cannot
     // ask for only today. Half-open [from, to): a day boundary belongs to one

@@ -8,6 +8,7 @@ import {
   DataTable,
   EmptyState,
   PageShell,
+  StatStrip,
   StatusPill,
   type Column,
 } from "@/components/ui";
@@ -25,7 +26,6 @@ import { formatDateTime, formatMoney, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { demoNow } from "@/lib/schedule";
-import { OrdersSummary } from "./_components/OrdersSummary";
 
 export default function OrdersPage() {
   return (
@@ -200,20 +200,30 @@ function OrdersPageInner() {
   return (
     <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
-        <OrdersSummary
-          collected={summary.collected}
-          orders={summary.orders}
-          average={summary.average}
-          outstanding={summary.outstanding}
+        <StatStrip
           compact={compact}
           loading={summaryQ.loading}
-          labels={{
-            collected: t("statCollected"),
-            orders: t("statOrders"),
-            average: t("statAverage"),
-            outstanding: t("statOutstanding"),
-            excluded: summary.voided > 0 ? t("statExcluded", { count: summary.voided }) : null,
-          }}
+          items={[
+            {
+              key: "collected",
+              label: t("statCollected"),
+              value: formatMoney(summary.collected),
+              // Cancelled and refunded orders are excluded from the money.
+              note: summary.voided > 0 ? t("statExcluded", { count: summary.voided }) : null,
+            },
+            { key: "orders", label: t("statOrders"), value: String(summary.orders) },
+            {
+              key: "average",
+              label: t("statAverage"),
+              value: summary.orders === 0 ? "—" : formatMoney(summary.average),
+            },
+            {
+              key: "outstanding",
+              label: t("statOutstanding"),
+              value: formatMoney(summary.outstanding),
+              tone: summary.outstanding > 0 ? "warning" : undefined,
+            },
+          ]}
         />
 
         <DataTable

@@ -11,6 +11,8 @@ export { PageShell } from "./PageShell";
 export { EmptyState } from "./EmptyState";
 export { Modal, ConfirmDialog } from "./Modal";
 export { ToastProvider, useToast } from "./Toast";
+export { StatStrip } from "./StatStrip";
+export type { StatItem } from "./StatStrip";
 export { Tabs } from "./Tabs";
 export type { TabItem } from "./Tabs";
 export { DataTable } from "./DataTable";
