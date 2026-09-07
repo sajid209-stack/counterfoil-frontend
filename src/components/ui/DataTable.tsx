@@ -24,6 +24,20 @@ export interface DataTableProps<T> {
   /** search input + filter controls live here; the table stays domain-agnostic */
   toolbar?: React.ReactNode;
   emptyState?: React.ReactNode;
+  /** A purpose-built phone card for this table's row. The generic one
+   *  below reads every column as a LABEL/value pair and wraps them, which
+   *  is fine for a settings list and poor for anything with a natural
+   *  shape — an order wants its reference, who it was for, when, and how
+   *  much, in that order and not as five labelled pairs. Opt-in: pages
+   *  that do not supply one keep the generic layout. */
+  renderCard?: (row: T) => React.ReactNode;
+  /** Below this the table scrolls sideways instead of squeezing its
+   *  columns. Opt-in, because a three-column table has nothing to gain
+   *  from it — but a seven-column one squeezed to 766px wraps a reference
+   *  mid-identifier and clips the last column off the edge. The wrapper
+   *  already carries `overflow-auto` and the scroll-shadow affordance;
+   *  this is what finally uses them. */
+  minWidth?: string;
   pagination?: {
     page: number;
     pageSize: number;
@@ -46,6 +60,8 @@ export function DataTable<T>({
   onSortChange,
   toolbar,
   emptyState,
+  renderCard,
+  minWidth,
   pagination,
   skeletonRows = 6,
 }: DataTableProps<T>) {
@@ -75,6 +91,10 @@ export function DataTable<T>({
               onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
               className={cn("card-surface p-comfortable transition-transform duration-quick", onRowClick && "cursor-pointer active:bg-subtle hover:-translate-y-0.5")}
             >
+              {renderCard ? (
+                renderCard(row)
+              ) : (
+                <>
               <div className="break-words text-sm font-medium">
                 {columns[0].render ? columns[0].render(row) : String((row as Record<string, unknown>)[columns[0].key] ?? "")}
               </div>
@@ -87,20 +107,25 @@ export function DataTable<T>({
                   // it silently: the value is on screen but unreadable, and
                   // nothing says so.
                   <div key={col.key} className="flex min-w-0 max-w-full items-baseline gap-inline">
-                    <dt className="type-label shrink-0 text-[12px] uppercase text-faint">{col.header}</dt>
+                    <dt className="type-label shrink-0 text-[12px] uppercase text-muted">{col.header}</dt>
                     <dd className={cn("min-w-0 break-words text-[13px]", col.align === "right" && "font-mono tabular-nums")}>
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "")}
                     </dd>
                   </div>
                 ))}
               </dl>
+                </>
+              )}
             </div>
           ))}
       </div>
 
       <div className="hidden max-h-[70vh] overflow-auto card-surface scroll-x-hint md:block">
-        <table className="w-full border-collapse text-sm">
-          <thead className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_var(--color-neutral-200)]">
+        <table className="w-full border-collapse text-sm" style={minWidth ? { minWidth } : undefined}>
+                  {/* `line`, not `neutral-200`: the raw primitive is a palette entry
+            that is never redefined for dark, so this rule painted a light
+            #e2ded5 hairline across the top of every dark table. */}
+        <thead className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_var(--color-line)]">
             <tr>
               {columns.map((col) => {
                 const activeSort = sort?.key === col.key;
@@ -217,7 +242,7 @@ function Pagination({
 
   return (
     <div className="flex items-center justify-between">
-      <p className="font-mono text-[12px] text-faint">
+      <p className="font-mono text-[12px] text-muted">
         {loading ? "…" : `${from}–${to} of ${total}`}
       </p>
       <div className="flex items-center gap-tight">

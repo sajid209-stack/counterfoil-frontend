@@ -81,3 +81,29 @@ export function formatDateTime(iso: string | null | undefined): string {
     hour12: false,
   }).format(d);
 }
+
+/**
+ * "12m ago", "3h ago", "2d ago", then the date.
+ *
+ * An orders list is read for recency before it is read for anything else, and
+ * "29 Jul, 11:05" makes you do the subtraction yourself. Past about a week the
+ * relative form stops helping — "23d ago" is not a date anyone can place — so
+ * it hands back to the absolute one.
+ *
+ * `now` is a parameter rather than `Date.now()` so the demo clock and the
+ * tests can both say what time it is.
+ */
+export function formatRelative(iso: string | null | undefined, now: Date): string {
+  if (!iso) return "—";
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return "—";
+  const mins = Math.round((now.getTime() - then.getTime()) / 60000);
+  if (mins < 0) return formatDateTime(iso);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days <= 7) return `${days}d ago`;
+  return formatDateTime(iso);
+}

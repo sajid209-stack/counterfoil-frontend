@@ -12,6 +12,12 @@ const resource = createResource<Order>("orders", "Order", {
     if (f.status && o.status !== f.status) return false;
     if (f.channel && o.channel !== f.channel) return false;
     if (f.locationId && o.locationId !== f.locationId) return false;
+    // "When" is the question an orders list is asked most often, and sorting
+    // by date cannot answer it — you can put today at the top but you cannot
+    // ask for only today. Half-open [from, to): a day boundary belongs to one
+    // side or the other, never to both.
+    if (typeof f.from === "string" && o.createdAt < f.from) return false;
+    if (typeof f.to === "string" && o.createdAt >= f.to) return false;
     return true;
   },
   sort: {
@@ -37,6 +43,24 @@ export function findOrderByReference(ref: string): Promise<ApiResult<Order>> {
   const hit = all.find((o) => o.reference.toLowerCase() === q) ?? all.find((o) => q.length >= 3 && o.reference.toLowerCase().includes(q));
   return resource.get(hit?.id ?? "__no_order__");
 }
+
+/**
+ * What has actually been taken against an order, and what is still owed.
+ *
+ * Refunds land as negative payments, so this is already net of them — except
+ * for a full refund taken through `refundOrder` below, which only flips the
+ * status. Anything summing money across orders must therefore exclude
+ * `refunded` and `cancelled` rather than trusting the payments alone.
+ *
+ * Extracted because the order detail page was recomputing this expression in
+ * five places and `addOrderPayment` in a sixth.
+ */
+export const orderPaid = (o: Order): Minor => o.payments.reduce((s, p) => s + p.amount, 0);
+export const orderOutstanding = (o: Order): Minor => Math.max(0, o.total - orderPaid(o));
+
+/** Statuses whose money is no longer the venue's. */
+export const isVoidedOrder = (o: Order): boolean =>
+  o.status === "cancelled" || o.status === "refunded";
 
 /** Full refund — flips status; the real endpoint would also reverse payments. */
 export const refundOrder = (id: string): Promise<ApiResult<Order>> =>

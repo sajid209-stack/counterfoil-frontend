@@ -8,7 +8,7 @@
   "colItems": "আইটেম",
   "colTotal": "মোট",
   "colStatus": "স্ট্যাটাস",
-  "searchPlaceholder": "রেফারেন্স দিয়ে খুঁজুন…",
+  "searchPlaceholder": "রেফারেন্স বা গ্রাহক খুঁজুন…",
   "allStatuses": "সব স্ট্যাটাস",
   "allChannels": "সব চ্যানেল",
   "channelCounter": "কাউন্টার",
@@ -95,5 +95,18 @@
   "unlockReason": "কেন আনলক করছেন?",
   "unlockReasonHelp": "আবশ্যক — কে কেন লক সরিয়েছেন তা রেকর্ডে থাকতে হবে।",
   "locked": "রিজার্ভেশন লক হয়েছে।",
-  "unlocked": "রিজার্ভেশন আনলক হয়েছে।"
+  "unlocked": "রিজার্ভেশন আনলক হয়েছে।",
+  "colCustomer": "গ্রাহক",
+  "walkIn": "ওয়াক-ইন",
+  "dueLabel": "{amount} বাকি",
+  "statCollected": "সংগৃহীত",
+  "statOrders": "অর্ডার",
+  "statAverage": "গড় অর্ডার",
+  "statOutstanding": "বকেয়া",
+  "allRanges": "যেকোনো তারিখ",
+  "rangeToday": "আজ",
+  "range7d": "গত ৭ দিন",
+  "range30d": "গত ৩০ দিন",
+  "statExcluded": "{count}টি বাতিল / ফেরত বাদে",
+  "itemCount": "{count}টি আইটেম"
 }

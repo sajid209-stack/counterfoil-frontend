@@ -162,7 +162,10 @@ export function OsShell({ children }: { children: React.ReactNode }) {
                 placeholder={t("search")}
                 className="min-w-0 flex-1 bg-transparent text-fg outline-none placeholder:text-faint"
               />
-              <kbd className="rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-[12px] text-faint">⌘K</kbd>
+              {/* `muted`, not `faint`: faint is the disabled-foreground token and this
+                  is a live hint on a filled chip — it measured 1.77:1 on every OS
+                  page. */}
+              <kbd className="rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-[12px] text-muted">⌘K</kbd>
             </div>
             <LocaleToggle />
             <ModeButton />

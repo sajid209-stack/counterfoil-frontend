@@ -8,7 +8,7 @@
   "colItems": "Items",
   "colTotal": "Total",
   "colStatus": "Status",
-  "searchPlaceholder": "Search by reference…",
+  "searchPlaceholder": "Search reference or customer…",
   "allStatuses": "All statuses",
   "allChannels": "All channels",
   "channelCounter": "Counter",
@@ -95,5 +95,18 @@
   "unlockReason": "Why are you unlocking it?",
   "unlockReasonHelp": "Required — the record has to say who overrode the lock and why.",
   "locked": "Reservation locked.",
-  "unlocked": "Reservation unlocked."
+  "unlocked": "Reservation unlocked.",
+  "colCustomer": "Customer",
+  "walkIn": "Walk-in",
+  "dueLabel": "{amount} due",
+  "statCollected": "Collected",
+  "statOrders": "Orders",
+  "statAverage": "Average order",
+  "statOutstanding": "Outstanding",
+  "allRanges": "Any date",
+  "rangeToday": "Today",
+  "range7d": "Last 7 days",
+  "range30d": "Last 30 days",
+  "statExcluded": "excl. {count} cancelled / refunded",
+  "itemCount": "{count, plural, one {# item} other {# items}}"
 }

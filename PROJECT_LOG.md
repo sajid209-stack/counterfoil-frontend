@@ -4148,3 +4148,72 @@ does not change, so a scroll does not re-render the grid on every frame.
 Contrast unchanged: one finding per theme, the declared white-on-ember badge at
 3.50:1. Peek, keyboard and the empty-state notice all unchanged. `tsc`, `build`
 and `eslint` clean; i18n 0 / 0.
+
+## Orders — the list learns who bought, and what it is worth (2026-09-08)
+
+Measured first. The table was not broken: no clipping, no overflow, twelve rows
+in view, 24% chrome. The problems were informational, which is a harder kind to
+see.
+
+### The column that was missing
+
+Every order carries `customerName`, and `listOrders` has always **searched**
+it — the table just never drew it. So an orders list read as a column of
+receipt numbers, and the only way to find Anika's sale was to know its
+reference. The placeholder said "Search by reference…", which hid the other
+half of a feature that already worked.
+
+Customer is now the second column, and the placeholder names both things the
+API matches.
+
+### What the page is worth
+
+151 orders and not one figure of money. Four cards now state the filtered set:
+**collected, orders, average, outstanding** — computed over everything the
+filters match rather than the twelve rows on screen, because "pending" is worth
+asking about precisely when you want the total of all of it.
+
+Cancelled and refunded are excluded from the money, and the caveat sits inside
+the Collected card rather than as a sentence under the row, where it cost a
+line and pointed at nothing. Proof it agrees with itself: filter to *pending*
+and the cards read **Collected ৳0.00, Outstanding ৳33,465** across 7 orders.
+
+`orderPaid` / `orderOutstanding` / `isVoidedOrder` moved into `api/orders` —
+the detail page was recomputing `total − sum(payments)` in five places and
+`addOrderPayment` in a sixth.
+
+### Three smaller ones
+
+- **A date range.** Sorting by date can put today at the top but cannot ask for
+  only today. Half-open `[from, to)`, so a day boundary belongs to one side.
+- **Balance due on the row.** A partial sale showing only its total hides the
+  number somebody has to go and collect.
+- **Relative dates** — "55m ago", "3h ago", handing back to the absolute form
+  after a week, with the exact stamp on hover.
+
+### DataTable, carefully
+
+It is shared by **17 pages**, so both additions are opt-in and default to the
+old behaviour: `minWidth` (the wrapper already carried `overflow-auto` and a
+scroll-shadow that nothing used) and `renderCard` for a purpose-built phone
+card. Ten other tables re-checked afterwards: no overflow, no clipping, no
+console errors.
+
+Two contrast fixes there are not opt-in because they are strictly right:
+the sticky header rule used `--color-neutral-200`, a raw palette entry **never
+redefined for dark**, so every dark table had a light `#e2ded5` hairline across
+its top; and the row count and card labels used `faint`, the disabled token.
+
+### One found by the audit, outside the page
+
+`OsShell`'s `⌘K` chip was `text-faint` at **1.77:1** — on every OS page, and
+pre-existing. One line.
+
+### Verified
+
+Contrast across the whole page, both themes: **zero**. Filters and summary
+agree (all 151 → today 6 → pending 7 with zero collected). Search "Ayesha"
+returns 11 rows whose customer column all read Ayesha Siddika. Tablet rows went
+97px → 54px once the reference stopped wrapping mid-identifier and long names
+truncated instead of stacking four lines. `tsc`, `build` clean; lint unchanged
+from baseline (32 repo-wide, none mine); i18n 0 / 0.
