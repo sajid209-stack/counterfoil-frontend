@@ -13,16 +13,20 @@
 
 import {
   applyResourceRate,
+  firstFreeResource,
   freeGuides,
   getDailyRemaining,
   getResourceMatrix,
   getSlots,
   isOpenOn,
+  isOwnerFree,
+  isResourceFreeFor,
   type Product,
   type Resource,
   type Staff,
 } from "@/lib/api";
 import { resolveProductPrice } from "@/lib/pricing";
+import { durationOptions, productDurationPrice } from "@/lib/duration";
 import {
   DEMO_TODAY,
   isFlexibleResource,
@@ -31,6 +35,9 @@ import {
   isResourceType,
   needsSchedule,
   slotISO,
+  slotTimesOn,
+  toMinutes,
+  toTime,
 } from "@/lib/schedule";
 import type { SaleItem } from "./saleMath";
 
@@ -40,17 +47,25 @@ import type { SaleItem } from "./saleMath";
  *  a selection screen that silently omits the one question a booking type is
  *  run by would sell the wrong thing. The rest arrive in the next pass. */
 export type Pattern =
-  | "tiered"       // open entry, date pass, daily cap — quantities, maybe a date
+  | "tiered"       // open entry, date pass, daily cap, credit packs — quantities
   | "sessions"     // fixed departures and shows, optionally with a guide
   | "resourceSlot" // fields, courts, lanes on the hour
+  | "flexible"     // a lane by the hour — the duration engine
+  | "provider"     // a therapist, a stylist — an appointment with a person
+  | "course"       // a fixed series of dates; the only choice left is places
+  | "sectioned"    // stalls and balcony — priced blocks, not a seat map
+  | "seats"        // a named seat out of a layout
   | "unsupported";
 
 export function patternOf(product: Product): Pattern {
   const bt = product.bookingType;
-  if (product.layoutId) return "unsupported";        // seat map
-  if ((product.sections?.length ?? 0) > 0) return "unsupported";
-  if (bt === "BT-10" || bt === "BT-12" || bt === "BT-13") return "unsupported";
-  if (isFlexibleResource(bt)) return "unsupported";  // duration engine
+  // A layout wins over sections: a room with a seat map sells the SEAT, and
+  // its sections are then only how those seats are priced.
+  if (product.layoutId) return "seats";
+  if ((product.sections?.length ?? 0) > 0) return "sectioned";
+  if (bt === "BT-10") return "provider";
+  if (bt === "BT-13") return "course";
+  if (isFlexibleResource(bt)) return "flexible";
   if (isResourceType(bt)) return "resourceSlot";
   // A day-capped booking needs a schedule (to know which days it runs) but has
   // no sessions to choose between — the day's allowance IS the capacity. It
@@ -71,6 +86,14 @@ export interface Draft {
   qty: Record<string, number>;
   /** BT-02 sells a pass in lengths. */
   validityId?: string;
+  /** BT-05: how long the lane is booked for. */
+  durationMinutes?: number;
+  /** BT-10: who takes the appointment. Undefined means "first available". */
+  providerId?: string;
+  /** BT-07: the seats picked, carried with the prices they were picked at.
+   *  The seat map is fetched asynchronously by the UI, so the prices come
+   *  down here rather than being looked up again in a pure resolver. */
+  seats?: { label: string; categoryUid: string; categoryName: string; price: number }[];
 }
 
 /** The first day this product actually runs.
@@ -99,11 +122,15 @@ export function openDates(product: Product, count = 5, from = DEMO_TODAY): strin
 
 export function newDraft(product: Product): Draft {
   const validity = product.bookingType === "BT-02" ? product.validityOptions?.[0]?.id : undefined;
+  const pattern = patternOf(product);
   return {
     productId: product.id,
     date: firstOpenDate(product),
     qty: {},
     validityId: validity,
+    // The shortest sellable span is the default because it is the cheapest and
+    // the commonest, not because it is first in the array.
+    durationMinutes: pattern === "flexible" ? flexDurations(product)[0] : undefined,
   };
 }
 
@@ -122,6 +149,69 @@ export function draftFrom(product: Product, item: SaleItem): Draft {
   };
 }
 
+/** Providers without a configured schedule sell appointments on these hours —
+ *  the same fallback the v1 sheet uses, so a spa configured either way offers
+ *  the same times on both tills. */
+const PROVIDER_DAY = {
+  slotMinutes: 60, sessionMinutes: 60, startTime: "10:00", endTime: "19:00",
+  capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6],
+  guideIds: [], exceptions: [],
+};
+
+/** How long one appointment runs. */
+export const providerMinutes = (product: Product) =>
+  product.schedule?.sessionMinutes || product.schedule?.slotMinutes || 60;
+
+/** The appointment times a provider product offers on a date. */
+export const providerTimes = (product: Product, date: string) =>
+  slotTimesOn(product.schedule ?? PROVIDER_DAY, date);
+
+/** Who is actually free at a time, cheapest premium first — so "first
+ *  available" costs the customer the least rather than whoever sorts first. */
+export function freeProvidersAt(product: Product, date: string, time: string): string[] {
+  const mins = providerMinutes(product);
+  return (product.providerIds ?? [])
+    .filter((pid) => isOwnerFree(pid, date, time, mins))
+    .sort((a, b) => (product.providerPremiums?.[a] ?? 0) - (product.providerPremiums?.[b] ?? 0));
+}
+
+/** The lane hours a flexible product can start on. */
+export const flexTimes = (product: Product, date: string) =>
+  slotTimesOn(
+    product.schedule ?? { ...PROVIDER_DAY, startTime: "06:00", endTime: "22:00" },
+    date,
+  );
+
+/** Every duration this product sells, from its engine config. */
+export const flexDurations = (product: Product) =>
+  product.durationConfig ? durationOptions(product.durationConfig) : [60];
+
+/** Why a start cannot be taken, or null when it can. The words are the
+ *  caller's; this decides WHICH refusal applies. */
+export function flexStartBlocked(
+  product: Product,
+  date: string,
+  time: string,
+  minutes: number,
+  resourceId: string | undefined,
+  nowMinutes: number,
+): "past" | "closes" | "taken" | null {
+  const cfg = product.durationConfig;
+  const sch = product.schedule;
+  const buffer = product.bufferMinutes ?? 0;
+  const override = sch?.dayOverrides?.[new Date(`${date}T12:00:00Z`).getUTCDay()];
+  const closeMin = sch
+    ? toMinutes(override?.endTime ?? sch.endTime) + (sch.sessionMinutes || 60)
+    : Infinity;
+  const start = toMinutes(time);
+  if (date === DEMO_TODAY && start < nowMinutes + (cfg?.leadTimeMinutes ?? 0)) return "past";
+  if ((cfg?.mustEndByClose ?? true) && start + minutes > closeMin) return "closes";
+  const free = resourceId
+    ? isResourceFreeFor(resourceId, date, time, minutes, buffer)
+    : !!firstFreeResource(product, date, time, minutes);
+  return free ? null : "taken";
+}
+
 export const activeTiersOf = (product: Product) => product.tiers.filter((t) => t.active);
 
 export const ticketCount = (draft: Draft) =>
@@ -137,7 +227,10 @@ export interface Resolved {
   /** Null until the draft answers every question this pattern asks. */
   item: SaleItem | null;
   /** What is still to decide, as a step key the page turns into a sentence. */
-  missing: "date" | "time" | "resource" | "guide" | "tickets" | "unsupported" | null;
+  missing:
+    | "date" | "time" | "resource" | "guide" | "tickets"
+    | "duration" | "provider" | "seats" | "unsupported"
+    | null;
   /** What the block is worth right now, complete or not. */
   amount: number;
 }
@@ -192,13 +285,85 @@ export function resolveDraft(
     };
   }
 
-  // Both remaining patterns end in quantities; sessions ask when first.
-  const priced = tiers.map((t) => ({
-    id: t.id,
-    name: t.name,
+  /* ── A lane by the hour (BT-05) ────────────────────────────────────────
+     The duration engine prices the span: time bands, per-resource rates and
+     deal durations all resolve inside `productDurationPrice`, so this asks
+     for three answers and lets the engine do the arithmetic. */
+  if (pattern === "flexible") {
+    const minutes = draft.durationMinutes ?? flexDurations(product)[0];
+    if (!draft.slotTime) return { item: null, missing: "time", amount: 0 };
+    // "Any" lane resolves to the first free one at resolve time, so the
+    // summary can name the lane the sale will actually take rather than
+    // promising one and assigning another.
+    const laneId = draft.resourceId ?? firstFreeResource(product, draft.date, draft.slotTime, minutes)?.id;
+    if (!laneId) return { item: null, missing: "resource", amount: 0 };
+    const lane = getResourceMatrix(product, draft.date).find((r) => r.resource.id === laneId)?.resource;
+    const price = applyResourceRate(
+      productDurationPrice(product, draft.date, draft.slotTime, minutes, basePriceOf(product)),
+      minutes,
+      lane,
+    );
+    return {
+      amount: price,
+      missing: null,
+      item: {
+        id,
+        productId: product.id,
+        productName: product.name,
+        slotDate: draft.date,
+        slotTime: draft.slotTime,
+        slotEnd: `${draft.date}T${toTime(toMinutes(draft.slotTime) + minutes)}:00+06:00`,
+        resourceId: laneId,
+        resourceLabel: lane?.name,
+        items: [],
+        fixedPrice: price,
+        partySize: product.policies?.partyMin ?? 1,
+      },
+    };
+  }
+
+  /* ── A named seat (BT-07) ──────────────────────────────────────────────
+     Seats carry their own prices, so there are no tiers to count: the seat
+     IS the ticket. Grouped by category so the order line reads "2 Stalls"
+     rather than one line per chair. */
+  if (pattern === "seats") {
+    const chosen = draft.seats ?? [];
+    const amount = chosen.reduce((sum, x) => sum + x.price, 0);
+    if (chosen.length === 0) return { item: null, missing: "seats", amount: 0 };
+    const byCat = new Map<string, { name: string; price: number; qty: number }>();
+    for (const x of chosen) {
+      const g = byCat.get(x.categoryUid) ?? { name: x.categoryName, price: x.price, qty: 0 };
+      g.qty += 1;
+      byCat.set(x.categoryUid, g);
+    }
+    return {
+      amount,
+      missing: null,
+      item: {
+        id,
+        productId: product.id,
+        productName: product.name,
+        items: Array.from(byCat, ([uid, g]) => ({
+          tierId: uid, tierName: g.name, unitPrice: g.price, qty: g.qty,
+        })),
+        seatLabels: chosen.map((x) => x.label),
+      },
+    };
+  }
+
+  // Every remaining pattern ends in quantities. Sections are counted the same
+  // way tiers are, so one list serves both.
+
+  const countable =
+    pattern === "sectioned"
+      ? (product.sections ?? []).map((x) => ({ id: x.id, name: x.name, price: x.price }))
+      : tiers.map((t) => ({ id: t.id, name: t.name, price: t.price }));
+  const priced = countable.map((x) => ({
+    id: x.id,
+    name: x.name,
     price: draft.slotTime
-      ? resolveProductPrice(product, draft.date, draft.slotTime, t.price)
-      : t.price,
+      ? resolveProductPrice(product, draft.date, draft.slotTime, x.price)
+      : x.price,
   }));
   const validity = product.validityOptions?.find((v) => v.id === draft.validityId);
   const items = priced
@@ -221,20 +386,52 @@ export function resolveDraft(
       if (free.length > 0 && !draft.guideId) return { item: null, missing: "guide", amount };
     }
   }
+
+  /* ── An appointment with a person (BT-10) ───────────────────────────────
+     The premium is a LINE, not a different price: the treatment costs what it
+     costs, and the senior therapist is an extra the receipt can show. */
+  let assignedProviderId: string | undefined;
+  if (pattern === "provider") {
+    if (!draft.slotTime) return { item: null, missing: "time", amount };
+    const free = freeProvidersAt(product, draft.date, draft.slotTime);
+    assignedProviderId = draft.providerId ?? free[0];
+    if (!assignedProviderId) return { item: null, missing: "provider", amount };
+    const premium = product.providerPremiums?.[assignedProviderId] ?? 0;
+    if (premium > 0 && count > 0) {
+      const who = ctx.team.find((x) => x.id === assignedProviderId);
+      items.push({
+        tierId: `prem_${assignedProviderId}`,
+        tierName: `${who?.name.split(" ")[0] ?? "Provider"} premium`,
+        unitPrice: premium,
+        qty: 1,
+      });
+    }
+  }
+
   if (count === 0) return { item: null, missing: "tickets", amount };
 
-  const guide = ctx.team.find((s) => s.id === draft.guideId);
+  const owner = ctx.team.find((x) => x.id === (assignedProviderId ?? draft.guideId));
+  const mins = providerMinutes(product);
+  const dated =
+    pattern === "provider" || pattern === "course" || needsSchedule(product.bookingType);
   return {
-    amount,
+    // Recomputed: the provider premium is pushed onto `items` above, after the
+    // first sum was taken.
+    amount: items.reduce((sum, i) => sum + i.unitPrice * i.qty, 0),
     missing: null,
     item: {
       id,
       productId: product.id,
       productName: product.name,
-      slotDate: needsSchedule(product.bookingType) ? draft.date : undefined,
+      slotDate: dated ? draft.date : undefined,
       slotTime: draft.slotTime,
-      resourceId: draft.guideId,
-      resourceLabel: guide?.name,
+      slotEnd:
+        pattern === "provider" && draft.slotTime
+          ? `${draft.date}T${toTime(toMinutes(draft.slotTime) + mins)}:00+06:00`
+          : undefined,
+      resourceId: assignedProviderId ?? draft.guideId,
+      resourceLabel: pattern === "provider" ? undefined : owner?.name,
+      providerLabel: pattern === "provider" ? owner?.name : undefined,
       items,
     },
   };

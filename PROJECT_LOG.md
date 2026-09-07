@@ -3185,3 +3185,92 @@ lead back to the Go chrome rather than being copied a second time — this is a
 TILL design, not a fork of front-of-house. The `TillSwitcher` is added to the
 classic header as review scaffolding (it is not part of the restored design);
 without it there is no way out of the variant but the browser's back button.
+
+
+---
+
+## The scrolling till learns the other five booking types (2026-09-07)
+
+Owner asked whether `/sell` had the other booking types. It did not: **5 of the
+18 seeded bookings** fell into the honest "not on this till yet" panel. A till
+that cannot sell a third of the catalogue is not comparable to the other two, so
+the remaining patterns were built.
+
+| Pattern | Booking | Was |
+|---|---|---|
+| Flexible duration (BT-05) | Bowling Lane | unsupported |
+| Provider (BT-10) | Deep Tissue Massage | unsupported |
+| Seat map (BT-07) | Evening Film | unsupported |
+| Credits pack (BT-12) | 10-Class Yoga Pack | unsupported |
+| Course (BT-13) | Beginner Swim Course | unsupported |
+
+`patternOf` now returns nine shapes. Two corrections fell out of writing it: a
+**credits pack has no special selection** — it sells as a quantity like any
+tiered item, so it simply routes to `tiered`; and a **layout beats sections**,
+because a room with a seat map sells the seat and its sections are then only how
+those seats are priced.
+
+### What each one asks, and why in that order
+
+- **Flexible** asks *how long* first, then the lane, then the start — because
+  the length decides which starts are even possible (a three-hour booking cannot
+  start an hour before closing). Changing the length re-checks the chosen start
+  and clears it rather than leaving it pointing at a span that no longer fits.
+  "Any" lane resolves to the first free one **at resolve time**, so the summary
+  names the lane the sale will actually take instead of promising one and
+  assigning another.
+- **Provider** asks *when* before *who* — offering a therapist before a time
+  offers people who may not be free when the customer wants to come. The
+  premium is a **line**, not a different price: the treatment costs what it
+  costs and the senior therapist is an extra the receipt can show.
+- **Course** has nothing to configure — it runs on dates it already owns — so
+  it states that in the affirmative and asks only for places.
+- **Seats** keep their own rules: the selected seat is **solid ember with white
+  text**, not a saturated version of its own category colour, which is the one
+  comparison a 28px tile cannot carry.
+
+The pure/UI split held: everything except the seat map resolves synchronously in
+`_lib/selection.ts`. Seats are the one asynchronous shape, so the UI fetches
+`availableSeats` and writes the chosen labels **and their prices** into the
+draft — rather than the resolver pretending it can look them up.
+
+### The check that mattered
+
+**Both tills must price identically.** The same selection — Bowling Lane, 2 hr,
+Lane 1, 17:00 — was driven through v1's sheet and v2's blocks: **৳1,925.00 on
+both**. The duration engine, time bands and per-lane rates agree across the
+variants, which is the whole point of sharing `lib/duration` rather than
+copying it.
+
+Two harness self-corrections worth recording, because both looked like product
+bugs and were not:
+
+- v1's duration control is a **stepper**, not chips, so a click looking for a
+  "2 hr" button never landed and v1 appeared to price the same booking at
+  ৳1,000. It was still on 1 hr.
+- The provider list appeared to show only one therapist. The card renders
+  "+৳500.00", and the probe was filtering on the word "premium". Both Nadia and
+  Karim render, correctly, with Karim's premium beside him.
+
+### Verified end to end
+
+- **Seats**: A1 + A2 Stalls → grouped as "2 × Evening Film · Stalls ৳800.00",
+  VAT ৳120, total ৳920, sold. (v1 once shipped "Add 2 seats — ৳0.00" here; v2
+  is right from the start because the seat prices travel with the selection.)
+- **Provider**: ৳3,000 treatment + **৳500 Karim premium as its own line**, VAT
+  ৳525, total ৳4,025 — and the spa's deposit policy split it automatically into
+  **৳2,275 now, ৳1,750 at arrival**, with the balance printed on the receipt.
+- **Flexible**: 2 hr on Lane 1 from 17:00, ৳1,925 + VAT = ৳2,213.75, window
+  stated as "17:00 – 19:00".
+- Overflow sweep on the three new heavy patterns at 320 and 390: no page
+  x-scroll, nothing clipped without an ellipsis, and the only sub-12px text is
+  the seat numbers — the same **declared exception** v1's seat grid already
+  carries (9px on a 28px tile, each seat carrying a full title attribute).
+
+`tsc`, `npm run build` and `eslint` clean; i18n parity 0 missing / 0 extra with
+the new keys authored in both locales.
+
+**Still not on the scrolling till**, and now the only gaps: add-ons, repeat
+weekly, the group-size stepper for per-booking pricing, and the waiver gate.
+Those are cross-cutting options rather than booking types — every type can be
+sold without them.

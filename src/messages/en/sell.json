@@ -24,7 +24,16 @@
     "slot": "Time",
     "allowance": "Today's allowance",
     "validity": "How long it runs",
-    "tickets": "Choose tickets"
+    "tickets": "Choose tickets",
+    "duration": "How long",
+    "lane": "Which {noun}",
+    "start": "Start time",
+    "appointment": "Appointment",
+    "provider": "Who takes it",
+    "course": "The course",
+    "seats": "Choose seats",
+    "sections": "Choose seats",
+    "places": "How many places"
   },
   "date": {
     "today": "Today",
@@ -56,11 +65,14 @@
     "resource": "Choose a space",
     "guide": "Choose a guide",
     "tickets": "Choose how many",
-    "unsupported": "Sell this on the main till"
+    "unsupported": "Sell this on the main till",
+    "duration": "Choose how long",
+    "provider": "Choose who takes it",
+    "seats": "Choose seats"
   },
   "unsupported": {
     "title": "Not on this till yet",
-    "body": "This booking is sold by seats, by the hour, by therapist or as a course — those selection systems arrive in the next pass. Sell it on the main till for now."
+    "body": "This booking uses a selection system that is not on this till yet. Sell it on the main till for now."
   },
   "pay": {
     "label": "Pay",
@@ -112,5 +124,30 @@
     "advancePlaceholder": "Amount",
     "minimum": "Min {amount}",
     "belowMin": "The least you can take now is {amount}."
+  },
+  "flex": {
+    "any": "Any",
+    "anyHint": "First free",
+    "outOfService": "Out of service",
+    "past": "That start has already gone.",
+    "closes": "That would end after closing.",
+    "taken": "Booked at that time.",
+    "window": "{from} – {to}"
+  },
+  "provider": {
+    "noneFree": "Nobody is free at {time}.",
+    "length": "Each appointment runs {length}.",
+    "premium": "+{amount}",
+    "standard": "Standard rate"
+  },
+  "course": {
+    "ready": "Ready to add",
+    "runs": "{count} sessions on {days}, {range}",
+    "showDates": "Show all dates",
+    "hideDates": "Hide dates"
+  },
+  "seats": {
+    "screen": "SCREEN",
+    "selected": "Selected"
   }
 }

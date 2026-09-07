@@ -20,20 +20,29 @@
  */
 
 import { useState } from "react";
+import { useApiQuery } from "@/lib/useApi";
 import { useTranslations } from "next-intl";
 import { Minus, Plus } from "lucide-react";
-import { BlockedNotice, ChoiceCard } from "@/components/ui";
-import { explainUnavailable, type Product, type Staff } from "@/lib/api";
+import { Avatar, BlockedNotice, ChoiceCard } from "@/components/ui";
+import { availableSeats, explainUnavailable, type Product, type Staff } from "@/lib/api";
 import { applyResourceRate } from "@/lib/api";
+import { productDurationPrice } from "@/lib/duration";
 import { resolveProductPrice } from "@/lib/pricing";
-import { DEMO_TODAY, isGuided, slotISO } from "@/lib/schedule";
+import { DEMO_TODAY, isGuided, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { formatDay, formatMoney } from "@/lib/format";
+import { formatDuration } from "@/lib/duration";
 import {
   activeTiersOf,
   basePriceOf,
   dailyLeft,
+  flexDurations,
+  flexStartBlocked,
+  flexTimes,
+  freeProvidersAt,
   openDates,
   patternOf,
+  providerMinutes,
+  providerTimes,
   sessionRows,
   type Draft,
 } from "../_lib/selection";
@@ -71,6 +80,13 @@ export function SelectionInline({
   const ts = useTranslations("pos");
   const [blocked, setBlocked] = useState<string | null>(null);
   const [moreDates, setMoreDates] = useState(false);
+  const [courseOpen, setCourseOpen] = useState(false);
+  // Seats are the one shape whose availability is asynchronous, so it is
+  // fetched here rather than pretended at in the pure resolver.
+  const seatsQ = useApiQuery(
+    () => (product.layoutId ? availableSeats(product.id) : Promise.resolve({ ok: true as const, data: [] })),
+    [product.id, product.layoutId],
+  );
 
   const pattern = patternOf(product);
   const tiers = activeTiersOf(product);
@@ -85,7 +101,15 @@ export function SelectionInline({
     );
   }
 
-  const dated = pattern !== "tiered" || product.bookingType === "BT-02" || product.bookingType === "BT-06";
+  // Which patterns ask "when". A course runs on dates it already owns, and a
+  // seat map has no date of its own in this catalogue, so neither offers one.
+  const dated =
+    pattern === "sessions" ||
+    pattern === "resourceSlot" ||
+    pattern === "flexible" ||
+    pattern === "provider" ||
+    product.bookingType === "BT-02" ||
+    product.bookingType === "BT-06";
   const chips = dated ? openDates(product) : [];
   const cap = product.schedule?.dailyCapacity ?? 0;
 
@@ -307,14 +331,339 @@ export function SelectionInline({
     );
   })();
 
+  /* ── A lane by the hour (BT-05) ─────────────────────────────────────────
+     Three questions, in the order a counter asks them: how long, which lane,
+     what time. Duration first, because it decides which starts are even
+     possible — a three-hour booking cannot start an hour before closing. */
+  const flexible = pattern === "flexible" && (() => {
+    const durations = flexDurations(product);
+    const minutes = draft.durationMinutes ?? durations[0];
+    const lanes = getResourceMatrix(product, draft.date).map((r) => r.resource);
+    const times = flexTimes(product, draft.date);
+    const price = (time: string, laneId?: string) => {
+      const lane = lanes.find((l) => l.id === laneId);
+      return applyResourceRate(
+        productDurationPrice(product, draft.date, time, minutes, basePriceOf(product)),
+        minutes,
+        lane,
+      );
+    };
+    const blockWord = (b: "past" | "closes" | "taken") =>
+      t(b === "past" ? "flex.past" : b === "closes" ? "flex.closes" : "flex.taken");
+
+    return (
+      <>
+        <Step label={t("step.duration")}>
+          <div className="flex flex-wrap gap-tight">
+            {durations.map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => {
+                  // Changing the length can invalidate the chosen start, so it
+                  // is cleared rather than left pointing at a span that no
+                  // longer fits.
+                  const stillFits =
+                    draft.slotTime &&
+                    !flexStartBlocked(product, draft.date, draft.slotTime, d, draft.resourceId, 12 * 60);
+                  set({ durationMinutes: d, slotTime: stillFits ? draft.slotTime : undefined });
+                }}
+                className={`h-12 min-w-[72px] flex-1 rounded-full border px-comfortable text-[14px] transition-colors duration-quick ${
+                  minutes === d
+                    ? "border-ember bg-ember/10 font-medium text-brand-foreground"
+                    : "border-line bg-card active:bg-ember/10"
+                }`}
+              >
+                {formatDuration(d)}
+              </button>
+            ))}
+          </div>
+        </Step>
+
+        <Step label={t("step.lane", { noun: lanes[0]?.nounSingular ?? t("slot.resource") })}>
+          <div className="-mx-comfortable flex gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <ChoiceCard
+              hideCheck
+              selected={!draft.resourceId}
+              onClick={() => set({ resourceId: undefined })}
+              className="flex min-w-[104px] shrink-0 flex-col gap-inline px-comfortable py-tight"
+            >
+              <span className="text-[14px] font-medium">{t("flex.any")}</span>
+              <span className="text-[12px] text-muted">{t("flex.anyHint")}</span>
+            </ChoiceCard>
+            {lanes.map((l) => (
+              <ChoiceCard
+                key={l.id}
+                hideCheck
+                disabled={l.outOfService}
+                selected={draft.resourceId === l.id}
+                onClick={() => set({ resourceId: l.id, slotTime: undefined })}
+                className="flex min-w-[104px] shrink-0 flex-col gap-inline px-comfortable py-tight"
+              >
+                <span className="truncate text-[14px] font-medium">{l.name}</span>
+                <span className="text-[12px] text-muted">
+                  {l.outOfService ? t("flex.outOfService") : formatMoney(price("12:00", l.id), currency)}
+                </span>
+              </ChoiceCard>
+            ))}
+          </div>
+        </Step>
+
+        <Step label={t("step.start")}>
+          <div className="grid grid-cols-4 gap-tight">
+            {times.map((time) => {
+              const blocked = flexStartBlocked(product, draft.date, time, minutes, draft.resourceId, 12 * 60);
+              const on = draft.slotTime === time;
+              return (
+                <button
+                  key={time}
+                  type="button"
+                  onClick={() => (blocked ? setBlocked(blockWord(blocked)) : set({ slotTime: time }))}
+                  className={`flex min-h-12 flex-col items-center justify-center rounded-go border px-inline text-[13px] transition-colors duration-quick ${
+                    on
+                      ? "border-ember bg-ember font-medium text-white"
+                      : blocked
+                        ? "border-line bg-subtle text-muted line-through"
+                        : "border-line bg-card active:bg-ember/10"
+                  }`}
+                >
+                  {time}
+                </button>
+              );
+            })}
+          </div>
+          {/* The end time is the thing a customer asks for, and it is never
+              typed — it falls out of the start and the length. */}
+          {draft.slotTime && (
+            <p className="mt-tight text-[13px] text-muted">
+              {t("flex.window", {
+                from: draft.slotTime,
+                to: toTime(toMinutes(draft.slotTime) + minutes),
+              })}
+            </p>
+          )}
+        </Step>
+      </>
+    );
+  })();
+
+  /* ── An appointment with a person (BT-10) ───────────────────────────────
+     Time first, then who is free at it — asking for a therapist before a time
+     offers people who may not be available when the customer wants to come. */
+  const providerStep = pattern === "provider" && (() => {
+    const mins = providerMinutes(product);
+    const times = providerTimes(product, draft.date);
+    const people = (product.providerIds ?? []);
+    const freeNow = draft.slotTime ? freeProvidersAt(product, draft.date, draft.slotTime) : [];
+    return (
+      <>
+        <Step label={t("step.appointment")}>
+          <div className="grid grid-cols-4 gap-tight">
+            {times.map((time) => {
+              const anyFree = freeProvidersAt(product, draft.date, time).length > 0;
+              const on = draft.slotTime === time;
+              return (
+                <button
+                  key={time}
+                  type="button"
+                  onClick={() =>
+                    anyFree
+                      ? set({ slotTime: time, providerId: undefined })
+                      : setBlocked(t("provider.noneFree", { time }))
+                  }
+                  className={`flex min-h-12 items-center justify-center rounded-go border px-inline text-[13px] transition-colors duration-quick ${
+                    on
+                      ? "border-ember bg-ember font-medium text-white"
+                      : anyFree
+                        ? "border-line bg-card active:bg-ember/10"
+                        : "border-line bg-subtle text-muted line-through"
+                  }`}
+                >
+                  {time}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-tight text-[13px] text-muted">{t("provider.length", { length: formatDuration(mins) })}</p>
+        </Step>
+
+        {draft.slotTime && people.length > 0 && (
+          <Step label={t("step.provider")}>
+            <div className="flex flex-col gap-tight">
+              {people.map((pid) => {
+                const who = team.find((x) => x.id === pid);
+                const free = freeNow.includes(pid);
+                const premium = product.providerPremiums?.[pid] ?? 0;
+                const assigned = (draft.providerId ?? freeNow[0]) === pid;
+                return (
+                  <ChoiceCard
+                    key={pid}
+                    hideCheck
+                    disabled={!free}
+                    selected={assigned}
+                    onClick={() => set({ providerId: pid })}
+                    className="flex items-center gap-comfortable py-tight pl-comfortable pr-comfortable"
+                  >
+                    <Avatar name={who?.name ?? pid} size={36} />
+                    <span className="min-w-0 flex-1 text-left">
+                      <span className="block truncate text-[14px] font-medium">{who?.name ?? pid}</span>
+                      <span className={`block text-[13px] ${free ? "text-success" : "text-muted"}`}>
+                        {t(free ? "guide.available" : "guide.busy")}
+                      </span>
+                    </span>
+                    <span className="shrink-0 whitespace-nowrap text-[13px] text-muted">
+                      {premium > 0 ? t("provider.premium", { amount: formatMoney(premium, currency) }) : t("provider.standard")}
+                    </span>
+                  </ChoiceCard>
+                );
+              })}
+            </div>
+          </Step>
+        )}
+      </>
+    );
+  })();
+
+  /* ── A course (BT-13) ───────────────────────────────────────────────────
+     Nothing to configure: it runs on dates it already owns, and the only
+     decision left is how many places. Stated in the affirmative rather than
+     as a list that looks like a choice still to be made. */
+  const courseStep = pattern === "course" && (() => {
+    const dates = [...(product.courseDates ?? [])].sort();
+    if (dates.length === 0) return null;
+    const day = (iso: string) => new Date(`${iso}T12:00:00`);
+    const weekdays = [...new Set(dates.map((x) => new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(day(x))))];
+    const range = `${new Intl.DateTimeFormat("en-GB", { day: "numeric" }).format(day(dates[0]))}–${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(day(dates[dates.length - 1]))}`;
+    return (
+      <Step label={t("step.course")}>
+        <div className="rounded-go border border-success/30 bg-success/10 p-comfortable">
+          <p className="text-[14px] font-medium text-success">{t("course.ready")}</p>
+          <p className="mt-inline text-[13px]">
+            {t("course.runs", { count: dates.length, days: weekdays.join(" & "), range })}
+          </p>
+          <button
+            type="button"
+            onClick={() => setCourseOpen((v) => !v)}
+            className="mt-tight min-h-11 text-[13px] font-medium text-brand-foreground underline-offset-2 hover:underline"
+          >
+            {t(courseOpen ? "course.hideDates" : "course.showDates")}
+          </button>
+          {courseOpen && (
+            <ul className="mt-tight flex flex-col gap-inline">
+              {dates.map((x) => (
+                <li key={x} className="text-[13px] tabular-nums">{formatDay(x, { weekday: true })}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Step>
+    );
+  })();
+
+  /* ── A named seat (BT-07) ───────────────────────────────────────────────
+     A spatial diagram, so it keeps its own rules: seats are small, and the
+     selected one is SOLID ember with white text rather than a saturated
+     version of its own category colour — which is the one comparison a 28px
+     tile cannot carry. */
+  const seatStep = pattern === "seats" && (() => {
+    const rows = seatsQ.data ?? [];
+    if (seatsQ.loading) {
+      return (
+        <Step label={t("step.seats")}>
+          <div aria-busy="true" className="flex animate-pulse flex-col gap-tight">
+            <div className="h-4 w-1/3 rounded-go-sm bg-line" />
+            <div className="h-16 w-full rounded-go-sm bg-line" />
+          </div>
+        </Step>
+      );
+    }
+    const picked = draft.seats ?? [];
+    const isPicked = (label: string) => picked.some((x) => x.label === label);
+    const maxY = Math.max(0, ...rows.map((r) => r.posY));
+    const categories = [...new Map(rows.map((r) => [r.categoryUid, r])).values()];
+    return (
+      <Step label={t("step.seats")}>
+        <p className="mb-tight rounded-go bg-subtle py-inline text-center text-[12px] tracking-widest text-muted">
+          {t("seats.screen")}
+        </p>
+        <div className="-mx-comfortable overflow-x-auto px-comfortable pb-1">
+          <div className="inline-flex flex-col gap-inline">
+            {Array.from({ length: maxY + 1 }, (_, y) => (
+              <div key={y} className="flex gap-inline">
+                {rows
+                  .filter((r) => r.posY === y)
+                  .sort((a, b) => a.posX - b.posX)
+                  .map((seat) => {
+                    const on = isPicked(seat.label);
+                    return (
+                      <button
+                        key={seat.label}
+                        type="button"
+                        title={`${seat.label} · ${seat.categoryName} · ${formatMoney(seat.price, currency)}`}
+                        disabled={!seat.available && !on}
+                        onClick={() =>
+                          set({
+                            seats: on
+                              ? picked.filter((x) => x.label !== seat.label)
+                              : [...picked, {
+                                  label: seat.label,
+                                  categoryUid: seat.categoryUid,
+                                  categoryName: seat.categoryName,
+                                  price: seat.price,
+                                }],
+                          })
+                        }
+                        className={`flex size-7 shrink-0 items-center justify-center rounded-go-sm border text-[9px] ${
+                          on
+                            ? "border-ember bg-ember font-semibold text-white"
+                            : seat.available
+                              ? "border-line bg-card"
+                              : "border-line bg-subtle text-faint line-through"
+                        }`}
+                        style={!on && seat.available ? { backgroundColor: `${seat.color}22`, borderColor: seat.color } : undefined}
+                      >
+                        {seat.label.replace(/[^0-9]/g, "")}
+                      </button>
+                    );
+                  })}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="mt-tight flex flex-wrap gap-comfortable text-[12px] text-muted">
+          {categories.map((c) => (
+            <span key={c.categoryUid} className="flex items-center gap-inline">
+              <span
+                className="size-3 rounded-go-sm border"
+                style={{ backgroundColor: `${c.color}22`, borderColor: c.color }}
+                aria-hidden
+              />
+              {c.categoryName} · {formatMoney(c.price, currency)}
+            </span>
+          ))}
+          <span className="flex items-center gap-inline">
+            <span className="size-3 rounded-go-sm border border-ember bg-ember" aria-hidden />
+            {t("seats.selected")}
+          </span>
+        </div>
+      </Step>
+    );
+  })();
+
   /* ── Tickets ──────────────────────────────────────────────────────────── */
-  const tierStep = pattern !== "resourceSlot" && tiers.length > 0 && (
-    <Step label={t("step.tickets")}>
+  const countable =
+    pattern === "sectioned"
+      ? (product.sections ?? []).map((x) => ({ id: x.id, name: x.name, price: x.price, admits: 1, ageNote: undefined as string | undefined }))
+      : tiers.map((x) => ({ id: x.id, name: x.name, price: x.price, admits: x.admits, ageNote: x.ageNote }));
+  const countsTickets =
+    pattern !== "resourceSlot" && pattern !== "flexible" && pattern !== "seats";
+  const tierStep = countsTickets && countable.length > 0 && (
+    <Step label={t(pattern === "sectioned" ? "step.sections" : pattern === "course" ? "step.places" : "step.tickets")}>
       {/* One panel of hairline-separated rows. Each row states the three
           things in the order they are decided: what it is, who it admits,
           what it costs. Four bordered cards read as four unrelated objects. */}
       <div className="overflow-hidden rounded-go border border-line bg-card">
-        {tiers.map((tier) => {
+        {countable.map((tier) => {
           const price = draft.slotTime
             ? resolveProductPrice(product, draft.date, draft.slotTime, tier.price)
             : tier.price;
@@ -367,6 +716,10 @@ export function SelectionInline({
       {sessions}
       {guideStep}
       {resourceStep}
+      {flexible}
+      {providerStep}
+      {courseStep}
+      {seatStep}
       {validityStep}
       {tierStep}
     </div>
