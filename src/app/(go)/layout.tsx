@@ -23,6 +23,7 @@ import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
 import { Logo, Modal } from "@/components/ui";
+import { TillSwitcher } from "./_components/TillSwitcher";
 import { useApiQuery } from "@/lib/useApi";
 import { listProducts } from "@/lib/api";
 import { isSlotBased } from "@/lib/schedule";
@@ -40,10 +41,10 @@ const TABS = [
 ] as const;
 
 const MORE_ITEMS = [
-  // The cartless till (v2). It lives in More rather than in the tab bar
-  // because the tab bar is the shift's muscle memory and this is a design in
-  // review — /pos is still the till of record.
-  { key: "sellV2", icon: Layers, href: "/sell" },
+  // The till-design chooser. It lives in More rather than in the tab bar
+  // because the tab bar is the shift's muscle memory, and it is the phone's
+  // route to the switcher the header shows from `sm` up.
+  { key: "tillDesign", icon: Layers, href: "/tills" },
   { key: "shift", icon: Clock, href: "/shift/close" },
   { key: "mySales", icon: Banknote, action: "sales" },
   { key: "quickPass", icon: Ticket, href: "/quick-pass" },
@@ -122,6 +123,8 @@ export default function GoLayout({ children }: { children: React.ReactNode }) {
           <span className="hidden shrink-0 rounded-full bg-subtle px-comfortable py-inline text-[13px] text-muted sm:block">Fort Main Gate</span>
           <span className="hidden shrink-0 font-mono text-[13px] text-muted sm:block" title="Shift open for">⏱ 3:24</span>
         </div>
+        {/* Only on a till, and only where there is room for it. */}
+        <TillSwitcher />
         <span className="flex shrink-0 items-center gap-tight">
           <ModeButton shape="round" />
           <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse font-mono text-[13px] text-inverse-fg" title="Nadia Islam — my profile">N</Link>

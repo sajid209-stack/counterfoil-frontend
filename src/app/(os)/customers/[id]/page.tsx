@@ -46,6 +46,7 @@ import {
 } from "@/lib/api";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import { MembershipTab } from "./MembershipTab";
+import { FEATURES } from "@/lib/features";
 
 // Who is acting. Real auth lands with the backend; until then the counter
 // manager is the actor, exactly as the rest of OS assumes.
@@ -103,11 +104,16 @@ export default function CustomerDetailPage() {
 
   const tabs = [
     { value: "activity", label: t("tabActivity"), count: orders.length },
-    {
-      value: "membership",
-      label: t("tabMembership"),
-      count: memberships.filter((m) => m.effectiveStatus === "active").length,
-    },
+    // Membership & points is hidden while the backend has neither (lib/features).
+    ...(FEATURES.memberships || FEATURES.loyalty
+      ? [
+          {
+            value: "membership",
+            label: t("tabMembership"),
+            count: memberships.filter((m) => m.effectiveStatus === "active").length,
+          },
+        ]
+      : []),
     { value: "details", label: t("tabDetails") },
     { value: "consent", label: t("tabConsent") },
     { value: "notes", label: t("tabNotes"), count: customer.notes.length },
@@ -170,7 +176,7 @@ export default function CustomerDetailPage() {
         <Tabs items={tabs} value={tab} onChange={(v) => setTab(v as Tab)} />
 
         {tab === "activity" && <ActivityTab orders={orders} loading={ordersQ.loading} stats={stats} />}
-        {tab === "membership" && (
+        {tab === "membership" && (FEATURES.memberships || FEATURES.loyalty) && (
           <MembershipTab
             key={`${memberships.length}-${points.balance}`}
             customerId={customer.id}

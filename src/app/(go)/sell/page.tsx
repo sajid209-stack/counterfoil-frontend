@@ -33,23 +33,30 @@ import { Check, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
+  advanceMinimum,
   checkout,
+  getAdvancePolicy,
+  getManualDiscountPolicy,
   getOperator,
   listCategories,
   listLocations,
   listPaymentAccounts,
   listProducts,
   listResources,
+  listRoles,
   listStaff,
   type PaymentMethod,
   type Product,
 } from "@/lib/api";
+import type { DiscountMode } from "@/components/ui";
+import { CustomerPicker, type AttachedCustomer } from "../pos/CustomerPicker";
+import { SaleRows, type RowKey } from "./_components/SaleRows";
 import { formatDay, formatMoney } from "@/lib/format";
 import { useMediaQuery } from "@/lib/useMedia";
 import { Catalogue } from "./_components/Catalogue";
 import { SelectionInline } from "./_components/SelectionInline";
 import { Keypad } from "../_components/Keypad";
-import { itemSeats, itemSlotISO, itemTotal, priceSale, type SaleItem } from "./_lib/saleMath";
+import { itemBalance, itemSeats, itemSlotISO, itemTotal, priceSale, type SaleItem } from "./_lib/saleMath";
 import { draftFrom, newDraft, patternOf, resolveDraft, type Draft } from "./_lib/selection";
 
 /** One thing in the sale, and the questions it is still answering.
@@ -61,6 +68,10 @@ interface Block {
   productId: string;
   draft: Draft;
 }
+
+/** The signed-in staff member (mock session): Nadia, whose role sets the
+ *  discount ceiling when no business policy overrides it. */
+const SIGNED_IN_STAFF_ID = "stf_nadia";
 
 const newId = () => `item_${globalThis.crypto.randomUUID().slice(0, 8)}`;
 
@@ -78,6 +89,9 @@ export default function SellPage() {
   const teamQ = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
   const payAcctsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
+  const policyQ = useApiQuery(() => getManualDiscountPolicy(), []);
+  const advanceQ = useApiQuery(() => getAdvancePolicy(), []);
+  const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
 
   /* The wall has two homes — a column on a tablet, a section of the scroll on
      a phone — and it must exist in exactly ONE of them at a time. Rendering it
@@ -101,6 +115,15 @@ export default function SellPage() {
   const [customName, setCustomName] = useState("");
   const [customAmount, setCustomAmount] = useState("");
   const [customItems, setCustomItems] = useState<SaleItem[]>([]);
+  const [attached, setAttached] = useState<AttachedCustomer | null>(null);
+  const [customerOpen, setCustomerOpen] = useState(false);
+  const [openRow, setOpenRow] = useState<RowKey | null>(null);
+  const [discountMode, setDiscountMode] = useState<DiscountMode>("percent");
+  const [discountPct, setDiscountPct] = useState(0);
+  const [discountAmt, setDiscountAmt] = useState(0);
+  const [discountReason, setDiscountReason] = useState("");
+  const [advance, setAdvance] = useState<number | null>(null);
+  const [payInFull, setPayInFull] = useState(false);
 
   const operator = opQ.data;
   const currency = operator?.currency ?? "BDT";
@@ -135,10 +158,46 @@ export default function SellPage() {
     [resolved, customItems],
   );
 
-  const totals = useMemo(
+  /* ── The money ───────────────────────────────────────────────────────────
+     Priced in two passes because a percentage discount needs something to be
+     a percentage OF. The first pass is the sale at list price; the second
+     applies the discount that pass sized. */
+  const listTotals = useMemo(
     () => priceSale(items, { products, operator }),
     [items, products, operator],
   );
+  const discountBase = listTotals.subtotal - listTotals.lineDiscountTotal;
+  const manualDiscount =
+    discountMode === "percent"
+      ? Math.round((Math.max(0, discountBase) * discountPct) / 100)
+      : Math.min(Math.max(0, discountBase), discountAmt);
+
+  const totals = useMemo(
+    () => priceSale(items, { products, operator, manualDiscount }),
+    [items, products, operator, manualDiscount],
+  );
+
+  /* The cashier's discount is capped by the business policy, falling back to
+     the signed-in staff's role limit where no policy is set. The cap is on the
+     EFFECTIVE rate — what actually came off, not what was typed. */
+  const roleLimit =
+    rolesQ.data?.data.find((r) => r.id === (teamQ.data?.data.find((x) => x.id === SIGNED_IN_STAFF_ID)?.roleId))
+      ?.discountLimitPct ?? 100;
+  const capPct = policyQ.data ? policyQ.data.maxPercentBps / 100 : roleLimit;
+  const effectivePct = totals.subtotal > 0 ? (manualDiscount / totals.subtotal) * 100 : 0;
+  const overLimit = effectivePct > capPct + 1e-9;
+  const reasonNeeded = manualDiscount > 0 && !!policyQ.data?.requireReason && !discountReason.trim();
+
+  /* ── Part payment ────────────────────────────────────────────────────────
+     A booking's DEPOSIT policy says what the booking requires; an ADVANCE says
+     what this customer actually handed over. The advance sits on top. */
+  const depositBalance = items.reduce((sum, e) => sum + itemBalance(e, products), 0);
+  const advanceRule = advanceQ.data?.counter;
+  const advanceAllowed = !!advanceRule?.enabled && items.length > 0 && totals.total > 0;
+  const advanceMin = advanceRule ? advanceMinimum(advanceRule, totals.total) : totals.total;
+  const advanceValid = advance != null && advance >= advanceMin && advance < totals.total;
+  const balance = advanceValid ? totals.total - advance! : payInFull ? 0 : depositBalance;
+  const dueNow = totals.total - balance;
 
   /** Seats already spoken for elsewhere in this sale, so a session cannot be
    *  oversold by adding it twice. The block being edited excludes itself. */
@@ -210,18 +269,22 @@ export default function SellPage() {
   const payable = totals.total > 0;
 
   const tenderedMinor = (parseInt(tenderTaka || "0", 10) || 0) * 100;
-  const changeMinor = tenderedMinor - totals.total;
-  const cashReady = method !== "cash" || tenderedMinor >= totals.total;
+  const changeMinor = tenderedMinor - dueNow;
+  const cashReady = method !== "cash" || tenderedMinor >= dueNow;
   const walletReady = method !== "bkash" || walletRef.trim().length > 0;
-  const canComplete = payable && !openMissing && cashReady && walletReady;
+  const canComplete = payable && !openMissing && cashReady && walletReady && !overLimit && !reasonNeeded;
 
   const footerLabel = openMissing
     ? t(`missing.${openMissing}` as never)
     : !payable
       ? t("footer.nothingYet")
-      : method === "cash" && !cashReady
-        ? t("footer.takeAmount", { amount: formatMoney(totals.total, currency) })
-        : t("footer.completeAmount", { amount: formatMoney(totals.total, currency) });
+      : overLimit
+        ? t("footer.overLimit")
+        : reasonNeeded
+          ? t("footer.needReason")
+          : method === "cash" && !cashReady
+            ? t("footer.takeAmount", { amount: formatMoney(dueNow, currency) })
+            : t("footer.completeAmount", { amount: formatMoney(dueNow, currency) });
 
   /* ── The sale ───────────────────────────────────────────────────────────
      The SAME lines that priced the footer are the lines handed to checkout.
@@ -244,14 +307,18 @@ export default function SellPage() {
       locationId: locationsQ.data?.data[0]?.id ?? "loc_fort",
       counterId: null,
       staffId: null,
+      customerName: attached?.name ?? null,
+      customerId: attached?.id ?? null,
       lines: totals.lines,
       orderDiscount: totals.orderDiscount,
       bookings,
       taxPct: operator?.taxRatePct ?? 0,
       method,
-      amountTendered: method === "cash" ? tenderedMinor : totals.total,
+      amountTendered: method === "cash" ? tenderedMinor : dueNow,
       paymentReference: method === "bkash" ? walletRef.trim() : undefined,
-      payNow: totals.total,
+      // Below the total, the order lands as "partial" with the rest owed at
+      // arrival — which is what the balance line on the receipt then says.
+      payNow: dueNow,
     });
     setSaving(false);
     if (!res.ok) {
@@ -264,7 +331,7 @@ export default function SellPage() {
         orderId: res.data.order.id,
         code: res.data.firstTicketCode,
         change: method === "cash" ? Math.max(0, changeMinor) : 0,
-        balance: 0,
+        balance,
         receipt: {
           lines: totals.lines.map((l) => ({
             name: l.tierName && l.tierName !== l.productName ? `${l.productName} · ${l.tierName}` : l.productName,
@@ -280,8 +347,8 @@ export default function SellPage() {
         },
         payments: [
           method === "cash"
-            ? { method: "cash", amount: totals.total, tendered: tenderedMinor, change: Math.max(0, changeMinor) }
-            : { method, amount: totals.total },
+            ? { method: "cash", amount: dueNow, tendered: tenderedMinor, change: Math.max(0, changeMinor) }
+            : { method, amount: dueNow },
         ],
       }),
     );
@@ -474,6 +541,35 @@ export default function SellPage() {
             </button>
           )}
 
+          {/* The decisions that belong to the sale rather than to one item. */}
+          {payable && (
+            <SaleRows
+              currency={currency}
+              openRow={openRow}
+              onOpenRow={setOpenRow}
+              attached={attached}
+              onPickCustomer={() => setCustomerOpen(true)}
+              discountMode={discountMode}
+              onDiscountMode={setDiscountMode}
+              discountValue={discountMode === "percent" ? discountPct : discountAmt}
+              onDiscountValue={(v) => (discountMode === "percent" ? setDiscountPct(v) : setDiscountAmt(v))}
+              discountBase={discountBase}
+              discountReason={discountReason}
+              onDiscountReason={setDiscountReason}
+              reasonRequired={!!policyQ.data?.requireReason}
+              overLimit={overLimit}
+              capPct={capPct}
+              advanceAllowed={advanceAllowed}
+              advance={advance}
+              onAdvance={setAdvance}
+              advanceMin={advanceMin}
+              total={totals.total}
+              depositBalance={depositBalance}
+              payInFull={payInFull}
+              onPayInFull={setPayInFull}
+            />
+          )}
+
           {/* ── Pay ──────────────────────────────────────────────────────── */}
           {payable && (
             <div className="rounded-go border border-line bg-card p-comfortable">
@@ -510,6 +606,16 @@ export default function SellPage() {
                   <span>{t("pay.subtotal")}</span>
                   <span className="tabular-nums">{formatMoney(totals.subtotal, currency)}</span>
                 </div>
+                {totals.manualDiscount > 0 && (
+                  <div className="flex justify-between text-muted">
+                    <span className="min-w-0 truncate">
+                      {discountMode === "percent" ? t("pay.discountPct", { pct: discountPct }) : t("pay.discountFlat")}
+                    </span>
+                    <span className="shrink-0 text-danger tabular-nums">
+                      −{formatMoney(totals.manualDiscount, currency)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-muted">
                   <span>{t("pay.vat")}</span>
                   <span className="tabular-nums">{formatMoney(totals.tax, currency)}</span>
@@ -518,6 +624,20 @@ export default function SellPage() {
                   <span>{t("pay.total")}</span>
                   <span className="tabular-nums">{formatMoney(totals.total, currency)}</span>
                 </div>
+                {/* Only where they differ. On a sale paid in full, "Due now"
+                    repeating the total is a line that says nothing. */}
+                {balance > 0 && (
+                  <>
+                    <div className="mt-inline flex justify-between font-medium">
+                      <span>{t("pay.dueNow")}</span>
+                      <span className="tabular-nums">{formatMoney(dueNow, currency)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted">
+                      <span>{t("pay.balanceAtArrival")}</span>
+                      <span className="tabular-nums">{formatMoney(balance, currency)}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               {method === "cash" && (
@@ -535,7 +655,7 @@ export default function SellPage() {
                   <div className="mt-section flex gap-tight">
                     <button
                       type="button"
-                      onClick={() => setTenderTaka(String(Math.ceil(totals.total / 100)))}
+                      onClick={() => setTenderTaka(String(Math.ceil(dueNow / 100)))}
                       className="h-12 flex-1 rounded-full border border-inverse bg-card text-sm active:bg-ember/10"
                     >
                       {tp("cash.exact")}
@@ -606,6 +726,13 @@ export default function SellPage() {
           </div>
         </div>
       </div>
+
+      <CustomerPicker
+        open={customerOpen}
+        onClose={() => setCustomerOpen(false)}
+        attached={attached}
+        onAttach={setAttached}
+      />
 
       <Modal
         open={customOpen}

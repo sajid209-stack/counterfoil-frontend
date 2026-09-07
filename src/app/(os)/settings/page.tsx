@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Building2, CreditCard, LandPlot, MapPin, MonitorSmartphone, ShieldCheck, Star, Store, Tags, UserCog, Users, Wallet } from "lucide-react";
+import { ArrowUpRight, Building2, CreditCard, LandPlot, MapPin, MonitorSmartphone, ShieldCheck, Store, Tags, UserCog, Users } from "lucide-react";
 import { PageShell } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { listResources } from "@/lib/api";
@@ -27,8 +27,6 @@ export default function SettingsHub() {
     // sub-nav tabs and real screens were missing from it — so the only way to
     // reach them was to already know they were there.
     { title: "Categories", desc: "The groups bookings are filed under, and the chips at the till.", href: "/settings/categories", icon: Tags },
-    { title: "Memberships", desc: "Tiers, what they include and what they discount.", href: "/settings/memberships", icon: Star },
-    { title: "Points", desc: "How points are earned and what they are worth.", href: "/settings/loyalty", icon: Wallet },
     { title: "Team", desc: "Staff members, their PINs and what they can do.", href: "/settings/team", icon: Users },
     { title: "Devices", desc: "Tablets and scanners paired to your workspace.", href: "/settings/devices", icon: MonitorSmartphone },
     { title: "Payments", desc: "Payment accounts, payouts and how money is taken.", href: "/settings/payments", icon: CreditCard },

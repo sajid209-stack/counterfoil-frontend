@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, BadgeCheck, CalendarDays, Lock, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, Ticket, TicketPercent, UsersRound } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Lock, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, Ticket, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -23,16 +23,16 @@ export function Sidebar({
   const pathname = usePathname();
   const t = useTranslations("nav");
 
+  // Memberships and Promotions are built but hidden — the backend does not
+  // implement them yet. See lib/features; restoring the flag restores the row.
   const OPERATE: { label: string; href: string; icon: IconType }[] = [
     { label: t("dashboard"), href: "/dashboard", icon: LayoutDashboard },
     { label: t("calendar"), href: "/calendar", icon: CalendarDays },
     { label: t("orders"), href: "/orders", icon: ReceiptText },
     { label: t("customers"), href: "/customers", icon: UsersRound },
-    { label: t("memberships"), href: "/memberships", icon: BadgeCheck },
     { label: t("holds"), href: "/holds", icon: Lock },
     { label: t("products"), href: "/bookings", icon: Ticket },
     { label: t("reports"), href: "/reports/sales", icon: ChartNoAxesColumn },
-    { label: t("promotions"), href: "/promotions", icon: TicketPercent },
   ];
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);

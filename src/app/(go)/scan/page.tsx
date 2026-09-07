@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FEATURES } from "@/lib/features";
 import { useTranslations } from "next-intl";
 import { ScanLine } from "lucide-react";
 import { Button } from "@/components/ui";
@@ -31,7 +32,10 @@ export default function ScanPage() {
     // A membership card scans at the same gate as a ticket (§16.10), so the
     // one input takes both. Membership codes are CF-M-…; anything else falls
     // through to the ticket path.
-    if (/^cf-m-/i.test(c)) {
+    // With memberships hidden a CF-M- code has no meaning to this operator, so
+    // it falls through to the ticket path and is refused as an unknown code —
+    // which is the truth, rather than a card that half works.
+    if (FEATURES.memberships && /^cf-m-/i.test(c)) {
       const res = await scanMembership(c);
       if (!res.ok) {
         outcome = { accept: false, code: c, reason: t("notFound") };

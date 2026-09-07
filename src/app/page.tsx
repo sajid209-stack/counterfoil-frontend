@@ -113,7 +113,7 @@ export default function Home() {
         {/* Quiet dev/entry links. */}
         <div className="mt-hero flex flex-wrap gap-major border-t border-line pt-major font-mono text-xs text-faint">
           <Link href="/dashboard" className="hover:text-ember">OS admin →</Link>
-          <Link href="/pos" className="hover:text-ember">Go · POS →</Link>
+          <Link href="/tills" className="hover:text-ember">Go · till designs →</Link>
           <Link href="/tokens" className="hover:text-ember">Design tokens →</Link>
           <Link href="/kitchen-sink" className="hover:text-ember">Primitives →</Link>
         </div>

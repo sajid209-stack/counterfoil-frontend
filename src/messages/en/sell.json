@@ -72,13 +72,19 @@
     "txnLabel": "bKash transaction ID",
     "txnPlaceholder": "e.g. 8N7A2K4M1P",
     "txnHint": "Enter the ID from the customer's confirmation before completing the sale.",
-    "qrHint": "Show the counter's Bangla QR to the customer, then complete the sale once their payment confirms."
+    "qrHint": "Show the counter's Bangla QR to the customer, then complete the sale once their payment confirms.",
+    "discountPct": "Discount {pct}%",
+    "discountFlat": "Discount",
+    "dueNow": "Due now",
+    "balanceAtArrival": "Balance at arrival"
   },
   "footer": {
     "total": "Total",
     "nothingYet": "Nothing to pay yet",
     "takeAmount": "Take {amount}",
-    "completeAmount": "Complete {amount}"
+    "completeAmount": "Complete {amount}",
+    "overLimit": "Needs a manager",
+    "needReason": "Add a reason for the discount"
   },
   "custom": {
     "title": "Custom amount",
@@ -87,5 +93,24 @@
   },
   "complete": {
     "whatWasSold": "What was sold"
+  },
+  "rows": {
+    "customer": "Customer",
+    "walkIn": "Walk-in",
+    "discount": "Discount",
+    "none": "None",
+    "overLimit": "Over the {limit}% limit for this counter. Ask a manager to approve it.",
+    "reason": "Reason",
+    "reasonPlaceholder": "Why this discount?",
+    "payNow": "Paying now",
+    "inFull": "In full",
+    "half": "Half",
+    "advanceSummary": "{now} now · {later} later",
+    "deposit": "Deposit · {later} at arrival",
+    "depositExplain": "Take the whole amount now instead of leaving {later} at arrival",
+    "advanceAmount": "Amount to take now",
+    "advancePlaceholder": "Amount",
+    "minimum": "Min {amount}",
+    "belowMin": "The least you can take now is {amount}."
   }
 }

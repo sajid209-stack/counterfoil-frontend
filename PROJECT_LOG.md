@@ -3009,3 +3009,102 @@ component. Worth fixing in v2's own session list later.
 4. Park/resume, settling an existing booking (which cannot be a block — it is
    `addOrderPayment` against an order that already exists, so it needs its own
    entry point), and the bKash/QR pending flows.
+
+
+---
+
+## Three till variants, and the features the backend cannot keep (2026-09-07)
+
+Owner's direction, in their words: three POS variants, reachable from the home
+screen; v2 needs partial payment, discounts and customers; **promotions and
+memberships come out of every system for now, because the backend is not ready
+for them**; and a third variant restoring the design as it was before Ishmam's
+6 September pass.
+
+### Hidden, not deleted — `lib/features.ts`
+
+`FEATURES.promotions`, `.memberships` and `.loyalty` are three booleans, all
+`false`. Nothing under `lib/api`, nothing in the seed and none of the routes was
+removed, so lifting a flag restores the feature whole. Points came out too, at
+the owner's instruction.
+
+Two rules the gating follows, both of which matter more than where the controls
+went:
+
+- **Gate the source, not the markup.** The till sets `benefit`, `pointsAccount`
+  and `program` to null behind the flag, so every downstream sum and every
+  control that reads them goes quiet at once — rather than nine separate places
+  each remembering to check. `priceSale` and `buildOrderLines` still ACCEPT a
+  member discount or a coupon; what changes is that no screen can produce one,
+  which keeps the money engine identical to the one the backend team is reading.
+- **Gate the write, not only the control.** A sale made while points are hidden
+  must not add ledger entries, or the balances waiting behind the flag are wrong
+  when it is lifted. `issueMembership`, `spendPoints` and `earnPoints` are all
+  behind the flag at the call site.
+
+Swept: OS sidebar · Settings sub-nav and hub · the customer record's Membership
+& points tab · the v1 till's coupon row, membership sale, points sheet and
+member-rate banner · the CF-M- branch at the gate, which now falls through to
+the ticket path and is refused as an unknown code — the truth, rather than a
+card that half works. A cashier's **manual discount is not a promotion** and
+stays on: it is a role-and-policy mechanism that works with no promotions engine
+at all.
+
+The passes row was renamed "Passes & balances" — it now holds a credits pass and
+settling a booking, and naming a control after something it cannot do is worse
+than a shorter name.
+
+Verified in a browser rather than by grep: **zero** occurrences of Memberships,
+Promotions or Points across the dashboard nav, the settings hub and the till.
+`eslint` on `pos/page.tsx` is byte-identical before and after (6 problems both
+sides — the pre-existing deep-link effect), so the gating introduced nothing.
+
+### The variant picker
+
+`lib/tills.ts` is one registry read by everything that offers the choice: the
+picker at **`/tills`**, the switcher in the Go header, the More sheet and the
+home page's bottom link row. A variant marked `ready: false` is **shown but not
+offered** — a link that 404s is worse than an honest placeholder.
+
+The header switcher appears only on a till route (elsewhere it would offer to
+change something the current screen is not) and only from `sm`, where the header
+has room; the phone route in is More → Till design. Same
+responsive-by-form-factor rule the nav itself follows.
+
+### v2 gains the three things it was missing
+
+- **Customer** — reuses `pos/CustomerPicker` rather than a second copy: it is a
+  self-contained component, and two customer pickers would be two places for a
+  flagged customer's reason to stop appearing.
+- **Discount** — `DiscountInput` (percent or money), capped by the business
+  policy and falling back to the signed-in staff's **role limit** where no
+  policy is set. The cap is on the EFFECTIVE rate, not what was typed, and the
+  refusal names the cap and the way past it. A required reason blocks the sale
+  with "Add a reason for the discount" rather than a silent disabled button.
+- **Partial payment** — two rules meet in one row: a booking's **deposit** says
+  what the booking requires, an **advance** says what this customer actually
+  handed over. The footer then collects `dueNow`, not the total, and `checkout`
+  lands the order as `partial` (`payNow < total`).
+
+Priced in two passes, because a percentage needs something to be a percentage
+of: the sale at list price sizes the discount, then the sale is priced again
+with it.
+
+**A defect found by walking it:** the completion screen showed the change due
+but not the **৳517.50 still owed**. A part-paid sale has to say that on the slip
+the customer walks away with, or the only record of the balance is in the ledger
+and the person who owes it never saw it.
+
+Browser-verified end to end at 430px: 2 Adult ৳1,000 → 15% refused with "Over
+the 10% limit for this counter" and the footer reading "Needs a manager" → 10%
+accepted, reason demanded, **VAT ৳135 on the discounted ৳900** → Half → Due now
+৳517.50, balance ৳517.50 → tendered ৳518, change ৳0.50, order partial.
+
+Overflow sweep at 320 · 390 · 430 · 768 · 1024 · 1440: no page x-scroll, nothing
+clipped without an ellipsis (the `sr-only` heading excepted, which is meant to
+be). `tsc`, `npm run build` and `eslint` clean; i18n parity 0 missing / 0 extra.
+
+**Harness note:** `DiscountInput` commits on blur or Enter, not on input, and
+React 19's focus delegation means a synthetic `blur` event does not reach it.
+Drive it by its chips, or dispatch `focusout`. Two "failing" checks were this
+and not product bugs.

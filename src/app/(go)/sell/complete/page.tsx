@@ -114,6 +114,17 @@ export default function SellCompletePage() {
             </p>
           )}
 
+          {/* A part-paid sale has to say what is still owed, on the slip the
+              customer walks away with — otherwise the only record of the
+              balance is in the ledger, and the person who owes it never saw
+              it. */}
+          {(info.balance ?? 0) > 0 && (
+            <p className="type-body w-full rounded-go border border-ember/30 bg-ember/10 px-comfortable py-tight text-brand-foreground">
+              {t("complete.balanceDueAtArrival")}{" "}
+              <span className="font-semibold">{formatMoney(info.balance!, currency)}</span>
+            </p>
+          )}
+
           {/* The sale itself. The page it was built on is gone, so this is the
               only place it can still be read without going to Orders. */}
           {info.receipt && (

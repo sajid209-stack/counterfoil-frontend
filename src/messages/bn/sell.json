@@ -72,13 +72,19 @@
     "txnLabel": "বিকাশ ট্রানজেকশন আইডি",
     "txnPlaceholder": "যেমন 8N7A2K4M1P",
     "txnHint": "বিক্রি সম্পন্ন করার আগে গ্রাহকের কনফার্মেশন থেকে আইডিটি লিখুন।",
-    "qrHint": "গ্রাহককে কাউন্টারের বাংলা QR দেখান, পেমেন্ট নিশ্চিত হলে বিক্রি সম্পন্ন করুন।"
+    "qrHint": "গ্রাহককে কাউন্টারের বাংলা QR দেখান, পেমেন্ট নিশ্চিত হলে বিক্রি সম্পন্ন করুন।",
+    "discountPct": "ছাড় {pct}%",
+    "discountFlat": "ছাড়",
+    "dueNow": "এখন দিতে হবে",
+    "balanceAtArrival": "আসার সময় বাকি"
   },
   "footer": {
     "total": "মোট",
     "nothingYet": "এখনো পরিশোধের কিছু নেই",
     "takeAmount": "{amount} নিন",
-    "completeAmount": "{amount} সম্পন্ন করুন"
+    "completeAmount": "{amount} সম্পন্ন করুন",
+    "overLimit": "ম্যানেজারের অনুমোদন লাগবে",
+    "needReason": "ছাড়ের কারণ লিখুন"
   },
   "custom": {
     "title": "কাস্টম পরিমাণ",
@@ -87,5 +93,24 @@
   },
   "complete": {
     "whatWasSold": "যা বিক্রি হয়েছে"
+  },
+  "rows": {
+    "customer": "গ্রাহক",
+    "walkIn": "ওয়াক-ইন",
+    "discount": "ছাড়",
+    "none": "নেই",
+    "overLimit": "এই কাউন্টারের {limit}% সীমার বেশি। ম্যানেজারের অনুমোদন নিন।",
+    "reason": "কারণ",
+    "reasonPlaceholder": "এই ছাড় কেন?",
+    "payNow": "এখন পরিশোধ",
+    "inFull": "সম্পূর্ণ",
+    "half": "অর্ধেক",
+    "advanceSummary": "এখন {now} · পরে {later}",
+    "deposit": "জমা · আসার সময় {later}",
+    "depositExplain": "আসার সময় {later} না রেখে এখনই পুরো টাকা নিন",
+    "advanceAmount": "এখন যত নেবেন",
+    "advancePlaceholder": "পরিমাণ",
+    "minimum": "সর্বনিম্ন {amount}",
+    "belowMin": "এখন সর্বনিম্ন {amount} নিতে হবে।"
   }
 }

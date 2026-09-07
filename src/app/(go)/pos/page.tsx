@@ -14,6 +14,7 @@ import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { taxRateFor } from "@/lib/tax";
+import { FEATURES } from "@/lib/features";
 import { formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
@@ -197,7 +198,10 @@ export default function PosPage() {
   // ── Membership + points (Milestone 2). Both hang off the ATTACHED customer,
   //    so removing the customer removes the benefit — no stale member price.
   const benefitQ = useApiQuery(() => getMemberBenefit(attached?.id ?? null), [attached?.id]);
-  const benefit = attached?.id ? (benefitQ.data ?? null) : null;
+  // Gated at the source: with no benefit, no account and no programme, every
+  // downstream sum and every control that reads them goes quiet at once —
+  // rather than nine separate places each remembering to check a flag.
+  const benefit = FEATURES.memberships && attached?.id ? (benefitQ.data ?? null) : null;
   const pointsQ = useApiQuery(
     () =>
       attached?.id
@@ -205,9 +209,9 @@ export default function PosPage() {
         : Promise.resolve({ ok: true as const, data: null }),
     [attached?.id],
   );
-  const pointsAccount = attached?.id ? (pointsQ.data ?? null) : null;
+  const pointsAccount = FEATURES.loyalty && attached?.id ? (pointsQ.data ?? null) : null;
   const programQ = useApiQuery(() => getLoyaltyProgram(), []);
-  const program = programQ.data;
+  const program = FEATURES.loyalty ? programQ.data : null;
   const [pointsToSpend, setPointsToSpend] = useState(0);
   const [pointsOpen, setPointsOpen] = useState(false);
   const [membershipOpen, setMembershipOpen] = useState(false);
@@ -545,7 +549,9 @@ export default function PosPage() {
     discountMode === "percent"
       ? Math.round((Math.max(0, preBase) * discountPct) / 100)
       : Math.min(Math.max(0, preBase), discountAmt);
-  const couponDiscount = Math.min(appliedCoupon?.discount ?? 0, Math.max(0, preBase - manualDiscount));
+  const couponDiscount = FEATURES.promotions
+    ? Math.min(appliedCoupon?.discount ?? 0, Math.max(0, preBase - manualDiscount))
+    : 0;
 
   // ── The member price (§16.9). Applied only to what the tier actually covers,
   //    and never to the sale of a membership itself. Like the coupon, this is
@@ -702,6 +708,7 @@ export default function PosPage() {
     if (!customerId) return;
 
     for (const entry of cart) {
+      if (!FEATURES.memberships) break;
       if (!entry.productId.startsWith("membership_")) continue;
       const tierId = entry.productId.slice("membership_".length);
       const issued = await issueMembership({ customerId, tierId, orderId });
@@ -709,6 +716,7 @@ export default function PosPage() {
       else toast.error(issued.error.message);
     }
 
+    if (!FEATURES.loyalty) return;
     if (pointsToSpend > 0) await spendPoints(customerId, pointsToSpend, orderId);
     await earnPoints(customerId, paidAmount, orderId);
   };
@@ -1130,6 +1138,7 @@ export default function PosPage() {
             </CartRow>
           )}
 
+          {FEATURES.promotions && (
           <CartRow icon={TicketPercent} label={pt("list.coupon")} value={appliedCoupon ? (appliedCoupon.code ?? appliedCoupon.name) : t("summary.applyCoupon")} open={cartRow === "coupon"} onToggle={() => toggleRow("coupon")}>
           <div className="flex items-center justify-between gap-tight">
             <span className="shrink-0 text-[13px] text-muted">{pt("list.coupon")}</span>
@@ -1148,10 +1157,13 @@ export default function PosPage() {
           {couponError && (
             <p className="mb-tight text-[13px] text-danger">{pt(`pos.rejected.${couponError}` as never)}</p>
           )}
-          {cartNotice && <div className="mb-tight"><BlockedNotice message={cartNotice} onDismiss={() => setCartNotice(null)} /></div>}
-
-          {/* Credits pass */}
           </CartRow>
+          )}
+
+          {/* The refusal guidance is not part of the coupon row — it explains
+              why an extend or a discount was declined, so it must survive the
+              coupon control being hidden. */}
+          {cartNotice && <div className="mb-tight"><BlockedNotice message={cartNotice} onDismiss={() => setCartNotice(null)} /></div>}
 
           <CartRow icon={Wallet} label={t("summary.passesMembership")} value={pass ? pass.code : t("summary.add")} open={cartRow === "passes"} onToggle={() => toggleRow("passes")}>
           <div className="mb-tight flex flex-wrap items-center justify-between gap-tight">
@@ -1169,8 +1181,8 @@ export default function PosPage() {
 
           {/* Membership + points. Both need a customer attached, so the row
               says so rather than offering a control that cannot work. */}
-          <div className="mb-tight flex flex-wrap items-center gap-tight">
-            <button type="button" onClick={() => setMembershipOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[13px]">{t("summary.sellMembership")}</button>
+          <div className="mb-tight flex flex-wrap items-center gap-tight empty:hidden">
+            {FEATURES.memberships && <button type="button" onClick={() => setMembershipOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[13px]">{t("summary.sellMembership")}</button>}
             {pointsAccount && program?.enabled && (
               <button type="button" onClick={() => setPointsOpen(true)} className="h-12 min-w-0 rounded-full border border-line px-comfortable text-[13px]">
                 <span className="truncate">{pointsToSpend > 0 ? t("summary.pointsApplied", { count: pointsToSpend }) : t("summary.spendPoints", { count: pointsAccount.balance })}</span>
@@ -1335,6 +1347,7 @@ export default function PosPage() {
 
       <CustomerPicker open={customerOpen} onClose={() => setCustomerOpen(false)} attached={attached} onAttach={setAttached} />
 
+      {FEATURES.memberships && (
       <MembershipSheet
         open={membershipOpen}
         onClose={() => setMembershipOpen(false)}
@@ -1344,15 +1357,18 @@ export default function PosPage() {
           setMembershipOpen(false);
         }}
       />
+      )}
+      {FEATURES.loyalty && (
       <PointsSheet
         open={pointsOpen}
         onClose={() => setPointsOpen(false)}
         account={pointsAccount}
-        program={program}
+        program={program ?? undefined}
         maxPoints={maxPointsForSale}
         current={pointsToSpend}
         onApply={setPointsToSpend}
       />
+      )}
 
       <Modal open={parkOpen} onClose={() => setParkOpen(false)} title={t("parked.title")} footer={<Button shape="pill" variant="secondary" onClick={() => setParkOpen(false)}>{t("parked.close")}</Button>}>
         <div className="flex flex-col gap-section">

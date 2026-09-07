@@ -16,6 +16,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     ? resources[0].nounPlural
     : "Resources";
 
+  // Memberships and Points are hidden pending backend support (lib/features).
   const SUB_NAV = [
     { label: "Business", href: "/settings/business" },
     { label: "Locations", href: "/settings/locations" },
@@ -25,8 +26,6 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     { label: "Team", href: "/settings/team" },
     { label: "Devices", href: "/settings/devices" },
     { label: "Payments", href: "/settings/payments" },
-    { label: "Memberships", href: "/settings/memberships" },
-    { label: "Points", href: "/settings/loyalty" },
     { label: "Roles", href: "/settings/roles" },
     { label: "Security", href: "/settings/security" },
   ];
