@@ -95,7 +95,7 @@ export function MonthGrid({
 
     return (
       <div>
-        <div className="grid grid-cols-7 border-b border-line">
+        <div className="grid grid-cols-7 border-b border-hairline">
           {weekdayLabels.map((w) => (
             <div key={w} className="type-label py-tight text-center text-[12px] text-muted">
               {w.slice(0, 1)}
@@ -104,7 +104,7 @@ export function MonthGrid({
         </div>
 
         {visible.map((week, wi) => (
-          <div key={wi} className="grid grid-cols-7 border-b border-line last:border-0">
+          <div key={wi} className="grid grid-cols-7 border-b border-hairline last:border-0">
             {week.map((d) => {
               const key = isoDate(d);
               const list = byDay.get(key) ?? [];
@@ -117,15 +117,15 @@ export function MonthGrid({
                   type="button"
                   onClick={() => setPicked(key)}
                   className={cn(
-                    "flex min-h-[3.25rem] flex-col items-center gap-1 border-r border-line py-tight last:border-r-0",
+                    "flex min-h-[3.25rem] flex-col items-center gap-1 border-r border-hairline py-tight last:border-r-0",
                     outside && "bg-subtle/40",
                     on && "bg-ember/10",
                   )}
                 >
                   <span
                     className={cn(
-                      "flex h-6 w-6 items-center justify-center rounded-full font-mono text-[12px]",
-                      today && "bg-ember text-ink",
+                      "flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px]",
+                      today && "bg-ember-solid font-semibold text-white",
                       !today && on && "border border-ember text-brand-foreground",
                       !today && !on && outside && "text-faint",
                       !today && !on && !outside && "text-fg",
@@ -148,7 +148,7 @@ export function MonthGrid({
         ))}
 
         {/* The chosen day, in full — the reason the grid can afford to be dots. */}
-        <div className="border-t border-line">
+        <div className="border-t border-hairline">
           <p className="type-label px-comfortable pt-comfortable text-[12px] text-muted">
             {dayHeading ? dayHeading(selectedDate) : isoDate(selectedDate)}
           </p>
@@ -194,7 +194,7 @@ export function MonthGrid({
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[44rem]">
-        <div className="grid grid-cols-7 border-b border-line">
+        <div className="grid grid-cols-7 border-b border-hairline">
           {weekdayLabels.map((w) => (
             <div key={w} className="type-label px-tight py-tight text-[12px] text-muted">
               {w}
@@ -203,7 +203,7 @@ export function MonthGrid({
         </div>
 
         {visible.map((week, wi) => (
-          <div key={wi} className="grid grid-cols-7 border-b border-line last:border-0">
+          <div key={wi} className="grid grid-cols-7 border-b border-hairline last:border-0">
             {week.map((d) => {
               const key = isoDate(d);
               const list = byDay.get(key) ?? [];
@@ -216,7 +216,7 @@ export function MonthGrid({
                 <div
                   key={key}
                   className={cn(
-                    "min-h-[7rem] border-r border-line p-1 last:border-r-0",
+                    "min-h-[7rem] border-r border-hairline p-1 last:border-r-0",
                     outside && "bg-subtle/40",
                   )}
                 >
@@ -224,8 +224,8 @@ export function MonthGrid({
                     type="button"
                     onClick={onPickDay ? () => onPickDay(d) : undefined}
                     className={cn(
-                      "mb-1 flex h-6 w-6 items-center justify-center rounded-full font-mono text-[12px] transition-colors duration-quick",
-                      today && "bg-ember text-ink",
+                      "mb-1 flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px] transition-colors duration-quick",
+                      today && "bg-ember-solid font-semibold text-white",
                       !today && outside && "text-faint",
                       !today && !outside && "text-fg",
                       onPickDay && !today && "hover:bg-subtle",

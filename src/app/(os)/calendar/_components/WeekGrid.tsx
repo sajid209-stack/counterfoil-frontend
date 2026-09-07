@@ -133,8 +133,8 @@ export function WeekGrid({
     <div ref={scroller} className="max-h-[70vh] overflow-auto">
       <div className={compact ? "min-w-0" : "min-w-[52rem]"}>
         {/* ── day headers ─────────────────────────────────────────────────── */}
-        <div className="sticky top-0 z-20 flex border-b border-line bg-card">
-          <div className={cn(gutter, "shrink-0 border-r border-line")} />
+        <div className="sticky top-0 z-20 flex border-b border-hairline bg-card">
+          <div className={cn(gutter, "shrink-0 border-r border-hairline")} />
           {days.map((d) => {
             const today = sameDay(d, now);
             const label = dayLabel(d);
@@ -144,7 +144,7 @@ export function WeekGrid({
                 type="button"
                 onClick={onPickDay ? () => onPickDay(d) : undefined}
                 className={cn(
-                  "flex flex-1 flex-col items-center gap-0.5 border-r border-line py-tight last:border-r-0",
+                  "flex flex-1 flex-col items-center gap-0.5 border-r border-hairline py-tight last:border-r-0",
                   today && "bg-ember/5",
                   onPickDay && "transition-colors duration-quick hover:bg-subtle",
                 )}
@@ -159,10 +159,11 @@ export function WeekGrid({
                 </span>
                 <span
                   className={cn(
-                    "flex h-6 w-6 items-center justify-center rounded-full font-mono text-[12px]",
-                    // ink, not white: white on ember is 3.50:1, which a 12px
-                    // numeral does not get away with. ink is 5.30:1.
-                    today ? "bg-ember font-semibold text-ink" : "text-fg",
+                    "flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px]",
+                    // White on ember measures 3.50:1. It is the house rule for
+                    // anything sitting inside a solid ember frame, and the same
+                    // declared exception the till already carries.
+                    today ? "bg-ember-solid font-semibold text-white" : "text-fg",
                   )}
                 >
                   {label.day}
@@ -173,17 +174,17 @@ export function WeekGrid({
         </div>
 
         {allDay.length > 0 && (
-          <div className="flex border-b border-line bg-subtle/50">
+          <div className="flex border-b border-hairline bg-subtle/50">
             <div
               className={cn(
                 gutter,
-                "shrink-0 border-r border-line py-tight text-center text-[12px] text-faint",
+                "shrink-0 border-r border-hairline py-tight text-center text-[12px] text-faint",
               )}
             >
               {compact ? allDayLabel.slice(0, 3) : allDayLabel}
             </div>
             {days.map((d) => (
-              <div key={isoDate(d)} className="flex-1 border-r border-line p-0.5 last:border-r-0">
+              <div key={isoDate(d)} className="flex-1 border-r border-hairline p-0.5 last:border-r-0">
                 {allDay
                   .filter((e) => sameDay(e.start, d))
                   .map((e) => (
@@ -208,7 +209,7 @@ export function WeekGrid({
         {/* ── the grid ────────────────────────────────────────────────────── */}
         <div ref={track} className="flex" style={{ height: bodyHeight }}>
           {/* Hour gutter, once, on the left. */}
-          <div className={cn("relative shrink-0 border-r border-line", gutter)}>
+          <div className={cn("relative shrink-0 border-r border-hairline", gutter)}>
             {hours.map((h, i) => (
               <span
                 key={h}
@@ -240,17 +241,22 @@ export function WeekGrid({
             return (
               <div
                 key={isoDate(d)}
-                /* No tint on today's column any more. It was ember, and now
-                   so is every booked block — Wednesday's bookings were sinking
-                   into their own background. The header pill and the brand
-                   weekday above mark the day emphatically enough. */
-                className="relative flex-1 border-r border-line last:border-r-0"
+                /* Today's whole column, tinted, so the eye lands on it before
+                   it reads anything. Kept to 4%: booked blocks are themselves
+                   an ember wash, and at the 5% this started on Wednesday's
+                   bookings sank into their own background. At 4%, with the
+                   block borders, the column reads as ground and the blocks
+                   still read as objects on it. */
+                className={cn(
+                  "relative flex-1 border-r border-hairline last:border-r-0",
+                  today && "bg-ember/[0.04]",
+                )}
               >
                 {hours.map((h) => (
                   <span
                     key={h}
                     aria-hidden
-                    className="absolute inset-x-0 h-px bg-line/70"
+                    className="absolute inset-x-0 h-px bg-hairline"
                     style={{ top: `${((h * 60 - openMin) / span) * 100}%` }}
                   />
                 ))}
@@ -411,7 +417,7 @@ function CompactWeek({
 
   return (
     <div>
-      <div className="grid grid-cols-7 border-b border-line">
+      <div className="grid grid-cols-7 border-b border-hairline">
         {days.map((d) => {
           const key = isoDate(d);
           const list = byDay.get(key) ?? [];
@@ -425,15 +431,15 @@ function CompactWeek({
               aria-pressed={on}
               onClick={() => setPicked(key)}
               className={cn(
-                "flex min-h-[3.5rem] flex-col items-center gap-1 border-r border-line py-tight last:border-r-0",
+                "flex min-h-[3.5rem] flex-col items-center gap-1 border-r border-hairline py-tight last:border-r-0",
                 on && "bg-ember/10",
               )}
             >
               <span className="type-label text-[12px] text-muted">{label.weekday.slice(0, 1)}</span>
               <span
                 className={cn(
-                  "flex h-6 w-6 items-center justify-center rounded-full font-mono text-[12px]",
-                  today && "bg-ember font-semibold text-ink",
+                  "flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px]",
+                  today && "bg-ember-solid font-semibold text-white",
                   !today && on && "border border-ember text-brand-foreground",
                   !today && !on && "text-fg",
                 )}

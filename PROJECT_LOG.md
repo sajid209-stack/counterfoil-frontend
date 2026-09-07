@@ -4056,3 +4056,59 @@ said `querySelector(".card-surface")` silently began measuring a stat card
 instead of the grid — one of them reported "0 low-contrast" while measuring the
 wrong element entirely. All four now take the tallest card. A harness that
 quietly changes what it measures is worse than one that fails.
+
+## The calendar, fourth pass — the today badge, the ruling and the cards (2026-09-08)
+
+Five corrections from a marked-up screenshot.
+
+### Solid ember carries white text — and stops brightening in dark
+
+The owner's rule: anything inside an **#F94A00** frame is white, not black.
+
+The today badge was `text-ink` on ember, which I had chosen deliberately at
+5.30:1 over white's 3.50:1. White is the house rule, it is the same
+**declared white-on-ember exception the till already carries**, and it is now
+recorded here rather than re-argued each time.
+
+Worth the detail: `--color-ember` lifts to `#ff7a3d` in dark so that ember *as
+text* stays legible on ink. The same lift under white *as a fill* gives
+**2.59:1** — materially worse than light mode. So solid ember became its own
+token, `--color-ember-solid`, held at `#f94a00` in both themes: 3.50:1 either
+way, the colour the owner actually named, and identical light and dark.
+
+The badge is a rounded rectangle now rather than a circle — `rounded-sm`, the
+same 6px the rest of OS uses — and 13px rather than 12.
+
+### Today's column is tinted again, at 4%
+
+I removed this last round because it was ember at 5% under blocks that are
+themselves an ember wash, and Wednesday's bookings were sinking into their own
+background. The owner wants the column marked, and is right that it should be.
+At **4%**, with the block borders added in the same round, the column reads as
+ground and the blocks still read as objects sitting on it.
+
+### The ruling got quieter
+
+`--color-hairline`: `line` one step softer. `line` is the right weight for a
+border between two components; drawn seven days across and seventeen hours down
+it becomes a cage. Every internal stroke in the three grids now uses it — the
+card's own edge does not, because that one really is dividing something.
+
+In dark, *lighter* means **less contrast, not a lighter colour**: on ink a
+stroke softens by moving toward the card it sits on, so `#2e2c29` against a
+`#22211f` card rather than anything nearer white.
+
+### Cards
+
+`min-h-[5.25rem]`, centred, value up to `text-2xl`. Squat cards read as a
+toolbar rather than as figures worth reading. Desktop chrome 36% → 37%, phone
+58% → 60%, which is what the extra height costs.
+
+### Verified
+
+Contrast across every text node in the grid, both themes: **one** finding in
+each, the declared white-on-ember badge at 3.50:1, identical light and dark.
+Peek unchanged — full name, status in words, inside the viewport at a middle
+and a right-edge block, cleared on leave, and `{peek: false, dialog: true}` on
+an emulated iPhone. Keyboard unchanged. The filter empty-state notice still
+fires in all three views. `tsc`, `build` and `eslint` clean; i18n 0 / 0.

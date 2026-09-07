@@ -441,6 +441,20 @@
   --color-ember-wash: #ffe4d6;
   --color-success-wash: #d8efdf;
   --color-muted-wash: #eae8e3;
+
+  /* The calendar's internal ruling. `line` is the right weight for a border
+     that separates two components; drawn 7 days across and 17 hours down it
+     becomes a cage. This is the same idea one step quieter, for strokes whose
+     job is to guide the eye rather than to divide anything. */
+  --color-hairline: #edeae4;
+
+  /* Solid ember that does NOT brighten in dark.
+     `ember` lifts to #ff7a3d on ink so that ember-as-TEXT stays legible, but
+     the same lift applied to ember-as-FILL drops white on it to 2.59:1. This
+     is the brand orange held at #f94a00 in both themes, for the badges and
+     frames that carry white text: 3.50:1 either way, and the same colour the
+     owner named. */
+  --color-ember-solid: #f94a00;
 }
 
 /* Dark: tonal direction reverses — content lightens, surfaces deepen.
@@ -484,6 +498,11 @@
   --color-ember-wash: #4a2a17;
   --color-success-wash: #17362a;
   --color-muted-wash: #2b2a27;
+
+  /* Lighter here means LESS contrast, not a lighter colour: on ink, a stroke
+     softens by moving toward the card it sits on, not toward white. */
+  --color-hairline: #2e2c29;
+  --color-ember-solid: #f94a00;
 }
 .dark body { background: var(--color-surface); color: var(--color-fg); }
 

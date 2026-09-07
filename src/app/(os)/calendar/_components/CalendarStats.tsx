@@ -87,13 +87,16 @@ export function CalendarStats({
           <div
             key={c.key}
             className={cn(
-              "card-surface flex flex-col gap-inline px-comfortable py-tight",
+              "card-surface flex flex-col justify-center gap-tight px-comfortable py-comfortable",
+              // Squat cards read as a toolbar rather than as figures worth
+              // reading. This is the height the numbers earn.
+              "min-h-[5.25rem]",
               compact && "min-w-[9.5rem] shrink-0",
             )}
           >
             <span className="type-label truncate text-[12px] text-muted">{c.label}</span>
             <span className="flex flex-wrap items-baseline gap-tight">
-              <span className="text-xl font-semibold tracking-tight tabular-nums">{c.value}</span>
+              <span className="text-2xl font-semibold tracking-tight tabular-nums">{c.value}</span>
               {!flat && (
                 <span
                   className={cn(

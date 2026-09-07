@@ -189,7 +189,7 @@ function EmptyLaneToggle({
 }) {
   if (count === 0) return null;
   return (
-    <div className="border-t border-line px-comfortable py-tight">
+    <div className="border-t border-hairline px-comfortable py-tight">
       <button
         type="button"
         aria-expanded={open}
@@ -248,8 +248,8 @@ function DayTrack({
     <div ref={scroller} className="max-h-[70vh] overflow-auto">
       <div style={{ minWidth: width + 160 }}>
         {/* ── the one shared axis ─────────────────────────────────────────── */}
-        <div className="sticky top-0 z-20 flex border-b border-line bg-card">
-          <div className="sticky left-0 z-30 w-40 shrink-0 border-r border-line bg-card" />
+        <div className="sticky top-0 z-20 flex border-b border-hairline bg-card">
+          <div className="sticky left-0 z-30 w-40 shrink-0 border-r border-hairline bg-card" />
           <div className="relative h-8 flex-1">
             {hours.map((h, i) => (
               <span
@@ -275,9 +275,9 @@ function DayTrack({
           const rowHeight = Math.max(64, 26 * Math.max(1, ...packed.map((p) => p.lanes)) + 20);
 
           return (
-            <div key={lane.id} className="flex border-b border-line last:border-0">
+            <div key={lane.id} className="flex border-b border-hairline last:border-0">
               {/* Name column stays put while the hours scroll under it. */}
-              <div className="sticky left-0 z-10 flex w-40 shrink-0 flex-col justify-center border-r border-line bg-card px-comfortable">
+              <div className="sticky left-0 z-10 flex w-40 shrink-0 flex-col justify-center border-r border-hairline bg-card px-comfortable">
                 <span className="break-words text-[13px] font-medium leading-tight">{lane.name}</span>
                 {lane.note && (
                   <span
@@ -304,7 +304,7 @@ function DayTrack({
                   <span
                     key={h}
                     aria-hidden
-                    className="absolute inset-y-0 w-px bg-line/70"
+                    className="absolute inset-y-0 w-px bg-hairline"
                     style={{ left: `${pct(h * 60)}%` }}
                   />
                 ))}
@@ -435,7 +435,7 @@ function CompactDay({
   return (
     <div>
       {blocked.length > 0 && (
-        <div className="flex flex-col gap-tight border-b border-line px-comfortable py-tight">
+        <div className="flex flex-col gap-tight border-b border-hairline px-comfortable py-tight">
           {blocked.map((l) => (
             <span key={l.id} className="flex items-baseline gap-tight text-[12px]">
               <span className="font-medium text-fg">{l.name}</span>
@@ -451,7 +451,7 @@ function CompactDay({
         <div ref={scroller} className="max-h-[70vh] overflow-y-auto">
           <div className="flex" style={{ height: trackHeight }}>
             {/* Hours down the left, once. */}
-            <div className="relative w-11 shrink-0 border-r border-line">
+            <div className="relative w-11 shrink-0 border-r border-hairline">
               {hours.slice(0, -1).map((h, i) => (
                 <span
                   key={h}
@@ -471,7 +471,7 @@ function CompactDay({
                 <span
                   key={h}
                   aria-hidden
-                  className="absolute inset-x-0 h-px bg-line/70"
+                  className="absolute inset-x-0 h-px bg-hairline"
                   style={{ top: `${pct(h * 60)}%` }}
                 />
               ))}
