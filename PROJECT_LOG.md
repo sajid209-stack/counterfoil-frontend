@@ -3578,3 +3578,96 @@ and this drawer is its only route on a phone.
   but it is the one case where the mockup's convenience does not reach.
 - `Modal` keeps its OS 12px corner; removing a single line still does not
   release its checkout hold. Both carried forward from the previous entry.
+
+---
+
+## The cart becomes a route (2026-09-07)
+
+Owner's three asks, with a screenshot: the discount chips do not match the
+theme's radii; the cart should sit on the POS ground with white cards; and
+**"no need popup, direct to individual cart page"** — repeated, with *"build a
+individual cart page properly"*.
+
+### 1. The chips
+
+The `%`/`৳` toggle, its field and the four percentage chips were on the OS 6px
+corner inside a till that is otherwise pills. They are pills now, still 44px.
+`DiscountInput` is shared by all three tills and `/classic` is deliberately the
+pre-redesign look, so this is a **`shape="go"` prop rather than a new default** —
+the pattern `Button` and `ModeButton` already use.
+
+### 2. The surfaces, inverted
+
+The cart was a white sheet with paper panels. It is now the till's own ground
+with **white cards on it**, measured at `rgb(245, 242, 235)` behind
+`rgb(255, 255, 255)`. The `dark:bg-surface` override came off with it: in dark
+the panels are `card` over `surface`, which is the project's own elevation rule
+rather than a second one written for this screen.
+
+### 3. A real route, and the trade that bought it
+
+`/pos/cart` is a route. Not a drawer, not a query parameter.
+
+**The till is mounted at `pos/layout.tsx`, not at a page.** A Next layout stays
+mounted while you move between its child routes; a page is unmounted and
+rebuilt. The sale — the lines, the customer, the discount, the coupon, the pass,
+the points, the advance, the derivation and the whole checkout path — is one
+1611-line component holding about 45 state hooks. Mounting it once at the layout
+is what lets the cart be a route without that state having to survive an
+unmount.
+
+**The honest cost:** `pos/page.tsx` and `pos/cart/page.tsx` exist to declare the
+routes and render `null`. Both carry a comment saying why. `/pos/complete` and
+`/pos/payment` are ordinary child routes and render normally through
+`{children}`.
+
+**The alternative, and why not now:** lifting the sale into a provider is a
+refactor of the **money path**, not of routing — roughly 700 lines including
+`buildInputs`, the discount stack, `buildSale` and `charge`. This repo pushes
+straight to `main` with no review gate and no tests but these harnesses. That is
+a bad trade to make inside a styling request. The URLs do not change when that
+refactor happens, so it is free to happen later.
+
+Full-bleed, no rounded lip and no drag handle: those are the grammar of a sheet
+you pull up, and this is a destination. `lg:inset-auto` keeps the tablet's
+sticky side panel from inheriting the phone's `inset-0`.
+
+### Back is now the truth
+
+`openCart` pushes `/pos/cart`; `closeCart` is `router.back()`. Measured:
+`history.length` goes 2 → 3 on open and stays 3 on Back, landing on `/pos` with
+the sale intact — so the phone's own back button does what the label says
+instead of leaving the till mid-sale.
+
+**A transient worth recording:** one run reported Back landing on `about:blank`,
+which would have been much worse than the `push` it replaced. It did not
+reproduce — the dev server was still compiling and the click landed before
+hydration. Re-running gave `/pos` with "2 items". A single red result from a
+harness that races a rebuild is not evidence.
+
+### Verified
+
+- **The money path still works after the route change**, which is the only
+  thing that mattered: a full sale — sheet → cart page → cash → complete — sold
+  Yoga Session down from 20 to 3 and the grid card badged itself **Limited**.
+- Route behaviour: `/pos` → pill → `/pos/cart` with the sale intact
+  (৳1,725.00) → Back → `/pos` still reading "2 items" → forward → `/pos/cart`.
+- At 1024 **both routes render identically** — grid plus sticky panel, panel at
+  `sticky@12px`, no x-scroll.
+- POS audit at 390 light, 390 dark and 320: **only the declared white-on-ember
+  exception**, zero A, zero B. Undo still restores the middle of three in place.
+  45 sheet-renders clean. `tsc` and `build` clean, `eslint` identical to HEAD,
+  i18n parity 0 missing / 0 extra across 30 namespaces.
+
+### Housekeeping for whoever is next
+
+Two stashes are sitting on this clone, both redundant:
+`stash@{0}` (WIP on 4941167) and `stash@{1}` (WIP on acb8291, the BT-02 work
+that is already on `main` — `ValidityOption`, `validityOptions` and `val_season`
+are all in the tree). The second is almost certainly what produced the committed
+merge-conflict markers found in this file on 6 September. Both are safe to drop.
+
+**And a lesson worth keeping:** `git stash push` / `pop` around an `eslint`
+baseline comparison failed twice this session because that stale stash conflicts
+on pop, which leaves the tree in a state that *looks* like lost work. Compare
+against a committed ref instead of stashing.

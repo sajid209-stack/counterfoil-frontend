@@ -31,7 +31,10 @@
     "clearConfirm": "Clear the sale",
     "cleared": "Sale cleared",
     "title": "Current sale",
-    "attachCustomer": "Attach customer"
+    "attachCustomer": "Attach customer",
+    "back": "Back",
+    "walkIn": "Walk-in customer",
+    "extend": "Extend"
   },
   "added": "Added {name}",
   "cartParked": "Cart parked.",
@@ -72,7 +75,14 @@
     "applyCoupon": "Apply coupon",
     "passesMembership": "Passes & balances",
     "add": "Add",
-    "discountFlat": "Discount"
+    "discountFlat": "Discount",
+    "noDiscount": "No discount applied",
+    "noPasses": "No passes or balance applied",
+    "advanceNot": "Not required",
+    "advanceReq": "Deposit required",
+    "paymentMethod": "Payment method",
+    "noCoupon": "No coupon applied",
+    "vatRate": "VAT ({pct}%)"
   },
   "charge": "Charge",
   "chargeAmount": "Charge {amount} — {method}",

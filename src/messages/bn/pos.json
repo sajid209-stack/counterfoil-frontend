@@ -31,7 +31,10 @@
     "clearConfirm": "বিক্রয় মুছুন",
     "cleared": "বিক্রয় মুছে ফেলা হয়েছে",
     "title": "বর্তমান বিক্রয়",
-    "attachCustomer": "গ্রাহক যুক্ত করুন"
+    "attachCustomer": "গ্রাহক যুক্ত করুন",
+    "back": "ফিরে",
+    "walkIn": "ওয়াক-ইন গ্রাহক",
+    "extend": "বাড়ান"
   },
   "added": "{name} যোগ হয়েছে",
   "cartParked": "কার্ট পার্ক করা হয়েছে।",
@@ -72,7 +75,14 @@
     "applyCoupon": "কুপন প্রয়োগ",
     "passesMembership": "পাস ও বকেয়া",
     "add": "যোগ করুন",
-    "discountFlat": "ছাড়"
+    "discountFlat": "ছাড়",
+    "noDiscount": "কোনো ছাড় নেই",
+    "noPasses": "কোনো পাস বা ব্যালান্স নেই",
+    "advanceNot": "প্রয়োজন নেই",
+    "advanceReq": "অগ্রিম প্রয়োজন",
+    "paymentMethod": "পেমেন্ট পদ্ধতি",
+    "noCoupon": "কোনো কুপন নেই",
+    "vatRate": "ভ্যাট ({pct}%)"
   },
   "charge": "চার্জ",
   "chargeAmount": "চার্জ {amount} — {method}",

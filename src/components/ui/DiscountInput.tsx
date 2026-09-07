@@ -35,6 +35,7 @@ export function DiscountInput({
   chips = [5, 10, 15],
   label,
   compact,
+  shape = "default",
   className,
 }: {
   mode: DiscountMode;
@@ -48,6 +49,8 @@ export function DiscountInput({
   chips?: number[];
   label?: string;
   compact?: boolean;
+  /** "go" swaps the 6px corners for the till's pill. */
+  shape?: "default" | "go";
   className?: string;
 }) {
   const id = useId();
@@ -78,7 +81,7 @@ export function DiscountInput({
       {label && <span className="type-label text-[12px] text-muted">{label}</span>}
 
       <div className="flex items-center gap-tight">
-        <div className="flex shrink-0 overflow-hidden rounded-sm border border-line">
+        <div className={cn("flex shrink-0 overflow-hidden border border-line", shape === "go" ? "rounded-full" : "rounded-sm")}>
           {(["percent", "amount"] as const).map((m) => (
             <button
               key={m}
@@ -98,7 +101,7 @@ export function DiscountInput({
           onChange={(e) => setDraft({ of: value, text: e.target.value })}
           onBlur={() => commit(text)}
           onKeyDown={(e) => { if (e.key === "Enter") { commit(text); (e.target as HTMLInputElement).blur(); } }}
-          className={cn(h, "min-w-0 flex-1 rounded-sm border bg-card px-comfortable text-right font-mono text-sm outline-none", error ? "border-danger" : "border-line focus:border-ember")}
+          className={cn(h, "min-w-0 flex-1 border bg-card px-comfortable text-right font-mono text-sm outline-none", shape === "go" ? "rounded-full" : "rounded-sm", error ? "border-danger" : "border-line focus:border-ember")}
         />
       </div>
 
@@ -111,7 +114,8 @@ export function DiscountInput({
               onClick={() => { setDraft(null); setError(null); onChange(c); }}
               className={cn(
                 compact ? "h-9" : "h-11",
-                "min-w-12 flex-1 rounded-sm border px-tight text-[13px] font-medium",
+                "min-w-12 flex-1 border px-tight text-[13px] font-medium",
+                shape === "go" ? "rounded-full" : "rounded-sm",
                 value === c ? "border-ember bg-ember/10 text-brand-foreground" : "border-line bg-card active:bg-ember/10",
               )}
             >
