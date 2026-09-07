@@ -14,7 +14,9 @@
   "block": {
     "addAnother": "আরেকটি যোগ করুন",
     "remove": "সরান",
-    "done": "সম্পন্ন"
+    "done": "সম্পন্ন",
+    "slotCount": "{count}টি স্লট",
+    "dayCount": "{count} দিন"
   },
   "step": {
     "date": "তারিখ",
@@ -37,7 +39,8 @@
   },
   "date": {
     "today": "আজ",
-    "more": "আরও তারিখ"
+    "more": "আরও তারিখ",
+    "tomorrow": "আগামীকাল"
   },
   "allowance": {
     "remaining": "আজ বাকি আছে",
@@ -53,7 +56,10 @@
     "busy": "ফাঁকা নেই"
   },
   "slot": {
-    "resource": "জায়গা"
+    "resource": "জায়গা",
+    "chosen": "বেছে নেওয়া স্লট",
+    "chosenCount": "{count}টি বেছে নেওয়া",
+    "remove": "{time} সরান"
   },
   "qty": {
     "less": "{tier} একটি কম",
@@ -79,7 +85,6 @@
     "subtotal": "সাবটোটাল",
     "vat": "ভ্যাট",
     "total": "মোট",
-    "tendered": "দেওয়া হয়েছে",
     "change": "ফেরত",
     "txnLabel": "বিকাশ ট্রানজেকশন আইডি",
     "txnPlaceholder": "যেমন 8N7A2K4M1P",
@@ -88,7 +93,10 @@
     "discountPct": "ছাড় {pct}%",
     "discountFlat": "ছাড়",
     "dueNow": "এখন দিতে হবে",
-    "balanceAtArrival": "আসার সময় বাকি"
+    "balanceAtArrival": "আসার সময় বাকি",
+    "received": "নগদ পাওয়া গেছে",
+    "collect": "নিতে হবে",
+    "collectNow": "এখন নিন"
   },
   "footer": {
     "total": "মোট",
@@ -96,7 +104,8 @@
     "takeAmount": "{amount} নিন",
     "completeAmount": "{amount} সম্পন্ন করুন",
     "overLimit": "ম্যানেজারের অনুমোদন লাগবে",
-    "needReason": "ছাড়ের কারণ লিখুন"
+    "needReason": "ছাড়ের কারণ লিখুন",
+    "toCollect": "নিতে হবে"
   },
   "custom": {
     "title": "কাস্টম পরিমাণ",

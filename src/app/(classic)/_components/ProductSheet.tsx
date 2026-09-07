@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Clock, X, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Avatar, BlockedNotice, Button, ChoiceCard, FormField, ProductThumb, ResourceTimeline, useToast } from "../_ui";
+import { Avatar, BlockedNotice, Button, ChoiceCard, FormField, ProductThumb, ResourceTimeline, useToast, DateStrip } from "../_ui";
 import { availableSeats } from "@/lib/api";
 import { SessionList } from "./SessionList";
 import { SlotMatrix } from "./SlotMatrix";
@@ -222,7 +222,6 @@ export function ProductSheet({
   const [group, setGroup] = useState<number>(initial?.partySize ?? 2); // flat-per-booking group size
   const [waived, setWaived] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null); // BlockedNotice message
-  const [moreDates, setMoreDates] = useState(false);
 
   /** Re-opening a cart line means capacity is already spoken for: adding it
    *  placed a self-releasing checkout hold. The counter needs to know how long
@@ -375,29 +374,6 @@ export function ProductSheet({
       return { left: ss.reduce((s, x) => s + x.remaining, 0), total: ss.reduce((s, x) => s + x.capacity, 0) };
     }
     return null;
-  };
-
-  // Date strip chips — the selectable-card pattern in miniature.
-  const dateBtn = (value: string, label: string) => {
-    const cap = dateCap(value);
-    const low = cap && cap.total > 0 && cap.left <= Math.max(1, Math.floor(cap.total * 0.2));
-    return (
-      <ChoiceCard key={value} selected={date === value} hideCheck onClick={() => { setDate(value); setSlotTime(undefined); setResourceId(undefined); }}
-        // No corner glyph here: at ~96px the check landed on the day label
-        // ("TODAY" once rendered as "TODA✓") and the strip is where that has
-        // bitten most. Selection is carried by the doubled ember edge, the
-        // wash, and both lines going ember — which is three signals, all of
-        // which survive grayscale.
-        className="flex min-h-[62px] min-w-[92px] shrink-0 flex-col items-center justify-center gap-0.5 px-comfortable py-tight">
-        {/* Two lines, not three. The day is what a person scans the strip by
-            and the date confirms it; running DAY / 29 / Jul down three lines
-            made an 84px card that wrapped the strip onto a second row and
-            stranded "More dates" beside the orphan. */}
-        <span className={`whitespace-nowrap text-[13px] font-medium leading-tight ${date === value ? "text-brand-foreground" : ""}`}>{label === t("sheet.today") || label === t("sheet.tomorrow") ? label : label.split(" ")[0]}</span>
-        <span className={`whitespace-nowrap text-[12px] leading-tight ${date === value ? "text-brand-foreground/70" : "text-muted"}`}>{value.slice(8, 10)} {new Date(`${value}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}</span>
-        {cap && <span className={`whitespace-nowrap text-[12px] leading-tight ${low ? "font-medium text-brand-foreground" : date === value ? "text-brand-foreground/70" : "text-muted"}`}>{cap.left} left</span>}
-      </ChoiceCard>
-    );
   };
 
   const submitTiered = (onDate?: string, pay = false) => {
@@ -556,30 +532,36 @@ export function ProductSheet({
         {(needsSchedule(bt) || provider) && !course && (
           <div className="mb-section">
             <p className="mb-tight text-[12px] font-medium uppercase tracking-wide text-muted">{t("sheet.dateLabel")}</p>
-            {/* One row that scrolls, never a grid that wraps. Five chips plus
-                the calendar cannot fit a phone's width, and wrapping put a
-                lone card on a second row with "More dates" stranded next to
-                it in dead space. */}
-            <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {/* Date chips first — the next bookable days; calendar behind "More dates". */}
+            {/* A wrapping grid with the calendar beneath it — never a row
+                that scrolls sideways. A chip that has scrolled out of view is
+                a day nobody knows is on offer, and parking the calendar at the
+                end of that scroll meant passing four days you did not want to
+                reach the control that offers all of them. */}
             {(() => {
               const chips: string[] = [];
               for (let i = 0; chips.length < 5 && i < 30; i++) {
                 const d = new Date(Date.parse(`${TODAY}T12:00:00Z`) + i * 86400000).toISOString().slice(0, 10);
                 if (isOpenOn(product, d)) chips.push(d);
               }
-              return chips.map((d) => {
-                const label = d === TODAY ? t("sheet.today") : d === TOMORROW ? t("sheet.tomorrow")
-                  : new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric" });
-                return dateBtn(d, label);
-              });
+              return (
+                <DateStrip
+                  dates={chips}
+                  value={date}
+                  onChange={(d) => { setDate(d); setSlotTime(undefined); setResourceId(undefined); }}
+                  today={TODAY}
+                  tomorrow={TOMORROW}
+                  min={TODAY}
+                  caption={(d) => {
+                    const c = dateCap(d);
+                    if (!c) return null;
+                    // The app's standing low-availability rule: a fifth of
+                    // capacity or less, never fewer than one.
+                    return { text: t("sheet.leftCount", { count: c.left }), low: c.total > 0 && c.left <= Math.max(1, Math.floor(c.total * 0.2)) };
+                  }}
+                  labels={{ today: t("sheet.today"), tomorrow: t("sheet.tomorrow"), pick: t("sheet.moreDates") }}
+                />
+              );
             })()}
-            {moreDates ? (
-              <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setSlotTime(undefined); setResourceId(undefined); }} className="h-auto shrink-0 self-stretch rounded-sm border border-line bg-card px-comfortable text-sm" />
-            ) : (
-              <button type="button" onClick={() => setMoreDates(true)} className="shrink-0 self-stretch whitespace-nowrap rounded-sm px-tight text-[13px] text-muted active:text-fg">{t("sheet.moreDates")}</button>
-            )}
-            </div>
           </div>
         )}
         {!openToday && needsSchedule(bt) && <p className="mb-section text-[13px] text-danger">{t("sheet.closedOnDate")}</p>}

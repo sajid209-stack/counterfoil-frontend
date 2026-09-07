@@ -14,7 +14,9 @@
   "block": {
     "addAnother": "Add another",
     "remove": "Remove",
-    "done": "Done"
+    "done": "Done",
+    "slotCount": "{count} slots",
+    "dayCount": "{count} days"
   },
   "step": {
     "date": "Date",
@@ -37,7 +39,8 @@
   },
   "date": {
     "today": "Today",
-    "more": "More dates"
+    "more": "More dates",
+    "tomorrow": "Tomorrow"
   },
   "allowance": {
     "remaining": "Places left today",
@@ -53,7 +56,10 @@
     "busy": "Not free"
   },
   "slot": {
-    "resource": "Space"
+    "resource": "Space",
+    "chosen": "Chosen slots",
+    "chosenCount": "{count} chosen",
+    "remove": "Remove {time}"
   },
   "qty": {
     "less": "One fewer {tier}",
@@ -79,7 +85,6 @@
     "subtotal": "Subtotal",
     "vat": "VAT",
     "total": "Total",
-    "tendered": "Tendered",
     "change": "Change",
     "txnLabel": "bKash transaction ID",
     "txnPlaceholder": "e.g. 8N7A2K4M1P",
@@ -88,7 +93,10 @@
     "discountPct": "Discount {pct}%",
     "discountFlat": "Discount",
     "dueNow": "Due now",
-    "balanceAtArrival": "Balance at arrival"
+    "balanceAtArrival": "Balance at arrival",
+    "received": "Cash received",
+    "collect": "To collect",
+    "collectNow": "Collect now"
   },
   "footer": {
     "total": "Total",
@@ -96,7 +104,8 @@
     "takeAmount": "Take {amount}",
     "completeAmount": "Complete {amount}",
     "overLimit": "Needs a manager",
-    "needReason": "Add a reason for the discount"
+    "needReason": "Add a reason for the discount",
+    "toCollect": "To collect"
   },
   "custom": {
     "title": "Custom amount",

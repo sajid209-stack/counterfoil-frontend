@@ -22,13 +22,13 @@
 import { useState } from "react";
 import { useApiQuery } from "@/lib/useApi";
 import { useTranslations } from "next-intl";
-import { Minus, Plus } from "lucide-react";
-import { Avatar, BlockedNotice, ChoiceCard } from "@/components/ui";
-import { availableSeats, explainUnavailable, type Product, type Staff } from "@/lib/api";
+import { Minus, Plus, X } from "lucide-react";
+import { Avatar, BlockedNotice, ChoiceCard, DateStrip } from "@/components/ui";
+import { availableSeats, explainUnavailable, type Product, type Resource, type Staff } from "@/lib/api";
 import { applyResourceRate } from "@/lib/api";
 import { productDurationPrice } from "@/lib/duration";
 import { resolveProductPrice } from "@/lib/pricing";
-import { DEMO_TODAY, isGuided, slotISO, toMinutes, toTime } from "@/lib/schedule";
+import { DEMO_TODAY, demoDay, isGuided, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { formatDay, formatMoney } from "@/lib/format";
 import { formatDuration } from "@/lib/duration";
 import {
@@ -47,7 +47,6 @@ import {
   type Draft,
 } from "../_lib/selection";
 import { SessionList } from "../../_components/SessionList";
-import { SlotMatrix } from "../../_components/SlotMatrix";
 import { getResourceMatrix } from "@/lib/api";
 
 /** A question's heading. One shape for all of them, so the block reads as a
@@ -67,6 +66,7 @@ export function SelectionInline({
   onDraft,
   currency,
   team,
+  resources,
   seatsElsewhere,
 }: {
   product: Product;
@@ -74,12 +74,14 @@ export function SelectionInline({
   onDraft: (next: Draft) => void;
   currency: string;
   team: Staff[];
+  /** Only to name a slot picked on a day the strip has since moved off. */
+  resources: Resource[];
   seatsElsewhere: (productId: string, slotStart: string) => number;
 }) {
+  const TOMORROW = demoDay(1);
   const t = useTranslations("sell");
   const ts = useTranslations("pos");
   const [blocked, setBlocked] = useState<string | null>(null);
-  const [moreDates, setMoreDates] = useState(false);
   const [courseOpen, setCourseOpen] = useState(false);
   // Seats are the one shape whose availability is asynchronous, so it is
   // fetched here rather than pretended at in the pure resolver.
@@ -113,55 +115,22 @@ export function SelectionInline({
   const chips = dated ? openDates(product) : [];
   const cap = product.schedule?.dailyCapacity ?? 0;
 
-  /* ── Date ─────────────────────────────────────────────────────────────── */
+  /* ── Date ─────────────────────────────────────────────────────────────
+     A wrapping grid with the calendar beneath it — never a row that scrolls
+     sideways. Days already carrying part of the sale are marked, so a
+     selection spanning several is legible from the picker itself. */
   const dateStrip = (
     <Step label={t("step.date")}>
-      {/* One row that scrolls. A grid that wraps strands the calendar button
-          beside a lone chip on a second row — the same defect the v1 sheet
-          was fixed for. */}
-      <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {chips.map((d) => {
-          const label = d === DEMO_TODAY ? t("date.today") : formatDay(d, { weekday: true });
-          return (
-            <ChoiceCard
-              key={d}
-              selected={draft.date === d}
-              /* hideCheck, deliberately. ChoiceCard's corner check owns the
-                 top-right 24px, and this card is 76px of centred text — the
-                 badge landed on top of the month. Selection reads from the
-                 ember ring and the ember type instead, which is the same
-                 grayscale-legible treatment, minus the collision. */
-              hideCheck
-              onClick={() => set({ date: d, slotTime: undefined, resourceId: undefined, guideId: undefined })}
-              className="flex min-w-[76px] shrink-0 flex-col items-center justify-center gap-inline px-tight py-tight text-center"
-            >
-              <span className={`whitespace-nowrap text-[13px] font-medium leading-tight ${draft.date === d ? "text-brand-foreground" : ""}`}>
-                {label.split(" ")[0]}
-              </span>
-              <span className={`whitespace-nowrap text-[13px] leading-tight ${draft.date === d ? "text-brand-foreground/70" : "text-muted"}`}>
-                {d.slice(8, 10)} {new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { month: "short" })}
-              </span>
-            </ChoiceCard>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => setMoreDates((v) => !v)}
-          className="flex min-h-[56px] min-w-[76px] shrink-0 items-center justify-center rounded-go border border-line px-tight text-[13px] text-muted active:bg-ember/10"
-        >
-          {t("date.more")}
-        </button>
-      </div>
-      {moreDates && (
-        <input
-          type="date"
-          value={draft.date}
-          min={DEMO_TODAY}
-          onChange={(e) => set({ date: e.target.value, slotTime: undefined, resourceId: undefined, guideId: undefined })}
-          aria-label={t("step.date")}
-          className="mt-tight h-12 w-full rounded-go-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-ember"
-        />
-      )}
+      <DateStrip
+        dates={chips}
+        value={draft.date}
+        onChange={(d) => set({ date: d, slotTime: undefined, guideId: undefined, providerId: undefined })}
+        today={DEMO_TODAY}
+        tomorrow={TOMORROW}
+        min={DEMO_TODAY}
+        marked={[...new Set((draft.slots ?? []).map((x) => x.date))]}
+        labels={{ today: t("date.today"), tomorrow: t("date.tomorrow"), pick: t("date.more") }}
+      />
     </Step>
   );
 
@@ -268,57 +237,154 @@ export function SelectionInline({
     );
   })();
 
-  /* ── Resource × time ──────────────────────────────────────────────────── */
+  /* ── Fixed slots on a resource (BT-04) ─────────────────────────────────
+     A SET of slots, not one choice. Tap to take an hour, tap it again to give
+     it back, and the set survives changing the day — so "Field 1 at six on
+     Saturday and Field 2 at seven on Sunday" is one sale rather than two trips
+     through the same screen.
+
+     This does not use the shared SlotMatrix: that component asks for a single
+     answer and is used by the two other tills, so teaching it a second mode
+     would put a variant's behaviour inside everybody's component. */
   const matrix = pattern === "resourceSlot" ? getResourceMatrix(product, draft.date) : [];
-  /* No Step label here: SlotMatrix heads its own two questions (the space,
-     then that space's times), so wrapping it in a third heading printed
-     "Time" above "Field" above "Time". */
+  const picked = draft.slots ?? [];
+  const isPicked = (rid: string, time: string) =>
+    picked.some((x) => x.date === draft.date && x.resourceId === rid && x.time === time);
+  const toggleSlot = (rid: string, time: string) => {
+    const on = isPicked(rid, time);
+    set({
+      slots: on
+        ? picked.filter((x) => !(x.date === draft.date && x.resourceId === rid && x.time === time))
+        : [...picked, { date: draft.date, time, resourceId: rid }],
+    });
+    setBlocked(null);
+  };
+
   const resourceStep = pattern === "resourceSlot" && (
-    <div className="mt-section first:mt-0">
+    <>
       {matrix.length === 0 ? (
-        <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[13px] text-muted">
-          {t("session.noneToday")}
-        </p>
+        <Step label={t("step.slot")}>
+          <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[13px] text-muted">
+            {t("session.noneToday")}
+          </p>
+        </Step>
       ) : (
-        <SlotMatrix
-          currency={currency}
-          resourceNoun={matrix[0]?.resource.nounSingular ?? t("slot.resource")}
-          selectedResourceId={draft.resourceId}
-          selectedTime={draft.slotTime}
-          onSelect={(rid, time) => { set({ resourceId: rid, slotTime: time }); setBlocked(null); }}
-          onBlocked={setBlocked}
-          rows={matrix.map((row) => ({
-            id: row.resource.id,
-            name: row.resource.name,
-            outOfService: row.resource.outOfService,
-            cells: row.slots.map((sl) => ({
-              time: sl.time,
-              available: sl.available,
-              price: applyResourceRate(
-                resolveProductPrice(product, draft.date, sl.time, basePriceOf(product)),
-                product.schedule?.sessionMinutes ?? 60,
-                row.resource,
-              ),
-            })),
-          }))}
-        />
+        matrix.map((row) => {
+          const times = row.slots;
+          const takenHere = picked.filter((x) => x.date === draft.date && x.resourceId === row.resource.id).length;
+          return (
+            <Step
+              key={row.resource.id}
+              label={`${row.resource.name}${takenHere ? ` · ${t("slot.chosenCount", { count: takenHere })}` : ""}`}
+            >
+              {row.resource.outOfService ? (
+                <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[13px] text-muted">
+                  {t("flex.outOfService")}
+                </p>
+              ) : (
+                <div className="grid grid-cols-4 gap-tight">
+                  {times.map((sl) => {
+                    const on = isPicked(row.resource.id, sl.time);
+                    const price = applyResourceRate(
+                      resolveProductPrice(product, draft.date, sl.time, basePriceOf(product)),
+                      product.schedule?.sessionMinutes ?? 60,
+                      row.resource,
+                    );
+                    return (
+                      <button
+                        key={sl.time}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => {
+                          if (!sl.available && !on) {
+                            const why = explainUnavailable({
+                              product,
+                              date: draft.date,
+                              slotStart: slotISO(draft.date, sl.time),
+                              remaining: 0,
+                            });
+                            setBlocked(why?.message ?? t("session.soldOut"));
+                            return;
+                          }
+                          toggleSlot(row.resource.id, sl.time);
+                        }}
+                        className={`flex min-h-[52px] flex-col items-center justify-center rounded-go border px-inline text-[13px] transition-colors duration-quick ${
+                          on
+                            ? "border-ember bg-ember font-medium text-white"
+                            : sl.available
+                              ? "border-line bg-card active:bg-ember/10"
+                              : "border-line bg-subtle text-muted line-through"
+                        }`}
+                      >
+                        <span>{sl.time}</span>
+                        <span className={on ? "text-[12px] text-white/80" : "text-[12px] text-muted"}>
+                          {formatMoney(price, currency)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </Step>
+          );
+        })
       )}
-    </div>
+
+      {/* What has been taken so far, across every day — the only place a
+          multi-day selection can be read in full, and where a slot on a day
+          you are no longer looking at can still be given back. */}
+      {picked.length > 0 && (
+        <Step label={t("slot.chosen")}>
+          <div className="overflow-hidden rounded-go border border-line bg-card">
+            {[...picked]
+              .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
+              .map((x, i) => {
+                const res = resources.find((r) => r.id === x.resourceId);
+                return (
+                  <div
+                    key={`${x.date}|${x.resourceId}|${x.time}`}
+                    className={`flex items-center gap-tight p-comfortable ${i ? "border-t border-line" : ""}`}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-medium">
+                        {res?.name ?? x.resourceId} · {x.time}
+                      </span>
+                      <span className="block text-[12px] text-muted">
+                        {formatDay(x.date, { weekday: true })}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={t("slot.remove", { time: x.time })}
+                      onClick={() => set({ slots: picked.filter((y) => y !== x) })}
+                      className="flex size-11 shrink-0 items-center justify-center rounded-full text-danger active:bg-ember/10"
+                    >
+                      <X size={16} strokeWidth={1.75} />
+                    </button>
+                  </div>
+                );
+              })}
+          </div>
+        </Step>
+      )}
+    </>
   );
 
-  /* ── How long the pass runs (BT-02) ───────────────────────────────────── */
+  /* ── How long the pass runs (BT-02) ────────────────────────────────────
+     The lengths come from the product, so an operator selling one length gets
+     no picker at all rather than a row with a single chip in it. */
   const validityStep = (() => {
     const options = product.bookingType === "BT-02" ? (product.validityOptions ?? []) : [];
-    if (options.length === 0) return null;
+    if (options.length < 2) return null;
     return (
       <Step label={t("step.validity")}>
-        <div className="flex flex-wrap gap-tight">
+        <div className="grid grid-cols-2 gap-tight sm:grid-cols-3">
           {options.map((v) => (
             <ChoiceCard
               key={v.id}
               selected={draft.validityId === v.id}
               onClick={() => set({ validityId: v.id })}
-              className="flex min-w-[120px] flex-1 flex-col gap-inline py-tight pl-comfortable pr-7"
+              className="flex min-h-[56px] flex-col justify-center gap-inline py-tight pl-comfortable pr-7"
             >
               <span className="min-w-0 truncate text-[14px] font-medium">{v.label}</span>
               {(v.priceDelta ?? 0) > 0 && (
@@ -381,12 +447,14 @@ export function SelectionInline({
         </Step>
 
         <Step label={t("step.lane", { noun: lanes[0]?.nounSingular ?? t("slot.resource") })}>
-          <div className="-mx-comfortable flex gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {/* Wraps rather than scrolls: a lane that has scrolled out of view
+              is a lane nobody knows is free. */}
+          <div className="grid grid-cols-3 gap-tight sm:grid-cols-4">
             <ChoiceCard
               hideCheck
               selected={!draft.resourceId}
               onClick={() => set({ resourceId: undefined })}
-              className="flex min-w-[104px] shrink-0 flex-col gap-inline px-comfortable py-tight"
+              className="flex min-h-[56px] flex-col justify-center gap-inline px-comfortable py-tight"
             >
               <span className="text-[14px] font-medium">{t("flex.any")}</span>
               <span className="text-[12px] text-muted">{t("flex.anyHint")}</span>
@@ -398,7 +466,7 @@ export function SelectionInline({
                 disabled={l.outOfService}
                 selected={draft.resourceId === l.id}
                 onClick={() => set({ resourceId: l.id, slotTime: undefined })}
-                className="flex min-w-[104px] shrink-0 flex-col gap-inline px-comfortable py-tight"
+                className="flex min-h-[56px] flex-col justify-center gap-inline px-comfortable py-tight"
               >
                 <span className="truncate text-[14px] font-medium">{l.name}</span>
                 <span className="text-[12px] text-muted">

@@ -90,6 +90,10 @@ export interface Draft {
   durationMinutes?: number;
   /** BT-10: who takes the appointment. Undefined means "first available". */
   providerId?: string;
+  /** BT-04: every slot picked, each carrying its own date — so a selection
+   *  survives changing the day and a sale can span several. One booking line
+   *  per entry. */
+  slots?: { date: string; time: string; resourceId: string }[];
   /** BT-07: the seats picked, carried with the prices they were picked at.
    *  The seat map is fetched asynchronously by the UI, so the prices come
    *  down here rather than being looked up again in a pure resolver. */
@@ -136,14 +140,24 @@ export function newDraft(product: Product): Draft {
 
 /** Re-open an item that is already in the sale, back into the draft it came
  *  from — so "Change" lands on the choices that were made, not on a blank. */
-export function draftFrom(product: Product, item: SaleItem): Draft {
+export function draftFrom(product: Product, items: SaleItem[]): Draft {
+  const item = items[0];
+  if (!item) return newDraft(product);
   const qty: Record<string, number> = {};
   for (const i of item.items) qty[i.tierId] = i.qty;
+  const slots =
+    patternOf(product) === "resourceSlot"
+      ? items
+          .filter((x) => x.slotDate && x.slotTime && x.resourceId)
+          .map((x) => ({ date: x.slotDate!, time: x.slotTime!, resourceId: x.resourceId! }))
+      : undefined;
   return {
     productId: product.id,
     date: item.slotDate ?? firstOpenDate(product),
     slotTime: item.slotTime,
     resourceId: item.resourceId,
+    slots,
+    seats: item.seatLabels?.length ? undefined : undefined,
     qty,
     validityId: product.bookingType === "BT-02" ? product.validityOptions?.[0]?.id : undefined,
   };
@@ -224,8 +238,9 @@ export const basePriceOf = (product: Product) => {
 };
 
 export interface Resolved {
-  /** Null until the draft answers every question this pattern asks. */
-  item: SaleItem | null;
+  /** The lines this block would add. Empty until the draft answers every
+   *  question its pattern asks; more than one when several slots are picked. */
+  items: SaleItem[];
   /** What is still to decide, as a step key the page turns into a sentence. */
   missing:
     | "date" | "time" | "resource" | "guide" | "tickets"
@@ -236,11 +251,12 @@ export interface Resolved {
 }
 
 /**
- * A draft, resolved into the item it would add.
+ * A draft, resolved into the lines it would add.
  *
  * `id` is passed in rather than generated so that re-resolving a draft on every
  * keystroke does not mint a new identity each time — an item's id is what the
- * page tracks it by.
+ * page tracks it by. Where a block yields several lines the id is suffixed, so
+ * each line keeps a stable identity across renders.
  */
 export function resolveDraft(
   product: Product,
@@ -249,40 +265,42 @@ export function resolveDraft(
   ctx: { resources: Resource[]; team: Staff[] },
 ): Resolved {
   const pattern = patternOf(product);
-  if (pattern === "unsupported") return { item: null, missing: "unsupported", amount: 0 };
+  if (pattern === "unsupported") return { items: [], missing: "unsupported", amount: 0 };
 
   const tiers = activeTiersOf(product);
   const count = ticketCount(draft);
 
+  /* ── Fixed slots on a resource (BT-04) ─────────────────────────────────
+     A set, not a single choice. Picking an hour on Field 1 and another on
+     Field 2 next Saturday is one sale, so each entry carries its own date and
+     each becomes its own booking line — which is also what holds the capacity
+     for every one of them rather than only the last. */
   if (pattern === "resourceSlot") {
-    if (!draft.resourceId) return { item: null, missing: "resource", amount: 0 };
-    if (!draft.slotTime) return { item: null, missing: "time", amount: 0 };
-    const row = getResourceMatrix(product, draft.date).find((r) => r.resource.id === draft.resourceId);
+    const picked = draft.slots ?? [];
+    if (picked.length === 0) return { items: [], missing: "time", amount: 0 };
     const minutes = product.schedule?.sessionMinutes ?? 60;
-    const price = applyResourceRate(
-      resolveProductPrice(product, draft.date, draft.slotTime, basePriceOf(product)),
-      minutes,
-      row?.resource,
-    );
-    const end = new Date(Date.parse(slotISO(draft.date, draft.slotTime)) + minutes * 60000);
-    const endTime = `${String(end.getUTCHours() + 6).padStart(2, "0")}:${String(end.getUTCMinutes()).padStart(2, "0")}`;
-    return {
-      amount: price,
-      missing: null,
-      item: {
-        id,
+    const lines = picked.map((sl, i) => {
+      const row = getResourceMatrix(product, sl.date).find((r) => r.resource.id === sl.resourceId);
+      const price = applyResourceRate(
+        resolveProductPrice(product, sl.date, sl.time, basePriceOf(product)),
+        minutes,
+        row?.resource,
+      );
+      return {
+        id: `${id}_${i}`,
         productId: product.id,
         productName: product.name,
-        slotDate: draft.date,
-        slotTime: draft.slotTime,
-        slotEnd: `${draft.date}T${endTime}:00+06:00`,
-        resourceId: draft.resourceId,
+        slotDate: sl.date,
+        slotTime: sl.time,
+        slotEnd: `${sl.date}T${toTime(toMinutes(sl.time) + minutes)}:00+06:00`,
+        resourceId: sl.resourceId,
         resourceLabel: row?.resource.name,
         items: [],
         fixedPrice: price,
         partySize: product.policies?.partyMin ?? 1,
-      },
-    };
+      } satisfies SaleItem;
+    });
+    return { items: lines, missing: null, amount: lines.reduce((a, l) => a + (l.fixedPrice ?? 0), 0) };
   }
 
   /* ── A lane by the hour (BT-05) ────────────────────────────────────────
@@ -291,12 +309,12 @@ export function resolveDraft(
      for three answers and lets the engine do the arithmetic. */
   if (pattern === "flexible") {
     const minutes = draft.durationMinutes ?? flexDurations(product)[0];
-    if (!draft.slotTime) return { item: null, missing: "time", amount: 0 };
+    if (!draft.slotTime) return { items: [], missing: "time", amount: 0 };
     // "Any" lane resolves to the first free one at resolve time, so the
     // summary can name the lane the sale will actually take rather than
     // promising one and assigning another.
     const laneId = draft.resourceId ?? firstFreeResource(product, draft.date, draft.slotTime, minutes)?.id;
-    if (!laneId) return { item: null, missing: "resource", amount: 0 };
+    if (!laneId) return { items: [], missing: "resource", amount: 0 };
     const lane = getResourceMatrix(product, draft.date).find((r) => r.resource.id === laneId)?.resource;
     const price = applyResourceRate(
       productDurationPrice(product, draft.date, draft.slotTime, minutes, basePriceOf(product)),
@@ -306,7 +324,7 @@ export function resolveDraft(
     return {
       amount: price,
       missing: null,
-      item: {
+      items: [{
         id,
         productId: product.id,
         productName: product.name,
@@ -318,7 +336,7 @@ export function resolveDraft(
         items: [],
         fixedPrice: price,
         partySize: product.policies?.partyMin ?? 1,
-      },
+      }],
     };
   }
 
@@ -329,7 +347,7 @@ export function resolveDraft(
   if (pattern === "seats") {
     const chosen = draft.seats ?? [];
     const amount = chosen.reduce((sum, x) => sum + x.price, 0);
-    if (chosen.length === 0) return { item: null, missing: "seats", amount: 0 };
+    if (chosen.length === 0) return { items: [], missing: "seats", amount: 0 };
     const byCat = new Map<string, { name: string; price: number; qty: number }>();
     for (const x of chosen) {
       const g = byCat.get(x.categoryUid) ?? { name: x.categoryName, price: x.price, qty: 0 };
@@ -339,7 +357,7 @@ export function resolveDraft(
     return {
       amount,
       missing: null,
-      item: {
+      items: [{
         id,
         productId: product.id,
         productName: product.name,
@@ -347,7 +365,7 @@ export function resolveDraft(
           tierId: uid, tierName: g.name, unitPrice: g.price, qty: g.qty,
         })),
         seatLabels: chosen.map((x) => x.label),
-      },
+      }],
     };
   }
 
@@ -380,10 +398,10 @@ export function resolveDraft(
   const amount = items.reduce((s, i) => s + i.unitPrice * i.qty, 0);
 
   if (pattern === "sessions") {
-    if (!draft.slotTime) return { item: null, missing: "time", amount };
+    if (!draft.slotTime) return { items: [], missing: "time", amount };
     if (isGuided(product.bookingType)) {
       const free = freeGuides(product, draft.date, draft.slotTime);
-      if (free.length > 0 && !draft.guideId) return { item: null, missing: "guide", amount };
+      if (free.length > 0 && !draft.guideId) return { items: [], missing: "guide", amount };
     }
   }
 
@@ -392,10 +410,10 @@ export function resolveDraft(
      costs, and the senior therapist is an extra the receipt can show. */
   let assignedProviderId: string | undefined;
   if (pattern === "provider") {
-    if (!draft.slotTime) return { item: null, missing: "time", amount };
+    if (!draft.slotTime) return { items: [], missing: "time", amount };
     const free = freeProvidersAt(product, draft.date, draft.slotTime);
     assignedProviderId = draft.providerId ?? free[0];
-    if (!assignedProviderId) return { item: null, missing: "provider", amount };
+    if (!assignedProviderId) return { items: [], missing: "provider", amount };
     const premium = product.providerPremiums?.[assignedProviderId] ?? 0;
     if (premium > 0 && count > 0) {
       const who = ctx.team.find((x) => x.id === assignedProviderId);
@@ -408,7 +426,7 @@ export function resolveDraft(
     }
   }
 
-  if (count === 0) return { item: null, missing: "tickets", amount };
+  if (count === 0) return { items: [], missing: "tickets", amount };
 
   const owner = ctx.team.find((x) => x.id === (assignedProviderId ?? draft.guideId));
   const mins = providerMinutes(product);
@@ -419,7 +437,7 @@ export function resolveDraft(
     // first sum was taken.
     amount: items.reduce((sum, i) => sum + i.unitPrice * i.qty, 0),
     missing: null,
-    item: {
+    items: [{
       id,
       productId: product.id,
       productName: product.name,
@@ -433,7 +451,7 @@ export function resolveDraft(
       resourceLabel: pattern === "provider" ? undefined : owner?.name,
       providerLabel: pattern === "provider" ? owner?.name : undefined,
       items,
-    },
+    }],
   };
 }
 

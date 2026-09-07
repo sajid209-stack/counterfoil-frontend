@@ -767,7 +767,7 @@ export default function PosPage() {
             container rather than as "there is more this way". Bleeding it to
             the screen edge puts the cut on the edge itself, which is the
             affordance everyone already knows. */}
-        <div className="-mx-tight flex snap-x snap-mandatory gap-inline overflow-x-auto px-tight pb-inline [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex flex-wrap gap-inline pb-inline">
           {[{ id: "all", name: t("categoryAll") }, ...chipCategories].map((c) => (
             <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 min-w-12 shrink-0 snap-start rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ember bg-ember text-ink" : "border-line bg-card"}`}>{c.name}</button>
           ))}

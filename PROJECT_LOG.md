@@ -2728,8 +2728,7 @@ be legible.
    "Futs…" — on a screen whose entire job is to say which field is booked when.
    Time and name take their own line under `sm`; from `sm` the single row has
    the width for all of it.
-3. **`PROJECT_LOG.md` had committed merge-conflict markers** (`<<<<<<< Updated
-   upstream` at line 2449). Both sides were real, distinct entries; both kept.
+3. **`PROJECT_LOG.md` had committed merge-conflict markers** (`   upstream` at line 2449). Both sides were real, distinct entries; both kept.
 
 ### A regression of mine, backed out
 
@@ -3891,3 +3890,91 @@ still resolves a clipped 81px "Planetarium Show" in full. Filters: closed at
 rest, `aria-expanded` tracks, 35 nodes → 7, badge "Filters (1)"; the phone gets
 the tone key folded in beside the selects. `tsc`, `build`, `eslint` clean on
 every file touched; i18n parity 0 / 0 across 30 namespaces.
+---
+
+## Multi-slot selection, a date strip that never scrolls, and the money made loud (2026-09-07)
+
+### 1. Slots became a set, not a choice (`/sell`, BT-04)
+
+Tap an hour to take it, tap it again to give it back, and the set **survives
+changing the day** — so "Field 1 at six on Saturday and Field 2 at four on
+Sunday" is one sale instead of two trips through the same screen.
+
+The model change is that a **block can now resolve to several lines**.
+`Resolved.item` became `Resolved.items`, and each picked slot carries its own
+date and becomes its own booking line — which is also what holds capacity for
+every one of them rather than only the last. Where a block yields several lines
+the id is suffixed, so each keeps a stable identity across renders.
+
+Three affordances the set needs and a single choice does not:
+- **Days already carrying part of the sale are dotted in the date strip**, so a
+  multi-day selection is legible from the picker rather than only from the list.
+- **A "Chosen slots" panel** lists everything taken across every day, with a
+  remove on each — the only place a slot on a day you have since left can be
+  given back.
+- **The collapsed block says "3 slots · 2 days"** rather than listing them,
+  which would turn the summary back into the thing it was collapsed to avoid.
+
+This does **not** use the shared `SlotMatrix`. That component asks for a single
+answer and is used by the other two tills, so teaching it a second mode would
+put one variant's behaviour inside everybody's component.
+
+**Where else this makes sense:** provider appointments (BT-10) are the same
+shape — a fixed price per slot, no per-slot quantities — and would take it
+cleanly. Fixed sessions (BT-03/09) are *not* the same: they also carry ticket
+quantities, so "3 sessions × 2 Adult" needs deciding (per slot, or shared?)
+before it can be honest. Flexible duration already has repeat-weekly, and each
+span would need its own length, so it wants a different control.
+
+**Verified**: three slots across two days = ৳4,500 + VAT ৳675 = ৳5,175, sold as
+**three separate booking lines**; re-tapping a slot removed it (৳3,450) and
+tapping again restored it. A struck-through Saturday 18:00 correctly refused —
+that is the seeded turf-sharing booking, not a bug.
+
+**A defect this exposed:** the three lines read *"Cricket · Outdoor Field"*
+three times on the receipt, differing only by a time that was not printed.
+Lines now carry their slot, because three identical charges is what a receipt
+dispute is made of.
+
+### 2. No horizontal scrolling, in any till
+
+New shared **`DateStrip`** (`components/ui`), used by all three: a wrapping grid
+of five days with the calendar as a **full-width row beneath**, never a row that
+scrolls sideways. `Today` and `Tomorrow` are named rather than dated, because
+that is what a cashier and a customer both say out loud.
+
+The scrolling row it replaces had two faults: a chip that has scrolled out of
+view is a day nobody knows is on offer, and the calendar sat at the **end** of
+that scroll — so reaching any date past the fifth meant scrolling past four you
+did not want to find the control that offers all of them.
+
+The **category chip rows** in all three tills now wrap too. Measured after: zero
+horizontal scrollers on `/sell`, `/pos` and `/classic`. The one exception is the
+**seat map**, a 12-wide spatial diagram that must scroll — the same declared
+exception it already carried.
+
+`dateBtn` and its `moreDates` state are gone from both ProductSheets.
+
+### 3. The pay panel leads with the money
+
+On a part-paid sale the total is context and **the amount to collect is the
+answer**, so the emphasis follows the money rather than the arithmetic: subtotal,
+VAT, total and balance drop to muted rows, and **"Collect now"** becomes the
+figure — 24px, in an ember wash. Paid in full they are the same number and
+printing it twice says nothing, so there is exactly one loud line either way.
+
+**"Tendered" is gone**, in every till — it is a ledger word, not a counter word.
+It reads **"Cash received"** now (`pos.cash.tendered` retargeted, so v1 and
+classic get it too).
+
+And the sticky footer stopped disagreeing with the panel: it showed *"Total
+৳3,450"* beside a button reading *"Take ৳1,950"* — two different numbers side by
+side, the easiest kind of misread at a counter. It now shows what the button is
+about to take, labelled "To collect".
+
+### Verified
+
+`tsc` and `npm run build` clean. `(classic)` and `(go)/sell` lint with **zero
+problems**; `(go)/pos` is **identical before and after** (7 problems both sides,
+confirmed by stashing), so none of this touched its documented baseline. i18n
+parity 0 missing / 0 extra with the new keys in both locales.

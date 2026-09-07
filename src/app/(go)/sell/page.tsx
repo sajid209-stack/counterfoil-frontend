@@ -145,16 +145,16 @@ export default function SellPage() {
     () =>
       blocks.map((b) => {
         const product = productById(b.productId);
-        if (!product) return { block: b, product: null, item: null, missing: null as null | string, amount: 0 };
+        if (!product) return { block: b, product: null, lines: [] as SaleItem[], missing: null as null | string, amount: 0 };
         const r = resolveDraft(product, b.draft, b.id, { resources, team });
-        return { block: b, product, item: r.item, missing: r.missing, amount: r.amount };
+        return { block: b, product, lines: r.items, missing: r.missing, amount: r.amount };
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [blocks, products, resources, team],
   );
 
   const items: SaleItem[] = useMemo(
-    () => [...resolved.map((r) => r.item).filter((x): x is SaleItem => x !== null), ...customItems],
+    () => [...resolved.flatMap((r) => r.lines), ...customItems],
     [resolved, customItems],
   );
 
@@ -217,8 +217,8 @@ export default function SellPage() {
   const openBlock = (id: string) => {
     const entry = resolved.find((r) => r.block.id === id);
     // Re-open on the choices that were made, not on a blank draft.
-    if (entry?.product && entry.item) {
-      setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, draft: draftFrom(entry.product!, entry.item!) } : b)));
+    if (entry?.product && entry.lines.length > 0) {
+      setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, draft: draftFrom(entry.product!, entry.lines) } : b)));
     }
     setOpenId(id);
     setBrowsing(false);
@@ -333,8 +333,17 @@ export default function SellPage() {
         change: method === "cash" ? Math.max(0, changeMinor) : 0,
         balance,
         receipt: {
+          // A multi-slot sale produces several lines that differ ONLY by when
+          // they are. Without the time they read as three identical charges,
+          // which is what a receipt dispute is made of.
           lines: totals.lines.map((l) => ({
-            name: l.tierName && l.tierName !== l.productName ? `${l.productName} · ${l.tierName}` : l.productName,
+            name: [
+              l.tierName && l.tierName !== l.productName ? `${l.productName} · ${l.tierName}` : l.productName,
+              l.booking?.startTime,
+              l.booking?.date ? formatDay(l.booking.date, { weekday: true }) : null,
+            ]
+              .filter(Boolean)
+              .join(" · "),
             qty: l.quantity,
             amount: l.unitPrice * l.quantity,
             child: l.parentIndex != null,
@@ -356,7 +365,21 @@ export default function SellPage() {
   };
 
   /* ── A finished block, as one line ──────────────────────────────────────── */
-  const summaryOf = (item: SaleItem) => {
+  /** One line of prose for a finished block. Several slots collapse to a
+   *  count plus the days they fall on, because listing eight of them turns
+   *  the collapsed summary back into the thing it was collapsed to avoid. */
+  const summaryOf = (lines: SaleItem[]) => {
+    if (lines.length > 1) {
+      const days = [...new Set(lines.map((l) => l.slotDate).filter(Boolean))] as string[];
+      return [
+        t("block.slotCount", { count: lines.length }),
+        days.length === 1
+          ? formatDay(days[0], { weekday: true })
+          : t("block.dayCount", { count: days.length }),
+      ].join(" · ");
+    }
+    const item = lines[0];
+    if (!item) return "";
     const bits = [
       item.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "),
       item.resourceLabel,
@@ -433,7 +456,7 @@ export default function SellPage() {
             <EmptyState title={t("sale.empty")} message={t("sale.emptyHint")} />
           )}
 
-          {resolved.map(({ block, product, item, missing, amount }) => {
+          {resolved.map(({ block, product, lines, missing, amount }) => {
             const open = openId === block.id;
             if (!product) return null;
             return (
@@ -450,15 +473,15 @@ export default function SellPage() {
                     className="flex min-h-11 min-w-0 flex-1 items-start gap-tight text-left"
                   >
                     <span
-                      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${item ? "bg-success/15 text-success" : "bg-line text-muted"}`}
+                      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ${lines.length ? "bg-success/15 text-success" : "bg-line text-muted"}`}
                       aria-hidden
                     >
-                      {item ? <Check size={13} strokeWidth={2.5} /> : <ChevronDown size={13} strokeWidth={2.5} className={open ? "rotate-180" : ""} />}
+                      {lines.length ? <Check size={13} strokeWidth={2.5} /> : <ChevronDown size={13} strokeWidth={2.5} className={open ? "rotate-180" : ""} />}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block break-words text-[15px] font-semibold leading-snug">{product.name}</span>
                       <span className="mt-inline block text-[13px] text-muted">
-                        {item ? summaryOf(item) : missing ? t(`missing.${missing}` as never) : ""}
+                        {lines.length ? summaryOf(lines) : missing ? t(`missing.${missing}` as never) : ""}
                       </span>
                     </span>
                   </button>
@@ -485,6 +508,7 @@ export default function SellPage() {
                       onDraft={(d) => setDraft(block.id, d)}
                       currency={currency}
                       team={team}
+                      resources={resources}
                       seatsElsewhere={seatsElsewhere}
                     />
                     {patternOf(product) !== "unsupported" && (
@@ -493,7 +517,7 @@ export default function SellPage() {
                         shape="pill"
                         fullWidth
                         className="mt-section h-12"
-                        disabled={!item}
+                        disabled={lines.length === 0}
                         onClick={() => setOpenId(null)}
                       >
                         {t("block.done")}
@@ -620,30 +644,40 @@ export default function SellPage() {
                   <span>{t("pay.vat")}</span>
                   <span className="tabular-nums">{formatMoney(totals.tax, currency)}</span>
                 </div>
-                <div className="mt-inline flex items-baseline justify-between text-[17px] font-semibold">
-                  <span>{t("pay.total")}</span>
-                  <span className="tabular-nums">{formatMoney(totals.total, currency)}</span>
-                </div>
-                {/* Only where they differ. On a sale paid in full, "Due now"
-                    repeating the total is a line that says nothing. */}
-                {balance > 0 && (
+                {/* On a part-paid sale the TOTAL is context and the amount to
+                    collect is the answer, so the emphasis follows the money
+                    rather than the arithmetic: total drops to a muted row and
+                    "To collect" becomes the figure. Paid in full they are the
+                    same number, and printing it twice says nothing — so there
+                    is one loud line either way. */}
+                {balance > 0 ? (
                   <>
-                    <div className="mt-inline flex justify-between font-medium">
-                      <span>{t("pay.dueNow")}</span>
-                      <span className="tabular-nums">{formatMoney(dueNow, currency)}</span>
+                    <div className="flex justify-between text-muted">
+                      <span>{t("pay.total")}</span>
+                      <span className="tabular-nums">{formatMoney(totals.total, currency)}</span>
                     </div>
                     <div className="flex justify-between text-muted">
                       <span>{t("pay.balanceAtArrival")}</span>
                       <span className="tabular-nums">{formatMoney(balance, currency)}</span>
                     </div>
                   </>
-                )}
+                ) : null}
+              </div>
+
+              {/* The one figure the cashier reads out and takes. */}
+              <div className="mt-tight flex items-baseline justify-between gap-comfortable rounded-go bg-ember/10 px-comfortable py-tight">
+                <span className="min-w-0 text-[14px] font-semibold text-brand-foreground">
+                  {balance > 0 ? t("pay.collectNow") : t("pay.collect")}
+                </span>
+                <span className="shrink-0 whitespace-nowrap text-2xl font-semibold tabular-nums text-brand-foreground">
+                  {formatMoney(dueNow, currency)}
+                </span>
               </div>
 
               {method === "cash" && (
                 <div className="mt-section">
                   <div className="flex items-baseline justify-between">
-                    <span className="text-[13px] text-muted">{t("pay.tendered")}</span>
+                    <span className="text-[13px] text-muted">{t("pay.received")}</span>
                     <span className="text-[17px] font-semibold tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
                   </div>
                   <div className={`mt-tight flex items-baseline justify-between ${cashReady ? "text-success" : "text-muted"}`}>
@@ -713,10 +747,18 @@ export default function SellPage() {
           className="fixed inset-x-comfortable bottom-[calc(82px+env(safe-area-inset-bottom))] z-30 lg:static lg:mt-comfortable"
         >
           <div className="flex items-center gap-comfortable rounded-full bg-inverse px-section py-tight shadow-go-pop lg:rounded-go lg:px-comfortable">
+            {/* The figure here is what the button is about to take, not the
+                order total — a part-paid sale showed "Total ৳3,450" beside a
+                button reading "Take ৳1,950", which is two different numbers
+                side by side and the easiest kind of misread at a counter. The
+                total stays in the pay panel, where it is context rather than
+                a competing answer. */}
             <span className="min-w-0 flex-1">
-              <span className="block text-[12px] text-inverse-fg/60">{t("footer.total")}</span>
+              <span className="block text-[12px] text-inverse-fg/60">
+                {balance > 0 ? t("footer.toCollect") : t("footer.total")}
+              </span>
               <span className="block truncate text-[17px] font-semibold tabular-nums text-inverse-fg">
-                {formatMoney(totals.total, currency)}
+                {formatMoney(dueNow, currency)}
               </span>
             </span>
             <Button

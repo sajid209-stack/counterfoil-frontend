@@ -11,10 +11,10 @@ export {
   Card, LogoMark, Logo, StatusPill, statusTone, Field, FormField, PageShell,
   EmptyState, Modal, ConfirmDialog, ToastProvider, useToast, Tabs, DataTable,
   DurationInput, PercentInput, parsePercent, DiscountInput, parseDiscount,
-  TimeInput, BlockedNotice, ResourceTimeline, ProductThumb, Qr, TicketCard,
+  TimeInput, BlockedNotice, DateStrip, ResourceTimeline, ProductThumb, Qr, TicketCard,
   AreaChart, BarChart, DonutChart, HBarChart, LineChart,
 } from "@/components/ui";
 export type {
   PillTone, FieldVariant, SelectOption, TabItem, Column, DataTableProps,
-  DiscountMode, TimelineSpan, TicketCardData, ChartPoint,
+  DiscountMode, DateStripLabels, TimelineSpan, TicketCardData, ChartPoint,
 } from "@/components/ui";

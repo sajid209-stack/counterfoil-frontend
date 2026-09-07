@@ -105,7 +105,10 @@ export function Catalogue({
         )}
       </div>
 
-      <div className="-mx-comfortable flex snap-x snap-mandatory gap-tight overflow-x-auto px-comfortable py-inline [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* Wraps rather than scrolls sideways. A chip that has scrolled out of
+            view is a group nobody knows exists, and the cut edge reads as a
+            clipped container at least as often as it reads as "more this way". */}
+        <div className="flex flex-wrap gap-tight py-inline">
         {[{ id: "all", name: t("catalogue.all") }, ...chipCategories].map((c) => (
           <button
             key={c.id}

@@ -854,7 +854,10 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
             container rather than as "there is more this way". Bleeding it to
             the screen edge puts the cut on the edge itself, which is the
             affordance everyone already knows. */}
-        <div className="-mx-comfortable flex snap-x snap-mandatory gap-tight overflow-x-auto px-comfortable py-inline [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Wraps rather than scrolls sideways. A chip that has scrolled out of
+            view is a group nobody knows exists, and the cut edge reads as a
+            clipped container at least as often as it reads as "more this way". */}
+        <div className="flex flex-wrap gap-tight py-inline">
           {[{ id: "all", name: t("categoryAll") }, ...chipCategories].map((c) => (
             <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}>{c.name}</button>
           ))}
