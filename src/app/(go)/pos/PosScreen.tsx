@@ -965,19 +965,12 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
             charge bar). On a phone that arithmetic left the lines about thirty
             pixels, so the one thing a cart exists to show was the one thing you
             could not read. Only the payment controls are pinned now. */}
-        <div className="scroll-y-hint flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="p-comfortable">
           {cart.length === 0 ? (
             <EmptyState title={t("cart.empty")} message={t("cart.emptyHint")} />
           ) : (
             <div className="flex flex-col gap-comfortable">
-              {cart.length > 1 && (
-                <div className="flex justify-end">
-                  <button type="button" onClick={() => setClearOpen(true)} className="flex h-11 items-center rounded-full px-comfortable text-[13px] text-muted active:bg-ember/10">
-                    {t("cart.clearAll")}
-                  </button>
-                </div>
-              )}
               {cart.map((e) => (
                 <div key={e.id} className="go-surface p-comfortable">
                 <div className="flex flex-col gap-tight">
@@ -1099,6 +1092,19 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
                 )}
                 </div>
               ))}
+              {/* After the lines, not above them: the top of the cart is for
+                  the sale, and down here "clear all" plainly acts on the list
+                  it follows rather than sitting in a 44px strip of its own.
+                  Pulled up 8px because the gap below it — the panel's own
+                  padding, then a rule — was the same 12px as the gap above,
+                  which left it owned by neither the lines nor what follows. */}
+              {cart.length > 1 && (
+                <div className="-mt-tight flex justify-end">
+                  <button type="button" onClick={() => setClearOpen(true)} className="flex h-11 items-center rounded-full px-comfortable text-[13px] text-muted active:bg-ember/10">
+                    {t("cart.clearAll")}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -539,16 +539,3 @@
     radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.13), transparent) 100% 0 / 16px 100% no-repeat scroll;
 }
 
-/* The same trick on the other axis, for the cart's scrolling sale. A region
-   that simply cuts its last row mid-glyph reads as a rendering fault rather
-   than as "there is more below" — the cart's Total row was being sliced in
-   half by the pinned payment bar. Painted by the SCROLLER, so each shadow
-   appears only on the side that still has content and vanishes at that end.
-   No JS, no scroll listener. */
-.scroll-y-hint {
-  background:
-    linear-gradient(to bottom, var(--color-card) 30%, transparent) 0 0 / 100% 28px no-repeat local,
-    linear-gradient(to top, var(--color-card) 30%, transparent) 0 100% / 100% 28px no-repeat local,
-    radial-gradient(farthest-side at 50% 0, rgb(0 0 0 / 0.13), transparent) 0 0 / 100% 12px no-repeat scroll,
-    radial-gradient(farthest-side at 50% 100%, rgb(0 0 0 / 0.13), transparent) 0 100% / 100% 12px no-repeat scroll;
-}

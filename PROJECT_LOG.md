@@ -3671,3 +3671,64 @@ merge-conflict markers found in this file on 6 September. Both are safe to drop.
 baseline comparison failed twice this session because that stale stash conflicts
 on pop, which leaves the tree in a state that *looks* like lost work. Compare
 against a committed ref instead of stashing.
+
+## The pale band above the cart (2026-09-07)
+
+A screenshot with a red box around the strip between the cart's sticky header
+and its first card: **"fix these UI errors, no need background shadows."**
+
+### What it was
+
+`.scroll-y-hint`, written two turns earlier and wrong the moment the cart
+stopped being white.
+
+It is the vertical twin of `.scroll-x-hint`: four backgrounds painted on the
+scroller itself — two `linear-gradient`s in `var(--color-card)` that cover the
+content at each end, and two `radial-gradient`s in `rgb(0 0 0 / 0.13)` that
+sit still while the content moves under them, so a shadow appears only on the
+side that still has something below it. No JS, no scroll listener. It was there
+because the pinned payment bar was slicing the Total row in half, which reads
+as a rendering fault rather than as "there is more below".
+
+Then the cart inverted: paper ground, white cards. The cover gradient kept
+painting `--color-card` — **white on paper** — so the trick that had been
+invisible became a 28px pale band under the header with a soft shadow beneath
+it. The class did exactly what it was written to do. It was the surface under
+it that changed.
+
+Removed from the scroller, and the rule deleted from `globals.css` rather than
+left dead. `.scroll-x-hint` stays: the horizontal filter rail it paints is
+still on card white, where the trick is still invisible.
+
+The affordance it was buying is not lost. The lines are cards now, and a card
+clipped by the payment bar reads as more-below on its own — a shape cut in half
+is legible in a way a sliced line of text is not.
+
+### Clear all moves below the lines
+
+Same screenshot, same band. "Clear all" was a 44px right-aligned strip *above*
+the first line — so the first thing at the top of a cart was the way to destroy
+it, and it was half of what made that strip look like chrome.
+
+It now follows the lines it acts on. Pulled up 8px, because the gap below it —
+the panel's own padding, then the rule under it — was the same 12px as the gap
+above, and a control spaced equally between two groups belongs to neither.
+Measured after: 4px above, 12px below, still a 44px target.
+
+### Not removed
+
+The **card lift** (`--shadow-go` on `.go-surface`) stays. The shadow in the red
+box was the painted background on the scroll container, not the elevation on the
+cards, and the cards are what makes white-on-paper read as stacked rather than
+as a patchwork. If the soft lift is also unwanted it is one token.
+
+### Verified
+
+- Computed style on the scroller: `background-image: none`. Grep: zero
+  `scroll-y-hint` in `src/`. Rendered at 2× — clean paper from the header to
+  the first card.
+- Clear all: cancel keeps all three lines, confirm empties the sale, dialog
+  copy intact, zero console errors.
+- POS audit at 390 light, 390 dark and 320 — only the declared white-on-ember
+  exception. Undo still restores the middle of three in place. 45 sheet-renders
+  clean. `tsc` and `build` clean.
