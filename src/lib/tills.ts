@@ -48,7 +48,7 @@ export const TILLS: Till[] = [
     blurb:
       "The earlier design — bookings as a dense row list with a thumbnail and the price inline, and the chrome, buttons and cards as they were before the September redesign.",
     href: "/classic",
-    ready: false,
+    ready: true,
   },
 ];
 

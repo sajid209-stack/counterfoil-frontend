@@ -3108,3 +3108,80 @@ be). `tsc`, `npm run build` and `eslint` clean; i18n parity 0 missing / 0 extra.
 React 19's focus delegation means a synthetic `blur` event does not reach it.
 Drive it by its chips, or dispatch `focusout`. Two "failing" checks were this
 and not product bugs.
+
+
+---
+
+## The classic till (2026-09-07) — the design before the 6 September pass
+
+The third variant, at **`/classic`**. Owner's definition: the design as it was
+*before Ishmam changed those UI elements* — so this is not a re-drawing from
+memory, it is the till **restored from `acb8291`**, the last commit before that
+pass began.
+
+### What is restored, and what deliberately is not
+
+Restored verbatim from git into `src/app/(classic)/`: the Go layout, the till
+page, its completion screen, the customer picker, and all five selection
+sub-components (`ProductSheet`, `SessionList`, `SlotMatrix`, `RepeatPicker`,
+`Keypad`).
+
+`globals.css` turned out to be **purely additive** across the redesign — every
+old class still exists — so the older look needed no CSS surgery. Of the four
+shared primitives that changed, three were supersets: `shape="pill"`, `raised`
+and `size="card"` were *added*, so markup that predates them gets the old
+rendering for free. Only two real deltas remained (the ember CTA went ink →
+white, and the choice-card radius moved), so the classic variant keeps **its own
+copy of `Button` and `ChoiceCard`** in `(classic)/_ui/`, re-exporting the rest of
+`@/components/ui` unchanged. Nothing shared was forked.
+
+**The logic layer is current, not restored.** `lib/api`, `lib/posState`,
+`lib/orderMath` and the rest are today's — `posLiveState` had gained a phrasing
+since, and classic follows it. This is a visual variant, not a fork of the
+engine, so all three tills price identically and write the same order shape.
+
+The same `FEATURES` gating was applied: no coupon row, no membership sale, no
+points. Verified in-browser at six widths — zero occurrences.
+
+### Three inherited lint errors, fixed rather than imported
+
+The restored file carried three `react-hooks/set-state-in-effect` violations
+(an error in this repo, not a warning). Copying them in would have added three
+new errors to a clean tree, so each was reworked in the classic copy:
+
+- **The non-cash fallback** kept a `method` state and corrected it in an effect.
+  It is now a render-time derivation — what the till *will* charge with is a
+  function of what was picked and what is actually live.
+- **The Schedule deep-link** read session storage in an effect and setState'd.
+  It now reads once in a lazy initialiser and resolves during render when the
+  catalogue lands.
+- **The completion screen** read session storage in an effect;
+  `useSyncExternalStore`, the shape this codebase settled on.
+
+Also removed: a `buildSale()` call whose result was discarded — dead work the
+old file did to destructure a `payload` it never used. `(classic)` lints with
+**zero errors and zero warnings**.
+
+### Verified
+
+Sold end to end at 1280: General Admission → "Add 1 ticket — ৳500.00" → cart →
+"Charge ৳575.00 — Cash" (৳500 + 15% VAT) → tender → `/classic/complete`, so the
+loop closes inside the variant. Overflow sweep at 320 · 390 · 768 · 1024 · 1280
+· 1440: no page x-scroll, nothing clipped without an ellipsis bar the `sr-only`
+heading. `tsc` and `npm run build` clean.
+
+### One authentic defect, kept on purpose
+
+The classic till prints **"Fort Main Gate" twice** at ≥640px — once in the
+context bar and again beside the search. That is a real fault the 6 September
+pass fixed, and it is faithfully present here because the brief was to restore
+the design, not an improved version of it. Silently repairing it would make the
+comparison dishonest. **Say the word and it goes.**
+
+### Navigation between the three
+
+The Sell tab inside `/classic` stays in the variant; Schedule, Scan and Check In
+lead back to the Go chrome rather than being copied a second time — this is a
+TILL design, not a fork of front-of-house. The `TillSwitcher` is added to the
+classic header as review scaffolding (it is not part of the restored design);
+without it there is no way out of the variant but the browser's back button.
