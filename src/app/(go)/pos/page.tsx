@@ -266,37 +266,13 @@ export default function PosPage() {
   /** Only groups that are switched on AND have something in them. An empty
    *  chip is a control that filters the grid to nothing and tells the cashier
    *  they have made a mistake — the seeded "Add-ons" group did exactly that. */
-  /** The nine selection systems, offered as filters beside the categories.
-   *  A category says WHAT a thing is; this says HOW it is sold, and on a busy
-   *  till "show me everything with a time slot" is a real question. Ids are
-   *  prefixed so one piece of state serves both kinds of chip. */
-  const SYSTEMS: { id: string; bt: string; key: string }[] = [
-    { id: "sys:BT-01", bt: "BT-01", key: "sysOpenEntry" },
-    { id: "sys:BT-02", bt: "BT-02", key: "sysDatePass" },
-    { id: "sys:BT-03", bt: "BT-03", key: "sysSessions" },
-    { id: "sys:BT-04", bt: "BT-04", key: "sysTimeSlots" },
-    { id: "sys:BT-05", bt: "BT-05", key: "sysByDuration" },
-    { id: "sys:BT-06", bt: "BT-06", key: "sysDailyLimit" },
-    { id: "sys:BT-07", bt: "BT-07", key: "sysSeats" },
-    { id: "sys:BT-09", bt: "BT-09", key: "sysGuided" },
-    { id: "sys:BT-10", bt: "BT-10", key: "sysAppointments" },
-  ];
-  /** Same rule the categories follow: a chip that filters to nothing is a
-   *  control that tells the cashier they made a mistake. */
-  const chipSystems = SYSTEMS.filter((x) => sellable.some((p) => p.bookingType === x.bt));
 
   const chipCategories = categories
     .filter((c) => c.active !== false && sellable.some((p) => p.categoryId === c.id))
     .sort((a, b) => a.sortOrder - b.sortOrder);
   const shown = products
     .filter((p) => p.bookingType !== "BT-14") // field passes issue from Quick pass, not the grid
-    .filter((p) =>
-      category === "all"
-        ? true
-        : category.startsWith("sys:")
-          ? p.bookingType === category.slice(4)
-          : p.categoryId === category,
-    )
+    .filter((p) => category === "all" || p.categoryId === category)
     .filter((p) => {
       const q = query.trim().toLowerCase();
       return !q || p.name.toLowerCase().includes(q) || catName(p.categoryId).toLowerCase().includes(q);
@@ -816,27 +792,6 @@ export default function PosPage() {
           {[{ id: "all", name: t("categoryAll") }, ...chipCategories].map((c) => (
             <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}>{c.name}</button>
           ))}
-          {/* A category says what a thing IS; a system says how it is SOLD.
-              Two kinds of filter in one row need a seam, or "Admission" and
-              "Open entry" read as the same kind of thing when they are not. */}
-          {chipSystems.length > 0 && (
-            <>
-              <span aria-hidden className="mx-tight my-inline w-px shrink-0 self-stretch bg-line" />
-              <span className="flex shrink-0 items-center pr-tight text-[13px] font-medium uppercase tracking-wide text-muted">
-                {t("systemsLabel")}
-              </span>
-              {chipSystems.map((x) => (
-                <button
-                  key={x.id}
-                  type="button"
-                  onClick={() => setCategory(x.id)}
-                  className={`h-11 min-w-11 shrink-0 snap-start whitespace-nowrap rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === x.id ? "bg-ember font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}
-                >
-                  {t(x.key)}
-                </button>
-              ))}
-            </>
-          )}
         </div>
         <div className="flex-1 overflow-y-auto">
           {productsQ.loading ? (

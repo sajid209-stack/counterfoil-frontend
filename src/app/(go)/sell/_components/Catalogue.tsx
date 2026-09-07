@@ -24,20 +24,6 @@ import { posLiveState } from "@/lib/posState";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDay, formatPriceShort } from "@/lib/format";
 
-/** The nine selection systems, offered beside the operator's own groups. A
- *  category says what a thing IS; this says how it is SOLD. */
-const SYSTEMS = [
-  { id: "sys:BT-01", bt: "BT-01", key: "sysOpenEntry" },
-  { id: "sys:BT-02", bt: "BT-02", key: "sysDatePass" },
-  { id: "sys:BT-03", bt: "BT-03", key: "sysSessions" },
-  { id: "sys:BT-04", bt: "BT-04", key: "sysTimeSlots" },
-  { id: "sys:BT-05", bt: "BT-05", key: "sysByDuration" },
-  { id: "sys:BT-06", bt: "BT-06", key: "sysDailyLimit" },
-  { id: "sys:BT-07", bt: "BT-07", key: "sysSeats" },
-  { id: "sys:BT-09", bt: "BT-09", key: "sysGuided" },
-  { id: "sys:BT-10", bt: "BT-10", key: "sysAppointments" },
-] as const;
-
 export function Catalogue({
   products,
   categories,
@@ -79,16 +65,9 @@ export function Catalogue({
   const chipCategories = categories
     .filter((c) => c.active !== false && sellable.some((p) => p.categoryId === c.id))
     .sort((a, b) => a.sortOrder - b.sortOrder);
-  const chipSystems = SYSTEMS.filter((x) => sellable.some((p) => p.bookingType === x.bt));
 
   const shown = sellable
-    .filter((p) =>
-      category === "all"
-        ? true
-        : category.startsWith("sys:")
-          ? p.bookingType === category.slice(4)
-          : p.categoryId === category,
-    )
+    .filter((p) => category === "all" || p.categoryId === category)
     .filter((p) => {
       const q = query.trim().toLowerCase();
       return !q || p.name.toLowerCase().includes(q) || catName(p.categoryId).toLowerCase().includes(q);
@@ -137,24 +116,6 @@ export function Catalogue({
             {c.name}
           </button>
         ))}
-        {chipSystems.length > 0 && (
-          <>
-            <span aria-hidden className="mx-tight my-inline w-px shrink-0 self-stretch bg-line" />
-            <span className="flex shrink-0 items-center pr-tight text-[13px] font-medium uppercase tracking-wide text-muted">
-              {t("catalogue.systems")}
-            </span>
-            {chipSystems.map((x) => (
-              <button
-                key={x.id}
-                type="button"
-                onClick={() => onCategory(x.id)}
-                className={`h-11 min-w-11 shrink-0 snap-start whitespace-nowrap rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === x.id ? "bg-ember font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}
-              >
-                {tp(x.key)}
-              </button>
-            ))}
-          </>
-        )}
       </div>
 
       <div className="min-w-0">

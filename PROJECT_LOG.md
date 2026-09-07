@@ -3274,3 +3274,48 @@ the new keys authored in both locales.
 weekly, the group-size stepper for per-booking pricing, and the waiver gate.
 Those are cross-cutting options rather than booking types — every type can be
 sold without them.
+
+
+---
+
+## Two owner findings (2026-09-07)
+
+### 1. "Sold as" comes off every till
+
+The chip row offered the **nine selection systems as filters** beside the
+operator's own categories — Open entry · Date pass · Sessions · Time slots · By
+duration · Daily limit · Seats · Guided · Appointments.
+
+Removing it is not only the owner's call, it settles a standing contradiction.
+The Phase 7 governing rule is that **internal identifiers never appear in the
+UI** and booking type is *derived*, shown only in a read-only Advanced section —
+which is why there is no BT dropdown anywhere. That chip row was the
+booking-type taxonomy, relabelled and put at the counter. A category says what
+a thing IS, and that is the filter worth keeping.
+
+Gone from `/pos` and `/sell`, along with the `sys:` branch in both filters and
+the ten now-orphaned message keys in both locales. `/classic` predates the
+feature and never had it. `eslint` on `pos/page.tsx` is unchanged at its
+documented baseline (6 problems), so nothing else moved.
+
+### 2. The scrolling till's total bar was clipped by the tab bar
+
+Measured, not eyeballed: the Go tab bar is a floating pill inset 12px from the
+bottom and 64px tall, so it owns the **bottom 76px**. The v2 total bar was
+pinned at 70px, which put its lower edge **6px inside** the nav — exactly the
+slice in the owner's screenshot.
+
+Now 82px, matching the v1 till **exactly** rather than being picked by eye, so
+both tills' bottom furniture rides at the same height — which is what a design
+comparison needs. Content padding went 160 → 176px so the last row still clears
+it at the end of the scroll.
+
+Measured after: `/sell` **+8px** clear at 320 and 390, `/pos` **+8px**,
+`/classic` **+7px**.
+
+**A false alarm worth recording.** A heuristic sweep reported `/classic`
+overlapping by 9px. Measuring its actual cart bar — rather than the
+biggest-bottom-most element the heuristic guessed at — showed **+7px clear**.
+Classic's nav is a full-bleed strip at `bottom:0`, not the floating pill, so its
+own 64px offset is correct by design and always was. Three tills, three
+different offsets, and only one of them was wrong.

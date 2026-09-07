@@ -407,7 +407,7 @@ export default function SellPage() {
 
       {/* The sale — one scroll, ending in the money. */}
       <div className="flex min-h-0 min-w-0 flex-col">
-        <div className="flex flex-col gap-comfortable pb-[160px] lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-0">
+        <div className="flex flex-col gap-comfortable pb-[176px] lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-0">
           {/* Phone: the wall lives here, above the sale. */}
           {!wide && (
           <div>
@@ -704,7 +704,13 @@ export default function SellPage() {
         {/* The one thing that never scrolls away: what this costs, and the
             next decision. On a phone it clears the Go tab bar. */}
         <div
-          className="fixed inset-x-comfortable bottom-[calc(70px+env(safe-area-inset-bottom))] z-30 lg:static lg:mt-comfortable"
+          /* 82px, matching the v1 till exactly rather than being picked by eye.
+             The Go tab bar is a floating pill inset 12px from the bottom and
+             64px tall, so it owns the bottom 76px; at 70px this bar's lower
+             edge sat 6px INSIDE it and was clipped. Both tills' bottom
+             furniture now rides at the same height, which is what a design
+             comparison needs. */
+          className="fixed inset-x-comfortable bottom-[calc(82px+env(safe-area-inset-bottom))] z-30 lg:static lg:mt-comfortable"
         >
           <div className="flex items-center gap-comfortable rounded-full bg-inverse px-section py-tight shadow-go-pop lg:rounded-go lg:px-comfortable">
             <span className="min-w-0 flex-1">
