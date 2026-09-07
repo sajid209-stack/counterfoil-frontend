@@ -4112,3 +4112,39 @@ Peek unchanged — full name, status in words, inside the viewport at a middle
 and a right-edge block, cleared on leave, and `{peek: false, dialog: true}` on
 an emulated iPhone. Keyboard unchanged. The filter empty-state notice still
 fires in all three views. `tsc`, `build` and `eslint` clean; i18n 0 / 0.
+
+## The calendar, fifth pass — the header earns its rule (2026-09-08)
+
+A Google Calendar screenshot, and the observation behind it: *"lines are faded
+in dates row, and when scrolling the date and hours, row divider get visible."*
+
+Two things were being conflated. A rule that **separates** and a rule that
+**signals overlap** look identical but are not the same object, and drawing the
+first one permanently is how a calendar ends up looking like a spreadsheet.
+
+### The dates row is a label strip, not a row of cells
+
+Its seven vertical rules and its bottom border are gone. The dates are already
+spaced apart by a seven-column grid; boxing each one adds nothing but ink. This
+is the single biggest reason the reference looks smoother than what we had.
+
+### The divider is earned, not permanent
+
+Each scroller now tracks its own offset and hands out a rule only where content
+has actually started sliding underneath:
+
+- **Week** — `scrollTop > 0` gives the day strip a 1px rule plus a 2px shadow.
+- **Day** — two axes, two independent dividers. `scrollTop` rules the hour
+  axis; `scrollLeft` rules the sticky lane-name column, each earned on its own.
+
+Measured at rest and after scrolling: `border-bottom` 0 → 1, shadow `none` →
+present, ruled header cells 0 in both states.
+
+State in an event handler, not an effect — React bails out when the boolean
+does not change, so a scroll does not re-render the grid on every frame.
+
+### Verified
+
+Contrast unchanged: one finding per theme, the declared white-on-ember badge at
+3.50:1. Peek, keyboard and the empty-state notice all unchanged. `tsc`, `build`
+and `eslint` clean; i18n 0 / 0.

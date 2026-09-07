@@ -97,6 +97,10 @@ export function WeekGrid({
      booked, and leave a quarter of the viewport above it for context. */
   const scroller = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
+  /* The header divides nothing while the grid is at the top — it is the
+     same surface as the row under it. It earns its rule the moment content
+     starts sliding underneath. */
+  const [scrolled, setScrolled] = useState(false);
   const focus = focusMinute(events, now, showNow);
   useEffect(() => {
     const box = scroller.current;
@@ -130,11 +134,23 @@ export function WeekGrid({
     // Both axes scroll in ONE container so the day headers can stick to its
     // top. Sticky against the page would let them scroll away, which is the
     // one thing a calendar header must never do.
-    <div ref={scroller} className="max-h-[70vh] overflow-auto">
+    <div
+      ref={scroller}
+      onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
+      className="max-h-[70vh] overflow-auto"
+    >
       <div className={compact ? "min-w-0" : "min-w-[52rem]"}>
         {/* ── day headers ─────────────────────────────────────────────────── */}
-        <div className="sticky top-0 z-20 flex border-b border-hairline bg-card">
-          <div className={cn(gutter, "shrink-0 border-r border-hairline")} />
+        <div
+          className={cn(
+            "sticky top-0 z-20 flex bg-card transition-shadow duration-quick",
+            scrolled && "border-b border-hairline shadow-[0_1px_2px_rgb(0_0_0/0.06)]",
+          )}
+        >
+          {/* No rule under the gutter or between the days up here: the
+              dates are a label strip, not cells, and ruling them boxes in
+              seven numbers that are already spaced apart. */}
+          <div className={cn(gutter, "shrink-0")} />
           {days.map((d) => {
             const today = sameDay(d, now);
             const label = dayLabel(d);
@@ -144,7 +160,7 @@ export function WeekGrid({
                 type="button"
                 onClick={onPickDay ? () => onPickDay(d) : undefined}
                 className={cn(
-                  "flex flex-1 flex-col items-center gap-0.5 border-r border-hairline py-tight last:border-r-0",
+                  "flex flex-1 flex-col items-center gap-0.5 py-tight",
                   today && "bg-ember/5",
                   onPickDay && "transition-colors duration-quick hover:bg-subtle",
                 )}

@@ -234,6 +234,11 @@ function DayTrack({
 }) {
   /* Open where the day happens rather than at its left edge. */
   const scroller = useRef<HTMLDivElement>(null);
+  /* Same idea as the week's header: the axis and the sticky name column divide
+     nothing until something starts sliding underneath them. Two axes here, so
+     two dividers, each earned independently. */
+  const [scrolledY, setScrolledY] = useState(false);
+  const [scrolledX, setScrolledX] = useState(false);
   const focus = focusMinute(events, now, showNow);
   useEffect(() => {
     const box = scroller.current;
@@ -245,11 +250,28 @@ function DayTrack({
   return (
     // The grid scrolls inside its own card on both axes, so the hour axis can
     // stick to the top of it. The page itself never scrolls sideways.
-    <div ref={scroller} className="max-h-[70vh] overflow-auto">
+    <div
+      ref={scroller}
+      onScroll={(e) => {
+        setScrolledY(e.currentTarget.scrollTop > 0);
+        setScrolledX(e.currentTarget.scrollLeft > 0);
+      }}
+      className="max-h-[70vh] overflow-auto"
+    >
       <div style={{ minWidth: width + 160 }}>
         {/* ── the one shared axis ─────────────────────────────────────────── */}
-        <div className="sticky top-0 z-20 flex border-b border-hairline bg-card">
-          <div className="sticky left-0 z-30 w-40 shrink-0 border-r border-hairline bg-card" />
+        <div
+          className={cn(
+            "sticky top-0 z-20 flex bg-card transition-shadow duration-quick",
+            scrolledY && "border-b border-hairline shadow-[0_1px_2px_rgb(0_0_0/0.06)]",
+          )}
+        >
+          <div
+            className={cn(
+              "sticky left-0 z-30 w-40 shrink-0 bg-card transition-shadow duration-quick",
+              scrolledX && "border-r border-hairline",
+            )}
+          />
           <div className="relative h-8 flex-1">
             {hours.map((h, i) => (
               <span
@@ -277,7 +299,12 @@ function DayTrack({
           return (
             <div key={lane.id} className="flex border-b border-hairline last:border-0">
               {/* Name column stays put while the hours scroll under it. */}
-              <div className="sticky left-0 z-10 flex w-40 shrink-0 flex-col justify-center border-r border-hairline bg-card px-comfortable">
+              <div
+                className={cn(
+                  "sticky left-0 z-10 flex w-40 shrink-0 flex-col justify-center bg-card px-comfortable transition-shadow duration-quick",
+                  scrolledX && "border-r border-hairline shadow-[1px_0_2px_rgb(0_0_0/0.06)]",
+                )}
+              >
                 <span className="break-words text-[13px] font-medium leading-tight">{lane.name}</span>
                 {lane.note && (
                   <span
