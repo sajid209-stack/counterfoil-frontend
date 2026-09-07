@@ -1,0 +1,91 @@
+{
+  "srTitle": "Point of sale",
+  "catalogue": {
+    "searchPlaceholder": "Search bookings",
+    "clear": "Clear",
+    "all": "All",
+    "systems": "Sold as",
+    "custom": "Custom amount"
+  },
+  "sale": {
+    "empty": "Nothing added yet",
+    "emptyHint": "Choose a booking and it appears here, ready to configure."
+  },
+  "block": {
+    "addAnother": "Add another",
+    "remove": "Remove",
+    "done": "Done"
+  },
+  "step": {
+    "date": "Date",
+    "session": "Session",
+    "departure": "Departure",
+    "guide": "Led by",
+    "slot": "Time",
+    "allowance": "Today's allowance",
+    "validity": "How long it runs",
+    "tickets": "Choose tickets"
+  },
+  "date": {
+    "today": "Today",
+    "more": "More dates"
+  },
+  "allowance": {
+    "remaining": "Places left today",
+    "ofTotal": "{left} of {total}"
+  },
+  "session": {
+    "noneToday": "Nothing runs on this date. Pick another day.",
+    "soldOut": "This session is sold out.",
+    "noGuide": "No guide is free for this departure."
+  },
+  "guide": {
+    "available": "Available",
+    "busy": "Not free"
+  },
+  "slot": {
+    "resource": "Space"
+  },
+  "qty": {
+    "less": "One fewer {tier}",
+    "more": "One more {tier}"
+  },
+  "missing": {
+    "date": "Choose a date",
+    "time": "Choose a time",
+    "resource": "Choose a space",
+    "guide": "Choose a guide",
+    "tickets": "Choose how many",
+    "unsupported": "Sell this on the main till"
+  },
+  "unsupported": {
+    "title": "Not on this till yet",
+    "body": "This booking is sold by seats, by the hour, by therapist or as a course — those selection systems arrive in the next pass. Sell it on the main till for now."
+  },
+  "pay": {
+    "label": "Pay",
+    "subtotal": "Subtotal",
+    "vat": "VAT",
+    "total": "Total",
+    "tendered": "Tendered",
+    "change": "Change",
+    "txnLabel": "bKash transaction ID",
+    "txnPlaceholder": "e.g. 8N7A2K4M1P",
+    "txnHint": "Enter the ID from the customer's confirmation before completing the sale.",
+    "qrHint": "Show the counter's Bangla QR to the customer, then complete the sale once their payment confirms."
+  },
+  "footer": {
+    "total": "Total",
+    "nothingYet": "Nothing to pay yet",
+    "takeAmount": "Take {amount}",
+    "completeAmount": "Complete {amount}"
+  },
+  "custom": {
+    "title": "Custom amount",
+    "defaultName": "Custom amount",
+    "lineLabel": "One-off charge"
+  },
+  "complete": {
+    "whatWasSold": "What was sold"
+  }
+}

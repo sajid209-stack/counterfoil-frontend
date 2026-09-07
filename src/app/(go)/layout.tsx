@@ -16,6 +16,7 @@ import {
   UserCheck,
   UserRound,
   Users,
+  Layers,
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -39,6 +40,10 @@ const TABS = [
 ] as const;
 
 const MORE_ITEMS = [
+  // The cartless till (v2). It lives in More rather than in the tab bar
+  // because the tab bar is the shift's muscle memory and this is a design in
+  // review — /pos is still the till of record.
+  { key: "sellV2", icon: Layers, href: "/sell" },
   { key: "shift", icon: Clock, href: "/shift/close" },
   { key: "mySales", icon: Banknote, action: "sales" },
   { key: "quickPass", icon: Ticket, href: "/quick-pass" },

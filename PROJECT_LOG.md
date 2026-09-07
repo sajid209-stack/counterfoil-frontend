@@ -2881,3 +2881,131 @@ clear the body floor. The size is what buys the colour.
 - The icon tiles are **one neutral surface**, where the mockup tints each one a
   different pastel. Eight hues would break the standing one-accent-per-screen
   rule (D8), and the calm wall is what lets the ember prices carry the glance.
+
+---
+
+## POS v2 — the cartless till (2026-09-07), part 1 of 4
+
+Owner asked for a **second** POS variant with no cart, laid out as one scrolling
+page, and was explicit that it is a **design** to hand to the engineering team
+(whose backend already exists) — so `/pos` must not change. It has not: the only
+edits outside `src/app/(go)/sell/` are one More-menu entry, one namespace
+registration and two nav strings.
+
+### What "no cart" resolved to
+
+Two honest readings were put to the owner, who chose the first:
+
+- **The scroll IS the sale.** Each thing added stays as a block where it was
+  configured; finished blocks collapse to a line stating what was decided; the
+  total is a bar that never scrolls away. No cart region, no drawer, no sheet
+  over the selection. Multi-item sales survive — a single-product venue simply
+  never sees a second block, so this contains the strict express case for free.
+- (Rejected: strict one-item express — two products would mean two orders and
+  two receipts, which is worse at a counter and no faster at a gate.)
+
+Wide screens are **two columns** (wall left, sale right), not a next/next
+stepper: a wizard is more taps than the scroll for the fastest users and would
+be a third layout to keep in sync.
+
+### Sharing, and what is deliberately duplicated
+
+`/pos` being off-limits rules out extracting the shared engine, so v2 **copies**
+the till's arithmetic and writes its own selection UI. The cost is named rather
+than hidden: two implementations that will drift. It is the right trade here —
+this is a design artifact with a known lifespan, and the inline selection was
+always going to diverge visually from a sheet, so shared code would have been
+all `variant` branches. When v2 wins, one is built and the other deleted.
+
+What IS shared is the contract, which is what the backend lane is wiring to:
+`lib/api`, `lib/orderMath`, `lib/duration`, `lib/pricing`, `lib/posState`, and
+the three selection sub-components (`SessionList`, `SlotMatrix`, `RepeatPicker`)
+which were already separate files.
+
+### Shape
+
+```
+(go)/sell/page.tsx              blocks · sticky total · pay section
+(go)/sell/complete/page.tsx     v2's own completion (New sale returns to /sell)
+(go)/sell/_lib/saleMath.ts      PURE: items → CheckoutLine[] + totals
+(go)/sell/_lib/selection.ts     PURE: draft → item, and what is still missing
+(go)/sell/_components/Catalogue.tsx
+(go)/sell/_components/SelectionInline.tsx
+```
+
+Two rules the structure enforces:
+
+- **One resolution pass.** Blocks, the footer total and the eventual payload are
+  all computed from the same `resolveDraft`/`priceSale` output. The lines that
+  priced the bar are the array handed to `checkout()` — rebuilding the payload at
+  charge time is how a till shows one number and charges another.
+- **The footer never says "Continue."** `resolveDraft` returns which question is
+  still open, so the button reads "Choose a time" → "Choose how many" →
+  "Take ৳2,760.00" → "Complete ৳2,760.00".
+
+### Patterns in this part, and the ones that say they are missing
+
+In: open entry · date-and-validity pass · fixed sessions · guided departures
+(with the guide step, first free guide auto-picked) · daily allowance ·
+resource × time slots · custom amount.
+
+Not in, and **stated on screen** rather than silently omitted: seat maps,
+flexible duration, providers, courses, credits packs, sectioned rooms. A
+selection screen that quietly drops the one question a booking type is run by
+would sell the wrong thing.
+
+### Defects found by rendering it, not by reading it
+
+- **A daily-capped booking was routed to the session list.** `needsSchedule`
+  is true for BT-06 (it needs to know which days it runs) but it has no
+  sessions, so the block showed an empty departure list under a call to action
+  demanding a time it does not have. `patternOf` now branches on
+  `isDailyCapped` before `needsSchedule`.
+- **The wall was in the DOM twice** — once hidden behind `lg:` for the desktop
+  column, once for the phone — so a screen reader found two search fields and
+  anything selecting "the search box" got the invisible one. Exactly the trap
+  the page-header portal hit on 2026-09-03; fixed the way that was, with
+  `useMediaQuery`. Verified: exactly one search field at every width and state.
+- **The date chip wore its own check badge.** `ChoiceCard` owns the top-right
+  24px and the chip is 76px of centred text, so the badge landed on the month —
+  the same collision the sheets were swept for. These chips use `hideCheck`;
+  selection reads from the ember ring instead.
+- **`h-full` had nothing to resolve against.** The Go shell hands its children
+  no height, so the two columns grew the page instead of scrolling. The desktop
+  branch now states its height (`100dvh` less the 64px header and the 96px the
+  shell reserves for the tab bar, which a landscape tablet does not have).
+- **`SlotMatrix` heads its own two questions**, so wrapping it in a Step printed
+  "Time" above "Field" above "Time".
+- **A `set-state-in-effect` error** on the completion screen — session storage is
+  an external store, so it is read with `useSyncExternalStore`.
+
+### Verified
+
+Driven in a real browser, at 320 · 390 · 430 · 768 · 1024 · 1440, light and
+dark, en and bn: **no page x-scroll, nothing clipped without an ellipsis, and
+nothing below the 12px caption floor** except the two standing exceptions (the
+`sr-only` heading, which is meant to be clipped, and the 5-tab mobile bar's
+11px). Sales completed end to end three times — single item, two items, and a
+Family tier (admits 4) plus a day-capped booking — each landing a real order and
+ticket with correct VAT (৳2,400 + 15% = ৳2,760).
+
+`tsc` clean · `npm run build` clean · `eslint` clean on every new file ·
+i18n parity **0 missing / 0 extra across 30 namespaces** (new `sell` namespace
+authored in both locales).
+
+### Inherited, not introduced
+
+A session list footed with "৳800.00 per ticket" under tiers priced ৳800 and
+৳1,200 reads as a promise it does not keep. That line is `SessionList`'s own and
+`/pos` shows the same thing, so it was left alone rather than edited in a shared
+component. Worth fixing in v2's own session list later.
+
+### Still to come (parts 2–4, all four scope groups were approved)
+
+2. The remaining selection patterns inline (duration, providers, seats,
+   sections, course, credits, add-ons, repeat weekly, group size, waiver).
+3. Sale-level rows: customer + member pricing + points, discounts + coupons
+   with the policy cap and required reason.
+4. Park/resume, settling an existing booking (which cannot be a block — it is
+   `addOrderPayment` against an order that already exists, so it needs its own
+   entry point), and the bKash/QR pending flows.
