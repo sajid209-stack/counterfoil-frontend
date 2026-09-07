@@ -3732,3 +3732,118 @@ as a patchwork. If the soft lift is also unwanted it is one token.
 - POS audit at 390 light, 390 dark and 320 — only the declared white-on-ember
   exception. Undo still restores the middle of three in place. 45 sheet-renders
   clean. `tsc` and `build` clean.
+
+## The calendar, first pass — the clock, the chrome and the unreadable block (2026-09-07)
+
+"Research schedule calendars UI and UX and properly improve the UI and UX of
+the calendar." Measured first, at three widths and both themes, because a
+calendar's problems are quantities.
+
+| | desktop | tablet | phone |
+|---|---|---|---|
+| chrome before the grid | 281px (31%) | 337px (42%) | 520px (**62%**) |
+| blocks clipping their own title | 16/28 | 19/28 | **26/27** |
+| narrowest block | 53px | 35px | **21px** |
+
+And `scrollTop: 0` against `scrollHeight: 945` — the grid opened at 06:00 while
+the venue's first booking is at 08:00, so the first thing on screen was empty
+morning and every booking was below the fold.
+
+### The calendar did not know what day it was
+
+`DEMO_TODAY`'s own comment warns that "two components each holding their own
+copy" is the bug. All three grids called `new Date()`. In the demo that is a
+date the seeded week never contains, so **no column was ever today, the
+current-time line never drew once, and the button labelled Today jumped to a
+day the grid did not agree was today**.
+
+`demoNow()` now lives beside `DEMO_TODAY` — the demo's date at 12:00, the hour
+the till already pins itself to — and the page passes it to all three grids.
+Today marks in week and month; the now-line draws.
+
+The now-line is `info`, not `ember` and not `danger`: the legend already spends
+ember on Booked and danger on Session closed, and the clock is neither.
+
+### Opening where the day is
+
+`tradingWindow` derives the drawn hours from the products' own
+`startTime`/`endTime` instead of a hardcoded 06→23. It lands on the same 06→23
+here, which is the point — it was right by coincidence and is right by
+derivation now.
+
+Deliberately **not** narrowed to the busy hours: a manager checking whether
+07:00 is free needs to see that it is empty. The cure for an empty morning is
+`focusMinute` — scroll to now when the window contains it, otherwise to the
+first thing booked, a quarter-viewport down for context. `scrollTop` 0 → 315.
+
+### You could not read a booking, and hover was the only recovery
+
+The Critical rule is that distinguishing names need complete access by a
+*visible* path. A 53px block clipped its name and offered a `title` tooltip,
+which a touch screen never shows.
+
+`EventDetail` — click a block, get the whole name, the status **in words**, the
+time range, the day, the party and the resource, then Close or Open order.
+Verified end to end: an 81px block showing a clipped "Planetarium Show" opens a
+panel reading "Planetarium Show / BOOKED / 11:45 – 12:30 · Thursday 30 July /
+3 guests", nothing clipped inside it, Escape closes.
+
+Clicking used to navigate straight to the order — a whole page load to answer
+"what is this?". Now reading is free and going is one more click. Every block
+also carries a complete `aria-label`, so the accessible name never truncates
+even where the visible one does.
+
+### Chrome
+
+The nav and the label it changes were 60px apart — arrows in the page header,
+range beside the tabs. They share one row now, range between the arrows, as a
+`aria-live` region because stepping a week changes nothing else a screen reader
+would announce.
+
+The three selects fold behind a Filters disclosure with a count of how many are
+set. The five-state key stays out on desktop: it is the legend, and hiding it
+makes five colours unreadable. On a phone it folds in with the selects, where
+it was costing three 44px rows of a screen that was already 62% chrome.
+
+### The day view was eight empty lanes
+
+Every active resource got a row whether the day touched it or not, so the
+bookings sat below the fold under eight blank courts, and 17 hours × 76px + a
+160px name column needed 1,452px inside 1,250px — the evening ran off the right
+edge.
+
+Empty lanes fold, with "Show 6 empty"; out-of-service lanes never fold, because
+"nothing booked" and "closed today" must not look the same. `HOUR_PX` 76 → 60
+so the whole trading day fits the width it has. Clipped blocks there: 10 → 3.
+
+### A phone does not get a seven-column time grid
+
+47px per column, 21px when two share an hour. What survived read "Badm", "S",
+"S". Week now uses the shape the month view already uses here and every pocket
+calendar settled on: a day strip carrying each day's load as dots, and a list
+underneath where the name wraps instead of truncating. **26 clipped → 0.**
+
+### Two of my own regressions, caught by measuring again
+
+- The subtitle second line I added to week blocks pushed tablet clipping 19 →
+  23 and phone 26 → 38. `lanes === 1` is not "wide enough" — a 1024 column is
+  97px. Gated on a real breakpoint (`XL`, 80rem) and it went back to 16.
+- The arrived tick I added to satisfy "never status by colour alone" ate a 29px
+  day-view block whole, leaving a green tick and no name at all. Icons are now
+  gated on the room left for the name; a block reading "Yog" says more than a
+  lone tick.
+- Lint caught a third: the compact early return sat above the scroll hooks, so
+  crossing 768px would have changed hook order. Moved below them.
+
+### After
+
+| | desktop | tablet | phone |
+|---|---|---|---|
+| chrome before the grid | 236px (26%) | 257px (32%) | 400px (47%) |
+| week blocks clipping | 16 | 16 | **0** |
+| day blocks clipping | **3** | 4 | 0 |
+
+Contrast measured across every text node in the card, both themes: **zero**
+below its threshold. The today pill is `text-ink` on ember at 5.30:1, not white
+at 3.50:1. `tsc`, `build` and `eslint` clean on every file touched; i18n parity
+0 missing / 0 extra across 30 namespaces.

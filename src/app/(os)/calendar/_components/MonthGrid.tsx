@@ -16,6 +16,7 @@ const MAX_DOTS = 4;
 export function MonthGrid({
   month,
   events,
+  now,
   weekdayLabels,
   moreLabel,
   onSelect,
@@ -27,6 +28,8 @@ export function MonthGrid({
   /** Any date inside the month to render. */
   month: Date;
   events: CalEvent[];
+  /** The app's clock, passed in rather than read here. */
+  now: Date;
   /** Seven short weekday names, Monday first — the page owns formatting. */
   weekdayLabels: string[];
   moreLabel: (count: number) => string;
@@ -42,7 +45,6 @@ export function MonthGrid({
    *  fallback below only accepts a day that is actually on screen. */
   const [picked, setPicked] = useState<string | null>(null);
   const cells = monthMatrix(month);
-  const now = new Date();
 
   // Bucket once rather than filtering 42 times.
   const byDay = new Map<string, CalEvent[]>();
@@ -227,6 +229,11 @@ export function MonthGrid({
                         type="button"
                         onClick={onSelect ? () => onSelect(e) : undefined}
                         title={`${e.title} · ${hhmm(e.start)}${e.subtitle ? ` · ${e.subtitle}` : ""}`}
+                        /* The chip truncates at this density; the accessible
+                           name does not, and clicking opens the full detail. */
+                        aria-label={`${e.title}, ${e.allDay ? "" : hhmm(e.start)}${
+                          e.subtitle ? `, ${e.subtitle}` : ""
+                        }`}
                         className={cn(
                           "flex w-full items-center gap-0.5 overflow-hidden rounded-xs border px-1 py-0.5 text-left text-[12px] leading-tight",
                           TONE_CLASS[e.tone],

@@ -8,6 +8,16 @@ import type { BookingTypeCode, ProductSchedule } from "@/lib/api/types";
    this and using the actual date. */
 export const DEMO_TODAY = "2026-07-29";
 
+/** The demo's "now" — its date at the hour the till pins itself to.
+ *
+ *  Pinned rather than read off the wall clock, for the same reason the date
+ *  above is: the calendar's grids each called `new Date()`, so "today" was a
+ *  day in the real present that the seeded week never contains. The result was
+ *  a calendar with no today marker and no current-time line, and a "Today"
+ *  button that jumped to a day the grid did not think was today. */
+export const DEMO_NOW_MINUTES = 12 * 60;
+export const demoNow = (): Date => new Date(`${DEMO_TODAY}T12:00:00`);
+
 /** N days from the demo's today, as an ISO date. */
 export const demoDay = (offset: number): string => {
   const d = new Date(`${DEMO_TODAY}T00:00:00Z`);

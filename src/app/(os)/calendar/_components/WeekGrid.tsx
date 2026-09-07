@@ -1,15 +1,18 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, Lock } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   addDays,
+  focusMinute,
   hhmm,
   isoDate,
   minutesOf,
   packLanes,
   sameDay,
   TONE_CLASS,
+  TONE_DOT,
   type CalEvent,
 } from "./model";
 
@@ -22,22 +25,32 @@ const MAX_LANES = 3;
 /** Seven columns inside 320px leaves ~40px each; a third abreast would be a
  *  sliver rather than a booking. */
 const MAX_LANES_COMPACT = 2;
+/** Below this a block has one line, and the name gets it. A 30-minute booking
+ *  is 26px tall here, which is one line of 12px text and its padding. */
+const TWO_LINE_PX = 40;
 
 /** The week as columns of days over a shared hour gutter — the shape everyone
  *  already knows from every calendar they have ever used. */
 export function WeekGrid({
   weekStartDate,
   events,
+  now,
   openHour = 6,
   closeHour = 23,
   onSelect,
   onPickDay,
   dayLabel,
   moreLabel,
+  allDayLabel,
+  emptyLabel,
+  roomy = false,
   compact = false,
 }: {
   weekStartDate: Date;
   events: CalEvent[];
+  /** The app's clock, passed in rather than read here: three grids each
+   *  calling `new Date()` is why "today" never highlighted. */
+  now: Date;
   openHour?: number;
   closeHour?: number;
   onSelect?: (event: CalEvent) => void;
@@ -45,10 +58,19 @@ export function WeekGrid({
   /** Renders the column header, so the page owns date formatting. */
   dayLabel: (d: Date) => { weekday: string; day: string };
   moreLabel: (count: number) => string;
+  allDayLabel: string;
+  /** Shown when the chosen day has nothing on it. */
+  emptyLabel: string;
+  /** The columns are wide enough for a block to carry a second line. Measured
+   *  by the page, because it depends on the viewport rather than on the data:
+   *  at 1024 a day column is about 97px and the subtitle truncated on 23 of 28
+   *  blocks, which is worse than not drawing it. */
+  roomy?: boolean;
   /** Phone: the columns shrink to fit rather than the week scrolling away. */
   compact?: boolean;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i));
+
   const openMin = openHour * 60;
   const closeMin = closeHour * 60;
   const span = Math.max(1, closeMin - openMin);
@@ -57,19 +79,55 @@ export function WeekGrid({
   const maxLanes = compact ? MAX_LANES_COMPACT : MAX_LANES;
   const gutter = compact ? "w-8" : "w-14";
 
-  const now = new Date();
   const nowMin = minutesOf(now);
-  const showNow = nowMin >= openMin && nowMin <= closeMin;
+  const weekHasToday = days.some((d) => sameDay(d, now));
+  const showNow = weekHasToday && nowMin >= openMin && nowMin <= closeMin;
 
   // All-day events (a day-wide hold) get their own strip above the grid rather
   // than being stretched down a column they do not really occupy.
   const allDay = events.filter((e) => e.allDay);
 
+  /* Open where the day happens.
+     The grid used to open at `scrollTop` 0 — 06:00 — with every booking below
+     the fold, so the first thing on screen was four hours of empty morning.
+     Aim at now when this week contains it, otherwise at the first thing
+     booked, and leave a quarter of the viewport above it for context. */
+  const scroller = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLDivElement>(null);
+  const focus = focusMinute(events, now, showNow);
+  useEffect(() => {
+    const box = scroller.current;
+    const body = track.current;
+    if (!box || !body || focus == null) return;
+    const y = body.offsetTop + ((focus - openMin) / span) * bodyHeight - box.clientHeight * 0.25;
+    box.scrollTop = Math.max(0, y);
+  }, [focus, openMin, span, bodyHeight]);
+
+  /* A phone does not get a seven-column time grid.
+     Seven columns inside 390px is 47px each, and a booking sharing its hour
+     drops to 21px — 26 of 27 blocks were clipping their own name and what
+     survived read "Badm", "S", "S". So the week keeps its job of choosing a
+     day and hands the reading of one to a list, which is the shape every
+     pocket calendar settled on and the one the month view here already uses. */
+  if (compact) {
+    return (
+      <CompactWeek
+        days={days}
+        events={events}
+        now={now}
+        onSelect={onSelect}
+        dayLabel={dayLabel}
+        allDayLabel={allDayLabel}
+        emptyLabel={emptyLabel}
+      />
+    );
+  }
+
   return (
     // Both axes scroll in ONE container so the day headers can stick to its
     // top. Sticky against the page would let them scroll away, which is the
     // one thing a calendar header must never do.
-    <div className="max-h-[70vh] overflow-auto">
+    <div ref={scroller} className="max-h-[70vh] overflow-auto">
       <div className={compact ? "min-w-0" : "min-w-[52rem]"}>
         {/* ── day headers ─────────────────────────────────────────────────── */}
         <div className="sticky top-0 z-20 flex border-b border-line bg-card">
@@ -84,14 +142,24 @@ export function WeekGrid({
                 onClick={onPickDay ? () => onPickDay(d) : undefined}
                 className={cn(
                   "flex flex-1 flex-col items-center gap-0.5 border-r border-line py-tight last:border-r-0",
+                  today && "bg-ember/5",
                   onPickDay && "transition-colors duration-quick hover:bg-subtle",
                 )}
               >
-                <span className="type-label text-[12px] text-muted">{label.weekday}</span>
+                <span
+                  className={cn(
+                    "type-label text-[12px]",
+                    today ? "text-brand-foreground" : "text-muted",
+                  )}
+                >
+                  {label.weekday}
+                </span>
                 <span
                   className={cn(
                     "flex h-6 w-6 items-center justify-center rounded-full font-mono text-[12px]",
-                    today ? "bg-ember text-ink" : "text-fg",
+                    // ink, not white: white on ember is 3.50:1, which a 12px
+                    // numeral does not get away with. ink is 5.30:1.
+                    today ? "bg-ember font-semibold text-ink" : "text-fg",
                   )}
                 >
                   {label.day}
@@ -103,8 +171,13 @@ export function WeekGrid({
 
         {allDay.length > 0 && (
           <div className="flex border-b border-line bg-subtle/50">
-            <div className={cn(gutter, "shrink-0 border-r border-line py-tight text-center font-mono text-[12px] text-faint")}>
-              all day
+            <div
+              className={cn(
+                gutter,
+                "shrink-0 border-r border-line py-tight text-center text-[12px] text-faint",
+              )}
+            >
+              {compact ? allDayLabel.slice(0, 3) : allDayLabel}
             </div>
             {days.map((d) => (
               <div key={isoDate(d)} className="flex-1 border-r border-line p-0.5 last:border-r-0">
@@ -129,13 +202,18 @@ export function WeekGrid({
         )}
 
         {/* ── the grid ────────────────────────────────────────────────────── */}
-        <div className="flex" style={{ height: bodyHeight }}>
+        <div ref={track} className="flex" style={{ height: bodyHeight }}>
           {/* Hour gutter, once, on the left. */}
           <div className={cn("relative shrink-0 border-r border-line", gutter)}>
-            {hours.map((h) => (
+            {hours.map((h, i) => (
               <span
                 key={h}
-                className="absolute right-tight -translate-y-1/2 font-mono text-[12px] text-muted"
+                className={cn(
+                  "absolute right-tight font-mono text-[12px] text-muted",
+                  // The first label centred on its own rule sits half above the
+                  // track, where the sticky header cuts it in half.
+                  i === 0 ? "translate-y-0" : "-translate-y-1/2",
+                )}
                 style={{ top: `${((h * 60 - openMin) / span) * 100}%` }}
               >
                 {String(h).padStart(2, "0")}
@@ -156,7 +234,13 @@ export function WeekGrid({
               ? Math.max(...overflow.map((p) => minutesOf(p.event.end)))
               : 0;
             return (
-              <div key={isoDate(d)} className="relative flex-1 border-r border-line last:border-r-0">
+              <div
+                key={isoDate(d)}
+                className={cn(
+                  "relative flex-1 border-r border-line last:border-r-0",
+                  today && "bg-ember/5",
+                )}
+              >
                 {hours.map((h) => (
                   <span
                     key={h}
@@ -169,9 +253,16 @@ export function WeekGrid({
                 {today && showNow && (
                   <span
                     aria-hidden
-                    className="absolute inset-x-0 z-10 h-0.5 bg-ember"
+                    /* info, not danger and not ember: the legend already spends
+                       danger on "session closed" and ember on "booked", and the
+                       clock is not either of those. */
+                    className="absolute inset-x-0 z-10 h-px bg-info"
                     style={{ top: `${((nowMin - openMin) / span) * 100}%` }}
-                  />
+                  >
+                    {/* A line alone reads as another hour rule. The knob on the
+                        leading edge is what says "this one is the clock". */}
+                    <span className="absolute -left-0.5 -top-[3px] h-[7px] w-[7px] rounded-full bg-info" />
+                  </span>
                 )}
 
                 {/* Anything beyond MAX_LANES becomes one "+N" tile rather than a
@@ -196,12 +287,28 @@ export function WeekGrid({
                   const s = Math.max(openMin, minutesOf(event.start));
                   const e = Math.min(closeMin, minutesOf(event.end));
                   if (e <= s) return null;
+                  const tall = ((e - s) / span) * bodyHeight;
+                  const across = Math.min(lanes, maxLanes);
+                  /* The second line costs the first one its width. It needs a
+                     tall block, a column to itself, and a viewport wide enough
+                     that the column is worth having — otherwise the name wins,
+                     because the name is what tells two bookings apart. */
+                  const roomForTwo = tall >= TWO_LINE_PX && across === 1 && roomy;
+                  /* A block narrow enough that an icon crowds out the name is
+                     better off with the name: a 29px block showing nothing but
+                     a tick says less than one reading "Yog". */
+                  const roomForIcon = across < 3;
                   return (
                     <button
                       key={event.id}
                       type="button"
                       onClick={onSelect ? () => onSelect(event) : undefined}
                       title={`${event.title} · ${hhmm(event.start)}–${hhmm(event.end)}`}
+                      /* The visible text truncates at this density; the
+                         accessible name never does. */
+                      aria-label={`${event.title}, ${hhmm(event.start)}–${hhmm(event.end)}${
+                        event.subtitle ? `, ${event.subtitle}` : ""
+                      }`}
                       className={cn(
                         "absolute overflow-hidden rounded-xs border px-1 py-0.5 text-left",
                         TONE_CLASS[event.tone],
@@ -214,12 +321,19 @@ export function WeekGrid({
                       }}
                     >
                       <span className="flex items-center gap-0.5 truncate text-[12px] font-medium leading-tight">
-                        {event.locked && <Lock size={8} strokeWidth={2.5} className="shrink-0" />}
+                        {roomForIcon && event.locked && (
+                          <Lock size={9} strokeWidth={2.5} className="shrink-0" />
+                        )}
+                        {/* Arrived is a green bar and nothing else, which is
+                            status by colour alone; the tick is the word. */}
+                        {roomForIcon && event.tone === "arrived" && (
+                          <Check size={9} strokeWidth={3} className="shrink-0 text-success" />
+                        )}
                         {event.title}
                       </span>
-                      {!compact && (
-                        <span className="block truncate font-mono text-[12px] leading-tight opacity-70">
-                          {hhmm(event.start)}
+                      {roomForTwo && (
+                        <span className="block truncate text-[12px] leading-tight text-muted">
+                          {event.subtitle ?? hhmm(event.start)}
                         </span>
                       )}
                     </button>
@@ -230,6 +344,134 @@ export function WeekGrid({
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The week on a phone: a strip to choose the day, a list to read it.
+ *
+ * The strip keeps what a week view is for — seeing which days are busy before
+ * picking one — by stating each day's load as dots, the same language the
+ * month view uses. The list underneath is where a booking is actually read,
+ * and there nothing truncates: full width, the name wrapping if it must.
+ */
+function CompactWeek({
+  days,
+  events,
+  now,
+  onSelect,
+  dayLabel,
+  allDayLabel,
+  emptyLabel,
+}: {
+  days: Date[];
+  events: CalEvent[];
+  now: Date;
+  onSelect?: (event: CalEvent) => void;
+  dayLabel: (d: Date) => { weekday: string; day: string };
+  allDayLabel: string;
+  emptyLabel: string;
+}) {
+  const byDay = new Map<string, CalEvent[]>();
+  for (const e of events) {
+    const k = isoDate(e.start);
+    byDay.set(k, [...(byDay.get(k) ?? []), e]);
+  }
+  for (const list of byDay.values()) {
+    list.sort((a, b) => a.start.getTime() - b.start.getTime());
+  }
+
+  /* Open on today when the week contains it, otherwise on the first day that
+     has anything — never on a blank Monday when Friday is where the work is. */
+  const fallback =
+    days.find((d) => sameDay(d, now)) ??
+    days.find((d) => (byDay.get(isoDate(d)) ?? []).length > 0) ??
+    days[0];
+  const [picked, setPicked] = useState<string | null>(null);
+  const selectedKey =
+    picked && days.some((d) => isoDate(d) === picked) ? picked : isoDate(fallback);
+  const agenda = byDay.get(selectedKey) ?? [];
+
+  return (
+    <div>
+      <div className="grid grid-cols-7 border-b border-line">
+        {days.map((d) => {
+          const key = isoDate(d);
+          const list = byDay.get(key) ?? [];
+          const today = sameDay(d, now);
+          const on = key === selectedKey;
+          const label = dayLabel(d);
+          return (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setPicked(key)}
+              className={cn(
+                "flex min-h-[3.5rem] flex-col items-center gap-1 border-r border-line py-tight last:border-r-0",
+                on && "bg-ember/10",
+              )}
+            >
+              <span className="type-label text-[12px] text-muted">{label.weekday.slice(0, 1)}</span>
+              <span
+                className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-full font-mono text-[12px]",
+                  today && "bg-ember font-semibold text-ink",
+                  !today && on && "border border-ember text-brand-foreground",
+                  !today && !on && "text-fg",
+                )}
+              >
+                {label.day}
+              </span>
+              <span className="flex h-1.5 items-center gap-0.5">
+                {list.slice(0, 4).map((e) => (
+                  <span key={e.id} className={cn("h-1.5 w-1.5 rounded-full", TONE_DOT[e.tone])} />
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {agenda.length === 0 ? (
+        <p className="px-comfortable py-hero text-center text-[13px] text-faint">{emptyLabel}</p>
+      ) : (
+        <ul className="flex flex-col gap-tight p-comfortable">
+          {agenda.map((e) => (
+            <li key={e.id}>
+              <button
+                type="button"
+                onClick={onSelect ? () => onSelect(e) : undefined}
+                className={cn(
+                  "flex w-full items-start gap-comfortable rounded-xs border px-comfortable py-tight text-left",
+                  TONE_CLASS[e.tone],
+                )}
+              >
+                <span className="w-12 shrink-0 font-mono text-[12px] opacity-70">
+                  {e.allDay ? allDayLabel.slice(0, 3) : hhmm(e.start)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-0.5 text-[13px] font-medium leading-tight">
+                    {e.locked && <Lock size={11} strokeWidth={2.5} className="shrink-0" />}
+                    {e.tone === "arrived" && (
+                      <Check size={11} strokeWidth={3} className="shrink-0 text-success" />
+                    )}
+                    {/* break-words, not truncate: this is the list that exists
+                        so the name does not have to be guessed. */}
+                    <span className="min-w-0 break-words">{e.title}</span>
+                  </span>
+                  {e.subtitle && (
+                    <span className="mt-0.5 block break-words text-[12px] leading-tight text-muted">
+                      {e.subtitle}
+                    </span>
+                  )}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

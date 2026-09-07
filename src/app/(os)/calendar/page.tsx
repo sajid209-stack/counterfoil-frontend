@@ -3,10 +3,11 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { Button, PageShell, Tabs } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { MD, useMediaQuery } from "@/lib/useMedia";
+import { MD, XL, useMediaQuery } from "@/lib/useMedia";
 import {
   listBookings,
   listCategories,
@@ -15,10 +16,11 @@ import {
   listResources,
   listStaff,
 } from "@/lib/api";
-import { DEMO_TODAY } from "@/lib/schedule";
+import { DEMO_TODAY, demoNow } from "@/lib/schedule";
 import { DayGrid, type DayLane } from "./_components/DayGrid";
 import { WeekGrid } from "./_components/WeekGrid";
 import { MonthGrid } from "./_components/MonthGrid";
+import { EventDetail } from "./_components/EventDetail";
 import {
   addDays,
   bookingsToEvents,
@@ -26,6 +28,7 @@ import {
   isoDate,
   sameDay,
   startOfDay,
+  tradingWindow,
   weekStart,
   type CalEvent,
   type EventTone,
@@ -65,10 +68,21 @@ export default function CalendarPage() {
   // A phone corrects itself on mount, before paint.
   const wide = useMediaQuery(MD, true);
   const compact = !wide;
+  /** Wide enough for a week block to carry a second line. */
+  const roomy = useMediaQuery(XL, true);
 
   const [view, setView] = useState<View>("week");
   const [cursor, setCursor] = useState<Date>(openingDate);
   const [groupBy, setGroupBy] = useState<"resource" | "product">("resource");
+  /* One clock, shared with the grids. They each used to call `new Date()`,
+     which in the demo is a day the seeded week never contains — so no column
+     was ever "today", the current-time line never drew, and the button
+     labelled Today jumped to a date the grid did not agree was today. */
+  const now = useMemo(() => demoNow(), []);
+  /** The event the detail panel is showing. Clicking a block opens this
+   *  rather than navigating, because at week density the block cannot show
+   *  its own name and a page load is a heavy way to ask "what is this?". */
+  const [detail, setDetail] = useState<CalEvent | null>(null);
 
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 200 }), []);
@@ -95,6 +109,14 @@ export default function CalendarPage() {
   const loading =
     bookingsQ.loading || productsQ.loading || resourcesQ.loading || holdsQ.loading;
 
+  /* The hours the grids draw, from the catalogue rather than from a guess.
+     It lands on the same 06–23 for this venue, which is the point: it was
+     right by coincidence before and is right by derivation now. */
+  const { openHour, closeHour } = useMemo(
+    () => tradingWindow(products, events),
+    [products, events],
+  );
+
   // ── filters ───────────────────────────────────────────────────────────────
   // Two questions a manager actually asks of a calendar: "show me just this
   // one thing" and "show me only what is in this state". The first three are
@@ -106,6 +128,13 @@ export default function CalendarPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [tones, setTones] = useState<EventTone[]>(TONES);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  /** Only the folded-away selects count towards the badge — the tone toggles
+   *  are on screen saying their own state, so counting them would report a
+   *  filter as hidden while the user is looking straight at it. */
+  const selectFilters = [bookingFilter, categoryFilter, ownerFilter].filter(
+    (v) => v !== "all",
+  ).length;
   const categories = useMemo(() => categoriesQ.data?.data ?? [], [categoriesQ.data]);
   const filtered =
     bookingFilter !== "all" || categoryFilter !== "all" || ownerFilter !== "all" || tones.length !== TONES.length;
@@ -238,10 +267,41 @@ export default function CalendarPage() {
     return fmt(cursor, { month: "long", year: "numeric" });
   }, [view, cursor, wkStart]);
 
+  /** Where a booking leads once you have decided it is the one you wanted. */
+  const canOpen = (e: CalEvent) => e.kind === "hold" || !!e.orderId;
   const openEvent = (e: CalEvent) => {
     if (e.kind === "hold") router.push("/holds");
     else if (e.orderId) router.push(`/orders/${e.orderId}`);
   };
+
+  /** The key IS the filter: each chip says what its colour means, how many
+   *  are in view, and switches that state off when tapped. Drawing a legend
+   *  and a filter separately would state the same five words twice. */
+  const toneKey = TONES.map((tone) => {
+    const on = tones.includes(tone);
+    return (
+      <button
+        key={tone}
+        type="button"
+        aria-pressed={on}
+        onClick={() => toggleTone(tone)}
+        className={cn(
+          "flex h-11 items-center gap-tight rounded-sm border px-comfortable text-[12px] transition-colors duration-quick md:h-9",
+          on ? "border-line bg-card text-fg" : "border-line bg-subtle text-faint",
+        )}
+      >
+        <span
+          className={cn(
+            "h-3 w-3 rounded-xs border border-line border-l-[3px]",
+            TONE_BAR[tone],
+            !on && "opacity-40",
+          )}
+        />
+        {t(TONE_KEY[tone])}
+        <span className="font-mono text-[12px] text-muted">{toneCounts[tone]}</span>
+      </button>
+    );
+  });
 
   const weekdayLabels = WEEKDAYS_MON_FIRST.map((d) =>
     new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(new Date(2026, 6, 5 + d)),
@@ -251,41 +311,13 @@ export default function CalendarPage() {
     <PageShell
       title={t("title")}
       description={t("description")}
-      actions={
-        <div className="flex flex-wrap items-center gap-tight">
-          <Button variant="secondary" size="sm" onClick={() => setCursor(openingDate())}>
-            {t("today")}
-          </Button>
-          <div className="flex items-center gap-inline">
-            <button
-              type="button"
-              aria-label={t("previous")}
-              onClick={() => step(-1)}
-              className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
-            >
-              <ChevronLeft size={16} strokeWidth={1.5} />
-            </button>
-            <button
-              type="button"
-              aria-label={t("next")}
-              onClick={() => step(1)}
-              className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
-            >
-              <ChevronRight size={16} strokeWidth={1.5} />
-            </button>
-          </div>
-          <input
-            aria-label={tc("chooseDate")}
-            type="date"
-            value={isoDate(cursor)}
-            onChange={(e) => e.target.value && setCursor(startOfDay(new Date(`${e.target.value}T12:00:00`)))}
-            className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
-          />
-        </div>
-      }
     >
       <div className="flex flex-col gap-section">
-        <div className="flex flex-wrap items-center justify-between gap-tight">
+        {/* The range and the control that changes it, together. They were 60px
+            apart — arrows in the page header, the label they move down beside
+            the tabs — so you read where you are in one place and moved it in
+            another. */}
+        <div className="flex flex-wrap items-center justify-between gap-comfortable">
           <Tabs
             items={[
               { value: "day", label: t("tabDay") },
@@ -295,12 +327,86 @@ export default function CalendarPage() {
             value={view}
             onChange={(v) => setView(v as View)}
           />
-          <span className="font-mono text-[13px] text-muted">{rangeLabel}</span>
+
+          <div className="flex flex-wrap items-center gap-tight">
+            <Button variant="secondary" size="sm" onClick={() => setCursor(openingDate())}>
+              {t("today")}
+            </Button>
+            <div className="flex items-center gap-inline">
+              <button
+                type="button"
+                aria-label={t("previous")}
+                onClick={() => step(-1)}
+                className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
+              >
+                <ChevronLeft size={16} strokeWidth={1.5} />
+              </button>
+              {/* Between the arrows, which is where you look for it — and a
+                  live region, because stepping a week changes nothing else a
+                  screen reader would announce. */}
+              <h2
+                aria-live="polite"
+                className="min-w-[11rem] px-tight text-center text-[15px] font-medium tracking-tight"
+              >
+                {rangeLabel}
+              </h2>
+              <button
+                type="button"
+                aria-label={t("next")}
+                onClick={() => step(1)}
+                className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
+              >
+                <ChevronRight size={16} strokeWidth={1.5} />
+              </button>
+            </div>
+            <input
+              aria-label={tc("chooseDate")}
+              type="date"
+              value={isoDate(cursor)}
+              onChange={(e) =>
+                e.target.value && setCursor(startOfDay(new Date(`${e.target.value}T12:00:00`)))
+              }
+              className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
+            />
+          </div>
         </div>
 
         {/* ── filters ─────────────────────────────────────────────────────── */}
         <div className="flex flex-col gap-tight">
+          {/* The key stays out where it can be read — it is the legend, and
+              hiding it makes five colours unreadable. The three selects fold
+              away: they were three full-width controls on a phone, and with
+              the tabs and the key above them the grid did not start until 62%
+              of the screen had gone by. */}
           <div className="flex flex-wrap items-center gap-tight">
+            <button
+              type="button"
+              aria-expanded={filtersOpen}
+              aria-controls="calendar-filters"
+              onClick={() => setFiltersOpen((v) => !v)}
+              className={cn(
+                "flex h-11 items-center gap-tight rounded-sm border px-comfortable text-[13px] transition-colors duration-quick md:h-9",
+                selectFilters > 0
+                  ? "border-ember bg-ember/10 text-brand-foreground"
+                  : "border-line hover:bg-subtle",
+              )}
+            >
+              <SlidersHorizontal size={14} strokeWidth={1.5} aria-hidden />
+              {selectFilters > 0 ? t("filtersActive", { count: selectFilters }) : t("filters")}
+            </button>
+
+            {!compact && toneKey}
+
+            {filtered && (
+              <Button variant="secondary" size="sm" onClick={resetFilters}>
+                {t("clearFilters")}
+              </Button>
+            )}
+          </div>
+
+          <div id="calendar-filters" hidden={!filtersOpen} className="flex flex-col gap-tight">
+            {compact && <div className="flex flex-wrap items-center gap-tight">{toneKey}</div>}
+            <div className="flex flex-wrap items-center gap-tight">
             <select
               value={bookingFilter}
               onChange={(e) => setBookingFilter(e.target.value)}
@@ -338,35 +444,7 @@ export default function CalendarPage() {
                 ))}
               </select>
             )}
-
-            {filtered && (
-              <Button variant="secondary" size="sm" onClick={resetFilters}>
-                {t("clearFilters")}
-              </Button>
-            )}
-          </div>
-
-          {/* The key IS the filter. Each one says what its colour means, how
-              many are in view, and switches that state off when tapped. */}
-          <div className="flex flex-wrap items-center gap-tight">
-            {TONES.map((tone) => {
-              const on = tones.includes(tone);
-              return (
-                <button
-                  key={tone}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => toggleTone(tone)}
-                  className={`flex items-center gap-tight rounded-sm border px-comfortable py-1 text-[12px] transition-colors duration-quick ${
-                    on ? "border-line bg-card text-fg" : "border-line bg-subtle text-faint"
-                  }`}
-                >
-                  <span className={`h-3 w-3 rounded-xs border border-line border-l-[3px] ${TONE_BAR[tone]} ${on ? "" : "opacity-40"}`} />
-                  {t(TONE_KEY[tone])}
-                  <span className="font-mono text-[12px] text-muted">{toneCounts[tone]}</span>
-                </button>
-              );
-            })}
+            </div>
           </div>
         </div>
 
@@ -397,15 +475,26 @@ export default function CalendarPage() {
               date={cursor}
               lanes={lanes}
               events={laneEvents}
-              onSelect={openEvent}
+              now={now}
+              openHour={openHour}
+              closeHour={closeHour}
+              onSelect={setDetail}
               emptyLabel={t("nothingToday")}
+              showEmptyLabel={(n) => t("showEmptyLanes", { count: n })}
+              hideEmptyLabel={t("hideEmptyLanes")}
               compact={compact}
             />
           ) : view === "week" ? (
             <WeekGrid
               weekStartDate={wkStart}
               events={weekEvents}
-              onSelect={openEvent}
+              now={now}
+              openHour={openHour}
+              closeHour={closeHour}
+              allDayLabel={t("allDayStrip")}
+              emptyLabel={t("nothingToday")}
+              roomy={roomy}
+              onSelect={setDetail}
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
@@ -421,9 +510,10 @@ export default function CalendarPage() {
             <MonthGrid
               month={cursor}
               events={monthEvents}
+              now={now}
               weekdayLabels={weekdayLabels}
               moreLabel={(n) => t("more", { count: n })}
-              onSelect={openEvent}
+              onSelect={setDetail}
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
@@ -441,6 +531,20 @@ export default function CalendarPage() {
           )}
         </div>
 
+        <EventDetail
+          event={detail}
+          onClose={() => setDetail(null)}
+          onOpen={openEvent}
+          canOpen={!!detail && canOpen(detail)}
+          dayLabel={(d) =>
+            new Intl.DateTimeFormat("en-GB", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            }).format(d)
+          }
+          t={t}
+        />
       </div>
     </PageShell>
   );

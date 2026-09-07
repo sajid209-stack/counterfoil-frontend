@@ -26,5 +26,18 @@
   "allCategories": "সব ক্যাটাগরি",
   "filterOwner": "রিসোর্স অনুযায়ী ফিল্টার",
   "allOwners": "সব রিসোর্স",
-  "clearFilters": "ফিল্টার মুছুন"
+  "clearFilters": "ফিল্টার মুছুন",
+  "allDayStrip": "সারা দিন",
+  "allDayLong": "সারা দিন",
+  "detailWhen": "কখন",
+  "detailWhat": "বিবরণ",
+  "lockedNote": "লক করা",
+  "openOrder": "অর্ডার খুলুন",
+  "openHold": "হোল্ডে দেখুন",
+  "close": "বন্ধ করুন",
+  "filters": "ফিল্টার",
+  "filtersActive": "ফিল্টার ({count})",
+  "showEmptyLanes": "{count}টি খালি দেখান",
+  "hideEmptyLanes": "খালি লুকান",
+  "nowLabel": "এখন"
 }

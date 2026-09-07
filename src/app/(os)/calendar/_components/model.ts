@@ -166,6 +166,69 @@ export function holdsToEvents(holds: HoldView[]): CalEvent[] {
 }
 
 /**
+ * The hours the grids actually draw.
+ *
+ * These were hardcoded 06:00–23:00. That happens to be right for this venue,
+ * which is exactly the problem: it is right by coincidence. Every product
+ * already declares `startTime`/`endTime`, so the window is the union of them,
+ * widened to contain anything actually booked outside it — an event the grid
+ * cannot draw is far worse than an empty hour.
+ *
+ * Deliberately NOT narrowed to the hours that happen to be busy. A manager
+ * checking whether the 07:00 slot is free needs to see that it is empty, and a
+ * grid that hides its quiet hours cannot answer that. The cure for opening on
+ * an empty morning is scrolling to the bookings — see `focusMinute` — not
+ * pretending the morning is not there.
+ */
+export function tradingWindow(
+  products: Product[],
+  events: CalEvent[],
+): { openHour: number; closeHour: number } {
+  const hourOf = (t?: string) => {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(t ?? "");
+    return m ? Number(m[1]) + Number(m[2]) / 60 : null;
+  };
+
+  let open = 24;
+  let close = 0;
+  for (const p of products) {
+    const s = hourOf(p.schedule?.startTime);
+    const e = hourOf(p.schedule?.endTime);
+    if (s != null) open = Math.min(open, s);
+    if (e != null) close = Math.max(close, e);
+  }
+  for (const e of events) {
+    if (e.allDay) continue;
+    open = Math.min(open, e.start.getHours() + e.start.getMinutes() / 60);
+    close = Math.max(close, e.end.getHours() + e.end.getMinutes() / 60);
+  }
+
+  // Nothing to go on — a fresh venue with no catalogue and nothing booked.
+  if (open > close) return { openHour: 8, closeHour: 22 };
+
+  return { openHour: Math.max(0, Math.floor(open)), closeHour: Math.min(24, Math.ceil(close)) };
+}
+
+/**
+ * Where the grid should be scrolled to when it opens.
+ *
+ * The complaint this answers: the week opened at 06:00 with `scrollTop` 0 and
+ * 315px of unseen day below it, so the first thing on screen was four hours of
+ * empty grid while every booking sat off the bottom.
+ *
+ * Prefer the current time when the window on screen contains it — a manager
+ * looking at today wants now — and otherwise the first thing booked. Returns
+ * minutes from midnight, or null when there is nothing to aim at and the grid
+ * should just stay where it is.
+ */
+export function focusMinute(events: CalEvent[], now: Date, showsNow: boolean): number | null {
+  if (showsNow) return minutesOf(now);
+  const timed = events.filter((e) => !e.allDay);
+  if (timed.length === 0) return null;
+  return Math.min(...timed.map((e) => minutesOf(e.start)));
+}
+
+/**
  * Pack overlapping events into side-by-side columns.
  *
  * Without this two bookings at the same time draw on top of each other and one

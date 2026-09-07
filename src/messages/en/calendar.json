@@ -26,5 +26,18 @@
   "allCategories": "All categories",
   "filterOwner": "Filter by resource",
   "allOwners": "All resources",
-  "clearFilters": "Clear filters"
+  "clearFilters": "Clear filters",
+  "allDayStrip": "All day",
+  "allDayLong": "All day",
+  "detailWhen": "When",
+  "detailWhat": "Details",
+  "lockedNote": "Locked",
+  "openOrder": "Open order",
+  "openHold": "View in holds",
+  "close": "Close",
+  "filters": "Filters",
+  "filtersActive": "Filters ({count})",
+  "showEmptyLanes": "Show {count} empty",
+  "hideEmptyLanes": "Hide empty",
+  "nowLabel": "Now"
 }
