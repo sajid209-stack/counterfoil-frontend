@@ -229,6 +229,7 @@ export default function PosPage() {
   // code to scan. Both pass pending → confirmed | failed before the sale lands.
   const [nc, setNc] = useState<null | { method: "bkash" | "bangla_qr"; state: "pending" | "confirmed" | "failed"; txn: string }>(null);
   // Inline cash checkout — replaces the /pos/payment page navigation.
+  const [clearOpen, setClearOpen] = useState(false);
   const [cashOpen, setCashOpen] = useState(false);
   const [tenderTaka, setTenderTaka] = useState("");
   const [cashSaving, setCashSaving] = useState(false);
@@ -242,6 +243,17 @@ export default function PosPage() {
     setDiscountAmt(0); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0); void releaseCheckoutHolds(TILL_ID);
     setParkOpen(false); setParkName("");
     toast.success(t("cartParked"));
+  };
+  /** Everything `park` does except keeping the sale. Holds go back on public
+   *  sale, which is why this asks first and does not offer Undo. */
+  const clearSale = () => {
+    setCart([]);
+    setAdvance(null);
+    setDiscountAmt(0); setDiscountPct(0); setAttached(null); setPass(null);
+    setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0);
+    void releaseCheckoutHolds(TILL_ID);
+    setClearOpen(false);
+    toast.success(t("cart.cleared"));
   };
   const resume = (i: number) => {
     const p = parked[i];
@@ -904,6 +916,13 @@ export default function PosPage() {
             <EmptyState title={t("cart.empty")} message={t("cart.emptyHint")} />
           ) : (
             <div className="flex flex-col gap-tight">
+              {cart.length > 1 && (
+                <div className="flex justify-end">
+                  <button type="button" onClick={() => setClearOpen(true)} className="flex h-11 items-center rounded-full px-comfortable text-[13px] text-muted active:bg-ember/10">
+                    {t("cart.clearAll")}
+                  </button>
+                </div>
+              )}
               {cart.map((e) => (
                 <div key={e.id} className="border-b border-line pb-tight last:border-0">
                 <div className="flex flex-col gap-tight">
@@ -1007,6 +1026,7 @@ export default function PosPage() {
           {/* Who the sale is for, grouped with the other things that modify
               it rather than sitting above the lines. It reads as one of the
               cart's decisions — which it is — instead of a banner over them. */}
+          <div className="-mx-comfortable -mt-comfortable mb-comfortable bg-subtle px-comfortable dark:bg-surface">
           <div className="border-b border-line">
             <button
               type="button"
@@ -1186,6 +1206,8 @@ export default function PosPage() {
             </div>
           )}
 
+          </div>
+
           {/* A sale that does not exist yet has no arithmetic to show.
               Subtotal 0.00 over VAT 0.00 over Total 0.00 is three lines
               describing nothing, on the screen where a cashier is trying to
@@ -1327,6 +1349,15 @@ export default function PosPage() {
           </div>
         );
       })()}
+
+      <Modal
+        open={clearOpen}
+        onClose={() => setClearOpen(false)}
+        title={t("cart.clearTitle")}
+        footer={<><Button shape="pill" variant="secondary" onClick={() => setClearOpen(false)}>{t("custom.cancel")}</Button><Button shape="pill" variant="destructive" onClick={clearSale}>{t("cart.clearConfirm")}</Button></>}
+      >
+        <p className="text-sm text-muted">{t("cart.clearBody", { count: cart.length })}</p>
+      </Modal>
 
       <Modal open={customOpen} onClose={() => setCustomOpen(false)} title={t("custom.title")} footer={<><Button shape="pill" variant="secondary" onClick={() => setCustomOpen(false)}>{t("custom.cancel")}</Button><Button shape="pill" onClick={addCustom} disabled={!customAmount}>{t("custom.add")}</Button></>}>
         <div className="flex flex-col gap-section">

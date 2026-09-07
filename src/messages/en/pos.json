@@ -24,7 +24,12 @@
     "customerAdd": "Add",
     "customerChange": "Change",
     "removed": "Removed {name}",
-    "undo": "Undo"
+    "undo": "Undo",
+    "clearAll": "Clear all",
+    "clearTitle": "Clear this sale?",
+    "clearBody": "All {count} lines are removed and any places held for them go back on sale. This cannot be undone.",
+    "clearConfirm": "Clear the sale",
+    "cleared": "Sale cleared"
   },
   "added": "Added {name}",
   "cartParked": "Cart parked.",

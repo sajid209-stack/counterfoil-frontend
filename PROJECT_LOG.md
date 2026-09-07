@@ -3418,3 +3418,79 @@ how big it was.
   working sheet and hiding them would remove a route rather than a redundancy.
   The three that were actively misleading (the ৳0.00 stack, the payment
   selector, the dead Charge) are the ones that went.
+
+---
+
+## The cart, second pass — hierarchy, and the missing exit (2026-09-07)
+
+Owner asked for the cart researched and improved again, with a screenshot of a
+one-line sale.
+
+**A note on the research:** searches for cart-line efficiency and for grouping
+related controls returned nothing on point — two narrower retries gave back
+generic contrast and help-placement rules. The verified hits held to here are
+**Focus States (High)** and **Contrast Readability (High)**. The layout calls
+below are judgement plus the built-in priority table, and are labelled as such
+rather than dressed up as database matches.
+
+### The problem was hierarchy, not styling
+
+Lines, modifiers and totals were three zones separated by identical hairlines,
+in identical row heights, with identical icon discs. So a cart holding one
+Cricket booking gave more room and more visual weight to **Customer, Discount,
+Advance and Passes** than to the thing being sold. Four settings outranked the
+sale.
+
+The modifiers now sit on a **recessive ground** — paper in light, a step *down*
+from the card in dark — so the cart reads in the order a till is worked in:
+what is being bought, then the settings, then what it costs, then charge. One
+surface change; no control moved, renamed or removed.
+
+### Clear all — the exit that was missing
+
+A customer walks away from a five-line sale and there was no way to abandon it.
+The bin, five times; or **Park**, which SAVES the sale, so the next customer
+inherits it. Clearing was the one thing the cart could not do.
+
+**It asks first, and deliberately does not offer the Undo that single-line
+removal gets.** The difference is real rather than stylistic: clearing runs the
+same reset `park` does, including `releaseCheckoutHolds`, which puts held places
+back on public sale. Undo cannot promise to take that back — somebody else may
+have taken the slot in the meantime — so this is the case the guidance's first
+branch (confirm before an irreversible action) exists for.
+
+It appears only when there is more than one line: with one line the bin is
+already a single tap.
+
+### Two options considered and rejected
+
+- **A quantity stepper on cart lines.** The commonest till edit, and tempting.
+  But it only works for a single-tier line with no slot, resource, provider or
+  seat — and this codebase deliberately removed a grid "Book now" shortcut for
+  exactly that reason: *a shortcut there can only sell the default*. The sheet
+  is the single place selection happens. A stepper that appeared on some lines
+  and not others would rebuild the inconsistency that was removed on purpose.
+- **Collapsing the line's action row** to save ~48px per line. Every version
+  either truncated the booking name or split the tappable text into two
+  buttons. The three-row line is taller and unambiguous, and the meta
+  ("Outdoor Field · Group of 2 · 16:00 today") stays whole.
+
+### Verified
+
+- **Clear, end to end**: two lines, dialog states the count and that it cannot
+  be undone, **Cancel keeps both**, Confirm empties to the empty state.
+- **Undo still behaves**: remove the middle of three, restored at index 1.
+- POS audit at 390 light, 390 dark and 320: **only the declared white-on-ember
+  exception**, zero A, zero B.
+- 45 sheet-renders clean · `tsc` and `build` clean · **eslint identical to
+  HEAD** (one line number moved) · i18n parity **0 missing / 0 extra** across 30
+  namespaces, five new keys in both locales.
+
+### Still open
+
+- **`Modal` keeps its OS 12px corner** inside a till that is otherwise on the
+  Go radii. It is shared with the admin app, so softening it is an OS decision.
+- **Removing a single line does not release its checkout hold.** Pre-existing,
+  and load-bearing for Undo: the hold still standing is exactly why the line can
+  come back. Holds self-release in ten minutes, so the leak is bounded — but it
+  is a leak, and worth naming.
