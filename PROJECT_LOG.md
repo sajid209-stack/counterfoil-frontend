@@ -3494,3 +3494,87 @@ already a single tap.
   and load-bearing for Undo: the hold still standing is exactly why the line can
   come back. Holds self-release in ten minutes, so the leak is bounded — but it
   is a leak, and worth naming.
+
+---
+
+## The cart, rebuilt to the reference (2026-09-07)
+
+Owner supplied a cart mockup and asked for it built. Its shape: a named sale, a
+line with a thumbnail and a quantity stepper, each decision in its own labelled
+panel, a receipt-style totals card, and one pill to charge.
+
+### What the reference changed
+
+- **The cart names itself.** "Current sale" with the count beneath it, and a
+  circular ✕. Park stays as a pill beside it — the mockup has no Park, but it
+  is a real feature and dropping it to match a drawing would be a functional
+  regression.
+- **The line takes the reference's two-row shape**: thumbnail, name and chevron
+  on top; controls left and the money bold on the right underneath. The
+  thumbnail is `ProductThumb size="card"`, the same 44px tile the sell grid
+  uses, so a cart line and its card show the same picture.
+- **The per-line controls lost their borders.** Three bordered 48px circles read
+  as three equal siblings to the content; borderless 44px glyphs read as what
+  they are — secondary to the money beside them. The touch target is unchanged.
+- **CUSTOMER is an invitation, not a navigation row.** Empty, it is the dashed
+  target the reference draws. Filled, it is the record with the phone beneath
+  the name — two customers share a name far more often than a phone, which is
+  the line that confirms the right person. The card already says CUSTOMER, so
+  the row that also said it was the label twice.
+- **DISCOUNT is always open.** It was the most-used modifier and cost a tap to
+  reveal.
+- **The totals became a receipt panel** with a rule above Total.
+- **Charge stops repeating the method.** The segmented control directly above
+  states it and marks it selected, so the button was saying it twice — and it
+  was the half that truncated first on a narrow screen. `chargeAmount` stays in
+  the message files because `/classic` still uses it.
+
+### The quantity stepper, and where it does not appear
+
+Argued against in the previous pass and settled by the owner's mockup, which
+draws it on a General Admission line — which is exactly where it is safe.
+
+`simpleQty` gates it: one tier, and nothing reserved. **A booking is not a
+quantity.** A lane at 12:00, seat A5, a group of two, a provider appointment —
+each is one thing, and a stepper on it would be a control with nothing to count
+and no way to price a second one. So Bowling Lane has none and General
+Admission does. The sheet still owns every other kind of change, which keeps
+the standing rule that selection happens in one place.
+
+### One deviation from the mockup, on purpose
+
+The mockup draws discount as four chips (0 / 5 / 10 / 15). The typed field
+stays beside them, because a previous session fixed exactly this: four fixed
+buttons meant a manager who agreed **12%** had no way to say so and the till
+silently made it 10. The chips still fill the field; they are just not the
+whole menu. Less tidy than the drawing, and the owner can have chips-only if
+the tidiness is worth the 12%.
+
+### What the reference made me revisit
+
+Promoting the modifiers from rows to prominent panels changed the empty-cart
+calculation. Four quiet rows were harmless; two labelled cards offering a
+discount and a coupon on a sale with no lines are a promise with nothing behind
+it. **DISCOUNT and the adjustments panel are now gated on having a line.**
+CUSTOMER stays — attaching a member before ringing anything up is a real flow
+and this drawer is its only route on a phone.
+
+### Verified
+
+- POS audit at 390 light, 390 dark and 320: **only the declared white-on-ember
+  exception**, zero A, zero B.
+- Undo still restores the middle of three lines **in place**; Clear still asks,
+  cancels cleanly and empties to the empty state.
+- 45 sheet-renders clean · `tsc` and `build` clean · **eslint identical to
+  HEAD** after removing a `methodLabel` binding the Charge change orphaned ·
+  i18n parity **0 missing / 0 extra** across 30 namespaces, three new keys in
+  both locales.
+
+### Still open
+
+- The **stepper only reprices single-tier lines**, which is the whole point of
+  the gate, but it does mean a two-tier line ("1 Adult · 1 Child") is still a
+  sheet round trip to change. That is the sheet's job and not obviously wrong,
+  but it is the one case where the mockup's convenience does not reach.
+- `Modal` keeps its OS 12px corner; removing a single line still does not
+  release its checkout hold. Both carried forward from the previous entry.

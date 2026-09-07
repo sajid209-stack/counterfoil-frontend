@@ -738,6 +738,22 @@ export default function PosPage() {
   /* A cart line names its day the way a cashier reads it out. It used to
      print the raw `2026-08-01`, which is a different sentence from "Sat 1 Aug"
      to everyone except a database. */
+  /** A line whose quantity is just a number: one tier, nothing reserved.
+   *  A booking is not that — a lane at 12:00 or seat A5 is one thing, and a
+   *  stepper on it would be a control with nothing to count. So the stepper
+   *  appears exactly where it means something and the sheet still owns every
+   *  other kind of change. */
+  const simpleQty = (e: CartEntry) =>
+    e.productId !== "custom" &&
+    e.items.length === 1 &&
+    !e.slotTime && !e.resourceId && !e.providerLabel &&
+    !e.seatLabels?.length && e.partySize == null && e.fixedPrice == null;
+
+  const bumpQty = (id: string, delta: number) =>
+    setCart((c) => c.map((x) => (x.id === id
+      ? { ...x, items: [{ ...x.items[0], qty: Math.max(1, x.items[0].qty + delta) }] }
+      : x)));
+
   const slotLabel = (e: CartEntry) => {
     if (!e.slotDate) return "";
     const day = e.slotDate === TODAY ? t("slotToday") : formatDay(e.slotDate, { weekday: true });
@@ -759,7 +775,6 @@ export default function PosPage() {
     nextDay: (d: string, time: string) => t("live.nextDay", { day: formatDay(d, { weekday: true }), time }),
     providersFree: (free: number, total: number) => t("live.providersFree", { free, total }),
   }), [t]);
-  const methodLabel = enumL.method(method);
 
   return (
     <div className="grid h-full grid-cols-1 gap-comfortable p-comfortable pb-[72px] lg:grid-cols-[1fr_23rem] lg:pb-comfortable">
@@ -889,19 +904,19 @@ export default function PosPage() {
       {/* Sheets cover the tab bar (z-50 over z-40) — nothing tappable behind a modal cart. */}
       <div className={`${cartOpen ? "fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] rounded-t-go-lg pb-[env(safe-area-inset-bottom)] shadow-go-pop" : "hidden"} min-h-0 flex-col bg-card lg:z-auto lg:flex lg:rounded-go lg:pb-0 lg:shadow-go lg:sticky lg:top-comfortable lg:h-[calc(100dvh-88px)] lg:max-h-none lg:self-start`}>
         {cartOpen && <div className="mx-auto mt-tight h-1 w-10 shrink-0 rounded-full bg-line lg:hidden" aria-hidden />}
-        <div className="flex items-center gap-tight border-b border-line p-tight">
-          {cartOpen && (
-            <button type="button" onClick={() => setCartOpen(false)} className="flex h-12 items-center rounded-full bg-subtle px-section text-[13px] text-muted dark:border dark:border-line dark:bg-transparent lg:hidden">{t("cart.close")}</button>
-          )}
-          {/* The drawer had two buttons and no name. Once it is open the
-              phone summary pill is gone, so this is the only place the sale
-              states its own size. */}
-          <span className="min-w-0 flex-1 truncate px-tight text-center text-[13px] font-medium text-muted">
-            {cart.length > 0 ? t("phoneSummary", { count: cart.length }) : ""}
-          </span>
-          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-12 items-center gap-inline rounded-full bg-subtle px-section text-[13px] text-muted disabled:text-faint dark:border dark:border-line dark:bg-transparent" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
+        <div className="flex items-center gap-tight border-b border-line p-comfortable">
+          {/* The drawer had two buttons and no name. It says what it is and
+              how big it is; the two exits sit where a sheet's exits sit. */}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[17px] font-semibold leading-tight">{t("cart.title")}</p>
+            <p className="mt-0.5 text-[13px] text-muted">{t("phoneSummary", { count: cart.length })}</p>
+          </div>
+          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-11 shrink-0 items-center gap-inline rounded-full bg-subtle px-comfortable text-[13px] text-muted disabled:text-faint dark:border dark:border-line dark:bg-transparent" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
             <Archive size={14} strokeWidth={1.5} />{t("cart.park")}
           </button>
+          {cartOpen && (
+            <button type="button" aria-label={t("cart.close")} onClick={() => setCartOpen(false)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-subtle text-muted dark:bg-line lg:hidden"><X size={18} strokeWidth={1.75} /></button>
+          )}
         </div>
         {/* One scrolling region for the sale itself — the lines AND the rows
             that modify them. They used to be separate: the lines were flex-1
@@ -926,13 +941,14 @@ export default function PosPage() {
               {cart.map((e) => (
                 <div key={e.id} className="border-b border-line pb-tight last:border-0">
                 <div className="flex flex-col gap-tight">
-                  <div className="flex min-h-11 min-w-0 cursor-pointer flex-col justify-center" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
+                  <div className="flex items-start gap-comfortable">
+                  {productById(e.productId) && (
+                    <ProductThumb images={productById(e.productId)!.images} name={e.productName} bookingType={productById(e.productId)!.bookingType} size="card" />
+                  )}
+                  <div className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
                     <div className="flex items-center justify-between gap-tight text-sm font-medium">
                       <span className="min-w-0 truncate">{e.productName}</span>
-                      <span className="flex shrink-0 items-center gap-inline whitespace-nowrap">
-                        {formatMoney(entryTotal(e), currency)}
-                        {e.productId !== "custom" && <ChevronRight size={15} strokeWidth={1.5} className="text-muted" aria-hidden />}
-                      </span>
+                      {e.productId !== "custom" && <ChevronRight size={15} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />}
                     </div>
                     <div className="text-[13px] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="text-[13px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
@@ -943,21 +959,29 @@ export default function PosPage() {
                     ) : null}
                     {entryBalance(e) > 0 && <div className="text-[13px] text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                   </div>
-                  {/* The row actions sit on their own line so the name and the
-                      money get the full card width. Four 48px targets beside
-                      the text column left about 200px for both, and a name as
-                      ordinary as "All-Day Re-entry Pass" truncated in it. */}
-                  <div className="flex items-center justify-end gap-tight">
+                  </div>
+                  {/* Controls on the left, money on the right — the shape the
+                      reference draws. The name row above keeps the full width,
+                      so a name as ordinary as "All-Day Re-entry Pass" is never
+                      squeezed by a column of 48px targets. */}
+                  <div className="flex items-center gap-tight">
+                  {simpleQty(e) && (
+                    <span className="flex items-center gap-inline rounded-full border border-line">
+                      <button type="button" aria-label={t("sheet.fewer")} disabled={e.items[0].qty <= 1} onClick={() => bumpQty(e.id, -1)} className="flex h-11 w-11 items-center justify-center rounded-full text-lg disabled:text-faint active:bg-ember/10">−</button>
+                      <span className="min-w-6 text-center text-sm font-medium">{e.items[0].qty}</span>
+                      <button type="button" aria-label={t("sheet.more")} onClick={() => bumpQty(e.id, 1)} className="flex h-11 w-11 items-center justify-center rounded-full text-lg active:bg-ember/10">+</button>
+                    </span>
+                  )}
                   <button
                     type="button"
                     aria-label={t("cart.lineDiscountLabel")}
                     onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
-                    className={`flex h-12 w-12 items-center justify-center rounded-full border text-[13px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "border-ember text-brand-foreground" : "border-line"}`}
+                    className={`flex h-11 w-11 items-center justify-center rounded-full text-[13px] active:bg-ember/10 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "bg-ember/15 font-medium text-brand-foreground" : "text-muted"}`}
                   >
                     {e.lineDiscountAmount ? "৳" : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}
                   </button>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex h-12 items-center justify-center rounded-full border border-line px-comfortable text-[13px] active:bg-ember/10">
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-11 items-center justify-center rounded-full border border-line px-comfortable text-[13px] active:bg-ember/10">
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
@@ -978,8 +1002,9 @@ export default function PosPage() {
                         }),
                       });
                     }}
-                    className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-danger active:bg-ember/10"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-danger active:bg-ember/10"
                   ><Trash2 size={15} strokeWidth={1.5} /></button>
+                  <span className="ml-auto shrink-0 whitespace-nowrap text-base font-semibold">{formatMoney(entryTotal(e), currency)}</span>
                   </div>
                 </div>
                 {lineDiscEdit === e.id && (
@@ -1026,24 +1051,35 @@ export default function PosPage() {
           {/* Who the sale is for, grouped with the other things that modify
               it rather than sitting above the lines. It reads as one of the
               cart's decisions — which it is — instead of a banner over them. */}
-          <div className="-mx-comfortable -mt-comfortable mb-comfortable bg-subtle px-comfortable dark:bg-surface">
-          <div className="border-b border-line">
-            <button
-              type="button"
-              onClick={() => setCustomerOpen(true)}
-              className="flex min-h-12 w-full items-center gap-tight py-tight text-left"
-            >
-              <span aria-hidden className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${attached ? "bg-ember/15 text-brand-foreground" : "bg-subtle text-muted dark:bg-line"}`}>
-                <UserRound size={16} strokeWidth={1.75} />
-              </span>
-              <span className="min-w-0 flex-1 truncate text-[13px]">
-                {attached ? attached.name : t("cart.customer")}
-              </span>
-              <span className="shrink-0 truncate text-[13px] text-muted">
-                {attached ? (attached.phone || attached.email || t("cart.customerChange")) : t("cart.customerAdd")}
-              </span>
-              <ChevronRight size={15} strokeWidth={1.5} className="shrink-0 text-faint" />
-            </button>
+          <div className="mb-comfortable rounded-go bg-subtle p-comfortable dark:bg-surface">
+            <p className="type-label mb-tight flex items-center gap-inline text-[13px] text-muted">
+              <UserRound size={14} strokeWidth={1.75} />{t("cart.customer")}
+            </p>
+          <div>
+            {attached ? (
+              <button
+                type="button"
+                onClick={() => setCustomerOpen(true)}
+                className="flex min-h-11 w-full items-center gap-tight rounded-go-sm bg-card px-comfortable py-tight text-left"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{attached.name}</span>
+                  {(attached.phone || attached.email) && (
+                    <span className="block truncate text-[13px] text-muted">{attached.phone || attached.email}</span>
+                  )}
+                </span>
+                <span className="shrink-0 text-[13px] text-muted">{t("cart.customerChange")}</span>
+                <ChevronRight size={15} strokeWidth={1.5} className="shrink-0 text-muted" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCustomerOpen(true)}
+                className="flex min-h-11 w-full items-center justify-center gap-inline rounded-go-sm border border-dashed border-strong text-[13px] font-medium text-brand-foreground active:bg-ember/10"
+              >
+                <Plus size={15} strokeWidth={2} />{t("cart.attachCustomer")}
+              </button>
+            )}
             {attached?.flagReason && (
               <p className="min-w-0 break-words pb-tight text-[13px] text-warning">
                 <span className="font-medium">{t("customerModal.flagged")}: </span>
@@ -1051,8 +1087,12 @@ export default function PosPage() {
               </p>
             )}
           </div>
-
-          <CartRow icon={Percent} label={t("summary.discount")} value={manualDiscount > 0 ? (discountMode === "percent" ? `${discountPct}%` : formatMoney(manualDiscount, currency)) : t("summary.none")} open={cartRow === "discount"} onToggle={() => toggleRow("discount")}>
+          </div>
+          {cart.length > 0 && (<>
+          <div className="mb-comfortable rounded-go bg-subtle p-comfortable dark:bg-surface">
+            <p className="type-label mb-tight flex items-center gap-inline text-[13px] text-muted">
+              <Percent size={14} strokeWidth={1.75} />{t("summary.discount")}
+            </p>
             {/* Four buttons meant a manager who agreed 12% had no way to say
                 so and the till decided it was 10. The chips still fill the
                 field; they just stopped being the whole menu — and money off
@@ -1080,7 +1120,8 @@ export default function PosPage() {
               className={`mt-tight h-11 w-full rounded-go-sm border bg-card px-comfortable text-sm outline-none placeholder:text-faint ${reasonNeeded ? "border-danger" : "border-line focus:border-inverse"}`}
             />
           )}
-          </CartRow>
+          </div>
+          <div className="mb-comfortable rounded-go bg-subtle p-comfortable dark:bg-surface">
 
           {/* An advance. Offered only where the business allows one, because a
               control that always refuses is worse than no control. */}
@@ -1208,6 +1249,8 @@ export default function PosPage() {
 
           </div>
 
+          </>)}
+
           {/* A sale that does not exist yet has no arithmetic to show.
               Subtotal 0.00 over VAT 0.00 over Total 0.00 is three lines
               describing nothing, on the screen where a cashier is trying to
@@ -1215,6 +1258,7 @@ export default function PosPage() {
               before ringing anything up is a real flow and this drawer is its
               only route on a phone. */}
           {cart.length > 0 && (<>
+          <div className="rounded-go bg-subtle p-comfortable dark:bg-surface">
           <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.subtotal")}</span><span className="">{formatMoney(subtotal, currency)}</span></div>
           {lineDiscountTotal > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.lineDiscounts")}</span><span className="text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
           {manualDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{discountMode === "percent" ? t("summary.discountPct", { pct: discountPct }) : t("summary.discountFlat")}</span><span className="text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
@@ -1223,7 +1267,7 @@ export default function PosPage() {
           {pointsDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.pointsSpent", { count: pointsToSpend })}</span><span className="text-danger">−{formatMoney(pointsDiscount, currency)}</span></div>}
           {creditsValue > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.passCredits", { count: creditsUsed })}</span><span className="text-success">−{formatMoney(creditsValue, currency)}</span></div>}
           <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.vat")}</span><span className="">{formatMoney(tax, currency)}</span></div>
-          <div className="mt-tight flex items-baseline justify-between text-lg font-medium"><span>{t("summary.total")}</span><AnimatedMoney value={total} currency={currency} /></div>
+          <div className="mt-tight flex items-baseline justify-between border-t border-line pt-tight text-lg font-semibold"><span>{t("summary.total")}</span><AnimatedMoney value={total} currency={currency} /></div>
           {depositBalance > 0 && (
             <>
               <button type="button" onClick={() => setPayInFull((v) => !v)} className="mt-tight flex w-full items-center justify-between text-[13px]">
@@ -1240,6 +1284,7 @@ export default function PosPage() {
               )}
             </>
           )}
+          </div>
           </>)}
 
         </div>
@@ -1270,7 +1315,11 @@ export default function PosPage() {
 
           <Button size="lg" shape="pill" fullWidth className="mt-tight h-14" disabled={cart.length === 0 || overLimit || reasonNeeded} onClick={charge}>
             {/* The amount never wraps; the method gives way first on narrow screens. */}
-            <span className="min-w-0 truncate">{cart.length > 0 ? t("chargeAmount", { amount: formatMoney(dueNow, currency), method: methodLabel }) : t("charge")}</span>
+            {/* The segmented control directly above states the method and
+                marks it selected, so the button repeating it was the same word
+                twice — and it was the half that truncated first on a narrow
+                screen. The amount is what the button is for. */}
+            <span className="min-w-0 truncate">{cart.length > 0 ? t("chargeOnly", { amount: formatMoney(dueNow, currency) }) : t("charge")}</span>
           </Button>
         </div>
       </div>
