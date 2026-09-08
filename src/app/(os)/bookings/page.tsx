@@ -3,26 +3,47 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Plus, Search } from "lucide-react";
+import { AlertTriangle, Archive, Copy, Pencil, Plus, Power, PowerOff, Search } from "lucide-react";
 import {
   Button,
+  ConfirmDialog,
   DataTable,
   EmptyState,
   PageShell,
   ProductThumb,
   StatStrip,
   StatusPill,
+  useToast,
   type Column,
 } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { listCategories, listProducts, listResources, listStaff, type Product } from "@/lib/api";
+import {
+  archiveProduct,
+  createProduct,
+  listCategories,
+  listProducts,
+  listResources,
+  listStaff,
+  updateProduct,
+  type Product,
+} from "@/lib/api";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { sellingBlockers, type Blocker } from "@/lib/sellable";
 import { cn } from "@/lib/cn";
 import { formatDate, formatMoney } from "@/lib/format";
 import { MD, useMediaQuery } from "@/lib/useMedia";
+import { RowMenu } from "./_components/RowMenu";
 
 const PAGE_SIZE = 10;
+
+/** Copy an object without certain keys. Written out rather than destructured
+ *  into throwaway names, so that adding a field to `Product` cannot silently
+ *  start copying it into a duplicate. */
+function omit<T extends object, K extends keyof T>(source: T, keys: K[]): Omit<T, K> {
+  const out = { ...source };
+  for (const key of keys) delete out[key];
+  return out;
+}
 
 function priceRange(p: Product): string {
   const prices = p.tiers.map((t) => t.price);
@@ -63,7 +84,7 @@ export default function ProductsPage() {
     [status, categoryId],
   );
 
-  const { data, loading } = useApiQuery(
+  const { data, loading, reload: reloadList } = useApiQuery(
     () =>
       listProducts({ page, pageSize: PAGE_SIZE, search, sort: sort.key, order: sort.order, filters }),
     [search, filters, sort.key, sort.order, page],
@@ -73,6 +94,7 @@ export default function ProductsPage() {
      "how many cannot be sold" is a question about the catalogue, not about the
      ten rows currently on screen. */
   const allQ = useApiQuery(() => listProducts({ pageSize: 500, search, filters }), [search, filters]);
+  const reloadAll = allQ.reload;
   const summary = useMemo(() => {
     const all = allQ.data?.data ?? [];
     return {
@@ -82,6 +104,82 @@ export default function ProductsPage() {
       blocked: all.filter((p) => sellingBlockers(p, resources).length > 0).length,
     };
   }, [allQ.data, resources]);
+
+  const toast = useToast();
+  /* Selection lives on ids, not on rows: a bulk action reloads the table and
+     the row objects are replaced, but the ids the operator ticked are still
+     the ids they meant. */
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirm, setConfirm] = useState<{ ids: string[] } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const rows = useMemo(() => data?.data ?? [], [data]);
+  const reload = () => {
+    setSelected(new Set());
+    reloadList();
+    reloadAll();
+  };
+
+  const toggleOne = (id: string) =>
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const allOnPageSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
+  const toggleAllOnPage = () =>
+    setSelected((cur) => {
+      const next = new Set(cur);
+      if (allOnPageSelected) rows.forEach((r) => next.delete(r.id));
+      else rows.forEach((r) => next.add(r.id));
+      return next;
+    });
+
+  /** Switching a product on or off is reversible and silent-free: it says what
+   *  happened, and the row it happened to. */
+  const setProductStatus = async (ids: string[], next: "active" | "inactive") => {
+    setBusy(true);
+    for (const id of ids) await updateProduct(id, { status: next });
+    setBusy(false);
+    toast.success(
+      ids.length === 1
+        ? t(next === "active" ? "toastActivated" : "toastDeactivated")
+        : t(next === "active" ? "toastActivatedMany" : "toastDeactivatedMany", { count: ids.length }),
+    );
+    reload();
+  };
+
+  /* Archive asks first. It takes a product out of the catalogue and out of the
+     till, which is not something to do on a mis-click. */
+  const doArchive = async (ids: string[]) => {
+    setBusy(true);
+    for (const id of ids) await archiveProduct(id);
+    setBusy(false);
+    setConfirm(null);
+    toast.success(ids.length === 1 ? t("toastArchived") : t("toastArchivedMany", { count: ids.length }));
+    reload();
+  };
+
+  /** The most common thing anyone does to a catalogue: make the next one like
+   *  the last one. Copies everything but the identity, lands inactive so a
+   *  half-edited duplicate never appears on the till. */
+  const duplicate = async (p: Product) => {
+    setBusy(true);
+    // The server assigns identity and timestamps; everything else is the copy.
+    const base = omit(p, ["id", "createdAt", "updatedAt", "archivedAt", "tiers"]);
+    const res = await createProduct({
+      ...base,
+      name: t("copyOf", { name: p.name }),
+      status: "inactive",
+      tiers: p.tiers.map((tier) => omit(tier, ["id"])),
+    });
+    setBusy(false);
+    if (res.ok) {
+      toast.success(t("toastDuplicated"));
+      reload();
+    }
+  };
 
   const blockerLabel = (b: Blocker) =>
     t(
@@ -98,6 +196,25 @@ export default function ProductsPage() {
     c === "counter" ? t("channelCounter") : c === "online" ? t("channelOnline") : c;
 
   const columns: Column<Product>[] = [
+    {
+      /* Selection, so a seasonal switch-off is one action rather than twenty.
+         The cell stops its own clicks: the row navigates, and ticking a box
+         must not also open the record. */
+      key: "select",
+      header: "",
+      width: "2.5rem",
+      render: (p) => (
+        <span onClick={(e) => e.stopPropagation()} className="flex">
+          <input
+            type="checkbox"
+            checked={selected.has(p.id)}
+            onChange={() => toggleOne(p.id)}
+            aria-label={t("selectOne", { name: p.name })}
+            className="h-4 w-4 accent-[var(--color-ember)]"
+          />
+        </span>
+      ),
+    },
     {
       key: "name",
       header: t("colName"),
@@ -161,6 +278,51 @@ export default function ProductsPage() {
       header: t("colUpdated"),
       sortable: true,
       render: (p) => <span className="whitespace-nowrap text-muted">{formatDate(p.updatedAt)}</span>,
+    },
+    {
+      key: "actions",
+      header: "",
+      width: "3rem",
+      render: (p) => (
+        <RowMenu
+          label={t("rowActions", { name: p.name })}
+          items={[
+            {
+              key: "edit",
+              label: t("actionEdit"),
+              icon: <Pencil size={14} strokeWidth={1.5} />,
+              onSelect: () => router.push(`/bookings/${p.id}`),
+            },
+            {
+              key: "duplicate",
+              label: t("actionDuplicate"),
+              icon: <Copy size={14} strokeWidth={1.5} />,
+              onSelect: () => duplicate(p),
+            },
+            p.status === "active"
+              ? {
+                  key: "deactivate",
+                  label: t("actionDeactivate"),
+                  icon: <PowerOff size={14} strokeWidth={1.5} />,
+                  onSelect: () => setProductStatus([p.id], "inactive"),
+                }
+              : {
+                  key: "activate",
+                  label: t("actionActivate"),
+                  icon: <Power size={14} strokeWidth={1.5} />,
+                  onSelect: () => setProductStatus([p.id], "active"),
+                },
+            {
+              key: "archive",
+              label: t("actionArchive"),
+              icon: <Archive size={14} strokeWidth={1.5} />,
+              destructive: true,
+              disabled: p.status === "archived",
+              onSelect: () => setConfirm({ ids: [p.id] }),
+            },
+          ]}
+        />
+      ),
     },
   ];
 
@@ -242,7 +404,58 @@ export default function ProductsPage() {
             );
           }}
           toolbar={
+            selected.size > 0 ? (
+              /* While something is ticked the toolbar becomes the thing you
+                 would do to it. Filters are not what you came for mid-task,
+                 and a bar that appears where they were is impossible to miss. */
+              <div className="flex flex-wrap items-center gap-tight rounded-sm border border-ember bg-ember/5 px-comfortable py-tight">
+                <span className="text-[13px] font-medium">
+                  {t("selectedCount", { count: selected.size })}
+                </span>
+                <span className="flex-1" />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={busy}
+                  icon={<Power size={15} strokeWidth={1.5} />}
+                  onClick={() => setProductStatus([...selected], "active")}
+                >
+                  {t("actionActivate")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={busy}
+                  icon={<PowerOff size={15} strokeWidth={1.5} />}
+                  onClick={() => setProductStatus([...selected], "inactive")}
+                >
+                  {t("actionDeactivate")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={busy}
+                  icon={<Archive size={15} strokeWidth={1.5} />}
+                  onClick={() => setConfirm({ ids: [...selected] })}
+                >
+                  {t("actionArchive")}
+                </Button>
+                <Button variant="tertiary" size="sm" onClick={() => setSelected(new Set())}>
+                  {t("clearSelection")}
+                </Button>
+              </div>
+            ) : (
             <div className="flex flex-wrap items-center gap-tight">
+              <label className="flex h-11 items-center gap-tight px-tight text-[13px] text-muted md:h-9">
+                <input
+                  type="checkbox"
+                  checked={allOnPageSelected}
+                  onChange={toggleAllOnPage}
+                  aria-label={t("selectAll")}
+                  className="h-4 w-4 accent-[var(--color-ember)]"
+                />
+                {t("selectAll")}
+              </label>
               <div className="relative">
                 <Search
                   size={16}
@@ -290,6 +503,7 @@ export default function ProductsPage() {
                 <option value="archived">{t("statusArchived")}</option>
               </select>
             </div>
+            )
           }
           emptyState={
             <EmptyState
@@ -313,6 +527,22 @@ export default function ProductsPage() {
           }}
         />
       </div>
+
+      {/* Archive takes a product out of the catalogue and out of the till.
+          Confirmed, never done on a mis-click. */}
+      <ConfirmDialog
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        onConfirm={() => confirm && doArchive(confirm.ids)}
+        loading={busy}
+        title={t("archiveTitle")}
+        message={
+          confirm && confirm.ids.length > 1
+            ? t("archiveBodyMany", { count: confirm.ids.length })
+            : t("archiveBody")
+        }
+        confirmLabel={t("actionArchive")}
+      />
     </PageShell>
   );
 }

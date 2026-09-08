@@ -4581,3 +4581,63 @@ The wizard and the detail page still need doing; noted rather than half-done.
 Contrast both themes: **zero**. Nine unit cases on the blocker logic pass. Ten
 other tables unaffected. `tsc`, `build`, `eslint` clean; i18n 0 / 0 with the
 namespace filled in both locales.
+
+## The catalogue could look but not touch (2026-09-08)
+
+Second pass, on the ask for activate / deactivate / archive.
+
+### The gap
+
+**The list had no actions at all.** Not a menu, not a checkbox, nothing. Every
+state change — switching a product off for the season, archiving one that is
+finished, copying one to make its sibling — meant opening the record, finding
+the field, saving, and coming back. For twenty products that is an afternoon,
+and it is why the guidance rule on bulk editing exists.
+
+### What it has now
+
+- **A row menu** (`⋯`): Edit, Duplicate, Activate/Deactivate, Archive. The
+  action offered is the one that applies — an active product offers Deactivate
+  and an inactive one offers Activate, rather than both greyed against each
+  other.
+- **Selection and a bulk bar.** Tick rows and the filter row becomes what you
+  would do to them. Filters are not what you came for mid-task, and a bar that
+  appears exactly where they were is impossible to miss. Selection is held on
+  **ids, not rows** — a bulk action reloads the table and replaces every row
+  object, but the ids someone ticked are still the ids they meant.
+- **Duplicate**, the most common thing anyone does to a catalogue: make the
+  next one like the last one. It lands **inactive**, so a half-edited copy
+  never reaches the till.
+- **Archive confirms** — High-severity rule, and it takes a product off the
+  till. The body says what survives: past orders keep their record.
+- **Every action says so.** No silent success.
+
+### Details worth keeping
+
+The row navigates on click, so the checkbox cell and the menu both stop their
+events before they reach it — ticking a box must not also open the record. The
+menu opens upward near the bottom of the window, which is exactly where the
+last rows of a full table are.
+
+`omit()` is written out rather than destructured into throwaway names, so that
+adding a field to `Product` cannot silently start copying it into duplicates.
+
+### Verified by doing, not by rendering
+
+Deactivate the first row: status ACTIVE → INACTIVE **and the summary card
+ACTIVE 20 → 19**. Activate it back: → ACTIVE, card → 20. So the action, the row
+and the figures above all agree rather than the card being decoration. Bulk bar
+reads "2 selected · Activate · Deactivate · Archive · Clear"; Archive raises the
+confirm with the correct plural body; Cancel leaves all twenty untouched. Zero
+console errors.
+
+A side effect worth noting: `UPDATED` was "15 Jan 2026" on all twenty rows and
+now moves when something is changed — the column that carried no information
+carries some as soon as the page can change anything.
+
+### Verified
+
+Contrast both themes: **zero**. Ten other tables unaffected. `tsc`, `build`
+clean; the two lint errors under `bookings/` are pre-existing in
+`ProductWizard` and `layouts/[id]`, untouched here. i18n 0 / 0 across 51 keys
+in the namespace.
