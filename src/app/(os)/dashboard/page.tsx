@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, Banknote, CalendarOff, Clock, WifiOff, Wrench, type LucideIcon } from "lucide-react";
-import { AreaChart, Button, Modal, PageShell, useToast } from "@/components/ui";
+import { AreaChart, Button, Modal, PageShell, StatusPill, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   cancelSessionBookings,
@@ -20,18 +20,22 @@ import {
   listProducts,
   listResources,
   listStaff,
+  orderOutstanding,
+  isVoidedOrder,
   peekWaitlist,
   updateProduct,
   type Booking,
   type Order,
   type Product,
 } from "@/lib/api";
-import { isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
-import { formatMoney, formatMoneyCompact } from "@/lib/format";
+import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
+import { formatDateTime, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { cn } from "@/lib/cn";
 
-const TODAY = "2026-07-29";
+// The demo clock is shared, never copied: DEMO_TODAY's own comment warns
+// that two components each holding their own date is the bug.
+const TODAY = DEMO_TODAY;
 const NOW_MIN = 12 * 60; // mock clock: noon
 const dayShift = (d: string, n: number) => new Date(Date.parse(`${d}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -120,6 +124,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const t = useTranslations("dashboard");
   const tc = useTranslations("common");
+  // Column names live in the orders namespace already; duplicating them
+  // here would be two places for one word to drift.
+  const to = useTranslations("orders");
   const enumL = useEnumLabels();
   const toast = useToast();
   const op = useApiQuery(() => getOperator(), []);
@@ -159,6 +166,44 @@ export default function DashboardPage() {
   const customers = useMemo(() => customersQ.data?.data ?? [], [customersQ.data]);
 
   const scopeDays = useMemo(() => (scope === "today" ? [TODAY] : Array.from({ length: 7 }, (_, i) => dayShift(TODAY, i - 6))), [scope]);
+
+  // ── Recent orders ─────────────────────────────────────────────────────────
+  // A dashboard orders table is NOT the orders index in miniature, and it is
+  // not the activity feed either. Live activity answers "what just happened"
+  // as a stream of mixed events; /orders answers "find me an order" with
+  // search, filters and pagination. This answers the third question a manager
+  // opens the page with — "what has sold, and is any of it unpaid" — which is
+  // why it obeys the page's OWN controls (the Today/This-week scope and the
+  // location filter) rather than carrying a second set. A table here that
+  // ignored them would contradict every other card on the page.
+  const now = useMemo(() => demoNow(), []);
+  const scopeOrders = useMemo(
+    () =>
+      orders
+        .filter((o) => scopeDays.includes(o.createdAt.slice(0, 10)))
+        // Date.parse, not localeCompare: the seed spells timestamps two ways
+        // (generated records are Z, hand-authored ones carry +06:00), so a
+        // string sort puts a 12-minute-old order below a 55-minute-old one.
+        .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
+    [orders, scopeDays],
+  );
+  const recentOrders = scopeOrders.slice(0, 8);
+  // Cancelled and refunded orders are listed — they are part of what happened —
+  // but they can never be owed.
+  const owedOrders = scopeOrders.filter((o) => !isVoidedOrder(o) && orderOutstanding(o) > 0);
+  const scopeOwedCount = owedOrders.length;
+  const scopeOwed = owedOrders.reduce((sum, o) => sum + orderOutstanding(o), 0);
+  /* This card deliberately does NOT print a revenue total.
+     It did at first — "24 orders · ৳110,082.50 collected" — and the hero two
+     screens up read ৳111,620.00 for the same window. Both were right and they
+     measure different things: the hero counts an order's full total once it is
+     paid or part-paid, this counted the cash actually taken across every order
+     including pending ones. But two money figures of the same window, differing
+     by an amount nothing on screen accounts for, is how a dashboard loses
+     trust — and the gap is not even a single subtraction, because the hero
+     excludes pending orders entirely while an outstanding balance includes
+     them. So the page keeps ONE revenue figure, the hero's, and this card
+     contributes the thing the hero cannot say: what is still owed. */
   const prevDays = useMemo(() => scopeDays.map((d) => dayShift(d, -7)), [scopeDays]);
 
   // ── Hero: revenue ─────────────────────────────────────────────────────────
@@ -1093,6 +1138,144 @@ export default function DashboardPage() {
                   </button>
                 )}
               </div>
+        </div>
+
+        {/* ── Recent orders ────────────────────────────────────────────────
+            Built in the dashboard's own table anatomy — header bar, hairline
+            rows, footer bar — rather than with the shared DataTable, which
+            draws its own bordered frame and would sit as a card inside a card.
+            What DataTable gives for free is carried over explicitly instead:
+            rows are a keyboard tab stop with Enter/Space, the phone gets a
+            purpose-built card rather than five labelled pairs, and the empty
+            state says which window it is empty for. */}
+        <div className="mt-wide">
+          <div className={card}>
+            <div className="flex items-baseline justify-between gap-tight border-b border-line px-major py-comfortable">
+              <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("recentOrders")}</h2>
+              {/* The count is the scope's, not the eight rows' — otherwise the
+                  header would describe the slice rather than the day. */}
+              <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">
+                {t("orderCount", { count: scopeOrders.length })}
+              </span>
+            </div>
+
+            {scopeOrders.length === 0 ? (
+              <p className="px-section py-major text-[13px] text-muted">
+                {scope === "today" ? t("noOrdersToday") : t("noOrdersThisWeek")}
+              </p>
+            ) : (
+              <>
+                {/* Desktop — a real table element, so each header cell is
+                    announced with its column and the figures line up. */}
+                <table className="hidden w-full md:table">
+                  <thead>
+                    <tr className="border-b border-line text-left">
+                      <th scope="col" className="type-label px-major py-tight text-[12px] font-medium text-muted">{to("colDate")}</th>
+                      <th scope="col" className="type-label px-major py-tight text-[12px] font-medium text-muted">{to("colReference")}</th>
+                      <th scope="col" className="type-label px-major py-tight text-center text-[12px] font-medium text-muted">{to("colItems")}</th>
+                      <th scope="col" className="type-label px-major py-tight text-right text-[12px] font-medium text-muted">{to("colTotal")}</th>
+                      <th scope="col" className="type-label px-major py-tight text-right text-[12px] font-medium text-muted">{to("colStatus")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentOrders.map((o) => {
+                      const due = isVoidedOrder(o) ? 0 : orderOutstanding(o);
+                      return (
+                        <tr
+                          key={o.id}
+                          tabIndex={0}
+                          onClick={() => router.push("/orders/" + o.id)}
+                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push("/orders/" + o.id); } }}
+                          className="cursor-pointer border-b border-line transition-colors duration-quick last:border-0 hover:bg-subtle focus-visible:bg-subtle"
+                        >
+                          <td className="whitespace-nowrap px-major py-tight text-[13px] text-muted" title={formatDateTime(o.createdAt)}>
+                            {formatRelative(o.createdAt, now)}
+                          </td>
+                          {/* Reference and buyer are ONE column here. The index
+                              can afford them apart; a cockpit table cannot, and
+                              they are read together anyway. */}
+                          <td className="px-major py-tight">
+                            <span className="block whitespace-nowrap font-mono text-[13px]">{o.reference}</span>
+                            <span
+                              className="block max-w-[16rem] truncate text-[12px] text-muted"
+                              title={o.customerName ?? undefined}
+                            >
+                              {o.customerName ?? to("walkIn")}
+                            </span>
+                          </td>
+                          <td className="px-major py-tight text-center font-mono text-[13px] tabular-nums">
+                            {o.lines.reduce((n, l) => n + l.quantity, 0)}
+                          </td>
+                          <td className="px-major py-tight text-right">
+                            <span className="block whitespace-nowrap font-mono text-[13px] tabular-nums">{formatMoney(o.total)}</span>
+                            {/* Only when something is owed — a count of nothing
+                                goes quiet, and this is the one number on the
+                                row a manager can act on. */}
+                            {due > 0 && (
+                              <span className="block whitespace-nowrap font-mono text-[12px] tabular-nums text-warning">
+                                {t("orderDue", { amount: formatMoney(due) })}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-major py-tight text-right"><StatusPill status={o.status} /></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Phone — the reference and the money on one line, who and
+                    when underneath, status last. Not five labelled pairs. */}
+                <div className="md:hidden">
+                  {recentOrders.map((o) => {
+                    const due = isVoidedOrder(o) ? 0 : orderOutstanding(o);
+                    return (
+                      <button
+                        key={o.id}
+                        type="button"
+                        onClick={() => router.push("/orders/" + o.id)}
+                        className="flex w-full flex-col gap-inline border-b border-line px-section py-comfortable text-left last:border-0 active:bg-subtle"
+                      >
+                        <span className="flex items-baseline justify-between gap-tight">
+                          <span className="min-w-0 truncate font-mono text-[13px]">{o.reference}</span>
+                          <span className="shrink-0 whitespace-nowrap font-mono text-[13px] tabular-nums">{formatMoney(o.total)}</span>
+                        </span>
+                        <span className="flex items-baseline justify-between gap-tight">
+                          <span className="min-w-0 truncate text-[13px] text-muted">{o.customerName ?? to("walkIn")}</span>
+                          <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{formatRelative(o.createdAt, now)}</span>
+                        </span>
+                        <span className="mt-inline flex items-center justify-between gap-tight">
+                          <StatusPill status={o.status} />
+                          {due > 0 && (
+                            <span className="shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums text-warning">
+                              {t("orderDue", { amount: formatMoney(due) })}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            <button
+              type="button"
+              data-type-role="button"
+              onClick={() => router.push("/orders")}
+              className="flex min-h-11 w-full items-center gap-tight border-t border-line px-section text-left text-[13px] font-medium text-muted hover:text-ember"
+            >
+              <span className="min-w-0 flex-1 truncate">
+                {/* The footer states what the eight rows do NOT: how many are
+                    left, and how many of the window's orders are still owed. */}
+                {scopeOrders.length > recentOrders.length ? t("ordersMore", { count: scopeOrders.length - recentOrders.length }) : null}
+                {scopeOrders.length > recentOrders.length && scopeOwedCount > 0 ? " · " : null}
+                {scopeOwedCount > 0 ? t("ordersAwaitingPayment", { count: scopeOwedCount, amount: formatMoney(scopeOwed) }) : null}
+              </span>
+              <span className="shrink-0 whitespace-nowrap">{t("viewAllOrders")}</span>
+              <ArrowRight size={13} strokeWidth={1.75} className="shrink-0" aria-hidden />
+            </button>
+          </div>
         </div>
         </>
       )}

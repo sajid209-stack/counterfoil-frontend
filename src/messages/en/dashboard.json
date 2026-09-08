@@ -120,5 +120,13 @@
   "thisPeriod": "This period",
   "previousPeriod": "Previous period",
   "lastDaysLong": "Last {count} days",
-  "viewAllActivity": "View all activity"
+  "viewAllActivity": "View all activity",
+  "recentOrders": "Recent orders",
+  "noOrdersToday": "Nothing sold yet today.",
+  "noOrdersThisWeek": "Nothing sold this week yet.",
+  "orderDue": "{amount} due",
+  "ordersMore": "{count, plural, one {# more order} other {# more orders}}",
+  "ordersAwaitingPayment": "{amount} owed on {count, plural, one {# order} other {# orders}}",
+  "viewAllOrders": "View all orders",
+  "orderCount": "{count, plural, =0 {No orders} one {# order} other {# orders}}"
 }

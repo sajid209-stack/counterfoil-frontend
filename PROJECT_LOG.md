@@ -5111,3 +5111,101 @@ Standing harnesses all hold: order detail 0 contrast findings both themes,
 review checks 15/15, accessibility 8/8. The till was proven by **selling**:
 General Admission → `Charge ৳575.00` (৳500 + 15% VAT) with the primary button
 measuring `rgb(249, 74, 0)` on white.
+
+## Recent orders on the dashboard (2026-09-09)
+
+Owner pointed at the Today's-sessions card and asked for an orders list beside
+it. The trap is that the dashboard already carries **Live activity**, so a
+plain "recent orders" list would be that card built twice.
+
+### The three questions, and which one this answers
+
+- **Live activity** answers *what just happened* — a time-ordered stream of
+  mixed events (paid · refunded · sale · new customer), filterable.
+- **`/orders`** answers *find me an order* — search, date range, status and
+  channel filters, sortable columns, pagination.
+- This answers the third: **what has sold in the window I am looking at, and is
+  any of it unpaid.**
+
+Which is why it obeys the page's **own** controls — the Today / This-week scope
+toggle and the location filter — rather than carrying a second set. A table on
+this page that ignored them would contradict every other card on it. Switching
+to This week takes it from 4 orders to 24 and the footer from *"৳2,070.00 owed
+on 1 order"* to *"16 more orders · ৳8,897.50 owed on 3 orders"*.
+
+### Built in the dashboard's own table anatomy, not with DataTable
+
+`DataTable` would have given keyboard rows, a phone card list and skeletons for
+free — but it draws its own bordered frame, so it would sit as a card inside a
+card. Every other list on this page (Today's sessions, Live activity, Top
+products) is header-bar → hairline rows → footer-bar, and that is the language
+the page reads in.
+
+So the shape is the page's and DataTable's behaviours were carried over
+explicitly: rows are a real `<table>` (header cells announced with their
+column), each row is a tab stop with Enter/Space, the phone gets a
+purpose-built card rather than five labelled pairs, and the empty state names
+its window — *"Nothing sold yet today"* vs *"Nothing sold this week yet"*.
+
+**Five columns, not the index's seven.** Reference and customer are folded into
+one column — the index can afford them apart, a cockpit table cannot, and they
+are read together anyway. Location and channel are dropped outright: the page
+has a location filter at the top, so a column repeating it earns nothing. The
+outstanding balance renders under the total in warning, and only when there is
+one.
+
+### A near-duplicate figure, removed rather than explained
+
+The header first read **"24 orders · ৳110,082.50 collected"** — and the hero two
+screens up read **৳111,620.00** for the same window. Both were right and they
+measure different things: the hero counts an order's full total once it is paid
+or part-paid; the card counted cash actually taken across every order including
+pending ones.
+
+Two money figures for one window, differing by an amount nothing on screen
+accounts for, is how a dashboard loses trust. The first attempt tried to bridge
+them by stating the amount owed — and **measuring proved that wrong**: collected
+৳110,082.50 + owed ৳8,897.50 ≠ ৳111,620.00, because the hero excludes pending
+orders entirely while an outstanding balance includes them. A comment asserting
+that identity would have been a lie in the codebase.
+
+So the total came out of the header instead. The page keeps **one** revenue
+figure — the hero's — and the card contributes what the hero cannot say: what
+is still owed. Header is a count; the footer carries the money that needs
+chasing.
+
+### Also fixed
+
+`dashboard/page.tsx` kept its own `const TODAY = "2026-07-29"` — a private copy
+of `DEMO_TODAY`, which is exactly what that token's own comment warns against
+and the third such copy found in this codebase. It imports the shared one now.
+
+### Verified
+
+Driven, not just rendered: **click and Enter both land on `/orders/ord_stress`**
+from the first row. Scope-following proven by switching the toggle (4 orders →
+24, 8 rows capped, footer recomputed). Inside the card at **390 light, 390 dark
+and 1440 dark**: zero contrast failures, zero clipped text, zero targets under
+44px, table hidden on the phone with four purpose-built cards in its place, no
+console errors.
+
+Bangla renders whole — heading, all five column headers and the footer — with
+**0 missing-message warnings** and no raw keys.
+
+The full 29-route audit is **unchanged at 73 findings** (72 the declared
+white-on-ember rule, 1 the kitchen-sink inline-link exemption), so the card
+introduced nothing. Standing harnesses hold: order detail 0 contrast findings
+across four configs, review 15/15, accessibility 8/8. `tsc` and `npm run build`
+clean; `eslint` on the dashboard holds at its **5 pre-existing**
+`exhaustive-deps` warnings, 0 errors. i18n parity 0 missing / 0 extra with
+seven new keys in both locales.
+
+### Observed, pre-existing, not changed
+
+In Bangla the card reads **"৪ অর্ডার"** (Bengali numerals) beside
+**"৳2,070.00"** (Latin). That is app-wide and predates this card — next-intl
+formats ICU counts in the active locale's numbering system while `formatMoney`
+pins `en-US`, so the same split already shows in "৭ দিন", "৪৮ঘ" and
+"৩০%-এর কম" on this page. Money staying Latin is the defensible POS convention
+for Bangladesh; the counts are what drift. Worth settling product-wide rather
+than in one card.

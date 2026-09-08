@@ -120,5 +120,13 @@
   "thisPeriod": "এই সময়কাল",
   "previousPeriod": "পূর্ববর্তী সময়কাল",
   "lastDaysLong": "গত {count} দিন",
-  "viewAllActivity": "সব কার্যকলাপ দেখুন"
+  "viewAllActivity": "সব কার্যকলাপ দেখুন",
+  "recentOrders": "সাম্প্রতিক অর্ডার",
+  "noOrdersToday": "আজ এখনো কিছু বিক্রি হয়নি।",
+  "noOrdersThisWeek": "এই সপ্তাহে এখনো কিছু বিক্রি হয়নি।",
+  "orderDue": "{amount} বাকি",
+  "ordersMore": "{count, plural, other {আরও # অর্ডার}}",
+  "ordersAwaitingPayment": "{count, plural, other {# টি অর্ডারে}} {amount} বাকি",
+  "viewAllOrders": "সব অর্ডার দেখুন",
+  "orderCount": "{count, plural, =0 {কোনো অর্ডার নেই} other {# অর্ডার}}"
 }
