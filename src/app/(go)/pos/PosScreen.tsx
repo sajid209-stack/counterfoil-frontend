@@ -887,9 +887,17 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
                      it. `overflow-hidden` (which keeps the press tint inside
                      the rounded corners) was clipping the button's outline
                      completely, so tabbing across the product wall moved the
-                     focus and showed nothing at all. A ring is a box-shadow,
-                     so the card's own overflow cannot eat it. */
-                  className="go-surface flex overflow-hidden transition-shadow duration-quick hover:shadow-md focus-within:ring-2 focus-within:ring-ember active:scale-[0.99]"
+                     focus and showed nothing at all.
+
+                     INSET, because an outset ring is painted outside the card's
+                     box and the scroller above is `overflow-y-auto` — which in
+                     CSS forces the other axis to clip too. Its content edge and
+                     the grid's first card share an origin with no padding
+                     between them, so the top row and the left column had two
+                     pixels of ember drawn outside the clip and thrown away.
+                     Inset needs no room, and it is what the search field on
+                     this same screen already does. */
+                  className="go-surface flex overflow-hidden transition-shadow duration-quick hover:shadow-md focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember active:scale-[0.99]"
                 >
                 <button type="button" onClick={() => tapProduct(p)} className="flex min-w-0 flex-1 flex-col gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-ember/10">
                   <span className="flex w-full items-start justify-between gap-tight">

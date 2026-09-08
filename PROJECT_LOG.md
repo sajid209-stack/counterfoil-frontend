@@ -4475,3 +4475,48 @@ Both flows that use `DateStrip`: `/pos` and `/sell` each gain a sixth chip,
 and the CTA live. Money path unchanged — Yoga Session 20 → 3, badge Limited. 45
 sheet variants still on theme, zero console errors. `tsc`, `build`, `eslint`
 clean.
+
+## The selected card's ring was being cut off (2026-09-08)
+
+Reported from the till: the ember outline on a chosen product card is clipped.
+
+### Measured, not guessed
+
+The ring is `rgb(249,74,0) 0 0 0 2px` — a spread box-shadow, painted **outside**
+the card's border box. Walking up from the card, exactly one ancestor clips:
+
+```
+div.flex-1.overflow-y-auto   overflow: auto/auto   left 12  top 204  padding 0
+grid first card              left 12  top 204
+```
+
+Two facts meeting: **`overflow-y: auto` forces `overflow-x` to compute to `auto`
+as well** — CSS does not allow one axis to clip while the other stays visible —
+so a vertical scroller clips sideways too. And the scroller's content edge and
+the grid's first card share an origin with no padding between them. So the top
+row and the left column each had their two pixels of ember painted outside the
+clip and thrown away. Cards in the middle were fine, which is why this survived
+so long.
+
+The comment sitting on that very line said "a ring is a box-shadow, so the
+card's own overflow cannot eat it". True, and beside the point: it was never
+the card's own overflow.
+
+### The fix
+
+`ring-inset`. An inset ring is painted inside the border box, so there is
+nothing outside to clip and no padding needed to make room. It is also what the
+search field on the same screen already does — the pattern existed, the cards
+just were not using it.
+
+The alternative was padding the scroller by 2px, which moves every card to fix
+two of them.
+
+### Verified
+
+Box-shadow now reports `… 2px inset` on both `/pos` and `/sell`; the cropped
+render shows the ring closed on all four sides at the 18px radius. Money path
+unchanged — Yoga Session 20 → 3, badge Limited. 45 sheet variants on theme,
+zero console errors. Lint on the two files is the documented pre-existing
+PosScreen baseline; the diff is `focus-within:ring-inset` and a corrected
+comment.

@@ -143,7 +143,7 @@ export function Catalogue({
                 <div
                   key={p.id}
                   data-focus-host
-                  className="go-surface flex overflow-hidden transition-shadow duration-quick hover:shadow-md focus-within:ring-2 focus-within:ring-ember active:scale-[0.99]"
+                  className="go-surface flex overflow-hidden transition-shadow duration-quick hover:shadow-md focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember active:scale-[0.99]"
                 >
                   <button
                     type="button"
