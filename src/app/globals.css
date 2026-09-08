@@ -438,6 +438,24 @@
      on. Written out rather than taken as an alpha of the base colour: the
      status colours are 700/800-level, and 10% of a dark green over paper is a
      grey-green rather than a pastel. */
+  /* ── Categorical chart slots ──────────────────────────────────────────
+     Assigned in this fixed order and never cycled. Validated rather than
+     chosen: brand / blue-600 / amber-700 / green-600 clears the lightness
+     band, the chroma floor, the normal-vision floor (ΔE 25.3) and 3:1 contrast
+     on the card. Its one warning is the deuteranopia pair at ΔE 7.3, in the
+     6–8 floor band, which is legal only alongside secondary encoding — every
+     chart using these ships direct labels and a 2px gap between fills.
+
+     The donut used to take `fg / strong / faint / line / muted`: five UI
+     neutrals, cycled. Measured, that failed the lightness band, failed the
+     chroma floor on five of six slots (they "read gray"), and failed the
+     normal-vision floor at ΔE 8.1 — and in dark `strong` and `faint` are the
+     same hex, so two segments were literally one colour. */
+  --chart-1: #f94a00;
+  --chart-2: #2563eb;
+  --chart-3: #b45309;
+  --chart-4: #16a34a;
+
   --color-ember-wash: #ffe4d6;
   --color-success-wash: #d8efdf;
   --color-muted-wash: #eae8e3;
@@ -495,6 +513,15 @@
   /* Dark keeps the same idea the other way up: a tint of the status colour
      dropped into the card, not a pastel lifted onto it. A pastel here would
      glow. */
+  /* Dark takes its own steps from the same ramps rather than flipping the
+     light ones: every 400-level step measured L 0.71–0.84, outside the dark
+     band of 0.48–0.67. These four sit inside it and clear 3:1 on the dark
+     card, normal-vision ΔE 23.7. */
+  --chart-1: #f94a00;
+  --chart-2: #3b82f6;
+  --chart-3: #d97706;
+  --chart-4: #16a34a;
+
   --color-ember-wash: #4a2a17;
   --color-success-wash: #17362a;
   --color-muted-wash: #2b2a27;

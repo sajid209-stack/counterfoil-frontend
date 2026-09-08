@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight, Download, Plus, X } from "lucide-react";
 import { DEMO_TODAY } from "@/lib/schedule";
-import { BarChart, Button, DateField, DonutChart, HBarChart, LineChart, Modal, PageShell, StatusPill, Tabs, useToast, FormField } from "@/components/ui";
+import { AreaChart, BarChart, Button, DateField, DonutChart, HBarChart, LineChart, Modal, PageShell, StatusPill, Tabs, useToast, FormField } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getAnalytics,
@@ -22,7 +22,7 @@ import {
   type TransactionRow,
   type TxStatus,
 } from "@/lib/api";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatMoneyCompact } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { OrderLinesDetail } from "@/components/OrderLinesDetail";
 
@@ -115,7 +115,11 @@ function SalesReportInner() {
     }
     return f;
   });
-  const [tab, setTab] = useState(params.get("tab") ?? "transactions");
+  /* Opens on the summary, not on 146 individual receipts. A sales report is
+     opened to find out how sales are going; the ledger is the raw material for
+     that answer rather than the answer, and it is still one tab away — and
+     still the tab a ?tab= link can point at. */
+  const [tab, setTab] = useState(params.get("tab") ?? "summary");
   const [added, setAdded] = useState<FilterKey[]>(() => FILTER_DEFS.map((d) => d.key).filter((k) => !!(filters as unknown as Record<string, string | undefined>)[k]));
 
   // State → URL (replace, so back doesn't spam history).
@@ -253,7 +257,7 @@ function SalesReportInner() {
 
   const card = "card-surface p-section";
   const chartSkeleton = <div className="h-36 animate-pulse rounded-sm bg-line/50" aria-busy="true" />;
-  const emptyChart = <p className="flex h-36 items-center justify-center text-[13px] text-faint">{t("nothingInRange")}</p>;
+  const emptyChart = <p className="flex h-36 items-center justify-center text-[13px] text-muted">{t("nothingInRange")}</p>;
   const hasData = (pts?: { value: number }[]) => (pts ?? []).some((p) => p.value > 0);
 
   return (
@@ -291,9 +295,9 @@ function SalesReportInner() {
         <div className="mt-tight flex flex-wrap items-center gap-tight">
           {added.map((k) => (
             <span key={k} className="flex items-center gap-inline rounded-lg border border-line bg-subtle py-inline pl-tight pr-inline">
-              <span className="text-[12px] uppercase tracking-wide text-faint">{t(`filters.${k}`)}</span>
+              <span className="text-[12px] uppercase tracking-wide text-muted">{t(`filters.${k}`)}</span>
               {filterControl(k)}
-              <button type="button" aria-label={t("filters.remove", { label: t(`filters.${k}`) })} onClick={() => removeFilter(k)} className="text-faint hover:text-danger"><X size={14} strokeWidth={1.5} /></button>
+              <button type="button" aria-label={t("filters.remove", { label: t(`filters.${k}`) })} onClick={() => removeFilter(k)} className="text-muted hover:text-danger"><X size={14} strokeWidth={1.5} /></button>
             </span>
           ))}
           {added.length < FILTER_DEFS.length && (
@@ -302,7 +306,7 @@ function SalesReportInner() {
               {FILTER_DEFS.filter((d) => !added.includes(d.key)).map((d) => <option key={d.key} value={d.key}>{t(`filters.${d.key}`)}</option>)}
             </select>
           )}
-          {activeCount > 0 && <button type="button" onClick={clearAll} className="text-[13px] text-faint hover:text-danger">{t("clearAll")}</button>}
+          {activeCount > 0 && <button type="button" onClick={clearAll} className="text-[13px] text-muted hover:text-danger">{t("clearAll")}</button>}
         </div>
       </div>
 
@@ -341,12 +345,12 @@ function SalesReportInner() {
                 <FragmentRow key={r.id} r={r} expanded={expanded === r.id} onToggle={() => setExpanded(expanded === r.id ? null : r.id)} onOpen={() => router.push(`/orders/${r.id}`)} />
               ))}
               {!txQ.loading && (txQ.data?.rows.length ?? 0) === 0 && (
-                <tr><td colSpan={10} className="px-comfortable py-hero text-center text-[13px] text-faint">{t("transactions.empty")}</td></tr>
+                <tr><td colSpan={10} className="px-comfortable py-hero text-center text-[13px] text-muted">{t("transactions.empty")}</td></tr>
               )}
             </tbody>
           </table>
           <div className="flex items-center justify-between border-t border-line px-comfortable py-tight">
-            <span className="font-mono text-[12px] text-faint">{txQ.data ? t("transactions.pageRange", { from: cursor + 1, to: cursor + txQ.data.rows.length, total: txQ.data.total }) : t("transactions.loadingRange")}</span>
+            <span className="font-mono text-[12px] text-muted">{txQ.data ? t("transactions.pageRange", { from: cursor + 1, to: cursor + txQ.data.rows.length, total: txQ.data.total }) : t("transactions.loadingRange")}</span>
             <div className="flex gap-tight">
               <Button size="sm" variant="secondary" disabled={cursor === 0} onClick={() => setCursor(Math.max(0, cursor - 25))}>{t("transactions.previous")}</Button>
               <Button size="sm" variant="secondary" disabled={!txQ.data?.cursor} onClick={() => setCursor(cursor + 25)}>{t("transactions.next")}</Button>
@@ -359,11 +363,11 @@ function SalesReportInner() {
         <div className="flex flex-col gap-section">
           <div className="grid gap-tight sm:grid-cols-2">
             <div className="card-surface p-section">
-              <p className="type-label text-[12px] text-faint">{t("outstanding.totalOwed")}</p>
+              <p className="type-label text-[12px] text-muted">{t("outstanding.totalOwed")}</p>
               <p className="mt-tight font-mono text-3xl tabular-nums text-warning">{formatMoney(totalOwed)}</p>
             </div>
             <div className="card-surface p-section">
-              <p className="type-label text-[12px] text-faint">{t("outstanding.count")}</p>
+              <p className="type-label text-[12px] text-muted">{t("outstanding.count")}</p>
               <p className="mt-tight font-mono text-3xl tabular-nums">{outstanding.length}</p>
             </div>
           </div>
@@ -383,7 +387,7 @@ function SalesReportInner() {
                 {!ordersQ.loading && outstanding.map(({ o, paid, owed }) => (
                   <tr key={o.id} onClick={() => router.push(`/orders/${o.id}`)} className="cursor-pointer border-b border-line last:border-0 hover:bg-subtle/60">
                     <td className="whitespace-nowrap px-comfortable py-tight font-mono text-[12px]">{o.reference}</td>
-                    <td className="px-comfortable py-tight">{o.customerName ?? <span className="text-faint">—</span>}</td>
+                    <td className="px-comfortable py-tight">{o.customerName ?? <span className="text-muted">—</span>}</td>
                     <td className="whitespace-nowrap px-comfortable py-tight font-mono text-[12px] text-muted">{o.createdAt.slice(0, 10)}</td>
                     <td className="whitespace-nowrap px-comfortable py-tight text-right font-mono tabular-nums">{formatMoney(o.total)}</td>
                     <td className="whitespace-nowrap px-comfortable py-tight text-right font-mono tabular-nums text-muted">{formatMoney(paid)}</td>
@@ -391,7 +395,7 @@ function SalesReportInner() {
                   </tr>
                 ))}
                 {!ordersQ.loading && outstanding.length === 0 && (
-                  <tr><td colSpan={6} className="px-comfortable py-hero text-center text-[13px] text-faint">{t("outstanding.empty")}</td></tr>
+                  <tr><td colSpan={6} className="px-comfortable py-hero text-center text-[13px] text-muted">{t("outstanding.empty")}</td></tr>
                 )}
               </tbody>
             </table>
@@ -407,9 +411,9 @@ function SalesReportInner() {
             <div className="mb-section grid grid-cols-2 gap-tight lg:grid-cols-4">
               {([["gross", t("summary.gross"), s?.gross, s?.prevGross], ["refunds", t("summary.refunds"), s?.refunds, undefined], ["net", t("summary.net"), s?.net, s?.prevNet], ["tickets", t("summary.tickets"), s?.ticketCount, s?.prevTicketCount]] as const).map(([key, label, v, pv]) => (
                 <div key={key} className={card}>
-                  <p className="type-label text-[12px] text-faint">{label}</p>
+                  <p className="type-label text-[12px] text-muted">{label}</p>
                   <p className="mt-tight whitespace-nowrap font-mono text-2xl tabular-nums">{v == null ? "—" : key === "tickets" ? String(v) : formatMoney(v as number)}</p>
-                  {pv != null && v != null && <p className="mt-inline font-mono text-[12px] text-faint">{t("summary.vsPrev", { delta: d(v as number, pv as number) })}</p>}
+                  {pv != null && v != null && <p className="mt-inline font-mono text-[12px] text-muted">{t("summary.vsPrev", { delta: d(v as number, pv as number) })}</p>}
                 </div>
               ))}
             </div>
@@ -443,7 +447,7 @@ function SalesReportInner() {
                       <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(r.gross)}</td>
                       <td className="px-comfortable text-right font-mono text-[13px] tabular-nums text-danger">{r.refunds ? `−${formatMoney(r.refunds)}` : "—"}</td>
                       <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(r.net)}</td>
-                      <td className="px-comfortable text-right font-mono text-[12px] text-faint">{(r.shareOfTotal * 100).toFixed(0)}%</td>
+                      <td className="px-comfortable text-right font-mono text-[12px] text-muted">{(r.shareOfTotal * 100).toFixed(0)}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -459,12 +463,28 @@ function SalesReportInner() {
           <div className="flex flex-col gap-tight">
             <div className={card}>
               <div className="mb-tight flex items-center justify-between">
-                <p className="type-label text-[12px] text-muted">{t("charts.revenueOverTime")} <span className="normal-case text-faint">{t("charts.revenueOverTimeNote")}</span></p>
+                <p className="type-label text-[12px] text-muted">{t("charts.revenueOverTime")} <span className="normal-case text-muted">{t("charts.revenueOverTimeNote")}</span></p>
                 <select aria-label={t("charts.auto")} value={gran} onChange={(e) => setGran(e.target.value as typeof gran)} className={selectCls}>
                   <option value="auto">{t("charts.auto")}</option><option value="hour">{t("charts.hourly")}</option><option value="day">{t("charts.daily")}</option><option value="week">{t("charts.weekly")}</option>
                 </select>
               </div>
-              {anQ.loading ? chartSkeleton : hasData(a?.revenue) ? <LineChart points={a!.revenue!} fmt={money} /> : emptyChart}
+              {/* AreaChart, not LineChart. The sales report's headline figure was
+                  drawn by the sparkline component — no gridlines, no y-axis, and
+                  its period labels sitting two pixels off the bottom edge where
+                  the previous-period line runs through them. You could see the
+                  shape of the month and not read a single value off it. The
+                  charted component was already in the module, used by the
+                  dashboard and by nothing here. */}
+              {anQ.loading ? chartSkeleton : hasData(a?.revenue) ? (
+                <AreaChart
+                  points={a!.revenue!}
+                  fmt={money}
+                  fmtAxis={(v) => formatMoneyCompact(v)}
+                  height={300}
+                  valueLabel={t("charts.revenueOverTime")}
+                  compareLabel={t("charts.revenueOverTimeNote")}
+                />
+              ) : emptyChart}
             </div>
 
             <div className="grid gap-tight lg:grid-cols-3">
@@ -528,7 +548,7 @@ function FragmentRow({ r, expanded, onToggle, onOpen }: { r: TransactionRow; exp
   return (
     <>
       <tr className="h-12 cursor-pointer border-b border-line hover:bg-subtle" onClick={onOpen}>
-        <td className="pl-tight"><button type="button" aria-label={t("transactions.lines")} onClick={(e) => { e.stopPropagation(); onToggle(); }} className="flex h-8 w-8 items-center justify-center text-faint hover:text-fg">{expanded ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}</button></td>
+        <td className="pl-tight"><button type="button" aria-label={t("transactions.lines")} onClick={(e) => { e.stopPropagation(); onToggle(); }} className="flex h-8 w-8 items-center justify-center text-muted hover:text-fg">{expanded ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}</button></td>
         <td className="whitespace-nowrap px-comfortable font-mono text-[12px] tabular-nums">{day} {time}</td>
         <td className="whitespace-nowrap px-comfortable font-mono text-[12px]">{r.reference}</td>
         <td className="min-w-0 max-w-56 truncate px-comfortable">{r.itemsLabel}</td>

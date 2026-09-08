@@ -4641,3 +4641,72 @@ Contrast both themes: **zero**. Ten other tables unaffected. `tsc`, `build`
 clean; the two lint errors under `bookings/` are pre-existing in
 `ProductWizard` and `layouts/[id]`, untouched here. i18n 0 / 0 across 51 keys
 in the namespace.
+
+## Sales reports — the report was behind the ledger (2026-09-08)
+
+Chart work, so the `dataviz` method rather than taste: pick the form, assign
+colour by its job, **run the validator**, apply mark specs, then render it and
+look.
+
+### It opened on the raw material, not the answer
+
+Four tabs — Transactions, Summary, Outstanding, Analytics — and it landed on
+**Transactions: 146 individual receipts, no figure of money anywhere on screen**.
+A sales report is opened to find out how sales are going; the ledger is what
+that answer is computed *from*. All seven charts sat on the fourth tab. It opens
+on Summary now, and `?tab=` still points anywhere.
+
+### The headline chart had no axis
+
+"Revenue over time" — the page's whole point — was drawn with **`LineChart`, the
+sparkline component**: no gridlines, no y-axis, and period labels two pixels off
+the bottom edge with the previous-period line running through them. Measured:
+`gridLines: 0`, `paths: 0`, x-labels at `y=159` in a 161px box. You could see the
+shape of the month and not read one value off it.
+
+`AreaChart` — gridlines, a y-axis, an area fill, a crosshair tooltip — was in
+the same module all along, **used by the dashboard and by nothing on this page**.
+Swapped. Now `gridLines: 5`, `paths: 3`, labels at `y=292` in a 300px box,
+reading ৳0 → ৳100k.
+
+### The donut palette failed, measured
+
+The categorical slots were `ember, fg, strong, faint, line, muted` — one brand
+hue plus **five UI neutrals, cycled**. The validator:
+
+```
+[FAIL] Lightness band      3 slots outside
+[FAIL] Chroma floor        5 of 6 below floor (read gray)
+[FAIL] Normal-vision floor ΔE 8.1 — below 15, hard to tell apart with full colour vision
+[WARN] Contrast vs surface 3 slots below 3:1
+```
+
+And in dark, `--color-strong` and `--color-faint` are **the same hex**: two
+segments were literally one colour.
+
+Replaced with four slots snapped from the app's own ramps and validated per
+mode — light `brand/blue-600/amber-700/green-600`, dark
+`brand/blue-500/amber-600/green-600`. Both pass; dark takes **its own steps**
+because every 400-level step measured L 0.71–0.84, outside the dark band of
+0.48–0.67. Brand stays slot 1, so the single-series bar charts remain ember —
+which was already right: nominal bars take one hue, never colour-by-value.
+
+The one remaining warning is a deuteranopia pair in the 6–8 floor band, legal
+only with secondary encoding: the donut carries direct labels with values, and
+segments now have the **2px surface gap** the mark spec asks for.
+
+### Two more, found by looking rather than measuring
+
+- The forced last x-label printed **"07-2807-2"** — the end label drawn on top
+  of the previous tick. It is dropped when the tick before it is within one
+  step. Overlapping pairs on the axis row: **0**.
+- **Fifteen** `text-faint` uses — KPI labels, comparison deltas, pagination
+  range — at 1.87:1. Thirty findings across the page, now zero. Seventh
+  instance of the disabled token used for live content this session.
+
+### Verified
+
+Contrast both themes: 30 → **0**. Axis row: 0 overlapping labels. Dashboard,
+which shares `AreaChart`, unchanged (5 gridlines, 2 paths, no console errors).
+`tsc` and `build` clean; the one `charts.tsx` lint error is the pre-existing
+`acc` mutation — the diff there touches the line that *reads* it, not the write.

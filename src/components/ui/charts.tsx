@@ -195,11 +195,25 @@ export function AreaChart({
           <path d={area} fill={`url(#${gradId})`} />
           <path d={line((p) => p.value)} fill="none" stroke="var(--color-ember)" strokeWidth="2" strokeLinejoin="round" />
 
-          {points.map((p, i) => (i % every === 0 || i === points.length - 1 ? (
-            <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor="middle" className="fill-[var(--color-muted)] text-[12px]">
-              {p.label}
-            </text>
-          ) : null))}
+          {/* The last label is always drawn so the axis states where it ends —
+              but only if the previous one is not already there. Forcing it
+              unconditionally printed "07-28" and "07-29" on top of each other
+              at the right edge, which reads as one corrupt string. */}
+          {points.map((p, i) => {
+            const last = points.length - 1;
+            const isTick = i % every === 0;
+            const isLast = i === last;
+            if (isLast && !isTick && last % every > last - every + 1) return null;
+            if (!isTick && !isLast) return null;
+            // The forced last label collides when the previous tick is within
+            // one step of the end; drop the tick, keep the end.
+            if (isTick && !isLast && last - i < every) return null;
+            return (
+              <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor="middle" className="fill-[var(--color-muted)] text-[12px]">
+                {p.label}
+              </text>
+            );
+          })}
 
           {/* Hover guide, drawn over the series so it reads as a cursor. */}
           {active && (
@@ -326,19 +340,47 @@ export function HBarChart({ points, fmt }: { points: ChartPoint[]; fmt: (v: numb
 }
 
 /** Donut with a legend carrying amounts and percentages. */
-export function DonutChart({ points, fmt }: { points: ChartPoint[]; fmt: (v: number) => string }) {
-  const total = points.reduce((s, p) => s + p.value, 0) || 1;
-  const colors = ["var(--color-ember)", "var(--color-fg)", "var(--color-strong)", "var(--color-faint)", "var(--color-line)", "var(--color-muted)"];
+export function DonutChart({
+  points,
+  fmt,
+  otherLabel = "Other",
+}: {
+  points: ChartPoint[];
+  fmt: (v: number) => string;
+  /** What the fifth-and-beyond slice is called. */
+  otherLabel?: string;
+}) {
+  /* Four slots, then "Other". A ninth series is never a generated hue, and a
+     fifth here would have to reuse one — which makes two segments claim the
+     same identity in the ring and the legend both. */
+  const shown = points.length <= 4
+    ? points
+    : [
+        ...points.slice(0, 3),
+        {
+          label: otherLabel,
+          value: points.slice(3).reduce((sum, p) => sum + p.value, 0),
+        },
+      ];
+  const total = shown.reduce((s, p) => s + p.value, 0) || 1;
+  /* The four validated categorical slots, in fixed order and never cycled.
+     A fifth category folds into "Other" rather than inventing a hue — see the
+     token comment in globals.css for what the old neutral ramp measured. */
+  const colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
   const r = 42, c = 2 * Math.PI * r;
   let acc = 0;
   return (
     <div className="flex items-center gap-section">
       <svg viewBox="0 0 110 110" className="h-28 w-28 shrink-0" role="img">
-        {points.map((p, i) => {
+        {shown.map((p, i) => {
           const frac = p.value / total;
+          /* A 2px gap in the surface colour between neighbouring fills, so two
+             segments never touch — the mark spec's separator, and the secondary
+             encoding the 6–8 CVD band obliges. */
+          const gap = shown.length > 1 ? 2 : 0;
           const seg = (
-            <circle key={p.label} cx="55" cy="55" r={r} fill="none" stroke={colors[i % colors.length]} strokeWidth="14"
-              strokeDasharray={`${frac * c} ${c}`} strokeDashoffset={-acc * c} transform="rotate(-90 55 55)">
+            <circle key={p.label} cx="55" cy="55" r={r} fill="none" stroke={colors[i]} strokeWidth="14"
+              strokeDasharray={`${Math.max(0, frac * c - gap)} ${c}`} strokeDashoffset={-acc * c} transform="rotate(-90 55 55)">
               <title>{`${p.label} · ${fmt(p.value)} · ${Math.round(frac * 100)}%`}</title>
             </circle>
           );
@@ -347,9 +389,9 @@ export function DonutChart({ points, fmt }: { points: ChartPoint[]; fmt: (v: num
         })}
       </svg>
       <div className="min-w-0 flex-1">
-        {points.map((p, i) => (
+        {shown.map((p, i) => (
           <div key={p.label} className="flex items-center gap-tight text-[12px]">
-            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: colors[i % colors.length] }} />
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: colors[i] }} />
             <span className="min-w-0 flex-1 truncate">{p.label}</span>
             <span className="whitespace-nowrap font-mono text-[12px] tabular-nums">{fmt(p.value)} · {Math.round((p.value / total) * 100)}%</span>
           </div>
