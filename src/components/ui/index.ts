@@ -11,6 +11,8 @@ export { PageShell } from "./PageShell";
 export { EmptyState } from "./EmptyState";
 export { Modal, ConfirmDialog } from "./Modal";
 export { ToastProvider, useToast } from "./Toast";
+export { ActionMenu } from "./ActionMenu";
+export type { ActionMenuItem } from "./ActionMenu";
 export { StatStrip } from "./StatStrip";
 export type { StatItem } from "./StatStrip";
 export { Tabs } from "./Tabs";

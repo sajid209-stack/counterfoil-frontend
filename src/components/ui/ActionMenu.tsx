@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-export interface RowMenuItem {
+export interface ActionMenuItem {
   key: string;
   label: string;
   icon?: React.ReactNode;
@@ -15,18 +15,18 @@ export interface RowMenuItem {
 }
 
 /**
- * The per-row actions a catalogue needs and this one had none of.
+ * An overflow menu for actions that should not all be buttons.
  *
- * Every state change — switching a product off for the season, archiving one
- * that is finished, copying one to make its sibling — meant opening the record,
- * finding the field, saving, and coming back. For a wall of twenty products
- * that is the whole afternoon.
+ * Written page-local for the bookings catalogue with a note that a second
+ * screen would move it here. This is that second screen: an order carries five
+ * things you can do to it, and a row of five equal buttons states no opinion
+ * about which one you came for — while putting "Refund" and "Write off", both
+ * of which move money, at the same weight as "Print receipt".
  *
- * Page-local on purpose. It is the first menu of its kind in the app; if a
- * second screen wants one it can move to `components/ui` then, which is the
- * same rule `StatStrip` was extracted under.
+ * It stops its own click and key events, so it is safe inside a table row that
+ * navigates.
  */
-export function RowMenu({ items, label }: { items: RowMenuItem[]; label: string }) {
+export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: string }) {
   const [open, setOpen] = useState(false);
   const [up, setUp] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);

@@ -108,5 +108,9 @@
   "range7d": "Last 7 days",
   "range30d": "Last 30 days",
   "statExcluded": "excl. {count} cancelled / refunded",
-  "itemCount": "{count, plural, one {# item} other {# items}}"
+  "itemCount": "{count, plural, one {# item} other {# items}}",
+  "moreActions": "More actions",
+  "cardMoney": "Money",
+  "settled": "Paid in full.",
+  "refundedLabel": "Refunded"
 }

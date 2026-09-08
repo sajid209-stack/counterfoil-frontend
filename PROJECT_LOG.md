@@ -4710,3 +4710,117 @@ Contrast both themes: 30 → **0**. Axis row: 0 overlapping labels. Dashboard,
 which shares `AreaChart`, unchanged (5 gridlines, 2 paths, no console errors).
 `tsc` and `build` clean; the one `charts.tsx` lint error is the pre-existing
 `acc` mutation — the diff there touches the line that *reads* it, not the write.
+
+## The order page — one primary action, one money block (2026-09-08)
+
+Measured first. Nothing was broken: no clipping, no overflow, no console
+errors. Everything wrong here was a matter of emphasis, which is the harder
+kind to see and the kind an order page lives or dies by.
+
+### Five equal buttons state no opinion about which one you came for
+
+The header carried **Print tickets · Print receipt · Resend ticket · Refund… ·
+Write off…**, all the same weight — so **Refund** and **Write off**, both of
+which move money, sat at exactly the weight of Print receipt, and a part-paid
+order offered **no primary action at all** while somebody owed money.
+
+One primary, one secondary, the rest behind a menu. **Take payment** is the
+only action that is ever urgent, so it is the only one that is ever primary,
+and it appears only while a balance is outstanding. Print receipt stays as the
+secondary. The other four moved into an overflow, with the two that move money
+drawn in danger.
+
+The menu is the bookings catalogue's `RowMenu`, promoted to `components/ui`
+as **`ActionMenu`** — exactly as its own doc comment predicted a second screen
+would do. `git mv`, so its history follows it.
+
+### Total and Paid were the same number, printed twice
+
+Three cards across the top: Placed, Total, Paid. On a settled order — which is
+most of them — Total and Paid are **identical**, so two thirds of the band said
+one thing twice, and the figure that actually needs a decision (what is still
+owed) was a 12px afterthought under the second of them.
+
+One money block now. The lead figure is **Outstanding** where there is one, in
+warning, at 30px; where there is not it falls back to Paid with "Paid in full."
+under it. Total, Paid and — only when there is one — Refunded sit beside it as
+a breakdown. Exactly one loud line either way, which is the rule the till's pay
+panel already follows.
+
+Verified on both states: `ord_001022` reads **Outstanding ৳1,537.50** in
+`rgb(146,64,14)` over Total ৳3,075.00 / Paid ৳1,537.50, and Take payment opens
+pre-filled at ৳1,538. `ord_stress` reads **Paid ৳11,178.00 · Paid in full.**
+with no primary action, which is correct.
+
+### Seven copies of the same arithmetic
+
+`total − sum(payments)` was recomputed in **seven** places on this page —
+seven chances for one of them to drift — while `api/orders` has exported
+`orderPaid` / `orderOutstanding` since the orders list was built. Now computed
+once at the top and read everywhere, including by the take-payment modal.
+
+### The bottom half of the page was mostly empty card
+
+Four short cards paired off against each other full-width, each stretched to
+its neighbour: **Payments held one row and was drawn the height of a
+three-ticket list beside it.**
+
+Two columns from `xl` — the sale on the left (Money, Items, Reservations,
+Payments), the record on the right (Placed, Tickets, History, Internal notes).
+Desktop page height **1258px → 1005px**, cards sized to their contents.
+
+`xl` (1280) rather than `lg`: at 1024 the rail would be 230px, and a ticket
+code beside a status pill does not fit that.
+
+### Contrast, and the eighth instance of the same mistake
+
+Twelve `text-faint` uses on this page, and four more in the shared
+`OrderLinesDetail` — the line that says **which tiers were sold at what price**,
+or when the reservation is, rendered in the disabled-foreground token at
+**2.03:1 light / 1.94:1 dark**. That is the substance of the sale, not a greyed
+hint; a refunded line still says "not this one" through the strike-through
+above it. This is the eighth place this session where `faint` was carrying live
+content.
+
+Also fixed: the buyer's name was `font-mono text-[12px] text-faint` below the
+channel, as if it were metadata about the sale rather than the person who owes
+the figure beside it; a reservation row printed a **raw `2026-07-14 18:00`**
+where every other date on the page goes through `lib/format`; and that row
+truncated the product name, which the narrower column made unreadable
+("…Walking Tour of Ol…") — it wraps now, per the rule that a distinguishing
+name gets wrapped before it is cut.
+
+### A harness that was measuring the wrong thing
+
+The contrast probe reported ink-on-white at **1.13:1** and passed a page that
+was visibly fine. Its `bgOf` parsed `backgroundColor` with a regex — and
+Tailwind v4 hands back `color-mix()` / `color(srgb …)`, whose leading `1 1 1`
+parsed as near-black. It now resolves every colour through a 1×1 canvas, which
+takes any CSS colour syntax, and composites the ancestor stack properly.
+
+**Worth keeping: a regex is not a colour parser.** The first run's numbers were
+nonsense in both directions — it would equally have hidden a real failure.
+
+### Verified
+
+Contrast across the whole page: **0 findings** at 1512 and 390, light and dark
+(4 before the `OrderLinesDetail` fix). No page x-scroll, no hidden overflow
+inside `main`, nothing clipped, zero console errors at **390 · 768 · 1024 ·
+1280 · 1440 · 1512 · 1920**.
+
+Both shared components regression-checked **by doing**: the moved `ActionMenu`
+still drives the bookings catalogue — Deactivate takes the row ACTIVE →
+INACTIVE *and* the summary card 20 → 19, Activate puts both back — and
+`OrderLinesDetail` still renders inside the reports transaction rows and the
+POS print receipt (৳11,178.00, tiers intact).
+
+Bangla renders whole with **0 missing-message warnings** and no raw keys.
+`tsc`, `npm run build` and `eslint` clean on every file touched; i18n parity
+**0 missing / 0 extra** across 30 namespaces, four new keys in both locales.
+
+### Not done
+
+`OrderLinesDetail` still foots the Items card with "Paid Cash ৳11,178.00",
+which the Payments card immediately below repeats. It is shared with the POS
+receipt, where that line is the whole point, so it was left alone rather than
+edited in a shared component for one caller's benefit.

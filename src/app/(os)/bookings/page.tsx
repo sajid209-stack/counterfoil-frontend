@@ -11,6 +11,7 @@ import {
   EmptyState,
   PageShell,
   ProductThumb,
+  ActionMenu,
   StatStrip,
   StatusPill,
   useToast,
@@ -32,7 +33,6 @@ import { sellingBlockers, type Blocker } from "@/lib/sellable";
 import { cn } from "@/lib/cn";
 import { formatDate, formatMoney } from "@/lib/format";
 import { MD, useMediaQuery } from "@/lib/useMedia";
-import { RowMenu } from "./_components/RowMenu";
 
 const PAGE_SIZE = 10;
 
@@ -284,7 +284,7 @@ export default function ProductsPage() {
       header: "",
       width: "3rem",
       render: (p) => (
-        <RowMenu
+        <ActionMenu
           label={t("rowActions", { name: p.name })}
           items={[
             {

@@ -47,7 +47,12 @@ export function OrderLinesDetail({ order, compact = false }: { order: Pick<Order
             </span>
             <span className={`${money} ${refunded(l) ? "text-faint line-through" : ""}`}>{formatMoney(l.subtotal)}</span>
           </div>
-          <p className="font-mono text-[12px] text-faint">{l.tierId ? `${l.quantity} ${l.tierName} × ${formatMoney(l.unitPrice)}` : lineMeta(l)}</p>
+          {/* `faint` is the disabled-foreground token (2.03:1 light, 1.94:1
+              dark). This line says which tiers were sold at what price, or
+              when the reservation is — the substance of the sale, not a
+              greyed-out hint. A refunded line still says "not this one"
+              through the strike-through above it. */}
+          <p className="font-mono text-[12px] text-muted">{l.tierId ? `${l.quantity} ${l.tierName} × ${formatMoney(l.unitPrice)}` : lineMeta(l)}</p>
           {l.lineDiscount > 0 && (
             <div className="flex justify-between font-mono text-[12px] text-danger">
               <span>Line discount</span><span className={money}>−{formatMoney(l.lineDiscount)}</span>

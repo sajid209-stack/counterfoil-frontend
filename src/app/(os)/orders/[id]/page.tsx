@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, CalendarClock, Lock, Printer, RotateCcw, Send, Unlock, Wallet } from "lucide-react";
 import {
+  ActionMenu,
   Button,
   EmptyState,
   FormField,
@@ -22,6 +23,8 @@ import {
   listProducts,
   listTickets,
   logOrderAction,
+  orderPaid,
+  orderOutstanding,
   addOrderNote,
   addOrderPayment,
   refundOrderLines,
@@ -34,7 +37,7 @@ import {
   type Booking,
   type WriteOffCategory,
 } from "@/lib/api";
-import { formatDateTime, formatMoney } from "@/lib/format";
+import { formatDateTime, formatDay, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { OrderLinesDetail } from "@/components/OrderLinesDetail";
 
@@ -96,6 +99,15 @@ export default function OrderDetailPage() {
 
   const o = order.data;
   const canRefund = o && (o.status === "paid" || o.status === "partial");
+
+  /* The money, computed once. This page recomputed `total - sum(payments)` in
+     seven places, which is seven chances for one of them to drift from the
+     rest — and `api/orders` has exported the answer since the orders list was
+     built. `refunded` is read from the lines rather than from the negative
+     payment, because a line knows what was actually given back. */
+  const paid = o ? orderPaid(o) : 0;
+  const owed = o ? orderOutstanding(o) : 0;
+  const refunded = o ? o.lines.reduce((s, l) => s + (l.refundedAmount ?? 0), 0) : 0;
   const orderBookings = useMemo(
     () => (bookingsQ.data?.data ?? []).filter((b) => b.orderId === params.id && b.status === "confirmed"),
     [bookingsQ.data, params.id],
@@ -146,16 +158,14 @@ export default function OrderDetailPage() {
 
   const openPay = () => {
     if (!o) return;
-    const outstanding = Math.max(0, o.total - o.payments.reduce((s, p) => s + p.amount, 0));
-    setPayTaka(String(Math.ceil(outstanding / 100)));
+    setPayTaka(String(Math.ceil(owed / 100)));
     setPayMethod("cash");
     setPayOpen(true);
   };
 
   const doTakePayment = async () => {
     if (!o) return;
-    const outstanding = Math.max(0, o.total - o.payments.reduce((s, p) => s + p.amount, 0));
-    const amount = Math.min(outstanding, Math.round((parseFloat(payTaka) || 0) * 100));
+    const amount = Math.min(owed, Math.round((parseFloat(payTaka) || 0) * 100));
     if (amount <= 0) return;
     setPaying(true);
     const res = await addOrderPayment(o.id, payMethod, amount);
@@ -204,37 +214,60 @@ export default function OrderDetailPage() {
       title={o?.reference ?? t("order")}
       actions={
         o ? (
+          /* One primary, one secondary, the rest behind a menu. Five equal
+             buttons state no opinion about which one you came for, and they
+             put Refund and Write off — both of which move money — at the same
+             weight as Print receipt. Taking the money owed is the only action
+             that is ever urgent, so it is the only one that is ever primary. */
           <div className="flex items-center gap-tight">
             <StatusPill status={o.status} />
-            <Button variant="secondary" icon={<Printer size={16} strokeWidth={1.5} />} onClick={() => router.push(`/print/tickets/${o.id}`)}>
-              {t("printTickets")}
-            </Button>
-            <Button variant="secondary" icon={<Printer size={16} strokeWidth={1.5} />} onClick={() => router.push(`/print/receipt/${o.id}`)}>
-              {t("printReceipt")}
-            </Button>
-            <Button variant="secondary" icon={<Send size={16} strokeWidth={1.5} />} onClick={() => setResendOpen(true)}>
-              {t("resendTicket")}
-            </Button>
-            {o.status === "partial" && o.total - o.payments.reduce((s, p) => s + p.amount, 0) > 0 && (
+            {owed > 0 && o.status === "partial" && (
               <Button icon={<Wallet size={16} strokeWidth={1.5} />} onClick={openPay}>
                 {t("takePayment")}
               </Button>
             )}
-            {canRefund && (
-              <Button variant="secondary" icon={<RotateCcw size={16} strokeWidth={1.5} />} onClick={() => setRefundOpen(true)}>
-                {t("refundAction")}
-              </Button>
-            )}
-            {canRefund && (
-              <Button variant="secondary" onClick={() => setWoOpen(true)}>
-                {t("writeOffAction")}
-              </Button>
-            )}
+            <Button variant="secondary" icon={<Printer size={16} strokeWidth={1.5} />} onClick={() => router.push(`/print/receipt/${o.id}`)}>
+              {t("printReceipt")}
+            </Button>
+            <ActionMenu
+              label={t("moreActions")}
+              items={[
+                {
+                  key: "tickets",
+                  label: t("printTickets"),
+                  icon: <Printer size={14} strokeWidth={1.5} />,
+                  onSelect: () => router.push(`/print/tickets/${o.id}`),
+                },
+                {
+                  key: "resend",
+                  label: t("resendTicket"),
+                  icon: <Send size={14} strokeWidth={1.5} />,
+                  onSelect: () => setResendOpen(true),
+                },
+                ...(canRefund
+                  ? [
+                      {
+                        key: "refund",
+                        label: t("refundAction"),
+                        icon: <RotateCcw size={14} strokeWidth={1.5} />,
+                        destructive: true,
+                        onSelect: () => setRefundOpen(true),
+                      },
+                      {
+                        key: "writeoff",
+                        label: t("writeOffAction"),
+                        destructive: true,
+                        onSelect: () => setWoOpen(true),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
           </div>
         ) : undefined
       }
     >
-      <Link href="/orders" className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg">
+      <Link href="/orders" className="mb-section inline-flex items-center gap-inline text-[13px] text-muted hover:text-fg">
         <ArrowLeft size={14} strokeWidth={1.5} /> {t("backOrders")}
       </Link>
 
@@ -242,37 +275,49 @@ export default function OrderDetailPage() {
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : (
         <div className="flex flex-col gap-section pb-hero">
-          <div className="grid gap-section sm:grid-cols-3">
-            <Card title={t("cardPlaced")}>
-              <p className="text-sm">{formatDateTime(o.createdAt)}</p>
-              <p className="mt-inline font-mono text-[12px] text-faint">
-                {channelLabel(o.channel)}
-                {o.customerName && (
-                  <>
-                    {" · "}
-                    {/* A named buyer with a record links to it; a bare name (an
-                        older order, or an anonymous walk-up) stays plain text. */}
-                    {o.customerId ? (
-                      <Link href={`/customers/${o.customerId}`} className="text-brand-foreground underline underline-offset-2">
-                        {o.customerName}
-                      </Link>
-                    ) : (
-                      o.customerName
-                    )}
-                  </>
-                )}
-              </p>
-            </Card>
-            <Card title={t("cardTotal")}>
-              <p className="font-mono text-2xl">{formatMoney(o.total)}</p>
-            </Card>
-            <Card title={t("cardPaid")}>
-              <p className="font-mono text-2xl">{formatMoney(o.payments.reduce((s, p) => s + p.amount, 0))}</p>
-              {o.total - o.payments.reduce((s, p) => s + p.amount, 0) > 0 && (
-                <p className="mt-inline font-mono text-[12px] text-warning">{t("outstandingLabel")} · {formatMoney(o.total - o.payments.reduce((s, p) => s + p.amount, 0))}</p>
-              )}
-            </Card>
-          </div>
+          {/* Two columns: the sale on the left, the record on the right.
+              Stacked full-width, the short cards paired off against each other
+              and each stretched to its neighbour — Payments held one row and
+              was drawn the height of a three-ticket list beside it, and the
+              bottom half of the page was mostly empty card. The rail is where
+              the short, standing material belongs. */}
+          <div className="grid gap-section xl:grid-cols-3 xl:items-start">
+            <div className="flex min-w-0 flex-col gap-section xl:col-span-2">
+              {/* One money block, not three cards two of which print the same
+                  number. Total and Paid are identical on a settled order, so
+                  stating them as separate headline figures spent two thirds of
+                  the band saying one thing twice. The lead figure is the one
+                  that needs a decision — what is still owed — falling back to
+                  what was taken once nothing is. */}
+              <div className="card-surface p-major">
+              <h2 className="type-label mb-section text-[12px] text-muted">{t("cardMoney")}</h2>
+              <div className="flex flex-wrap items-end justify-between gap-section">
+                <div className="min-w-0">
+                  <p className="type-label text-[12px] text-muted">{owed > 0 ? t("outstandingLabel") : t("cardPaid")}</p>
+                  <p className={`mt-inline text-3xl font-semibold tabular-nums ${owed > 0 ? "text-warning" : ""}`}>
+                    {formatMoney(owed > 0 ? owed : paid)}
+                  </p>
+                  {owed === 0 && <p className="mt-inline text-[13px] text-muted">{t("settled")}</p>}
+                </div>
+                <dl className="flex flex-wrap items-end gap-x-section gap-y-tight text-[13px]">
+                  <div>
+                    <dt className="type-label text-[12px] text-muted">{t("cardTotal")}</dt>
+                    <dd className="mt-inline tabular-nums">{formatMoney(o.total)}</dd>
+                  </div>
+                  <div>
+                    <dt className="type-label text-[12px] text-muted">{t("cardPaid")}</dt>
+                    <dd className="mt-inline tabular-nums">{formatMoney(paid)}</dd>
+                  </div>
+                  {/* Only when there is one — a count of nothing goes quiet. */}
+                  {refunded > 0 && (
+                    <div>
+                      <dt className="type-label text-[12px] text-muted">{t("refundedLabel")}</dt>
+                      <dd className="mt-inline tabular-nums text-danger">−{formatMoney(refunded)}</dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            </div>
 
           <Card title={t("cardItems")}>
             <OrderLinesDetail order={o} />
@@ -288,8 +333,12 @@ export default function OrderDetailPage() {
                 const edit = bookingEditable(b.id, ACTOR);
                 return (
                   <div key={b.id} className="flex flex-wrap items-center gap-section border-b border-line py-tight text-sm last:border-0">
-                    <span className="min-w-0 flex-1 truncate">{p?.name ?? b.productId}</span>
-                    <span className="font-mono text-[12px] text-muted">{b.slotStart.slice(0, 10)} {b.slotStart.slice(11, 16)} · {t("party", { size: b.partySize })}</span>
+                    {/* The name distinguishes one reservation from another, so it wraps
+                        rather than truncating — the column narrowed when the
+                        page went to two, and "…Walking Tour of Ol…" names
+                        nothing. */}
+                    <span className="min-w-0 flex-1 break-words">{p?.name ?? b.productId}</span>
+                    <span className="font-mono text-[12px] text-muted">{formatDay(b.slotStart.slice(0, 10))} {b.slotStart.slice(11, 16)} · {t("party", { size: b.partySize })}</span>
                     {!edit.editable && (
                       <span className="flex min-w-0 items-center gap-inline rounded-sm bg-warning/10 px-tight py-0.5 text-[12px] text-warning">
                         <Lock size={12} strokeWidth={2} className="shrink-0" />
@@ -315,10 +364,9 @@ export default function OrderDetailPage() {
             </Card>
           )}
 
-          <div className="grid gap-section sm:grid-cols-2">
             <Card title={t("cardPayments")}>
               {o.payments.length === 0 ? (
-                <p className="text-[13px] text-faint">{t("noPayments")}</p>
+                <p className="text-[13px] text-muted">{t("noPayments")}</p>
               ) : (
                 o.payments.map((p) => (
                   <div key={p.id} className="flex items-center justify-between border-b border-line py-tight text-sm last:border-0">
@@ -328,11 +376,34 @@ export default function OrderDetailPage() {
                 ))
               )}
             </Card>
+            </div>
+
+            {/* The rail: who bought it, what was issued, and what has happened
+                since. Short cards that never needed half the page each. */}
+            <div className="flex min-w-0 flex-col gap-section">
+            <Card title={t("cardPlaced")}>
+              <p className="text-sm">{formatDateTime(o.createdAt)}</p>
+              <p className="mt-inline text-[13px] text-muted">{channelLabel(o.channel)}</p>
+              {o.customerName && (
+                /* The buyer was rendered at 12px in the disabled grey, below
+                   the channel, as if it were metadata about the sale. It is
+                   the person who owes or is owed the figure beside it. */
+                <p className="mt-tight text-sm">
+                  {o.customerId ? (
+                    <Link href={`/customers/${o.customerId}`} className="text-brand-foreground underline underline-offset-2">
+                      {o.customerName}
+                    </Link>
+                  ) : (
+                    o.customerName
+                  )}
+                </p>
+              )}
+            </Card>
             <Card title={t("cardTickets", { count: ticketsQ.data?.data.length ?? 0 })}>
               {ticketsQ.loading ? (
                 <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /></div>
               ) : (ticketsQ.data?.data.length ?? 0) === 0 ? (
-                <p className="text-[13px] text-faint">{t("noTickets")}</p>
+                <p className="text-[13px] text-muted">{t("noTickets")}</p>
               ) : (
                 ticketsQ.data!.data.map((tk) => (
                   <div key={tk.id} className="flex items-center justify-between border-b border-line py-tight text-sm last:border-0">
@@ -342,29 +413,26 @@ export default function OrderDetailPage() {
                 ))
               )}
             </Card>
-          </div>
-
-          <div className="grid gap-section sm:grid-cols-2">
             <Card title={t("cardHistory")}>
               {(o.history ?? []).length === 0 ? (
-                <p className="text-[13px] text-faint">{t("noHistory")}</p>
+                <p className="text-[13px] text-muted">{t("noHistory")}</p>
               ) : (
                 [...(o.history ?? [])].reverse().map((h, i) => (
                   <div key={i} className="border-b border-line py-tight text-[13px] last:border-0">
                     <p>{h.text}</p>
-                    <p className="mt-inline font-mono text-[12px] text-faint">{formatDateTime(h.at)} · {h.who}</p>
+                    <p className="mt-inline font-mono text-[12px] text-muted">{formatDateTime(h.at)} · {h.who}</p>
                   </div>
                 ))
               )}
             </Card>
             <Card title={t("cardNotes")}>
               {(o.notes ?? []).length === 0 ? (
-                <p className="mb-tight text-[13px] text-faint">{t("noNotes")}</p>
+                <p className="mb-tight text-[13px] text-muted">{t("noNotes")}</p>
               ) : (
                 [...(o.notes ?? [])].reverse().map((n, i) => (
                   <div key={i} className="border-b border-line py-tight text-[13px] last:border-0">
                     <p>{n.text}</p>
-                    <p className="mt-inline font-mono text-[12px] text-faint">{formatDateTime(n.at)} · {n.who}</p>
+                    <p className="mt-inline font-mono text-[12px] text-muted">{formatDateTime(n.at)} · {n.who}</p>
                   </div>
                 ))
               )}
@@ -373,6 +441,7 @@ export default function OrderDetailPage() {
                 <Button size="sm" variant="secondary" disabled={!noteDraft.trim()} onClick={addNote}>{t("add")}</Button>
               </div>
             </Card>
+            </div>
           </div>
         </div>
       )}
@@ -393,7 +462,7 @@ export default function OrderDetailPage() {
           {o && (
             <div className="flex items-center justify-between rounded-sm bg-subtle px-comfortable py-tight text-[13px]">
               <span className="text-muted">{t("outstandingLabel")}</span>
-              <span className="font-mono tabular-nums">{formatMoney(Math.max(0, o.total - o.payments.reduce((s, p) => s + p.amount, 0)))}</span>
+              <span className="font-mono tabular-nums">{formatMoney(owed)}</span>
             </div>
           )}
           <FormField label={t("amountLabel")} variant="number" value={payTaka} onChange={(e) => setPayTaka(e.target.value)} help={t("amountHelp")} />
@@ -425,7 +494,7 @@ export default function OrderDetailPage() {
           ))}
         </div>
         <FormField className="mt-section" label={t("reasonLabel")} placeholder={t("reasonPlaceholder")} value={refundReason} onChange={(e) => setRefundReason(e.target.value)} />
-        <p className="mt-tight text-[12px] text-faint">{t("refundNote")}</p>
+        <p className="mt-tight text-[12px] text-muted">{t("refundNote")}</p>
       </Modal>
 
       {/* Write off a balance — not a refund; clears what's owed with a reason. */}
@@ -519,7 +588,7 @@ export default function OrderDetailPage() {
           <FormField label={t("newDate")} variant="date" value={moveDate} onChange={(e) => { setMoveDate(e.target.value); setMoveTime(""); }} />
           {moveDate && (
             moveSlots.length === 0 ? (
-              <p className="text-[13px] text-faint">{t("noSessionsOnDay")}</p>
+              <p className="text-[13px] text-muted">{t("noSessionsOnDay")}</p>
             ) : (
               <div className="grid grid-cols-4 gap-tight">
                 {moveSlots.map((s) => {
@@ -530,7 +599,7 @@ export default function OrderDetailPage() {
                       type="button"
                       disabled={!fits}
                       onClick={() => setMoveTime(s.time)}
-                      className={`flex h-12 flex-col items-center justify-center rounded-sm border font-mono text-[13px] ${moveTime === s.time ? "border-inverse bg-inverse text-inverse-fg" : fits ? "border-line bg-card" : "border-line bg-subtle text-faint"}`}
+                      className={`flex h-12 flex-col items-center justify-center rounded-sm border font-mono text-[13px] ${moveTime === s.time ? "border-inverse bg-inverse text-inverse-fg" : fits ? "border-line bg-card" : "border-line bg-subtle text-muted line-through"}`}
                     >
                       {s.time}
                       <span className="text-[12px]">{fits ? t("slotLeft", { count: s.remaining }) : t("slotFull")}</span>
@@ -540,7 +609,7 @@ export default function OrderDetailPage() {
               </div>
             )
           )}
-          <p className="text-[12px] text-faint">{t("moveNote", { size: moveFor?.partySize ?? 1 })}</p>
+          <p className="text-[12px] text-muted">{t("moveNote", { size: moveFor?.partySize ?? 1 })}</p>
         </div>
       </Modal>
     </PageShell>

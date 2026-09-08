@@ -108,5 +108,9 @@
   "range7d": "গত ৭ দিন",
   "range30d": "গত ৩০ দিন",
   "statExcluded": "{count}টি বাতিল / ফেরত বাদে",
-  "itemCount": "{count}টি আইটেম"
+  "itemCount": "{count}টি আইটেম",
+  "moreActions": "আরও অ্যাকশন",
+  "cardMoney": "অর্থ",
+  "settled": "সম্পূর্ণ পরিশোধিত।",
+  "refundedLabel": "ফেরত দেওয়া হয়েছে"
 }
