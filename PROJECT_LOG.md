@@ -4425,3 +4425,53 @@ themes: one finding, the declared white-on-ember at 3.50:1, identical light and
 dark. The money path still sells Yoga Session 20 → 3 with the card badging
 Limited, and 45 sheet variants remain on theme. `tsc`, `build` clean; lint
 unchanged from baseline; i18n 0 / 0.
+
+## The day you picked had nowhere to appear (2026-09-08)
+
+Reported straight after the picker shipped: choose a date from the calendar and
+nothing shows it.
+
+### What it was
+
+`DateStrip` draws a chip per entry in `dates` — the next few open days — and
+marks one selected by `value === d`. The calendar underneath it can reach any
+day at all. So picking a day outside that handful left **every chip unpressed**
+and closed the picker behind itself: the selection was real, the sheet's own
+summary line even said "Wed 19 Aug", but the day-picker showed nothing chosen.
+
+A control whose whole job is to show which day is selected, silently showing
+none, is worse than one that refuses the input.
+
+Measured before and after, which is the only reason this is a fix rather than a
+guess:
+
+```
+before        Today 29 Jul  pressed=true   … Sun 2 Aug  pressed=false
+after (bug)   Today 29 Jul  pressed=false  … Sun 2 Aug  pressed=false   ← none
+after (fix)   Today 29 Jul  pressed=false  … Sun 2 Aug  pressed=false
+              Wed 19 Aug    pressed=true                                ← joins
+```
+
+### The fix
+
+A day chosen from the calendar joins the strip, in date order. It is the only
+place its caption — remaining places, the low-availability warning — can appear
+either, so this was never only a highlight problem.
+
+ISO strings sort chronologically as plain strings, so the insert is a `sort()`.
+
+### Why it was not caught when the picker shipped
+
+The picker's own harness proved the *picker*: that a click set the value, the
+panel closed and the field updated. It never asked what the **surrounding
+control** did with a value it had no chip for. Testing a component in isolation
+and testing it in the thing that uses it are different tests, and only the
+second one had this bug in view.
+
+### Verified
+
+Both flows that use `DateStrip`: `/pos` and `/sell` each gain a sixth chip,
+`Wed 19 Aug`, pressed, with the sheet summary reading "Wed 19 Aug · 1 Drop-in"
+and the CTA live. Money path unchanged — Yoga Session 20 → 3, badge Limited. 45
+sheet variants still on theme, zero console errors. `tsc`, `build`, `eslint`
+clean.

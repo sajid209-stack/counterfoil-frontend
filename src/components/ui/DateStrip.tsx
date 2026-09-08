@@ -21,7 +21,7 @@
  * for a different week.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { DatePicker } from "./DatePicker";
@@ -64,6 +64,17 @@ export function DateStrip({
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  /* A day chosen from the calendar joins the strip.
+     The chips are the next few open days; the calendar can reach any day at
+     all. Choosing one outside that handful left every chip unpressed and the
+     picker closed behind it, so the sheet showed no chosen day anywhere — the
+     selection was real, and invisible. It gets a chip of its own now, in date
+     order, which is also the only place its caption can appear. */
+  const shown = useMemo(
+    () => (!value || dates.includes(value) ? dates : [...dates, value].sort()),
+    [dates, value],
+  );
+
   const label = (d: string) => {
     if (d === today) return labels.today;
     if (d === tomorrow) return labels.tomorrow;
@@ -77,7 +88,7 @@ export function DateStrip({
       {/* Three across on the narrowest phone, five once there is room — so
           five days are at most two rows and never a sideways scroll. */}
       <div className="grid grid-cols-3 gap-tight sm:grid-cols-5">
-        {dates.map((d) => {
+        {shown.map((d) => {
           const on = value === d;
           const cap = caption?.(d) ?? null;
           const isMarked = marked.includes(d);
