@@ -4520,3 +4520,64 @@ unchanged — Yoga Session 20 → 3, badge Limited. 45 sheet variants on theme,
 zero console errors. Lint on the two files is the documented pre-existing
 PosScreen baseline; the diff is `focus-within:ring-inset` and a corrected
 comment.
+
+## The bookings catalogue — what is on sale, and what cannot be (2026-09-08)
+
+### It could not say what a catalogue exists to say
+
+Six columns, and on this dataset **two of them carried no information at all**:
+`CHANNELS` read "counter · online" on all twenty rows and `UPDATED` read "15
+Jan 2026" on all twenty. Meanwhile nothing on the page answered the question a
+product catalogue is opened with — *can this actually be sold?*
+
+Status is not that answer. Status says somebody switched it on; it does not say
+the till would have anything to charge for. Those come apart exactly when a
+product is half-configured, which is exactly when somebody needs telling.
+
+`lib/sellable.ts` derives it from the record, nothing stored: no active price
+tier, a slot-selling type with no schedule, a court product with no court, or
+no channel at all. Unit-tested through `jiti` — nine cases including the
+combined one, all passing.
+
+### A correction to my own first pass
+
+I first drew this as a **"Ready to sell" column** — and it printed the same word
+on every one of twenty rows, which is precisely the criticism I had just made
+of `CHANNELS`. I had replaced two constant columns with a third.
+
+It is an exception now: the row's subtitle line carries the blockers in warning
+when there are any, and the ordinary behaviour description when there are not.
+Zero width when all is well, loud when it is not — the same rule as "a count of
+nothing goes quiet" on the customer record.
+
+**Stated plainly: it fires on nothing in this seed.** Every seeded product is
+complete, so the card reads "Not sellable 0" and no row shows a badge. The
+logic is proven by unit test rather than by the screen, and it is the kind of
+signal that is invisible until the day it matters.
+
+### The whole feature was untranslated
+
+`bookings/page.tsx`, `bookings/new` and `bookings/[id]` were three of only four
+OS screens with **no translator at all**, writing every label inline in
+English — while an empty `products` namespace sat registered in the i18n loader
+waiting for them. Filled it (30 keys, both locales) and wired the list page.
+The wizard and the detail page still need doing; noted rather than half-done.
+
+### Smaller
+
+- `text-faint` on the row subtitle — the **sixth** instance of the disabled
+  token used for real content this session.
+- Channels rendered as lowercase mono `counter · online`, which reads as a
+  stored enum. Words now, and `Nowhere` in warning when the list is empty.
+- Thumbnail `chip` → `card`. A catalogue is the one screen where the picture
+  earns its space: it is how an operator recognises their own product before
+  reading anything.
+- A phone card of its own, rather than the generic label/value dump. Page
+  height 1993px → 1624px.
+- A summary strip, consistent with calendar, orders and customers.
+
+### Verified
+
+Contrast both themes: **zero**. Nine unit cases on the blocker logic pass. Ten
+other tables unaffected. `tsc`, `build`, `eslint` clean; i18n 0 / 0 with the
+namespace filled in both locales.
