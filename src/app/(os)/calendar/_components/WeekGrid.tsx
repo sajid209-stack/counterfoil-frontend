@@ -194,7 +194,7 @@ export function WeekGrid({
             <div
               className={cn(
                 gutter,
-                "shrink-0 border-r border-hairline py-tight text-center text-[12px] text-faint",
+                "shrink-0 border-r border-hairline py-tight text-center text-[12px] text-muted",
               )}
             >
               {compact ? allDayLabel.slice(0, 3) : allDayLabel}
@@ -473,7 +473,7 @@ function CompactWeek({
       </div>
 
       {agenda.length === 0 ? (
-        <p className="px-comfortable py-hero text-center text-[13px] text-faint">{emptyLabel}</p>
+        <p className="px-comfortable py-hero text-center text-[13px] text-muted">{emptyLabel}</p>
       ) : (
         <ul className="flex flex-col gap-tight p-comfortable">
           {agenda.map((e) => (

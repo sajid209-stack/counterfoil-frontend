@@ -129,7 +129,7 @@ export default function SeatLayoutEditorPage() {
             <h2 className="type-h2 text-base">{t("editor.gridTitle")}</h2>
             <span className="font-mono text-[12px] text-muted">{t("editor.seatsForSale", { count: forSale })}</span>
           </div>
-          <p className="mb-section text-[12px] text-faint">{t("editor.gridHelp")}</p>
+          <p className="mb-section text-[12px] text-muted">{t("editor.gridHelp")}</p>
 
           {/* Tool selector */}
           <div className="mb-section flex flex-wrap gap-inline">
@@ -146,7 +146,7 @@ export default function SeatLayoutEditorPage() {
           </div>
 
           {/* Screen marker + grid (scrolls horizontally if wide) */}
-          <div className="mb-tight rounded-xs bg-subtle py-inline text-center font-mono text-[12px] tracking-widest text-faint">{t("editor.screen")}</div>
+          <div className="mb-tight rounded-xs bg-subtle py-inline text-center font-mono text-[12px] tracking-widest text-muted">{t("editor.screen")}</div>
           <div className="overflow-x-auto">
             <div className="inline-grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${cols}, 1.75rem)` }}>
               {seats.slice().sort((a, b) => a.posY - b.posY || a.posX - b.posX).map((s) => {
@@ -159,7 +159,7 @@ export default function SeatLayoutEditorPage() {
                     type="button"
                     title={s.name}
                     onClick={() => applyTool(s.id)}
-                    className={`h-7 rounded-[3px] border text-[9px] font-mono leading-none ${c ? "" : "border-dashed border-line text-faint"} ${blocked ? "border-line bg-line text-faint line-through" : ""}`}
+                    className={`h-7 rounded-[3px] border text-[9px] font-mono leading-none ${c ? "" : "border-dashed border-line text-muted"} ${blocked ? "border-line bg-line text-muted line-through" : ""}`}
                     style={blocked ? undefined : style}
                   >
                     {s.seatNumber}

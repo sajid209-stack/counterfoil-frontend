@@ -155,7 +155,7 @@ export default function KitchenSink() {
           value={tab}
           onChange={setTab}
         />
-        <p className="mt-section font-mono text-[12px] text-faint">
+        <p className="mt-section font-mono text-[12px] text-muted">
           active tab: {tab}
         </p>
       </Block>
@@ -221,7 +221,7 @@ export default function KitchenSink() {
                 <Search
                   size={16}
                   strokeWidth={1.5}
-                  className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint"
+                  className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted"
                 />
                 <input
                   placeholder="Search…"

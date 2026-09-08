@@ -408,11 +408,17 @@ function SalesReportInner() {
         const d = (cur: number, prev: number) => (prev === 0 ? (cur > 0 ? t("summary.new") : t("summary.none")) : `${cur >= prev ? "▲" : "▼"} ${Math.abs(((cur - prev) / prev) * 100).toFixed(0)}%`);
         return (
           <>
-            <div className="mb-section grid grid-cols-2 gap-tight lg:grid-cols-4">
+            {/* One column under 420px, and the figure steps down a size on a
+                phone. Measured at 390: a 141px tile against a 158px number, so
+                "৳502,445.00" rendered as "৳502,4" with no ellipsis — a
+                DIFFERENT number, shown with nothing to say anything was
+                missing. Same defect the dashboard hero was fixed for; these
+                tiles never got the treatment. */}
+            <div className="mb-section grid grid-cols-1 gap-tight min-[420px]:grid-cols-2 lg:grid-cols-4">
               {([["gross", t("summary.gross"), s?.gross, s?.prevGross], ["refunds", t("summary.refunds"), s?.refunds, undefined], ["net", t("summary.net"), s?.net, s?.prevNet], ["tickets", t("summary.tickets"), s?.ticketCount, s?.prevTicketCount]] as const).map(([key, label, v, pv]) => (
                 <div key={key} className={card}>
                   <p className="type-label text-[12px] text-muted">{label}</p>
-                  <p className="mt-tight whitespace-nowrap font-mono text-2xl tabular-nums">{v == null ? "—" : key === "tickets" ? String(v) : formatMoney(v as number)}</p>
+                  <p className="mt-tight whitespace-nowrap font-mono text-xl tabular-nums sm:text-2xl">{v == null ? "—" : key === "tickets" ? String(v) : formatMoney(v as number)}</p>
                   {pv != null && v != null && <p className="mt-inline font-mono text-[12px] text-muted">{t("summary.vsPrev", { delta: d(v as number, pv as number) })}</p>}
                 </div>
               ))}

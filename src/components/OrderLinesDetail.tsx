@@ -41,11 +41,11 @@ export function OrderLinesDetail({ order, compact = false }: { order: Pick<Order
       {parents.map((l) => (
         <div key={l.id} className="border-b border-line py-tight last:border-0">
           <div className="flex items-baseline justify-between gap-tight">
-            <span className={`min-w-0 break-words font-medium line-clamp-2 ${refunded(l) ? "text-faint line-through" : ""}`}>
+            <span className={`min-w-0 break-words font-medium line-clamp-2 ${refunded(l) ? "text-muted line-through" : ""}`}>
               {l.productName}
               {l.booking?.resourceName ? ` — ${l.booking.resourceName}` : l.tierName && l.tierName !== l.productName && l.quantity === 1 && !l.tierId ? ` — ${l.tierName}` : ""}
             </span>
-            <span className={`${money} ${refunded(l) ? "text-faint line-through" : ""}`}>{formatMoney(l.subtotal)}</span>
+            <span className={`${money} ${refunded(l) ? "text-muted line-through" : ""}`}>{formatMoney(l.subtotal)}</span>
           </div>
           {/* `faint` is the disabled-foreground token (2.03:1 light, 1.94:1
               dark). This line says which tiers were sold at what price, or

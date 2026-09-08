@@ -57,7 +57,7 @@ export default function Home() {
         </div>
 
         {/* Pick a business — admission-ticket cards. */}
-        <p className="type-label mt-hero text-[12px] text-faint">Pick a business to explore</p>
+        <p className="type-label mt-hero text-[12px] text-muted">Pick a business to explore</p>
         <div className="mt-tight grid gap-section sm:grid-cols-2 lg:grid-cols-3">
           {DEMOS.map((d) => (
             <button
@@ -88,7 +88,7 @@ export default function Home() {
               <div className="flex flex-1 flex-col p-section pt-tight">
                 <span className="type-h2 text-base">{d.name}</span>
                 <span className="type-body mt-inline text-[13px] text-muted">{d.tagline}</span>
-                <span className="mt-tight font-mono text-[12px] uppercase leading-relaxed tracking-wide text-faint">{d.types}</span>
+                <span className="mt-tight font-mono text-[12px] uppercase leading-relaxed tracking-wide text-muted">{d.types}</span>
                 <span className="mt-comfortable inline-flex items-center gap-inline text-[13px] font-medium text-brand-foreground">
                   Explore <ArrowRight size={14} strokeWidth={1.5} className="transition-transform duration-quick group-hover:translate-x-0.5" />
                 </span>
@@ -111,11 +111,16 @@ export default function Home() {
         </div>
 
         {/* Quiet dev/entry links. */}
-        <div className="mt-hero flex flex-wrap gap-major border-t border-line pt-major font-mono text-xs text-faint">
-          <Link href="/dashboard" className="hover:text-ember">OS admin →</Link>
-          <Link href="/tills" className="hover:text-ember">Go · till designs →</Link>
-          <Link href="/tokens" className="hover:text-ember">Design tokens →</Link>
-          <Link href="/kitchen-sink" className="hover:text-ember">Primitives →</Link>
+        {/* The arrow is an ICON, not part of the string.
+            Baked into the label it cannot be styled or animated, it is read
+            aloud by a screen reader, and it made the link a 16px-tall target.
+            Each row is now a real 44px target on a phone with the glyph
+            nudging on hover. */}
+        <div className="mt-hero flex flex-wrap items-center gap-major border-t border-line pt-major font-mono text-xs text-muted">
+          <Link href="/dashboard" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">OS admin<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
+          <Link href="/tills" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">Go · till designs<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
+          <Link href="/tokens" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">Design tokens<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
+          <Link href="/kitchen-sink" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">Primitives<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
         </div>
       </div>
     </main>

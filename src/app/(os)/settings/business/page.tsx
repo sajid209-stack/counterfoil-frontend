@@ -88,7 +88,7 @@ export default function BusinessSetupPage() {
               <FormField label={t("business.businessName")} value={state.name} onChange={(e) => set("name", e.target.value)} className="sm:col-span-2" />
               <div className="flex flex-col gap-tight">
                 <span className="type-label text-[12px] text-muted">{t("business.logo")}</span>
-                <div className="flex h-20 items-center justify-center rounded-sm border border-dashed border-line text-[12px] text-faint">
+                <div className="flex h-20 items-center justify-center rounded-sm border border-dashed border-line text-[12px] text-muted">
                   {t("business.logoHint")}
                 </div>
               </div>
@@ -137,10 +137,10 @@ export default function BusinessSetupPage() {
             />
             <div className="mt-tight flex flex-wrap gap-tight text-[12px] text-muted">
               {SMS_PLACEHOLDERS.map((p) => (
-                <span key={p.key} className="rounded-xs border border-line bg-subtle px-tight py-inline font-mono text-[12px]">{p.key} <span className="font-sans text-faint">= {p.means}</span></span>
+                <span key={p.key} className="rounded-xs border border-line bg-subtle px-tight py-inline font-mono text-[12px]">{p.key} <span className="font-sans text-muted">= {p.means}</span></span>
               ))}
             </div>
-            <p className="mt-section text-[12px] text-faint">{t("business.preview")}</p>
+            <p className="mt-section text-[12px] text-muted">{t("business.preview")}</p>
             <p className="mt-inline rounded-sm border border-line bg-subtle p-comfortable text-[13px]">
               {renderSms(state.smsTemplate, { business: state.name, code: "CF-2026-000123-01", date: "2026-07-29" })}
             </p>
@@ -152,7 +152,7 @@ export default function BusinessSetupPage() {
             <div className="mt-major">
               <LanguagePicker className="max-w-sm" />
             </div>
-            <p className="mt-tight text-[12px] text-faint">{t("business.appearanceNote")}</p>
+            <p className="mt-tight text-[12px] text-muted">{t("business.appearanceNote")}</p>
           </div>
 
           <div className="sticky bottom-0 max-md:bottom-[calc(56px+env(safe-area-inset-bottom))] flex items-center justify-end gap-tight border-t border-line bg-surface py-section">

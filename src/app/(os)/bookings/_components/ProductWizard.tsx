@@ -176,7 +176,7 @@ export function ProductWizard({
     <div className="flex flex-col gap-major pb-hero">
       <ol className="flex flex-wrap gap-tight">
         {STEPS.map((label, i) => (
-          <li key={label} className={`flex items-center gap-inline rounded-sm px-comfortable py-tight text-[12px] ${i === step ? "bg-inverse text-inverse-fg" : i < step ? "text-fg" : "text-faint"}`}>
+          <li key={label} className={`flex items-center gap-inline rounded-sm px-comfortable py-tight text-[12px] ${i === step ? "bg-inverse text-inverse-fg" : i < step ? "text-fg" : "text-muted"}`}>
             <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current font-mono text-[12px]">{i < step ? <Check size={12} strokeWidth={2} /> : i + 1}</span>
             {label}
           </li>
@@ -228,7 +228,7 @@ export function ProductWizard({
               <span className="type-label text-[12px] text-muted">Locations</span>
               {locations.length === 0 ? (
                 <div className="rounded-sm border border-dashed border-line px-comfortable py-section text-center">
-                  <p className="text-[13px] text-faint">You haven&apos;t added a location yet.</p>
+                  <p className="text-[13px] text-muted">You haven&apos;t added a location yet.</p>
                   <Button size="sm" className="mt-tight" icon={<Plus size={14} strokeWidth={1.5} />} onClick={() => setAddLocOpen(true)}>Add one now</Button>
                 </div>
               ) : locations.length === 1 ? (
@@ -288,7 +288,7 @@ export function ProductWizard({
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-section border-b border-line pb-tight text-sm last:border-0">
-      <span className="w-16 shrink-0 text-faint">{label}</span>
+      <span className="w-16 shrink-0 text-muted">{label}</span>
       <span className="flex-1">{children}</span>
     </div>
   );

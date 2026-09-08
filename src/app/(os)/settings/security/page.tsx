@@ -56,7 +56,7 @@ export default function SecurityPage() {
           <FormField label={t("security.twoStepLabel")} variant="toggle" checked={twoStep} onChange={(e) => { const on = (e.target as HTMLInputElement).checked; setTwoStep(on); if (on && !codes) makeCodes(); }} help={t("security.twoStepHelp")} />
           <div className="mt-section flex items-center gap-tight">
             <Button variant="secondary" size="sm" onClick={makeCodes}>{codes ? t("security.regenerateCodes") : t("security.generateCodes")}</Button>
-            {codes && <span className="text-[12px] text-faint">{t("security.codesExist")}</span>}
+            {codes && <span className="text-[12px] text-muted">{t("security.codesExist")}</span>}
           </div>
         </div>
 
@@ -66,7 +66,7 @@ export default function SecurityPage() {
             <div className="rounded-sm border border-line border-l-[3px] border-l-ember bg-subtle p-comfortable text-[13px]">
               {t("security.emailPending", { email: pendingEmail, current: email })}
               <button type="button" onClick={() => { setEmail(pendingEmail); setPendingEmail(null); toast.success(t("security.emailConfirmed")); }} className="ml-tight text-brand-foreground underline-offset-4 hover:underline">{t("security.demoConfirm")}</button>
-              <button type="button" onClick={() => setPendingEmail(null)} className="ml-tight text-faint hover:text-danger">{t("common.cancel")}</button>
+              <button type="button" onClick={() => setPendingEmail(null)} className="ml-tight text-muted hover:text-danger">{t("common.cancel")}</button>
             </div>
           ) : (
             <div className="flex items-end gap-tight">

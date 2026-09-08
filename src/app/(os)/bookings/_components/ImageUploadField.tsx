@@ -56,7 +56,7 @@ export function ImageUploadField({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex h-24 w-24 flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-line text-faint hover:border-inverse hover:text-fg"
+          className="flex h-24 w-24 flex-col items-center justify-center gap-inline rounded-sm border border-dashed border-line text-muted hover:border-inverse hover:text-fg"
         >
           <ImagePlus size={20} strokeWidth={1.5} />
           <span className="text-[12px]">Add</span>

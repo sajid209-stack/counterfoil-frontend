@@ -317,7 +317,7 @@ export function SelectionInline({
                         }}
                         className={`flex min-h-[52px] flex-col items-center justify-center rounded-go border px-inline text-[13px] transition-colors duration-quick ${
                           on
-                            ? "border-ember bg-ember font-medium text-white"
+                            ? "border-ember bg-ember-solid font-medium text-white"
                             : sl.available
                               ? "border-line bg-card active:bg-ember/10"
                               : "border-line bg-subtle text-muted line-through"
@@ -496,7 +496,7 @@ export function SelectionInline({
                   onClick={() => (blocked ? setBlocked(blockWord(blocked)) : set({ slotTime: time }))}
                   className={`flex min-h-12 flex-col items-center justify-center rounded-go border px-inline text-[13px] transition-colors duration-quick ${
                     on
-                      ? "border-ember bg-ember font-medium text-white"
+                      ? "border-ember bg-ember-solid font-medium text-white"
                       : blocked
                         ? "border-line bg-subtle text-muted line-through"
                         : "border-line bg-card active:bg-ember/10"
@@ -548,7 +548,7 @@ export function SelectionInline({
                   }
                   className={`flex min-h-12 items-center justify-center rounded-go border px-inline text-[13px] transition-colors duration-quick ${
                     on
-                      ? "border-ember bg-ember font-medium text-white"
+                      ? "border-ember bg-ember-solid font-medium text-white"
                       : anyFree
                         ? "border-line bg-card active:bg-ember/10"
                         : "border-line bg-subtle text-muted line-through"
@@ -690,10 +690,10 @@ export function SelectionInline({
                         }
                         className={`flex size-7 shrink-0 items-center justify-center rounded-go-sm border text-[9px] ${
                           on
-                            ? "border-ember bg-ember font-semibold text-white"
+                            ? "border-ember bg-ember-solid font-semibold text-white"
                             : seat.available
                               ? "border-line bg-card"
-                              : "border-line bg-subtle text-faint line-through"
+                              : "border-line bg-subtle text-muted line-through"
                         }`}
                         style={!on && seat.available ? { backgroundColor: `${seat.color}22`, borderColor: seat.color } : undefined}
                       >

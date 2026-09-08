@@ -106,9 +106,9 @@ export function ScheduleBuilder({
                   ))}
                 </select>
                 <TimeInput value={hrs.startTime} onChange={(t) => setOverride(d, { ...hrs, startTime: t })} className="w-32" />
-                <span className="text-faint">–</span>
+                <span className="text-muted">–</span>
                 <TimeInput value={hrs.endTime} onChange={(t) => setOverride(d, { ...hrs, endTime: t })} className="w-32" />
-                <button type="button" aria-label="Remove override" onClick={() => setOverride(d, null)} className="text-faint hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
+                <button type="button" aria-label="Remove override" onClick={() => setOverride(d, null)} className="text-muted hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
               </div>
             );
           })}
@@ -124,7 +124,7 @@ export function ScheduleBuilder({
         <div className="flex flex-col gap-tight">
           <span className="type-label text-[12px] text-muted">Who can lead this?</span>
           {team.length === 0 ? (
-            <p className="rounded-sm border border-dashed border-line px-comfortable py-comfortable text-[13px] text-faint">
+            <p className="rounded-sm border border-dashed border-line px-comfortable py-comfortable text-[13px] text-muted">
               No team members yet — add your first guide from the Team screen.
             </p>
           ) : (
@@ -142,7 +142,7 @@ export function ScheduleBuilder({
       {/* Live preview — the most important element. */}
       {isSlotBased(bookingType) && (
         <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="type-label text-[12px] text-faint">Preview</p>
+          <p className="type-label text-[12px] text-muted">Preview</p>
           <p className="mt-inline font-mono text-[13px]">
             {slots.slice(0, 6).join(" · ")}{slots.length > 6 ? ` … ${slots[slots.length - 1]}` : ""}
           </p>
@@ -166,8 +166,8 @@ export function ScheduleBuilder({
           <div key={e.date} className="flex items-center justify-between rounded-sm border border-line px-comfortable py-tight text-sm">
             <span className="font-mono text-[13px]">{e.date}</span>
             <span className="flex items-center gap-section">
-              <span className="text-faint">Closed</span>
-              <button type="button" aria-label="Remove" onClick={() => removeException(e.date)} className="text-faint hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
+              <span className="text-muted">Closed</span>
+              <button type="button" aria-label="Remove" onClick={() => removeException(e.date)} className="text-muted hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
             </span>
           </div>
         ))}

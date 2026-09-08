@@ -191,15 +191,15 @@ export default function SchedulePage() {
               <span className="min-w-0 flex-1 truncate text-sm">{r.label}</span>
               </div>
               <div className="flex items-center gap-tight sm:contents">
-              <span className={`font-mono text-[13px] ${r.full ? "text-faint" : "text-muted"}`}>{r.state}</span>
+              <span className={`font-mono text-[13px] ${r.full ? "text-muted" : "text-muted"}`}>{r.state}</span>
               <span className="flex-1 sm:hidden" />
               {r.full ? (
-                r.product.waitlistEnabled ? <Button shape="pill" size="sm" variant="secondary" onClick={() => sell(r.product)}>{t("waitlist")}</Button> : <span className="w-16 text-right font-mono text-[13px] text-faint">—</span>
+                r.product.waitlistEnabled ? <Button shape="pill" size="sm" variant="secondary" onClick={() => sell(r.product)}>{t("waitlist")}</Button> : <span className="w-16 text-right font-mono text-[13px] text-muted">—</span>
               ) : (
                 <Button shape="pill" size="sm" onClick={() => sell(r.product)}>{t("sell")}</Button>
               )}
               {r.resourceId && (
-                <button type="button" aria-label={t("rowActions")} onClick={() => openOos(r.resourceId!)} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-full border border-line text-faint active:bg-ember/10">
+                <button type="button" aria-label={t("rowActions")} onClick={() => openOos(r.resourceId!)} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-full border border-line text-muted active:bg-ember/10">
                   <MoreHorizontal size={15} strokeWidth={1.5} />
                 </button>
               )}

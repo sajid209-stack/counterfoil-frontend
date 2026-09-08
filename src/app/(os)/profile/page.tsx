@@ -55,7 +55,7 @@ export default function ProfilePage() {
             <Avatar name={me?.name ?? "?"} size={56} />
             <div>
               <p className="text-lg font-medium">{me?.name ?? "…"}</p>
-              <button type="button" onClick={() => toast.info(t("photoInfo"))} className="text-[13px] text-brand-foreground underline-offset-4 hover:underline">{t("changePhoto")}</button>
+              <button type="button" onClick={() => toast.info(t("photoInfo"))} className="-my-tight inline-flex min-h-11 items-center text-[13px] text-brand-foreground underline-offset-4 hover:underline sm:min-h-0">{t("changePhoto")}</button>
             </div>
           </div>
           <div className="grid gap-section sm:grid-cols-2">
@@ -76,15 +76,15 @@ export default function ProfilePage() {
           <p className="mt-tight text-[13px] text-muted">
             {t("counters")}: <span className="text-fg">{(me?.counterIds ?? []).map((id) => countersQ.data?.data.find((c) => c.id === id)?.name ?? id).join(", ") || "—"}</span>
           </p>
-          <p className="mt-tight text-[12px] text-faint">{t("assignmentsNote")}</p>
+          <p className="mt-tight text-[12px] text-muted">{t("assignmentsNote")}</p>
         </div>
 
         <div className={card}>
           <h2 className="type-h2 mb-section text-base">{t("signedInDevices")}</h2>
           {devices.map((d) => (
             <div key={d.id} className="flex h-12 items-center gap-section border-b border-line text-[13px] last:border-0">
-              <span className="min-w-0 flex-1 truncate">{d.name} <span className="text-faint">· {d.where}</span></span>
-              <span className="font-mono text-[12px] text-faint">{lastSeen(d)}</span>
+              <span className="min-w-0 flex-1 truncate">{d.name} <span className="text-muted">· {d.where}</span></span>
+              <span className="font-mono text-[12px] text-muted">{lastSeen(d)}</span>
               {d.current ? (
                 <span className="font-mono text-[12px] text-success">{t("thisDevice")}</span>
               ) : (

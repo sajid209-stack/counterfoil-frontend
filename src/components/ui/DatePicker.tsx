@@ -242,7 +242,7 @@ export function DatePicker({
               className={cn(
                 "flex items-center justify-center font-mono tabular-nums transition-colors duration-quick",
                 cell,
-                off && "cursor-not-allowed text-faint",
+                off && "cursor-not-allowed text-muted",
                 !off && !isSelected && outside && "text-muted hover:bg-subtle",
                 !off && !isSelected && !outside && "text-fg hover:bg-subtle",
                 // The house rule: white inside a solid ember frame.

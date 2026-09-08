@@ -87,7 +87,7 @@ export function DataTable<T>({
               <div className="h-3 w-1/2 rounded-xs bg-line" />
             </div>
           ))}
-        {showEmpty && (emptyState ?? <p className="py-section text-center text-[13px] text-faint">No results.</p>)}
+        {showEmpty && (emptyState ?? <p className="py-section text-center text-[13px] text-muted">No results.</p>)}
         {!loading &&
           rows.map((row) => (
             <div
@@ -165,7 +165,7 @@ export function DataTable<T>({
                             <ChevronDown size={13} strokeWidth={1.5} />
                           )
                         ) : (
-                          <ArrowUpDown size={13} strokeWidth={1.5} className="text-faint" />
+                          <ArrowUpDown size={13} strokeWidth={1.5} className="text-muted" />
                         )}
                       </button>
                     ) : (
@@ -209,7 +209,7 @@ export function DataTable<T>({
               <tr>
                 <td colSpan={columns.length} className="px-comfortable py-hero">
                   {emptyState ?? (
-                    <p className="text-center text-[13px] text-faint">No results.</p>
+                    <p className="text-center text-[13px] text-muted">No results.</p>
                   )}
                 </td>
               </tr>

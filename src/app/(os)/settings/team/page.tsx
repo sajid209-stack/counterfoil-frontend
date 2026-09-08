@@ -52,7 +52,7 @@ export default function StaffPage() {
       render: (s) => (
         <div>
           <div className="font-medium">{s.name}</div>
-          <div className="font-mono text-[12px] text-faint">{s.email ?? s.phone ?? "—"}</div>
+          <div className="font-mono text-[12px] text-muted">{s.email ?? s.phone ?? "—"}</div>
         </div>
       ),
     },
@@ -98,7 +98,7 @@ export default function StaffPage() {
         toolbar={
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
+              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}

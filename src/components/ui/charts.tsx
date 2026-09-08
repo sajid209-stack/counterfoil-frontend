@@ -154,7 +154,7 @@ export function AreaChart({
             transform: "translateX(-50%)",
           }}
         >
-          <p className="text-[12px] text-faint">{active.title ?? active.label}</p>
+          <p className="text-[12px] text-muted">{active.title ?? active.label}</p>
           <p className="whitespace-nowrap text-[13px] font-medium">{fmt(active.value)}</p>
           {active.compare != null && (
             <p className="whitespace-nowrap text-[12px] text-muted">{fmt(active.compare)}</p>

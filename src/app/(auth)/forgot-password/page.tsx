@@ -17,10 +17,10 @@ export default function ForgotPasswordPage() {
           If an account exists for <span className="font-medium">{contact}</span>, a reset
           link is on its way. It expires in one hour.
         </p>
-        <p className="text-[12px] text-faint">Nothing arrived? Check spam, or try again in a few minutes.</p>
+        <p className="text-[12px] text-muted">Nothing arrived? Check spam, or try again in a few minutes.</p>
         <Link href="/sign-in" className="text-[13px] text-brand-foreground underline-offset-4 hover:underline">Back to sign in</Link>
         {/* demo shortcut to the reset screen */}
-        <Link href="/reset/demo-token" className="font-mono text-[12px] text-faint hover:text-fg">(demo: open the reset link)</Link>
+        <Link href="/reset/demo-token" className="font-mono text-[12px] text-muted hover:text-fg">(demo: open the reset link)</Link>
       </main>
     );
   }
@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
       </div>
       <FormField label="Email or phone" placeholder="you@business.example" value={contact} onChange={(e) => setContact(e.target.value)} />
       <Button size="lg" fullWidth disabled={!contact.trim()} onClick={() => setSent(true)}>Send reset link</Button>
-      <Link href="/sign-in" className="text-center text-[13px] text-faint hover:text-fg">Back to sign in</Link>
+      <Link href="/sign-in" className="text-center text-[13px] text-muted hover:text-fg">Back to sign in</Link>
     </main>
   );
 }

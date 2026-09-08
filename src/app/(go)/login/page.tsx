@@ -77,7 +77,7 @@ export default function GoLoginPage() {
         </p>
         <p className="mt-inline font-mono text-[13px] text-muted">
           {shiftOwner ? `Shift open — ${shiftOwner.name.split(" ")[0]}, since ${OPEN_SHIFT.since}` : "No shift open"}
-          <span className="ml-tight text-faint">· demo PIN {DEMO_PIN}</span>
+          <span className="ml-tight text-muted">· demo PIN {DEMO_PIN}</span>
         </p>
       </div>
 
@@ -99,7 +99,7 @@ export default function GoLoginPage() {
                   {s.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}
                 </span>
                 <span className="max-w-full truncate text-sm text-fg">{s.name}</span>
-                <span className={`font-mono text-[13px] ${s.id === OPEN_SHIFT.staffId ? "text-brand-foreground" : "text-faint"}`}>{stateLine(s)}</span>
+                <span className={`font-mono text-[13px] ${s.id === OPEN_SHIFT.staffId ? "text-brand-foreground" : "text-muted"}`}>{stateLine(s)}</span>
               </button>
             ))}
             <button

@@ -147,7 +147,7 @@ export function SlotMatrix({
                 // then names, so it is the one selection in this pattern drawn
                 // as a fill rather than a tint.
                 selected
-                  ? "border-ember bg-ember font-medium text-white"
+                  ? "border-ember bg-ember-solid font-medium text-white"
                   : "border-line bg-card active:bg-ember/10",
               )}
             >

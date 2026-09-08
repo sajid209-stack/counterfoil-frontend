@@ -50,7 +50,7 @@ export default function RolesPage() {
         onRowClick={(r) => router.push(`/settings/roles/${r.id}`)}
         toolbar={
           <div className="relative">
-            <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
+            <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
             <input
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}

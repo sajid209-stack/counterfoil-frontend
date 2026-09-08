@@ -571,10 +571,10 @@ export default function DashboardPage() {
             </select>
           )}
           {/* Scope, not actions — a dashboard is a place to look. */}
-          <div className="relative grid h-11 grid-cols-2 rounded-sm bg-line/60 p-inline">
-            <span aria-hidden className="absolute inset-y-inline rounded-xs bg-ember transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />
+          <div className="relative grid h-[52px] grid-cols-2 rounded-sm bg-line/60 p-inline sm:h-11">
+            <span aria-hidden className="absolute inset-y-inline rounded-xs bg-ember-solid transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />
             {(["today", "week"] as const).map((s) => (
-              <button key={s} type="button" onClick={() => setScope(s)} className={`relative z-10 px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-white" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
+              <button key={s} type="button" onClick={() => setScope(s)} className={`relative z-10 h-full px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-white" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
             ))}
           </div>
         </div>
@@ -715,12 +715,22 @@ export default function DashboardPage() {
                       onClick={() => setTrendDays(d)}
                       aria-pressed={trendDays === d}
                       // Ember marks the selection, matching the page header's
-                      // scope toggle — one selected-state treatment across the
-                      // dashboard rather than two. Ink text on ember, which is
-                      // the pairing the colour system fixes as literal in both
-                      // themes; measured at 5.3:1 light and 7.1:1 dark.
-                      className={`min-h-8 rounded-xs px-tight text-[13px] font-medium transition-colors duration-quick ${
-                        trendDays === d ? "bg-ember text-ink" : "text-muted hover:text-fg"
+                      /* One selected-state treatment across the dashboard,
+                         which this was NOT: the scope toggle beside it draws
+                         white on ember while this drew ink, so two chips of the
+                         same shape and the same meaning carried two different
+                         inks — and `bg-ember` lifts to #FF7A3D in dark, so this
+                         one also changed colour between themes while the other
+                         did not. Both are now white on `ember-solid`, the
+                         house rule (anything inside an #F94A00 frame is white)
+                         and the same pairing as the primary button and the
+                         calendar's today badge.
+                         The honest trade: ink on ember measured 5.3:1 and white
+                         measures 3.50:1, the project's declared exception. One
+                         consistent selected state across the product is worth
+                         more than one chip being better on its own. */
+                      className={`min-h-11 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick sm:min-h-8 sm:px-tight ${
+                        trendDays === d ? "bg-ember-solid text-white" : "text-muted hover:text-fg"
                       }`}
                     >
                       {t("lastDays", { count: d })}
@@ -806,7 +816,7 @@ export default function DashboardPage() {
             <div className={`${card} p-major`}>
               <div className="mb-comfortable flex items-baseline justify-between gap-tight">
                 <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("topProducts")}</h2>
-                <button type="button" onClick={() => router.push("/reports/sales")} className="shrink-0 whitespace-nowrap text-[12px] text-muted transition-colors duration-quick hover:text-fg">{t("viewAll")}</button>
+                <button type="button" onClick={() => router.push("/reports/sales")} className="-my-tight flex min-h-11 shrink-0 items-center whitespace-nowrap px-tight text-[12px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-0 sm:px-0">{t("viewAll")}</button>
               </div>
               {/* The reference's "Top verticals" row: icon square, name and
                   money on the first line, then a full-width bar with the
@@ -905,7 +915,7 @@ export default function DashboardPage() {
                                 // and the border already carry the severity, and
                                 // amber-on-amber is both a second shout and the
                                 // weaker contrast of the two.
-                                className="mt-tight inline-flex items-center gap-inline text-sm font-medium text-fg transition-colors duration-quick hover:text-ember"
+                                className="mt-tight inline-flex min-h-11 items-center gap-inline text-sm font-medium text-fg transition-colors duration-quick hover:text-ember sm:min-h-0"
                               >
                                 {a.action.label}
                                 <ArrowRight size={13} strokeWidth={1.75} className="shrink-0" />
@@ -943,7 +953,7 @@ export default function DashboardPage() {
                     aria-label={t("filterActivity")}
                     value={activityFilter}
                     onChange={(e) => setActivityFilter(e.target.value as ActivityFilter)}
-                    className="cursor-pointer appearance-none rounded-xs bg-transparent py-inline pl-[19px] pr-0 text-[12px] text-current outline-none transition-colors duration-quick [&>option]:bg-card [&>option]:text-fg"
+                    className="min-h-11 cursor-pointer appearance-none rounded-xs bg-transparent py-inline pl-[19px] pr-0 text-[12px] text-current outline-none transition-colors duration-quick sm:min-h-0 [&>option]:bg-card [&>option]:text-fg"
                   >
                     <option value="all">{t("filterAll")}</option>
                     <option value="sales">{t("filterSales")}</option>
@@ -991,7 +1001,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => router.push(activityFilter === "customers" ? "/customers" : "/orders")}
-                  className="min-h-9 w-full rounded-sm border border-line bg-card/60 text-sm font-medium transition-colors duration-quick hover:border-strong hover:bg-card"
+                  className="min-h-11 w-full rounded-sm border border-line bg-card/60 text-sm font-medium transition-colors duration-quick hover:border-strong hover:bg-card sm:min-h-9"
                 >
                   {t("viewAllActivity")}
                 </button>
@@ -1023,7 +1033,7 @@ export default function DashboardPage() {
                             row without the session is not a row. The name keeps
                             a floor and the meta drops to a second line. */}
                         <div className="flex min-h-12 flex-wrap items-center gap-x-section gap-y-inline px-section py-tight">
-                          <button type="button" aria-label={t("bookings")} onClick={() => setOpenSession(open ? null : u.key)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-muted hover:text-fg">
+                          <button type="button" aria-label={t("bookings")} onClick={() => setOpenSession(open ? null : u.key)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-muted hover:text-fg sm:h-8 sm:w-8">
                             {open ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}
                           </button>
                           <span className="w-12 shrink-0 text-sm">{u.time}</span>
@@ -1038,12 +1048,12 @@ export default function DashboardPage() {
                             <span className="shrink-0 rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight text-[12px] text-muted dark:bg-[repeating-linear-gradient(45deg,#3a3a36,#3a3a36_2px,transparent_2px,transparent_5px)]">{t("full")}</span>
                           )}
                           {u.adjustable && (
-                            <button type="button" onClick={() => setCapModal({ product: u.product, value: u.product.schedule?.dailyCapacity ?? u.product.schedule?.capacityPerSession ?? 0 })} className="shrink-0 text-[13px] font-medium text-muted hover:text-fg">{t("adjust")}</button>
+                            <button type="button" onClick={() => setCapModal({ product: u.product, value: u.product.schedule?.dailyCapacity ?? u.product.schedule?.capacityPerSession ?? 0 })} className="-my-tight flex min-h-11 shrink-0 items-center px-tight text-[13px] font-medium text-muted hover:text-fg sm:min-h-0 sm:px-0">{t("adjust")}</button>
                           )}
                           {/* Cancelling closes a scheduled session; a booked resource
                               hour is cancelled by releasing its booking, not here. */}
                           {u.adjustable && (
-                            <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="shrink-0 text-[13px] font-medium text-danger hover:opacity-80">{t("cancel")}</button>
+                            <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="-my-tight flex min-h-11 shrink-0 items-center px-tight text-[13px] font-medium text-danger hover:opacity-80 sm:min-h-0 sm:px-0">{t("cancel")}</button>
                           )}
                         </div>
                         {open && (

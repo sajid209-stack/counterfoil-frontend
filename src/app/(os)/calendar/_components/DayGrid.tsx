@@ -97,7 +97,7 @@ export function DayGrid({
   const shownLanes = showEmpty ? lanes : lanes.filter((l) => busy.has(l.id) || l.blocked);
 
   if (lanes.length === 0) {
-    return <p className="py-hero text-center text-[13px] text-faint">{emptyLabel}</p>;
+    return <p className="py-hero text-center text-[13px] text-muted">{emptyLabel}</p>;
   }
 
   /* ── phone ──────────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ export function DayGrid({
   if (shownLanes.length === 0) {
     return (
       <>
-        <p className="py-hero text-center text-[13px] text-faint">{emptyLabel}</p>
+        <p className="py-hero text-center text-[13px] text-muted">{emptyLabel}</p>
         <EmptyLaneToggle
           count={emptyLanes.length}
           open={showEmpty}
@@ -473,7 +473,7 @@ function CompactDay({
       )}
 
       {timed.length === 0 ? (
-        <p className="py-hero text-center text-[13px] text-faint">{emptyLabel}</p>
+        <p className="py-hero text-center text-[13px] text-muted">{emptyLabel}</p>
       ) : (
         <div ref={scroller} className="max-h-[70vh] overflow-y-auto">
           <div className="flex" style={{ height: trackHeight }}>

@@ -46,7 +46,7 @@ export default function SeatLayoutsPage() {
               className="flex flex-col gap-tight card-surface p-section text-left transition-colors duration-quick hover:border-ember/40 active:bg-ember/10"
             >
               <div className="flex items-center gap-tight">
-                <Grid3x3 size={18} strokeWidth={1.5} className="text-faint" />
+                <Grid3x3 size={18} strokeWidth={1.5} className="text-muted" />
                 <span className="min-w-0 truncate font-medium">{l.name}</span>
               </div>
               <span className="font-mono text-[12px] text-muted">{l.rows}×{l.seatsPerRow} · {l.seatCount} {t("list.seats")}</span>

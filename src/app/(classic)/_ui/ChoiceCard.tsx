@@ -40,7 +40,7 @@ export function ChoiceCard({
       className={cn(
         "relative rounded-md border text-left transition-all duration-quick",
         disabled
-          ? "border-line bg-subtle text-faint"
+          ? "border-line bg-subtle text-muted"
           : selected
             ? hideCheck
               ? "border-ember bg-ember/10 ring-1 ring-inset ring-ember"

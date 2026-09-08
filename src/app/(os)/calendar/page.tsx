@@ -330,7 +330,7 @@ export default function CalendarPage() {
         onClick={() => toggleTone(tone)}
         className={cn(
           "flex h-11 items-center gap-tight rounded-sm border px-comfortable text-[12px] transition-colors duration-quick md:h-9",
-          on ? "border-line bg-card text-fg" : "border-line bg-subtle text-faint",
+          on ? "border-line bg-card text-fg" : "border-line bg-subtle text-muted",
         )}
       >
         <span

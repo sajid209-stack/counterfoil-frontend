@@ -131,7 +131,7 @@ export default function MembershipTiersPage() {
                 </Button>
               </div>
             </div>
-            <p className="mt-tight font-mono text-[12px] text-faint">
+            <p className="mt-tight font-mono text-[12px] text-muted">
               {t("membersOnTier", { count: held(tier.id) })}
             </p>
           </div>
@@ -443,7 +443,7 @@ function ChipPicker({
   emptyLabel: string;
 }) {
   if (options.length === 0) {
-    return <p className="text-[13px] text-faint">{emptyLabel}</p>;
+    return <p className="text-[13px] text-muted">{emptyLabel}</p>;
   }
   return (
     <div className="flex flex-wrap gap-inline">

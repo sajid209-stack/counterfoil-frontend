@@ -70,7 +70,7 @@ export function Field({
       {error ? (
         <p className="text-[12px] text-danger">{error}</p>
       ) : help ? (
-        <p className="text-[12px] text-faint">{help}</p>
+        <p className="text-[12px] text-muted">{help}</p>
       ) : null}
     </div>
   );
@@ -114,7 +114,7 @@ export function FormField({
         {error ? (
           <p className="text-[12px] text-danger">{error}</p>
         ) : help ? (
-          <p className="text-[12px] text-faint">{help}</p>
+          <p className="text-[12px] text-muted">{help}</p>
         ) : null}
       </div>
     );

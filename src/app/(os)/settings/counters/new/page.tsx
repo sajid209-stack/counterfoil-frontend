@@ -16,7 +16,7 @@ export default function NewCounterPage() {
 
   return (
     <PageShell title={t("counters.newTitle")} description={t("counters.newDescription")}>
-      <Link href="/settings/counters" className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg">
+      <Link href="/settings/counters" className="mb-section inline-flex items-center gap-inline text-[13px] text-muted hover:text-fg">
         <ArrowLeft size={14} strokeWidth={1.5} /> {t("counters.backToCounters")}
       </Link>
       {loading ? (

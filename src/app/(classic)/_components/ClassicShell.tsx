@@ -116,7 +116,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
       {/* Context bar — business · counter · shift state. Nav does NOT live here. */}
       <header className="flex items-center justify-between gap-tight border-b border-line px-section py-tight">
         <div className="flex min-w-0 items-center gap-tight">
-          <Link href="/login" className="flex h-12 shrink-0 items-center">
+          <Link href="/login" aria-label="Counterfoil Go — sign in" className="flex h-12 shrink-0 items-center">
             <Logo variant="go" size={30} />
           </Link>
           <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[12px] text-muted sm:block">Fort Main Gate</span>

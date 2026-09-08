@@ -175,7 +175,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           <div className="flex shrink-0 flex-col items-end gap-tight">
           <div className="flex shrink-0 items-center gap-tight">
             <div className="hidden items-center gap-tight rounded-sm border border-line bg-card/60 px-comfortable py-tight text-sm text-muted transition-colors duration-quick hover:bg-card focus-within:ring-2 focus-within:ring-ember/20 lg:flex lg:w-64">
-              <Search size={16} strokeWidth={1.5} className="text-faint" />
+              <Search size={16} strokeWidth={1.5} className="text-muted" />
               <input
                 aria-label={t("search")}
                 placeholder={t("search")}
@@ -247,7 +247,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between border-b border-line px-section py-tight">
             <div>
               <p className="text-sm font-medium">{operatorQ.data?.name ?? "Counterfoil"}</p>
-              <p className="font-mono text-[12px] text-faint">Counterfoil OS workspace</p>
+              <p className="font-mono text-[12px] text-muted">Counterfoil OS workspace</p>
             </div>
             <button type="button" aria-label="Close" onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-sm active:bg-line">
               <X size={20} strokeWidth={1.5} />

@@ -52,7 +52,7 @@ function SaleRow({
         <ChevronRight
           size={15}
           strokeWidth={1.5}
-          className={`shrink-0 text-faint transition-transform duration-quick ${open ? "rotate-90" : ""}`}
+          className={`shrink-0 text-muted transition-transform duration-quick ${open ? "rotate-90" : ""}`}
         />
       </button>
       {open && children && <div className="pb-tight">{children}</div>}

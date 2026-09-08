@@ -739,7 +739,7 @@ export function ProductSheet({
           return (
             <div className="mb-section flex flex-col gap-tight">
               {date === TODAY && (
-                <button type="button" disabled={!nowLane || !waiverOk} onClick={() => nowLane && submitResource(nowLane.id, nowLane.name, nowTime, nowPrice, duration)} className={`flex h-12 items-center justify-between rounded-sm border px-comfortable text-sm ${nowLane && waiverOk ? "border-ember bg-ember/10 font-medium" : "border-line bg-subtle text-faint"}`}>
+                <button type="button" disabled={!nowLane || !waiverOk} onClick={() => nowLane && submitResource(nowLane.id, nowLane.name, nowTime, nowPrice, duration)} className={`flex h-12 items-center justify-between rounded-sm border px-comfortable text-sm ${nowLane && waiverOk ? "border-ember bg-ember/10 font-medium" : "border-line bg-subtle text-muted"}`}>
                   <span>{t("sheet.startNow", { time: nowTime, duration: formatDuration(duration), lane: nowLane ? ` · ${nowLane.name}` : "" })}</span>
                   <span>{!nowLane ? t("sheet.noLaneFree") : !waiverOk ? t("sheet.waiverFirst") : formatMoney(nowPrice, currency)}</span>
                 </button>
@@ -871,7 +871,7 @@ export function ProductSheet({
                     <p className="text-[13px]">
                       <span className="font-medium">{lane?.name ?? t("sheet.anyLane")}</span> · <span className="tabular-nums">{slotTime}–{endLabel}</span> · {formatDuration(duration)}
                       {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""} · <span className="tabular-nums">{formatMoney(total, currency)}</span>
-                      {!resourceId && lane ? <span className="text-faint">{t("sheet.bestFit")}</span> : null}
+                      {!resourceId && lane ? <span className="text-muted">{t("sheet.bestFit")}</span> : null}
                     </p>
                   </div>
                 );

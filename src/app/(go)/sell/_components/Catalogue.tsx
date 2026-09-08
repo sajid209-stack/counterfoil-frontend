@@ -99,7 +99,7 @@ export function Catalogue({
           className="h-full w-full bg-transparent text-sm outline-none focus-visible:outline-none placeholder:text-faint"
         />
         {query && (
-          <button type="button" onClick={() => onQuery("")} className="text-[13px] text-faint hover:text-fg">
+          <button type="button" onClick={() => onQuery("")} className="text-[13px] text-muted hover:text-fg">
             {t("catalogue.clear")}
           </button>
         )}
@@ -114,7 +114,7 @@ export function Catalogue({
             key={c.id}
             type="button"
             onClick={() => onCategory(c.id)}
-            className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}
+            className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}
           >
             {c.name}
           </button>

@@ -16,14 +16,20 @@ export type ButtonSize = "sm" | "md" | "lg";
 export type ButtonShape = "default" | "pill";
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  // Solid ember — the one brand accent for the primary action. Never an outline.
-  // ink text on ember passes AA; white would not.
-  primary: "bg-ember text-white hover:opacity-90 disabled:bg-line disabled:text-muted",
+  /* Solid ember — the one brand accent for the primary action. Never an outline.
+     White on ember is the house rule (the owner's: anything inside an #F94A00
+     frame is white), and it is a declared exception at 3.50:1.
+     `ember-solid`, not `ember`: the plain token brightens to #FF7A3D in dark so
+     that ember-as-TEXT stays legible on ink — but under white as a FILL that
+     same lift measured 2.59:1, materially worse than light mode. Pinned at
+     #F94A00 it is 3.50:1 in both themes, which is the colour that was
+     specified and one reading rather than two. */
+  primary: "bg-ember-solid text-white hover:opacity-90 disabled:bg-line disabled:text-muted",
   secondary:
     "bg-card text-fg border border-line hover:border-inverse disabled:text-muted disabled:border-line",
   tertiary: "bg-transparent text-fg hover:bg-line disabled:text-muted",
   link: "bg-transparent text-brand-foreground underline underline-offset-2 hover:opacity-80 disabled:text-muted",
-  destructive: "bg-danger text-white hover:opacity-90 disabled:opacity-40",
+  destructive: "bg-danger-solid text-white hover:opacity-90 disabled:opacity-40",
 };
 
 const SIZES: Record<ButtonSize, string> = {

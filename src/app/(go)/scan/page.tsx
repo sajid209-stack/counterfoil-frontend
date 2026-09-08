@@ -109,7 +109,7 @@ export default function ScanPage() {
         <h1 className="type-h1 mt-tight text-2xl">{t("title")}</h1>
       </div>
 
-      <div className="flex h-40 flex-col items-center justify-center gap-tight rounded-go border border-dashed border-line text-faint">
+      <div className="flex h-40 flex-col items-center justify-center gap-tight rounded-go border border-dashed border-line text-muted">
         <ScanLine size={40} strokeWidth={1.5} />
         <span className="text-[13px]">{t("cameraHint")}</span>
       </div>
@@ -127,10 +127,10 @@ export default function ScanPage() {
 
       {samplesQ.data && samplesQ.data.data.length > 0 && (
         <div className="flex flex-col gap-inline">
-          <span className="type-label text-[13px] text-faint">{t("trySample")}</span>
+          <span className="type-label text-[13px] text-muted">{t("trySample")}</span>
           <div className="flex flex-wrap gap-inline">
             {samplesQ.data.data.map((t) => (
-              <button key={t.id} type="button" onClick={() => submit(t.code)} className="rounded-full border border-line bg-card px-tight py-inline font-mono text-[13px] active:bg-ember/10">
+              <button key={t.id} type="button" onClick={() => submit(t.code)} className="min-h-11 rounded-full border border-line bg-card px-comfortable py-inline font-mono text-[13px] active:bg-ember/10">
                 {t.code}
               </button>
             ))}

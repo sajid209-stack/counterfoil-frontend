@@ -90,7 +90,7 @@ export default function MembershipsPage() {
       render: (m) => (
         <div className="min-w-0">
           <div className="break-words font-medium">{m.customerName}</div>
-          <div className="font-mono text-[12px] text-faint">{m.code}</div>
+          <div className="font-mono text-[12px] text-muted">{m.code}</div>
         </div>
       ),
     },
@@ -231,7 +231,7 @@ export default function MembershipsPage() {
               <Search
                 size={16}
                 strokeWidth={1.5}
-                className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint"
+                className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted"
               />
               <input
                 value={search}

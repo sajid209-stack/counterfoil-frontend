@@ -35,7 +35,7 @@ export default function GoBookingsPage() {
         <h1 className="type-h1 mt-tight text-2xl">{t("arrivalsTitle")}</h1>
       </div>
       <div className="relative">
-        <Search size={18} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint" />
+        <Search size={18} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -54,11 +54,11 @@ export default function GoBookingsPage() {
             <div key={b.id} className="flex items-center gap-section rounded-go border border-line bg-card p-comfortable">
               <div className="text-center">
                 <div className="font-mono text-lg">{time(b.slotStart)}</div>
-                <div className="font-mono text-[13px] text-faint">{formatDate(b.slotStart)}</div>
+                <div className="font-mono text-[13px] text-muted">{formatDate(b.slotStart)}</div>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{productName(b.productId)}</div>
-                <div className="font-mono text-[13px] text-faint">{t("partyOf", { size: b.partySize })}</div>
+                <div className="font-mono text-[13px] text-muted">{t("partyOf", { size: b.partySize })}</div>
               </div>
               <StatusPill status="confirmed" />
             </div>

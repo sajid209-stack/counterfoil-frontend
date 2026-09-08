@@ -103,13 +103,13 @@ export default function CategoriesPage() {
                     key={c.id}
                     className="flex items-center gap-comfortable border-b border-line px-comfortable py-tight last:border-0"
                   >
-                    <div className="flex shrink-0 flex-col">
+                    <div className="flex shrink-0 flex-row sm:flex-col">
                       <button
                         type="button"
                         aria-label={t("categories.moveUp")}
                         disabled={i === 0 || busy}
                         onClick={() => move(i, -1)}
-                        className="flex h-5 w-6 items-center justify-center text-muted disabled:opacity-30 hover:text-fg"
+                        className="flex h-11 w-11 items-center justify-center text-muted disabled:opacity-30 hover:text-fg sm:h-5 sm:w-6"
                       >
                         <ArrowUp size={13} strokeWidth={1.5} />
                       </button>
@@ -118,7 +118,7 @@ export default function CategoriesPage() {
                         aria-label={t("categories.moveDown")}
                         disabled={i === categories.length - 1 || busy}
                         onClick={() => move(i, 1)}
-                        className="flex h-5 w-6 items-center justify-center text-muted disabled:opacity-30 hover:text-fg"
+                        className="flex h-11 w-11 items-center justify-center text-muted disabled:opacity-30 hover:text-fg sm:h-5 sm:w-6"
                       >
                         <ArrowDown size={13} strokeWidth={1.5} />
                       </button>
@@ -128,7 +128,7 @@ export default function CategoriesPage() {
                       defaultValue={c.name}
                       onBlur={(e) => rename(c, e.target.value)}
                       aria-label={t("categories.nameLabel")}
-                      className="h-10 min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-tight text-sm outline-none hover:border-line focus:border-inverse"
+                      className="h-11 min-w-0 flex-1 rounded-sm border border-transparent bg-transparent px-tight text-sm outline-none hover:border-line focus:border-inverse sm:h-10"
                     />
 
                     <span className="shrink-0 whitespace-nowrap font-mono text-[12px] text-muted">
@@ -138,7 +138,7 @@ export default function CategoriesPage() {
                     <button
                       type="button"
                       onClick={() => toggle(c)}
-                      className={`h-9 shrink-0 whitespace-nowrap rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
+                      className={`h-11 shrink-0 whitespace-nowrap rounded-sm border px-comfortable text-[13px] transition-colors duration-quick sm:h-9 ${
                         c.active
                           ? "border-line text-muted hover:bg-subtle"
                           : "border-ember bg-ember/10 text-brand-foreground"
@@ -160,7 +160,7 @@ export default function CategoriesPage() {
             onKeyDown={(e) => e.key === "Enter" && add()}
             placeholder={t("categories.newPlaceholder")}
             aria-label={t("categories.newPlaceholder")}
-            className="h-10 min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
+            className="h-11 w-full min-w-0 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse sm:h-10 sm:flex-1"
           />
           <Button onClick={add} disabled={!newName.trim() || busy} icon={<Plus size={16} strokeWidth={1.5} />}>
             {t("categories.add")}

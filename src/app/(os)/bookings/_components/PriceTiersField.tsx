@@ -59,7 +59,7 @@ export function PriceTiersField({
       {errors.tiers && <p className="text-[12px] text-danger">{errors.tiers}</p>}
 
       {tiers.length === 0 && (
-        <p className="rounded-sm border border-dashed border-line px-comfortable py-comfortable text-[13px] text-faint">
+        <p className="rounded-sm border border-dashed border-line px-comfortable py-comfortable text-[13px] text-muted">
           No tiers yet. Add at least one (e.g. Adult, Child).
         </p>
       )}

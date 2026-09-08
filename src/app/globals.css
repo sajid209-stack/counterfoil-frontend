@@ -473,6 +473,12 @@
      frames that carry white text: 3.50:1 either way, and the same colour the
      owner named. */
   --color-ember-solid: #f94a00;
+
+  /* Same reasoning for the destructive fill. `danger` brightens to red-400 on
+     ink so danger-as-TEXT reads there; under white as a FILL that measured
+     2.77:1. Held at red-700 in both themes it is ~7:1 either way, and still
+     unmistakably red against a near-black card. */
+  --color-danger-solid: #b91c1c;
 }
 
 /* Dark: tonal direction reverses — content lightens, surfaces deepen.
@@ -530,6 +536,7 @@
      softens by moving toward the card it sits on, not toward white. */
   --color-hairline: #2e2c29;
   --color-ember-solid: #f94a00;
+  --color-danger-solid: #b91c1c;
 }
 .dark body { background: var(--color-surface); color: var(--color-fg); }
 

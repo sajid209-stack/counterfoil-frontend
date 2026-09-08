@@ -320,7 +320,7 @@ export function ProductForm({
                   Which of your {resourceNoun.toLowerCase()} this booking can be sold on. Availability is worked out per {resourceSingular.toLowerCase()}, across every booking that shares it.
                 </p>
                 {resources.length === 0 ? (
-                  <p className="text-[13px] text-faint">
+                  <p className="text-[13px] text-muted">
                     None set up yet — add them in Settings → {resourceNoun}.
                   </p>
                 ) : (
@@ -388,7 +388,7 @@ export function ProductForm({
             {state.booking.bookingType === "BT-03" && state.schedule && (
               <div className="flex flex-col gap-tight">
                 <span className="type-label text-[12px] text-muted">Session names (optional)</span>
-                <p className="text-[12px] text-faint">Name a session and the name shows on tickets and the schedule — &quot;Morning show&quot;.</p>
+                <p className="text-[12px] text-muted">Name a session and the name shows on tickets and the schedule — &quot;Morning show&quot;.</p>
                 <div className="grid gap-tight sm:grid-cols-3">
                   {slotTimes(state.schedule).map((t) => (
                     <div key={t} className="flex items-center gap-tight">
@@ -426,7 +426,7 @@ export function ProductForm({
                     className="max-w-xs"
                     help="One price for the whole group — group size is capped by the party limits in Policies."
                   />
-                  <p className="text-[12px] text-faint">Priced per booking. Switch to per-person tiers by changing the booking setup on the Availability tab.</p>
+                  <p className="text-[12px] text-muted">Priced per booking. Switch to per-person tiers by changing the booking setup on the Availability tab.</p>
                 </div>
               ) : (
                 <PriceTiersField tiers={state.tiers} onChange={(tiers) => set("tiers", tiers)} errors={errors} currency={currency} />
@@ -467,7 +467,7 @@ export function ProductForm({
 
         {tab === "advanced" && (
           <div className="flex flex-col gap-tight text-sm">
-            <p className="text-[13px] text-faint">Internal values for support and debugging. Read-only.</p>
+            <p className="text-[13px] text-muted">Internal values for support and debugging. Read-only.</p>
             <AdvancedRow label="Booking type" value={state.booking.bookingType} />
             <AdvancedRow label="Booking ID" value={product.id} />
             <AdvancedRow label="Created" value={product.createdAt} />
@@ -477,7 +477,7 @@ export function ProductForm({
       </div>
 
       <div className="sticky bottom-0 max-md:bottom-[calc(56px+env(safe-area-inset-bottom))] flex items-center justify-between border-t border-line bg-surface py-section">
-        <span className="font-mono text-[12px] text-faint">{dirty ? "Unsaved changes" : "No changes"}</span>
+        <span className="font-mono text-[12px] text-muted">{dirty ? "Unsaved changes" : "No changes"}</span>
         <div className="flex items-center gap-tight">
           <Button variant="secondary" onClick={() => router.push("/bookings")} disabled={saving}>Cancel</Button>
           <Button onClick={save} loading={saving} disabled={!dirty}>Save changes</Button>

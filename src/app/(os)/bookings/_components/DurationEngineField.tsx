@@ -79,7 +79,7 @@ export function DurationEngineField({
           ] as const).map((o) => (
             <button key={o.v} type="button" onClick={() => set("pricingModel", o.v)} className={`flex flex-col items-start rounded-sm border px-comfortable py-tight text-left ${value.pricingModel === o.v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>
               <span className="text-sm font-medium">{o.label}</span>
-              <span className={`text-[12px] ${value.pricingModel === o.v ? "opacity-70" : "text-faint"}`}>{o.helper}</span>
+              <span className={`text-[12px] ${value.pricingModel === o.v ? "opacity-70" : "text-muted"}`}>{o.helper}</span>
             </button>
           ))}
         </div>
@@ -126,7 +126,7 @@ export function DurationEngineField({
               </button>
             )}
           </div>
-          <p className="text-[12px] text-faint">
+          <p className="text-[12px] text-muted">
             Optional. Leave a duration blank and it follows the formula above.
           </p>
           <div className="grid gap-tight sm:grid-cols-2 lg:grid-cols-3">
@@ -137,7 +137,7 @@ export function DurationEngineField({
                 <div key={d} className={`flex items-center gap-comfortable rounded-sm border p-comfortable ${deal ? "border-ember bg-ember/5" : "border-line"}`}>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="text-sm font-medium">{formatDuration(d)}</span>
-                    <span className={`font-mono text-[12px] ${deal ? "text-faint line-through" : "text-muted"}`}>
+                    <span className={`font-mono text-[12px] ${deal ? "text-muted line-through" : "text-muted"}`}>
                       {formatMoney(formula, currency)}
                     </span>
                   </span>
@@ -171,7 +171,7 @@ export function DurationEngineField({
       {/* The mandatory preview — concrete numbers before saving. */}
       {!err && options.length > 0 && (
         <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="type-label text-[12px] text-faint">Preview</p>
+          <p className="type-label text-[12px] text-muted">Preview</p>
           <p className="mt-inline font-mono text-[13px]">
             Bookable:{" "}
             {options.map((d, i) => (

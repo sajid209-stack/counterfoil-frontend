@@ -91,7 +91,7 @@ function CartRow({
         <Icon size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
         <span className="min-w-0 flex-1 truncate text-[13px]">{label}</span>
         <span className="shrink-0 text-[13px] text-muted">{value}</span>
-        <ChevronRight size={15} strokeWidth={1.5} className={`shrink-0 text-faint transition-transform duration-quick ${open ? "rotate-90" : ""}`} />
+        <ChevronRight size={15} strokeWidth={1.5} className={`shrink-0 text-muted transition-transform duration-quick ${open ? "rotate-90" : ""}`} />
       </button>
       {open && <div className="pb-tight">{children}</div>}
     </div>
@@ -751,9 +751,9 @@ export default function PosPage() {
         <div className="flex items-center gap-tight">
           <span className="hidden h-12 shrink-0 items-center rounded-sm border border-line bg-card px-comfortable text-[13px] text-muted sm:flex">{t("counter")}</span>
           <div className="flex h-12 min-w-0 flex-1 items-center gap-tight rounded-sm border border-line bg-card px-comfortable focus-within:border-inverse">
-            <Search size={16} strokeWidth={1.5} className="shrink-0 text-faint" />
+            <Search size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none placeholder:text-faint" />
-            {query && <button type="button" onClick={() => setQuery("")} className="text-[12px] text-faint hover:text-fg">{t("search.clear")}</button>}
+            {query && <button type="button" onClick={() => setQuery("")} className="text-[12px] text-muted hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
             <button type="button" onClick={() => setParkOpen(true)} className="flex h-12 shrink-0 items-center rounded-sm border border-ember bg-ember/10 px-comfortable text-[12px] text-brand-foreground">
@@ -941,7 +941,7 @@ export default function PosPage() {
               <span className="shrink-0 truncate text-[13px] text-muted">
                 {attached ? (attached.phone || attached.email || t("cart.customerChange")) : t("cart.customerAdd")}
               </span>
-              <ChevronRight size={15} strokeWidth={1.5} className="shrink-0 text-faint" />
+              <ChevronRight size={15} strokeWidth={1.5} className="shrink-0 text-muted" />
             </button>
             {attached?.flagReason && (
               <p className="min-w-0 break-words pb-tight text-[12px] text-warning">
@@ -1142,14 +1142,18 @@ export default function PosPage() {
             const pct = 100 / n;
             const idx = Math.max(0, availableMethods.findIndex((m) => m.value === method));
             return (
-              <div className="relative mt-tight grid h-14 rounded-sm bg-line/60 p-inline" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
-                {n > 1 && (
-                  <span
-                    aria-hidden
-                    className="absolute inset-y-inline rounded-xs bg-ember transition-[left] duration-quick ease-counterfoil"
-                    style={{ width: `calc(${pct}% - 8px)`, left: `calc(${idx * pct}% + 4px)` }}
-                  />
-                )}
+              <div className="relative mt-tight grid h-14 rounded-sm bg-line/60 p-inline dark:bg-line/25" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+                {/* The thumb draws even when there is only one method.
+                    Guarding it on `n > 1` left the selected label in `text-ink`
+                    on the bare track — fine in light, 1.35:1 in dark, where the
+                    track is #383632. A single-option control showing its one
+                    option as selected is also honest: it is what the sale will
+                    be charged with. */}
+                <span
+                  aria-hidden
+                  className="absolute inset-y-inline rounded-xs bg-ember-solid transition-[left] duration-quick ease-counterfoil"
+                  style={{ width: `calc(${pct}% - 8px)`, left: `calc(${idx * pct}% + 4px)` }}
+                />
                 {availableMethods.map((m) => (
                   <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[13px] transition-colors duration-quick ${method === m.value ? "font-medium text-ink" : "text-muted"}`}>{enumL.method(m.value)}</button>
                 ))}
@@ -1197,7 +1201,7 @@ export default function PosPage() {
                   <div className="flex justify-between text-muted"><span>{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</span><span className="text-lg">{formatMoney(dueNow, currency)}</span></div>
                   {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>}
                   <div className="mt-tight flex justify-between"><span>{t("cash.tendered")}</span><span className="text-lg">{formatMoney(tenderedMinor, currency)}</span></div>
-                  <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-faint"}`}>
+                  <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-muted"}`}>
                     <span className="text-xl">{t("cash.change")}</span>
                     <span className="text-5xl">{enough ? formatMoney(changeMinor, currency) : "—"}</span>
                   </div>
@@ -1271,12 +1275,12 @@ export default function PosPage() {
                 <div key={i} className="flex items-center justify-between rounded-sm border border-line p-comfortable">
                   <div>
                     <p className="text-sm font-medium">{p.name}</p>
-                    <p className="text-[12px] text-faint">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
+                    <p className="text-[12px] text-muted">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
                   </div>
                   <Button size="sm" onClick={() => resume(i)} disabled={cart.length > 0} >{t("parked.resume")}</Button>
                 </div>
               ))}
-              {cart.length > 0 && <p className="text-[12px] text-faint">{t("parked.parkFirst")}</p>}
+              {cart.length > 0 && <p className="text-[12px] text-muted">{t("parked.parkFirst")}</p>}
             </div>
           )}
         </div>
@@ -1313,7 +1317,7 @@ export default function PosPage() {
             ) : (
               <p className="rounded-sm bg-success/10 py-tight text-center text-sm font-medium text-success">{t("settle.fullyPaid")}</p>
             )}
-            <button type="button" onClick={() => { setSettleOrder(null); setSettleRef(""); }} className="text-center text-[13px] text-faint hover:text-fg">{t("settle.lookupAnother")}</button>
+            <button type="button" onClick={() => { setSettleOrder(null); setSettleRef(""); }} className="text-center text-[13px] text-muted hover:text-fg">{t("settle.lookupAnother")}</button>
           </div>
         )}
       </Modal>

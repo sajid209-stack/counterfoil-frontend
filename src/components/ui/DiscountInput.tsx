@@ -88,7 +88,7 @@ export function DiscountInput({
               type="button"
               aria-pressed={mode === m}
               onClick={() => { onMode(m); setDraft(null); setError(null); }}
-              className={cn(h, "w-12 text-sm font-medium", mode === m ? "bg-ember text-white" : "bg-card")}
+              className={cn(h, "w-12 text-sm font-medium", mode === m ? "bg-ember-solid text-white" : "bg-card")}
             >
               {m === "percent" ? "%" : "৳"}
             </button>

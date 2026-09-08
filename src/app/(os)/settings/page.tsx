@@ -47,7 +47,7 @@ export default function SettingsHub() {
               <span className="flex h-10 w-10 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground">
                 <Icon size={20} strokeWidth={1.5} />
               </span>
-              <ArrowUpRight size={18} strokeWidth={1.5} className="text-faint transition-colors duration-quick group-hover:text-ember" />
+              <ArrowUpRight size={18} strokeWidth={1.5} className="text-muted transition-colors duration-quick group-hover:text-ember" />
             </div>
             <div>
               <p className="type-h2 text-base">{title}</p>

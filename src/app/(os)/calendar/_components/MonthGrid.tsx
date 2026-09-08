@@ -127,7 +127,7 @@ export function MonthGrid({
                       "flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px]",
                       today && "bg-ember-solid font-semibold text-white",
                       !today && on && "border border-ember text-brand-foreground",
-                      !today && !on && outside && "text-faint",
+                      !today && !on && outside && "text-muted",
                       !today && !on && !outside && "text-fg",
                     )}
                   >
@@ -153,7 +153,7 @@ export function MonthGrid({
             {dayHeading ? dayHeading(selectedDate) : isoDate(selectedDate)}
           </p>
           {agenda.length === 0 ? (
-            <p className="px-comfortable py-comfortable text-[13px] text-faint">{emptyLabel}</p>
+            <p className="px-comfortable py-comfortable text-[13px] text-muted">{emptyLabel}</p>
           ) : (
             <ul className="flex flex-col gap-tight p-comfortable">
               {agenda.map((e) => (
@@ -226,7 +226,7 @@ export function MonthGrid({
                     className={cn(
                       "mb-1 flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px] transition-colors duration-quick",
                       today && "bg-ember-solid font-semibold text-white",
-                      !today && outside && "text-faint",
+                      !today && outside && "text-muted",
                       !today && !outside && "text-fg",
                       onPickDay && !today && "hover:bg-subtle",
                     )}

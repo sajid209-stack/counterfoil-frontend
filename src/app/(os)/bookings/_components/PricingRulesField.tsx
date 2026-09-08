@@ -81,7 +81,7 @@ export function PricingRulesField({
         <span className="type-label text-[12px] text-muted">Prices by time of day</span>
         <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} />} onClick={add}>Add band</Button>
       </div>
-      <p className="-mt-tight text-[12px] text-faint">The base price applies all day. Add a band to charge differently at certain times — the first band that matches wins.</p>
+      <p className="-mt-tight text-[12px] text-muted">The base price applies all day. Add a band to charge differently at certain times — the first band that matches wins.</p>
 
       {/* Visual day timeline */}
       <div className="card-surface p-comfortable">
@@ -111,14 +111,14 @@ export function PricingRulesField({
             );
           })}
         </div>
-        <div className="mt-inline flex justify-between font-mono text-[12px] text-faint">
+        <div className="mt-inline flex justify-between font-mono text-[12px] text-muted">
           {ticks.map((m, i) => <span key={i}>{fmtMin(m)}</span>)}
         </div>
       </div>
 
       {/* Band editors — the selected band is highlighted; tap a band above to jump to it. */}
       {rules.length === 0 ? (
-        <p className="rounded-sm border border-dashed border-line px-comfortable py-section text-center text-[13px] text-faint">No time bands yet — everything sells at the base price. Add a band for evenings, weekends, peak hours…</p>
+        <p className="rounded-sm border border-dashed border-line px-comfortable py-section text-center text-[13px] text-muted">No time bands yet — everything sells at the base price. Add a band for evenings, weekends, peak hours…</p>
       ) : (
         rules.map((rule, i) => (
           <div
@@ -130,7 +130,7 @@ export function PricingRulesField({
               {DAY_LABELS.map((label, d) => (
                 <button key={d} type="button" onClick={(e) => { e.stopPropagation(); toggleDay(i, d); }} className={cn("h-8 w-8 rounded-xs border text-[12px]", rule.days.includes(d) ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted")}>{label}</button>
               ))}
-              <span className="ml-inline self-center text-[12px] text-faint">{rule.days.length ? "" : "any day"}</span>
+              <span className="ml-inline self-center text-[12px] text-muted">{rule.days.length ? "" : "any day"}</span>
             </div>
             <div className="flex flex-wrap items-end gap-tight">
               <FormField label="From" value={rule.fromTime} onChange={(e) => update(i, { fromTime: e.target.value })} />
@@ -148,7 +148,7 @@ export function PricingRulesField({
 
       {(rules.length > 0 || base > 0) && (
         <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="type-label text-[12px] text-faint">Preview</p>
+          <p className="type-label text-[12px] text-muted">Preview</p>
           <p className="mt-inline flex flex-wrap gap-section font-mono text-[12px]">
             {EXAMPLES.map(([label, dow, time]) => (
               <span key={label}>{label} → <span className="font-medium">{formatMoney(resolveRulePrice(rulesMinor, dow, time, base), currency)}</span></span>

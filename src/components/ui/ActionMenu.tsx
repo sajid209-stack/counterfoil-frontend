@@ -111,7 +111,7 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: s
               className={cn(
                 "flex w-full items-center gap-tight px-comfortable py-tight text-left text-[13px] transition-colors duration-quick",
                 item.disabled
-                  ? "cursor-not-allowed text-faint"
+                  ? "cursor-not-allowed text-muted"
                   : item.destructive
                     ? "text-danger hover:bg-danger/10"
                     : "text-fg hover:bg-subtle",

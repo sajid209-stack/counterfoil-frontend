@@ -97,15 +97,15 @@ export default function MoneySetupPage() {
         {/* ── Payment accounts ─────────────────────────────────────────── */}
         <section>
           <h2 className="type-h2 mb-inline text-base">{t("accounts.title")}</h2>
-          <p className="mb-section text-[13px] text-faint">{t("accounts.description")}</p>
+          <p className="mb-section text-[13px] text-muted">{t("accounts.description")}</p>
 
           <div className="overflow-hidden card-surface">
             {/* Cash — always on, no account */}
             <div className="flex items-center gap-section border-b border-line p-section">
-              <Wallet size={20} strokeWidth={1.5} className="shrink-0 text-faint" />
+              <Wallet size={20} strokeWidth={1.5} className="shrink-0 text-muted" />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-medium">{t("cash.title")}</div>
-                <div className="text-[12px] text-faint">{t("cash.helper")}</div>
+                <div className="text-[12px] text-muted">{t("cash.helper")}</div>
               </div>
               <StatusPill tone="success">{t("cash.always")}</StatusPill>
             </div>
@@ -122,11 +122,11 @@ export default function MoneySetupPage() {
                         ? <StatusPill tone={STATUS_TONE[acct.status]}>{t(`status.${acct.status}`)}</StatusPill>
                         : <StatusPill tone="neutral">{t("accounts.notConnected")}</StatusPill>}
                     </div>
-                    <div className="mt-inline text-[12px] text-faint">{t(`provider.${provider}Helper`)} · {t(`posture.${posture}`)}</div>
+                    <div className="mt-inline text-[12px] text-muted">{t(`provider.${provider}Helper`)} · {t(`posture.${posture}`)}</div>
                     {acct && (
                       <div className="mt-tight flex flex-wrap gap-x-major gap-y-inline font-mono text-[12px]">
-                        <span className={acct.chargesEnabled ? "text-success" : "text-faint"}>{t("accounts.charges")}: {acct.chargesEnabled ? t("accounts.enabled") : t("accounts.off")}</span>
-                        <span className={acct.payoutsEnabled ? "text-success" : "text-faint"}>{t("accounts.payouts")}: {acct.payoutsEnabled ? t("accounts.enabled") : t("accounts.off")}</span>
+                        <span className={acct.chargesEnabled ? "text-success" : "text-muted"}>{t("accounts.charges")}: {acct.chargesEnabled ? t("accounts.enabled") : t("accounts.off")}</span>
+                        <span className={acct.payoutsEnabled ? "text-success" : "text-muted"}>{t("accounts.payouts")}: {acct.payoutsEnabled ? t("accounts.enabled") : t("accounts.off")}</span>
                       </div>
                     )}
                     {acct && acct.requirementsDue.length > 0 && (
@@ -177,7 +177,7 @@ export default function MoneySetupPage() {
         {/* ── Advance payments ─────────────────────────────────────────── */}
         <section className="card-surface p-major">
           <h2 className="type-h2 mb-inline text-base">{t("advance.title")}</h2>
-          <p className="mb-section text-[13px] text-faint">{t("advance.description")}</p>
+          <p className="mb-section text-[13px] text-muted">{t("advance.description")}</p>
           {adv && (
             <div className="flex flex-col gap-section">
               {(["counter", "online"] as const).map((ch) => {

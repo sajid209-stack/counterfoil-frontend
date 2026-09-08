@@ -172,7 +172,7 @@ function PickerBody({
         <Search
           size={18}
           strokeWidth={1.5}
-          className="absolute left-comfortable top-1/2 -translate-y-1/2 text-faint"
+          className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted"
         />
         <input
           value={query}

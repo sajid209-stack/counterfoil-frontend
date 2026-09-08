@@ -220,7 +220,7 @@ export default function CheckInPage() {
           className="min-w-40"
         />
         <div className="flex h-11 min-w-40 md:h-10 flex-1 items-center gap-tight rounded-full border border-line bg-card px-comfortable focus-within:border-inverse">
-          <Search size={15} strokeWidth={1.5} className="shrink-0 text-faint" />
+          <Search size={15} strokeWidth={1.5} className="shrink-0 text-muted" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchPlaceholder")} className="h-full w-full bg-transparent text-sm outline-none" />
         </div>
       </div>
@@ -265,8 +265,8 @@ export default function CheckInPage() {
                           {o && (
                             <div className="mt-inline flex flex-wrap items-center gap-tight font-mono text-[13px] tabular-nums">
                               <span className="text-muted">{t("paidOf", { paid: formatMoney(o.payments.reduce((s, x) => s + x.amount, 0)), total: formatMoney(o.total) })}</span>
-                              {due > 0 ? <span className="rounded-full bg-ember px-tight text-white">{t("owes", { amount: formatMoney(due) })}</span> : <span className="text-success">{t("settled")}</span>}
-                              <span className="min-w-0 truncate text-faint">· {o.payments.map((x) => `${enumL.method(x.method)} ${formatMoney(x.amount)}`).join(" + ")}</span>
+                              {due > 0 ? <span className="rounded-full bg-ember-solid px-tight text-white">{t("owes", { amount: formatMoney(due) })}</span> : <span className="text-success">{t("settled")}</span>}
+                              <span className="min-w-0 truncate text-muted">· {o.payments.map((x) => `${enumL.method(x.method)} ${formatMoney(x.amount)}`).join(" + ")}</span>
                             </div>
                           )}
                           <div className="mt-tight flex flex-wrap gap-tight">
@@ -363,7 +363,7 @@ export default function CheckInPage() {
               <button type="button" aria-label={t("more")} onClick={() => setWalkInParty((g) => g + 1)} className="h-11 w-11 rounded-full border border-line text-lg">+</button>
             </div>
           </div>
-          <p className="text-[13px] text-faint">{t("walkInHint")}</p>
+          <p className="text-[13px] text-muted">{t("walkInHint")}</p>
         </div>
       </Modal>
     </main>

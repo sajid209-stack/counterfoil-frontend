@@ -118,11 +118,11 @@ export function GoShell({ children }: { children: React.ReactNode }) {
       {/* Context bar — business · counter · shift state. Nav does NOT live here. */}
       <header className="flex items-center justify-between gap-tight px-section py-tight">
         <div className="flex min-w-0 items-center gap-tight">
-          <Link href="/login" className="flex h-12 shrink-0 items-center">
+          <Link href="/login" aria-label="Counterfoil Go — sign in" className="flex h-12 shrink-0 items-center">
             <Logo variant="go" size={30} />
           </Link>
           <span className="hidden shrink-0 rounded-full bg-subtle px-comfortable py-inline text-[13px] text-muted dark:border dark:border-line dark:bg-transparent sm:block">Fort Main Gate</span>
-          <span className="hidden shrink-0 font-mono text-[13px] text-muted sm:block" title="Shift open for">⏱ 3:24</span>
+          <span className="hidden shrink-0 font-mono text-[13px] text-muted sm:block" title="Shift open for"><span className="sr-only">Shift open for </span>⏱ 3:24</span>
         </div>
         {/* Only on a till, and only where there is room for it. */}
         <TillSwitcher />

@@ -29,7 +29,7 @@ export default function ResourceDetailPage() {
       title={res.data?.name ?? t("resources.fallbackTitle")}
       actions={res.data ? (res.data.outOfService ? <StatusPill tone="danger">{t("resources.outOfService")}</StatusPill> : <StatusPill status={res.data.status} />) : undefined}
     >
-      <Link href="/settings/resources" className="mb-section inline-flex items-center gap-inline text-[13px] text-faint hover:text-fg">
+      <Link href="/settings/resources" className="mb-section inline-flex items-center gap-inline text-[13px] text-muted hover:text-fg">
         <ArrowLeft size={14} strokeWidth={1.5} /> {t("resources.backToResources")}
       </Link>
       {res.loading || locs.loading || !res.data ? (

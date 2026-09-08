@@ -24,7 +24,7 @@ export default function TillsPage() {
         <Logo size={28} />
         <Link
           href="/"
-          className="flex items-center gap-inline font-mono text-xs text-faint hover:text-ember"
+          className="-my-tight inline-flex min-h-11 items-center gap-inline font-mono text-xs text-muted hover:text-ember sm:min-h-0"
         >
           <ArrowLeft size={13} strokeWidth={1.5} /> Home
         </Link>
@@ -50,14 +50,14 @@ export default function TillsPage() {
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-tight">
                   <span className="type-h2 text-lg">{till.name}</span>
-                  <span className="font-mono text-xs text-faint">{till.href}</span>
+                  <span className="font-mono text-xs text-muted">{till.href}</span>
                 </span>
                 <span className="type-body mt-inline block text-[14px] text-muted">{till.blurb}</span>
               </span>
               <ArrowRight
                 size={18}
                 strokeWidth={1.5}
-                className="mt-1 shrink-0 text-faint transition-transform duration-quick group-hover:translate-x-0.5 group-hover:text-ember"
+                className="mt-1 shrink-0 text-muted transition-transform duration-quick group-hover:translate-x-0.5 group-hover:text-ember"
               />
             </Link>
           ) : (
@@ -67,13 +67,13 @@ export default function TillsPage() {
               key={till.id}
               className="flex items-start gap-comfortable rounded-go border border-dashed border-strong p-section opacity-70"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle font-mono text-[13px] text-faint">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-subtle font-mono text-[13px] text-muted">
                 {till.short.slice(0, 2)}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-tight">
                   <span className="type-h2 text-lg text-muted">{till.name}</span>
-                  <span className="rounded-full bg-subtle px-tight py-inline font-mono text-xs text-faint">
+                  <span className="rounded-full bg-subtle px-tight py-inline font-mono text-xs text-muted">
                     being built
                   </span>
                 </span>
@@ -84,10 +84,15 @@ export default function TillsPage() {
         )}
       </div>
 
-      <div className="mt-hero flex flex-wrap gap-major border-t border-line pt-major font-mono text-xs text-faint">
-        <Link href="/dashboard" className="hover:text-ember">OS admin →</Link>
-        <Link href="/tokens" className="hover:text-ember">Design tokens →</Link>
-        <Link href="/kitchen-sink" className="hover:text-ember">Primitives →</Link>
+      {/* The arrow is an ICON, not part of the string.
+          Baked into the label it cannot be styled or animated, it is read
+          aloud by a screen reader, and it made the link a 16px-tall target.
+          Each row is now a real 44px target on a phone with the glyph
+          nudging on hover. */}
+      <div className="mt-hero flex flex-wrap items-center gap-major border-t border-line pt-major font-mono text-xs text-muted">
+        <Link href="/dashboard" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">OS admin<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
+        <Link href="/tokens" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">Design tokens<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
+        <Link href="/kitchen-sink" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">Primitives<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
       </div>
     </main>
   );

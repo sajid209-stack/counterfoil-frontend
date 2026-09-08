@@ -112,7 +112,7 @@ export function EventPeek({
           </span>
         )}
 
-        <span className="mt-inline text-[12px] text-faint">{t("peekHint")}</span>
+        <span className="mt-inline text-[12px] text-muted">{t("peekHint")}</span>
       </div>
     </div>
   );

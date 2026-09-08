@@ -105,7 +105,7 @@ function CartRow({
           {hint && <span className="block truncate text-[13px] text-muted">{hint}</span>}
         </span>
         <span className="shrink-0 whitespace-nowrap text-[13px] text-muted">{value}</span>
-        <ChevronRight size={15} strokeWidth={1.5} className={`shrink-0 text-faint transition-transform duration-quick ${open ? "rotate-90" : ""}`} />
+        <ChevronRight size={15} strokeWidth={1.5} className={`shrink-0 text-muted transition-transform duration-quick ${open ? "rotate-90" : ""}`} />
       </button>
       {open && <div className="pb-tight">{children}</div>}
     </div>
@@ -840,7 +840,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
           <div data-focus-host className="go-surface flex h-[52px] min-w-0 flex-1 items-center gap-tight rounded-full px-section focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember">
             <Search size={18} strokeWidth={1.75} className="shrink-0 text-muted" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none focus-visible:outline-none placeholder:text-faint" />
-            {query && <button type="button" onClick={() => setQuery("")} className="text-[13px] text-faint hover:text-fg">{t("search.clear")}</button>}
+            {query && <button type="button" onClick={() => setQuery("")} className="text-[13px] text-muted hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
             <button type="button" onClick={() => setParkOpen(true)} className="flex h-[52px] shrink-0 items-center rounded-full bg-ember/15 px-section text-[13px] font-medium text-brand-foreground">
@@ -859,7 +859,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
             clipped container at least as often as it reads as "more this way". */}
         <div className="flex flex-wrap gap-tight py-inline">
           {[{ id: "all", name: t("categoryAll") }, ...chipCategories].map((c) => (
-            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}>{c.name}</button>
+            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}>{c.name}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -1409,7 +1409,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
           onClick={() => openCart()}
           className={cn(
             "fixed inset-x-comfortable z-30 flex h-14 items-center justify-between gap-comfortable rounded-full px-section shadow-go-pop transition-[transform,background-color] duration-quick active:scale-[0.99] lg:hidden",
-            cart.length > 0 ? "bg-ember text-white" : "bg-card text-muted",
+            cart.length > 0 ? "bg-ember-solid text-white" : "bg-card text-muted",
           )}
           style={{ bottom: "calc(82px + env(safe-area-inset-bottom))" }}
         >
@@ -1443,7 +1443,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
                   <div className="flex justify-between text-muted"><span>{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</span><span className="text-lg">{formatMoney(dueNow, currency)}</span></div>
                   {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>}
                   <div className="mt-tight flex justify-between"><span>{t("cash.tendered")}</span><span className="text-lg">{formatMoney(tenderedMinor, currency)}</span></div>
-                  <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-faint"}`}>
+                  <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-muted"}`}>
                     <span className="text-xl">{t("cash.change")}</span>
                     <span className="text-5xl">{enough ? formatMoney(changeMinor, currency) : "—"}</span>
                   </div>
@@ -1526,12 +1526,12 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
                 <div key={i} className="flex items-center justify-between rounded-go border border-line p-comfortable">
                   <div>
                     <p className="text-sm font-medium">{p.name}</p>
-                    <p className="text-[13px] text-faint">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
+                    <p className="text-[13px] text-muted">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
                   </div>
                   <Button shape="pill" size="sm" onClick={() => resume(i)} disabled={cart.length > 0} >{t("parked.resume")}</Button>
                 </div>
               ))}
-              {cart.length > 0 && <p className="text-[13px] text-faint">{t("parked.parkFirst")}</p>}
+              {cart.length > 0 && <p className="text-[13px] text-muted">{t("parked.parkFirst")}</p>}
             </div>
           )}
         </div>
@@ -1568,7 +1568,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
             ) : (
               <p className="rounded-go bg-success/10 py-tight text-center text-sm font-medium text-success">{t("settle.fullyPaid")}</p>
             )}
-            <button type="button" onClick={() => { setSettleOrder(null); setSettleRef(""); }} className="text-center text-[13px] text-faint hover:text-fg">{t("settle.lookupAnother")}</button>
+            <button type="button" onClick={() => { setSettleOrder(null); setSettleRef(""); }} className="text-center text-[13px] text-muted hover:text-fg">{t("settle.lookupAnother")}</button>
           </div>
         )}
       </Modal>

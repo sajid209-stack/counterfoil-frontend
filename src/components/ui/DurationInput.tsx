@@ -87,8 +87,8 @@ export function DurationInput({
           className="w-full bg-transparent px-comfortable font-mono text-sm outline-none placeholder:text-faint disabled:cursor-not-allowed"
         />
         <div className="flex flex-col border-l border-line">
-          <button type="button" tabIndex={-1} aria-label="More" disabled={disabled} onClick={() => nudge(1)} className="flex h-1/2 w-8 items-center justify-center text-faint hover:text-fg active:bg-line"><ChevronUp size={13} strokeWidth={1.5} /></button>
-          <button type="button" tabIndex={-1} aria-label="Less" disabled={disabled} onClick={() => nudge(-1)} className="flex h-1/2 w-8 items-center justify-center border-t border-line text-faint hover:text-fg active:bg-line"><ChevronDown size={13} strokeWidth={1.5} /></button>
+          <button type="button" tabIndex={-1} aria-label="More" disabled={disabled} onClick={() => nudge(1)} className="flex h-1/2 w-8 items-center justify-center text-muted hover:text-fg active:bg-line"><ChevronUp size={13} strokeWidth={1.5} /></button>
+          <button type="button" tabIndex={-1} aria-label="Less" disabled={disabled} onClick={() => nudge(-1)} className="flex h-1/2 w-8 items-center justify-center border-t border-line text-muted hover:text-fg active:bg-line"><ChevronDown size={13} strokeWidth={1.5} /></button>
         </div>
       </div>
       {chips && chips.length > 0 && (

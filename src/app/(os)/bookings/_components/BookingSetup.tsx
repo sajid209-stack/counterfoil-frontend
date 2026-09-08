@@ -32,7 +32,7 @@ function Option({ title, helper, onClick }: { title: string; helper: string; onC
   return (
     <button type="button" onClick={onClick} className="flex w-full flex-col items-start gap-inline card-surface p-section text-left transition-all duration-quick hover:border-ember/40 hover:shadow-sm active:bg-ember/5">
       <span className="text-sm font-medium">{title}</span>
-      <span className="text-[13px] text-faint">{helper}</span>
+      <span className="text-[13px] text-muted">{helper}</span>
     </button>
   );
 }
@@ -174,7 +174,7 @@ export function BookingSetup({
               {resources.map((r) => (
                 <label key={r.id} className="flex cursor-pointer items-center gap-tight text-sm">
                   <input type="checkbox" checked={picked.includes(r.id)} onChange={() => setPicked((p) => toggle(p, r.id))} className="h-4 w-4 accent-ember" />
-                  {r.name} <span className="text-[12px] text-faint">({r.nounSingular})</span>
+                  {r.name} <span className="text-[12px] text-muted">({r.nounSingular})</span>
                 </label>
               ))}
               {onCreateResource && (
@@ -206,7 +206,7 @@ export function BookingSetup({
           <FormField label="What do you call them?" variant="select" value={provNoun} onChange={(e) => setProvNoun(e.target.value)} options={PROVIDER_NOUNS.map((n) => ({ value: n, label: n }))} />
           <div className="flex flex-col gap-tight">
             <span className="type-label text-[12px] text-muted">Who?</span>
-            {team.length === 0 ? <p className="text-[13px] text-faint">Add team members first, then pick them here.</p> : team.map((m) => (
+            {team.length === 0 ? <p className="text-[13px] text-muted">Add team members first, then pick them here.</p> : team.map((m) => (
               <label key={m.id} className="flex cursor-pointer items-center gap-tight text-sm"><input type="checkbox" checked={provIds.includes(m.id)} onChange={() => setProvIds((p) => toggle(p, m.id))} className="h-4 w-4 accent-ember" />{m.name}</label>
             ))}
           </div>
@@ -221,7 +221,7 @@ export function BookingSetup({
           <div className="flex flex-col gap-tight">
             <span className="type-label text-[12px] text-muted">Session dates</span>
             {courseDates.map((d) => (
-              <div key={d} className="flex items-center justify-between rounded-sm border border-line px-comfortable py-tight text-sm"><span className="font-mono text-[13px]">{d}</span><button type="button" onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="text-faint hover:text-danger"><X size={16} strokeWidth={1.5} /></button></div>
+              <div key={d} className="flex items-center justify-between rounded-sm border border-line px-comfortable py-tight text-sm"><span className="font-mono text-[13px]">{d}</span><button type="button" onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="text-muted hover:text-danger"><X size={16} strokeWidth={1.5} /></button></div>
             ))}
             <div className="flex gap-tight">
               <DateField value={courseDate} today={DEMO_TODAY} onChange={setCourseDate} labels={{ previousMonth: "Previous month", nextMonth: "Next month", today: "Today", open: "Choose a date" }} className="flex-1" />
@@ -270,7 +270,7 @@ function Radio({ label, value, onChange, options }: { label: string; value: stri
           <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={selected} className={`relative flex flex-col items-start rounded-md border p-comfortable text-left transition-all duration-quick ${selected ? "border-ember bg-ember/5" : "border-line bg-card hover:border-ember/40 hover:shadow-sm"}`}>
             {selected && <span className="absolute right-tight top-tight h-2 w-2 rounded-full bg-ember" aria-hidden />}
             <span className="text-sm font-medium">{o.label}</span>
-            <span className="text-[12px] text-faint">{o.helper}</span>
+            <span className="text-[12px] text-muted">{o.helper}</span>
           </button>
         );
       })}
@@ -288,5 +288,5 @@ function FlowFooter({ onBack, onDone, disabled }: { onBack: () => void; onDone: 
 }
 
 function BackLink({ onClick }: { onClick: () => void }) {
-  return <button type="button" onClick={onClick} className="self-start text-[13px] text-faint hover:text-fg">← Back</button>;
+  return <button type="button" onClick={onClick} className="self-start text-[13px] text-muted hover:text-fg">← Back</button>;
 }

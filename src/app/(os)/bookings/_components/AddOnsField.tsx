@@ -28,7 +28,7 @@ export function AddOnsField({
         <span className="type-label text-[12px] text-muted">Add-ons</span>
         <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} />} onClick={() => onChange([...addOns, emptyAddOn()])}>Add extra</Button>
       </div>
-      <p className="text-[12px] text-faint">Extras offered at the counter — shoe hire, bibs, oils.</p>
+      <p className="text-[12px] text-muted">Extras offered at the counter — shoe hire, bibs, oils.</p>
       {addOns.map((a, i) => (
         <div key={i} className="grid grid-cols-1 items-end gap-tight rounded-sm border border-line p-comfortable sm:grid-cols-[1fr_8rem_auto_auto]">
           <FormField label={i === 0 ? "Name" : undefined} placeholder="Shoe hire" value={a.name} onChange={(e) => update(i, { name: e.target.value })} />

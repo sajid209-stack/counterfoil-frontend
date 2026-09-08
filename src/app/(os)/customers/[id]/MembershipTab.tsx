@@ -203,7 +203,7 @@ export function MembershipTab({
         </div>
 
         {points.entries.length === 0 ? (
-          <p className="text-[13px] text-faint">{t("noPoints")}</p>
+          <p className="text-[13px] text-muted">{t("noPoints")}</p>
         ) : (
           <ul className="flex flex-col gap-inline">
             {points.entries.slice(0, 12).map((e) => (

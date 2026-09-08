@@ -42,7 +42,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                 href={s.href}
                 className={cn(
                   "flex h-11 items-center whitespace-nowrap border-b-2 px-comfortable text-sm transition-colors duration-quick",
-                  active ? "border-inverse font-medium text-fg" : "border-transparent text-faint hover:text-fg",
+                  active ? "border-inverse font-medium text-fg" : "border-transparent text-muted hover:text-fg",
                 )}
               >
                 {s.label}

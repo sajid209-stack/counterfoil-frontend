@@ -24,7 +24,7 @@ export default function SignInPage() {
       <div className="mt-section flex flex-col gap-tight">
         <div className="flex items-baseline justify-between">
           <label className="type-label text-[12px] text-muted">Password</label>
-          <Link href="/forgot-password" className="text-[12px] text-faint hover:text-ember">Forgot password?</Link>
+          <Link href="/forgot-password" className="text-[12px] text-muted hover:text-ember">Forgot password?</Link>
         </div>
         <input
           type="password"
@@ -35,12 +35,12 @@ export default function SignInPage() {
 
       <button
         type="button"
-        className="mt-major flex h-11 w-full items-center justify-center rounded-sm bg-ember text-sm font-medium text-white transition-colors duration-quick hover:bg-ember active:bg-brand-700"
+        className="mt-major flex h-11 w-full items-center justify-center rounded-sm bg-ember-solid text-sm font-medium text-white transition-colors duration-quick hover:bg-ember-solid active:bg-brand-700"
       >
         Sign in
       </button>
 
-      <p className="type-body mt-section text-center text-[13px] text-faint">
+      <p className="type-body mt-section text-center text-[13px] text-muted">
         <Link href="/" className="hover:text-ember">Back to launcher</Link>
       </p>
     </div>

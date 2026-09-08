@@ -121,7 +121,7 @@ export function RepeatPicker({
                   !o.ok && "bg-subtle",
                 )}
               >
-                <span className={cn("shrink-0", o.ok ? "text-success" : "text-faint")}>
+                <span className={cn("shrink-0", o.ok ? "text-success" : "text-muted")}>
                   {o.ok ? <Check size={14} strokeWidth={2} /> : <X size={14} strokeWidth={2} />}
                 </span>
                 <span className={cn("min-w-0 flex-1 truncate text-[13px] tabular-nums", !o.ok && "text-muted line-through")}>

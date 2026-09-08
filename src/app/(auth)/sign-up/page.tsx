@@ -34,7 +34,7 @@ export default function SignUpPage() {
           <Button fullWidth className="mt-major" onClick={() => setPhase("verify")}>
             Create account
           </Button>
-          <p className="type-body mt-section text-center text-[13px] text-faint">
+          <p className="type-body mt-section text-center text-[13px] text-muted">
             Already have one? <Link href="/sign-in" className="text-brand-foreground hover:underline">Sign in</Link>
           </p>
         </>
@@ -51,7 +51,7 @@ export default function SignUpPage() {
           <Button fullWidth className="mt-major" onClick={() => router.push("/onboarding")}>
             Confirm email
           </Button>
-          <button type="button" onClick={() => setPhase("form")} className="mt-section w-full text-center text-[13px] text-faint hover:text-fg">
+          <button type="button" onClick={() => setPhase("form")} className="mt-section w-full text-center text-[13px] text-muted hover:text-fg">
             Back
           </button>
         </>

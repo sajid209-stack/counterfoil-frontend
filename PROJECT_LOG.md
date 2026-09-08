@@ -4965,3 +4965,149 @@ was matching any `span` whose `textContent` equalled the label and measuring an
 ancestor cell. A pill is the span that *contains* the aria-hidden dot. The
 harness was fixed rather than the component — which is the second time this
 session a probe silently measured the wrong element.
+
+## Product-wide UI audit — 29 routes, measured then fixed by mechanism (2026-09-09)
+
+Owner asked for the whole product reviewed against 22 dimensions. A list that
+long is only tractable by measuring first: a harness renders all 29 routes at
+**390 and 1440, light and dark**, and asks the questions a person would notice,
+ranked by consequence — **A** the screen lies or hides something, **B** it is
+unusable for someone, **C** it reads as unfinished.
+
+**941 findings → 70**, and **69 of the 70 are the owner's declared
+white-on-ember rule.** One genuine item remains (below).
+
+| | before | after |
+|---|---|---|
+| contrast | 652 | 69 (all the declared exception) |
+| text under the 12px floor | 195 | 0 |
+| touch targets under 44px | 67 | 1 |
+| unnamed controls | 21 | 0 |
+| silently clipped text | 3 | 0 |
+| hidden overflow inside `main` | 3 | 0 |
+
+941 findings were never 941 problems. They were five mechanisms.
+
+### 1. `faint` was carrying live content — 194 sites, 91 files
+
+`--color-faint` is documented "disabled-fg" and measures **2.09:1 light /
+1.94:1 dark**. It was on the **entire Settings sub-navigation** (Business ·
+Locations · Counters · Resources · Categories · Team · Devices · Payments ·
+Roles · Security) — the primary navigation of the whole admin area, in the
+disabled-foreground token, on eleven routes. That single misuse was 200 of the
+652 contrast findings.
+
+This had been found and fixed one screen at a time in ten previous sessions.
+It is now a **rule** instead: `faint` is for a disabled control and for
+placeholder ink, and nothing else. 194 occurrences moved to `muted` (5.63:1);
+the 31 `placeholder:` / `disabled:` variants were left alone. `grep` for a bare
+`text-faint` now returns **zero**.
+
+### 2. A brand token that lifts for text was being used as a fill
+
+`--color-ember` brightens to `#FF7A3D` in dark so that ember-as-TEXT stays
+legible on ink. Under white as a **fill** that same lift measured **2.59:1** —
+materially worse than light mode, on primary buttons, category chips, selected
+slots and segmented thumbs across 13 routes.
+
+15 fills moved to `--color-ember-solid` (pinned `#F94A00` in both themes), so a
+white-on-ember control now reads **3.50:1 either way** — the owner's declared
+exception, at one value rather than two.
+
+`--color-danger` had the identical problem (red-400 on ink, **2.77:1** under
+white on the destructive button). New `--color-danger-solid`, pinned to
+red-700, ~7:1 in both themes and still unmistakably red on a near-black card.
+
+### 3. Three A-severity defects that hid real information
+
+- **`/reports/sales` clipped its own KPI figures.** At 390 a 141px tile against
+  a 158px number rendered `৳502,445.00` as `৳502,4` **with no ellipsis** — a
+  different number, with nothing to say anything was missing. The same defect
+  the dashboard hero was fixed for in September; these tiles never got the
+  treatment. One column under 420px, figure steps down a size on a phone.
+- **`/tokens` was unreadable in dark.** Swatches printed their hex on
+  themselves in `text-fg` / `text-inverse-fg` — theme tokens on chips whose
+  colour is FIXED — so in dark the ink inverted while the swatch did not, and
+  `#22211F` was drawn in near-black on near-black at **1.15:1**. The swatch is
+  pure colour now and both labels sit on the surface beneath it.
+- **The classic till's payment control drew no thumb when one method was
+  available.** `n > 1` guarded the thumb but not the selected label, so
+  `text-ink` sat on the bare track: fine in light, **1.35:1** in dark.
+
+### 4. Controls a thumb cannot hit
+
+67 targets under 44px, concentrated where it matters most — the manager's
+dashboard (session expand toggles at 32px, notice actions at 20px, chart
+ranges at 32px, scope toggle at 39px) and Settings → Categories, whose
+**reorder arrows were 24×20px** on a control that silently changes the order of
+the chips at the counter. All raised for touch and returned to density from
+`sm`, the responsive-by-form-factor rule the nav already follows.
+
+Settings → Categories also had a **`flex-1` inside a `flex-col`**, which sets
+flex-basis on the vertical axis — the new-category field had collapsed to
+**19px tall**.
+
+### 5. Names and semantics
+
+21 unnamed controls (the Go and classic logo links on seven routes each), the
+`⏱ 3:24` shift clock whose meaning was carried entirely by an emoji, and the
+landing/tills `→` arrows baked into link strings — which cannot be styled, are
+read aloud by a screen reader, and made those links 16px tall. The arrow is an
+icon now, and each row is a real target.
+
+### What LOOKING caught that measuring could not
+
+The audit was green on `/tokens` after the swatch fix, and the page was still
+lying: **the chip labelled "ink #141413" rendered light and "paper #F5F2EB"
+rendered dark**, because the primitives were drawn with `bg-inverse` /
+`bg-surface` / `bg-ember` — semantic, theme-adaptive tokens. A palette
+reference that misstates its own palette is worse than no page. Primitives are
+drawn from the palette scales now.
+
+Second: the dashboard carried **two selected-state treatments on one screen** —
+the scope toggle white on ember, the chart range ink on ember, same shape, same
+meaning, two inks — and the range chip also changed colour between themes while
+the other did not. Unified on the house rule (white on `ember-solid`). The
+honest trade is recorded in the code: ink measured 5.3:1 and white measures
+3.50:1, and one consistent selected state across the product is worth more than
+one chip being better on its own.
+
+### Three harness corrections, all mine
+
+Every one of these would have become a "fix" to working code if trusted:
+
+- **A segmented control paints its selection with an absolutely-positioned
+  SIBLING.** Walking ancestors measured the track behind the thumb and reported
+  white-on-ink as 1.24:1. The probe now reads the real paint stack via
+  `elementsFromPoint`, and — for elements below the fold, where that returns
+  nothing — checks positioned siblings that cover the element's centre.
+- **Decoration is meant to bleed off-canvas.** The landing's ambient blur is
+  `aria-hidden`, `pointer-events-none` and clipped by `overflow-hidden`;
+  measuring it as hidden overflow reported a decision, not a defect.
+- **An input styled `h-full` inside a bordered 44px pill measures 42** — the
+  content box — while the thing you tap is the pill.
+
+Also declared rather than "fixed": the **11px tab-bar labels** on both mobile
+bars. Five tabs across 390px is a tab-bar convention, 14px does not fit, and
+the log has recorded it as deliberate since the type sweep. That was 195 of the
+findings.
+
+### What remains
+
+**69 white-on-ember at 3.50:1**, which is the owner's stated rule (anything
+inside an `#F94A00` frame is white) and now consistent in both themes rather
+than degrading to 2.59:1 in dark. **One** touch target: the kitchen-sink's
+`variant="link"` button demo, which is inline by nature — the documented
+inline-link exemption.
+
+### Verified
+
+`tsc`, `npm run build` clean. **Lint attributed, not assumed**: the 100 changed
+files report 13 errors and 13 warnings, and extracting the same 100 files from
+`HEAD` and linting those reports **exactly 13 and 13** — zero introduced.
+i18n parity **0 missing / 0 extra** across 30 namespaces.
+
+Standing harnesses all hold: order detail 0 contrast findings both themes,
+review checks 15/15, accessibility 8/8. The till was proven by **selling**:
+General Admission → `Charge ৳575.00` (৳500 + 15% VAT) with the primary button
+measuring `rgb(249, 74, 0)` on white.

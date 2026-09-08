@@ -40,7 +40,7 @@ export function ChoiceCard({
       className={cn(
         "relative rounded-go border text-left transition-all duration-quick",
         disabled
-          ? "border-line bg-subtle text-faint"
+          ? "border-line bg-subtle text-muted"
           : selected
             ? hideCheck
               ? "border-ember bg-ember/10 ring-1 ring-inset ring-ember"
@@ -52,7 +52,7 @@ export function ChoiceCard({
       )}
     >
       {selected && !hideCheck && (
-        <span className="absolute right-tight top-tight flex h-4 w-4 items-center justify-center rounded-full bg-ember text-white" aria-hidden>
+        <span className="absolute right-tight top-tight flex h-4 w-4 items-center justify-center rounded-full bg-ember-solid text-white" aria-hidden>
           <Check size={11} strokeWidth={3} />
         </span>
       )}

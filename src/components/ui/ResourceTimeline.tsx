@@ -52,7 +52,7 @@ export function ResourceTimeline({
       </div>
       <div className="relative mt-inline h-3">
         {ticks.map((m) => (
-          <span key={m} className="absolute -translate-x-1/2 font-mono text-[12px] text-faint" style={{ left: pct(m) }}>{Math.floor(m / 60)}</span>
+          <span key={m} className="absolute -translate-x-1/2 font-mono text-[12px] text-muted" style={{ left: pct(m) }}>{Math.floor(m / 60)}</span>
         ))}
       </div>
     </div>

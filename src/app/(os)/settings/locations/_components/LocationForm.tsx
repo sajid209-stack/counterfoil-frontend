@@ -71,7 +71,7 @@ function HoursSummary({ hours }: { hours: OpeningHours[] }) {
           );
         })}
       </div>
-      <p className="mt-section text-[12px] text-faint">
+      <p className="mt-section text-[12px] text-muted">
         {t("locations.hoursFollowUp")}
       </p>
     </div>
