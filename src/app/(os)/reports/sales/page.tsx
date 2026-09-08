@@ -4,7 +4,8 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight, Download, Plus, X } from "lucide-react";
-import { BarChart, Button, DonutChart, HBarChart, LineChart, Modal, PageShell, StatusPill, Tabs, useToast, FormField } from "@/components/ui";
+import { DEMO_TODAY } from "@/lib/schedule";
+import { BarChart, Button, DateField, DonutChart, HBarChart, LineChart, Modal, PageShell, StatusPill, Tabs, useToast, FormField } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getAnalytics,
@@ -270,9 +271,11 @@ function SalesReportInner() {
           <button type="button" onClick={() => setPreset("custom")} className={`h-11 md:h-9 rounded-sm border px-tight text-[13px] ${filters.preset === "custom" ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{t("custom")}</button>
           {filters.preset === "custom" && (
             <span className="flex items-center gap-inline">
-              <input aria-label={tc("dateFrom")} type="date" value={filters.from} onChange={(e) => set("from", e.target.value)} className={selectCls} />
-              <span className="text-faint">→</span>
-              <input aria-label={tc("dateTo")} type="date" value={filters.to} onChange={(e) => set("to", e.target.value)} className={selectCls} />
+              {/* `to` cannot precede `from`, and the picker says so by
+                  refusing the days rather than by complaining afterwards. */}
+              <DateField value={filters.from} today={DEMO_TODAY} max={filters.to} onChange={(iso: string) => set("from", iso)} labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }} className="w-40" />
+              <span className="text-muted">→</span>
+              <DateField value={filters.to} today={DEMO_TODAY} min={filters.from} onChange={(iso: string) => set("to", iso)} labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }} className="w-40" />
             </span>
           )}
           <input value={filters.q ?? ""} onChange={(e) => set("q", e.target.value || undefined)} placeholder={t("search")} className={`${selectCls} w-64`} />

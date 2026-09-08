@@ -157,6 +157,7 @@ export function ProductSheet({
 }) {
   const toast = useToast();
   const t = useTranslations("pos");
+  const tc = useTranslations("common");
   const seatT = useTranslations("seatmaps");
   const hasLayout = !!product.layoutId;
   const seatsQ = useApiQuery(() => availableSeats(product.id), [product.id]);
@@ -568,7 +569,13 @@ export function ProductSheet({
                     // capacity or less, never fewer than one.
                     return { text: t("sheet.leftCount", { count: c.left }), low: c.total > 0 && c.left <= Math.max(1, Math.floor(c.total * 0.2)) };
                   }}
-                  labels={{ today: t("sheet.today"), tomorrow: t("sheet.tomorrow"), pick: t("sheet.moreDates") }}
+                  labels={{
+                    today: t("sheet.today"),
+                    tomorrow: t("sheet.tomorrow"),
+                    pick: t("sheet.moreDates"),
+                    previousMonth: tc("previousMonth"),
+                    nextMonth: tc("nextMonth"),
+                  }}
                 />
               );
             })()}

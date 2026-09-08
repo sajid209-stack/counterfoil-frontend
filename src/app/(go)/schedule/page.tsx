@@ -4,14 +4,18 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { MoreHorizontal } from "lucide-react";
-import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
+import { Button, DateField, EmptyState, FormField, Modal, useToast } from "@/components/ui";
+import { DEMO_TODAY } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
 import { getResourceMatrix, getSlots, listProducts, listResources, updateResource, type Product, type Resource } from "@/lib/api";
 import { isResourceType, isSlotBased } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
 import { formatMoney } from "@/lib/format";
 
-const TODAY = "2026-07-29";
+/* The app's one date, not a private copy of it — the token's own doc
+   comment warns that two components each holding their own is how a hold
+   lands in a different month from the schedule it blocks. */
+const TODAY = DEMO_TODAY;
 const TOMORROW = "2026-07-30";
 
 /** What a row IS, as opposed to what it says. The label is a price or a
@@ -125,7 +129,14 @@ export default function SchedulePage() {
       <div className="flex flex-wrap gap-tight">
         {dateBtn(TODAY, t("today"))}
         {dateBtn(TOMORROW, t("tomorrow"))}
-        <input aria-label={tc("chooseDate")} type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-12 min-w-0 max-w-full rounded-go-sm border border-line bg-card px-comfortable text-sm" />
+        <DateField
+          value={date}
+          today={TODAY}
+          onChange={setDate}
+          shape="go"
+          labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
+          className="min-w-40"
+        />
       </div>
 
       <div className="flex flex-col gap-tight">

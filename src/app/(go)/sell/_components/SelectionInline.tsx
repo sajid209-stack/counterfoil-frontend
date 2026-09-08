@@ -80,6 +80,7 @@ export function SelectionInline({
 }) {
   const TOMORROW = demoDay(1);
   const t = useTranslations("sell");
+  const tc = useTranslations("common");
   const ts = useTranslations("pos");
   const [blocked, setBlocked] = useState<string | null>(null);
   const [courseOpen, setCourseOpen] = useState(false);
@@ -129,7 +130,13 @@ export function SelectionInline({
         tomorrow={TOMORROW}
         min={DEMO_TODAY}
         marked={[...new Set((draft.slots ?? []).map((x) => x.date))]}
-        labels={{ today: t("date.today"), tomorrow: t("date.tomorrow"), pick: t("date.more") }}
+        labels={{
+          today: t("date.today"),
+          tomorrow: t("date.tomorrow"),
+          pick: t("date.more"),
+          previousMonth: tc("previousMonth"),
+          nextMonth: tc("nextMonth"),
+        }}
       />
     </Step>
   );

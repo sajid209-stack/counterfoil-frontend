@@ -4354,3 +4354,74 @@ across both pages, both themes: **zero**. Ten other tables unaffected. Orders
 re-verified after the `StatStrip` migration — all four figures, filters still
 agreeing. `tsc`, `build`, `eslint` clean; i18n 0 / 0 after removing three keys
 these changes orphaned.
+
+## Counterfoil's own calendar (2026-09-08)
+
+Every date field in the app was `<input type="date">`, which hands the whole
+job to the browser: a blue-and-white grid in system type, its own corners, its
+own "Clear / Today" links, and a text format taken from the operating system
+rather than from us. A till reading "29 Jul 2026" everywhere opened a picker
+reading **07/29/2026**, and the Go surface — otherwise 18px corners and 44px
+targets — simply became a different product for as long as the picker was up.
+
+I had flagged the format half of this twice during the calendar work and
+declined to fix it, on the grounds that a bespoke picker would be inconsistent
+with the rest of the app. That reasoning was only sound while *every* field was
+native. Asked to build the real thing, the inconsistency argument reverses.
+
+### Two components
+
+**`DatePicker`** — the grid. Design-system tokens throughout, Monday-first to
+match the rest of the app, `--color-ember-solid` on the chosen day with white
+on it per the house rule, and a `shape` prop in the pattern `Button`,
+`ModeButton` and `DiscountInput` already use: `default` is 36px squares on 6px
+corners, `go` is **44px squares on 14px** corners.
+
+Keyboard throughout: arrows by day and week, PageUp/PageDown by month,
+Home/End across a week, Enter to choose. Focus and selection are separate
+state — a picker that selected on every arrow press would fire `onChange` six
+times crossing a week. `role="grid"` with one tab stop, so Tab leaves rather
+than walking 42 squares.
+
+**`DateField`** — the drop-in for the native input. States the date through
+`lib/format`, so a field says "29 Jul 2026" like everything else on the page.
+Escape closes and returns focus to the trigger.
+
+Dates stay local `yyyy-mm-dd` strings; `toISOString` is never used to derive
+one, because at +06:00 it reports the previous day before 06:00 — which is how
+a booking gets filed to yesterday.
+
+### Eight fields, zero left
+
+`DateStrip` (the till sheet in the owner's screenshot), the OS calendar
+toolbar, the sales report's from/to pair, two booking forms, and the Go
+check-in and schedule screens. `grep 'type="date"'` now returns only the two
+doc comments that explain what was replaced.
+
+Two of those Go pages were keeping **`const TODAY = "2026-07-29"`** — private
+copies of `DEMO_TODAY`, exactly what that token's own comment warns against.
+Both now import it.
+
+The two booking-form components are not translated at all and take literal
+English labels, matching how the rest of those files already work. Pre-existing;
+noted rather than half-fixed.
+
+### Two bugs found by looking
+
+- The weekday header row inherited the 44px touch cell, making a label row as
+  tall as something you tap.
+- The OS panel opened left-aligned and **clipped Saturday and Sunday off the
+  window** on the calendar toolbar, whose field sits near the right edge. It
+  flips to the trigger's other edge when there is not room; measured back
+  inside at 1198–1488.
+
+### Verified
+
+Trigger reads "29 Jul 2026" with **zero native date inputs** on the page. Panel:
+July 2026, 42 cells, Mon-first, selected square `rgb(249,74,0)` with white text.
+ArrowRight moves to 2026-07-30, Enter selects and closes and the calendar's own
+range follows. Go: 44px cells, 14px radius. Contrast inside the panel, both
+themes: one finding, the declared white-on-ember at 3.50:1, identical light and
+dark. The money path still sells Yoga Session 20 → 3 with the card badging
+Limited, and 45 sheet variants remain on theme. `tsc`, `build` clean; lint
+unchanged from baseline; i18n 0 / 0.

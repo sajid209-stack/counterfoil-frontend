@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronDown, ChevronRight, Search, UserPlus } from "lucide-react";
-import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
+import { Button, DateField, EmptyState, FormField, Modal, useToast } from "@/components/ui";
+import { DEMO_TODAY } from "@/lib/schedule";
 import { useEnumLabels } from "@/lib/labels";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -24,7 +25,10 @@ import {
 import { toMinutes, toTime } from "@/lib/schedule";
 import { formatMoney } from "@/lib/format";
 
-const TODAY = "2026-07-29";
+/* The app's one date, not a private copy of it — the token's own doc
+   comment warns that two components each holding their own is how a hold
+   lands in a different month from the schedule it blocks. */
+const TODAY = DEMO_TODAY;
 const TOMORROW = "2026-07-30";
 const time = (iso: string) => iso.slice(11, 16);
 const METHODS: PaymentMethod[] = ["cash", "bkash", "bangla_qr", "card_terminal"];
@@ -207,7 +211,14 @@ export default function CheckInPage() {
       </div>
       <div className="flex flex-wrap gap-tight">
         {dateBtn(TODAY, t("today"))}{dateBtn(TOMORROW, t("tomorrow"))}
-        <input aria-label={tc("chooseDate")} type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11 md:h-10 rounded-go-sm border border-line bg-card px-comfortable text-sm" />
+        <DateField
+          value={date}
+          today={TODAY}
+          onChange={setDate}
+          shape="go"
+          labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
+          className="min-w-40"
+        />
         <div className="flex h-11 min-w-40 md:h-10 flex-1 items-center gap-tight rounded-full border border-line bg-card px-comfortable focus-within:border-inverse">
           <Search size={15} strokeWidth={1.5} className="shrink-0 text-faint" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchPlaceholder")} className="h-full w-full bg-transparent text-sm outline-none" />

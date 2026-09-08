@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Pencil, Plus, X } from "lucide-react";
-import { Button, DurationInput, FormField } from "@/components/ui";
+import { Button, DateField, DurationInput, FormField } from "@/components/ui";
+import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDuration } from "@/lib/duration";
 import type { BookingTypeCode, Product, Resource, Staff } from "@/lib/api";
 
@@ -223,7 +224,7 @@ export function BookingSetup({
               <div key={d} className="flex items-center justify-between rounded-sm border border-line px-comfortable py-tight text-sm"><span className="font-mono text-[13px]">{d}</span><button type="button" onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="text-faint hover:text-danger"><X size={16} strokeWidth={1.5} /></button></div>
             ))}
             <div className="flex gap-tight">
-              <input type="date" value={courseDate} onChange={(e) => setCourseDate(e.target.value)} className="h-10 flex-1 rounded-sm border border-line px-comfortable text-sm" />
+              <DateField value={courseDate} today={DEMO_TODAY} onChange={setCourseDate} labels={{ previousMonth: "Previous month", nextMonth: "Next month", today: "Today", open: "Choose a date" }} className="flex-1" />
               <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} />} onClick={() => { if (courseDate && !courseDates.includes(courseDate)) { setCourseDates((d) => [...d, courseDate].sort()); setCourseDate(""); } }}>Add date</Button>
             </div>
           </div>

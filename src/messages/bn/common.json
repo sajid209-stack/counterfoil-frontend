@@ -18,5 +18,9 @@
   "chooseDate": "তারিখ বেছে নিন",
   "filterByLocation": "অবস্থান অনুসারে ফিল্টার",
   "dateFrom": "শুরুর তারিখ",
-  "dateTo": "শেষের তারিখ"
+  "dateTo": "শেষের তারিখ",
+  "previousMonth": "আগের মাস",
+  "nextMonth": "পরের মাস",
+  "today": "আজ",
+  "openCalendar": "তারিখ বাছুন"
 }

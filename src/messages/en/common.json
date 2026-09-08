@@ -18,5 +18,9 @@
   "chooseDate": "Choose a date",
   "filterByLocation": "Filter by location",
   "dateFrom": "From date",
-  "dateTo": "To date"
+  "dateTo": "To date",
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "today": "Today",
+  "openCalendar": "Choose a date"
 }

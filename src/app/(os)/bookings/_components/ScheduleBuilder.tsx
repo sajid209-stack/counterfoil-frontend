@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
-import { DurationInput, FormField, TimeInput } from "@/components/ui";
+import { DateField, DurationInput, FormField, TimeInput } from "@/components/ui";
 import type { BookingTypeCode, DayHours, ProductSchedule, Staff } from "@/lib/api";
 import {
+  DEMO_TODAY,
   DAY_LABELS,
   DAY_NAMES,
   isDailyCapped,
@@ -171,7 +172,7 @@ export function ScheduleBuilder({
           </div>
         ))}
         <div className="flex gap-tight">
-          <input type="date" value={exDate} onChange={(e) => setExDate(e.target.value)} className="h-10 flex-1 rounded-sm border border-line px-comfortable text-sm outline-none focus:border-inverse" />
+          <DateField value={exDate} today={DEMO_TODAY} onChange={setExDate} labels={{ previousMonth: "Previous month", nextMonth: "Next month", today: "Today", open: "Choose a date" }} className="flex-1" />
           <button type="button" onClick={addException} className="flex h-10 items-center gap-inline rounded-sm border border-line px-comfortable text-sm hover:border-inverse">
             <Plus size={16} strokeWidth={1.5} /> Add closed date
           </button>

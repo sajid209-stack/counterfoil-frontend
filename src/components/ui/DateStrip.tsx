@@ -24,12 +24,15 @@
 import { useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { DatePicker } from "./DatePicker";
 
 export interface DateStripLabels {
   today: string;
   tomorrow: string;
   /** The control that opens a full calendar. */
   pick: string;
+  previousMonth: string;
+  nextMonth: string;
 }
 
 export function DateStrip({
@@ -136,16 +139,23 @@ export function DateStrip({
       {/* The calendar, always visible rather than parked at the end of a
           scroll. It opens in place; it does not cover anything. */}
       {pickerOpen ? (
-        <input
-          type="date"
-          autoFocus
-          value={value}
-          min={min}
-          aria-label={labels.pick}
-          onChange={(e) => e.target.value && onChange(e.target.value)}
-          onBlur={() => setPickerOpen(false)}
-          className="h-12 w-full rounded-go border border-ember bg-card px-comfortable text-sm outline-none"
-        />
+        /* Ours, not the browser's. The native control opened a blue system
+           grid with its own corners and a US date format inside a till that
+           is 18px corners and "29 Jul 2026" everywhere else. */
+        <div className="rounded-go border border-ember bg-card">
+          <DatePicker
+            value={value}
+            today={today}
+            min={min}
+            labels={{ previousMonth: labels.previousMonth, nextMonth: labels.nextMonth, today: labels.today }}
+            shape="go"
+            autoFocus
+            onChange={(iso) => {
+              onChange(iso);
+              setPickerOpen(false);
+            }}
+          />
+        </div>
       ) : (
         <button
           type="button"

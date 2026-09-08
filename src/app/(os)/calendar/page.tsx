@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
-import { Button, PageShell, Tabs } from "@/components/ui";
+import { Button, DateField, PageShell, Tabs } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, XL, useMediaQuery } from "@/lib/useMedia";
@@ -415,14 +415,15 @@ export default function CalendarPage() {
                 <ChevronRight size={16} strokeWidth={1.5} />
               </button>
             </div>
-            <input
-              aria-label={tc("chooseDate")}
-              type="date"
+            {/* Ours. The native control rendered 07/29/2026 beside a range
+                label reading "27 Jul – 2 Aug 2026" — two date formats, one
+                toolbar, because the browser owned one of them. */}
+            <DateField
               value={isoDate(cursor)}
-              onChange={(e) =>
-                e.target.value && setCursor(startOfDay(new Date(`${e.target.value}T12:00:00`)))
-              }
-              className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
+              today={isoDate(now)}
+              onChange={(iso) => setCursor(startOfDay(new Date(`${iso}T12:00:00`)))}
+              labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
+              className="w-44"
             />
           </div>
         </div>
