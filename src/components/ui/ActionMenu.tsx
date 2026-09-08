@@ -100,6 +100,12 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: s
               disabled={item.disabled}
               onClick={() => {
                 setOpen(false);
+                /* Hand focus back to the trigger BEFORE running the action.
+                   Selecting an item unmounts it, which drops focus to <body>;
+                   if the action opens a dialog, that dialog then records
+                   <body> as the thing to restore focus to and a keyboard user
+                   is returned to the top of the page when it closes. */
+                trigger.current?.focus();
                 item.onSelect();
               }}
               className={cn(

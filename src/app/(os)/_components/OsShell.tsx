@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -65,7 +65,26 @@ const DESTINATIONS = [
   { href: "/settings/business", key: "settings", icon: Settings },
 ] as const;
 
+/**
+ * ⌘ or Ctrl — the hint has to be true on the machine reading it.
+ *
+ * It was hardcoded to ⌘K, which is wrong on every Windows and Linux desktop,
+ * and this product's own operators run Windows. Read through
+ * `useSyncExternalStore` rather than an effect so the server render and the
+ * first client render agree: the server has no navigator, so it emits the
+ * Ctrl form and the client corrects it on hydration if it is a Mac.
+ */
+const subscribeNothing = () => () => {};
+const isMacClient = () =>
+  typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+
+function useShortcutKey(): string {
+  const mac = useSyncExternalStore(subscribeNothing, isMacClient, () => false);
+  return mac ? "⌘K" : "Ctrl K";
+}
+
 export function OsShell({ children }: { children: React.ReactNode }) {
+  const shortcutKey = useShortcutKey();
   const pathname = usePathname();
   const t = useTranslations("nav");
   const operatorQ = useApiQuery(() => getOperator(), []);
@@ -165,7 +184,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               {/* `muted`, not `faint`: faint is the disabled-foreground token and this
                   is a live hint on a filled chip — it measured 1.77:1 on every OS
                   page. */}
-              <kbd className="rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-[12px] text-muted">⌘K</kbd>
+              <kbd className="rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-[12px] text-muted">{shortcutKey}</kbd>
             </div>
             <LocaleToggle />
             <ModeButton />

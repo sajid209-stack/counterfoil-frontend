@@ -2,12 +2,18 @@ import type { Minor } from "@/lib/api";
 
 /** Minor units → display string. 1050 → "৳10.50". Currency is the operator's. */
 export function formatMoney(minor: Minor, currency = "BDT"): string {
+  // The sign goes OUTSIDE the symbol. Intl puts it inside — "৳-47,850.00" —
+  // which breaks the optical alignment of a money column and reads as part of
+  // the currency rather than as a direction. And it is a true minus (U+2212),
+  // not a hyphen: a hyphen is too short and sits at the wrong optical height
+  // beside lining figures.
+  const negative = minor < 0;
   const amount = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(minor / 100);
+  }).format(Math.abs(minor) / 100);
   const symbol = currency === "BDT" ? "৳" : `${currency} `;
-  return `${symbol}${amount}`;
+  return `${negative ? "−" : ""}${symbol}${amount}`;
 }
 
 /** A CATALOGUE price: "৳300", "৳1,500", but "৳1,250.50" when there are paisa.

@@ -67,7 +67,7 @@ export function PageShell({
     <div className="min-w-0">
       {crumbs.length > 0 && (
         <p className="mb-inline font-mono text-[12px] uppercase tracking-wide text-muted">
-          {["os", ...crumbs].join(" / ")}
+          {crumbs.join(" / ")}
         </p>
       )}
       {/* References and long names must wrap, never bleed out of the header. */}

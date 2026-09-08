@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { ThemeProvider as NextThemes, useTheme } from "next-themes";
 
@@ -8,9 +8,40 @@ import { ThemeProvider as NextThemes, useTheme } from "next-themes";
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <NextThemes attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <ThemeColorSync />
       {children}
     </NextThemes>
   );
+}
+
+/**
+ * Keep the browser chrome on the same theme as the app.
+ *
+ * The root layout ships a pair of `theme-color` metas keyed to
+ * `prefers-color-scheme`, which is right until someone uses the in-app toggle:
+ * force light inside a dark OS and the status bar stays ink while the page
+ * turns to paper. The media-query pair stays as the no-JS default; this
+ * overrides it once a person has actually chosen.
+ */
+const THEME_COLOR = { light: "#f5f2eb", dark: "#141413" } as const;
+
+function ThemeColorSync() {
+  const { resolvedTheme } = useTheme();
+  useEffect(() => {
+    if (resolvedTheme !== "light" && resolvedTheme !== "dark") return;
+    // The media-keyed pair cannot be edited in place — a light meta with a
+    // dark colour would be a lie the moment the override is cleared — so the
+    // override is its own unconditional tag, which wins by document order.
+    let el = document.querySelector<HTMLMetaElement>('meta[name="theme-color"][data-app-theme]');
+    if (!el) {
+      el = document.createElement("meta");
+      el.name = "theme-color";
+      el.dataset.appTheme = "";
+      document.head.appendChild(el);
+    }
+    el.content = THEME_COLOR[resolvedTheme];
+  }, [resolvedTheme]);
+  return null;
 }
 
 /** Header mode button: one tap flips light ↔ dark. The full picker (incl.

@@ -408,7 +408,12 @@ export default function OrderDetailPage() {
                 ticketsQ.data!.data.map((tk) => (
                   <div key={tk.id} className="flex items-center justify-between border-b border-line py-tight text-sm last:border-0">
                     <span className="font-mono text-[12px]">{tk.code}</span>
-                    <StatusPill status={tk.status === "issued" ? "confirmed" : tk.status === "redeemed" ? "active" : "void"}>{enumL.status(tk.status)}</StatusPill>
+                    {/* A ticket has its own lifecycle, so it names its own tone rather
+                        than borrowing an order word: laundering "redeemed"
+                        through "active" also handed it the record-state
+                        outline, which is a booking's shape, not a ticket's.
+                        Issued = exists, not used yet. Redeemed = done. */}
+                    <StatusPill tone={tk.status === "issued" ? "info" : tk.status === "redeemed" ? "success" : "neutral"}>{enumL.status(tk.status)}</StatusPill>
                   </div>
                 ))
               )}

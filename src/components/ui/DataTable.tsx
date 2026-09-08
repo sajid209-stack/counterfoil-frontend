@@ -47,6 +47,13 @@ export interface DataTableProps<T> {
   skeletonRows?: number;
 }
 
+/** Deterministic block width for a loading cell — see the note at the call site. */
+function skeletonWidth<T>(col: Column<T>, colIndex: number, rowIndex: number): string {
+  if (col.align === "right") return `${56 + ((rowIndex * 7 + colIndex * 3) % 4) * 8}px`;
+  if (colIndex === 0) return `${96 + ((rowIndex * 5) % 3) * 12}px`;
+  return `${52 + ((rowIndex * 11 + colIndex * 17) % 5) * 9}%`;
+}
+
 const alignClass = (a?: "left" | "right" | "center") =>
   a === "right" ? "text-right" : a === "center" ? "text-center" : "text-left";
 
@@ -174,9 +181,25 @@ export function DataTable<T>({
             {loading &&
               Array.from({ length: skeletonRows }).map((_, i) => (
                 <tr key={`sk-${i}`} className="border-b border-line last:border-0">
-                  {columns.map((col) => (
-                    <td key={col.key} className="px-comfortable py-comfortable">
-                      <div className="h-4 w-full max-w-[8rem] animate-pulse rounded-xs bg-line" />
+                  {columns.map((col, c) => (
+                    <td key={col.key} className={cn("px-comfortable py-comfortable", alignClass(col.align))}>
+                      {/* Every column used to get the same 8rem block, so the
+                          skeleton reflowed the moment data landed — which is
+                          worse than no skeleton, because the page jumps twice.
+                          Widths now follow the column's own role: a
+                          right-aligned column is money and sits right at a
+                          money's width, the first column is the identifier,
+                          the rest are prose. Varied per row from the indices
+                          so the block reads as content rather than as a
+                          progress bar, and deterministically so it does not
+                          reshuffle on every render. */}
+                      <div
+                        className={cn(
+                          "h-4 animate-pulse rounded-xs bg-line",
+                          col.align === "right" ? "ml-auto" : "",
+                        )}
+                        style={{ width: skeletonWidth(col, c, i) }}
+                      />
                     </td>
                   ))}
                 </tr>

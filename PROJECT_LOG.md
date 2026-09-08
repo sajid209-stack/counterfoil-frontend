@@ -4824,3 +4824,144 @@ Bangla renders whole with **0 missing-message warnings** and no raw keys.
 which the Payments card immediately below repeats. It is shared with the POS
 receipt, where that line is the whole point, so it was left alone rather than
 edited in a shared component for one caller's benefit.
+
+## An external UI review, checked claim by claim (2026-09-08)
+
+A written review arrived marking each item **[verified]** (provable from shipped
+markup) or **[prescribed]** (recommended from context). Verifying it first was
+the whole job: **five of its [verified] findings were artifacts of reading
+static HTML rather than a browser**, and three of its best points were real and
+had been sitting in the codebase for weeks.
+
+### What was real, and shipped
+
+**1. The zoom lock applied to the whole product.** `maximumScale: 1` was on the
+root layout, so every OS admin screen shipped it too — a WCAG 2.1 SC 1.4.4
+failure, since a low-vision operator cannot zoom a dense orders table. It
+belongs to the till, where a stray pinch mid-sale is a real incident.
+
+The obvious fix does not work, and the measurement is worth keeping: viewport
+objects merge shallowly root-down and **a key the child omits is inherited, not
+dropped**. Declaring an OS viewport without `maximumScale` still served
+`maximum-scale=1`. So the lock had to be *added* by the surfaces that want it.
+Those layouts were `"use client"`, which cannot export `viewport`, so `(go)`
+and `(classic)` are now a server `layout.tsx` over a client shell — the same
+split `(os)` has always had. Measured after: `/orders /dashboard /bookings
+/settings` unlocked, `/pos /sell /scan /checkin /classic` locked.
+
+**2. `pending` and `partial` were the same amber.** The sharpest point in the
+review. Pending is in flight and needs nobody; partial means a customer owes
+money and somebody has to collect it — and they rendered identically, which is
+the single most expensive collision a POS can have. `cancelled` also sat in the
+same danger red as `refunded`, implying something went wrong with an order that
+simply never happened and moved no money.
+
+`StatusPill` now carries **two axes**. Tone says what happened to the money —
+settled / in flight / **attention** / reversed / void. Shape says which
+lifecycle the word belongs to: transaction states are tinted, record states
+(`active`, `inactive`, `archived`) are outlined. Before this "Active" (a booking
+is on sale) and "Confirmed" (a reservation exists) were drawn identically
+despite belonging to unrelated lifecycles.
+
+`attention` gets the strongest non-destructive treatment available — a heavier
+tint **and** a ring, so it separates from `info` by shape as well as hue.
+Deliberately not a filled ember pill: white on ember is 3.50:1, which a 12px
+label cannot carry. Measured across both themes: **zero pills below 4.5:1**,
+PARTIAL at 5.08 light / 8.09 dark.
+
+That change surfaced a mislabel: order tickets laundered their status through
+order words (`redeemed` to `active`), which also handed them a booking's record
+outline. Tickets name their own tone now.
+
+**3. `/shift/close` opened at maximum alarm.** Variance was `counted − expected`
+from the first render, so a routine end-of-shift form greeted the cashier with
+**−৳47,850.00 in red before they touched the keypad**. It anchors badly and it
+trains staff to ignore the one cash control on the screen.
+
+Now an em-dash in neutral until something is entered, then three tiers against a
+stated ৳100 tolerance: square goes success; out goes warning, with the **reason
+field appearing and Close blocked until it is filled**. Threshold declared once,
+so the colour, the wording and the required note cannot disagree.
+
+The appearance picker also moved off that screen — a theme toggle was competing
+with the primary action in the middle of a cash count. It is a per-device
+choice, so it now sits with the other device preferences in the Go More sheet.
+(Moved, not deleted: it was Go's only appearance control.)
+
+**4. `formatMoney` put the sign inside the symbol** — `৳-47,850.00`. The sign is
+outside now and is a true minus (U+2212), not a hyphen. Audited the ~14 sites
+that prepend their own minus: all are guarded by a positive check, so nothing
+double-signs.
+
+**5. `os / bookings`** — a developer breadcrumb in production UI, on every OS
+page. Gone.
+
+**6. The command-key hint was hardcoded to the Mac glyph** on a product whose own
+operators run Windows. Read through `useSyncExternalStore` so the server and
+first client render agree: the server has no navigator, emits `Ctrl K`, and a
+Mac corrects it on hydration.
+
+**7. Toasts shared one polite live region**, so a failure queued behind whatever
+success was already speaking — and the one toast a user must not miss is the one
+saying their save did not land. Errors are `role="alert"`, confirmations
+`role="status"`. Two elements, because politeness cannot be changed per-message.
+
+**8. `Modal` trapped nothing.** Escape closed it; Tab walked straight out into
+the page behind. It now traps Tab both directions, restores focus to its opener,
+and `ConfirmDialog` gives opening focus to **Cancel** — a dialog that opens with
+Delete under the space bar deletes things by accident.
+
+Restoring focus exposed a second-order bug worth recording: a menu item that
+opens a dialog **unmounts itself**, so the dialog recorded a detached node and
+focus fell to `<body>`. `ActionMenu` now hands focus back to its trigger
+*before* running the action, and `Modal` falls back to `<main>` rather than
+leaving focus at the top of the page.
+
+**9. DataTable skeletons were one 8rem block per column**, so the table reflowed
+the moment data landed — worse than no skeleton, because the page jumps twice.
+Widths now follow each column's own role (right-aligned = money, first =
+identifier, rest = prose), varied per row deterministically. Reduced motion was
+already handled by the global block.
+
+### What was not real, and why
+
+Five **[verified]** claims came from reading served HTML rather than a browser:
+
+| Claim | Actual |
+|---|---|
+| "six visually empty rows", "KPI tiles render with no values" | Both have animated skeletons — `animate-pulse` blocks carry no text, so a markup scrape sees nothing |
+| "/calendar renders Loading…" | Zero literal loading strings since P8; it is a message key only |
+| "`theme-color` hardcoded `#141413`" | Already a `prefers-color-scheme` pair. The *real* gap was that the in-app override did not update it — fixed |
+| "the বাংলা toggle appears twice" | Mobile and desktop copies behind `md:hidden` / `hidden md:flex`. Exactly one renders, and `display:none` is out of the accessibility tree |
+| "add `tabular-nums` to every numeric column" | Global on `body` since the Inter sweep |
+
+Deliberately not done, with reasons: **trailing `.00` in lists** contradicts a
+recorded decision (`formatPriceShort` already exists for the catalogue, and two
+decimals are an accounting convention in tables) — an owner call, not mine.
+**Bengali numerals** are already consistently Latin via `Intl` on `en-US`;
+consistent is the defensible outcome the review asked for. **Safe-area insets**
+are already on every bottom bar. **The `/sell` till switcher** is a feature the
+owner asked for. **64px Go touch targets** would be a large visual change
+against a measured 48px floor with POS audits at zero findings.
+
+### Verified
+
+Two new harnesses, **15 + 8 checks, all passing**, plus a 20-route by 390/1440
+sweep across all three surfaces — every route 200, no page x-scroll, no hidden
+overflow in `main`, no missing-message warnings, no console errors.
+
+The till was proven by **selling**, not rendering, since its layout was split:
+General Admission, ৳500 + 15% VAT = **৳575.00, 1 item**, and the More sheet
+carries the relocated appearance picker.
+
+`tsc`, `npm run build` and `eslint` clean on every touched file; `OsShell` holds
+at its **one pre-existing** error, attributed by linting `HEAD`'s own copy
+(same rule, line 79 moved to 98 where the shortcut helper was inserted). i18n
+parity **0 missing / 0 extra** across 30 namespaces, three new keys in both
+locales.
+
+**Harness note, again:** the first pill run reported ACTIVE as un-outlined. It
+was matching any `span` whose `textContent` equalled the label and measuring an
+ancestor cell. A pill is the span that *contains* the aria-hidden dot. The
+harness was fixed rather than the component — which is the second time this
+session a probe silently measured the wrong element.

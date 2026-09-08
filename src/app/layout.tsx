@@ -46,12 +46,16 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Counterfoil" },
 };
 
-// F10 app readiness: draw under the notch/home indicator (safe-area insets
-// handle the overlap) and stop input-focus zoom — Go runs as an app, not a page.
+// F10 app readiness: draw under the notch/home indicator — safe-area insets
+// handle the overlap.
+//
+// The zoom lock that used to sit here has moved to the (go) and (classic)
+// layouts. It is a till decision: it stops an accidental pinch mid-sale, and
+// it was silently applying to every OS admin screen too, where a low-vision
+// operator could not zoom a dense table — a WCAG 2.1 SC 1.4.4 failure.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f5f2eb" },

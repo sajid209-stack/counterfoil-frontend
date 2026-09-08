@@ -61,11 +61,21 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div
-        className="pointer-events-none fixed inset-x-section top-[76px] z-[60] flex flex-col gap-tight md:inset-x-auto md:bottom-section md:left-section md:top-auto md:w-full md:max-w-sm"
-        aria-live="polite"
-      >
-        {toasts.map((t) => (
+      {/* TWO live regions, not one.
+          Everything used to share a single `aria-live="polite"` region, so a
+          failure announcement queued behind whatever success message was
+          already speaking — and the one toast a user must not miss is the one
+          that says their save did not land. Errors get `role="alert"`
+          (assertive); confirmations get `role="status"` (polite). A region's
+          politeness cannot be changed per-message after the fact, which is why
+          this is two elements rather than one attribute. */}
+      <div className="pointer-events-none fixed inset-x-section top-[76px] z-[60] flex flex-col gap-tight md:inset-x-auto md:bottom-section md:left-section md:top-auto md:w-full md:max-w-sm">
+        {([
+          ["alert", toasts.filter((t) => t.tone === "error")],
+          ["status", toasts.filter((t) => t.tone !== "error")],
+        ] as const).map(([role, group]) => (
+        <div key={role} role={role} className="flex flex-col gap-tight">
+        {group.map((t) => (
           <div
             key={t.id}
             className={cn(
@@ -93,6 +103,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <X size={16} strokeWidth={1.5} />
             </button>
           </div>
+        ))}
+        </div>
         ))}
       </div>
     </ToastContext.Provider>
