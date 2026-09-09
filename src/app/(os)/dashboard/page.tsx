@@ -3,11 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, CalendarClock, Check, ChevronDown, ChevronRight, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, Banknote, CalendarOff, Clock, WifiOff, Wrench, type LucideIcon } from "lucide-react";
-import { AreaChart, Button, Modal, PageShell, StatusPill, useToast } from "@/components/ui";
+import { ArrowRight, CalendarClock, Check, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, Banknote, CalendarOff, Clock, WifiOff, Wrench, type LucideIcon } from "lucide-react";
+import { AreaChart, Button, PageShell, StatusPill } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
-  cancelSessionBookings,
   getOperator,
   getResourceMatrix,
   getSlots,
@@ -23,10 +22,7 @@ import {
   orderOutstanding,
   isVoidedOrder,
   peekWaitlist,
-  updateProduct,
-  type Booking,
   type Order,
-  type Product,
 } from "@/lib/api";
 import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
 import { formatDateTime, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
@@ -128,7 +124,6 @@ export default function DashboardPage() {
   // here would be two places for one word to drift.
   const to = useTranslations("orders");
   const enumL = useEnumLabels();
-  const toast = useToast();
   const op = useApiQuery(() => getOperator(), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100, filters: { status: "active" } }), []);
   const counters = useApiQuery(() => listCounters({ pageSize: 1 }), []);
@@ -146,9 +141,6 @@ export default function DashboardPage() {
   const [scope, setScope] = useState<"today" | "week">("today");
   const [trendDays, setTrendDays] = useState<7 | 14 | 30>(30);
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
-  const [openSession, setOpenSession] = useState<string | null>(null); // inline bookings
-  const [capModal, setCapModal] = useState<{ product: Product; value: number } | null>(null);
-  const [cancelModal, setCancelModal] = useState<{ product: Product; time: string; slotISO: string; affected: number } | null>(null);
   const [skipped, setSkipped] = useState<Record<string, boolean>>({});
   const skip = (key: string) => setSkipped((s) => ({ ...s, [key]: true }));
   const has = (q: { data?: { page: { total: number } } }) => (q.data?.page.total ?? 0) > 0;
@@ -286,65 +278,26 @@ export default function DashboardPage() {
   const ahead = bookedAhead(1, 7);
   const aheadPrev = bookedAhead(8, 14);
 
-  // ── Today's sessions — management, never selling ─────────────────────────
-  // A scheduled session and an unbooked resource hour are not the same thing.
-  // A planetarium show at 0/40 runs whether or not anyone bought a seat, so it
-  // is always the manager's business. A free turf hour is not a session at all
-  // — it is capacity nobody has taken yet, and there is a row of it for every
-  // field × every hour. Listing both together (and then taking the nine
-  // EARLIEST) filled this panel with empty turf slots, each offering to cancel
-  // bookings that did not exist, and buried the one session with real numbers.
-  //
-  // So: scheduled sessions always appear; a resource hour appears only once
-  // somebody has booked it. The free hours are counted into one honest line
-  // rather than dropped silently. Out-of-service resources are deliberately
-  // absent — Needs attention already names them, once, instead of once an hour.
-  interface Session { key: string; time: string; slotISO: string; label: string; who?: string; sold: number; cap: number; state: "OPEN" | "FULL"; product: Product; adjustable: boolean; booked: boolean }
-  const { sessions, freeSlots, hiddenCount } = useMemo(() => {
-    const out: Session[] = [];
+  // ── Unbooked hours today ──────────────────────────────────────────────────
+  // What survives of the Today's-sessions derivation. The card is gone, but
+  // Operations at a glance still states how many resource hours nobody has
+  // taken, and this is where that figure came from. Only the free-hour count
+  // is computed now: the session list, its ordering and its "+N hidden" tail
+  // existed solely to fill the card.
+  const freeSlots = useMemo(() => {
     let free = 0;
     for (const p of products) {
-      if (isResourceType(p.bookingType) && !p.flexibleDurations) {
-        for (const r of getResourceMatrix(p, TODAY)) {
-          if (r.resource.outOfService) continue;
-          for (const s of r.slots) {
-            if (toMinutes(s.time) < NOW_MIN) continue;
-            if (s.available) { free++; continue; }
-            out.push({ key: `${p.id}|${r.resource.id}|${s.time}`, time: s.time, slotISO: `${TODAY}T${s.time}:00+06:00`, label: p.name, who: r.resource.name, sold: 1, cap: 1, state: "FULL", product: p, adjustable: false, booked: true });
-          }
-        }
-      } else if (isSlotBased(p.bookingType)) {
-        for (const s of getSlots(p, TODAY)) {
-          if (toMinutes(s.time) < NOW_MIN) continue;
-          out.push({ key: `${p.id}|${s.time}`, time: s.time, slotISO: `${TODAY}T${s.time}:00+06:00`, label: p.name, who: p.schedule?.guideIds.length ? t("guided") : undefined, sold: s.sold, cap: s.capacity, state: s.remaining <= 0 ? "FULL" : "OPEN", product: p, adjustable: true, booked: s.sold > 0 });
+      if (!isResourceType(p.bookingType) || p.flexibleDurations) continue;
+      for (const r of getResourceMatrix(p, TODAY)) {
+        if (r.resource.outOfService) continue;
+        for (const slot of r.slots) {
+          if (toMinutes(slot.time) < NOW_MIN) continue;
+          if (slot.available) free++;
         }
       }
     }
-    // Busiest first among equals at a time, so the ones carrying people lead.
-    out.sort((a, b) => a.time.localeCompare(b.time) || b.sold - a.sold);
-    return { sessions: out.slice(0, 9), freeSlots: free, hiddenCount: Math.max(0, out.length - 9) };
-  }, [products, t]);
-
-  const sessionBookings = (s: Session): Booking[] =>
-    bookings.filter((b) => b.productId === s.product.id && b.slotStart === s.slotISO && b.status === "confirmed");
-
-  const saveCapacity = async () => {
-    if (!capModal) return;
-    const p = capModal.product;
-    const sch = p.schedule!;
-    const patch = sch.dailyCapacity ? { schedule: { ...sch, dailyCapacity: capModal.value } } : { schedule: { ...sch, capacityPerSession: capModal.value } };
-    const res = await updateProduct(p.id, patch as never);
-    if (res.ok) { toast.success(t("capacitySetTo", { value: capModal.value })); productsQ.reload(); }
-    else toast.error(res.error.message);
-    setCapModal(null);
-  };
-
-  const doCancelSession = async () => {
-    if (!cancelModal) return;
-    const res = await cancelSessionBookings(cancelModal.product.id, cancelModal.slotISO);
-    if (res.ok) { toast.success(res.data.cancelled === 1 ? t("sessionCancelled", { count: res.data.cancelled }) : t("sessionCancelledPlural", { count: res.data.cancelled })); bookingsQ.reload(); productsQ.reload(); }
-    setCancelModal(null);
-  };
+    return free;
+  }, [products]);
 
   /** "12 min ago" / "3 hr ago" / "2 d ago", measured from the demo clock.
    *  Shared by the activity feed and the rail so one notion of "ago" governs
@@ -1055,91 +1008,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Full-width closer, where the reference puts its table: the session
-            list is the widest thing on the page and was being squeezed into
-            two thirds of it. */}
-        <div className="mt-wide">
-              <div className={card}>
-                <div className="flex items-baseline justify-between gap-tight border-b border-line px-major py-comfortable">
-                <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("todaysSessions")}</h2>
-                <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{dateLabel}</span>
-              </div>
-                {sessions.length === 0 ? (
-                  <p className="px-section py-major text-[13px] text-muted">{t("noMoreSessions")}</p>
-                ) : (
-                  sessions.map((u) => {
-                    const open = openSession === u.key;
-                    const list = sessionBookings(u);
-                    return (
-                      <div key={u.key} className="border-b border-line last:border-0">
-                        {/* Wraps rather than crushes. The row carries a time, a
-                            name, an occupancy and two actions; at 320px those
-                            fixed widths leave the name nothing, and a session
-                            row without the session is not a row. The name keeps
-                            a floor and the meta drops to a second line. */}
-                        <div className="flex min-h-12 flex-wrap items-center gap-x-section gap-y-inline px-section py-tight">
-                          <button type="button" aria-label={t("bookings")} onClick={() => setOpenSession(open ? null : u.key)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-muted hover:text-fg sm:h-8 sm:w-8">
-                            {open ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}
-                          </button>
-                          <span className="w-12 shrink-0 text-sm">{u.time}</span>
-                          <span className="min-w-[9rem] flex-1 truncate text-sm">{u.label}{u.who ? <span className="text-muted"> · {u.who}</span> : null}</span>
-                          {u.cap > 1 && (
-                            <span className="flex shrink-0 items-center gap-tight">
-                              <span className="whitespace-nowrap text-[12px] text-muted">{u.sold}/{u.cap}</span>
-                              <span className="h-0.5 w-16 overflow-hidden rounded-full bg-line"><span className={`block h-full ${u.sold / u.cap >= 0.8 ? "bg-ember" : "bg-strong"}`} style={{ width: `${(u.sold / u.cap) * 100}%` }} /></span>
-                            </span>
-                          )}
-                          {u.state !== "OPEN" && (
-                            <span className="shrink-0 rounded-xs bg-[repeating-linear-gradient(45deg,#D6D4CE,#D6D4CE_2px,transparent_2px,transparent_5px)] px-tight text-[12px] text-muted dark:bg-[repeating-linear-gradient(45deg,#3a3a36,#3a3a36_2px,transparent_2px,transparent_5px)]">{t("full")}</span>
-                          )}
-                          {u.adjustable && (
-                            <button type="button" onClick={() => setCapModal({ product: u.product, value: u.product.schedule?.dailyCapacity ?? u.product.schedule?.capacityPerSession ?? 0 })} className="-my-tight flex min-h-11 shrink-0 items-center px-tight text-[13px] font-medium text-muted hover:text-fg sm:min-h-0 sm:px-0">{t("adjust")}</button>
-                          )}
-                          {/* Cancelling closes a scheduled session; a booked resource
-                              hour is cancelled by releasing its booking, not here. */}
-                          {u.adjustable && (
-                            <button type="button" onClick={() => setCancelModal({ product: u.product, time: u.time, slotISO: u.slotISO, affected: list.length })} className="-my-tight flex min-h-11 shrink-0 items-center px-tight text-[13px] font-medium text-danger hover:opacity-80 sm:min-h-0 sm:px-0">{t("cancel")}</button>
-                          )}
-                        </div>
-                        {open && (
-                          <div className="border-t border-line bg-subtle px-section py-tight">
-                            {list.length === 0 ? (
-                              <p className="text-[12px] text-muted">{t("noBookingsOnSession")}</p>
-                            ) : (
-                              list.map((b) => (
-                                <div key={b.id} className="flex h-9 items-center gap-section text-[13px]">
-                                  <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted">{b.orderId}</span>
-                                  <span className="text-[12px]">{t("partyLine", { size: b.partySize })}</span>
-                                  <span className="text-[12px] text-muted">{t("checkedInLine", { count: b.checkedIn ?? 0 })}</span>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-                {/* The hours that did not earn a row still exist — say so, and
-                    send the manager where they can actually be seen. */}
-                {(freeSlots > 0 || hiddenCount > 0) && (
-                  <button
-                    type="button"
-                    data-type-role="button"
-                    onClick={() => router.push("/calendar")}
-                    className="flex min-h-11 w-full items-center gap-tight border-t border-line px-section text-left text-[13px] font-medium text-muted hover:text-ember"
-                  >
-                    <span className="min-w-0 flex-1 truncate">
-                      {hiddenCount > 0 ? t("andMoreSessions", { count: hiddenCount }) : null}
-                      {hiddenCount > 0 && freeSlots > 0 ? " · " : null}
-                      {freeSlots > 0 ? (freeSlots === 1 ? t("freeSlot", { count: freeSlots }) : t("freeSlots", { count: freeSlots })) : null}
-                    </span>
-                    <span className="shrink-0 whitespace-nowrap">{t("viewCalendar")} →</span>
-                  </button>
-                )}
-              </div>
-        </div>
-
         {/* ── Recent orders ────────────────────────────────────────────────
             Built in the dashboard's own table anatomy — header bar, hairline
             rows, footer bar — rather than with the shared DataTable, which
@@ -1280,45 +1148,6 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* Adjust capacity — the decision a manager makes when a session is full. */}
-      <Modal
-        open={!!capModal}
-        onClose={() => setCapModal(null)}
-        title={capModal ? t("capacityModalTitle", { product: capModal.product.name }) : ""}
-        footer={<><Button variant="secondary" onClick={() => setCapModal(null)}>{t("cancel")}</Button><Button onClick={saveCapacity}>{t("save")}</Button></>}
-      >
-        {capModal && (
-          <div className="flex flex-col gap-tight">
-            <div className="flex items-center justify-between rounded-sm border border-line bg-card p-comfortable">
-              <span className="text-sm">{capModal.product.schedule?.dailyCapacity ? t("placesPerDay") : t("placesPerSession")}</span>
-              <div className="flex items-center gap-tight">
-                <button type="button" aria-label={t("fewer")} onClick={() => setCapModal((m) => m && { ...m, value: Math.max(1, m.value - 1) })} className="h-11 w-11 rounded-sm border border-line text-lg">−</button>
-                <span className="w-10 text-center">{capModal.value}</span>
-                <button type="button" aria-label={t("more")} onClick={() => setCapModal((m) => m && { ...m, value: m.value + 1 })} className="h-11 w-11 rounded-sm border border-line text-lg">+</button>
-              </div>
-            </div>
-            <p className="text-[12px] text-muted">{t("capacityNote")}</p>
-          </div>
-        )}
-      </Modal>
-
-      {/* Cancel session — the warning names how many bookings are affected. */}
-      <Modal
-        open={!!cancelModal}
-        onClose={() => setCancelModal(null)}
-        title={cancelModal ? t("cancelSessionTitle", { time: cancelModal.time, product: cancelModal.product.name }) : ""}
-        footer={<><Button variant="secondary" onClick={() => setCancelModal(null)}>{t("keepSession")}</Button><Button variant="destructive" onClick={doCancelSession}>{t("cancelSession")}</Button></>}
-      >
-        {cancelModal && (
-          <p className="text-sm text-muted">
-            {cancelModal.affected === 0
-              ? t("noBookingsYet")
-              : cancelModal.affected === 1
-                ? t("cancelWarning", { count: cancelModal.affected })
-                : t("cancelWarningPlural", { count: cancelModal.affected })}
-          </p>
-        )}
-      </Modal>
     </PageShell>
   );
 }

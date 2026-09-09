@@ -5209,3 +5209,58 @@ pins `en-US`, so the same split already shows in "৭ দিন", "৪৮ঘ" an
 "৩০%-এর কম" on this page. Money staying Latin is the defensible POS convention
 for Bangladesh; the counts are what drift. Worth settling product-wide rather
 than in one card.
+
+## Today's sessions removed from the dashboard (2026-09-09)
+
+Owner's call. Recent orders takes over as the full-width closer.
+
+### What went with it — the part worth knowing
+
+**Adjust capacity and Cancel session were only ever reachable from that card.**
+Grep confirms it: `cancelSessionBookings` had exactly one call site in the whole
+app, and the capacity editor lived in a modal the session rows opened. Removing
+the card removes both from the product, so the modals went too rather than
+being left as unreachable code — a manager can no longer change a session's
+capacity or cancel a session from anywhere in OS.
+
+Everything else the card showed still exists: the sessions themselves are on
+`/calendar`, and **"Unbooked hours today" survives in Operations at a glance**.
+That figure came out of the removed derivation, so the derivation was rewritten
+down to just it — the session list, its busiest-first ordering and its "+N
+hidden" tail existed solely to fill the card.
+
+### Removed
+
+The card, both modals, `openSession` / `capModal` / `cancelModal` state, the
+`Session` interface, `sessionBookings`, `saveCapacity`, `doCancelSession`, and
+eight imports that died with them (`Modal`, `useToast`, `cancelSessionBookings`,
+`updateProduct`, `ChevronDown`, `ChevronRight`, and the `Booking` / `Product`
+types). ~11.9k characters.
+
+**23 message keys** in both locales, attributed rather than guessed: a clean
+copy of `HEAD`'s `src` was scanned for every dashboard key and compared against
+the same scan of the working tree, so only the keys *this* change orphaned were
+dropped. Two others — `nothingUnderFill` and `unsold` — were **already** dead at
+HEAD and were left alone, since they belong to a different change.
+
+### Verified
+
+Dashboard at 1440 light, 390 light and 1440 dark: Today's sessions gone,
+"Unbooked hours" still present, **0 console errors, 0 missing-message
+warnings**, no page x-scroll and no hidden overflow inside `main`. Cards now
+read Revenue trend · Operations at a glance · Top bookings today · Needs
+attention · Live activity · Recent orders, with Recent orders inheriting the
+full-width closer slot.
+
+The full 29-route audit is **unchanged at 73** (72 the declared white-on-ember
+rule, 1 the kitchen-sink inline-link exemption). Standing harnesses hold —
+review 15/15, accessibility 8/8, and the orders card still follows the scope
+toggle (4 orders → 24 with the footer recomputed). `tsc` and `npm run build`
+clean; `eslint` back to the dashboard's **5 pre-existing** `exhaustive-deps`
+warnings with 0 errors; i18n parity **0 missing / 0 extra**.
+
+### Open for the owner
+
+If adjusting a session's capacity or cancelling a session should still be
+possible, `/calendar` is the natural home — it already lists every session and
+`cancelSessionBookings` is still in the API layer, unused. Say the word.
