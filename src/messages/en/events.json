@@ -20,22 +20,19 @@
   "step": {
     "category": "Category",
     "type": "Type",
-    "template": "Template",
-    "details": "Details",
     "tickets": "Tickets",
     "publish": "Publish",
     "categoryTitle": "What kind of event is it?",
     "categoryHelp": "This picks the template, the palette and the typefaces. You can change all of them next.",
     "typeTitle": "Narrow it down",
     "typeHelp": "Used on the page as the label above the title, and to group the event in reports.",
-    "templateTitle": "Make it yours",
-    "templateHelp": "Colour, type, layout and which sections appear. The preview is the real page.",
-    "detailsTitle": "The details",
-    "detailsHelp": "Everything a person needs before they decide to come.",
     "ticketsTitle": "Tickets and pricing",
     "ticketsHelp": "Most events sell better with two or three tiers than with one.",
     "publishTitle": "Ready to go",
-    "publishHelp": "This is exactly what people will see. Publish now, or keep it as a draft."
+    "publishHelp": "This is exactly what people will see. Publish now, or keep it as a draft.",
+    "design": "Design",
+    "designTitle": "Build the page",
+    "designHelp": "Look and content together. Every change lands in the preview as you make it."
   },
   "category": {
     "entertainment": "Entertainment & Social",
@@ -159,7 +156,10 @@
     "address": "Address",
     "addressPlaceholder": "Banani, Dhaka 1213",
     "description": "About this event",
-    "descriptionPlaceholder": "What happens, who it's for, and anything someone should know before buying."
+    "descriptionPlaceholder": "What happens, who it's for, and anything someone should know before buying.",
+    "cover": "Cover image URL",
+    "coverPlaceholder": "https://…",
+    "coverHelp": "Leave empty for generated artwork in your accent colour."
   },
   "tickets": {
     "tierN": "Ticket {n}",
@@ -257,5 +257,24 @@
     "ended": "Ended"
   },
   "emptyTitle": "No events yet",
-  "emptyMessage": "Create one and it gets its own page, its own look and its own tickets."
+  "emptyMessage": "Create one and it gets its own page, its own look and its own tickets.",
+  "architect": {
+    "title": "Event page architect",
+    "brand": "Brand identity",
+    "show": "Show",
+    "entry": "Entry",
+    "name": "Name",
+    "namePlaceholder": "Nogor Baul",
+    "role": "Role or note",
+    "rolePlaceholder": "Headline",
+    "at": "Time",
+    "addEntry": "Add to the bill",
+    "question": "Question",
+    "q": "Question",
+    "a": "Answer",
+    "addQuestion": "Add a question",
+    "countdownNote": "Counts down to the start time you set in Hero. Nothing to fill in.",
+    "galleryNote": "Six plates drawn from your accent colour. Image upload is not built yet.",
+    "ticketsNote": "Ticket names, prices and quantities are set on the next step."
+  }
 }

@@ -5482,3 +5482,96 @@ pre-existing error. i18n parity **0 missing / 0 extra** across 31 namespaces.
   description and tickets. Editing the bill is the natural follow-up.
 - **Events do not yet reach the till or the reports.** `EventTier` mirrors
   `PriceTier` deliberately so that wiring is mechanical, but it is not wired.
+
+## Events, second pass — one architect screen, and templates worth looking at (2026-09-10)
+
+Two asks: put Template and Details on one page like the reference, and make the
+templates more interesting.
+
+### Look and content were never two decisions
+
+They were two wizard steps: choose a template, then fill a form and find out
+afterwards what it did to the page. That is backwards — you write a lineup in
+order to *see* the lineup, and the only way to know whether a subtitle is too
+long is to watch it land. Six steps became five, and Details is gone as a step
+because it never existed as a separate act.
+
+**The accordion IS the section list.** Each row carries its own visibility
+switch and its own place in the order, and expands to the fields that fill it.
+So "what appears on the page", "in what order", and "what it says" are one
+control rather than three panels that have to be kept in agreement. Rows are
+drawn in page order with anything switched off collected at the end, so the list
+always reads as the page reads. Brand identity sits above the list rather than
+inside it, because it governs every section rather than being one.
+
+That also closed the gap the last entry named: **the lineup and the FAQ are
+editable now**, in their own rows, and the sample bill only stands in while the
+section is still empty so the preview is never a blank page.
+
+### The templates
+
+Six upgrades, each chosen because it changes how the page reads rather than how
+it is decorated:
+
+- **Grain.** Flat colour reads as flat colour; a little film noise is most of
+  the difference between a coloured rectangle and a surface somebody designed.
+  Heavier on the dark themes, barely there on the light ones where it would only
+  look like dirt. Inline SVG, so it costs no request and cannot 404.
+- **A marquee under the hero** carrying the three facts a poster shouts —
+  what, when, where. Two identical runs translated by exactly half the track, so
+  the loop is seamless without measuring anything at runtime, and the global
+  `prefers-reduced-motion` block already neutralises it.
+- **Numbered section headers**, with a rule. The numbering is honest: a page is
+  an ordered run of sections and the operator just chose that order.
+- **A numbered bill.** Positions in outline rather than filled, so a four-name
+  lineup does not become a column of loud numerals competing with the names they
+  index.
+- **Ticket rows as stubs** — a punched edge down the left and a perforated tear
+  before the price. A counterfoil *is* a ticket stub; this is the one place the
+  product's own name earns a motif, and it costs two gradients.
+- **A vignette over the hero scrim.** The scrim makes the text legible; the
+  vignette is what stops a full-bleed hero reading as a flat rectangle with
+  words on it.
+
+### Two defects found by looking, both about numbering
+
+- **The numbered headers started at 03.** Hero and countdown are sections one
+  and two but draw no header, so the first visible index was 03 with 01 and 02
+  nowhere on the page — a numbering that invites the reader to look for
+  something that was never drawn. Numbered over the sections that actually carry
+  a header now; hiding one still renumbers the rest.
+- **The category cards printed their own name twice** — set at display size in
+  the swatch, then repeated in plain text underneath. The swatch keeps it.
+
+### A harness correction, mine
+
+The template probe reported the outlined lineup numerals at 1.05:1. They are
+`color: transparent` with a stroke, and they are `aria-hidden` decoration that
+duplicates the row position they index — the main audit already excluded them,
+this probe did not, and it was measuring a transparent fill. The probe was
+fixed, not the design.
+
+### Verified
+
+The merged wizard driven end to end, **9 checks all passing**: five steps with
+Details absorbed, the architect listing brand identity plus every section,
+typing a title landing in the preview live, an accent change repainting from the
+same screen, a venue typed in its own row reaching the page, hiding a section
+removing it, a lineup entry typed there appearing on the bill, the review
+carrying it through, and Publish landing on the list with the event in it. Hero's
+hide switch is correctly disabled — a required section.
+
+All six templates re-measured after the redesign: **zero contrast failures, zero
+sub-12px text, zero clipped text, zero console errors.** The full 32-route audit
+holds at 76 findings, 75 the declared white-on-ember rule and one the
+kitchen-sink inline-link exemption. Standing harnesses hold — review 15/15,
+accessibility 8/8, deck 9/9. Bangla whole with 0 missing-message warnings.
+`tsc` and `npm run build` clean; every new file lints clean after removing the
+imports the merge orphaned; i18n parity **0 missing / 0 extra** across 31
+namespaces.
+
+### Still open
+
+Cover image is a URL field, not an upload — templates render `coverUrl` when it
+is set and draw generated artwork otherwise. Gallery plates are still generated
+rather than uploaded. Events still do not reach the till or reports.

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, ArrowRight, Check, Rocket } from "lucide-react";
-import { Button, DateField, FormField, TimeInput, useToast } from "@/components/ui";
+import { Button, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { createEvent, slugify, type EventCustomisation, type EventRecord } from "@/lib/api";
 import { CATEGORIES, categoryById, type CategoryId } from "@/lib/events/catalog";
@@ -13,9 +13,9 @@ import { EventTemplate } from "@/components/events/EventTemplate";
 import { PreviewFrame } from "@/components/events/PreviewFrame";
 import { DEMO_TODAY, demoNow } from "@/lib/schedule";
 import { emptyTier, TicketTiers, toTiers, type FormTier } from "./TicketTiers";
-import { TemplateCustomiser } from "./TemplateCustomiser";
+import { EventArchitect, type EventContent } from "./EventArchitect";
 
-const STEP_KEYS = ["category", "type", "template", "details", "tickets", "publish"] as const;
+const STEP_KEYS = ["category", "type", "design", "tickets", "publish"] as const;
 
 /**
  * Create an event.
@@ -34,7 +34,6 @@ const STEP_KEYS = ["category", "type", "template", "details", "tickets", "publis
  */
 export function EventWizard() {
   const t = useTranslations("events");
-  const tc = useTranslations("common");
   const router = useRouter();
   const toast = useToast();
   const now = useMemo(() => demoNow(), []);
@@ -47,13 +46,19 @@ export function EventWizard() {
   const [subtype, setSubtype] = useState("");
   const [custom, setCustom] = useState<EventCustomisation | null>(null);
 
-  const [title, setTitle] = useState("");
-  const [subtitle, setSubtitle] = useState("");
-  const [date, setDate] = useState(DEMO_TODAY);
-  const [startTime, setStartTime] = useState("19:00");
-  const [venueName, setVenueName] = useState("");
-  const [venueAddress, setVenueAddress] = useState("");
-  const [description, setDescription] = useState("");
+  const [content, setContent] = useState<EventContent>({
+    title: "",
+    subtitle: "",
+    date: DEMO_TODAY,
+    startTime: "19:00",
+    venueName: "",
+    venueAddress: "",
+    description: "",
+    coverUrl: "",
+    lineup: [],
+    faq: [],
+  });
+  const patchContent = (patch: Partial<EventContent>) => setContent((c) => ({ ...c, ...patch }));
   const [tiers, setTiers] = useState<FormTier[]>([emptyTier()]);
 
   /** Choosing a category is also choosing its whole visual default. */
@@ -103,36 +108,42 @@ export function EventWizard() {
       id: "draft",
       status: "active",
       published: false,
-      slug: slugify(title || subtype || "event"),
-      title: title.trim() || t("placeholder.title"),
-      subtitle: subtitle.trim() || undefined,
+      slug: slugify(content.title || subtype || "event"),
+      title: content.title.trim() || t("placeholder.title"),
+      subtitle: content.subtitle.trim() || undefined,
       categoryId,
       subtype: subtype ? t(`subtype.${subtype}`) : t(`category.${categoryId}`),
-      startsAt: `${date}T${startTime}:00+06:00`,
-      venueName: venueName.trim() || t("placeholder.venue"),
-      venueAddress: venueAddress.trim() || undefined,
-      description: description.trim() || t("placeholder.description"),
-      lineup: SAMPLE_LINEUP.map((l, i) => ({ ...l, id: `s${i}`, name: t(`sample.${categoryId}.${i}`) })),
-      faq: [{ id: "f1", q: t("placeholder.faqQ"), a: t("placeholder.faqA") }],
-      tiers: toTiers(tiers).map((x) => ({ ...x, name: x.name || t("placeholder.tier") , quantity: x.quantity || 100 })),
-      customisation: custom,
+      startsAt: `${content.date}T${content.startTime}:00+06:00`,
+      venueName: content.venueName.trim() || t("placeholder.venue"),
+      venueAddress: content.venueAddress.trim() || undefined,
+      description: content.description.trim() || t("placeholder.description"),
+      // The operator's own bill once there is one; a sample stands in only
+      // while the section is still empty, so the preview is never a blank page.
+      lineup: content.lineup.filter((l) => l.name.trim())
+        .length
+        ? content.lineup.filter((l) => l.name.trim())
+        : SAMPLE_LINEUP.map((l, i) => ({ ...l, id: `s${i}`, name: t(`sample.${categoryId}.${i}`) })),
+      faq: content.faq.filter((f) => f.q.trim()).length
+        ? content.faq.filter((f) => f.q.trim())
+        : [{ id: "f1", q: t("placeholder.faqQ"), a: t("placeholder.faqA") }],
+      tiers: toTiers(tiers).map((x) => ({ ...x, name: x.name || t("placeholder.tier"), quantity: x.quantity || 100 })),
+      customisation: { ...custom, coverUrl: content.coverUrl.trim() || undefined },
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     };
-  }, [categoryId, custom, title, subtitle, subtype, date, startTime, venueName, venueAddress, description, tiers, now, t]);
+  }, [categoryId, custom, content, subtype, tiers, now, t]);
 
   const canAdvance =
     step === 0 ? categoryId !== null
     : step === 1 ? subtype !== ""
-    : step === 2 ? true
-    : step === 3 ? title.trim() !== "" && venueName.trim() !== ""
-    : step === 4 ? tiers.every((r) => r.name.trim() !== "" && r.quantity.trim() !== "")
+    : step === 2 ? content.title.trim() !== "" && content.venueName.trim() !== ""
+    : step === 3 ? tiers.every((r) => r.name.trim() !== "" && r.quantity.trim() !== "")
     : true;
 
-  const validateDetails = () => {
+  const validateDesign = () => {
     const e: Record<string, string> = {};
-    if (!title.trim()) e.title = t("error.title");
-    if (!venueName.trim()) e.venueName = t("error.venue");
+    if (!content.title.trim()) e.title = t("error.title");
+    if (!content.venueName.trim()) e.venueName = t("error.venue");
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -146,8 +157,8 @@ export function EventWizard() {
   };
 
   const next = () => {
-    if (step === 3 && !validateDetails()) return;
-    if (step === 4 && !validateTickets()) return;
+    if (step === 2 && !validateDesign()) return;
+    if (step === 3 && !validateTickets()) return;
     setErrors({});
     setStep((s) => Math.min(STEP_KEYS.length - 1, s + 1));
   };
@@ -158,19 +169,19 @@ export function EventWizard() {
     const res = await createEvent({
       status: "active",
       published: publishNow,
-      slug: slugify(title),
-      title: title.trim(),
-      subtitle: subtitle.trim() || undefined,
+      slug: slugify(content.title),
+      title: content.title.trim(),
+      subtitle: content.subtitle.trim() || undefined,
       categoryId,
       subtype,
-      startsAt: `${date}T${startTime}:00+06:00`,
-      venueName: venueName.trim(),
-      venueAddress: venueAddress.trim() || undefined,
-      description: description.trim() || undefined,
-      lineup: [],
-      faq: [],
+      startsAt: `${content.date}T${content.startTime}:00+06:00`,
+      venueName: content.venueName.trim(),
+      venueAddress: content.venueAddress.trim() || undefined,
+      description: content.description.trim() || undefined,
+      lineup: content.lineup.filter((l) => l.name.trim()),
+      faq: content.faq.filter((f) => f.q.trim()),
       tiers: toTiers(tiers),
-      customisation: custom,
+      customisation: { ...custom, coverUrl: content.coverUrl.trim() || undefined },
     });
     setSaving(false);
     if (res.ok) {
@@ -298,104 +309,43 @@ export function EventWizard() {
         </div>
       )}
 
-      {/* ── 3. Template + customise ─────────────────────────────────────── */}
+      {/* ── 3. Design — look and content, one screen ────────────────────
+          Template and Details used to be two steps: choose a look, then fill a
+          form and discover afterwards what it did. They are one decision, so
+          they are one screen. */}
       {step === 2 && categoryId && custom && draft && (
         <div>
-          <StepHead title={t("step.templateTitle")} help={t("step.templateHelp")} />
-          <TemplateCustomiser
+          <StepHead title={t("step.designTitle")} help={t("step.designHelp")} />
+          <EventArchitect
             categoryId={categoryId}
             event={draft}
-            value={custom}
-            onChange={setCustom}
+            custom={custom}
+            onCustom={setCustom}
+            content={content}
+            onContent={patchContent}
             now={now}
             labels={labels}
+            errors={errors}
           />
         </div>
       )}
 
-      {/* ── 4. Details ──────────────────────────────────────────────────── */}
+      {/* ── 4. Tickets ──────────────────────────────────────────────────── */}
       {step === 3 && (
-        <div>
-          <StepHead title={t("step.detailsTitle")} help={t("step.detailsHelp")} />
-          <div className="card-surface p-major">
-            <div className="grid gap-section sm:grid-cols-2">
-              <FormField
-                label={t("field.title")}
-                required
-                placeholder={t("field.titlePlaceholder")}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                error={errors.title}
-                className="sm:col-span-2"
-              />
-              <FormField
-                label={t("field.subtitle")}
-                placeholder={t("field.subtitlePlaceholder")}
-                value={subtitle}
-                onChange={(e) => setSubtitle(e.target.value)}
-                className="sm:col-span-2"
-              />
-              <div className="flex flex-col gap-inline">
-                <span className="type-label text-[12px] text-muted">{t("field.date")}</span>
-                <DateField
-                  value={date}
-                  today={DEMO_TODAY}
-                  onChange={setDate}
-                  labels={{
-                    previousMonth: tc("previousMonth"),
-                    nextMonth: tc("nextMonth"),
-                    today: tc("today"),
-                    open: tc("openCalendar"),
-                  }}
-                />
-              </div>
-              {/* The project's own time control, not a native input — free-typed
-                  with forgiving parsing, which is what every other time field
-                  in this app uses. */}
-              <TimeInput label={t("field.time")} value={startTime} onChange={setStartTime} />
-              <FormField
-                label={t("field.venue")}
-                required
-                placeholder={t("field.venuePlaceholder")}
-                value={venueName}
-                onChange={(e) => setVenueName(e.target.value)}
-                error={errors.venueName}
-              />
-              <FormField
-                label={t("field.address")}
-                placeholder={t("field.addressPlaceholder")}
-                value={venueAddress}
-                onChange={(e) => setVenueAddress(e.target.value)}
-              />
-              <FormField
-                label={t("field.description")}
-                variant="textarea"
-                placeholder={t("field.descriptionPlaceholder")}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="sm:col-span-2"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── 5. Tickets ──────────────────────────────────────────────────── */}
-      {step === 4 && (
         <div>
           <StepHead title={t("step.ticketsTitle")} help={t("step.ticketsHelp")} />
           <TicketTiers rows={tiers} onChange={setTiers} errors={errors} />
         </div>
       )}
 
-      {/* ── 6. Publish ──────────────────────────────────────────────────── */}
-      {step === 5 && draft && (
+      {/* ── 5. Publish ──────────────────────────────────────────────────── */}
+      {step === 4 && draft && (
         <div>
           <StepHead title={t("step.publishTitle")} help={t("step.publishHelp")} />
           <div className="card-surface overflow-hidden">
             <div className="flex flex-wrap items-baseline justify-between gap-tight border-b border-line px-major py-comfortable">
               <h3 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{draft.title}</h3>
-              <span className="shrink-0 font-mono text-[12px] text-muted">/e/{slugify(title || "event")}</span>
+              <span className="shrink-0 font-mono text-[12px] text-muted">/e/{slugify(content.title || "event")}</span>
             </div>
             <div className="bg-subtle p-comfortable">
               <div className={cn("mx-auto overflow-hidden rounded-sm shadow-md", templateFontVars)} style={{ maxWidth: 1180 }}>

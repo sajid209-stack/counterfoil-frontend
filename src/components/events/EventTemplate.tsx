@@ -114,11 +114,13 @@ export function EventTemplate({
 
   const Section = ({
     id,
+    index,
     eyebrow,
     title,
     children,
   }: {
     id: string;
+    index: number;
     eyebrow: string;
     title: string;
     children: React.ReactNode;
@@ -135,11 +137,23 @@ export function EventTemplate({
           Where they would be the same word (Lineup over Lineup, Tickets over
           Tickets) it is replaced by a short accent rule: the rhythm survives
           and the page stops repeating itself down its whole length. */}
-      {eyebrow.toLowerCase() === title.toLowerCase() ? (
-        <span aria-hidden style={{ display: "block", height: 3, width: 40, borderRadius: 999, background: "var(--e-accent)" }} />
-      ) : (
-        <Eyebrow>{eyebrow}</Eyebrow>
-      )}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+        {/* The index is real information, not decoration: the page is an
+            ordered run of sections and the operator chose that order. */}
+        <span
+          aria-hidden
+          style={{
+            font: `600 ${narrow ? "11px" : "12px"}/1 var(--e-body)`,
+            letterSpacing: "0.14em",
+            color: "var(--e-accent-ink)",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {String(index).padStart(2, "0")}
+        </span>
+        <span aria-hidden style={{ height: 1, flex: 1, background: "var(--e-line)", maxWidth: 64 }} />
+        {eyebrow.toLowerCase() !== title.toLowerCase() && <Eyebrow>{eyebrow}</Eyebrow>}
+      </div>
       <Heading>{title}</Heading>
       <div style={{ marginTop: narrow ? 20 : 32 }}>{children}</div>
     </section>
@@ -147,6 +161,14 @@ export function EventTemplate({
 
   const start = new Date(event.startsAt);
   const fromPrice = eventFromPrice(event);
+  /* Numbered by their place among the sections that ACTUALLY carry a header.
+     Counting hero and countdown made the first visible index read "03", with
+     01 and 02 nowhere on the page — a numbering that invites the reader to
+     look for something that was never drawn. Hiding a section still renumbers
+     the rest rather than leaving a gap. */
+  const NUMBERED: SectionId[] = c.sections.filter((x) => x !== "hero" && x !== "countdown");
+  const indexOf = (id: SectionId) => NUMBERED.indexOf(id) + 1;
+
 
   const draw: Record<SectionId, () => React.ReactNode> = {
     hero: () => (
@@ -157,7 +179,7 @@ export function EventTemplate({
     ),
     about: () =>
       event.description ? (
-        <Section id="about" eyebrow={labels.about} title={event.subtitle || labels.about}>
+        <Section id="about" index={indexOf("about")} eyebrow={labels.about} title={event.subtitle || labels.about}>
           <p
             style={{
               font: `400 ${narrow ? "15px" : "18px"}/1.7 var(--e-body)`,
@@ -172,18 +194,18 @@ export function EventTemplate({
       ) : null,
     lineup: () =>
       event.lineup.length ? (
-        <Section id="lineup" eyebrow={labels.lineup} title={labels.lineup}>
+        <Section id="lineup" index={indexOf("lineup")} eyebrow={labels.lineup} title={labels.lineup}>
           <LineupList entries={event.lineup} narrow={narrow} variant={variant} theme={t} />
         </Section>
       ) : null,
     schedule: () =>
       event.lineup.length ? (
-        <Section id="schedule" eyebrow={labels.schedule} title={labels.schedule}>
+        <Section id="schedule" index={indexOf("schedule")} eyebrow={labels.schedule} title={labels.schedule}>
           <ScheduleList entries={event.lineup} narrow={narrow} />
         </Section>
       ) : null,
     gallery: () => (
-      <Section id="gallery" eyebrow={labels.gallery} title={labels.gallery}>
+      <Section id="gallery" index={indexOf("gallery")} eyebrow={labels.gallery} title={labels.gallery}>
         <div
           style={{
             display: "grid",
@@ -212,12 +234,12 @@ export function EventTemplate({
       </Section>
     ),
     tickets: () => (
-      <Section id="tickets" eyebrow={labels.tickets} title={labels.tickets}>
+      <Section id="tickets" index={indexOf("tickets")} eyebrow={labels.tickets} title={labels.tickets}>
         <TicketTable event={event} narrow={narrow} labels={labels} theme={t} />
       </Section>
     ),
     venue: () => (
-      <Section id="venue" eyebrow={labels.venue} title={event.venueName}>
+      <Section id="venue" index={indexOf("venue")} eyebrow={labels.venue} title={event.venueName}>
         <div style={{ display: "grid", gap: 16, gridTemplateColumns: narrow ? "1fr" : "1fr 1fr", alignItems: "start" }}>
           <div>
             {event.venueAddress && (
@@ -250,7 +272,7 @@ export function EventTemplate({
     ),
     faq: () =>
       event.faq.length ? (
-        <Section id="faq" eyebrow={labels.faq} title={labels.faq}>
+        <Section id="faq" index={indexOf("faq")} eyebrow={labels.faq} title={labels.faq}>
           <div style={{ display: "grid", gap: 0, maxWidth: "72ch" }}>
             {event.faq.map((f, i) => (
               <div key={f.id} style={{ borderTop: i ? `1px solid var(--e-line)` : "none", padding: "18px 0" }}>
@@ -288,9 +310,31 @@ export function EventTemplate({
           }}
         />
       )}
+      {/* Grain. Flat colour reads as flat colour, and a little noise is most of
+          the difference between a coloured rectangle and a surface somebody
+          designed. Heavier on the dark themes, where it reads as film; barely
+          there on the light ones, where it would only look like dirt. */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 2,
+          opacity: isLight(t.bg) ? 0.035 : 0.07,
+          mixBlendMode: "overlay",
+          backgroundImage: GRAIN,
+        }}
+      />
       <div style={{ position: "relative" }}>
-        {c.sections.map((s) => (
-          <div key={s}>{draw[s]?.()}</div>
+        {c.sections.map((s, i) => (
+          <div key={s}>
+            {draw[s]?.()}
+            {/* Straight after the hero, a ticker of the three facts that matter.
+                It is the one moving thing on the page and it earns that by
+                repeating what a poster would shout: what, when, where. */}
+            {i === 0 && <Marquee event={event} start={start} narrow={narrow} />}
+          </div>
         ))}
 
         {/* A sticky bar is what turns a page into a ticket page. It states the
@@ -424,7 +468,18 @@ function Hero({
           style={{
             position: "absolute",
             inset: 0,
-            background: `linear-gradient(to top, var(--e-bg) 6%, color-mix(in srgb, var(--e-bg) 62%, transparent) 46%, color-mix(in srgb, var(--e-bg) 18%, transparent))`,
+            background: `linear-gradient(to top, var(--e-bg) 4%, color-mix(in srgb, var(--e-bg) 70%, transparent) 44%, color-mix(in srgb, var(--e-bg) 14%, transparent))`,
+          }}
+        />
+        {/* A vignette on top of the scrim. The scrim makes the text legible;
+            this is what stops a full-bleed hero reading as a flat rectangle
+            with words on it. */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: `radial-gradient(120% 90% at 50% 12%, transparent 38%, color-mix(in srgb, var(--e-bg) 55%, transparent) 100%)`,
           }}
         />
         <div style={{ position: "relative", padding: `${narrow ? 28 : 56}px ${pad}`, width: "100%" }}>
@@ -678,7 +733,24 @@ function LineupList({
             borderTop: i ? `1px solid var(--e-line)` : "none",
           }}
         >
-          <div style={{ minWidth: 0 }}>
+          {/* A billing position, drawn as one. Outlined rather than filled so a
+              four-name bill does not turn into a column of loud numerals
+              competing with the names they are indexing. */}
+          <span
+            aria-hidden
+            style={{
+              flexShrink: 0,
+              width: narrow ? 28 : 44,
+              font: `700 ${narrow ? "18px" : big ? "30px" : "24px"}/1 var(--e-display)`,
+              letterSpacing: theme.displayTracking,
+              color: "transparent",
+              WebkitTextStroke: `1px var(--e-accent)`,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {String(i + 1).padStart(2, "0")}
+          </span>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <p
               style={{
                 font: `${big ? 700 : 600} ${narrow ? (big ? "20px" : "17px") : big ? "30px" : "20px"}/1.15 var(--e-display)`,
@@ -777,18 +849,35 @@ function TicketTable({
           <div
             key={t.id}
             style={{
+              position: "relative",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: 16,
+              gap: narrow ? 12 : 24,
               padding: narrow ? "14px 16px" : "18px 22px",
               borderRadius: "var(--e-radius)",
-              border: `1px solid ${out ? "var(--e-line)" : "var(--e-line)"}`,
+              border: `1px solid var(--e-line)`,
               background: "var(--e-panel)",
               opacity: out ? 0.55 : 1,
+              overflow: "hidden",
             }}
           >
-            <div style={{ minWidth: 0 }}>
+            {/* A counterfoil is a ticket stub, so the ticket rows are stubs:
+                a punched edge on the left and a perforated tear before the
+                price. It is the one place the product's own name earns a
+                motif, and it costs two pseudo-free gradients. */}
+            <span
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: -5,
+                top: 0,
+                bottom: 0,
+                width: 10,
+                background: `radial-gradient(circle at 50% 50%, var(--e-bg) 4.5px, transparent 5px) 0 0 / 10px 14px repeat-y`,
+              }}
+            />
+            <div style={{ minWidth: 0, flex: 1, paddingLeft: 6 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <p
                   style={{
@@ -812,6 +901,15 @@ function TicketTable({
                 </p>
               )}
             </div>
+            <span
+              aria-hidden
+              style={{
+                alignSelf: "stretch",
+                width: 1,
+                flexShrink: 0,
+                background: `repeating-linear-gradient(to bottom, var(--e-line) 0 4px, transparent 4px 9px)`,
+              }}
+            />
             <p
               style={{
                 font: `600 ${narrow ? "16px" : "19px"}/1.2 var(--e-display)`,
@@ -821,6 +919,7 @@ function TicketTable({
                 whiteSpace: "nowrap",
                 fontVariantNumeric: "tabular-nums",
                 letterSpacing: theme.displayTracking,
+                paddingLeft: narrow ? 0 : 4,
               }}
             >
               {t.price === 0 ? labels.free : formatMoney(t.price)}
@@ -856,6 +955,67 @@ function Badge({ tone, children }: { tone: "accent" | "muted"; children: React.R
 }
 
 /* ── helpers ─────────────────────────────────────────────────────────────── */
+
+/** A little film noise. Inline SVG so it costs no request and cannot 404. */
+const GRAIN =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E\")";
+
+function Marquee({
+  event,
+  start,
+  narrow,
+}: {
+  event: EventRecord;
+  start: Date;
+  narrow: boolean;
+}) {
+  const bits = [event.title, longDate(start), event.venueName].filter(Boolean);
+  // Two identical runs, translated by exactly half the track, so the loop is
+  // seamless without measuring anything at runtime.
+  const run = (key: string) => (
+    <span key={key} style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
+      {[0, 1, 2, 3].map((r) =>
+        bits.map((b, i) => (
+          <span key={`${r}-${i}`} style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
+            <span
+              style={{
+                font: `600 ${narrow ? "13px" : "15px"}/1 var(--e-display)`,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--e-on-accent)",
+                whiteSpace: "nowrap",
+                padding: "0 18px",
+              }}
+            >
+              {b}
+            </span>
+            <span
+              aria-hidden
+              style={{ width: 5, height: 5, borderRadius: 999, background: "var(--e-on-accent)", opacity: 0.55, flexShrink: 0 }}
+            />
+          </span>
+        )),
+      )}
+    </span>
+  );
+  return (
+    <div
+      aria-hidden
+      style={{
+        overflow: "hidden",
+        background: "var(--e-accent)",
+        padding: narrow ? "9px 0" : "12px 0",
+        borderTop: `1px solid var(--e-line)`,
+        borderBottom: `1px solid var(--e-line)`,
+      }}
+    >
+      <div style={{ display: "inline-flex", animation: "event-marquee 34s linear infinite", willChange: "transform" }}>
+        {run("a")}
+        {run("b")}
+      </div>
+    </div>
+  );
+}
 
 /** Composite `a` over `b` at `amount`, so a tint can be reasoned about as the
  *  solid colour it actually renders as. */
