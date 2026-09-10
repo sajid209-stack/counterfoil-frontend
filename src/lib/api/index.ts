@@ -27,3 +27,4 @@ export * from "./customers";
 export * from "./memberships";
 export * from "./loyalty";
 export * from "./holds";
+export * from "./events";

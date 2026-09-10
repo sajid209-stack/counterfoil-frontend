@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, CalendarDays, Lock, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
+import { ArrowUpRight, CalendarDays, PartyPopper, Lock, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -28,6 +28,7 @@ export function Sidebar({
   const OPERATE: { label: string; href: string; icon: IconType }[] = [
     { label: t("dashboard"), href: "/dashboard", icon: LayoutDashboard },
     { label: t("calendar"), href: "/calendar", icon: CalendarDays },
+    { label: t("events"), href: "/events", icon: PartyPopper },
     { label: t("orders"), href: "/orders", icon: ReceiptText },
     { label: t("customers"), href: "/customers", icon: UsersRound },
     { label: t("holds"), href: "/holds", icon: Lock },

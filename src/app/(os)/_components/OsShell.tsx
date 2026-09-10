@@ -16,6 +16,7 @@ import {
   MapPin,
   MonitorSmartphone,
   Package,
+  PartyPopper,
   ReceiptText,
   Search,
   Settings,
@@ -49,6 +50,7 @@ const MOBILE_TABS = [
 const DESTINATIONS = [
   { href: "/dashboard", key: "overview", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
+  { href: "/events", key: "events", icon: PartyPopper },
   { href: "/orders", key: "orders", icon: ReceiptText },
   { href: "/bookings", key: "products", icon: Package },
   { href: "/reports/sales", key: "reports", icon: BarChart3 },

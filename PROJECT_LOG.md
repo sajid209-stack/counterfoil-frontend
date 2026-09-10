@@ -5330,3 +5330,155 @@ i18n parity **0 missing / 0 extra** with `nav.deck` authored in both locales.
 
 What Deck is for. The route, the sidebar entry, the mobile entry and the page
 frame are in place, so filling it in is additive from here.
+
+## Events — creation wizard and six published templates (2026-09-10)
+
+A new surface: `/events`, `/events/new`, `/events/[id]`, plus an Events entry in
+both navs. Six categories, 39 subtypes, a six-step wizard, and six fully
+designed page templates in desktop and mobile.
+
+### Research, and what it actually changed
+
+The named reference (`counterfoil-event-forge`) gave the shape: template first,
+brand identity (accent + typeface), modular sections, a device toggle, Save
+draft / Publish. The two ticketing sites named do not expose an organiser flow
+at all — their public pages gave one useful thing each: Tickify's "price starts
+from ৳X" with a Live / Coming soon / Ended state, which is why the sticky bar
+leads with the cheapest ticket still on sale.
+
+The search that mattered was Luma vs Eventbrite vs DICE. Luma's bar is a
+good-looking page **from minimal input, in about two minutes**; Eventbrite is
+described by its own reviewers as "functional but clunky". Both point the same
+way: six steps are only acceptable if five of them are nearly free. So every
+step arrives pre-answered — picking a category picks the theme, accent,
+typefaces, section order and layout variant; the tickets step opens with a row
+rather than an empty table; and the preview appears from step three so an
+operator is looking at the thing they are making rather than a form about it.
+
+The tier research (free RSVP + paid GA + VIP + time-limited early bird) is why
+the ticket editor carries named quick-adds. An early-bird tier is a price **and**
+an end date, and an operator who has to discover that pairing usually does not.
+
+### The structural idea: a theme is data, not a component
+
+Six templates are not six files. Every template renders the same ordered
+sections from the same record; `lib/events/catalog.ts` supplies each category's
+palette, two typefaces, radius, layout variant, section order and its own word
+for the people/things section — Lineup · Fixtures · Speakers · Works ·
+Itinerary · DJs. Adding a section adds it to all six, styled correctly.
+
+**The colours are a scoped island, never design-system tokens.** Everything in a
+template reads `--e-*` custom properties declared on its root. A published event
+page has its own fixed look, so an operator flipping the dashboard to dark must
+not repaint a customer's page — and nothing in a template can leak into the OS
+chrome around it. The functional UI (wizard, forms, list, filters) is pure
+Counterfoil: `card-surface`, the ember selection language, `FormField`,
+`DateField`, `TimeInput`, `DataTable`, `StatStrip`.
+
+| Category | Ground | Display face | Variant |
+|---|---|---|---|
+| Entertainment | `#0E0B14` dark | Bebas Neue | poster |
+| Sports | `#F4F4F5` light | Space Grotesk | kinetic |
+| Business | `#FFFFFF` light | Inter | structured |
+| Arts | `#F7F6F2` warm | Playfair Display | editorial |
+| Travel | `#101815` dark | Outfit | immersive |
+| Nightlife | `#08070C` dark | Syne | neon |
+
+Five faces are added via `next/font`, scoped to the event routes — next/font
+scopes a face to the modules that import it, so they do not ship on every OS
+screen. Six themes that all set the same face are not six themes.
+
+### The defect that would have shipped the whole feature broken
+
+**187 message keys were resolving to nothing.** The JSON was written flat with
+dotted names (`"step.category"`), and next-intl reads a dot in `t()` as a path
+into a nested object. Every dotted key rendered as its own raw key — 58 console
+errors per page — while the handful of undotted ones worked, which is exactly
+what made it survive a first read. Nesting both locales fixed all 187.
+
+Worth keeping: **a flat key with a dot in it is not the same as a nested key**,
+and a page that renders *some* copy is not evidence the copy resolves.
+
+### Three template defects found by measuring, one class of them familiar
+
+- **Accent-coloured small text failed the reading floor** — 3.60–4.48:1 on
+  badges, set times and eyebrows across four themes. This is the lesson the
+  design system already paid for once (`ember` is right as a fill and wrong as a
+  letterform, hence `brand-foreground`), except the accent here is
+  operator-chosen so the readable step cannot be a fixed token. `accentInk()`
+  computes it: walk the accent toward the page's own foreground and stop at the
+  first step clearing 4.5:1, so the colour keeps as much of its hue as it can
+  afford. The raw accent still paints fills and large display type.
+- **The "N left" badge was still failing** after that, because the ink was
+  derived against the panel while the text actually sits on a 16% accent wash
+  over it. The pill is composited to a solid colour now and the ink derived
+  against that exact value — a wash whose backdrop can change is a colour nobody
+  can guarantee a ratio for.
+- **Six pieces of 11px text**, under the 12px floor. Raised.
+
+### Three more that only looking caught
+
+- **Every section printed its own name twice** — eyebrow "LINEUP" over heading
+  "LINEUP", all the way down the page. The eyebrow now only appears where it
+  says something the heading does not ("About" over the subtitle, "Venue" over
+  the venue's name); where they would repeat, a short accent rule takes its
+  place, so the rhythm survives and the page stops echoing itself.
+- **The category cards did the same thing** — the name set at display size in
+  the swatch, then repeated in plain text underneath. The swatch keeps it; the
+  body carries only the description.
+- **The gallery spilled seven column-units into a four-column grid** and left a
+  hole. Five plates now: one leading tile two wide and two tall, four squares
+  filling the rest exactly. The cover art also had to push much harder on light
+  grounds — the same 55% wash that reads as vivid over near-black turned to grey
+  mush over warm paper, which is what a gallery of blank plates looked like.
+- **The sports hero was a 12% pink rectangle**, not the "dynamic angles" the
+  brief asks for. Two skewed wedges now — a solid accent bar as the angle and a
+  tint behind it for depth — both kept clear of the text column.
+
+### The preview: scaled, never narrowed
+
+A 1180px template has to fit a ~900px panel, and only one of the two ways is
+honest. Narrowing the frame to 900 makes the template lay out at 900 and report
+900 to its own media queries, hiding exactly the wrapping bugs a preview exists
+to catch. `transform: scale()` is paint-time, so the DOM stays genuinely 1180
+wide and every breakpoint resolves as it will in production.
+
+`PreviewFrame` measures its column and scales to fit, never above 1. A comment
+in the customiser had asserted the opposite while I was still scrolling the
+frame; it is corrected rather than left standing.
+
+### Verified
+
+**The wizard was driven end to end, 13 checks, all passing**: six category cards
+each drawn in its own theme ground (six distinct backgrounds), subtypes filtered
+to the chosen category, the live preview rendering inside the wizard, an accent
+change repainting it, hiding a section removing it from the page, the mobile
+frame laying out at a real 390px, a ticket preset adding a second tier, the
+review showing the typed title and venue, and Publish landing on the list with
+the new event in it. Zero console errors throughout.
+
+**All six templates measured**: zero contrast failures, zero text under the
+12px floor, zero silently clipped text, zero console errors.
+
+Bangla renders whole across all three routes with **0 missing-message
+warnings** and no raw keys. The full route audit — now **32 routes** with
+`/events` and `/events/new` added to the standing list — holds at 76 findings,
+**75 of them the declared white-on-ember rule** and one the kitchen-sink
+inline-link exemption; the three from `/events` are all that declared exception.
+Standing harnesses hold: review 15/15, accessibility 8/8, deck 9/9. `tsc` and
+`npm run build` clean; every new file lints clean and `OsShell` holds at its one
+pre-existing error. i18n parity **0 missing / 0 extra** across 31 namespaces.
+
+### Open
+
+- **Cover media is a themed abstract, not an upload.** `coverUrl` is on the
+  record and the templates render it when present; there is no uploader yet, so
+  every page currently draws a generated gradient derived from its accent. That
+  is deliberate for now — this codebase has already learned that a photograph of
+  the wrong place is worse than none — but a real upload is the obvious next
+  piece.
+- **Lineup and FAQ are seeded, not editable in the wizard.** The model carries
+  both and the templates draw both; the wizard collects title, date, venue,
+  description and tickets. Editing the bill is the natural follow-up.
+- **Events do not yet reach the till or the reports.** `EventTier` mirrors
+  `PriceTier` deliberately so that wiring is mechanical, but it is not wired.

@@ -72,6 +72,7 @@ const store: Record<string, Row[]> = {
   memberships: structuredClone(seed.memberships),
   loyaltyEntries: structuredClone(seed.loyaltyEntries),
   holds: structuredClone(seed.holds),
+  events: structuredClone(seed.events),
 };
 
 // ── Operator + demo-business switching ──────────────────────────────────────

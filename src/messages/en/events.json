@@ -1,0 +1,261 @@
+{
+  "title": "Events",
+  "description": "One-off occasions with their own page — concerts, tours, summits, exhibitions.",
+  "newTitle": "Create an event",
+  "newDescription": "Pick a look, add the details, price the tickets. Publish when you're ready.",
+  "create": "Create event",
+  "back": "Back",
+  "continue": "Continue",
+  "publish": "Publish",
+  "saveDraft": "Save as draft",
+  "published": "{title} is live.",
+  "savedDraft": "Saved as a draft.",
+  "free": "Free",
+  "soldOut": "Sold out",
+  "from": "From",
+  "left": "left",
+  "getTickets": "Get tickets",
+  "addToCalendar": "Add to calendar",
+  "doorsOpen": "doors open",
+  "step": {
+    "category": "Category",
+    "type": "Type",
+    "template": "Template",
+    "details": "Details",
+    "tickets": "Tickets",
+    "publish": "Publish",
+    "categoryTitle": "What kind of event is it?",
+    "categoryHelp": "This picks the template, the palette and the typefaces. You can change all of them next.",
+    "typeTitle": "Narrow it down",
+    "typeHelp": "Used on the page as the label above the title, and to group the event in reports.",
+    "templateTitle": "Make it yours",
+    "templateHelp": "Colour, type, layout and which sections appear. The preview is the real page.",
+    "detailsTitle": "The details",
+    "detailsHelp": "Everything a person needs before they decide to come.",
+    "ticketsTitle": "Tickets and pricing",
+    "ticketsHelp": "Most events sell better with two or three tiers than with one.",
+    "publishTitle": "Ready to go",
+    "publishHelp": "This is exactly what people will see. Publish now, or keep it as a draft."
+  },
+  "category": {
+    "entertainment": "Entertainment & Social",
+    "sports": "Sports & Activities",
+    "business": "Business & Professional",
+    "arts": "Arts & Experiences",
+    "travel": "Travel & Tours",
+    "nightlife": "Party & Nightlife"
+  },
+  "categoryBlurb": {
+    "entertainment": "Concerts, festivals, comedy, screenings. Poster energy, lineup up front.",
+    "sports": "Matches, tournaments, classes. High contrast, schedule and sign-up first.",
+    "business": "Conferences, seminars, launches. Clean and structured, agenda and speakers.",
+    "arts": "Exhibitions, fashion, cultural nights. Editorial, generous whitespace.",
+    "travel": "Tours, trips, cruises. Immersive photography and a day-by-day itinerary.",
+    "nightlife": "Clubs, raves, DJ nights. Dark, neon, lineup and door policy."
+  },
+  "subtype": {
+    "concert": "Concert",
+    "music": "Live music",
+    "movie": "Screening",
+    "drama": "Theatre",
+    "standup": "Stand-up",
+    "party": "Party",
+    "festival": "Festival",
+    "reunion": "Reunion",
+    "popculture": "Pop culture",
+    "match": "Match",
+    "tournament": "Tournament",
+    "race": "Race",
+    "recreational": "Recreational",
+    "workshop": "Workshop",
+    "class": "Class",
+    "conference": "Conference",
+    "seminar": "Seminar",
+    "launch": "Launch",
+    "corporate": "Corporate",
+    "networking": "Networking",
+    "training": "Training",
+    "exhibition": "Exhibition",
+    "fashion": "Fashion show",
+    "cultural": "Cultural",
+    "installation": "Installation",
+    "screening": "Film screening",
+    "literary": "Literary",
+    "tour": "Tour",
+    "trip": "Trip",
+    "excursion": "Excursion",
+    "sightseeing": "Sightseeing",
+    "cruise": "Cruise",
+    "package": "Travel package",
+    "club": "Club night",
+    "rave": "Rave",
+    "private": "Private party",
+    "djnight": "DJ night",
+    "themed": "Themed night",
+    "afterparty": "Afterparty"
+  },
+  "variant": {
+    "poster": "Poster",
+    "stacked": "Stacked",
+    "kinetic": "Kinetic",
+    "structured": "Structured",
+    "editorial": "Editorial",
+    "immersive": "Immersive",
+    "neon": "Neon"
+  },
+  "section": {
+    "hero": "Hero",
+    "countdown": "Countdown",
+    "about": "About",
+    "lineup": "Lineup",
+    "schedule": "Schedule",
+    "gallery": "Gallery",
+    "tickets": "Tickets",
+    "venue": "Venue",
+    "faq": "Questions",
+    "fixtures": "Fixtures",
+    "speakers": "Speakers",
+    "works": "Works",
+    "itinerary": "Itinerary",
+    "djs": "Lineup"
+  },
+  "customise": {
+    "accent": "Accent colour",
+    "type": "Typefaces",
+    "display": "Headings",
+    "body": "Body",
+    "layout": "Layout",
+    "sections": "Sections",
+    "sectionsHelp": "Reorder with the arrows. Hero and Tickets always show.",
+    "always": "Always on",
+    "hide": "Hide",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "preview": "Live preview"
+  },
+  "device": {
+    "desktop": "Desktop",
+    "tablet": "Tablet",
+    "mobile": "Mobile"
+  },
+  "font": {
+    "bebas": "Bebas Neue — condensed poster",
+    "syne": "Syne — geometric display",
+    "space": "Space Grotesk — technical",
+    "playfair": "Playfair Display — editorial serif",
+    "outfit": "Outfit — friendly geometric",
+    "inter": "Inter — neutral sans",
+    "mono": "DM Mono — monospaced"
+  },
+  "field": {
+    "title": "Event name",
+    "titlePlaceholder": "Nogor Baul: The Return",
+    "subtitle": "One line underneath",
+    "subtitlePlaceholder": "One night, one stage, three decades of sound",
+    "date": "Date",
+    "time": "Start time",
+    "venue": "Venue",
+    "venuePlaceholder": "Army Stadium",
+    "address": "Address",
+    "addressPlaceholder": "Banani, Dhaka 1213",
+    "description": "About this event",
+    "descriptionPlaceholder": "What happens, who it's for, and anything someone should know before buying."
+  },
+  "tickets": {
+    "tierN": "Ticket {n}",
+    "remove": "Remove this ticket",
+    "name": "Ticket name",
+    "namePlaceholder": "General admission",
+    "price": "Price (৳)",
+    "priceHelp": "Leave at 0 for a free ticket.",
+    "quantity": "How many",
+    "salesEnd": "Stop selling on",
+    "salesEndHelp": "Optional — this is what makes a tier an early bird.",
+    "description": "Note on the ticket",
+    "descriptionPlaceholder": "First 20 metres, own entrance",
+    "add": "Add a ticket",
+    "capacity": "{count, plural, =0 {No capacity yet} one {# place in total} other {# places in total}}",
+    "potential": "{amount} if it all sells",
+    "preset": {
+      "earlyBird": "Early bird",
+      "vip": "VIP",
+      "free": "Free entry"
+    }
+  },
+  "error": {
+    "title": "Give the event a name.",
+    "venue": "Say where it is.",
+    "tierName": "Name the ticket.",
+    "tierQuantity": "Say how many are on sale."
+  },
+  "placeholder": {
+    "title": "Your event name",
+    "venue": "Your venue",
+    "description": "A line or two about what happens, who it's for, and what to expect on the day. This is where people decide.",
+    "faqQ": "Can I get a refund?",
+    "faqA": "Up to 48 hours before the event, in full.",
+    "tier": "General admission"
+  },
+  "sample": {
+    "entertainment": {
+      "0": "Headline act",
+      "1": "Support",
+      "2": "Opening"
+    },
+    "sports": {
+      "0": "Group stage",
+      "1": "Semi-finals",
+      "2": "Final"
+    },
+    "business": {
+      "0": "Opening keynote",
+      "1": "Panel",
+      "2": "Closing session"
+    },
+    "arts": {
+      "0": "Featured artist",
+      "1": "Second room",
+      "2": "Curator's walk"
+    },
+    "travel": {
+      "0": "Day 1 — Departure",
+      "1": "Day 2 — The main site",
+      "2": "Day 3 — Return"
+    },
+    "nightlife": {
+      "0": "Closing set",
+      "1": "Main room",
+      "2": "Opening set"
+    }
+  },
+  "countdown": {
+    "days": "Days",
+    "hours": "Hours",
+    "mins": "Minutes"
+  },
+  "stat": {
+    "events": "Events",
+    "sold": "Tickets sold",
+    "revenue": "Revenue",
+    "live": "On sale"
+  },
+  "col": {
+    "event": "Event",
+    "when": "When",
+    "sold": "Sold",
+    "from": "From",
+    "status": "Status"
+  },
+  "filter": {
+    "allCategories": "All categories",
+    "allStates": "All states"
+  },
+  "state": {
+    "published": "Published",
+    "draft": "Draft",
+    "onSale": "On sale",
+    "ended": "Ended"
+  },
+  "emptyTitle": "No events yet",
+  "emptyMessage": "Create one and it gets its own page, its own look and its own tickets."
+}

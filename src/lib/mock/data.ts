@@ -1202,3 +1202,6 @@ const guidedBookings = [
   },
 ];
 export const bookings = [...sales.bookings, ...turfBookings, ...guidedBookings];
+
+/** Event fixtures live in their own file — see the note there. */
+export { events } from "./events";
