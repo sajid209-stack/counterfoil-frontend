@@ -5264,3 +5264,69 @@ warnings with 0 errors; i18n parity **0 missing / 0 extra**.
 If adjusting a session's capacity or cancelling a session should still be
 possible, `/calendar` is the natural home — it already lists every session and
 `cancelSessionBookings` is still in the API layer, unused. Say the word.
+
+## Counterfoil Deck — a second surface link in the sidebar (2026-09-10)
+
+Owner asked for a button like Point of Sale, for Counterfoil Deck. Nothing
+named "deck" existed anywhere in the codebase, so the button was five lines and
+the only real question was what it opens — asked rather than guessed, because a
+nav button that 404s is worse than no button. Owner chose a new route in this
+app.
+
+### The pair, not the special case
+
+Point of Sale was a lone hand-written `<Link>` sitting between the OPERATE nav
+and SETTINGS. A second one beside it would have been two copies of the same
+markup, so it became `SURFACES` — a two-entry list rendered by one block.
+
+What that list means is worth stating: these are **the surfaces you leave OS
+for**. They carry a bordered treatment and an ember ↗ because they are a
+hand-off to another product surface, not a destination inside the admin app.
+That is also why `/deck` renders **outside** the `(os)` group, the same way
+`/pos` and `/tills` do — putting it inside would have kept the sidebar on
+screen and made the arrow a lie.
+
+### Collapsing the rail forced a real decision
+
+At 64px the label is gone and only the glyph is left, so two entries drawing
+the same ↗ would have been indistinguishable — the tooltip would have been the
+only way to tell Point of Sale from Deck. Each surface now carries its own icon
+for the collapsed state and keeps the arrow only when expanded.
+
+The first icon choice was wrong and looking caught it: `LayoutGrid` is a 2×2
+grid, which is exactly what `LayoutDashboard` draws five rows above it in the
+same rail. `SquareStack` reads as a stack of cards — distinct at 18px, and
+closer to what a "deck" is.
+
+### The page
+
+A scaffold that admits it is one. Logo, a way back to the dashboard, an `h1`,
+one sentence of orientation and an `EmptyState` reading *"Nothing here yet —
+the route, the link and the chrome are in place. What Deck actually shows is
+still to be decided."* Dressing an empty page as a finished one would be worse
+than the empty page.
+
+Mobile parity: `/deck` joins the OS More-sheet destination grid beside `/pos`,
+so the surface is reachable at every width rather than only from a desktop
+sidebar.
+
+### Verified
+
+Nine checks, all passing: both surfaces render with identical treatment, Deck
+is labelled, the link navigates to `/deck`, the page carries its own `h1`, it
+renders **outside the OS shell** (so the ↗ tells the truth), the two collapsed
+glyphs differ, both carry tooltips, and Deck is reachable from the mobile More
+sheet.
+
+The full route audit — now **30 routes** with `/deck` added to the standing
+list — is **unchanged at 73 findings** (72 the declared white-on-ember rule, 1
+the kitchen-sink inline-link exemption), and **`/deck` itself contributes
+zero**. Standing harnesses hold: review 15/15, accessibility 8/8, the orders
+card still follows the scope toggle. `tsc` and `npm run build` clean; `Sidebar`
+and the new page lint clean, `OsShell` holds at its one pre-existing error;
+i18n parity **0 missing / 0 extra** with `nav.deck` authored in both locales.
+
+### Open for the owner
+
+What Deck is for. The route, the sidebar entry, the mobile entry and the page
+frame are in place, so filling it in is additive from here.

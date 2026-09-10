@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, CalendarDays, Lock, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, Ticket, UsersRound } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Lock, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -33,6 +33,14 @@ export function Sidebar({
     { label: t("holds"), href: "/holds", icon: Lock },
     { label: t("products"), href: "/bookings", icon: Ticket },
     { label: t("reports"), href: "/reports/sales", icon: ChartNoAxesColumn },
+  ];
+
+  /* The surfaces you leave OS for. Each carries its own glyph because the
+     rail collapses to 64px, where every one of these would otherwise be an
+     identical ↗ and the tooltip would be the only way to tell them apart. */
+  const SURFACES: { key: string; href: string; icon: IconType }[] = [
+    { key: "pos", href: "/pos", icon: Store },
+    { key: "deck", href: "/deck", icon: SquareStack },
   ];
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -101,18 +109,32 @@ export function Sidebar({
           {OPERATE.map((n) => item(n.label, n.href, isActive(n.href), n.icon))}
         </nav>
 
-        <div>
-          <Link
-            href="/pos"
-            title={collapsed ? t("pos") : undefined}
-            className={cn(
-              "flex items-center rounded-sm border border-line py-tight text-sm font-medium text-fg transition-colors duration-quick hover:border-ember hover:bg-subtle/60",
-              collapsed ? "justify-center px-0" : "justify-between px-comfortable",
-            )}
-          >
-            {!collapsed && t("pos")}
-            <ArrowUpRight size={16} strokeWidth={1.5} className="text-brand-foreground" />
-          </Link>
+        {/* The two surfaces you LEAVE the admin app for. Same bordered
+            treatment and the same ↗ as each other, because they are the same
+            kind of thing — not a destination inside OS but a hand-off to
+            another surface. Grouped so they read as a pair rather than as one
+            special case and one afterthought. */}
+        <div className="flex flex-col gap-inline">
+          {SURFACES.map((s) => (
+            <Link
+              key={s.href}
+              href={s.href}
+              title={collapsed ? t(s.key) : undefined}
+              className={cn(
+                "flex items-center rounded-sm border border-line py-tight text-sm font-medium text-fg transition-colors duration-quick hover:border-ember hover:bg-subtle/60",
+                collapsed ? "justify-center px-0" : "justify-between px-comfortable",
+              )}
+            >
+              {collapsed ? (
+                <s.icon size={18} strokeWidth={1.5} className="text-brand-foreground" />
+              ) : (
+                <>
+                  {t(s.key)}
+                  <ArrowUpRight size={16} strokeWidth={1.5} className="text-brand-foreground" />
+                </>
+              )}
+            </Link>
+          ))}
         </div>
 
         <nav className="flex flex-col gap-inline">
