@@ -5745,3 +5745,163 @@ dead in the tree. The hero now runs straight into the countdown.
 
 The second-pass entry above still describes it, because that is what that
 session built; this is the correction.
+
+## Events — the business template, rebuilt from two conference references (2026-09-13)
+
+Owner supplied a B2B conference landing page and a social event-detail
+dashboard, and asked for the business template only.
+
+### What the references actually contributed
+
+The first is on the nose: a conference page whose accent is all but our own
+business blue. Five things it does that we did not — a **four-column fact strip
+in the hero**, a **video block**, **Day 1 / Day 2 / Day 3** on the agenda,
+**pricing as three comparable plans**, and a **sponsor wall**.
+
+The second is a social product — RSVP, follows, a posts feed — and almost none
+of it is what this is. The one idea worth taking is the **organiser block**:
+"About the event by ⟨org⟩" is what a corporate buyer checks before anything
+else, and we had nowhere to put it.
+
+Everything below is gated on the `structured` variant or on the section being
+in the category's order. The other five templates measure **identical heights**
+before and after, which is how that is known rather than assumed.
+
+### The video field
+
+`videoUrl` holds what the operator pasted, not an id: a URL is what you get
+when you press Share, and asking somebody to find "the bit after `v=`" is
+asking them to do a parse the code can do. `lib/events/video.ts` takes every
+shape YouTube actually hands out — watch links, `youtu.be`, `/embed/`,
+`/live/`, `/shorts/`, a bare id, any of them with a playlist or a timestamp
+hanging off — and **returns null rather than guessing**, so a malformed link
+renders no section and the architect says so beside the field as it is typed.
+
+**Click-to-load, and the privacy claim is measured rather than asserted.**
+The harness records every request the page makes: **zero** to any YouTube
+domain at rest, one image to `i.ytimg.com`, and the iframe appears only on the
+press — pointed at `youtube-nocookie.com` with `autoplay=1`, so one click is
+still one click.
+
+The poster stacks `maxresdefault` over `hqdefault`. That is not belt and
+braces: `maxresdefault` does not exist for any video never uploaded above
+720p, and the seeded one is exactly such a video — the first render came back
+with the fallback plate, which is how the layering was found to be necessary.
+
+The seed is Blender's **"Big Buck Bunny"** — Creative Commons, permanently
+hosted, verified live through YouTube's oEmbed endpoint before it went in, and
+unmistakably placeholder footage rather than something that could be taken for
+the operator's own.
+
+### The hero fact strip
+
+Venue, doors and what is included, as three labelled columns with Register as
+the fourth. A business audience decides on logistics before anything else, and
+on the old header those three facts were a row of 14px icons under the
+subtitle.
+
+The content is `event.info`, which for this category already defaulted to
+exactly those three — so **nothing is invented**, and the About section stops
+drawing them. A page that states the same three facts twice, one screen apart,
+is the page repeating itself.
+
+### The agenda
+
+Day tabs where the entries carry days, one plain track where they do not. Real
+tabs — `tablist`/`tab`/`tabpanel` with arrow-key movement — because this is the
+widget that pattern exists for and a keyboard user should not tab through every
+day to reach the last.
+
+That needed `EventLineupEntry.day`, and it exposed a second thing: the seed had
+been concatenating the day into the time string (`"Day 1 · 09:30"`), which
+meant the agenda could only ever be one flat column.
+
+### A break is not a speaker
+
+Splitting the agenda out surfaced a real modelling gap. One `lineup` array
+feeds two sections — the bill and the agenda — and that works right up until
+the agenda gains a lunch break, which then turns up in the speaker grid with a
+portrait. Found by looking at the render, not by reading the code.
+
+It cannot be inferred: "Panel: what merchants actually ask for" carries a room
+in its role field and is no more a person than lunch is. So
+`EventLineupEntry.kind?: "person" | "session"`, undefined meaning person, so
+every record written before this reads exactly as it did. The bill filters;
+the agenda does not.
+
+### Pricing as a comparison
+
+Three plans side by side, because a delegate is choosing BETWEEN passes rather
+than reading each in turn.
+
+- **"Most popular" is read off the ledger, never chosen** — the best-selling
+  tier, and only when it is at least 25% ahead of the next. A badge that sits
+  wherever the operator wants to push is an advertisement wearing the clothes
+  of a fact.
+- The featured plan is **raised, not recoloured**: colour there would collide
+  with scarcity, which is already spending the accent on the border.
+- **One claim per card.** The ribbon already says this is the pass people take,
+  so the popular card does not also shout that it is selling — but sold-out and
+  almost-gone still show, because those are information a buyer needs rather
+  than a pitch.
+- **A tier that has gone is a line, not a column.** Four plans in a
+  three-column grid put the sold-out early bird alone on a fourth row with two
+  empty columns beside it, and a plan nobody can buy has no business taking a
+  third of a comparison of plans they can. It is still stated, struck through,
+  underneath.
+
+### Sponsors, and the organiser
+
+The wall groups by the operator's own word for the level — Headline, Partner,
+Supporter — because that grouping IS the information, and rank is said by
+plate size the way a sponsor wall has always said it. **Names only**: sponsor
+artwork is an upload this product does not have, and a wall of broken images
+says less than a wall of names.
+
+Centred rather than laid on a grid, which took two goes: `auto-fill` left two
+headline plates against the left edge of five empty tracks, and stretching two
+plates across the full width makes each one a billboard.
+
+The organiser sits with the prose in About — on a conference page it is the
+line the whole thing is believed or disbelieved on, so it does not belong in a
+footer nobody reaches.
+
+### Verified
+
+- **21 checks driving the template**, all passing: the fact strip, About not
+  repeating it, zero third-party requests before the press, the iframe
+  appearing on it and on the no-cookie host, two day tabs filtering correctly
+  and moving under arrow keys, breaks kept off the bill, exactly one "most
+  popular", the gone tier stated as a line, three columns, sponsors grouped,
+  the organiser named, and Watch reachable from the nav.
+- **20 unit cases on the URL parser**, including the shapes people actually
+  paste and the ones that must be refused.
+- **All six templates measured**: zero contrast failures, zero text under the
+  12px floor, zero clipped text, zero console errors — and the five
+  non-business templates come back at **identical heights**, which is the
+  evidence this is business-only.
+- Wizard 9/9, architect editors 6/6, review 15/15, accessibility 8/8, deck
+  9/9. The 32-route audit holds at **76** (75 the declared white-on-ember
+  rule, 1 the kitchen-sink inline-link exemption).
+- Bangla renders the whole business page — Watch, Sponsors, Hosted by, Most
+  popular, Register — with **0 missing-message warnings** and no raw keys.
+- `tsc`, `npm run build` and `eslint` clean. i18n parity **0 missing / 0
+  extra** across 31 namespaces. Four keys were authored and then removed once
+  the fact strip turned out to need the record's own labels rather than fixed
+  ones.
+
+### One harness correction
+
+The nav check read `document.querySelector("nav")`, which is the OS sidebar —
+the template's own bar had to be found inside the theme island. The section it
+reported missing had been visible in the render all along.
+
+### Open
+
+`video` and `sponsors` are in the business section order only. Both renderers
+are shared, so another category adopts one by adding a single string to its own
+`sections` array — deliberately not done here, because the brief was business.
+Sponsor artwork and cover uploads are still the missing piece across all six.
+
+`tpl.slotsAvailable` is an orphaned key, confirmed orphaned at `HEAD` before
+this change and left alone.

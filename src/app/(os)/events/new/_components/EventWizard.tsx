@@ -56,6 +56,9 @@ export function EventWizard() {
     venueAddress: "",
     description: "",
     coverUrl: "",
+    videoUrl: "",
+    organiserName: "",
+    organiserBlurb: "",
     lineup: [],
     faq: [],
   });
@@ -121,6 +124,11 @@ export function EventWizard() {
         label: t(`defaults.${categoryId}.info${i}.label`),
         value: t(`defaults.${categoryId}.info${i}.value`),
       })),
+      videoUrl: content.videoUrl.trim() || undefined,
+      organiser: content.organiserName.trim()
+        ? { name: content.organiserName.trim(), blurb: content.organiserBlurb.trim() || undefined }
+        : undefined,
+      sponsors: [],
       ...seedEdits,
       lineup: content.lineup.filter((l) => l.name.trim())
         .length
@@ -184,6 +192,9 @@ export function EventWizard() {
       stats: draft?.stats ?? [],
       highlights: draft?.highlights ?? [],
       info: draft?.info ?? [],
+      sponsors: draft?.sponsors ?? [],
+      videoUrl: draft?.videoUrl,
+      organiser: draft?.organiser,
       lineup: content.lineup.filter((l) => l.name.trim()),
       faq: content.faq.filter((f) => f.q.trim()),
       tiers: toTiers(tiers),

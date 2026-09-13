@@ -32,6 +32,7 @@ function base(
     stats: [],
     highlights: [],
     info: [],
+    sponsors: [],
     lineup: [],
     faq: [],
     tiers: [],
@@ -158,21 +159,78 @@ export const events: EventRecord[] = [
       { id: "i2", label: "Doors", value: "08:30 registration. Keynote at 09:30." },
       { id: "i3", label: "Included", value: "Lunch, coffee, and every session recorded" },
     ],
+    /* The day carries the grouping and `at` carries the clock. Concatenating
+       them into one string, which this seed used to do, meant the agenda could
+       only ever be one flat column — the tab strip needs a field to group on. */
     lineup: [
-      { id: "l1", name: "Farhana Rahman", role: "CTO, Bkash", at: "Day 1 · 09:30" },
-      { id: "l2", name: "Imran Chowdhury", role: "Head of Platform, Pathao", at: "Day 1 · 11:00" },
-      { id: "l3", name: "Dr. Nusrat Jahan", role: "Bangladesh Bank", at: "Day 1 · 14:00" },
-      { id: "l4", name: "Tanvir Ahmed", role: "Founder, ShopUp", at: "Day 2 · 10:00" },
+      { id: "l1", kind: "session" as const, name: "Registration and coffee", day: "Day 1", at: "08:30" },
+      { id: "l2", name: "Farhana Rahman", role: "Keynote \u2014 CTO, bKash", day: "Day 1", at: "09:30" },
+      { id: "l3", name: "Imran Chowdhury", role: "Head of Platform, Pathao", day: "Day 1", at: "11:00" },
+      { id: "l4", kind: "session" as const, name: "Lunch", day: "Day 1", at: "12:30" },
+      { id: "l5", name: "Dr. Nusrat Jahan", role: "Bangladesh Bank \u2014 regulation track", day: "Day 1", at: "14:00" },
+      { id: "l6", kind: "session" as const, name: "Workshop: settling at scale", role: "Hall C, 40 places", day: "Day 1", at: "15:45" },
+      { id: "l7", name: "Tanvir Ahmed", role: "Founder, ShopUp", day: "Day 2", at: "10:00" },
+      { id: "l8", kind: "session" as const, name: "Panel: what merchants actually ask for", role: "Halls A and B", day: "Day 2", at: "11:30" },
+      { id: "l9", kind: "session" as const, name: "Lunch", day: "Day 2", at: "12:30" },
+      { id: "l10", kind: "session" as const, name: "Closing remarks", role: "Hall A", day: "Day 2", at: "16:30" },
+    ],
+    /* Blender's "Big Buck Bunny": Creative Commons, permanently hosted, and
+       unmistakably placeholder footage rather than something that could be
+       taken for the operator's own. Verified live before it was seeded. */
+    videoUrl: "https://www.youtube.com/watch?v=YE7VzlLtp-4",
+    organiser: {
+      name: "Sylhet Digital Forum",
+      blurb: "A non-profit running developer and founder events across Sylhet since 2019.",
+    },
+    sponsors: [
+      { id: "sp1", name: "bKash", tier: "Headline" },
+      { id: "sp2", name: "Pathao", tier: "Headline" },
+      { id: "sp3", name: "Brac Bank", tier: "Partner" },
+      { id: "sp4", name: "Robi Axiata", tier: "Partner" },
+      { id: "sp5", name: "ShopUp", tier: "Partner" },
+      { id: "sp6", name: "Sylhet Chamber of Commerce", tier: "Supporter" },
+      { id: "sp7", name: "SUST Computer Science", tier: "Supporter" },
+      { id: "sp8", name: "Kite Games", tier: "Supporter" },
     ],
     faq: [
       { id: "f1", q: "Are talks recorded?", a: "Yes. Ticket holders get the recordings a week after the summit." },
       { id: "f2", q: "Is lunch included?", a: "Both days, for every ticket type." },
     ],
     tiers: [
+      {
+        id: "t4",
+        name: "Student pass",
+        price: 100000,
+        quantity: 150,
+        sold: 88,
+        description: "Valid student ID checked at the door.",
+        perks: ["Both days, single track", "Lunch and coffee", "Session recordings"],
+      },
+      {
+        id: "t2",
+        name: "Full summit",
+        price: 650000,
+        quantity: 600,
+        sold: 414,
+        description: "Everything across both days.",
+        perks: [
+          "Both days, every track",
+          "Lunch, coffee and the evening reception",
+          "Session recordings and slides",
+          "Workshop places, first come",
+        ],
+      },
+      {
+        id: "t3",
+        name: "Team of five",
+        price: 2800000,
+        quantity: 40,
+        sold: 11,
+        description: "Five passes, one invoice.",
+        maxPerOrder: 2,
+        perks: ["Five full-summit passes", "One invoice and one PO", "Reserved block seating", "A named contact on the day"],
+      },
       { id: "t1", name: "Early bird", price: 450000, quantity: 200, sold: 200, salesEnd: iso("2026-10-15T23:59:00") },
-      { id: "t2", name: "Standard", price: 650000, quantity: 600, sold: 214 },
-      { id: "t3", name: "Team of five", price: 2800000, quantity: 40, sold: 11, description: "Five passes, one invoice.", maxPerOrder: 2 },
-      { id: "t4", name: "Student", price: 100000, quantity: 150, sold: 88, description: "Valid student ID required at the door." },
     ],
   }),
 

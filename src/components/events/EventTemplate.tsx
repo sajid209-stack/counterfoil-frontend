@@ -1,10 +1,12 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { CalendarDays, ChevronDown, Clock, Flame, MapPin, Ticket } from "lucide-react";
+import { useState } from "react";
+import { Building2, CalendarDays, ChevronDown, Clock, Flame, MapPin, Play, Ticket } from "lucide-react";
 import type { EventRecord } from "@/lib/api/events";
 import { eventFromPrice } from "@/lib/api/events";
 import { categoryById, type EventTheme, type SectionId } from "@/lib/events/catalog";
+import { parseEventVideo } from "@/lib/events/video";
 import { formatMoney } from "@/lib/format";
 
 /**
@@ -53,6 +55,13 @@ interface Labels {
   sellingFast: string;
   almostGone: string;
   soldOutBadge: string;
+  video: string;
+  watchOn: string;
+  playVideo: string;
+  sponsors: string;
+  hostedBy: string;
+  mostPopular: string;
+  register: string;
   /** Carries a "{count}" placeholder the template fills. */
   remaining: string;
 }
@@ -192,9 +201,11 @@ export function EventTemplate({
      the renderers below rather than guessing from the order alone. */
   const drawn: Partial<Record<SectionId, boolean>> = {
     stats: event.stats.length > 0,
+    video: parseEventVideo(event.videoUrl) !== null,
+    sponsors: event.sponsors.length > 0,
     highlights: event.highlights.length > 0,
     about: Boolean(event.description) || event.info.length > 0,
-    lineup: event.lineup.length > 0,
+    lineup: event.lineup.some((l) => l.kind !== "session"),
     schedule: event.lineup.length > 0,
     gallery: true,
     tickets: true,
@@ -203,6 +214,8 @@ export function EventTemplate({
   };
   const anchorLabel: Partial<Record<SectionId, string>> = {
     stats: labels.stats,
+    video: labels.video,
+    sponsors: labels.sponsors,
     highlights: labels.highlights,
     about: labels.about,
     lineup: labels.lineup,
@@ -216,6 +229,17 @@ export function EventTemplate({
      starts being a section of its own. */
   const anchors = NUMBERED.filter((x) => drawn[x] && anchorLabel[x]).slice(0, 5);
 
+  /* The business template's own layout. It is a VARIANT rather than a category
+     check because an operator can switch business to `stacked`, and a fact
+     strip built for a three-column conference header has no business surviving
+     that choice. */
+  const structured = variant === "structured";
+
+  /* The bill is the people on it. The agenda is everything that happens,
+     breaks included — so the two sections read the same array through
+     different filters rather than the seed keeping two copies in step. */
+  const billed = event.lineup.filter((l) => l.kind !== "session");
+
   /* Scarcity is stated only when it is true. Summed across the whole event
      rather than read off one tier: a sold-out VIP box beside four thousand
      unsold standing tickets is not an event selling fast. */
@@ -228,7 +252,7 @@ export function EventTemplate({
 
   const draw: Record<SectionId, () => React.ReactNode> = {
     hero: () => (
-      <Hero event={event} variant={variant} narrow={narrow} theme={t} labels={labels} pad={pad} upper={upper} />
+      <Hero event={event} variant={variant} narrow={narrow} theme={t} labels={labels} pad={pad} upper={upper} fromPrice={fromPrice} />
     ),
     countdown: () => (
       <Countdown to={start} now={now} narrow={narrow} pad={pad} labels={labels} upper={upper} glow={t.glow} />
@@ -320,8 +344,56 @@ export function EventTemplate({
         </Section>
       ) : null,
 
+    /* A conference is sold on what last year looked like, which is why every
+       reference page for one leads with footage. Click-to-load rather than a
+       bare iframe: nothing is requested from a third party until a visitor
+       asks for it, the page does not carry an embed's weight for the many
+       people who never press play, and there is no layout jump when it lands. */
+    video: () => {
+      const v = parseEventVideo(event.videoUrl);
+      if (!v) return null;
+      return (
+        <Section id="video" index={indexOf("video")} eyebrow={labels.video} title={labels.video}>
+          {/* Full width, with no caption beside it.
+              The reference sets prose next to its video, but the only prose
+              this record has is the subtitle — which is the heading of the
+              About section directly below. Printing it twice, forty pixels
+              apart, is the page repeating itself; the video is better served
+              by the width. */}
+          <VideoPlayer video={v} accent={c.accent} light={isLight(t.bg)} labels={labels} narrow={narrow} />
+          <a
+            href={v.watchUrl}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: "inline-block",
+              marginTop: 16,
+              font: "600 14px/1 var(--e-body)",
+              color: "var(--e-accent-ink)",
+              textDecoration: "none",
+              borderBottom: `1px solid var(--e-accent)`,
+              paddingBottom: 3,
+            }}
+          >
+            {labels.watchOn}
+          </a>
+        </Section>
+      );
+    },
+
+    /* Names, grouped by whatever the operator calls the level. A sponsor wall
+       is one of the two things a corporate buyer scans for (the other is the
+       speaker list), and it is the section that tells them who else decided
+       this was worth being at. */
+    sponsors: () =>
+      event.sponsors.length ? (
+        <Section id="sponsors" index={indexOf("sponsors")} eyebrow={labels.sponsors} title={labels.sponsors}>
+          <SponsorWall sponsors={event.sponsors} narrow={narrow} theme={t} upper={upper} />
+        </Section>
+      ) : null,
+
     about: () =>
-      event.description || event.info.length ? (
+      event.description || event.info.length || event.organiser ? (
         <Section id="about" index={indexOf("about")} eyebrow={labels.about} title={event.subtitle || labels.about}>
           {event.description && (
             <p
@@ -335,11 +407,70 @@ export function EventTemplate({
               {event.description}
             </p>
           )}
+          {/* Who is putting this on. On a conference page it is the line the
+              whole thing is believed or disbelieved on, so it sits with the
+              prose rather than in a footer nobody reaches. */}
+          {event.organiser && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: narrow ? 12 : 16,
+                marginTop: event.description ? (narrow ? 20 : 26) : 0,
+                padding: narrow ? "14px 16px" : "16px 20px",
+                borderRadius: "var(--e-radius)",
+                border: `1px solid var(--e-line)`,
+                background: "var(--e-panel)",
+                maxWidth: "62ch",
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  flexShrink: 0,
+                  width: narrow ? 40 : 48,
+                  height: narrow ? 40 : 48,
+                  borderRadius: 999,
+                  background: `color-mix(in srgb, var(--e-accent) 14%, transparent)`,
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                <Building2 size={narrow ? 18 : 21} strokeWidth={1.75} style={{ color: "var(--e-accent)" }} />
+              </span>
+              <div style={{ minWidth: 0 }}>
+                <p
+                  style={{
+                    font: "600 12px/1 var(--e-body)",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "var(--e-panel-ink)",
+                    margin: 0,
+                  }}
+                >
+                  {labels.hostedBy}
+                </p>
+                <p style={{ font: `600 ${narrow ? "15px" : "17px"}/1.3 var(--e-body)`, color: "var(--e-fg)", margin: "7px 0 0" }}>
+                  {event.organiser.name}
+                </p>
+                {event.organiser.blurb && (
+                  <p style={{ font: "400 13px/1.55 var(--e-body)", color: "var(--e-muted)", margin: "5px 0 0" }}>
+                    {event.organiser.blurb}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
           {/* The three facts a buyer checks before committing. Their LABELS
               travel with the data, because what they are called is the
               category talking: a gallery has opening hours, a tour has a
-              departure point, a rave has a door policy. */}
-          {event.info.length > 0 && (
+              departure point, a rave has a door policy.
+
+              On the structured layout they are NOT here: a business audience
+              decides on logistics before anything else, so the same three
+              move up into the hero's fact strip. Drawing them twice would be
+              the page repeating itself down its own length. */}
+          {!structured && event.info.length > 0 && (
             <div
               style={{
                 marginTop: event.description ? (narrow ? 22 : 30) : 0,
@@ -377,7 +508,7 @@ export function EventTemplate({
         </Section>
       ) : null,
     lineup: () =>
-      event.lineup.length ? (
+      billed.length ? (
         <Section id="lineup" index={indexOf("lineup")} eyebrow={labels.lineup} title={labels.lineup}>
           {/* People and works get cards; a sequence gets rows.
               That is a distinction in the CONTENT, not a style preference: a
@@ -386,21 +517,25 @@ export function EventTemplate({
               order down a column and a grid of them destroys the order. */}
           {PORTRAIT_BILL.has(cat.lineupKey) ? (
             <LineupCards
-              entries={event.lineup}
+              entries={billed}
               narrow={narrow}
               variant={variant}
               theme={t}
               accent={c.accent}
             />
           ) : (
-            <LineupList entries={event.lineup} narrow={narrow} variant={variant} theme={t} />
+            <LineupList entries={billed} narrow={narrow} variant={variant} theme={t} />
           )}
         </Section>
       ) : null,
     schedule: () =>
       event.lineup.length ? (
         <Section id="schedule" index={indexOf("schedule")} eyebrow={labels.schedule} title={labels.schedule}>
-          <ScheduleList entries={event.lineup} narrow={narrow} />
+          {/* Day tabs appear only where the data has days. A conference runs
+              over three of them and its agenda is unreadable as one column of
+              forty rows; a single evening has one day and a tab strip with one
+              tab in it is a control that decides nothing. */}
+          <Agenda entries={event.lineup} narrow={narrow} labels={labels} upper={upper} />
         </Section>
       ) : null,
     gallery: () => (
@@ -448,7 +583,7 @@ export function EventTemplate({
     ),
     tickets: () => (
       <Section id="tickets" index={indexOf("tickets")} eyebrow={labels.tickets} title={labels.tickets}>
-        <TicketTable event={event} narrow={narrow} labels={labels} theme={t} />
+        <TicketTable event={event} narrow={narrow} labels={labels} theme={t} structured={structured} />
       </Section>
     ),
     venue: () => (
@@ -713,6 +848,7 @@ function Hero({
   labels,
   pad,
   upper,
+  fromPrice,
 }: {
   event: EventRecord;
   variant: string;
@@ -721,6 +857,7 @@ function Hero({
   labels: Labels;
   pad: string;
   upper: boolean;
+  fromPrice: number | null;
 }) {
   const start = new Date(event.startsAt);
   const cover = event.customisation.coverUrl;
@@ -914,6 +1051,77 @@ function Hero({
 
   // ── structured (business) and stacked (the universal fallback) ───────────
   const stacked = variant === "stacked";
+
+  /* The fact strip.
+     A business audience decides on logistics before it decides on anything
+     else — can I get there, is it the week I am free, is it aimed at me — and
+     on the old header those three were a row of 14px icons under the subtitle.
+     They are columns now, each labelled, with the register action as the
+     fourth. The content is `event.info`, which for this category already
+     defaults to exactly these three facts, so nothing is invented and the
+     About section stops drawing them (see the `structured` guard there). */
+  const facts = event.info.slice(0, 3);
+  const strip = variant !== "structured" || facts.length === 0 ? null : (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: narrow ? "1fr" : `repeat(${facts.length}, minmax(0, 1fr)) auto`,
+        gap: narrow ? 0 : 28,
+        marginTop: narrow ? 26 : 40,
+        paddingTop: narrow ? 20 : 28,
+        borderTop: `1px solid var(--e-line)`,
+        alignItems: "start",
+      }}
+    >
+      {facts.map((f, i) => (
+        <div
+          key={f.id}
+          style={{
+            minWidth: 0,
+            paddingTop: narrow && i ? 16 : 0,
+            paddingBottom: narrow ? 16 : 0,
+            borderTop: narrow && i ? `1px solid var(--e-line)` : undefined,
+          }}
+        >
+          <p
+            style={{
+              font: "600 12px/1 var(--e-body)",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "var(--e-muted)",
+              margin: 0,
+            }}
+          >
+            {f.label}
+          </p>
+          <p style={{ font: `500 ${narrow ? "14px" : "15px"}/1.55 var(--e-body)`, color: "var(--e-fg)", margin: "10px 0 0" }}>
+            {f.value}
+          </p>
+        </div>
+      ))}
+      <a
+        href="#tickets"
+        style={{
+          justifySelf: narrow ? "stretch" : "end",
+          alignSelf: "center",
+          textAlign: "center",
+          display: "block",
+          padding: narrow ? "14px 20px" : "14px 26px",
+          borderRadius: "var(--e-radius)",
+          background: "var(--e-accent)",
+          color: "var(--e-on-accent)",
+          font: "600 15px/1 var(--e-body)",
+          textDecoration: "none",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {fromPrice === null
+          ? labels.soldOut
+          : `${labels.register}${fromPrice === 0 ? ` · ${labels.free}` : ""}`}
+      </a>
+    </div>
+  );
+
   return (
     <header style={{ padding: `${narrow ? 32 : 68}px ${pad}` }}>
       <div style={{ display: "grid", gap: narrow ? 24 : 44, gridTemplateColumns: narrow || stacked ? "1fr" : "1.15fr 1fr", alignItems: "center" }}>
@@ -951,6 +1159,7 @@ function Hero({
           }}
         />
       </div>
+      {strip}
     </header>
   );
 }
@@ -1210,6 +1419,274 @@ function LineupList({
   );
 }
 
+/**
+ * A video, loaded when somebody asks for it.
+ *
+ * The poster is the only thing fetched on page load — one image, no cookies,
+ * no player script — and the iframe is mounted on the first press with
+ * `autoplay=1`, so the visitor still gets the video from one click. That is the
+ * difference between a page that costs half a megabyte of Google to everyone
+ * who scrolls past it and one that costs it to the people who wanted it.
+ *
+ * The button is a real `<button>` rather than a styled div: it has to be
+ * reachable by keyboard, and it has to say what it does when it is read aloud.
+ */
+function VideoPlayer({
+  video,
+  accent,
+  light,
+  labels,
+  narrow,
+}: {
+  video: NonNullable<ReturnType<typeof parseEventVideo>>;
+  accent: string;
+  light: boolean;
+  labels: Labels;
+  narrow: boolean;
+}) {
+  const [playing, setPlaying] = useState(false);
+  return (
+    <div
+      style={{
+        position: "relative",
+        aspectRatio: "16 / 9",
+        borderRadius: "var(--e-radius)",
+        overflow: "hidden",
+        border: `1px solid var(--e-line)`,
+        // Vimeo publishes no poster without an API call, so it falls through to
+        // the template's own plate rather than to an empty rectangle.
+        background: [...video.posters.map((u) => `url(${u}) center/cover`), artFor(accent, 1, light)].join(", "),
+      }}
+    >
+      {playing ? (
+        <iframe
+          src={video.embedUrl}
+          title={labels.video}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setPlaying(true)}
+          aria-label={labels.playVideo}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            border: 0,
+            cursor: "pointer",
+            display: "grid",
+            placeItems: "center",
+            // A scrim under the button, so the play target reads against a
+            // bright frame as well as a dark one.
+            background: "linear-gradient(180deg, rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.42))",
+          }}
+        >
+          <span
+            aria-hidden
+            style={{
+              width: narrow ? 58 : 78,
+              height: narrow ? 58 : 78,
+              borderRadius: 999,
+              background: "var(--e-accent)",
+              display: "grid",
+              placeItems: "center",
+              boxShadow: "0 10px 34px rgb(0 0 0 / 0.34)",
+            }}
+          >
+            <Play
+              size={narrow ? 22 : 30}
+              strokeWidth={2}
+              fill="var(--e-on-accent)"
+              style={{ color: "var(--e-on-accent)", marginLeft: 3 }}
+            />
+          </span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The sponsor wall.
+ *
+ * Grouped by the operator's own word for the level — Headline, Partner,
+ * Supporter — because that grouping IS the information: a headline sponsor
+ * paid for the right to be read first, and a flat alphabetical grid throws
+ * away the only thing the section is for. Names are set on plates rather than
+ * dropped as bare text so the wall reads as a wall.
+ */
+function SponsorWall({
+  sponsors,
+  narrow,
+  theme,
+  upper,
+}: {
+  sponsors: EventRecord["sponsors"];
+  narrow: boolean;
+  theme: EventTheme;
+  upper: boolean;
+}) {
+  const groups: { tier: string | undefined; items: EventRecord["sponsors"] }[] = [];
+  for (const sp of sponsors) {
+    const g = groups.find((x) => x.tier === sp.tier);
+    if (g) g.items.push(sp);
+    else groups.push({ tier: sp.tier, items: [sp] });
+  }
+  return (
+    <div style={{ display: "grid", gap: narrow ? 22 : 30 }}>
+      {groups.map((g, gi) => (
+        <div key={g.tier ?? `g${gi}`}>
+          {g.tier && (
+            <p
+              style={{
+                font: "600 12px/1 var(--e-body)",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "var(--e-muted)",
+                margin: "0 0 12px",
+                textAlign: "center",
+              }}
+            >
+              {g.tier}
+            </p>
+          )}
+          {/* Centred and wrapped rather than laid on a grid.
+              A grid with auto-fill leaves two headline plates sitting against
+              the left edge of five empty tracks, which reads as a wall somebody
+              stopped building; stretching two plates across the full width
+              instead makes each one the size of a billboard. Centred rows are
+              what a sponsor wall has always been, and the first group's larger
+              plate is how it says rank. */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              alignItems: "stretch",
+              gap: narrow ? 8 : 14,
+            }}
+          >
+            {g.items.map((sp) => (
+              <div
+                key={sp.id}
+                style={{
+                  display: "grid",
+                  placeItems: "center",
+                  flex: narrow ? "1 1 calc(50% - 8px)" : "0 1 auto",
+                  minWidth: narrow ? 0 : gi === 0 ? 230 : 168,
+                  minHeight: narrow ? 64 : gi === 0 ? 100 : 78,
+                  padding: "12px 16px",
+                  borderRadius: "var(--e-radius)",
+                  border: `1px solid var(--e-line)`,
+                  background: "var(--e-panel)",
+                  textAlign: "center",
+                }}
+              >
+                <span
+                  style={{
+                    font: `600 ${narrow ? "13px" : gi === 0 ? "19px" : "15px"}/1.25 var(--e-display)`,
+                    letterSpacing: theme.displayTracking,
+                    textTransform: upper ? "uppercase" : "none",
+                    color: "var(--e-fg)",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {sp.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The agenda.
+ *
+ * Day tabs where the entries carry days, one plain track where they do not.
+ * A three-day conference printed as one forty-row column is the commonest way
+ * an agenda becomes unreadable, and a tab strip holding a single tab is a
+ * control that decides nothing — so the shape follows the data rather than the
+ * category.
+ *
+ * Real tabs, not styled buttons: `tablist`/`tab`/`tabpanel` with arrow-key
+ * movement, because this is exactly the widget that pattern exists for and a
+ * keyboard user should not have to tab through every day to reach the last.
+ */
+function Agenda({
+  entries,
+  narrow,
+  labels,
+  upper,
+}: {
+  entries: EventRecord["lineup"];
+  narrow: boolean;
+  labels: Labels;
+  upper: boolean;
+}) {
+  const days: string[] = [];
+  for (const e of entries) if (e.day && !days.includes(e.day)) days.push(e.day);
+  const [active, setActive] = useState(0);
+
+  if (days.length < 2) return <ScheduleList entries={entries} narrow={narrow} />;
+
+  const current = days[Math.min(active, days.length - 1)];
+  const move = (delta: number) => setActive((i) => (i + delta + days.length) % days.length);
+
+  return (
+    <div style={{ display: "grid", gap: narrow ? 16 : 28, gridTemplateColumns: narrow ? "1fr" : "190px minmax(0, 1fr)" }}>
+      <div
+        role="tablist"
+        aria-label={labels.schedule}
+        style={{ display: "flex", flexDirection: narrow ? "row" : "column", flexWrap: "wrap", gap: 8 }}
+      >
+        {days.map((d, i) => {
+          const on = i === active;
+          return (
+            <button
+              key={d}
+              role="tab"
+              id={`agenda-tab-${i}`}
+              aria-selected={on}
+              aria-controls={`agenda-panel-${i}`}
+              tabIndex={on ? 0 : -1}
+              onClick={() => setActive(i)}
+              onKeyDown={(ev) => {
+                if (ev.key === "ArrowDown" || ev.key === "ArrowRight") { ev.preventDefault(); move(1); }
+                if (ev.key === "ArrowUp" || ev.key === "ArrowLeft") { ev.preventDefault(); move(-1); }
+              }}
+              style={{
+                textAlign: "left",
+                cursor: "pointer",
+                padding: narrow ? "10px 14px" : "14px 16px",
+                minHeight: 44,
+                borderRadius: "var(--e-radius)",
+                border: `1px solid ${on ? "var(--e-accent)" : "var(--e-line)"}`,
+                background: on ? "var(--e-accent)" : "var(--e-panel)",
+                color: on ? "var(--e-on-accent)" : "var(--e-fg)",
+                font: `600 ${narrow ? "13px" : "15px"}/1.2 var(--e-body)`,
+                letterSpacing: upper ? "0.06em" : 0,
+                textTransform: upper ? "uppercase" : "none",
+                flex: narrow ? "0 0 auto" : undefined,
+              }}
+            >
+              {d}
+            </button>
+          );
+        })}
+      </div>
+      <div role="tabpanel" id={`agenda-panel-${active}`} aria-labelledby={`agenda-tab-${active}`}>
+        <ScheduleList entries={entries.filter((e) => e.day === current)} narrow={narrow} />
+      </div>
+    </div>
+  );
+}
+
 function ScheduleList({ entries, narrow }: { entries: EventRecord["lineup"]; narrow: boolean }) {
   // A schedule reads down the time column, so the time leads and gets a rail.
   return (
@@ -1267,16 +1744,50 @@ function TicketTable({
   narrow,
   labels,
   theme,
+  structured = false,
 }: {
   event: EventRecord;
   narrow: boolean;
   labels: Labels;
   theme: EventTheme;
+  /** The business layout: three passes side by side, compared rather than
+   *  browsed. That is how every conference sells, and it is the one place the
+   *  stub grid is the wrong shape — a delegate is choosing BETWEEN passes, not
+   *  reading each one in turn. */
+  structured?: boolean;
 }) {
-  const live = event.tiers.filter((t) => t.quantity > 0);
+  const all = event.tiers.filter((t) => t.quantity > 0);
+  /* In the comparison layout a tier that has gone is not a column.
+     Four plans in a three-column grid put the sold-out early bird alone on a
+     fourth row with two empty columns beside it — and a plan nobody can buy
+     has no business taking a third of a comparison of plans they can. It is
+     still stated, as a line underneath: "gone" is information a buyer wants,
+     it just is not an option. */
+  const live = structured ? all.filter((t) => t.quantity - t.sold > 0) : all;
+  const gone = structured ? all.filter((t) => t.quantity - t.sold <= 0) : [];
+  /* "Most popular" is read off the ledger, never chosen: the best-selling tier,
+     and only when it is meaningfully ahead of the next one. A badge that sits
+     on whatever the operator wants to push is an advertisement wearing the
+     clothes of a fact. */
+  const ranked = [...live].sort((a, b) => b.sold - a.sold);
+  const popularId =
+    structured && ranked.length >= 3 && ranked[0].sold >= Math.max(1, ranked[1].sold * 1.25)
+      ? ranked[0].id
+      : null;
   return (
     <div style={{ display: "grid", gap: narrow ? 12 : 16 }}>
-      <div style={{ display: "grid", gap: narrow ? 12 : 16, gridTemplateColumns: narrow ? "1fr" : "repeat(2, 1fr)" }}>
+      <div
+        style={{
+          display: "grid",
+          gap: narrow ? 12 : 16,
+          gridTemplateColumns: narrow
+            ? "1fr"
+            : structured
+              ? `repeat(${Math.min(live.length, 3)}, minmax(0, 1fr))`
+              : "repeat(2, 1fr)",
+          alignItems: "stretch",
+        }}
+      >
         {live.map((t, i) => {
           const left = Math.max(0, t.quantity - t.sold);
           const out = left === 0;
@@ -1287,8 +1798,11 @@ function TicketTable({
              the ledger supports it — the same half-sold threshold the page's
              own sticky bar uses, so one rule governs both. */
           const moving = !out && !scarce && t.quantity > 0 && t.sold / t.quantity >= 0.5;
-          /* The last card fills its row rather than leaving a hole beside it. */
-          const spans = !narrow && i === live.length - 1 && live.length % 2 === 1;
+          /* The last card fills its row rather than leaving a hole beside it.
+             Three-up compares plans column by column, so a stretched last card
+             there would break the comparison it exists for. */
+          const spans = !structured && !narrow && i === live.length - 1 && live.length % 2 === 1;
+          const popular = t.id === popularId;
           return (
             <div
               key={t.id}
@@ -1298,7 +1812,13 @@ function TicketTable({
                 flexDirection: "column",
                 gridColumn: spans ? "span 2" : undefined,
                 borderRadius: "var(--e-radius)",
-                border: `1px solid ${scarce ? "var(--e-accent)" : "var(--e-line)"}`,
+                border: `1px solid ${popular || scarce ? "var(--e-accent)" : "var(--e-line)"}`,
+                /* The featured plan is raised, not recoloured. Colour here
+                   would collide with scarcity, which is already spending the
+                   accent on the border. */
+                boxShadow: popular ? "0 14px 40px rgb(15 23 42 / 0.12)" : undefined,
+                marginTop: popular && !narrow ? -12 : undefined,
+                marginBottom: popular && !narrow ? -12 : undefined,
                 background: "var(--e-panel)",
                 overflow: "hidden",
                 opacity: out ? 0.55 : 1,
@@ -1316,8 +1836,32 @@ function TicketTable({
                   background: `radial-gradient(circle at 50% 50%, var(--e-bg) 4.5px, transparent 5px) 0 0 / 10px 14px repeat-y`,
                 }}
               />
+              {popular && (
+                <p
+                  style={{
+                    margin: 0,
+                    padding: "8px 12px",
+                    background: "var(--e-accent)",
+                    color: "var(--e-on-accent)",
+                    font: "600 12px/1 var(--e-body)",
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    textAlign: "center",
+                  }}
+                >
+                  {labels.mostPopular}
+                </p>
+              )}
               <div style={{ flex: 1, padding: narrow ? "16px 16px 0 22px" : "20px 22px 0 28px" }}>
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: structured ? "flex-start" : "flex-start",
+                    flexDirection: structured ? "column" : "row",
+                    justifyContent: "space-between",
+                    gap: structured ? 10 : 10,
+                  }}
+                >
                   <p
                     style={{
                       font: `600 ${narrow ? "15px" : "16px"}/1.3 var(--e-body)`,
@@ -1333,7 +1877,7 @@ function TicketTable({
                     <Badge tone="muted">{labels.soldOutBadge}</Badge>
                   ) : scarce ? (
                     <Badge tone="accent">{labels.almostGone}</Badge>
-                  ) : moving ? (
+                  ) : moving && !popular ? (
                     <Badge tone="accent">{labels.sellingFast}</Badge>
                   ) : null}
                 </div>
@@ -1432,6 +1976,49 @@ function TicketTable({
           );
         })}
       </div>
+
+      {gone.length > 0 && (
+        <div style={{ display: "grid", gap: 0 }}>
+          {gone.map((t, i) => (
+            <div
+              key={t.id}
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                gap: 14,
+                padding: `${narrow ? 12 : 14}px 0`,
+                borderTop: i ? `1px solid var(--e-line)` : "none",
+              }}
+            >
+              <span
+                style={{
+                  font: `600 ${narrow ? "14px" : "15px"}/1.3 var(--e-body)`,
+                  color: "var(--e-muted)",
+                  textTransform: theme.eyebrowCase === "upper" ? "uppercase" : "none",
+                  letterSpacing: theme.eyebrowCase === "upper" ? "0.06em" : 0,
+                  minWidth: 0,
+                }}
+              >
+                {t.name}
+              </span>
+              <span style={{ display: "flex", alignItems: "baseline", gap: 14, flexShrink: 0 }}>
+                <span
+                  style={{
+                    font: "400 14px/1.3 var(--e-body)",
+                    color: "var(--e-muted)",
+                    textDecoration: "line-through",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {t.price === 0 ? labels.free : formatMoney(t.price)}
+                </span>
+                <Badge tone="muted">{labels.soldOutBadge}</Badge>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* The receipt. It states a zero total on purpose — nothing is chosen
           yet, and a summary that hides until you act is a summary nobody

@@ -46,6 +46,13 @@ export function useTemplateLabels(categoryId: CategoryId | null) {
       sellingFast: t("tpl.sellingFast"),
       almostGone: t("tpl.almostGone"),
       soldOutBadge: t("tpl.soldOutBadge"),
+      video: t("section.video"),
+      watchOn: t("tpl.watchOn"),
+      playVideo: t("tpl.playVideo"),
+      sponsors: t("section.sponsors"),
+      hostedBy: t("tpl.hostedBy"),
+      mostPopular: t("tpl.mostPopular"),
+      register: t("tpl.register"),
       // Kept as a raw ICU-free string with a {count} the template fills: it is
       // rendered inside an inline style tree, not JSX, so there is no element
       // to interpolate into.

@@ -63,6 +63,37 @@ export interface EventLineupEntry {
   role?: string;
   /** "21:00" for a set time, or a day label on an itinerary. */
   at?: string;
+  /** A person on the bill, or a slot on the running order.
+   *
+   *  One array feeds two sections — the bill (speakers, lineup, works) and the
+   *  agenda — and that works right up until the agenda gains a lunch break,
+   *  which then appears in the speaker grid with a portrait. It cannot be
+   *  inferred: "Panel: what merchants ask for" carries a room in its role
+   *  field and is no more a person than lunch is. Undefined means person, so
+   *  every record written before this reads exactly as it did. */
+  kind?: "person" | "session";
+  /** Which day of a multi-day event this sits on — "Day 1", "Sat 12 Dec".
+   *  Optional because most events are one day, and an agenda that demands a
+   *  day label from a single-evening gig would be asking for nothing. Where no
+   *  entry carries one the schedule renders as a single track. */
+  day?: string;
+}
+
+/** Who is putting the event on. A conference page is believed or not on the
+ *  strength of this line, which is why it is a first-class field rather than a
+ *  sentence someone remembers to type into the description. */
+export interface EventOrganiser {
+  name: string;
+  blurb?: string;
+}
+
+/** Names only, by design. Sponsor artwork is an upload this product does not
+ *  have yet, and a wall of broken images says less than a wall of names. */
+export interface EventSponsor {
+  id: string;
+  name: string;
+  /** "Headline", "Partner" — the operator's own word, shown as a group label. */
+  tier?: string;
 }
 
 export interface EventRecord {
@@ -88,6 +119,12 @@ export interface EventRecord {
    *  hours, a tour has a departure point), so the labels travel with the data. */
   info: { id: string; label: string; value: string }[];
   faq: { id: string; q: string; a: string }[];
+  /** A YouTube or Vimeo link as the operator pasted it. Parsed at render time
+   *  (`lib/events/video`) rather than stored as an id, so what is saved is what
+   *  they can paste back into a browser and check. */
+  videoUrl?: string;
+  organiser?: EventOrganiser;
+  sponsors: EventSponsor[];
   tiers: EventTier[];
   customisation: EventCustomisation;
   createdAt: string;

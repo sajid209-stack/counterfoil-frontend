@@ -34,6 +34,8 @@ export type SectionId =
   | "gallery"
   | "tickets"
   | "venue"
+  | "video"
+  | "sponsors"
   | "faq";
 
 export const ALL_SECTIONS: SectionId[] = [
@@ -47,6 +49,8 @@ export const ALL_SECTIONS: SectionId[] = [
   "gallery",
   "tickets",
   "venue",
+  "video",
+  "sponsors",
   "faq",
 ];
 
@@ -145,7 +149,7 @@ export const CATEGORIES: CategoryDef[] = [
     id: "business",
     key: "business",
     subtypes: ["conference", "seminar", "launch", "corporate", "networking", "training"],
-    sections: ["hero", "stats", "about", "lineup", "schedule", "tickets", "venue", "faq"],
+    sections: ["hero", "stats", "video", "about", "lineup", "schedule", "tickets", "sponsors", "venue", "faq"],
     lineupKey: "speakers",
     variants: ["structured", "stacked"],
     theme: {

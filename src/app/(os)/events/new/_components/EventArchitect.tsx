@@ -25,6 +25,8 @@ import {
   Monitor,
   Smartphone,
   Tablet,
+  Play,
+  Handshake,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { DateField, FormField, TimeInput } from "@/components/ui";
@@ -32,6 +34,7 @@ import { cn } from "@/lib/cn";
 import { EventTemplate } from "@/components/events/EventTemplate";
 import { PreviewFrame } from "@/components/events/PreviewFrame";
 import { templateFontVars } from "@/lib/events/fonts";
+import { parseEventVideo } from "@/lib/events/video";
 import { DEMO_TODAY } from "@/lib/schedule";
 import {
   ACCENT_CHOICES,
@@ -52,6 +55,10 @@ export interface EventContent {
   venueAddress: string;
   description: string;
   coverUrl: string;
+  /** A YouTube or Vimeo link, as pasted. Parsed at render time. */
+  videoUrl: string;
+  organiserName: string;
+  organiserBlurb: string;
   lineup: EventLineupEntry[];
   faq: { id: string; q: string; a: string }[];
 }
@@ -72,6 +79,8 @@ const SECTION_ICON: Record<SectionId, LucideIcon> = {
   lineup: Users,
   schedule: Users,
   gallery: LayoutGrid,
+  video: Play,
+  sponsors: Handshake,
   tickets: Ticket,
   venue: MapPin,
   faq: HelpCircle,
@@ -163,6 +172,11 @@ export function EventArchitect({
     onEvent({ highlights: event.highlights.map((h, j) => (j === i ? { ...h, label } : h)) });
   const onInfo = (i: number, patch: Partial<{ label: string; value: string }>) =>
     onEvent({ info: event.info.map((f, j) => (j === i ? { ...f, ...patch } : f)) });
+  const onSponsor = (i: number, patch: Partial<{ name: string; tier: string }>) =>
+    onEvent({ sponsors: event.sponsors.map((sp, j) => (j === i ? { ...sp, ...patch } : sp)) });
+  const addSponsor = () =>
+    onEvent({ sponsors: [...event.sponsors, { id: `sp_${Date.now()}`, name: "", tier: "" }] });
+  const dropSponsor = () => onEvent({ sponsors: event.sponsors.slice(0, -1) });
 
   const addFaq = () => onContent({ faq: [...content.faq, { id: `f_${Date.now()}`, q: "", a: "" }] });
   const patchFaq = (id: string, p: Partial<{ q: string; a: string }>) =>
@@ -339,6 +353,61 @@ export function EventArchitect({
                 </>
               )}
 
+              {id === "video" && (
+                <>
+                  <Note>{t("architect.videoNote")}</Note>
+                  <FormField
+                    label={t("architect.videoUrl")}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={content.videoUrl}
+                    onChange={(e) => onContent({ videoUrl: e.target.value })}
+                  />
+                  {/* Says whether the link took, at the moment it is typed. A
+                      preview that silently shows nothing leaves the operator
+                      guessing whether the section is off or the link is wrong. */}
+                  {content.videoUrl.trim() !== "" && (
+                    <p
+                      className={cn(
+                        "text-[13px]",
+                        parseEventVideo(content.videoUrl) ? "text-muted" : "text-danger",
+                      )}
+                    >
+                      {parseEventVideo(content.videoUrl) ? t("architect.videoOk") : t("architect.videoBad")}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {id === "sponsors" && (
+                <>
+                  <Note>{t("architect.sponsorsNote")}</Note>
+                  {event.sponsors.map((sp, i) => (
+                    <div key={sp.id} className="grid gap-tight sm:grid-cols-[minmax(0,1fr)_9rem]">
+                      <FormField label={t("architect.sponsorName")} value={sp.name} onChange={(e) => onSponsor(i, { name: e.target.value })} />
+                      <FormField label={t("architect.sponsorTier")} value={sp.tier ?? ""} onChange={(e) => onSponsor(i, { tier: e.target.value })} />
+                    </div>
+                  ))}
+                  <div className="flex gap-tight">
+                    <button
+                      type="button"
+                      onClick={addSponsor}
+                      className="min-h-11 rounded-sm border border-line px-comfortable text-[13px] font-medium text-fg transition-colors duration-quick hover:bg-subtle"
+                    >
+                      {t("architect.addSponsor")}
+                    </button>
+                    {event.sponsors.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={dropSponsor}
+                        className="min-h-11 rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:text-danger"
+                      >
+                        {t("architect.removeLast")}
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+
               {id === "highlights" && (
                 <>
                   <Note>{t("architect.highlightsNote")}</Note>
@@ -369,6 +438,19 @@ export function EventArchitect({
                       than in a panel of their own — an operator writing "no
                       seats, no barriers" is answering Capacity in the same
                       breath. */}
+                  <div className="grid gap-tight sm:grid-cols-2">
+                    <FormField
+                      label={t("architect.organiser")}
+                      placeholder={t("architect.organiserPlaceholder")}
+                      value={content.organiserName}
+                      onChange={(e) => onContent({ organiserName: e.target.value })}
+                    />
+                    <FormField
+                      label={t("architect.organiserBlurb")}
+                      value={content.organiserBlurb}
+                      onChange={(e) => onContent({ organiserBlurb: e.target.value })}
+                    />
+                  </div>
                   <Note>{t("architect.infoNote")}</Note>
                   {event.info.map((f, i) => (
                     <div key={f.id} className="grid gap-tight sm:grid-cols-[10rem_minmax(0,1fr)]">
@@ -396,7 +478,23 @@ export function EventArchitect({
                       </div>
                       <div className="grid gap-tight">
                         <FormField label={t("architect.name")} placeholder={t("architect.namePlaceholder")} value={l.name} onChange={(e) => patchLineup(l.id, { name: e.target.value })} />
-                        <div className="grid gap-tight sm:grid-cols-2">
+                        {/* A break is not a speaker. One array feeds both the
+                            bill and the agenda, so each entry has to say which
+                            it is — otherwise "Lunch" turns up in the speaker
+                            grid with a portrait. */}
+                        <label className="grid gap-[6px]">
+                          <span className="type-label text-[12px] text-muted">{t("architect.kind")}</span>
+                          <select
+                            value={l.kind ?? "person"}
+                            onChange={(e) => patchLineup(l.id, { kind: e.target.value as "person" | "session" })}
+                            className="min-h-11 rounded-sm border border-line bg-card px-comfortable text-[14px] text-fg"
+                          >
+                            <option value="person">{t("architect.kindPerson")}</option>
+                            <option value="session">{t("architect.kindSession")}</option>
+                          </select>
+                        </label>
+                        <div className="grid gap-tight sm:grid-cols-3">
+                          <FormField label={t("architect.day")} placeholder={t("architect.dayPlaceholder")} value={l.day ?? ""} onChange={(e) => patchLineup(l.id, { day: e.target.value })} />
                           <FormField label={t("architect.role")} placeholder={t("architect.rolePlaceholder")} value={l.role ?? ""} onChange={(e) => patchLineup(l.id, { role: e.target.value })} />
                           <FormField label={t("architect.at")} placeholder="21:30" value={l.at ?? ""} onChange={(e) => patchLineup(l.id, { at: e.target.value })} />
                         </div>

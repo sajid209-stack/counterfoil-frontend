@@ -116,7 +116,9 @@
     "itinerary": "Itinerary",
     "djs": "Lineup",
     "stats": "At a glance",
-    "highlights": "Sneak peeks"
+    "highlights": "Sneak peeks",
+    "video": "Watch",
+    "sponsors": "Sponsors"
   },
   "customise": {
     "accent": "Accent colour",
@@ -285,7 +287,24 @@
     "chip": "Highlight",
     "infoNote": "The three facts somebody checks before they commit. The label is yours to name.",
     "infoLabel": "Label",
-    "infoValue": "Detail"
+    "infoValue": "Detail",
+    "videoNote": "A YouTube or Vimeo link. The page loads only the thumbnail until a visitor presses play.",
+    "videoUrl": "Video link",
+    "videoOk": "Link recognised — the video will appear on the page.",
+    "videoBad": "That link is not a YouTube or Vimeo video. The section stays hidden until it is.",
+    "sponsorsNote": "Who is backing the event. Group them by whatever you call the level — Headline, Partner — and the first group is drawn largest.",
+    "sponsorName": "Sponsor",
+    "sponsorTier": "Level",
+    "addSponsor": "Add a sponsor",
+    "removeLast": "Remove the last",
+    "organiser": "Hosted by",
+    "organiserPlaceholder": "Your organisation",
+    "organiserBlurb": "One line about them",
+    "day": "Day",
+    "dayPlaceholder": "Day 1",
+    "kind": "Appears as",
+    "kindPerson": "A name on the bill",
+    "kindSession": "A slot on the agenda only"
   },
   "tpl": {
     "orderSummary": "Order summary",
@@ -297,7 +316,14 @@
     "almostGone": "Almost gone",
     "soldOutBadge": "Sold out",
     "remaining": "{count} remaining",
-    "slotsAvailable": "Slots available"
+    "slotsAvailable": "Slots available",
+    "video": "Watch",
+    "watchOn": "Watch on YouTube",
+    "playVideo": "Play the video",
+    "sponsors": "Sponsors",
+    "hostedBy": "Hosted by",
+    "mostPopular": "Most popular",
+    "register": "Register now"
   },
   "defaults": {
     "entertainment": {
