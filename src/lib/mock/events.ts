@@ -326,9 +326,10 @@ export const events: EventRecord[] = [
     description:
       "Three days through the world's largest mangrove forest, sleeping on board. Small group, two guides, all meals.",
     stats: [
-      { id: "s1", value: "3", label: "Days on the water" },
-      { id: "s2", value: "4", label: "Stops" },
-      { id: "s3", value: "18", label: "Travellers max" },
+      { id: "s1", value: "3", label: "Days" },
+      { id: "s2", value: "2", label: "Nights aboard" },
+      { id: "s3", value: "7", label: "Stops" },
+      { id: "s4", value: "18", label: "Travellers max" },
     ],
     highlights: [
       { id: "h1", label: "The route" },
@@ -341,19 +342,51 @@ export const events: EventRecord[] = [
       { id: "i2", label: "Duration", value: "3 days, 2 nights aboard" },
       { id: "i3", label: "Group", value: "18 travellers, 2 guides, 1 cook" },
     ],
+    /* Stops, not day-summaries. The day lives in its own field so the rail can
+       carry it in the margin and repeat it only when it changes, and the name
+       is the PLACE — which is what a route is a list of. */
     lineup: [
-      { id: "l1", name: "Day 1 — Khulna to Harbaria", role: "Board at dawn, forest walk in the afternoon", at: "Day 1" },
-      { id: "l2", name: "Day 2 — Kotka and Jamtola", role: "Sunrise at the watchtower, beach walk, night on deck", at: "Day 2" },
-      { id: "l3", name: "Day 3 — Karamjal and return", role: "Crocodile centre, back to Khulna by evening", at: "Day 3" },
+      { id: "l1", name: "Khulna launch ghat", role: "Board at first light. Breakfast as we cast off down the Rupsha.", day: "Day 1", at: "07:00" },
+      { id: "l2", name: "Harbaria", role: "Boardwalk through the mangrove. First crocodile, if the tide is kind.", day: "Day 1", at: "15:00" },
+      { id: "l3", name: "Kotka watchtower", role: "Up before the sun for the canopy from above.", day: "Day 2", at: "05:30" },
+      { id: "l4", name: "Jamtola beach", role: "An hour's walk through the forest to open sea.", day: "Day 2", at: "11:00" },
+      { id: "l5", name: "At anchor", role: "Engines off. Dinner on deck, and the forest making its own noise.", day: "Day 2", at: "20:00" },
+      { id: "l6", name: "Karamjal", role: "Crocodile and spotted deer breeding centre.", day: "Day 3", at: "08:00" },
+      { id: "l7", name: "Khulna launch ghat", role: "Back where we started, by evening.", day: "Day 3", at: "18:00" },
     ],
     faq: [
       { id: "f1", q: "What should I bring?", a: "Closed shoes, a hat, and long sleeves. Everything else is on board." },
       { id: "f2", q: "Is there a permit?", a: "Included. We file it for you with your booking." },
     ],
     tiers: [
-      { id: "t1", name: "Shared cabin", price: 1450000, quantity: 24, sold: 17 },
-      { id: "t2", name: "Private cabin", price: 2400000, quantity: 8, sold: 5, maxPerOrder: 2 },
-      { id: "t3", name: "Deck berth", price: 950000, quantity: 12, sold: 9, description: "Open deck, mattress and mosquito net." },
+      {
+        id: "t3",
+        name: "Deck berth",
+        price: 950000,
+        quantity: 12,
+        sold: 9,
+        description: "Open deck, mattress and mosquito net.",
+        perks: ["All meals and tea", "Forest permit and guides", "Sleep under the net on deck"],
+      },
+      {
+        id: "t1",
+        name: "Shared cabin",
+        price: 1450000,
+        quantity: 24,
+        sold: 17,
+        description: "Two berths, shared with one other traveller.",
+        perks: ["All meals and tea", "Forest permit and guides", "Two-berth cabin, fan and window"],
+      },
+      {
+        id: "t2",
+        name: "Private cabin",
+        price: 2400000,
+        quantity: 8,
+        sold: 2,
+        maxPerOrder: 2,
+        description: "The cabin to yourself, or the two of you.",
+        perks: ["All meals and tea", "Forest permit and guides", "Cabin to yourself", "Upper deck, own washroom"],
+      },
     ],
   }),
 

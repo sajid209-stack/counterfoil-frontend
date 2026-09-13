@@ -6248,3 +6248,117 @@ The glow check read `document.querySelector("h1")`, which is the OS page
 header's title rather than the template's — the same scoping mistake the nav
 check made earlier today. The glow had been visible in the render the whole
 time.
+
+## Events — the travel template, drawn as a chart (2026-09-13)
+
+Owner asked for travel and tours researched properly, built with real
+creativity, and explicitly not looking like it was generated.
+
+### What the other five already occupy
+
+Mapped before deciding anything, because "distinctive" is a claim about a set:
+
+| | ground | accent | face |
+|---|---|---|---|
+| entertainment | near-black purple | hot pink | Bebas |
+| sports | near-black green | emerald | Space Grotesk |
+| nightlife | near-black | violet | Syne |
+| business | clinical white | royal blue | Inter |
+| arts | warm gallery paper | forest | Playfair |
+| **travel (was)** | **dark green** | **warm ochre** | **Outfit** |
+
+Travel sat adjacent to sports AND on the exact pattern the design guidance
+names as a generated default — a near-black ground with one warm accent. It was
+the least differentiated of the six. A warm-cream direction was out too: arts
+already has warm paper, and cream-plus-serif-plus-terracotta is the other named
+default.
+
+### The direction: a navigational chart
+
+**Cool pale is the one ground nobody occupies**, and it is also true to the
+subject — a tour is daylight, and a dark tour page reads like a nightclub.
+
+**The accent is chart magenta**, because on a real navigational chart magenta is
+reserved for everything the mariner must ACT on: lights, routes, restricted
+water. On this page the thing you act on is the ticket. It is a documented
+cartographic convention with a reason, and against a pale cool ground it reads
+as ink, nothing like entertainment's hot pink on near-black.
+
+**The face is Fraunces** — a soft, low-contrast serif with a deliberate wobble.
+The opposite animal to Playfair's high-contrast Didone, and it sidesteps the
+serif-and-terracotta cliché because neither half of that pairing is present.
+Corners are 3px: charts have none.
+
+### The signature: the route
+
+A journey is a sequence in space and time, which is information no other
+category has — so it is the page's structure rather than its decoration.
+
+- **The header draws the passage.** Most tour pages open on a photograph of
+  somewhere you might end up; the most characteristic thing in this subject's
+  world is the route. A rule with a mark per leg, grouped by day, built from the
+  itinerary's own stops. The first and last marks are filled because they are
+  the two ends of the passage — and on a there-and-back trip they are the same
+  place, which is worth being able to see.
+- **The itinerary is that route walked.** One rail, a mark per stop, the day in
+  the margin repeated only when it changes, and what happens at each stop set
+  under its name rather than beside it — the sentence is the reason for the
+  stop, and squeezing it into a right-hand column turns a journey back into a
+  timetable. The order is honest information here in a way it rarely is: you
+  cannot do day three before day two.
+- **The venue stops drawing a second route.** The header carries the passage, so
+  down the page the venue is what a venue actually is — the place you leave
+  from — and gets a map.
+- **The itinerary IS the bill**, the way fixtures are for a tournament, so it is
+  one section carrying the category's own word rather than a "Schedule" saying
+  the same thing under a duller name.
+
+### Chart marginalia
+
+The header's facts are ruled off the way a sailing list rules them, and they are
+**Departs and Returns** rather than "Doors open" — a boat has no doors, and a
+journey is the one kind of event whose end date is as much a fact as its start.
+`endsAt` had been on the record since the model was written with nothing drawing
+it.
+
+### The seed became a real passage
+
+Seven stops across three days, each with a place name and what happens there,
+rather than three day-summaries with the day duplicated into the time field. The
+premium cabin was moved to a slower sell, because a page where all three berths
+shout "selling fast" is the badge-on-everything problem again — true here, but a
+seed that demonstrates a rule needs a case the rule leaves alone.
+
+### Verified
+
+- **17 checks driving the page**, all passing: the pale ground and chart
+  magenta, Fraunces actually resolving, the header drawing the route with one
+  marker per day built from the real stops, Departs and Returns present and
+  "doors open" gone, the section titled Itinerary, every stop in order with its
+  sentence, the day stated once per day rather than once per stop, the venue not
+  drawing the passage twice, and the badge marking two berths rather than three.
+- All six templates measured clean — zero contrast failures, nothing under the
+  12px floor, nothing clipped, no console errors.
+- Entertainment 13/13, sports 18/18, business 30/30, both architect harnesses,
+  both wizards, review 15/15, accessibility 8/8, deck 9/9, and the 32-route
+  audit back at its documented **76**.
+- Bangla clean with 0 missing-message warnings. `tsc`, `npm run build` and
+  `eslint` clean; i18n parity **0 missing / 0 extra** across 31 namespaces.
+
+### Two things the tooling caught that reading would not have
+
+- **A real lint error**: the journey rail tracked "is this a new day?" by
+  mutating a closure variable inside the render loop. Derived from the list
+  instead — a day starts where it differs from the entry before it, which is a
+  property of the list and not a running total. That kind of mutation only
+  misbehaves on the second render.
+- **A false alarm, correctly dismissed**: one audit run came back at 81 with
+  five console errors, all of which vanished on a clean re-run. The dev server
+  was recompiling after a seed edit while the run was in flight. The baseline is
+  76 and this session did not move it.
+
+### Open
+
+Cover art is still a generated plate on every template. For this one that
+matters least — the header is the route, not a photograph — but a real chart
+extract or a river photograph would be the natural next thing.

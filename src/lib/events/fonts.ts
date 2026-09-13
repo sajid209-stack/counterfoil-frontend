@@ -1,4 +1,4 @@
-import { Bebas_Neue, Outfit, Playfair_Display, Space_Grotesk, Syne } from "next/font/google";
+import { Bebas_Neue, Fraunces, Outfit, Playfair_Display, Space_Grotesk, Syne } from "next/font/google";
 
 /**
  * Typefaces for the published event templates — NOT for the dashboard.
@@ -17,6 +17,10 @@ const syne = Syne({ variable: "--font-syne", subsets: ["latin"], display: "swap"
 const spaceGrotesk = Space_Grotesk({ variable: "--font-space-grotesk", subsets: ["latin"], display: "swap" });
 const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], display: "swap" });
 const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"], display: "swap" });
+/* Fraunces is a SOFT, low-contrast serif with a deliberate wobble to it — the
+   opposite animal to Playfair's high-contrast Didone, and the reason the travel
+   template reads as an expedition journal rather than a landing page. */
+const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], display: "swap" });
 
 /** Put this on any element that contains a template preview. */
 export const templateFontVars = [
@@ -25,4 +29,5 @@ export const templateFontVars = [
   spaceGrotesk.variable,
   playfair.variable,
   outfit.variable,
+  fraunces.variable,
 ].join(" ");

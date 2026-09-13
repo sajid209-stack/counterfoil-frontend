@@ -99,7 +99,8 @@
     "editorial": "সম্পাদকীয়",
     "immersive": "নিমগ্ন",
     "neon": "নিয়ন",
-    "floodlit": "ফ্লাডলিট"
+    "floodlit": "ফ্লাডলিট",
+    "chart": "চার্ট"
   },
   "section": {
     "hero": "হিরো",
@@ -147,7 +148,8 @@
     "playfair": "Playfair Display — সম্পাদকীয় সেরিফ",
     "outfit": "Outfit — সহজ জ্যামিতিক",
     "inter": "Inter — নিরপেক্ষ স্যান্স",
-    "mono": "DM Mono — মনোস্পেসড"
+    "mono": "DM Mono — মনোস্পেসড",
+    "fraunces": "ফ্রনসেস"
   },
   "field": {
     "title": "ইভেন্টের নাম",
@@ -337,7 +339,10 @@
     "viewOnMap": "মানচিত্রে দেখুন",
     "viewLineup": "লাইনআপ দেখুন",
     "ticketsSold": "টিকিট বিক্রি",
-    "ofCapacity": "/"
+    "ofCapacity": "/",
+    "theRoute": "যাত্রাপথ",
+    "departs": "ছাড়বে",
+    "returns": "ফিরবে"
   },
   "defaults": {
     "entertainment": {
@@ -500,6 +505,10 @@
       "info2": {
         "label": "দল",
         "value": "১৮ জন যাত্রী, ২ জন গাইড, ১ জন বাবুর্চি"
+      },
+      "stat3": {
+        "value": "১৮",
+        "label": "সর্বোচ্চ যাত্রী"
       }
     },
     "nightlife": {

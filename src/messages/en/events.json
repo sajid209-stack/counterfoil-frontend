@@ -99,7 +99,8 @@
     "editorial": "Editorial",
     "immersive": "Immersive",
     "neon": "Neon",
-    "floodlit": "Floodlit"
+    "floodlit": "Floodlit",
+    "chart": "Chart"
   },
   "section": {
     "hero": "Hero",
@@ -147,7 +148,8 @@
     "playfair": "Playfair Display — editorial serif",
     "outfit": "Outfit — friendly geometric",
     "inter": "Inter — neutral sans",
-    "mono": "DM Mono — monospaced"
+    "mono": "DM Mono — monospaced",
+    "fraunces": "Fraunces"
   },
   "field": {
     "title": "Event name",
@@ -337,7 +339,10 @@
     "viewOnMap": "View on map",
     "viewLineup": "See the lineup",
     "ticketsSold": "Tickets sold",
-    "ofCapacity": "of"
+    "ofCapacity": "of",
+    "theRoute": "The route",
+    "departs": "Departs",
+    "returns": "Returns"
   },
   "defaults": {
     "entertainment": {
@@ -500,6 +505,10 @@
       "info2": {
         "label": "Group",
         "value": "18 travellers, 2 guides, 1 cook"
+      },
+      "stat3": {
+        "value": "18",
+        "label": "Travellers max"
       }
     },
     "nightlife": {

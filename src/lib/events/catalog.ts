@@ -215,22 +215,33 @@ export const CATEGORIES: CategoryDef[] = [
     id: "travel",
     key: "travel",
     subtypes: ["tour", "trip", "excursion", "sightseeing", "cruise", "package"],
-    sections: ["hero", "stats", "about", "schedule", "gallery", "tickets", "venue", "faq"],
+    /* The itinerary IS the bill for a tour, the way fixtures are for a
+       tournament — so it is one section carrying the category's own word,
+       rather than a Schedule that says the same thing under a duller name. */
+    sections: ["hero", "stats", "lineup", "about", "gallery", "tickets", "venue", "faq"],
     lineupKey: "itinerary",
-    variants: ["immersive", "stacked"],
+    variants: ["chart", "immersive", "stacked"],
+    statCount: 4,
+    /* A navigational chart.
+       Five templates already sit on near-black or on paper; cool pale is the
+       one ground nobody occupies, and a tour is daylight — a dark tour page
+       reads like a nightclub. The accent is the magenta a real chart reserves
+       for everything the mariner must ACT on: lights, routes, restricted
+       water. On this page the thing you act on is the ticket. Corners are all
+       but square, because charts have none. */
     theme: {
-      bg: "#101815",
-      fg: "#F1EEE7",
-      panel: "#18231F",
-      line: "#2A3833",
-      muted: "#A9BAB1",
-      accent: "#D08C3E",
-      onAccent: "#14100A",
-      display: "var(--font-outfit)",
-      body: "var(--font-outfit)",
-      radius: "18px",
+      bg: "#E8EEEC",
+      fg: "#0B2A2A",
+      panel: "#FAFCFB",
+      line: "#C2D2CD",
+      muted: "#4C6663",
+      accent: "#B0004E",
+      onAccent: "#FFFFFF",
+      display: "var(--font-fraunces)",
+      body: "var(--font-inter)",
+      radius: "3px",
       eyebrowCase: "upper",
-      displayTracking: "-0.02em",
+      displayTracking: "-0.01em",
       glow: false,
     },
   },
@@ -271,6 +282,7 @@ export const FONT_CHOICES = [
   { id: "space", key: "space", css: "var(--font-space-grotesk)" },
   { id: "playfair", key: "playfair", css: "var(--font-playfair)" },
   { id: "outfit", key: "outfit", css: "var(--font-outfit)" },
+  { id: "fraunces", key: "fraunces", css: "var(--font-fraunces)" },
   { id: "inter", key: "inter", css: "var(--font-inter)" },
   { id: "mono", key: "mono", css: "var(--font-dm-mono)" },
 ] as const;

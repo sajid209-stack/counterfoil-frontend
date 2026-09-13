@@ -68,6 +68,9 @@ interface Labels {
   viewAllSpeakers: string;
   viewAgenda: string;
   viewLineup: string;
+  theRoute: string;
+  departs: string;
+  returns: string;
   ticketsSold: string;
   ofCapacity: string;
   viewOnMap: string;
@@ -216,7 +219,9 @@ export function EventTemplate({
      else gets a street map. Derived from the content rather than the category,
      so a yoga class in the sports catalogue does not get a football pitch. */
   const venueShape: "map" | "route" | "pitch" =
-    event.categoryId === "travel"
+    /* The chart layout draws the passage in its own header, so down here the
+       venue is what the venue actually is: the place you leave from. */
+    event.categoryId === "travel" && variant !== "chart"
       ? "route"
       : event.lineup.some((l) => /\s+(?:vs\.?|v\.?|versus)\s+/i.test(l.name))
         ? "pitch"
@@ -757,7 +762,13 @@ export function EventTemplate({
               headliner, a speaker and a painting are each a thing you look at
               and want a face for, while fixtures and an itinerary are read in
               order down a column and a grid of them destroys the order. */}
-          {variant === "poster" ? (
+          {variant === "chart" ? (
+            /* A timetable answers "when"; an itinerary answers "and then?".
+               The rail is the same passage the header draws, walked at reading
+               pace — and the order is honest information here in a way it
+               rarely is, because you cannot do day three before day two. */
+            <Journey entries={billed} narrow={narrow} theme={t} />
+          ) : variant === "poster" ? (
             /* A festival poster has always said who is headlining by how big
                the name is set — the type size IS the billing, and it is the
                one piece of information four identical portrait plates cannot
@@ -1416,6 +1427,130 @@ function Hero({
           {meta}
           {posterActions}
           {soldBar}
+        </div>
+      </header>
+    );
+  }
+
+  /* ── chart: the journey drawn, because the journey IS the product ────────
+     Most tour pages open on a photograph of somewhere you might end up. The
+     most characteristic thing in this subject's world is not a beach, it is
+     the route: a sequence in space and time that no other kind of event has.
+     So the header states what it is and where it leaves from, and draws the
+     passage beside it. */
+  if (variant === "chart") {
+    const stops = routeStops(event.lineup);
+    return (
+      <header
+        style={{
+          position: "relative",
+          padding: `${narrow ? 34 : 72}px ${pad} ${narrow ? 34 : 64}px`,
+          borderBottom: `1px solid var(--e-line)`,
+        }}
+      >
+        {/* Chart ruling. A survey sheet is squared before anything is drawn on
+            it, and the grid is what makes the ground read as paper rather than
+            as a tint. */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            opacity: 0.5,
+            backgroundImage: `linear-gradient(var(--e-line) 1px, transparent 1px), linear-gradient(90deg, var(--e-line) 1px, transparent 1px)`,
+            backgroundSize: "56px 56px",
+            maskImage: "linear-gradient(to bottom, black, transparent)",
+            WebkitMaskImage: "linear-gradient(to bottom, black, transparent)",
+          }}
+        />
+        <div style={{ position: "relative", display: "grid", gap: narrow ? 30 : 54, gridTemplateColumns: narrow ? "1fr" : "minmax(0, 1fr) minmax(0, 1fr)", alignItems: "center" }}>
+          <div style={{ minWidth: 0 }}>
+            <p
+              style={{
+                font: "500 12px/1 var(--e-body)",
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "var(--e-accent-ink)",
+                margin: 0,
+              }}
+            >
+              {eyebrowText}
+            </p>
+            <h1
+              style={{
+                font: `600 ${narrow ? "clamp(28px, 9vw, 40px)" : "clamp(38px, 4.4vw, 62px)"}/1.08 var(--e-display)`,
+                letterSpacing: theme.displayTracking,
+                color: "var(--e-fg)",
+                margin: `${narrow ? 16 : 22}px 0 0`,
+                textWrap: "balance",
+              }}
+            >
+              {event.title}
+            </h1>
+            {event.subtitle && (
+              <p style={{ font: `400 ${narrow ? "15px" : "18px"}/1.6 var(--e-body)`, color: "var(--e-muted)", margin: "16px 0 0", maxWidth: "42ch" }}>
+                {event.subtitle}
+              </p>
+            )}
+            {/* Chart marginalia: the facts a sailing list carries, ruled off
+                rather than set as a paragraph. */}
+            <dl
+              style={{
+                display: "grid",
+                gridTemplateColumns: narrow ? "1fr" : "repeat(2, minmax(0, 1fr))",
+                gap: 0,
+                margin: `${narrow ? 24 : 34}px 0 0`,
+                borderTop: `1px solid var(--e-line)`,
+              }}
+            >
+              {/* Departs and returns, not "doors open" — a boat does not have
+                  doors, and a journey is the one kind of event whose end date is
+                  as much a fact as its start. `endsAt` has been on the record all
+                  along with nothing drawing it. */}
+              {[
+                { k: labels.departs, v: `${longDate(start)} \u00b7 ${time(start)}` },
+                event.endsAt
+                  ? { k: labels.returns, v: `${longDate(new Date(event.endsAt))} · ${time(new Date(event.endsAt))}` }
+                  : { k: labels.venue, v: event.venueName },
+              ].map((row) => (
+                <div key={row.k} style={{ padding: narrow ? "13px 0" : "15px 0", borderBottom: `1px solid var(--e-line)`, minWidth: 0 }}>
+                  <dt
+                    style={{
+                      font: "500 12px/1 var(--e-body)",
+                      letterSpacing: "0.16em",
+                      textTransform: "uppercase",
+                      color: "var(--e-muted)",
+                    }}
+                  >
+                    {row.k}
+                  </dt>
+                  <dd style={{ font: "400 15px/1.45 var(--e-body)", color: "var(--e-fg)", margin: "7px 0 0" }}>{row.v}</dd>
+                </div>
+              ))}
+            </dl>
+            <a
+              href="#tickets"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 9,
+                marginTop: narrow ? 24 : 32,
+                padding: narrow ? "14px 22px" : "15px 28px",
+                borderRadius: "var(--e-radius)",
+                background: "var(--e-accent)",
+                color: "var(--e-on-accent)",
+                font: `500 ${narrow ? "14px" : "15px"}/1 var(--e-body)`,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                textDecoration: "none",
+              }}
+            >
+              {fromPrice === null ? labels.soldOut : labels.getTickets}
+              <ArrowRight size={16} strokeWidth={1.75} aria-hidden />
+            </a>
+          </div>
+          {stops.length >= 2 && <RouteChart stops={stops} narrow={narrow} theme={theme} labels={labels} />}
         </div>
       </header>
     );
@@ -3076,6 +3211,234 @@ function Badge({ tone, children }: { tone: "accent" | "muted"; children: React.R
     >
       {children}
     </span>
+  );
+}
+
+/**
+ * One marker per leg of the journey.
+ *
+ * Grouped by day where the itinerary carries days, because that is how a trip
+ * is sold and how it is remembered — "day two" is a unit a traveller plans
+ * around, a 14:00 stop is not. A single-day excursion has no days to group by,
+ * so it draws its stops instead. Either way the first and last markers are the
+ * departure and the return, which on a there-and-back trip are the same place
+ * and it is worth being able to see that.
+ */
+function routeStops(entries: EventRecord["lineup"]): { key: string; label: string; place: string }[] {
+  const days: string[] = [];
+  for (const e of entries) if (e.day && !days.includes(e.day)) days.push(e.day);
+  if (days.length >= 2) {
+    return days.map((d) => {
+      const first = entries.find((e) => e.day === d);
+      return { key: d, label: d, place: first ? first.name : "" };
+    });
+  }
+  return entries.slice(0, 5).map((e) => ({ key: e.id, label: e.at ?? "", place: e.name }));
+}
+
+/**
+ * The route, drawn.
+ *
+ * A rule with a mark on it for each leg — the plainest possible drawing of a
+ * passage, which is what a chart's own track line is. It is not decoration: the
+ * marks are the itinerary and the order is the journey, so it says something a
+ * photograph of a beach cannot.
+ */
+function RouteChart({
+  stops,
+  narrow,
+  theme,
+  labels,
+}: {
+  stops: { key: string; label: string; place: string }[];
+  narrow: boolean;
+  theme: EventTheme;
+  labels: Labels;
+}) {
+  return (
+    <div
+      style={{
+        borderRadius: "var(--e-radius)",
+        border: `1px solid var(--e-line)`,
+        background: "var(--e-panel)",
+        padding: narrow ? "20px 18px" : "30px 32px",
+      }}
+    >
+      <p
+        style={{
+          font: "500 12px/1 var(--e-body)",
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+          color: "var(--e-muted)",
+          margin: 0,
+        }}
+      >
+        {labels.theRoute}
+      </p>
+      <div style={{ display: "grid", gap: 0, marginTop: narrow ? 20 : 26 }}>
+        {stops.map((stop, i) => {
+          const last = i === stops.length - 1;
+          return (
+            <div key={stop.key} style={{ display: "grid", gridTemplateColumns: "18px minmax(0, 1fr)", gap: narrow ? 14 : 18 }}>
+              {/* The rail: a mark, and the line running on to the next. The
+                  first and last are filled because they are the two ends of the
+                  passage; the legs between are open marks, as a chart draws a
+                  waypoint. */}
+              <div style={{ display: "grid", justifyItems: "center", gridTemplateRows: "auto 1fr" }}>
+                <span
+                  aria-hidden
+                  style={{
+                    width: i === 0 || last ? 13 : 9,
+                    height: i === 0 || last ? 13 : 9,
+                    marginTop: 5,
+                    borderRadius: 999,
+                    border: `2px solid var(--e-accent)`,
+                    background: i === 0 || last ? "var(--e-accent)" : "var(--e-panel)",
+                  }}
+                />
+                {!last && <span aria-hidden style={{ width: 2, background: "var(--e-accent)", opacity: 0.35, marginTop: 4 }} />}
+              </div>
+              <div style={{ minWidth: 0, paddingBottom: last ? 0 : narrow ? 20 : 26 }}>
+                {stop.label && (
+                  <p
+                    style={{
+                      font: "500 12px/1 var(--e-body)",
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                      color: "var(--e-accent-ink)",
+                      margin: 0,
+                    }}
+                  >
+                    {stop.label}
+                  </p>
+                )}
+                <p
+                  style={{
+                    font: `500 ${narrow ? "16px" : "19px"}/1.3 var(--e-display)`,
+                    letterSpacing: theme.displayTracking,
+                    color: "var(--e-fg)",
+                    margin: stop.label ? "7px 0 0" : 0,
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {stop.place}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The itinerary as a journey.
+ *
+ * One rail down the left with a mark per stop, the day carried in the margin
+ * and repeated only when it changes — which is how an itinerary is printed and
+ * how it is read. What happens at each stop sits under its name rather than
+ * beside it, because the sentence is the reason for the stop and squeezing it
+ * into a right-hand column turns a journey back into a timetable.
+ */
+function Journey({
+  entries,
+  narrow,
+  theme,
+}: {
+  entries: EventRecord["lineup"];
+  narrow: boolean;
+  theme: EventTheme;
+}) {
+  /* Derived rather than tracked through the loop: a day starts where it differs
+     from the entry before it, which is a property of the list and not a running
+     total. Mutating a closure while rendering is the kind of thing that only
+     misbehaves on the second render. */
+  const marked = entries.map((e, i) => ({ e, newDay: Boolean(e.day) && e.day !== entries[i - 1]?.day }));
+  return (
+    <div style={{ display: "grid", gap: 0 }}>
+      {marked.map(({ e, newDay }, i) => {
+        const last = i === entries.length - 1;
+        return (
+          <div
+            key={e.id}
+            style={{
+              display: "grid",
+              gridTemplateColumns: narrow ? "16px minmax(0, 1fr)" : "94px 16px minmax(0, 1fr)",
+              gap: narrow ? 16 : 20,
+            }}
+          >
+            {!narrow && (
+              <p
+                style={{
+                  font: "500 12px/1 var(--e-body)",
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "var(--e-accent-ink)",
+                  margin: 0,
+                  paddingTop: 3,
+                  textAlign: "right",
+                  visibility: newDay ? "visible" : "hidden",
+                }}
+              >
+                {e.day}
+              </p>
+            )}
+            <div style={{ display: "grid", justifyItems: "center", gridTemplateRows: "auto 1fr" }}>
+              <span
+                aria-hidden
+                style={{
+                  width: newDay || i === 0 || last ? 13 : 9,
+                  height: newDay || i === 0 || last ? 13 : 9,
+                  marginTop: 4,
+                  borderRadius: 999,
+                  border: `2px solid var(--e-accent)`,
+                  background: newDay || i === 0 || last ? "var(--e-accent)" : "var(--e-bg)",
+                }}
+              />
+              {!last && <span aria-hidden style={{ width: 2, background: "var(--e-accent)", opacity: 0.3, marginTop: 4 }} />}
+            </div>
+            <div style={{ minWidth: 0, paddingBottom: last ? 0 : narrow ? 24 : 30 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+                {narrow && newDay && (
+                  <span
+                    style={{
+                      font: "500 12px/1 var(--e-body)",
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                      color: "var(--e-accent-ink)",
+                    }}
+                  >
+                    {e.day}
+                  </span>
+                )}
+                {e.at && (
+                  <span style={{ font: "400 13px/1 var(--e-body)", color: "var(--e-muted)", fontVariantNumeric: "tabular-nums" }}>
+                    {e.at}
+                  </span>
+                )}
+              </div>
+              <p
+                style={{
+                  font: `500 ${narrow ? "17px" : "21px"}/1.3 var(--e-display)`,
+                  letterSpacing: theme.displayTracking,
+                  color: "var(--e-fg)",
+                  margin: "8px 0 0",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {e.name}
+              </p>
+              {e.role && (
+                <p style={{ font: `400 ${narrow ? "14px" : "15px"}/1.65 var(--e-body)`, color: "var(--e-muted)", margin: "8px 0 0", maxWidth: "56ch" }}>
+                  {e.role}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
