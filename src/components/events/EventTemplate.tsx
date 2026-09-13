@@ -629,14 +629,8 @@ export function EventTemplate({
             {labels.getTickets}
           </a>
         </nav>
-        {c.sections.map((s, i) => (
-          <div key={s}>
-            {draw[s]?.()}
-            {/* Straight after the hero, a ticker of the three facts that matter.
-                It is the one moving thing on the page and it earns that by
-                repeating what a poster would shout: what, when, where. */}
-            {i === 0 && <Marquee event={event} start={start} narrow={narrow} />}
-          </div>
+        {c.sections.map((s) => (
+          <div key={s}>{draw[s]?.()}</div>
         ))}
 
         {/* A sticky bar is what turns a page into a ticket page. It states the
@@ -1647,63 +1641,6 @@ function Badge({ tone, children }: { tone: "accent" | "muted"; children: React.R
 /** A little film noise. Inline SVG so it costs no request and cannot 404. */
 const GRAIN =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E\")";
-
-function Marquee({
-  event,
-  start,
-  narrow,
-}: {
-  event: EventRecord;
-  start: Date;
-  narrow: boolean;
-}) {
-  const bits = [event.title, longDate(start), event.venueName].filter(Boolean);
-  // Two identical runs, translated by exactly half the track, so the loop is
-  // seamless without measuring anything at runtime.
-  const run = (key: string) => (
-    <span key={key} style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
-      {[0, 1, 2, 3].map((r) =>
-        bits.map((b, i) => (
-          <span key={`${r}-${i}`} style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
-            <span
-              style={{
-                font: `600 ${narrow ? "13px" : "15px"}/1 var(--e-display)`,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "var(--e-on-accent)",
-                whiteSpace: "nowrap",
-                padding: "0 18px",
-              }}
-            >
-              {b}
-            </span>
-            <span
-              aria-hidden
-              style={{ width: 5, height: 5, borderRadius: 999, background: "var(--e-on-accent)", opacity: 0.55, flexShrink: 0 }}
-            />
-          </span>
-        )),
-      )}
-    </span>
-  );
-  return (
-    <div
-      aria-hidden
-      style={{
-        overflow: "hidden",
-        background: "var(--e-accent)",
-        padding: narrow ? "9px 0" : "12px 0",
-        borderTop: `1px solid var(--e-line)`,
-        borderBottom: `1px solid var(--e-line)`,
-      }}
-    >
-      <div style={{ display: "inline-flex", animation: "event-marquee 34s linear infinite", willChange: "transform" }}>
-        {run("a")}
-        {run("b")}
-      </div>
-    </div>
-  );
-}
 
 /** Composite `a` over `b` at `amount`, so a tint can be reasoned about as the
  *  solid colour it actually renders as. */

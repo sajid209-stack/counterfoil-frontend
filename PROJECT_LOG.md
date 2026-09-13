@@ -5736,3 +5736,12 @@ Each would have become a "fix" to working code if trusted:
 
 Cover media is a URL field, not an upload, and gallery plates are generated
 rather than uploaded. Events still do not reach the till or the reports.
+
+### The ticker is gone (same day)
+
+Owner: not wanted, on any template. Removed whole — the render, the component
+and its keyframes — rather than switched off behind a flag, so nothing is left
+dead in the tree. The hero now runs straight into the countdown.
+
+The second-pass entry above still describes it, because that is what that
+session built; this is the correction.

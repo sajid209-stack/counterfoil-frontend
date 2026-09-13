@@ -622,11 +622,3 @@
   to   { opacity: 1; transform: none; }
 }
 
-/* ── Event page templates ───────────────────────────────────────────────────
-   A marquee strip under the hero. Two identical runs translate by exactly half
-   the track, so the loop is seamless without measuring anything in JS. The
-   global prefers-reduced-motion block above neutralises it. */
-@keyframes event-marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
