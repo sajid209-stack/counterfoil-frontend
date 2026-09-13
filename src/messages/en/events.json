@@ -304,7 +304,11 @@
     "dayPlaceholder": "Day 1",
     "kind": "Appears as",
     "kindPerson": "A name on the bill",
-    "kindSession": "A slot on the agenda only"
+    "kindSession": "A slot on the agenda only",
+    "benefitsNote": "Three reasons to come, each with one line saying what it means. These sit beside the ticket panel.",
+    "benefit": "Benefit",
+    "benefitLine": "What it means",
+    "pairedWith": "On this template this is drawn beside {section} rather than on its own row. Switch it off here to remove it."
   },
   "tpl": {
     "orderSummary": "Order summary",
@@ -323,7 +327,13 @@
     "sponsors": "Sponsors",
     "hostedBy": "Hosted by",
     "mostPopular": "Most popular",
-    "register": "Register now"
+    "chooseTicket": "Choose your ticket",
+    "perPerson": "/ person",
+    "subtotal": "Subtotal",
+    "checkout": "Continue to checkout",
+    "viewAllSpeakers": "View all speakers",
+    "viewAgenda": "View agenda",
+    "viewOnMap": "View on map"
   },
   "defaults": {
     "entertainment": {
@@ -393,28 +403,36 @@
       },
       "stat1": {
         "value": "3",
-        "label": "Parallel tracks"
+        "label": "Tracks"
       },
       "stat2": {
         "value": "600",
         "label": "Seats"
       },
-      "highlight0": "Agenda",
-      "highlight1": "Speakers",
-      "highlight2": "Getting there",
-      "highlight3": "Wi-Fi",
+      "highlight0": "Gain real-world insights",
+      "highlight1": "Expand your network",
+      "highlight2": "Build what's next",
+      "highlight3": "Take the room home",
       "info0": {
-        "label": "Venue",
-        "value": "Sylhet Convention Centre, Halls A–C"
+        "label": "Doors",
+        "value": "08:30 registration. First session at 09:30."
       },
       "info1": {
-        "label": "Doors",
-        "value": "08:30 registration. Keynote at 09:30."
+        "label": "Included",
+        "value": "Lunch, coffee and every session recorded"
       },
       "info2": {
-        "label": "Included",
-        "value": "Lunch, coffee, and every session recorded"
-      }
+        "label": "Getting there",
+        "value": "20 minutes from the airport. Parking on site."
+      },
+      "stat3": {
+        "value": "1",
+        "label": "Day"
+      },
+      "benefit0": "Learn from the people running the products you use, not from a deck.",
+      "benefit1": "Meet the teams, investors and peers working on the same problems.",
+      "benefit2": "Leave with practical ways to scale what you have already built.",
+      "benefit3": "Every session is recorded, so the day does not end when it ends."
     },
     "arts": {
       "stat0": {

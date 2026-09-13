@@ -70,6 +70,11 @@ type Device = "desktop" | "tablet" | "mobile";
  *  resolves as it will in production. */
 const FRAME: Record<Device, number> = { desktop: 1180, tablet: 820, mobile: 390 };
 
+/** Sections this layout draws inside another row rather than on their own.
+ *  Mirrors `PAIRS` in the template; the note keeps an operator from thinking a
+ *  reorder did nothing. */
+const PAIRED_INTO: Partial<Record<SectionId, SectionId>> = { tickets: "about", venue: "video" };
+
 const SECTION_ICON: Record<SectionId, LucideIcon> = {
   hero: ImageIcon,
   countdown: Clock,
@@ -128,6 +133,8 @@ export function EventArchitect({
   const cat = categoryById(categoryId);
   const [device, setDevice] = useState<Device>("desktop");
   const [open, setOpen] = useState<string>("hero");
+  /* Matches the template: this is a variant decision, not a category one. */
+  const structuredLayout = custom.variant === "structured";
 
   const setC = (patch: Partial<EventCustomisation>) => onCustom({ ...custom, ...patch });
 
@@ -168,8 +175,8 @@ export function EventArchitect({
      place, so the patch goes back through the same setter the preview reads. */
   const onStat = (i: number, patch: Partial<{ value: string; label: string }>) =>
     onEvent({ stats: event.stats.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
-  const onHighlight = (i: number, label: string) =>
-    onEvent({ highlights: event.highlights.map((h, j) => (j === i ? { ...h, label } : h)) });
+  const onHighlight = (i: number, patch: Partial<{ label: string; description: string }>) =>
+    onEvent({ highlights: event.highlights.map((h, j) => (j === i ? { ...h, ...patch } : h)) });
   const onInfo = (i: number, patch: Partial<{ label: string; value: string }>) =>
     onEvent({ info: event.info.map((f, j) => (j === i ? { ...f, ...patch } : f)) });
   const onSponsor = (i: number, patch: Partial<{ name: string; tier: string }>) =>
@@ -353,6 +360,10 @@ export function EventArchitect({
                 </>
               )}
 
+              {structuredLayout && PAIRED_INTO[id] && (
+                <Note>{t("architect.pairedWith", { section: t(`section.${PAIRED_INTO[id]}`) })}</Note>
+              )}
+
               {id === "video" && (
                 <>
                   <Note>{t("architect.videoNote")}</Note>
@@ -417,7 +428,7 @@ export function EventArchitect({
                         key={h.id}
                         label={`${t("architect.chip")} ${i + 1}`}
                         value={h.label}
-                        onChange={(e) => onHighlight(i, e.target.value)}
+                        onChange={(e) => onHighlight(i, { label: e.target.value })}
                       />
                     ))}
                   </div>
@@ -438,6 +449,28 @@ export function EventArchitect({
                       than in a panel of their own — an operator writing "no
                       seats, no barriers" is answering Capacity in the same
                       breath. */}
+                  {/* The layouts that draw highlights as an argument beside
+                      the ticket panel edit them here, where they appear.
+                      There is no separate Highlights row on those templates. */}
+                  {structuredLayout && event.highlights.length > 0 && (
+                    <>
+                      <Note>{t("architect.benefitsNote")}</Note>
+                      {event.highlights.slice(0, 3).map((h, i) => (
+                        <div key={h.id} className="grid gap-tight sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
+                          <FormField
+                            label={`${t("architect.benefit")} ${i + 1}`}
+                            value={h.label}
+                            onChange={(e) => onHighlight(i, { label: e.target.value })}
+                          />
+                          <FormField
+                            label={t("architect.benefitLine")}
+                            value={h.description ?? ""}
+                            onChange={(e) => onHighlight(i, { description: e.target.value })}
+                          />
+                        </div>
+                      ))}
+                    </>
+                  )}
                   <div className="grid gap-tight sm:grid-cols-2">
                     <FormField
                       label={t("architect.organiser")}

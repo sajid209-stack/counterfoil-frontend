@@ -5905,3 +5905,143 @@ Sponsor artwork and cover uploads are still the missing piece across all six.
 
 `tpl.slotsAvailable` is an orphaned key, confirmed orphaned at `HEAD` before
 this change and left alone.
+
+## Events — the business template recomposed to the owner's five points (2026-09-13)
+
+A third conference reference and a five-point brief: a clean hero, one compact
+stats strip, **about and tickets in the same row**, four featured speakers, and
+watch and venue combined. Plus: build the architect properly around it.
+
+This **supersedes the three-across plan comparison** the previous pass shipped
+this morning. That was right for a page where pricing is its own full-width
+section. It is wrong here, because the brief puts the decision next to the
+reason for it and a rail is 380px wide — a comparison needs columns, a decision
+needs a list, a running subtotal and one button.
+
+### Two rows are pairs
+
+`about` takes tickets into its right rail; `video` takes the venue into its
+own. The pair is anchored on the first of the two and the second draws nothing
+wherever it sits in the order, so **both halves stay separately hideable** and
+hiding either gives the other the full width.
+
+That is the whole of the brief's efficiency argument, and it is measurable: the
+page went **5,792px to 5,040px**, so roughly 750px of scrolling came out
+without a single thing being dropped.
+
+Two consequences handled rather than left: an absorbed section no longer takes
+a number of its own, and its anchor still exists (the ids moved onto the panel
+and the card), so `#tickets` and `#venue` still work from the nav.
+
+### The hero
+
+Chip, title, tagline, when and where, two actions, one visual. The **fact strip
+the previous pass put here is gone** — venue and doors were already in the meta
+row two lines above it, and stating them twice in one screen is the page
+arguing with itself. They travel with the venue card now, where "doors at
+08:30" sits beside the address it applies to.
+
+When and where are stacked rather than a flat row of three icon-and-text pairs:
+each is a heading with its particulars beneath, which is the shape somebody
+copies into a calendar. The second action (**View agenda**) only appears when
+there is an agenda to send them to.
+
+**A duplication the render exposed:** the hero tagline and the About heading
+were the same sentence, because About titled itself with `subtitle`. About is
+titled "About" on this layout and the tagline stays in the hero.
+
+### The stats strip
+
+Four figures with rules between them rather than a gap — four numbers spaced
+apart read as four unrelated facts, and the strip's whole job is to be read as
+one claim. `statCount` is a number on the category rather than a hard-coded 3,
+because the wizard has to seed exactly as many defaults as the strip will draw.
+
+### About and tickets, in one row
+
+Left: the heading, the paragraph, **three benefits** each with a line saying
+what it means, then who is hosting. `EventHighlight` gained an optional
+`description` — a chip is a teaser and needs only its own word, but a benefit
+is a claim and a claim with nothing under it is marketing. Optional, so the
+five templates that draw these as chips are untouched.
+
+The glyph is keyed to position rather than meaning: nothing in the record says
+what a benefit is *about*, so it is a consistent motif down the page rather
+than an icon pretending to classify.
+
+Right: **the ticket panel** — "Choose your ticket", the tiers as rows with
+price, "/ person", two perks and a stepper, then the subtotal and one button.
+The counterfoil motif survives where it still reads at this width (the punched
+edge); the perforated tear does not survive a 90px row, so it is not drawn
+rather than drawn badly. Perks cut to two, because a rail is not the place for
+a four-item feature list and the two written first are the two that mattered.
+
+Sticky at `top: 76`, which clears the page's own bar, so the panel stays with
+you down the whole argument.
+
+"Most popular" is still read off the ledger and only when a tier is 25% ahead
+of the next; the tier that has gone is still a struck-through line rather than
+an offer.
+
+### Speakers, and Watch beside Venue
+
+Four to start — a conference bills two dozen and a wall of two dozen portraits
+is a wall, not a line-up. The rest **open in place** rather than behind a link,
+because there is no speakers page for a link to go to. Name and role moved
+inside the card's own footer, so a row reads as four cards rather than four
+plates with captions floating under them.
+
+The venue card carries the practical trio and a **real** "View on map" link to
+a maps search built from the venue and address — the plate below it is a
+placeholder, that link is the thing a visitor actually presses.
+
+### The architect
+
+- **Benefits are edited in the About row**, where they draw. There is no
+  separate Highlights row on this template, so putting them anywhere else would
+  have made them unreachable.
+- **A paired row says so**: "drawn beside About rather than on its own row" —
+  otherwise an operator reorders Tickets, sees nothing move, and concludes the
+  control is broken.
+- `PAIRED_INTO` in the architect mirrors `PAIRS` in the template, and the note
+  names the partner through the same section label the page uses.
+
+### Verified
+
+- **30 checks driving the template**, all passing: two real anchor CTAs, a
+  clean hero, About not titled with the hero's tagline, both pairs nested,
+  zero third-party requests before the video press, day tabs filtering and
+  moving under arrow keys, breaks off the bill, the panel naming and totalling
+  itself, "/ person", exactly one "most popular", the gone tier as a line,
+  sponsors grouped, the organiser named, the nav not listing Tickets beside the
+  Get-tickets pill, four featured speakers with the rest revealed on press, and
+  four figures across the strip.
+- **8 checks driving the architect**: the paired rows still listed, the
+  benefits editor in About, a benefit and its line each reaching the live
+  preview, and the paired-row note present.
+- All six templates measured clean — zero contrast failures, nothing under the
+  12px floor, nothing clipped, no console errors — and the five non-business
+  templates are within 3px of their previous heights.
+- Wizard 9/9, architect editors 6/6, review 15/15, accessibility 8/8, deck 9/9,
+  the 32-route audit unchanged at **76**.
+- Bangla renders the whole page including every new string — Choose your
+  ticket, Subtotal, Continue to checkout, View agenda, View on map, View all
+  speakers — with **0 missing-message warnings**.
+- `tsc`, `npm run build` and `eslint` clean; i18n parity **0 missing / 0
+  extra** across 31 namespaces, with two labels removed once the fact strip
+  they were written for was replaced.
+
+### Two harness corrections
+
+- The stats check matched an outer wrapper rather than the grid and reported
+  one column where there are four.
+- The wizard's step chips carry words like "Tickets", so a click helper that
+  did not skip disabled elements sat on one for thirty seconds and reported a
+  timeout that looked like a broken step.
+
+### Not built, from the reference rather than the brief
+
+The closing "Don't miss out" band and the page footer are in the image but not
+in the five points. The sticky bar at the foot of every template already states
+the from-price and carries Get tickets, so a second closing CTA would be the
+same offer twice; a footer of policy links needs pages that do not exist.

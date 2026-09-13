@@ -93,6 +93,11 @@ export interface CategoryDef {
   sections: SectionId[];
   /** What this theme calls the people/things section. */
   lineupKey: string;
+  /** How many figures the strip states. Four reads as a credibility bar on a
+   *  conference page and three is a trio everywhere else; it is a number
+   *  rather than a hard-coded 3 because the wizard has to seed exactly as many
+   *  defaults as the strip will draw. */
+  statCount?: number;
   theme: EventTheme;
   /** Layout variants an operator can switch between, first is the default. */
   variants: string[];
@@ -149,8 +154,14 @@ export const CATEGORIES: CategoryDef[] = [
     id: "business",
     key: "business",
     subtypes: ["conference", "seminar", "launch", "corporate", "networking", "training"],
-    sections: ["hero", "stats", "video", "about", "lineup", "schedule", "tickets", "sponsors", "venue", "faq"],
+    /* The order the page is read in, which on this layout is not the order it
+       is DRAWN in: `about` takes tickets into its right rail and `video` takes
+       the venue into its own, so those two pairs each render as one row. Both
+       halves stay separately hideable, and hiding either gives the other the
+       full width. */
+    sections: ["hero", "stats", "about", "tickets", "lineup", "video", "venue", "schedule", "sponsors", "faq"],
     lineupKey: "speakers",
+    statCount: 4,
     variants: ["structured", "stacked"],
     theme: {
       bg: "#FFFFFF",

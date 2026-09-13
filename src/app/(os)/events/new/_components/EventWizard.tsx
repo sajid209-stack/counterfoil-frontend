@@ -113,12 +113,18 @@ export function EventWizard() {
          and translated — a gallery states opening hours, a tour states where
          it departs from — because a template whose sample content is lorem
          teaches an operator nothing about what the section is FOR. */
-      stats: [0, 1, 2].map((i) => ({
+      stats: Array.from({ length: categoryById(categoryId).statCount ?? 3 }, (_, i) => ({
         id: `st${i}`,
         value: t(`defaults.${categoryId}.stat${i}.value`),
         label: t(`defaults.${categoryId}.stat${i}.label`),
       })),
-      highlights: [0, 1, 2, 3].map((i) => ({ id: `hl${i}`, label: t(`defaults.${categoryId}.highlight${i}`) })),
+      highlights: [0, 1, 2, 3].map((i) => ({
+        id: `hl${i}`,
+        label: t(`defaults.${categoryId}.highlight${i}`),
+        // Only the layouts that draw these as benefits have a line to draw;
+        // the rest are chips and a chip has no room for one.
+        description: categoryById(categoryId).statCount ? t(`defaults.${categoryId}.benefit${i}`) : undefined,
+      })),
       info: [0, 1, 2].map((i) => ({
         id: `in${i}`,
         label: t(`defaults.${categoryId}.info${i}.label`),

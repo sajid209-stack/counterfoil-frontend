@@ -44,6 +44,13 @@ export interface EventStat {
 export interface EventHighlight {
   id: string;
   label: string;
+  /** One line saying what the visitor gets out of it.
+   *
+   *  A chip is a teaser and needs no more than its own word. A benefit — "Gain
+   *  real-world insights", and then what that means — is a claim, and a claim
+   *  with nothing under it is marketing. Optional, so the categories that draw
+   *  these as chips are unaffected. */
+  description?: string;
 }
 
 /** Everything the operator changed about the template's default look. */

@@ -145,19 +145,21 @@ export const events: EventRecord[] = [
       "Two days on payments, logistics and the infrastructure underneath both. Single track in the morning, three rooms after lunch.",
     stats: [
       { id: "s1", value: "24", label: "Speakers" },
-      { id: "s2", value: "3", label: "Parallel tracks" },
+      { id: "s2", value: "3", label: "Tracks" },
       { id: "s3", value: "600", label: "Seats" },
+      { id: "s4", value: "2", label: "Days" },
     ],
+    /* Benefits, not chips: this layout draws them as an argument beside the
+       ticket panel, and "Wi-Fi" is not an argument. */
     highlights: [
-      { id: "h1", label: "Agenda" },
-      { id: "h2", label: "Speakers" },
-      { id: "h3", label: "Getting there" },
-      { id: "h4", label: "Wi-Fi" },
+      { id: "h1", label: "Gain real-world insights", description: "Learn from the teams running the products you use, not from a deck." },
+      { id: "h2", label: "Expand your network", description: "Meet the product teams, investors and peers working on the same problems." },
+      { id: "h3", label: "Build what's next", description: "Leave with practical ways to scale what you have already built." },
     ],
     info: [
-      { id: "i1", label: "Venue", value: "Sylhet Convention Centre, Halls A\u2013C" },
-      { id: "i2", label: "Doors", value: "08:30 registration. Keynote at 09:30." },
-      { id: "i3", label: "Included", value: "Lunch, coffee, and every session recorded" },
+      { id: "i1", label: "Doors", value: "08:30 registration. Keynote at 09:30." },
+      { id: "i2", label: "Included", value: "Lunch, coffee and every session recorded" },
+      { id: "i3", label: "Getting there", value: "20 minutes from the airport. Parking on site." },
     ],
     /* The day carries the grouping and `at` carries the clock. Concatenating
        them into one string, which this seed used to do, meant the agenda could
@@ -170,6 +172,8 @@ export const events: EventRecord[] = [
       { id: "l5", name: "Dr. Nusrat Jahan", role: "Bangladesh Bank \u2014 regulation track", day: "Day 1", at: "14:00" },
       { id: "l6", kind: "session" as const, name: "Workshop: settling at scale", role: "Hall C, 40 places", day: "Day 1", at: "15:45" },
       { id: "l7", name: "Tanvir Ahmed", role: "Founder, ShopUp", day: "Day 2", at: "10:00" },
+      { id: "l11", name: "Sadia Islam", role: "Director of Engineering, Robi", day: "Day 2", at: "14:00" },
+      { id: "l12", name: "Arif Hossain", role: "Partner, Anchorless Bangladesh", day: "Day 2", at: "15:15" },
       { id: "l8", kind: "session" as const, name: "Panel: what merchants actually ask for", role: "Halls A and B", day: "Day 2", at: "11:30" },
       { id: "l9", kind: "session" as const, name: "Lunch", day: "Day 2", at: "12:30" },
       { id: "l10", kind: "session" as const, name: "Closing remarks", role: "Hall A", day: "Day 2", at: "16:30" },

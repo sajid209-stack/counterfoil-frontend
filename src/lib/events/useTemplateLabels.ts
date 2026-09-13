@@ -52,7 +52,13 @@ export function useTemplateLabels(categoryId: CategoryId | null) {
       sponsors: t("section.sponsors"),
       hostedBy: t("tpl.hostedBy"),
       mostPopular: t("tpl.mostPopular"),
-      register: t("tpl.register"),
+      chooseTicket: t("tpl.chooseTicket"),
+      perPerson: t("tpl.perPerson"),
+      subtotal: t("tpl.subtotal"),
+      checkout: t("tpl.checkout"),
+      viewAllSpeakers: t("tpl.viewAllSpeakers"),
+      viewAgenda: t("tpl.viewAgenda"),
+      viewOnMap: t("tpl.viewOnMap"),
       // Kept as a raw ICU-free string with a {count} the template fills: it is
       // rendered inside an inline style tree, not JSX, so there is no element
       // to interpolate into.
