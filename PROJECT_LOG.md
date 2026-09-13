@@ -6045,3 +6045,110 @@ The closing "Don't miss out" band and the page footer are in the image but not
 in the five points. The sticky bar at the foot of every template already states
 the from-price and carries Get tickets, so a second closing CTA would be the
 same offer twice; a footer of policy links needs pages that do not exist.
+
+## Events — the sports template, under floodlights (2026-09-13)
+
+Owner supplied a dark event page with a vivid accent and asked for something
+like it for Sports & Activities, properly researched and properly built.
+
+### The theme is the subject, not a borrowed look
+
+Near-black with a vivid green is where every modern football property has
+landed, and here it is the subject's own material: turf under lights. The old
+theme was `#F4F4F5` with a red accent and a 4px radius — accurate to nothing in
+particular, and reading like a newspaper sports section.
+
+Now `#080D0A` ground, `#2BE07C` accent, Space Grotesk at 700 uppercase, 10px
+radius, glow on. Checked against the other dark templates before committing to
+it: travel is a dark green ground too, but with a warm ochre accent and Outfit,
+so the two do not collide.
+
+A new `floodlit` variant joins the full-bleed hero branch; `kinetic` stays as
+the alternative rather than being replaced, because its skewed plate is a
+different and still valid design.
+
+### What makes it a SPORTS page rather than a recoloured concert page
+
+- **Fixtures are two sides.** `ScheduleList` splits a name on `vs` / `v` /
+  `versus` and draws the two teams either side of a VS chip. Split on the word
+  rather than modelled as home and away fields: an operator types a fixture the
+  way it is written on a board, and a form asking for "home" and "away" is a
+  form for exactly one kind of sport. A row with no opponent — a heat, a class,
+  "Group stage continues" — falls through to the plain shape, which is what
+  keeps the Activities half of the category honest.
+- **The bill and the running order are one section.** A tournament's fixtures
+  are both, so sports has `lineup` (labelled Fixtures) carrying the day tabs,
+  rather than a Lineup and a Schedule saying the same thing twice.
+- **The venue plate is a pitch** — outer line, halfway line, centre circle,
+  penalty and six-yard boxes, centre spot. It states nothing that is not true of
+  every pitch. **Chosen from the content, not the category**: a bill with `vs`
+  in it gets a pitch, an event that moves gets a route, everything else gets a
+  street map — so a yoga class filed under sports does not get a football pitch.
+- **The figures get their own panels.** A tinted strip separates itself from a
+  light page; on near-black it is invisible. Four numbers floating on the ground
+  read as loose text rather than as the one claim the band is making.
+- **A glowing theme counts down in its own colour.** On a near-black page the
+  countdown is the loudest thing in its section and white is the one colour that
+  says nothing about the event. Large display type, so the 3:1 floor applies and
+  every accent in the catalogue clears it.
+
+Sections are now hero → countdown → stats → sneak peeks → fixtures → about →
+gallery → tickets → venue → FAQ, which is the reference's own order.
+
+### The seed became a real tournament
+
+Sixteen sides over two days: four named group fixtures with their group and
+pitch, then the rounds whose draw has not happened yet, labelled honestly
+("draw made Saturday night") rather than inventing a tie. Three ways in — day
+pass, weekend pass, team entry — each with what it actually buys, and the
+weekend pass sold to the point where it flags itself as nearly gone.
+
+### A dead anchor, found by measuring
+
+The nav has linked to `#stats` since the stats band was added, and **the band
+never carried an id** — so "At a glance" scrolled nowhere on every template that
+lists it. Pre-existing; fixed with the band's own id and a scroll offset, and
+the sports harness now asserts that every anchor in the nav resolves.
+
+### Dead code removed
+
+Routing the non-portrait bill through the agenda left `LineupList` with no
+callers, so it is gone rather than left in the tree. Travel's itinerary now
+reads through the same time-led rows, which suits an itinerary better than the
+numbered bill it used to get.
+
+### Verified
+
+- **18 checks driving the page**, all passing: the ground and accent, a
+  full-bleed hero with the tagline in the accent, the countdown in the accent,
+  the stats band anchored and carded at four across, day tabs filtering
+  Saturday from Sunday, four ties drawn as two sides, a row with no opponent
+  falling through, the pitch drawn to its markings, all three passes offered
+  with the weekend one flagged, and **every anchor in the nav resolving**.
+- **7 checks on a fresh sports draft**: it comes up floodlit, seeds four
+  figures, raises no missing-message errors, and a fixture typed in the
+  architect draws as two sides in the live preview.
+- All six templates measured clean — zero contrast failures, nothing under the
+  12px floor, nothing clipped, no console errors.
+- Business 30/30 and its architect 8/8 unchanged; wizard 9/9, architect editors
+  6/6, review 15/15, accessibility 8/8, deck 9/9; the 32-route audit unchanged
+  at **76**.
+- Bangla clean with 0 missing-message warnings. `tsc`, `npm run build` and
+  `eslint` clean; i18n parity **0 missing / 0 extra** across 31 namespaces.
+
+### Two harness findings worth keeping
+
+- The wizard harness caught a genuinely missing key: `variant.floodlit` had no
+  label in either locale, so the design step logged an error per render. A new
+  variant is a new string, and the catalogue does not enforce that.
+- `innerText` returns **rendered** text and this theme uppercases tier names in
+  CSS, so a check comparing against the typed casing failed on a page that was
+  correct. Third time this session; the checks now compare case-insensitively
+  wherever a theme may uppercase.
+
+### Open
+
+The hero art is still a generated plate rather than a photograph of the ground
+— the same cover-upload gap all six templates have. A tournament with a real
+draw would want a bracket; nothing in the model holds one, and inventing a
+knockout tree from a flat fixture list would be guessing.

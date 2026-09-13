@@ -131,23 +131,32 @@ export const CATEGORIES: CategoryDef[] = [
     id: "sports",
     key: "sports",
     subtypes: ["match", "tournament", "race", "recreational", "workshop", "class"],
-    sections: ["hero", "countdown", "stats", "schedule", "about", "tickets", "venue", "faq"],
+    /* Fixtures are the bill AND the running order for a tournament, so there
+       is one section rather than a Lineup and a Schedule saying the same thing
+       twice; the day tabs live on it. */
+    sections: ["hero", "countdown", "stats", "highlights", "lineup", "about", "gallery", "tickets", "venue", "faq"],
     lineupKey: "fixtures",
-    variants: ["kinetic", "stacked"],
+    variants: ["floodlit", "kinetic", "stacked"],
+    statCount: 4,
+    /* Floodlights on a pitch.
+       Near-black with a vivid green is the language every modern football
+       property already speaks, and here it is the subject's own: turf under
+       lights. The previous light-grey-and-red theme read like a newspaper
+       sports section — accurate to nothing in particular. */
     theme: {
-      bg: "#F4F4F5",
-      fg: "#0A0A0A",
-      panel: "#FFFFFF",
-      line: "#D7D7DA",
-      muted: "#54545C",
-      accent: "#D5001F",
-      onAccent: "#FFFFFF",
+      bg: "#080D0A",
+      fg: "#FFFFFF",
+      panel: "#101A14",
+      line: "#1D2E24",
+      muted: "#9CB5A6",
+      accent: "#2BE07C",
+      onAccent: "#04150B",
       display: "var(--font-space-grotesk)",
       body: "var(--font-inter)",
-      radius: "4px",
+      radius: "10px",
       eyebrowCase: "upper",
       displayTracking: "-0.03em",
-      glow: false,
+      glow: true,
     },
   },
   {

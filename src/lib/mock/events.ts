@@ -104,7 +104,8 @@ export const events: EventRecord[] = [
     stats: [
       { id: "s1", value: "16", label: "Teams" },
       { id: "s2", value: "\u09f32,00,000", label: "Prize pool" },
-      { id: "s3", value: "3", label: "Days of football" },
+      { id: "s3", value: "24", label: "Matches" },
+      { id: "s4", value: "2", label: "Days" },
     ],
     highlights: [
       { id: "h1", label: "The draw" },
@@ -117,20 +118,52 @@ export const events: EventRecord[] = [
       { id: "i2", label: "First whistle", value: "09:00 daily. Final at 18:00 Sunday." },
       { id: "i3", label: "Format", value: "Group stage, then straight knockout" },
     ],
+    /* Real fixtures, written the way a fixture is written on a board, so the
+       template can split the two sides either side of the VS. The rounds that
+       have no draw yet are honest about it rather than inventing a tie. */
     lineup: [
-      { id: "l1", name: "Group stage", role: "All four pitches", at: "Sat 16:00" },
-      { id: "l2", name: "Quarter-finals", role: "Pitch 1 and 2", at: "Sun 16:00" },
-      { id: "l3", name: "Semi-finals", role: "Pitch 1", at: "Sun 19:00" },
-      { id: "l4", name: "Final", role: "Pitch 1, under lights", at: "Sun 21:00" },
+      { id: "l1", name: "Agrabad FC vs Halishahar United", role: "Group A · Pitch 1", day: "Sat 24 Oct", at: "16:00" },
+      { id: "l2", name: "Patenga Rovers vs CEPZ Athletic", role: "Group A · Pitch 2", day: "Sat 24 Oct", at: "16:00" },
+      { id: "l3", name: "Khulshi Sporting vs Bakalia Boys", role: "Group B · Pitch 1", day: "Sat 24 Oct", at: "17:30" },
+      { id: "l4", name: "Chawkbazar XI vs Pahartali Kings", role: "Group B · Pitch 2", day: "Sat 24 Oct", at: "17:30" },
+      { id: "l5", name: "Group stage continues", role: "All four pitches, 12 fixtures", day: "Sat 24 Oct", at: "19:00" },
+      { id: "l6", name: "Quarter-finals", role: "Pitches 1 and 2 · draw made Saturday night", day: "Sun 25 Oct", at: "16:00" },
+      { id: "l7", name: "Semi-finals", role: "Pitch 1", day: "Sun 25 Oct", at: "19:00" },
+      { id: "l8", name: "Final", role: "Pitch 1, under lights", day: "Sun 25 Oct", at: "21:00" },
     ],
     faq: [
       { id: "f1", q: "How many in a squad?", a: "Seven on the pitch, up to eleven registered. Rolling substitutions." },
       { id: "f2", q: "What if it rains?", a: "The turf drains. Play continues unless lightning is called." },
     ],
     tiers: [
-      { id: "t1", name: "Team entry", price: 1200000, quantity: 16, sold: 13, description: "Covers both days and all fixtures.", maxPerOrder: 1 },
-      { id: "t2", name: "Spectator — day pass", price: 30000, quantity: 800, sold: 268 },
-      { id: "t3", name: "Spectator — weekend", price: 50000, quantity: 400, sold: 141 },
+      {
+        id: "t2",
+        name: "Day pass",
+        price: 30000,
+        quantity: 800,
+        sold: 268,
+        description: "One day of football, any pitch.",
+        perks: ["Any pitch, any fixture that day", "Re-entry all day", "Food and drink stalls"],
+      },
+      {
+        id: "t3",
+        name: "Weekend pass",
+        price: 50000,
+        quantity: 400,
+        sold: 341,
+        description: "Both days, group stage through the final.",
+        perks: ["Both days, every fixture", "Reserved side of Pitch 1 for the final", "Re-entry all weekend"],
+      },
+      {
+        id: "t1",
+        name: "Team entry",
+        price: 1200000,
+        quantity: 16,
+        sold: 13,
+        description: "Enter a side. Covers both days and all fixtures.",
+        maxPerOrder: 1,
+        perks: ["Up to 11 registered players", "Guaranteed three group fixtures", "Dressing room and warm-up slot"],
+      },
     ],
   }),
 

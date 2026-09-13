@@ -199,11 +199,25 @@ export function EventTemplate({
      strip built for a three-column conference header has no business surviving
      that choice. */
   const structured = variant === "structured";
+  /* The dark, full-bleed layouts draw the figures as panels rather than as one
+     tinted band — see the stats renderer for why. */
+  const carded = variant === "floodlit";
 
   /* The bill is the people on it. The agenda is everything that happens,
      breaks included — so the two sections read the same array through
      different filters rather than the seed keeping two copies in step. */
   const billed = event.lineup.filter((l) => l.kind !== "session");
+
+  /* What the venue plate draws, decided by what is actually on the page: an
+     event that moves gets a route, a bill of fixtures gets a pitch, everything
+     else gets a street map. Derived from the content rather than the category,
+     so a yoga class in the sports catalogue does not get a football pitch. */
+  const venueShape: "map" | "route" | "pitch" =
+    event.categoryId === "travel"
+      ? "route"
+      : event.lineup.some((l) => /\s+(?:vs\.?|v\.?|versus)\s+/i.test(l.name))
+        ? "pitch"
+        : "map";
 
   /* Two rows on this layout are pairs.
      Tickets beside About is the single biggest idea in the brief: the decision
@@ -297,22 +311,28 @@ export function EventTemplate({
     stats: () =>
       event.stats.length ? (
         <div
-          style={{
-            borderTop: `1px solid var(--e-line)`,
-            borderBottom: `1px solid var(--e-line)`,
-            background: "var(--e-panel)",
-          }}
+          id="stats"
+          style={
+            carded
+              ? { padding: `0 ${pad}`, scrollMarginTop: narrow ? 60 : 68 }
+              : {
+                  borderTop: `1px solid var(--e-line)`,
+                  borderBottom: `1px solid var(--e-line)`,
+                  background: "var(--e-panel)",
+                  scrollMarginTop: narrow ? 60 : 68,
+                }
+          }
         >
           <div
             style={{
               maxWidth: 1180,
               margin: "0 auto",
-              padding: narrow ? "22px 20px" : "34px 48px",
+              padding: carded ? (narrow ? "26px 0" : "40px 0") : narrow ? "22px 20px" : "34px 48px",
               display: "grid",
               gridTemplateColumns: narrow
                 ? "repeat(2, 1fr)"
                 : `repeat(${Math.min(event.stats.length, 4)}, 1fr)`,
-              gap: narrow ? 18 : 0,
+              gap: carded ? (narrow ? 10 : 16) : narrow ? 18 : 0,
             }}
           >
             {event.stats.map((st, i) => (
@@ -322,9 +342,22 @@ export function EventTemplate({
                   textAlign: "center",
                   /* A rule between the figures rather than a gap: four numbers
                      spaced apart read as four unrelated facts, and the strip's
-                     whole job is to be read as one claim. */
-                  borderLeft: !narrow && i ? `1px solid var(--e-line)` : undefined,
-                  padding: narrow ? 0 : "0 20px",
+                     whole job is to be read as one claim.
+
+                     On a near-black ground that strip is invisible — a tinted
+                     band only separates itself from a light page — so the dark
+                     templates give each figure its own panel instead. */
+                  ...(carded
+                    ? {
+                        borderRadius: "var(--e-radius)",
+                        border: `1px solid var(--e-line)`,
+                        background: "var(--e-panel)",
+                        padding: narrow ? "18px 12px" : "24px 18px",
+                      }
+                    : {
+                        borderLeft: !narrow && i ? `1px solid var(--e-line)` : undefined,
+                        padding: narrow ? 0 : "0 20px",
+                      }),
                 }}
               >
                 <p
@@ -483,7 +516,7 @@ export function EventTemplate({
               ))}
             </div>
           )}
-          <VenueMap narrow={narrow} shape={event.categoryId === "travel" ? "route" : "map"} />
+          <VenueMap narrow={narrow} shape={venueShape} />
         </div>
       ) : null;
 
@@ -737,7 +770,11 @@ export function EventTemplate({
               featured={structured ? 4 : undefined}
             />
           ) : (
-            <LineupList entries={billed} narrow={narrow} variant={variant} theme={t} />
+            /* Fixtures are a running order as well as a bill, so they get the
+               same day tabs the agenda has: a three-day tournament read as one
+               column of twenty-four rows is the thing tabs exist to prevent.
+               With one day it falls through to a plain list. */
+            <Agenda entries={billed} narrow={narrow} labels={labels} upper={upper} />
           )}
         </Section>
       ) : null,
@@ -817,7 +854,7 @@ export function EventTemplate({
           {/* A map stands in as a themed plate rather than an embedded tile: a
               broken third-party map is worse than an honest placeholder, and
               the address above is what someone actually copies. */}
-          <VenueMap narrow={narrow} shape={event.categoryId === "travel" ? "route" : "map"} />
+          <VenueMap narrow={narrow} shape={venueShape} />
         </div>
       </Section>
     ),
@@ -1157,8 +1194,8 @@ function Hero({
 
   const eyebrowText = upper ? event.subtype : event.subtype;
 
-  // ── immersive / poster / neon: art behind, content over a scrim ──────────
-  if (variant === "immersive" || variant === "poster" || variant === "neon") {
+  // ── immersive / poster / neon / floodlit: art behind, content over a scrim ─
+  if (variant === "immersive" || variant === "poster" || variant === "neon" || variant === "floodlit") {
     return (
       <header style={{ position: "relative", minHeight: narrow ? 420 : 560, display: "flex", alignItems: "flex-end" }}>
         <div
@@ -1206,7 +1243,22 @@ function Hero({
           </span>
           {Title}
           {event.subtitle && (
-            <p style={{ font: `400 ${narrow ? "15px" : "19px"}/1.5 var(--e-body)`, color: "var(--e-muted)", margin: "14px 0 0", maxWidth: "48ch" }}>
+            <p
+              style={{
+                font: `${variant === "floodlit" ? 600 : 400} ${narrow ? (variant === "floodlit" ? "17px" : "15px") : variant === "floodlit" ? "24px" : "19px"}/1.35 ${
+                  variant === "floodlit" ? "var(--e-display)" : "var(--e-body)"
+                }`,
+                letterSpacing: variant === "floodlit" ? theme.displayTracking : undefined,
+                textTransform: variant === "floodlit" ? "uppercase" : "none",
+                color: variant === "floodlit" ? "var(--e-accent)" : "var(--e-muted)",
+                textShadow:
+                  variant === "floodlit" && theme.glow
+                    ? "0 0 28px color-mix(in srgb, var(--e-accent) 45%, transparent)"
+                    : undefined,
+                margin: "16px 0 0",
+                maxWidth: "48ch",
+              }}
+            >
               {event.subtitle}
             </p>
           )}
@@ -1438,7 +1490,12 @@ function Countdown({
           <p
             style={{
               font: `700 ${narrow ? "26px" : "38px"}/1 var(--e-display)`,
-              color: "var(--e-fg)",
+              /* A theme that glows counts down in its own colour: the figure is
+                 the loudest thing in the section, and on a near-black page
+                 white is the one colour that says nothing about the event.
+                 Large display type, so the 3:1 floor applies and every accent
+                 in the catalogue clears it at this size. */
+              color: glow ? "var(--e-accent)" : "var(--e-fg)",
               margin: 0,
               fontVariantNumeric: "tabular-nums",
               textShadow: glow ? "0 0 22px color-mix(in srgb, var(--e-accent) 45%, transparent)" : undefined,
@@ -1622,99 +1679,6 @@ function LineupCards({
   );
 }
 
-function LineupList({
-  entries,
-  narrow,
-  variant,
-  theme,
-}: {
-  entries: EventRecord["lineup"];
-  narrow: boolean;
-  variant: string;
-  theme: ReturnType<typeof categoryById>["theme"];
-}) {
-  // A lineup is a bill: the names are the product, so they are set at display
-  // size and the roles stay quiet underneath.
-  const big = variant === "poster" || variant === "neon";
-  return (
-    <div style={{ display: "grid", gap: 0 }}>
-      {entries.map((e, i) => (
-        <div
-          key={e.id}
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-            gap: 16,
-            padding: `${narrow ? 14 : 18}px 0`,
-            borderTop: i ? `1px solid var(--e-line)` : "none",
-          }}
-        >
-          {/* A billing position, drawn as one. Outlined rather than filled so a
-              four-name bill does not turn into a column of loud numerals
-              competing with the names they are indexing. */}
-          <span
-            aria-hidden
-            style={{
-              flexShrink: 0,
-              width: narrow ? 28 : 44,
-              font: `700 ${narrow ? "18px" : big ? "30px" : "24px"}/1 var(--e-display)`,
-              letterSpacing: theme.displayTracking,
-              color: "transparent",
-              WebkitTextStroke: `1px var(--e-accent)`,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {String(i + 1).padStart(2, "0")}
-          </span>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <p
-              style={{
-                font: `${big ? 700 : 600} ${narrow ? (big ? "20px" : "17px") : big ? "30px" : "20px"}/1.15 var(--e-display)`,
-                letterSpacing: theme.displayTracking,
-                textTransform: big ? "uppercase" : "none",
-                color: "var(--e-fg)",
-                margin: 0,
-                overflowWrap: "anywhere",
-              }}
-            >
-              {e.name}
-            </p>
-            {e.role && (
-              <p style={{ font: "400 13px/1.4 var(--e-body)", color: "var(--e-muted)", margin: "5px 0 0" }}>{e.role}</p>
-            )}
-          </div>
-          {e.at && (
-            <p
-              style={{
-                font: "500 14px/1.2 var(--e-body)",
-                color: "var(--e-accent-ink)",
-                margin: 0,
-                flexShrink: 0,
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {e.at}
-            </p>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/**
- * A video, loaded when somebody asks for it.
- *
- * The poster is the only thing fetched on page load — one image, no cookies,
- * no player script — and the iframe is mounted on the first press with
- * `autoplay=1`, so the visitor still gets the video from one click. That is the
- * difference between a page that costs half a megabyte of Google to everyone
- * who scrolls past it and one that costs it to the people who wanted it.
- *
- * The button is a real `<button>` rather than a styled div: it has to be
- * reachable by keyboard, and it has to say what it does when it is read aloud.
- */
 function VideoPlayer({
   video,
   accent,
@@ -1971,6 +1935,14 @@ function Agenda({
   );
 }
 
+/** "Dhaka FC vs Port City United" — the two sides, and the VS between them.
+ *
+ *  Split on the word rather than modelled as two fields: an operator types a
+ *  fixture the way it is written on a board, and a form asking for "home" and
+ *  "away" would be a form for exactly one kind of sport. A row with no `vs` in
+ *  it is a talk, a class or a heat, and falls through to the plain shape. */
+const VS = /\s+(?:vs\.?|v\.?|versus)\s+/i;
+
 function ScheduleList({ entries, narrow }: { entries: EventRecord["lineup"]; narrow: boolean }) {
   // A schedule reads down the time column, so the time leads and gets a rail.
   return (
@@ -1997,11 +1969,69 @@ function ScheduleList({ entries, narrow }: { entries: EventRecord["lineup"]; nar
             {e.at ?? "—"}
           </p>
           <div style={{ minWidth: 0 }}>
-            <p style={{ font: `600 ${narrow ? "15px" : "17px"}/1.35 var(--e-body)`, color: "var(--e-fg)", margin: 0, overflowWrap: "anywhere" }}>
-              {e.name}
-            </p>
+            {(() => {
+              const sides = e.name.split(VS);
+              if (sides.length !== 2) {
+                return (
+                  <p style={{ font: `600 ${narrow ? "15px" : "17px"}/1.35 var(--e-body)`, color: "var(--e-fg)", margin: 0, overflowWrap: "anywhere" }}>
+                    {e.name}
+                  </p>
+                );
+              }
+              return (
+                <div style={{ display: "flex", alignItems: "center", gap: narrow ? 10 : 16, minWidth: 0 }}>
+                  <span
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      textAlign: "right",
+                      font: `600 ${narrow ? "14px" : "17px"}/1.3 var(--e-body)`,
+                      color: "var(--e-fg)",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {sides[0].trim()}
+                  </span>
+                  <span
+                    aria-hidden
+                    style={{
+                      flexShrink: 0,
+                      padding: "4px 9px",
+                      borderRadius: 999,
+                      border: `1px solid var(--e-line)`,
+                      background: "var(--e-panel)",
+                      font: "600 11px/1 var(--e-body)",
+                      letterSpacing: "0.1em",
+                      color: "var(--e-accent-ink)",
+                    }}
+                  >
+                    VS
+                  </span>
+                  <span
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      font: `600 ${narrow ? "14px" : "17px"}/1.3 var(--e-body)`,
+                      color: "var(--e-fg)",
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {sides[1].trim()}
+                  </span>
+                </div>
+              );
+            })()}
             {e.role && (
-              <p style={{ font: "400 13px/1.5 var(--e-body)", color: "var(--e-muted)", margin: "4px 0 0" }}>{e.role}</p>
+              <p
+                style={{
+                  font: "400 13px/1.5 var(--e-body)",
+                  color: "var(--e-muted)",
+                  margin: "6px 0 0",
+                  textAlign: e.name.split(VS).length === 2 ? "center" : "left",
+                }}
+              >
+                {e.role}
+              </p>
             )}
           </div>
         </div>
@@ -2666,7 +2696,7 @@ function TicketTable({
  * One distinction does change the drawing, because it is real: an event held
  * AT a place gets a map, and an event that MOVES gets a route.
  */
-function VenueMap({ narrow, shape }: { narrow: boolean; shape: "map" | "route" }) {
+function VenueMap({ narrow, shape }: { narrow: boolean; shape: "map" | "route" | "pitch" }) {
   return (
     <div
       aria-hidden
@@ -2690,7 +2720,30 @@ function VenueMap({ narrow, shape }: { narrow: boolean; shape: "map" | "route" }
           opacity: 0.75,
         }}
       />
-      {shape === "map" ? (
+      {shape === "pitch" ? (
+        /* A pitch, drawn to its own markings. It states nothing that is not
+           true of every pitch — a halfway line, a centre circle, two boxes —
+           where the old labelled zones claimed a stage and a standing area
+           inside somebody's real ground. */
+        <svg viewBox="0 0 320 200" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+          <g
+            fill="none"
+            stroke="var(--e-accent)"
+            strokeWidth="1.6"
+            opacity="0.85"
+            strokeLinejoin="round"
+          >
+            <rect x="18" y="16" width="284" height="168" rx="3" />
+            <line x1="160" y1="16" x2="160" y2="184" />
+            <circle cx="160" cy="100" r="30" />
+            <rect x="18" y="56" width="42" height="88" />
+            <rect x="260" y="56" width="42" height="88" />
+            <rect x="18" y="80" width="16" height="40" />
+            <rect x="286" y="80" width="16" height="40" />
+          </g>
+          <circle cx="160" cy="100" r="3" fill="var(--e-accent)" />
+        </svg>
+      ) : shape === "map" ? (
         <>
           <div style={{ position: "absolute", left: 0, right: 0, top: "62%", height: narrow ? 7 : 10, background: "var(--e-line)" }} />
           <div style={{ position: "absolute", top: 0, bottom: 0, left: "24%", width: narrow ? 5 : 7, background: "var(--e-line)" }} />

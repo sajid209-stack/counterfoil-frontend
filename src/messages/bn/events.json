@@ -98,7 +98,8 @@
     "structured": "গোছানো",
     "editorial": "সম্পাদকীয়",
     "immersive": "নিমগ্ন",
-    "neon": "নিয়ন"
+    "neon": "নিয়ন",
+    "floodlit": "ফ্লাডলিট"
   },
   "section": {
     "hero": "হিরো",
@@ -394,6 +395,10 @@
       "info2": {
         "label": "ফরম্যাট",
         "value": "গ্রুপ পর্ব, এরপর সরাসরি নকআউট"
+      },
+      "stat3": {
+        "value": "২",
+        "label": "দিন"
       }
     },
     "business": {

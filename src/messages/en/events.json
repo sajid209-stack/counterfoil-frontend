@@ -98,7 +98,8 @@
     "structured": "Structured",
     "editorial": "Editorial",
     "immersive": "Immersive",
-    "neon": "Neon"
+    "neon": "Neon",
+    "floodlit": "Floodlit"
   },
   "section": {
     "hero": "Hero",
@@ -394,6 +395,10 @@
       "info2": {
         "label": "Format",
         "value": "Group stage, then straight knockout"
+      },
+      "stat3": {
+        "value": "2",
+        "label": "Days"
       }
     },
     "business": {

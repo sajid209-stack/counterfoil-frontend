@@ -121,9 +121,14 @@ export function EventWizard() {
       highlights: [0, 1, 2, 3].map((i) => ({
         id: `hl${i}`,
         label: t(`defaults.${categoryId}.highlight${i}`),
-        // Only the layouts that draw these as benefits have a line to draw;
-        // the rest are chips and a chip has no room for one.
-        description: categoryById(categoryId).statCount ? t(`defaults.${categoryId}.benefit${i}`) : undefined,
+        /* Only the layout that draws these as benefits has a line to draw; the
+           rest are chips and a chip has no room for one. Keyed to the layout
+           itself rather than to the stat count, which was a proxy that stopped
+           being true the moment a second category asked for four figures. */
+        description:
+          categoryById(categoryId).variants[0] === "structured"
+            ? t(`defaults.${categoryId}.benefit${i}`)
+            : undefined,
       })),
       info: [0, 1, 2].map((i) => ({
         id: `in${i}`,
