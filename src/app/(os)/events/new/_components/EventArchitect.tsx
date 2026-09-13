@@ -17,6 +17,7 @@ import {
   MapPin,
   Palette,
   Plus,
+  Hash,
   Sparkles,
   Ticket,
   Trash2,
@@ -65,6 +66,8 @@ const FRAME: Record<Device, number> = { desktop: 1180, tablet: 820, mobile: 390 
 const SECTION_ICON: Record<SectionId, LucideIcon> = {
   hero: ImageIcon,
   countdown: Clock,
+  stats: Hash,
+  highlights: Sparkles,
   about: FileText,
   lineup: Users,
   schedule: Users,
@@ -95,6 +98,7 @@ export function EventArchitect({
   onCustom,
   content,
   onContent,
+  onEvent,
   now,
   labels,
   errors,
@@ -105,6 +109,7 @@ export function EventArchitect({
   onCustom: (c: EventCustomisation) => void;
   content: EventContent;
   onContent: (patch: Partial<EventContent>) => void;
+  onEvent: (patch: Partial<EventRecord>) => void;
   now: Date;
   labels: Parameters<typeof EventTemplate>[0]["labels"];
   errors: Record<string, string>;
@@ -148,6 +153,16 @@ export function EventArchitect({
   const patchLineup = (id: string, p: Partial<EventLineupEntry>) =>
     onContent({ lineup: content.lineup.map((l) => (l.id === id ? { ...l, ...p } : l)) });
   const dropLineup = (id: string) => onContent({ lineup: content.lineup.filter((l) => l.id !== id) });
+
+  /* Stats, highlights and the info trio live on the DRAFT rather than in the
+     wizard's content object: they arrive seeded per category and are edited in
+     place, so the patch goes back through the same setter the preview reads. */
+  const onStat = (i: number, patch: Partial<{ value: string; label: string }>) =>
+    onEvent({ stats: event.stats.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
+  const onHighlight = (i: number, label: string) =>
+    onEvent({ highlights: event.highlights.map((h, j) => (j === i ? { ...h, label } : h)) });
+  const onInfo = (i: number, patch: Partial<{ label: string; value: string }>) =>
+    onEvent({ info: event.info.map((f, j) => (j === i ? { ...f, ...patch } : f)) });
 
   const addFaq = () => onContent({ faq: [...content.faq, { id: `f_${Date.now()}`, q: "", a: "" }] });
   const patchFaq = (id: string, p: Partial<{ q: string; a: string }>) =>
@@ -304,15 +319,64 @@ export function EventArchitect({
 
               {id === "countdown" && <Note>{t("architect.countdownNote")}</Note>}
 
+              {id === "stats" && (
+                <>
+                  <Note>{t("architect.statsNote")}</Note>
+                  {event.stats.map((st, i) => (
+                    <div key={st.id} className="grid gap-tight sm:grid-cols-[8rem_minmax(0,1fr)]">
+                      <FormField
+                        label={t("architect.statValue")}
+                        value={st.value}
+                        onChange={(e) => onStat(i, { value: e.target.value })}
+                      />
+                      <FormField
+                        label={t("architect.statLabel")}
+                        value={st.label}
+                        onChange={(e) => onStat(i, { label: e.target.value })}
+                      />
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {id === "highlights" && (
+                <>
+                  <Note>{t("architect.highlightsNote")}</Note>
+                  <div className="grid gap-tight sm:grid-cols-2">
+                    {event.highlights.map((h, i) => (
+                      <FormField
+                        key={h.id}
+                        label={`${t("architect.chip")} ${i + 1}`}
+                        value={h.label}
+                        onChange={(e) => onHighlight(i, e.target.value)}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+
               {id === "about" && (
-                <FormField
-                  label={t("field.description")}
-                  variant="textarea"
-                  rows={5}
-                  placeholder={t("field.descriptionPlaceholder")}
-                  value={content.description}
-                  onChange={(e) => onContent({ description: e.target.value })}
-                />
+                <>
+                  <FormField
+                    label={t("field.description")}
+                    variant="textarea"
+                    rows={5}
+                    placeholder={t("field.descriptionPlaceholder")}
+                    value={content.description}
+                    onChange={(e) => onContent({ description: e.target.value })}
+                  />
+                  {/* The three facts sit with the prose they qualify rather
+                      than in a panel of their own — an operator writing "no
+                      seats, no barriers" is answering Capacity in the same
+                      breath. */}
+                  <Note>{t("architect.infoNote")}</Note>
+                  {event.info.map((f, i) => (
+                    <div key={f.id} className="grid gap-tight sm:grid-cols-[10rem_minmax(0,1fr)]">
+                      <FormField label={t("architect.infoLabel")} value={f.label} onChange={(e) => onInfo(i, { label: e.target.value })} />
+                      <FormField label={t("architect.infoValue")} value={f.value} onChange={(e) => onInfo(i, { value: e.target.value })} />
+                    </div>
+                  ))}
+                </>
               )}
 
               {(id === "lineup" || id === "schedule") && (

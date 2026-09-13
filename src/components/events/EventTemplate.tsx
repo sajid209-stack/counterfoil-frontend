@@ -1,10 +1,10 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { CalendarDays, Clock, MapPin, Ticket } from "lucide-react";
+import { CalendarDays, ChevronDown, Clock, Flame, MapPin, Ticket } from "lucide-react";
 import type { EventRecord } from "@/lib/api/events";
 import { eventFromPrice } from "@/lib/api/events";
-import { categoryById, type SectionId } from "@/lib/events/catalog";
+import { categoryById, type EventTheme, type SectionId } from "@/lib/events/catalog";
 import { formatMoney } from "@/lib/format";
 
 /**
@@ -40,10 +40,21 @@ interface Labels {
   getTickets: string;
   addToCalendar: string;
   doorsOpen: string;
-  left: string;
   countdownDays: string;
   countdownHours: string;
   countdownMins: string;
+  highlights: string;
+  stats: string;
+  orderSummary: string;
+  orderHint: string;
+  total: string;
+  selectTickets: string;
+  checkoutTrust: string;
+  sellingFast: string;
+  almostGone: string;
+  soldOutBadge: string;
+  /** Carries a "{count}" placeholder the template fills. */
+  remaining: string;
 }
 
 export function EventTemplate({
@@ -74,6 +85,10 @@ export function EventTemplate({
     "--e-accent": c.accent,
     "--e-on-accent": onAccent(c.accent, t.onAccent),
     "--e-accent-ink": accentInk(c.accent, t.bg, t.fg),
+    /* The same derivation against the panel. Accent text on a card is sitting
+       on a different colour from accent text on the page, and a ratio computed
+       against the wrong backdrop is not a ratio. */
+    "--e-panel-ink": accentInk(c.accent, t.panel, t.fg),
     "--e-badge-bg": mix(c.accent, t.panel, 0.16),
     "--e-badge-ink": accentInk(c.accent, mix(c.accent, t.panel, 0.16), t.fg),
     "--e-badge-muted-bg": mix(t.muted, t.panel, 0.16),
@@ -128,6 +143,9 @@ export function EventTemplate({
     <section
       id={id}
       style={{
+        // The sticky bar is ~56px tall, so an anchor that lands flush puts the
+        // heading underneath it. Offset the scroll, not the layout.
+        scrollMarginTop: narrow ? 60 : 68,
         padding: `${narrow ? "40px" : "72px"} ${pad}`,
         borderTop: `1px solid var(--e-line)`,
       }}
@@ -143,7 +161,7 @@ export function EventTemplate({
         <span
           aria-hidden
           style={{
-            font: `600 ${narrow ? "11px" : "12px"}/1 var(--e-body)`,
+            font: "600 12px/1 var(--e-body)",
             letterSpacing: "0.14em",
             color: "var(--e-accent-ink)",
             fontVariantNumeric: "tabular-nums",
@@ -169,6 +187,44 @@ export function EventTemplate({
   const NUMBERED: SectionId[] = c.sections.filter((x) => x !== "hero" && x !== "countdown");
   const indexOf = (id: SectionId) => NUMBERED.indexOf(id) + 1;
 
+  /* A section that renders nothing must not appear in the nav: an anchor that
+     scrolls nowhere is worse than one fewer link. This mirrors the guards in
+     the renderers below rather than guessing from the order alone. */
+  const drawn: Partial<Record<SectionId, boolean>> = {
+    stats: event.stats.length > 0,
+    highlights: event.highlights.length > 0,
+    about: Boolean(event.description) || event.info.length > 0,
+    lineup: event.lineup.length > 0,
+    schedule: event.lineup.length > 0,
+    gallery: true,
+    tickets: true,
+    venue: true,
+    faq: event.faq.length > 0,
+  };
+  const anchorLabel: Partial<Record<SectionId, string>> = {
+    stats: labels.stats,
+    highlights: labels.highlights,
+    about: labels.about,
+    lineup: labels.lineup,
+    schedule: labels.schedule,
+    gallery: labels.gallery,
+    tickets: labels.tickets,
+    venue: labels.venue,
+    faq: labels.faq,
+  };
+  /* Five at most. A nav that wraps to a second line stops being chrome and
+     starts being a section of its own. */
+  const anchors = NUMBERED.filter((x) => drawn[x] && anchorLabel[x]).slice(0, 5);
+
+  /* Scarcity is stated only when it is true. Summed across the whole event
+     rather than read off one tier: a sold-out VIP box beside four thousand
+     unsold standing tickets is not an event selling fast. */
+  const stock = event.tiers.reduce(
+    (a, x) => ({ q: a.q + x.quantity, sold: a.sold + x.sold }),
+    { q: 0, sold: 0 },
+  );
+  const sellingFast = stock.q > 0 && stock.sold / stock.q >= 0.5;
+
 
   const draw: Record<SectionId, () => React.ReactNode> = {
     hero: () => (
@@ -177,25 +233,168 @@ export function EventTemplate({
     countdown: () => (
       <Countdown to={start} now={now} narrow={narrow} pad={pad} labels={labels} upper={upper} glow={t.glow} />
     ),
-    about: () =>
-      event.description ? (
-        <Section id="about" index={indexOf("about")} eyebrow={labels.about} title={event.subtitle || labels.about}>
-          <p
+    /* Three figures, stated before anyone scrolls. What they SAY differs by
+       category — a gallery counts works and weeks, a tour counts days and
+       stops — because "at a glance" is only useful if it is a glance at the
+       thing in front of you. */
+    stats: () =>
+      event.stats.length ? (
+        <div
+          style={{
+            borderTop: `1px solid var(--e-line)`,
+            borderBottom: `1px solid var(--e-line)`,
+            background: "var(--e-panel)",
+          }}
+        >
+          <div
             style={{
-              font: `400 ${narrow ? "15px" : "18px"}/1.7 var(--e-body)`,
-              color: "var(--e-muted)",
-              maxWidth: "62ch",
-              margin: 0,
+              maxWidth: 1180,
+              margin: "0 auto",
+              padding: narrow ? "22px 20px" : "34px 48px",
+              display: "grid",
+              gridTemplateColumns: `repeat(${Math.min(event.stats.length, narrow ? 1 : 3)}, 1fr)`,
+              gap: narrow ? 18 : 32,
             }}
           >
-            {event.description}
-          </p>
+            {event.stats.map((st) => (
+              <div key={st.id} style={{ textAlign: narrow ? "left" : "center" }}>
+                <p
+                  style={{
+                    font: `700 ${narrow ? "28px" : "40px"}/1 var(--e-display)`,
+                    letterSpacing: t.displayTracking,
+                    color: "var(--e-accent-ink)",
+                    margin: 0,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {st.value}
+                </p>
+                <p style={{ font: `400 ${narrow ? "13px" : "14px"}/1.4 var(--e-body)`, color: "var(--e-muted)", margin: "8px 0 0" }}>
+                  {st.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null,
+
+    /* Teaser chips. Deliberately not links: they are an appetiser for the
+       sections below, and a chip that navigates nowhere is honest where one
+       that scrolls somewhere arbitrary is not. */
+    highlights: () =>
+      event.highlights.length ? (
+        <Section id="highlights" index={indexOf("highlights")} eyebrow={labels.highlights} title={labels.highlights}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: narrow ? 18 : 30 }}>
+            {event.highlights.map((h, i) => (
+              <div key={h.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, width: narrow ? 70 : 84 }}>
+                <span
+                  aria-hidden
+                  style={{
+                    width: narrow ? 52 : 64,
+                    height: narrow ? 52 : 64,
+                    borderRadius: 999,
+                    display: "grid",
+                    placeItems: "center",
+                    border: `1.5px solid var(--e-accent)`,
+                    background: artFor(c.accent, i, isLight(t.bg)),
+                    font: `600 ${narrow ? "15px" : "18px"}/1 var(--e-display)`,
+                    color: "var(--e-accent-ink)",
+                  }}
+                >
+                  {h.label.trim().charAt(0).toUpperCase()}
+                </span>
+                <span
+                  style={{
+                    font: `500 ${narrow ? "12px" : "12px"}/1.3 var(--e-body)`,
+                    color: "var(--e-muted)",
+                    textAlign: "center",
+                    textTransform: upper ? "uppercase" : "none",
+                    letterSpacing: upper ? "0.06em" : 0,
+                  }}
+                >
+                  {h.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null,
+
+    about: () =>
+      event.description || event.info.length ? (
+        <Section id="about" index={indexOf("about")} eyebrow={labels.about} title={event.subtitle || labels.about}>
+          {event.description && (
+            <p
+              style={{
+                font: `400 ${narrow ? "15px" : "18px"}/1.7 var(--e-body)`,
+                color: "var(--e-muted)",
+                maxWidth: "62ch",
+                margin: 0,
+              }}
+            >
+              {event.description}
+            </p>
+          )}
+          {/* The three facts a buyer checks before committing. Their LABELS
+              travel with the data, because what they are called is the
+              category talking: a gallery has opening hours, a tour has a
+              departure point, a rave has a door policy. */}
+          {event.info.length > 0 && (
+            <div
+              style={{
+                marginTop: event.description ? (narrow ? 22 : 30) : 0,
+                display: "grid",
+                gridTemplateColumns: narrow ? "1fr" : `repeat(${Math.min(event.info.length, 3)}, 1fr)`,
+                gap: narrow ? 10 : 16,
+              }}
+            >
+              {event.info.map((f) => (
+                <div
+                  key={f.id}
+                  style={{
+                    padding: narrow ? "14px 16px" : "18px 20px",
+                    borderRadius: "var(--e-radius)",
+                    border: `1px solid var(--e-line)`,
+                    background: "var(--e-panel)",
+                  }}
+                >
+                  <p
+                    style={{
+                      font: "600 12px/1 var(--e-body)",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: "var(--e-panel-ink)",
+                      margin: 0,
+                    }}
+                  >
+                    {f.label}
+                  </p>
+                  <p style={{ font: "400 14px/1.55 var(--e-body)", color: "var(--e-muted)", margin: "9px 0 0" }}>{f.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </Section>
       ) : null,
     lineup: () =>
       event.lineup.length ? (
         <Section id="lineup" index={indexOf("lineup")} eyebrow={labels.lineup} title={labels.lineup}>
-          <LineupList entries={event.lineup} narrow={narrow} variant={variant} theme={t} />
+          {/* People and works get cards; a sequence gets rows.
+              That is a distinction in the CONTENT, not a style preference: a
+              headliner, a speaker and a painting are each a thing you look at
+              and want a face for, while fixtures and an itinerary are read in
+              order down a column and a grid of them destroys the order. */}
+          {PORTRAIT_BILL.has(cat.lineupKey) ? (
+            <LineupCards
+              entries={event.lineup}
+              narrow={narrow}
+              variant={variant}
+              theme={t}
+              accent={c.accent}
+            />
+          ) : (
+            <LineupList entries={event.lineup} narrow={narrow} variant={variant} theme={t} />
+          )}
         </Section>
       ) : null,
     schedule: () =>
@@ -206,26 +405,40 @@ export function EventTemplate({
       ) : null,
     gallery: () => (
       <Section id="gallery" index={indexOf("gallery")} eyebrow={labels.gallery} title={labels.gallery}>
+        {/* A mosaic, not a contact sheet. Equal squares read as a filing
+            system; varied spans read as a set of photographs somebody chose.
+            The spans are declared so both rows fill exactly — a grid that
+            leaves a hole is the thing that makes a gallery look broken. */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: narrow ? "1fr 1fr" : "repeat(4, 1fr)",
+            gridTemplateColumns: narrow ? "repeat(2, 1fr)" : "repeat(6, 1fr)",
+            gridAutoRows: narrow ? "88px" : "clamp(96px, 11vw, 158px)",
             gap: narrow ? 8 : 14,
           }}
         >
-          {/* Five plates on a 4-column grid: one leading tile two wide and two
-              tall, four squares filling the rest exactly. The previous six-up
-              spilled to seven column-units and left a hole on the second row. */}
-          {[0, 1, 2, 3, 4].slice(0, narrow ? 4 : 5).map((i) => (
+          {(narrow
+            ? [
+                { c: 2, r: 2 },
+                { c: 1, r: 1 },
+                { c: 1, r: 1 },
+                { c: 2, r: 1 },
+              ]
+            : [
+                { c: 3, r: 2 },
+                { c: 3, r: 1 },
+                { c: 2, r: 1 },
+                { c: 1, r: 1 },
+              ]
+          ).map((tile, i) => (
             <div
               key={i}
               aria-hidden
               style={{
-                aspectRatio: "1 / 1",
-                gridColumn: i === 0 && !narrow ? "span 2" : undefined,
-                gridRow: i === 0 && !narrow ? "span 2" : undefined,
+                gridColumn: `span ${tile.c}`,
+                gridRow: `span ${tile.r}`,
                 borderRadius: "var(--e-radius)",
-                background: artFor(c.accent, i, isLight(t.bg)),
+                background: plateArt(c.accent, i, isLight(t.bg)),
                 border: `1px solid var(--e-line)`,
               }}
             />
@@ -254,31 +467,44 @@ export function EventTemplate({
           {/* A map stands in as a themed plate rather than an embedded tile: a
               broken third-party map is worse than an honest placeholder, and
               the address above is what someone actually copies. */}
-          <div
-            aria-hidden
-            style={{
-              aspectRatio: "16 / 9",
-              borderRadius: "var(--e-radius)",
-              border: `1px solid var(--e-line)`,
-              background: `linear-gradient(135deg, var(--e-panel), var(--e-bg))`,
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
-            <MapPin size={narrow ? 22 : 28} strokeWidth={1.5} style={{ color: "var(--e-accent)" }} />
-          </div>
+          <VenueMap narrow={narrow} shape={event.categoryId === "travel" ? "route" : "map"} />
         </div>
       </Section>
     ),
     faq: () =>
       event.faq.length ? (
         <Section id="faq" index={indexOf("faq")} eyebrow={labels.faq} title={labels.faq}>
-          <div style={{ display: "grid", gap: 0, maxWidth: "72ch" }}>
-            {event.faq.map((f, i) => (
-              <div key={f.id} style={{ borderTop: i ? `1px solid var(--e-line)` : "none", padding: "18px 0" }}>
-                <p style={{ font: "600 16px/1.4 var(--e-body)", color: "var(--e-fg)", margin: 0 }}>{f.q}</p>
-                <p style={{ font: "400 15px/1.65 var(--e-body)", color: "var(--e-muted)", margin: "6px 0 0" }}>{f.a}</p>
-              </div>
+          {/* <details> rather than a state hook: it opens with no JavaScript,
+              it is keyboard- and screen-reader-correct for free, and the page
+              is printed and crawled as often as it is clicked. */}
+          <div style={{ display: "grid", gap: 10, maxWidth: "72ch" }}>
+            {event.faq.map((f) => (
+              <details
+                key={f.id}
+                style={{
+                  borderRadius: "var(--e-radius)",
+                  border: `1px solid var(--e-line)`,
+                  background: "var(--e-panel)",
+                  padding: narrow ? "13px 15px" : "15px 18px",
+                }}
+              >
+                <summary
+                  style={{
+                    font: `600 ${narrow ? "14px" : "15px"}/1.45 var(--e-body)`,
+                    color: "var(--e-fg)",
+                    cursor: "pointer",
+                    listStyle: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 14,
+                  }}
+                >
+                  {f.q}
+                  <ChevronDown size={16} strokeWidth={1.75} style={{ color: "var(--e-muted)", flexShrink: 0 }} aria-hidden />
+                </summary>
+                <p style={{ font: "400 14px/1.65 var(--e-body)", color: "var(--e-muted)", margin: "10px 0 0" }}>{f.a}</p>
+              </details>
             ))}
           </div>
         </Section>
@@ -327,6 +553,82 @@ export function EventTemplate({
         }}
       />
       <div style={{ position: "relative" }}>
+        {/* The chrome a ticket page is recognised by: the event's own name, its
+            sections as anchors, and the one action the page exists for pinned
+            to the right of both. Sticky rather than fixed — fixed escapes the
+            scaled preview frame and lands on the wizard's own chrome. */}
+        <nav
+          aria-label={event.title}
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 3,
+            display: "flex",
+            alignItems: "center",
+            gap: narrow ? 10 : 20,
+            padding: `${narrow ? 9 : 11}px ${pad}`,
+            background: `color-mix(in srgb, var(--e-bg) 86%, transparent)`,
+            backdropFilter: "blur(12px)",
+            borderBottom: `1px solid var(--e-line)`,
+          }}
+        >
+          <span
+            style={{
+              font: `600 ${narrow ? "13px" : "15px"}/1.2 var(--e-display)`,
+              letterSpacing: t.displayTracking,
+              textTransform: upper ? "uppercase" : "none",
+              color: "var(--e-fg)",
+              minWidth: 0,
+              maxWidth: narrow ? "50%" : 280,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {event.title}
+          </span>
+          {!narrow && anchors.length > 0 && (
+            <div style={{ display: "flex", gap: 24, marginLeft: "auto", minWidth: 0 }}>
+              {anchors.map((a) => (
+                <a
+                  key={a}
+                  href={`#${a}`}
+                  style={{
+                    font: "500 13px/1 var(--e-body)",
+                    letterSpacing: upper ? "0.1em" : "0.02em",
+                    textTransform: upper ? "uppercase" : "none",
+                    color: "var(--e-muted)",
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {anchorLabel[a]}
+                </a>
+              ))}
+            </div>
+          )}
+          <a
+            href="#tickets"
+            style={{
+              marginLeft: narrow || anchors.length === 0 ? "auto" : 0,
+              flexShrink: 0,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              padding: narrow ? "8px 14px" : "9px 18px",
+              borderRadius: 999,
+              background: "var(--e-accent)",
+              color: "var(--e-on-accent)",
+              font: `600 ${narrow ? "12px" : "13px"}/1 var(--e-body)`,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              textDecoration: "none",
+            }}
+          >
+            <Ticket size={narrow ? 13 : 14} strokeWidth={2} />
+            {labels.getTickets}
+          </a>
+        </nav>
         {c.sections.map((s, i) => (
           <div key={s}>
             {draw[s]?.()}
@@ -358,9 +660,31 @@ export function EventTemplate({
             <p style={{ font: "500 12px/1.2 var(--e-body)", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--e-muted)", margin: 0 }}>
               {labels.from}
             </p>
-            <p style={{ font: `600 ${narrow ? "17px" : "20px"}/1.2 var(--e-display)`, color: "var(--e-fg)", margin: "2px 0 0" }}>
-              {fromPrice === null ? labels.soldOut : fromPrice === 0 ? labels.free : formatMoney(fromPrice)}
-            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
+              <p style={{ font: `600 ${narrow ? "17px" : "20px"}/1.2 var(--e-display)`, color: "var(--e-fg)", margin: 0 }}>
+                {fromPrice === null ? labels.soldOut : fromPrice === 0 ? labels.free : formatMoney(fromPrice)}
+              </p>
+              {/* Only where the ledger says so. A permanent "selling fast" is a
+                  claim the page cannot back up, and buyers learn to ignore it. */}
+              {sellingFast && fromPrice !== null && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "4px 9px",
+                    borderRadius: 999,
+                    background: "var(--e-badge-bg)",
+                    color: "var(--e-badge-ink)",
+                    font: "600 12px/1 var(--e-body)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <Flame size={12} strokeWidth={2} />
+                  {labels.sellingFast}
+                </span>
+              )}
+            </div>
           </div>
           <span
             style={{
@@ -705,6 +1029,112 @@ function Countdown({
   );
 }
 
+/** Which categories bill PEOPLE or WORKS rather than a running order. */
+const PORTRAIT_BILL = new Set(["lineup", "speakers", "works", "djs"]);
+
+/**
+ * The bill as portrait cards.
+ *
+ * A headliner, a speaker and a painting are each a thing you look AT, so the
+ * plate comes first and the name sits under it — the shape every tour poster,
+ * conference site and gallery listing has converged on, and the one an eye
+ * scans by picture rather than by line.
+ *
+ * The plate is generated artwork keyed to the accent until there is an upload,
+ * for the reason this codebase learned the hard way: a photograph of the wrong
+ * person is worse than none at all.
+ */
+function LineupCards({
+  entries,
+  narrow,
+  variant,
+  theme,
+  accent,
+}: {
+  entries: EventRecord["lineup"];
+  narrow: boolean;
+  variant: string;
+  theme: EventTheme;
+  accent: string;
+}) {
+  const big = variant === "poster" || variant === "neon";
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: narrow ? "repeat(2, 1fr)" : `repeat(${Math.min(entries.length, 4)}, 1fr)`,
+        gap: narrow ? 12 : 20,
+      }}
+    >
+      {entries.map((e, i) => (
+        <div key={e.id} style={{ minWidth: 0 }}>
+          <div
+            style={{
+              position: "relative",
+              aspectRatio: "3 / 4",
+              borderRadius: "var(--e-radius)",
+              border: `1px solid var(--e-line)`,
+              background: plateArt(accent, i, isLight(theme.bg)),
+              overflow: "hidden",
+            }}
+          >
+            {/* The billing position, kept on the plate rather than beside the
+                name: it indexes the picture, and outlined so a six-name bill
+                is not a column of loud numerals. */}
+            <span
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: narrow ? 8 : 12,
+                left: narrow ? 10 : 14,
+                font: `700 ${narrow ? "20px" : "28px"}/1 var(--e-display)`,
+                letterSpacing: theme.displayTracking,
+                color: "transparent",
+                WebkitTextStroke: `1px var(--e-accent)`,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            {e.at && (
+              <span
+                style={{
+                  position: "absolute",
+                  left: narrow ? 8 : 12,
+                  bottom: narrow ? 8 : 12,
+                  padding: "5px 10px",
+                  borderRadius: 999,
+                  background: "var(--e-accent)",
+                  color: "var(--e-on-accent)",
+                  font: "600 12px/1 var(--e-body)",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {e.at}
+              </span>
+            )}
+          </div>
+          <p
+            style={{
+              font: `${big ? 700 : 600} ${narrow ? (big ? "17px" : "15px") : big ? "22px" : "17px"}/1.2 var(--e-display)`,
+              letterSpacing: theme.displayTracking,
+              textTransform: big ? "uppercase" : "none",
+              color: "var(--e-fg)",
+              margin: `${narrow ? 10 : 14}px 0 0`,
+              overflowWrap: "anywhere",
+            }}
+          >
+            {e.name}
+          </p>
+          {e.role && (
+            <p style={{ font: "400 13px/1.45 var(--e-body)", color: "var(--e-muted)", margin: "5px 0 0" }}>{e.role}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function LineupList({
   entries,
   narrow,
@@ -825,6 +1255,19 @@ function ScheduleList({ entries, narrow }: { entries: EventRecord["lineup"]; nar
   );
 }
 
+/**
+ * The ticket block — the one thing this page exists to do, and the page's
+ * signature.
+ *
+ * A counterfoil IS a ticket stub, so the tiers are drawn as stubs: a punched
+ * edge down the left, a perforated tear before the price, and a summary panel
+ * underneath that reads like the receipt you are about to be handed. It is the
+ * only place the product's own name earns a motif, and it sits exactly where
+ * the commercial decision is made.
+ *
+ * What a tier BUYS is listed, because a price with nothing beside it makes a
+ * buyer work out the difference between two tiers from their names alone.
+ */
 function TicketTable({
   event,
   narrow,
@@ -834,99 +1277,344 @@ function TicketTable({
   event: EventRecord;
   narrow: boolean;
   labels: Labels;
-  theme: ReturnType<typeof categoryById>["theme"];
+  theme: EventTheme;
 }) {
+  const live = event.tiers.filter((t) => t.quantity > 0);
   return (
-    <div style={{ display: "grid", gap: narrow ? 10 : 12 }}>
-      {event.tiers.map((t) => {
-        const left = t.quantity - t.sold;
-        const out = left <= 0;
-        // "Almost gone" is an absolute count, not a percentage: eight left is
-        // eight left whether the room holds 60 or 4,000, and it is the number a
-        // buyer decides on.
-        const low = !out && left <= Math.max(10, Math.round(t.quantity * 0.08));
-        return (
-          <div
-            key={t.id}
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: narrow ? 12 : 24,
-              padding: narrow ? "14px 16px" : "18px 22px",
-              borderRadius: "var(--e-radius)",
-              border: `1px solid var(--e-line)`,
-              background: "var(--e-panel)",
-              opacity: out ? 0.55 : 1,
-              overflow: "hidden",
-            }}
-          >
-            {/* A counterfoil is a ticket stub, so the ticket rows are stubs:
-                a punched edge on the left and a perforated tear before the
-                price. It is the one place the product's own name earns a
-                motif, and it costs two pseudo-free gradients. */}
-            <span
-              aria-hidden
+    <div style={{ display: "grid", gap: narrow ? 12 : 16 }}>
+      <div style={{ display: "grid", gap: narrow ? 12 : 16, gridTemplateColumns: narrow ? "1fr" : "repeat(2, 1fr)" }}>
+        {live.map((t, i) => {
+          const left = Math.max(0, t.quantity - t.sold);
+          const out = left === 0;
+          const scarce = !out && left <= Math.max(1, Math.round(t.quantity * 0.15));
+          /* A badge on every available tier is a badge on nothing: the first
+             build read "TICKETS SELLING FAST" beside all four tiers, including
+             one that had sold 31% of four thousand. It now appears only where
+             the ledger supports it — the same half-sold threshold the page's
+             own sticky bar uses, so one rule governs both. */
+          const moving = !out && !scarce && t.quantity > 0 && t.sold / t.quantity >= 0.5;
+          /* The last card fills its row rather than leaving a hole beside it. */
+          const spans = !narrow && i === live.length - 1 && live.length % 2 === 1;
+          return (
+            <div
+              key={t.id}
               style={{
-                position: "absolute",
-                left: -5,
-                top: 0,
-                bottom: 0,
-                width: 10,
-                background: `radial-gradient(circle at 50% 50%, var(--e-bg) 4.5px, transparent 5px) 0 0 / 10px 14px repeat-y`,
-              }}
-            />
-            <div style={{ minWidth: 0, flex: 1, paddingLeft: 6 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <p
-                  style={{
-                    font: `600 ${narrow ? "15px" : "17px"}/1.3 var(--e-body)`,
-                    color: "var(--e-fg)",
-                    margin: 0,
-                    textDecoration: out ? "line-through" : "none",
-                  }}
-                >
-                  {t.name}
-                </p>
-                {out ? (
-                  <Badge tone="muted">{labels.soldOut}</Badge>
-                ) : low ? (
-                  <Badge tone="accent">{`${left} ${labels.left}`}</Badge>
-                ) : null}
-              </div>
-              {t.description && (
-                <p style={{ font: "400 13px/1.5 var(--e-body)", color: "var(--e-muted)", margin: "5px 0 0" }}>
-                  {t.description}
-                </p>
-              )}
-            </div>
-            <span
-              aria-hidden
-              style={{
-                alignSelf: "stretch",
-                width: 1,
-                flexShrink: 0,
-                background: `repeating-linear-gradient(to bottom, var(--e-line) 0 4px, transparent 4px 9px)`,
-              }}
-            />
-            <p
-              style={{
-                font: `600 ${narrow ? "16px" : "19px"}/1.2 var(--e-display)`,
-                color: out ? "var(--e-muted)" : "var(--e-fg)",
-                margin: 0,
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-                fontVariantNumeric: "tabular-nums",
-                letterSpacing: theme.displayTracking,
-                paddingLeft: narrow ? 0 : 4,
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                gridColumn: spans ? "span 2" : undefined,
+                borderRadius: "var(--e-radius)",
+                border: `1px solid ${scarce ? "var(--e-accent)" : "var(--e-line)"}`,
+                background: "var(--e-panel)",
+                overflow: "hidden",
+                opacity: out ? 0.55 : 1,
               }}
             >
-              {t.price === 0 ? labels.free : formatMoney(t.price)}
+              {/* The punched edge. */}
+              <span
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: -5,
+                  top: 0,
+                  bottom: 0,
+                  width: 10,
+                  background: `radial-gradient(circle at 50% 50%, var(--e-bg) 4.5px, transparent 5px) 0 0 / 10px 14px repeat-y`,
+                }}
+              />
+              <div style={{ flex: 1, padding: narrow ? "16px 16px 0 22px" : "20px 22px 0 28px" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                  <p
+                    style={{
+                      font: `600 ${narrow ? "15px" : "16px"}/1.3 var(--e-body)`,
+                      color: "var(--e-fg)",
+                      margin: 0,
+                      textTransform: theme.eyebrowCase === "upper" ? "uppercase" : "none",
+                      letterSpacing: theme.eyebrowCase === "upper" ? "0.06em" : 0,
+                    }}
+                  >
+                    {t.name}
+                  </p>
+                  {out ? (
+                    <Badge tone="muted">{labels.soldOutBadge}</Badge>
+                  ) : scarce ? (
+                    <Badge tone="accent">{labels.almostGone}</Badge>
+                  ) : moving ? (
+                    <Badge tone="accent">{labels.sellingFast}</Badge>
+                  ) : null}
+                </div>
+                {t.description && (
+                  <p style={{ font: "400 13px/1.6 var(--e-body)", color: "var(--e-muted)", margin: "8px 0 0" }}>{t.description}</p>
+                )}
+                {t.perks && t.perks.length > 0 && (
+                  <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "grid", gap: 6 }}>
+                    {t.perks.map((perk, i) => (
+                      <li key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                        <span
+                          aria-hidden
+                          style={{ width: 4, height: 4, borderRadius: 999, background: "var(--e-accent)", marginTop: 7, flexShrink: 0 }}
+                        />
+                        <span style={{ font: "400 13px/1.5 var(--e-body)", color: "var(--e-muted)" }}>{perk}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* The tear, then the money. */}
+              <div
+                aria-hidden
+                style={{
+                  margin: narrow ? "16px 16px 0 22px" : "20px 22px 0 28px",
+                  height: 1,
+                  background: `repeating-linear-gradient(to right, var(--e-line) 0 5px, transparent 5px 11px)`,
+                }}
+              />
+              <div
+                style={{
+                  padding: narrow ? "14px 16px 16px 22px" : "16px 22px 20px 28px",
+                  display: "flex",
+                  alignItems: "flex-end",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <p
+                    style={{
+                      font: `600 ${narrow ? "20px" : "24px"}/1.1 var(--e-display)`,
+                      color: out ? "var(--e-muted)" : "var(--e-accent-ink)",
+                      margin: 0,
+                      letterSpacing: theme.displayTracking,
+                      fontVariantNumeric: "tabular-nums",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {t.price === 0 ? labels.free : formatMoney(t.price)}
+                  </p>
+                  {!out && (
+                    <p style={{ font: "400 12px/1.4 var(--e-body)", color: "var(--e-muted)", margin: "5px 0 0" }}>
+                      {labels.remaining.replace("{count}", String(left))}
+                    </p>
+                  )}
+                </div>
+                {/* A stepper you can read but not drive: the page is a preview
+                    of a checkout that lives at the till, and a control that
+                    looks live and does nothing is worse than one that is
+                    plainly a picture of the real thing. */}
+                <div
+                  aria-hidden
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    border: `1px solid var(--e-line)`,
+                    borderRadius: 999,
+                    padding: 3,
+                    flexShrink: 0,
+                    opacity: out ? 0.4 : 1,
+                  }}
+                >
+                  {["−", "0", "+"].map((g, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        width: 26,
+                        height: 26,
+                        display: "grid",
+                        placeItems: "center",
+                        borderRadius: 999,
+                        font: "500 13px/1 var(--e-body)",
+                        color: i === 1 ? "var(--e-fg)" : "var(--e-muted)",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {g}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* The receipt. It states a zero total on purpose — nothing is chosen
+          yet, and a summary that hides until you act is a summary nobody
+          learns to look for. */}
+      <div
+        style={{
+          borderRadius: "var(--e-radius)",
+          border: `1px solid var(--e-line)`,
+          background: "var(--e-panel)",
+          padding: narrow ? "16px" : "20px 22px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 14 }}>
+          <div style={{ minWidth: 0 }}>
+            <p
+              style={{
+                font: "600 12px/1 var(--e-body)",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--e-muted)",
+                margin: 0,
+              }}
+            >
+              {labels.orderSummary}
+            </p>
+            <p style={{ font: "400 13px/1.5 var(--e-body)", color: "var(--e-muted)", margin: "7px 0 0" }}>{labels.orderHint}</p>
+          </div>
+          <div style={{ textAlign: "right", flexShrink: 0 }}>
+            <p
+              style={{
+                font: "600 12px/1 var(--e-body)",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--e-muted)",
+                margin: 0,
+              }}
+            >
+              {labels.total}
+            </p>
+            <p
+              style={{
+                font: `600 ${narrow ? "20px" : "24px"}/1.1 var(--e-display)`,
+                color: "var(--e-fg)",
+                margin: "7px 0 0",
+                fontVariantNumeric: "tabular-nums",
+                letterSpacing: theme.displayTracking,
+              }}
+            >
+              {formatMoney(0)}
             </p>
           </div>
-        );
-      })}
+        </div>
+        <div
+          style={{
+            marginTop: 16,
+            height: narrow ? 46 : 50,
+            borderRadius: 999,
+            background: "var(--e-accent)",
+            color: "var(--e-on-accent)",
+            display: "grid",
+            placeItems: "center",
+            font: `600 ${narrow ? "14px" : "15px"}/1 var(--e-body)`,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+          }}
+        >
+          {labels.selectTickets}
+        </div>
+        <p
+          style={{
+            font: "400 12px/1.4 var(--e-body)",
+            color: "var(--e-muted)",
+            margin: "11px 0 0",
+            textAlign: "center",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          {labels.checkoutTrust}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The venue plate.
+ *
+ * Wordless on purpose. An earlier version labelled it STAGE / GENERAL STANDING
+ * / LEFT / RIGHT on every category, which meant a gallery page claimed a stage
+ * and a boat trip claimed a room — the wrong-photograph mistake in another
+ * medium. Decoration may be abstract; it may not state something untrue about
+ * somebody's real building. The heading above it already names the venue and
+ * the column beside it carries the address, so there is nothing left for the
+ * plate to say.
+ *
+ * One distinction does change the drawing, because it is real: an event held
+ * AT a place gets a map, and an event that MOVES gets a route.
+ */
+function VenueMap({ narrow, shape }: { narrow: boolean; shape: "map" | "route" }) {
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: "relative",
+        aspectRatio: "16 / 10",
+        borderRadius: "var(--e-radius)",
+        border: `1px solid var(--e-line)`,
+        background: "var(--e-panel)",
+        overflow: "hidden",
+      }}
+    >
+      {/* Blocks and streets. Two gradients rather than an asset: it costs no
+          request, cannot 404, and takes the theme's own line colour. */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `linear-gradient(var(--e-line) 1px, transparent 1px), linear-gradient(90deg, var(--e-line) 1px, transparent 1px)`,
+          backgroundSize: `${narrow ? 34 : 46}px ${narrow ? 34 : 46}px`,
+          opacity: 0.75,
+        }}
+      />
+      {shape === "map" ? (
+        <>
+          <div style={{ position: "absolute", left: 0, right: 0, top: "62%", height: narrow ? 7 : 10, background: "var(--e-line)" }} />
+          <div style={{ position: "absolute", top: 0, bottom: 0, left: "24%", width: narrow ? 5 : 7, background: "var(--e-line)" }} />
+          <div
+            style={{
+              position: "absolute",
+              left: "54%",
+              top: "44%",
+              transform: "translate(-50%, -50%)",
+              width: narrow ? 62 : 84,
+              height: narrow ? 62 : 84,
+              borderRadius: 999,
+              background: `color-mix(in srgb, var(--e-accent) 18%, transparent)`,
+              display: "grid",
+              placeItems: "center",
+            }}
+          >
+            <span
+              style={{
+                width: narrow ? 34 : 44,
+                height: narrow ? 34 : 44,
+                borderRadius: 999,
+                background: "var(--e-accent)",
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              <MapPin size={narrow ? 17 : 21} strokeWidth={2} style={{ color: "var(--e-on-accent)" }} />
+            </span>
+          </div>
+        </>
+      ) : (
+        <svg viewBox="0 0 320 200" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+          <path
+            d="M34 152 C 92 152, 96 66, 156 66 S 236 132, 288 52"
+            fill="none"
+            stroke="var(--e-accent)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeDasharray="9 9"
+          />
+          {[
+            [34, 152],
+            [156, 66],
+            [288, 52],
+          ].map(([cx, cy], i) => (
+            <g key={i}>
+              <circle cx={cx} cy={cy} r="13" fill="var(--e-accent)" opacity="0.2" />
+              <circle cx={cx} cy={cy} r="6" fill="var(--e-accent)" />
+            </g>
+          ))}
+        </svg>
+      )}
     </div>
   );
 }
@@ -1089,6 +1777,23 @@ function artFor(accent: string, i: number, strong = false): string {
     `radial-gradient(circle at ${20 + i * 12}% ${18 + i * 9}%, color-mix(in srgb, ${accent} ${a}%, transparent), transparent 62%)`,
     `radial-gradient(circle at ${85 - i * 8}% ${72 - i * 6}%, color-mix(in srgb, ${accent} ${b}%, transparent), transparent 56%)`,
     `linear-gradient(${angle}deg, var(--e-panel), var(--e-bg))`,
+  ].join(", ");
+}
+
+/**
+ * The same wash with a ruled motif over it, for the gallery and the bill.
+ *
+ * `artFor` alone is soft radial gradient, which is right behind a hero — and
+ * wrong in a grid, where a row of soft blurs reads as photographs that failed
+ * to load rather than as plates somebody drew. One family of fine rules, at a
+ * different angle per tile, is enough to say "deliberate" without competing
+ * with the ticket block, which is where this page spends its boldness.
+ */
+function plateArt(accent: string, i: number, strong = false): string {
+  const angle = [22, 112, 67, 157, 0, 90][i % 6];
+  return [
+    `repeating-linear-gradient(${angle}deg, color-mix(in srgb, ${accent} ${strong ? 26 : 20}%, transparent) 0 1.5px, transparent 1.5px 13px)`,
+    artFor(accent, i, strong),
   ].join(", ");
 }
 

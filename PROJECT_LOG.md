@@ -5575,3 +5575,164 @@ namespaces.
 Cover image is a URL field, not an upload — templates render `coverUrl` when it
 is set and draw generated artwork otherwise. Gallery plates are still generated
 rather than uploaded. Events still do not reach the till or reports.
+
+## Events, third pass — the templates get content worth reading (2026-09-13)
+
+Owner supplied a dark tour page ("THE UNKNOWN TOUR") and asked for that kind of
+content and UI, with the design matching each category. The previous pass had
+the chrome and the themes; what it did not have was anything to put in them —
+six categories all drew the same skeleton with a lineup and a price list.
+
+### The record learned what a page needs to say
+
+`EventStat`, `EventHighlight`, `EventTier.perks` and `EventRecord.stats /
+highlights / info` are new on the contract, so this is shape for the backend
+lane alongside `EventTier`. Two new sections, `stats` and `highlights`, join
+`SectionId` and every category's section order.
+
+**96 strings per locale of category-specific default content.** A gallery
+counts works, artists and weeks and states its opening hours; a tour counts
+days on the water, stops and group size and states where it departs from; a
+rave counts rooms, hours and DJs and states its door policy. Lorem teaches an
+operator nothing about what a section is for, and one generic trio recoloured
+six times is lorem with better manners.
+
+The wizard builds those defaults from the translated keys and layers
+`seedEdits` on top — held apart from `content` and **cleared when the category
+changes**, because a gallery's opening hours have no business surviving a
+switch to a rave. All three are editable in the architect.
+
+### The ticket block is the signature
+
+A counterfoil *is* a ticket stub, so the tiers are drawn as stubs: a punched
+edge down the left, a perforated tear before the price, and a receipt panel
+underneath that reads like the slip you are about to be handed. It is the one
+place the product's own name earns a motif, and it sits exactly where the
+commercial decision is made — which is also why the page spends its boldness
+here and keeps the rest quiet.
+
+**What a tier buys is listed.** A price with nothing beside it makes a buyer
+work out the difference between two tiers from their names alone.
+
+Four things the first build got wrong, found by rendering it:
+
+- **"TICKETS SELLING FAST" appeared on every available tier** — including one
+  that had sold 31% of four thousand. A badge on everything is a badge on
+  nothing. It now needs half the stock gone, the same threshold the page's own
+  sticky bar uses, so one rule governs both scopes. Sold out and almost gone
+  keep their badges; an ordinary tier has none.
+- **Three-up left a four-tier event with one card alone in an empty row.** Two
+  columns now, with the last card spanning the row when the count is odd — a
+  grid that leaves a hole is what makes a section look broken.
+- **Prices sat at three different heights** across a row, because a tier with
+  no perks printed its price at the top and left dead card underneath. The
+  content block flexes, so the one figure a buyer compares across the row lines
+  up.
+- **A free tier read ৳0.00.** It reads Free.
+
+### The venue plate was lying about somebody's building
+
+The plate drew a concert floor plan — STAGE over GENERAL STANDING over LEFT /
+RIGHT — on all six categories. So the exhibition page claimed a stage and a
+standing area inside a gallery, and a three-day boat trip claimed a room.
+
+That is the wrong-photograph mistake in another medium, and it was mine from
+the previous session. Decoration may be abstract; it may not state something
+untrue about a real venue. **It carries no words now** — the heading above it
+already names the venue and the column beside it carries the address. One
+distinction changes the drawing because it is real: an event held AT a place
+gets a street map with a marker, and an event that MOVES gets a route. Four
+message keys came out of both locales with it.
+
+### The rest of the content pass
+
+- **A stats band** — three figures stated before anyone scrolls, and what they
+  say differs by category.
+- **Highlights** as teaser chips, deliberately not links: they are an appetiser
+  for the sections below, and a chip that navigates nowhere is honest where one
+  that scrolls somewhere arbitrary is not.
+- **Three info cards inside About**, whose *labels* travel with the data —
+  Venue / Doors open / Capacity for a concert, Gallery / Open / Entry for an
+  exhibition, Location / Doors / Age for a rave. What they are called is the
+  category talking.
+- **FAQ as `<details>`** rather than a state hook: it opens with no JavaScript,
+  it is keyboard- and screen-reader-correct for free, and the page is printed
+  and crawled as often as it is clicked.
+- **A sticky top nav** — the event's name, up to five section anchors, and the
+  one action the page exists for. Sticky rather than fixed: fixed escapes the
+  scaled preview frame and lands on the wizard's own chrome. Sections carry a
+  `scroll-margin-top` so an anchor does not drop the heading under the bar, and
+  **a section that renders nothing is not linked** — an anchor that scrolls
+  nowhere is worse than one fewer link.
+- **The sticky bottom bar states scarcity only when the ledger supports it**,
+  summed across the whole event rather than read off one tier: a sold-out VIP
+  box beside four thousand unsold standing tickets is not an event selling fast.
+- **The bill takes two shapes, on a distinction in the content rather than a
+  style preference.** A headliner, a speaker and a painting are each a thing you
+  look at, so entertainment, business, arts and nightlife get portrait cards
+  with the plate first. Fixtures and an itinerary are read in order down a
+  column, so sports and travel keep rows — a grid would destroy the order that
+  is the whole point of them. Columns are capped by the number of names, so a
+  three-act bill fills its row instead of occupying three of five tracks.
+- **The gallery is a mosaic**, with the spans declared so both rows fill
+  exactly.
+- **Plates read as drawn, not as photographs that failed to load.** `artFor`
+  alone is soft radial gradient — right behind a hero, wrong in a grid, where a
+  row of soft blurs reads as broken images. One family of fine rules at a
+  different angle per tile says "deliberate" without competing with the tickets.
+
+### Two contrast findings, both from the new work
+
+- **Eight pieces of 11px text** — info labels, the receipt eyebrows, the trust
+  line, the venue chips, the phone section index. The app has held a 12px floor
+  product-wide since September; raised.
+- **An accent ink derived against the wrong backdrop.** `accentInk()` walks the
+  accent toward the foreground until it clears 4.5:1 against the colour behind
+  it — and the existing var is derived against the page ground, while the info
+  labels sit on a *panel*, which is a different colour in four of the six
+  themes. Nightlife measured 4.31:1. New `--e-panel-ink`, same derivation
+  against the panel.
+
+### Eight message keys that resolved to nothing
+
+`architect.chip`, `.statsNote`, `.statValue`, `.statLabel`, `.highlightsNote`,
+`.infoNote`, `.infoLabel` and `.infoValue` were used by the editors added here
+and never authored — **380 console errors** on the design step, invisible
+because next-intl renders the key and a label reading "architect.chip" looks
+like a label. Authored in both locales; the wizard harness is back to zero
+errors.
+
+### Verified
+
+- **All six templates measured**: zero contrast failures, zero text under the
+  12px floor, zero silently clipped text, zero console errors.
+- **The wizard driven end to end, 9 checks passing**, and **six new checks**
+  driving the stats, highlights and info editors that had been built but never
+  exercised — a figure, a highlight and an info label each typed in the
+  architect and found on the live preview.
+- The full **32-route audit holds at 76 findings** — 75 the declared
+  white-on-ember rule, 1 the kitchen-sink inline-link exemption — so none of
+  this introduced anything.
+- Standing harnesses hold: review 15/15, accessibility 8/8, deck 9/9.
+- Bangla renders whole across all three event routes with **0 missing-message
+  warnings** and no raw keys.
+- `tsc --noEmit`, `npm run build` and `eslint` clean (one orphaned import
+  removed). i18n parity **0 missing / 0 extra** across 31 namespaces.
+
+### Three harness corrections, all mine
+
+Each would have become a "fix" to working code if trusted:
+
+- The template probe reported outlined lineup numerals at 1.05:1 — they are
+  `color: transparent` with a stroke, and `aria-hidden` decoration.
+- Selecting a category **auto-advances** the wizard, so a harness that clicked
+  Continue afterwards sat on a disabled button for thirty seconds and reported
+  a timeout that looked like a broken step.
+- `innerText` returns **rendered** text, and these templates uppercase chips and
+  info labels in CSS. Comparing against the typed casing reported two false
+  failures on editors that were working.
+
+### Still open
+
+Cover media is a URL field, not an upload, and gallery plates are generated
+rather than uploaded. Events still do not reach the till or the reports.

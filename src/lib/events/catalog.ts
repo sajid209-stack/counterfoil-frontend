@@ -26,6 +26,8 @@ export type CategoryId =
 export type SectionId =
   | "hero"
   | "countdown"
+  | "stats"
+  | "highlights"
   | "about"
   | "lineup"
   | "schedule"
@@ -37,6 +39,8 @@ export type SectionId =
 export const ALL_SECTIONS: SectionId[] = [
   "hero",
   "countdown",
+  "stats",
+  "highlights",
   "about",
   "lineup",
   "schedule",
@@ -95,7 +99,7 @@ export const CATEGORIES: CategoryDef[] = [
     id: "entertainment",
     key: "entertainment",
     subtypes: ["concert", "music", "movie", "drama", "standup", "party", "festival", "reunion", "popculture"],
-    sections: ["hero", "countdown", "lineup", "about", "gallery", "tickets", "venue", "faq"],
+    sections: ["hero", "countdown", "highlights", "stats", "lineup", "about", "gallery", "tickets", "venue", "faq"],
     lineupKey: "lineup",
     variants: ["poster", "stacked"],
     theme: {
@@ -118,7 +122,7 @@ export const CATEGORIES: CategoryDef[] = [
     id: "sports",
     key: "sports",
     subtypes: ["match", "tournament", "race", "recreational", "workshop", "class"],
-    sections: ["hero", "countdown", "schedule", "about", "tickets", "venue", "faq"],
+    sections: ["hero", "countdown", "stats", "schedule", "about", "tickets", "venue", "faq"],
     lineupKey: "fixtures",
     variants: ["kinetic", "stacked"],
     theme: {
@@ -141,7 +145,7 @@ export const CATEGORIES: CategoryDef[] = [
     id: "business",
     key: "business",
     subtypes: ["conference", "seminar", "launch", "corporate", "networking", "training"],
-    sections: ["hero", "about", "lineup", "schedule", "tickets", "venue", "faq"],
+    sections: ["hero", "stats", "about", "lineup", "schedule", "tickets", "venue", "faq"],
     lineupKey: "speakers",
     variants: ["structured", "stacked"],
     theme: {
@@ -164,7 +168,7 @@ export const CATEGORIES: CategoryDef[] = [
     id: "arts",
     key: "arts",
     subtypes: ["exhibition", "fashion", "cultural", "installation", "screening", "literary"],
-    sections: ["hero", "about", "lineup", "gallery", "tickets", "venue", "faq"],
+    sections: ["hero", "stats", "about", "lineup", "gallery", "tickets", "venue", "faq"],
     lineupKey: "works",
     variants: ["editorial", "stacked"],
     theme: {
@@ -187,7 +191,7 @@ export const CATEGORIES: CategoryDef[] = [
     id: "travel",
     key: "travel",
     subtypes: ["tour", "trip", "excursion", "sightseeing", "cruise", "package"],
-    sections: ["hero", "about", "schedule", "gallery", "tickets", "venue", "faq"],
+    sections: ["hero", "stats", "about", "schedule", "gallery", "tickets", "venue", "faq"],
     lineupKey: "itinerary",
     variants: ["immersive", "stacked"],
     theme: {
@@ -210,7 +214,7 @@ export const CATEGORIES: CategoryDef[] = [
     id: "nightlife",
     key: "nightlife",
     subtypes: ["club", "rave", "private", "djnight", "themed", "afterparty"],
-    sections: ["hero", "countdown", "lineup", "about", "tickets", "venue", "faq"],
+    sections: ["hero", "countdown", "highlights", "stats", "lineup", "about", "tickets", "venue", "faq"],
     lineupKey: "djs",
     variants: ["neon", "stacked"],
     theme: {

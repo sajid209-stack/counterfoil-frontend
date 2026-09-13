@@ -24,6 +24,26 @@ export interface EventTier {
   /** An early-bird tier stops selling on its own rather than by hand. */
   salesEnd?: string;
   maxPerOrder?: number;
+  /** What the tier actually buys. A price with nothing beside it makes a buyer
+   *  work out the difference between two tiers from their names alone. */
+  perks?: string[];
+}
+
+/** A figure worth stating before anyone scrolls — what the page is at a glance.
+ *  The value stays a STRING: "25,000+", "৳2,00,000" and "3 days" are all
+ *  honest answers and none of them survives being stored as a number. */
+export interface EventStat {
+  id: string;
+  value: string;
+  label: string;
+}
+
+/** A teaser chip. Short by construction — it is a label on a circle, not a
+ *  sentence — and it links nowhere, because it is an appetiser for the
+ *  sections underneath rather than navigation. */
+export interface EventHighlight {
+  id: string;
+  label: string;
 }
 
 /** Everything the operator changed about the template's default look. */
@@ -61,6 +81,12 @@ export interface EventRecord {
   venueAddress?: string;
   description?: string;
   lineup: EventLineupEntry[];
+  stats: EventStat[];
+  highlights: EventHighlight[];
+  /** The three facts a buyer checks before committing, in the operator's own
+   *  words — what they are called differs by category (a gallery has opening
+   *  hours, a tour has a departure point), so the labels travel with the data. */
+  info: { id: string; label: string; value: string }[];
   faq: { id: string; q: string; a: string }[];
   tiers: EventTier[];
   customisation: EventCustomisation;

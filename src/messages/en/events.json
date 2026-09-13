@@ -114,7 +114,9 @@
     "speakers": "Speakers",
     "works": "Works",
     "itinerary": "Itinerary",
-    "djs": "Lineup"
+    "djs": "Lineup",
+    "stats": "At a glance",
+    "highlights": "Sneak peeks"
   },
   "customise": {
     "accent": "Accent colour",
@@ -275,6 +277,208 @@
     "addQuestion": "Add a question",
     "countdownNote": "Counts down to the start time you set in Hero. Nothing to fill in.",
     "galleryNote": "Six plates drawn from your accent colour. Image upload is not built yet.",
-    "ticketsNote": "Ticket names, prices and quantities are set on the next step."
+    "ticketsNote": "Ticket names, prices and quantities are set on the next step.",
+    "statsNote": "Three figures a visitor reads before they scroll. Keep them short — a number and what it counts.",
+    "statValue": "Figure",
+    "statLabel": "What it counts",
+    "highlightsNote": "Short teasers for what is further down the page. Two words each is plenty.",
+    "chip": "Highlight",
+    "infoNote": "The three facts somebody checks before they commit. The label is yours to name.",
+    "infoLabel": "Label",
+    "infoValue": "Detail"
+  },
+  "tpl": {
+    "orderSummary": "Order summary",
+    "orderHint": "Select tickets to get started.",
+    "total": "Total",
+    "selectTickets": "Select tickets",
+    "checkoutTrust": "Secure checkout · Instant e-tickets",
+    "sellingFast": "Tickets selling fast",
+    "almostGone": "Almost gone",
+    "soldOutBadge": "Sold out",
+    "remaining": "{count} remaining",
+    "slotsAvailable": "Slots available"
+  },
+  "defaults": {
+    "entertainment": {
+      "stat0": {
+        "value": "25,000+",
+        "label": "Fans across 3 cities"
+      },
+      "stat1": {
+        "value": "12",
+        "label": "Shows completed"
+      },
+      "stat2": {
+        "value": "2026",
+        "label": "Tour season"
+      },
+      "highlight0": "Backstage",
+      "highlight1": "Soundcheck",
+      "highlight2": "Merch drop",
+      "highlight3": "The venue",
+      "info0": {
+        "label": "Venue",
+        "value": "Army Stadium, Dhaka — open-air, standing only"
+      },
+      "info1": {
+        "label": "Doors open",
+        "value": "16:00. Show starts 18:00 sharp."
+      },
+      "info2": {
+        "label": "Capacity",
+        "value": "8,000 standing. No seats, no barriers."
+      }
+    },
+    "sports": {
+      "stat0": {
+        "value": "16",
+        "label": "Teams"
+      },
+      "stat1": {
+        "value": "৳2,00,000",
+        "label": "Prize pool"
+      },
+      "stat2": {
+        "value": "3",
+        "label": "Days of football"
+      },
+      "highlight0": "The draw",
+      "highlight1": "Format",
+      "highlight2": "Teams",
+      "highlight3": "The ground",
+      "info0": {
+        "label": "Ground",
+        "value": "Chattogram Turf — floodlit, 7-a-side"
+      },
+      "info1": {
+        "label": "First whistle",
+        "value": "09:00 daily. Final at 18:00 Sunday."
+      },
+      "info2": {
+        "label": "Format",
+        "value": "Group stage, then straight knockout"
+      }
+    },
+    "business": {
+      "stat0": {
+        "value": "24",
+        "label": "Speakers"
+      },
+      "stat1": {
+        "value": "3",
+        "label": "Parallel tracks"
+      },
+      "stat2": {
+        "value": "600",
+        "label": "Seats"
+      },
+      "highlight0": "Agenda",
+      "highlight1": "Speakers",
+      "highlight2": "Getting there",
+      "highlight3": "Wi-Fi",
+      "info0": {
+        "label": "Venue",
+        "value": "Sylhet Convention Centre, Halls A–C"
+      },
+      "info1": {
+        "label": "Doors",
+        "value": "08:30 registration. Keynote at 09:30."
+      },
+      "info2": {
+        "label": "Included",
+        "value": "Lunch, coffee, and every session recorded"
+      }
+    },
+    "arts": {
+      "stat0": {
+        "value": "40",
+        "label": "Works on show"
+      },
+      "stat1": {
+        "value": "9",
+        "label": "Artists"
+      },
+      "stat2": {
+        "value": "6",
+        "label": "Weeks"
+      },
+      "highlight0": "The artists",
+      "highlight1": "The curator",
+      "highlight2": "Catalogue",
+      "highlight3": "The space",
+      "info0": {
+        "label": "Gallery",
+        "value": "Bengal Arts Centre, ground floor"
+      },
+      "info1": {
+        "label": "Open",
+        "value": "Tue–Sun, 11:00–19:00. Closed Mondays."
+      },
+      "info2": {
+        "label": "Entry",
+        "value": "Timed entry every 30 minutes"
+      }
+    },
+    "travel": {
+      "stat0": {
+        "value": "3",
+        "label": "Days on the water"
+      },
+      "stat1": {
+        "value": "4",
+        "label": "Stops"
+      },
+      "stat2": {
+        "value": "18",
+        "label": "Travellers max"
+      },
+      "highlight0": "The route",
+      "highlight1": "The boat",
+      "highlight2": "Meals",
+      "highlight3": "What to pack",
+      "info0": {
+        "label": "Departs",
+        "value": "Khulna launch ghat, 07:00"
+      },
+      "info1": {
+        "label": "Duration",
+        "value": "3 days, 2 nights aboard"
+      },
+      "info2": {
+        "label": "Group",
+        "value": "18 travellers, 2 guides, 1 cook"
+      }
+    },
+    "nightlife": {
+      "stat0": {
+        "value": "2",
+        "label": "Rooms"
+      },
+      "stat1": {
+        "value": "8",
+        "label": "Hours"
+      },
+      "stat2": {
+        "value": "4",
+        "label": "DJs"
+      },
+      "highlight0": "The rooms",
+      "highlight1": "The sound",
+      "highlight2": "Door policy",
+      "highlight3": "Location",
+      "info0": {
+        "label": "Location",
+        "value": "Tejgaon. Address sent 6 hours before."
+      },
+      "info1": {
+        "label": "Doors",
+        "value": "22:00 until sunrise"
+      },
+      "info2": {
+        "label": "Age",
+        "value": "21+. Photo ID checked at the door."
+      }
+    }
   }
 }

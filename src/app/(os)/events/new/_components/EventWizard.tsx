@@ -14,6 +14,7 @@ import { PreviewFrame } from "@/components/events/PreviewFrame";
 import { DEMO_TODAY, demoNow } from "@/lib/schedule";
 import { emptyTier, TicketTiers, toTiers, type FormTier } from "./TicketTiers";
 import { EventArchitect, type EventContent } from "./EventArchitect";
+import { useTemplateLabels } from "@/lib/events/useTemplateLabels";
 
 const STEP_KEYS = ["category", "type", "design", "tickets", "publish"] as const;
 
@@ -59,6 +60,11 @@ export function EventWizard() {
     faq: [],
   });
   const patchContent = (patch: Partial<EventContent>) => setContent((c) => ({ ...c, ...patch }));
+  /* Overrides for the content a CATEGORY seeds — stats, highlights, the info
+     trio. Held apart from `content` and cleared when the category changes, so
+     switching from a gallery to a rave does not carry "Open Tue–Sun" across. */
+  const [seedEdits, setSeedEdits] = useState<Partial<EventRecord>>({});
+  const patchDraft = (patch: Partial<EventRecord>) => setSeedEdits((e) => ({ ...e, ...patch }));
   const [tiers, setTiers] = useState<FormTier[]>([emptyTier()]);
 
   /** Choosing a category is also choosing its whole visual default. */
@@ -66,6 +72,8 @@ export function EventWizard() {
     const cat = categoryById(id);
     setCategoryId(id);
     setSubtype("");
+    // A gallery's opening hours have no business surviving a switch to a rave.
+    setSeedEdits({});
     setCustom({
       accent: cat.theme.accent,
       displayFont: cat.theme.display,
@@ -76,28 +84,7 @@ export function EventWizard() {
     setStep(1);
   };
 
-  const labels = useMemo(
-    () => ({
-      lineup: categoryId ? t(`section.${categoryById(categoryId).lineupKey}`) : t("section.lineup"),
-      schedule: t("section.schedule"),
-      about: t("section.about"),
-      tickets: t("section.tickets"),
-      venue: t("section.venue"),
-      faq: t("section.faq"),
-      gallery: t("section.gallery"),
-      soldOut: t("soldOut"),
-      free: t("free"),
-      from: t("from"),
-      getTickets: t("getTickets"),
-      addToCalendar: t("addToCalendar"),
-      doorsOpen: t("doorsOpen"),
-      left: t("left"),
-      countdownDays: t("countdown.days"),
-      countdownHours: t("countdown.hours"),
-      countdownMins: t("countdown.mins"),
-    }),
-    [t, categoryId],
-  );
+  const labels = useTemplateLabels(categoryId);
 
   /** The record the preview draws — the real shape, so the preview cannot
    *  diverge from what gets saved. Placeholders stand in only while a field is
@@ -119,6 +106,22 @@ export function EventWizard() {
       description: content.description.trim() || t("placeholder.description"),
       // The operator's own bill once there is one; a sample stands in only
       // while the section is still empty, so the preview is never a blank page.
+      /* The at-a-glance content a category ships with. It is real, specific
+         and translated — a gallery states opening hours, a tour states where
+         it departs from — because a template whose sample content is lorem
+         teaches an operator nothing about what the section is FOR. */
+      stats: [0, 1, 2].map((i) => ({
+        id: `st${i}`,
+        value: t(`defaults.${categoryId}.stat${i}.value`),
+        label: t(`defaults.${categoryId}.stat${i}.label`),
+      })),
+      highlights: [0, 1, 2, 3].map((i) => ({ id: `hl${i}`, label: t(`defaults.${categoryId}.highlight${i}`) })),
+      info: [0, 1, 2].map((i) => ({
+        id: `in${i}`,
+        label: t(`defaults.${categoryId}.info${i}.label`),
+        value: t(`defaults.${categoryId}.info${i}.value`),
+      })),
+      ...seedEdits,
       lineup: content.lineup.filter((l) => l.name.trim())
         .length
         ? content.lineup.filter((l) => l.name.trim())
@@ -131,7 +134,7 @@ export function EventWizard() {
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     };
-  }, [categoryId, custom, content, subtype, tiers, now, t]);
+  }, [categoryId, custom, content, subtype, tiers, now, t, seedEdits]);
 
   const canAdvance =
     step === 0 ? categoryId !== null
@@ -178,6 +181,9 @@ export function EventWizard() {
       venueName: content.venueName.trim(),
       venueAddress: content.venueAddress.trim() || undefined,
       description: content.description.trim() || undefined,
+      stats: draft?.stats ?? [],
+      highlights: draft?.highlights ?? [],
+      info: draft?.info ?? [],
       lineup: content.lineup.filter((l) => l.name.trim()),
       faq: content.faq.filter((f) => f.q.trim()),
       tiers: toTiers(tiers),
@@ -323,6 +329,7 @@ export function EventWizard() {
             onCustom={setCustom}
             content={content}
             onContent={patchContent}
+            onEvent={patchDraft}
             now={now}
             labels={labels}
             errors={errors}

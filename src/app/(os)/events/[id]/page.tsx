@@ -9,7 +9,7 @@ import { Button, EmptyState, PageShell, StatStrip } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { eventCapacity, eventRevenue, eventSold, getEvent } from "@/lib/api";
-import { categoryById } from "@/lib/events/catalog";
+import { useTemplateLabels } from "@/lib/events/useTemplateLabels";
 import { templateFontVars } from "@/lib/events/fonts";
 import { EventTemplate } from "@/components/events/EventTemplate";
 import { PreviewFrame } from "@/components/events/PreviewFrame";
@@ -25,28 +25,7 @@ export default function EventDetailPage() {
   const q = useApiQuery(() => getEvent(params.id), [params.id]);
   const e = q.data;
 
-  const labels = useMemo(() => {
-    const cat = e ? categoryById(e.categoryId) : null;
-    return {
-      lineup: t(`section.${cat?.lineupKey ?? "lineup"}`),
-      schedule: t("section.schedule"),
-      about: t("section.about"),
-      tickets: t("section.tickets"),
-      venue: t("section.venue"),
-      faq: t("section.faq"),
-      gallery: t("section.gallery"),
-      soldOut: t("soldOut"),
-      free: t("free"),
-      from: t("from"),
-      getTickets: t("getTickets"),
-      addToCalendar: t("addToCalendar"),
-      doorsOpen: t("doorsOpen"),
-      left: t("left"),
-      countdownDays: t("countdown.days"),
-      countdownHours: t("countdown.hours"),
-      countdownMins: t("countdown.mins"),
-    };
-  }, [t, e]);
+  const labels = useTemplateLabels(e?.categoryId ?? null);
 
   if (!q.loading && (q.error || !e)) {
     return (
