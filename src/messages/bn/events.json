@@ -334,7 +334,10 @@
     "checkout": "চেকআউটে যান",
     "viewAllSpeakers": "সব বক্তা দেখুন",
     "viewAgenda": "সূচি দেখুন",
-    "viewOnMap": "মানচিত্রে দেখুন"
+    "viewOnMap": "মানচিত্রে দেখুন",
+    "viewLineup": "লাইনআপ দেখুন",
+    "ticketsSold": "টিকিট বিক্রি",
+    "ofCapacity": "/"
   },
   "defaults": {
     "entertainment": {

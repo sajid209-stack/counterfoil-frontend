@@ -334,7 +334,10 @@
     "checkout": "Continue to checkout",
     "viewAllSpeakers": "View all speakers",
     "viewAgenda": "View agenda",
-    "viewOnMap": "View on map"
+    "viewOnMap": "View on map",
+    "viewLineup": "See the lineup",
+    "ticketsSold": "Tickets sold",
+    "ofCapacity": "of"
   },
   "defaults": {
     "entertainment": {

@@ -124,7 +124,7 @@ export const CATEGORIES: CategoryDef[] = [
       radius: "14px",
       eyebrowCase: "upper",
       displayTracking: "0.02em",
-      glow: false,
+      glow: true,
     },
   },
   {

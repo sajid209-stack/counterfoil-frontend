@@ -77,8 +77,12 @@ export const events: EventRecord[] = [
     ],
     lineup: [
       { id: "l1", name: "Nogor Baul", role: "Headline", at: "21:30" },
-      { id: "l2", name: "Arbovirus", role: "Support", at: "20:15" },
-      { id: "l3", name: "Shonar Bangla Circus", role: "Opening", at: "19:30" },
+      { id: "l2", name: "Arbovirus", at: "20:15" },
+      { id: "l3", name: "Shonar Bangla Circus", at: "19:00" },
+      { id: "l4", name: "Meghdol", at: "18:10" },
+      { id: "l5", name: "Cryptic Fate", at: "17:25" },
+      { id: "l6", name: "Bay of Bengal", at: "16:40" },
+      { id: "l7", name: "Owned", at: "16:00" },
     ],
     faq: [
       { id: "f1", q: "Can I re-enter?", a: "No re-entry once scanned. Plan your break before you come in." },

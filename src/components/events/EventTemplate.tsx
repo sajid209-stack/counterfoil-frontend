@@ -67,6 +67,9 @@ interface Labels {
   checkout: string;
   viewAllSpeakers: string;
   viewAgenda: string;
+  viewLineup: string;
+  ticketsSold: string;
+  ofCapacity: string;
   viewOnMap: string;
   /** Carries a "{count}" placeholder the template fills. */
   remaining: string;
@@ -754,7 +757,14 @@ export function EventTemplate({
               headliner, a speaker and a painting are each a thing you look at
               and want a face for, while fixtures and an itinerary are read in
               order down a column and a grid of them destroys the order. */}
-          {PORTRAIT_BILL.has(cat.lineupKey) ? (
+          {variant === "poster" ? (
+            /* A festival poster has always said who is headlining by how big
+               the name is set — the type size IS the billing, and it is the
+               one piece of information four identical portrait plates cannot
+               carry. It also needs no photography, which matters while cover
+               art is still a generated plate. */
+            <PosterBill entries={billed} narrow={narrow} theme={t} />
+          ) : PORTRAIT_BILL.has(cat.lineupKey) ? (
             <LineupCards
               entries={billed}
               narrow={narrow}
@@ -788,7 +798,63 @@ export function EventTemplate({
           <Agenda entries={event.lineup} narrow={narrow} labels={labels} upper={upper} />
         </Section>
       ) : null,
-    gallery: () => (
+    gallery: () =>
+      variant === "poster" ? (
+        /* Edge to edge, no gutters, no gaps.
+           A contained mosaic is a gallery; a strip that runs off both sides of
+           the page is the wall of faces every festival site puts between the
+           bill and the tickets, and it is the one place a page like this should
+           stop behaving like a document. */
+        <section id="gallery" style={{ scrollMarginTop: narrow ? 60 : 68, padding: `${narrow ? 40 : 72}px 0 0` }}>
+          <div style={{ padding: `0 ${pad}`, maxWidth: 1180, margin: "0 auto" }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+              <span
+                aria-hidden
+                style={{
+                  font: "600 12px/1 var(--e-body)",
+                  letterSpacing: "0.14em",
+                  color: "var(--e-accent-ink)",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {String(indexOf("gallery")).padStart(2, "0")}
+              </span>
+              <span aria-hidden style={{ height: 1, flex: 1, background: "var(--e-line)", maxWidth: 64 }} />
+            </div>
+            <h2
+              style={{
+                font: `600 ${narrow ? "24px" : "34px"}/1.1 var(--e-display)`,
+                letterSpacing: t.displayTracking,
+                color: "var(--e-fg)",
+                margin: "10px 0 0",
+              }}
+            >
+              {labels.gallery}
+            </h2>
+          </div>
+          <div
+            aria-hidden
+            style={{
+              marginTop: narrow ? 22 : 34,
+              display: "grid",
+              gridTemplateColumns: narrow ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+              gap: 0,
+            }}
+          >
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                style={{
+                  aspectRatio: narrow ? "1 / 1" : "3 / 4",
+                  background: plateArt(c.accent, i, isLight(t.bg)),
+                  borderTop: `1px solid var(--e-line)`,
+                  borderBottom: `1px solid var(--e-line)`,
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      ) : (
       <Section id="gallery" index={indexOf("gallery")} eyebrow={labels.gallery} title={labels.gallery}>
         {/* A mosaic, not a contact sheet. Equal squares read as a filing
             system; varied spans read as a set of photographs somebody chose.
@@ -830,7 +896,7 @@ export function EventTemplate({
           ))}
         </div>
       </Section>
-    ),
+      ),
     tickets: () =>
       absorbed.has("tickets") ? null : (
         <Section id="tickets" index={indexOf("tickets")} eyebrow={labels.tickets} title={labels.tickets}>
@@ -1192,6 +1258,91 @@ function Hero({
     </h1>
   );
 
+  /* How much of the room has gone.
+     Every ticketing page worth copying states this, and it is the one piece of
+     urgency that needs no adjectives: a bar and two numbers the ledger already
+     holds. Drawn only once something has actually sold — "0 of 8,000 gone" is
+     an argument against coming. */
+  const stock = event.tiers.reduce((a, x) => ({ q: a.q + x.quantity, sold: a.sold + x.sold }), { q: 0, sold: 0 });
+  const soldBar =
+    variant !== "poster" || stock.q === 0 || stock.sold === 0 ? null : (
+      <div style={{ marginTop: narrow ? 22 : 30, maxWidth: 420 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+          <span
+            style={{
+              font: "600 12px/1 var(--e-body)",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "var(--e-muted)",
+            }}
+          >
+            {labels.ticketsSold}
+          </span>
+          <span style={{ font: "600 14px/1 var(--e-body)", color: "var(--e-fg)", fontVariantNumeric: "tabular-nums" }}>
+            {formatCount(stock.sold)} {labels.ofCapacity} {formatCount(stock.q)}
+          </span>
+        </div>
+        <div
+          aria-hidden
+          style={{ marginTop: 10, height: 6, borderRadius: 999, background: "var(--e-line)", overflow: "hidden" }}
+        >
+          <div
+            style={{
+              width: `${Math.min(100, Math.round((stock.sold / stock.q) * 100))}%`,
+              height: "100%",
+              borderRadius: 999,
+              background: "var(--e-accent)",
+              boxShadow: theme.glow ? "0 0 16px color-mix(in srgb, var(--e-accent) 70%, transparent)" : undefined,
+            }}
+          />
+        </div>
+      </div>
+    );
+
+  const posterActions = variant !== "poster" ? null : (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: narrow ? 22 : 30 }}>
+      <a
+        href="#tickets"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          padding: narrow ? "14px 22px" : "15px 30px",
+          borderRadius: 999,
+          background: "var(--e-accent)",
+          color: "var(--e-on-accent)",
+          font: `600 ${narrow ? "14px" : "15px"}/1 var(--e-body)`,
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+          textDecoration: "none",
+          boxShadow: theme.glow ? "0 0 30px color-mix(in srgb, var(--e-accent) 55%, transparent)" : undefined,
+        }}
+      >
+        {fromPrice === null ? labels.soldOut : labels.getTickets}
+        <ArrowRight size={16} strokeWidth={2} aria-hidden />
+      </a>
+      {event.lineup.length > 0 && (
+        <a
+          href="#lineup"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            padding: narrow ? "14px 22px" : "15px 30px",
+            borderRadius: 999,
+            border: `1px solid var(--e-line)`,
+            color: "var(--e-fg)",
+            font: `600 ${narrow ? "14px" : "15px"}/1 var(--e-body)`,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            textDecoration: "none",
+          }}
+        >
+          {labels.viewLineup}
+        </a>
+      )}
+    </div>
+  );
+
   const eyebrowText = upper ? event.subtype : event.subtype;
 
   // ── immersive / poster / neon / floodlit: art behind, content over a scrim ─
@@ -1263,6 +1414,8 @@ function Hero({
             </p>
           )}
           {meta}
+          {posterActions}
+          {soldBar}
         </div>
       </header>
     );
@@ -1365,6 +1518,7 @@ function Hero({
      A button to a section that is switched off is a promise the page cannot
      keep. */
   const agendaOn = variant === "structured" && event.lineup.length > 0;
+
   const actions = variant !== "structured" ? null : (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: narrow ? 24 : 32 }}>
       <a
@@ -1517,6 +1671,107 @@ function Countdown({
         </div>
       ))}
     </section>
+  );
+}
+
+/**
+ * The bill as a poster.
+ *
+ * Names are set in descending size by billing position: the headliner alone and
+ * enormous, the main support a step down and sharing a line, everything below
+ * that smaller again. Nothing here is decoration — the size is the claim, and
+ * it is the claim every gig poster has made since gig posters existed.
+ *
+ * Bands are separated by an accent bullet rather than a comma, because a comma
+ * at 60px reads as a mark on the page and a bullet reads as a divider.
+ */
+function PosterBill({
+  entries,
+  narrow,
+  theme,
+}: {
+  entries: EventRecord["lineup"];
+  narrow: boolean;
+  theme: EventTheme;
+}) {
+  /* Three bands: the top of the bill, the main support, and the rest. With a
+     short lineup the later bands are simply empty — a three-act night gets a
+     headliner and two names under it, which is exactly how it would be
+     printed. */
+  const bands = [entries.slice(0, 1), entries.slice(1, 3), entries.slice(3)].filter((b) => b.length);
+  const size = [
+    narrow ? "clamp(30px, 11vw, 46px)" : "clamp(46px, 6.4vw, 92px)",
+    narrow ? "clamp(21px, 7vw, 30px)" : "clamp(30px, 3.6vw, 52px)",
+    narrow ? "clamp(15px, 4.6vw, 20px)" : "clamp(19px, 2.1vw, 30px)",
+  ];
+  return (
+    <div style={{ display: "grid", gap: narrow ? 22 : 34, textAlign: "center" }}>
+      {bands.map((band, bi) => (
+        <div
+          key={bi}
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            gap: narrow ? "14px 12px" : "18px 22px",
+          }}
+        >
+          {band.map((e, i) => (
+            <div key={e.id} style={{ display: "flex", alignItems: "flex-start", gap: narrow ? 6 : 10, minWidth: 0 }}>
+              {i > 0 && (
+                <span
+                  aria-hidden
+                  style={{
+                    color: "var(--e-accent)",
+                    font: `700 ${size[bi]}/1.04 var(--e-display)`,
+                    fontSize: `calc(${size[bi]} * 0.5)`,
+                  }}
+                >
+                  &bull;
+                </span>
+              )}
+              <div style={{ minWidth: 0, textAlign: "center" }}>
+                <p
+                  style={{
+                    font: `700 ${size[bi]}/1.04 var(--e-display)`,
+                    letterSpacing: theme.displayTracking,
+                    textTransform: "uppercase",
+                    color: "var(--e-fg)",
+                    margin: 0,
+                    overflowWrap: "anywhere",
+                    textShadow:
+                      bi === 0 && theme.glow
+                        ? "0 0 44px color-mix(in srgb, var(--e-accent) 38%, transparent)"
+                        : undefined,
+                  }}
+                >
+                  {e.name}
+                </p>
+                {/* The set time sits under ITS OWN name, not in a row of times
+                    beneath the band — matching four times to four acts by
+                    their left-to-right order is a puzzle, not a running
+                    order. */}
+                {(e.at || e.role) && (
+                  <p
+                    style={{
+                      font: `500 ${narrow ? "12px" : "13px"}/1.4 var(--e-body)`,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: "var(--e-muted)",
+                      margin: `${narrow ? 8 : 10}px 0 0`,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {[e.at, e.role].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -2920,6 +3175,12 @@ function plateArt(accent: string, i: number, strong = false): string {
     `repeating-linear-gradient(${angle}deg, color-mix(in srgb, ${accent} ${strong ? 26 : 20}%, transparent) 0 1.5px, transparent 1.5px 13px)`,
     artFor(accent, i, strong),
   ].join(", ");
+}
+
+/** 21000 -> "21,000". The template is a published page rather than a till, so
+ *  it groups digits for reading; money still goes through `formatMoney`. */
+function formatCount(n: number): string {
+  return n.toLocaleString("en-US");
 }
 
 /** Is this theme's ground light? Decides how hard the cover art has to push. */

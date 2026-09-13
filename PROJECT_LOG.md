@@ -6152,3 +6152,99 @@ The hero art is still a generated plate rather than a photograph of the ground
 — the same cover-upload gap all six templates have. A tournament with a real
 draw would want a bracket; nothing in the model holds one, and inventing a
 knockout tree from a flat fixture list would be guessing.
+
+## Events — the entertainment template, rebuilt as a gig poster (2026-09-13)
+
+Owner supplied two references — a purple SaaS events dashboard with an event
+detail page, and a dark music-festival landing page — and asked for concert and
+event ticketing pages researched properly before rebuilding Entertainment &
+Social.
+
+Both references are purple-and-magenta and ours already was, so the palette was
+never the work. What the research actually says a concert page leads with:
+artwork and name, then **who is playing**, then **how much has gone**, then the
+ticket types. Two of those three we were not doing.
+
+### The bill is a poster
+
+The biggest change, and the one that makes this a gig page rather than a
+recoloured conference page. Four identical portrait plates cannot say who is
+headlining. **A festival poster has always said it by how big the name is set**
+— the type size IS the billing, and it is the one claim a grid of equal cards
+structurally cannot make.
+
+Three bands: the headliner alone at `clamp(46px, 6.4vw, 92px)` with the theme's
+glow behind it, the main support sharing a line a step down, everything below
+that smaller again. Acts are divided by an accent bullet rather than a comma,
+because a comma at 90px reads as a mark on the page and a bullet reads as a
+divider.
+
+It also needs no photography, which matters while cover art is still a
+generated plate — a wall of seven blank portraits would have been worse than
+the four it replaces.
+
+**A defect the first build had, caught by looking:** set times were a single
+row under each band, so matching four times to four acts was left to
+left-to-right order. Each act carries its own time under its own name now. That
+is a running order; the other was a puzzle.
+
+### How much of the room has gone
+
+Taken from the first reference's "Tickets Sold 21,000 / 30,000", and it is the
+one piece of urgency a ticketing page can state without adjectives: a bar and
+two figures the ledger already holds. Verified against the ledger rather than
+eyeballed — the seeded event is 2,072 of 5,160 and the fill measures **40%**.
+
+Drawn only once something has actually sold. "0 of 8,000 gone" is an argument
+against coming.
+
+### The rest
+
+- **Two actions in the hero** — Get tickets and See the lineup, both anchored to
+  sections that exist, the second only when there is a bill to send someone to.
+- **The gallery runs edge to edge**: four tiles, no gutters, full page width.
+  A contained mosaic is a gallery; a strip that runs off both sides is the wall
+  of faces every festival site puts between the bill and the tickets, and it is
+  the one place a page like this should stop behaving like a document.
+- **The theme glows.** Both references are neon and ours was not. That also
+  turns the countdown to the accent through the rule the sports pass
+  established — on a near-black page white is the one colour that says nothing
+  about the event.
+- The seed gained four more acts, because a billing hierarchy needs something
+  to be a hierarchy of.
+
+### Deliberately not taken
+
+The first reference's **seat plan** is its best idea and we cannot do it
+honestly. Colour-coding zones by ticket tier is easy; **placing them is not** —
+saying the VIP box is at the back left when the record holds no geometry is the
+invented-venue-zone mistake this log already records once, in another costume.
+The tier list with what each buys already carries the price comparison the
+legend was doing.
+
+Its **Packages** block is the ticket tiers under another name, and the second
+reference's **tours/blog/newsletter** blocks belong to a multi-event site rather
+than one event's page.
+
+### Verified
+
+- **13 checks driving the page**, all passing: both hero anchors resolving, the
+  sold figures, the fill matching the ledger at 40%, seven acts on the bill with
+  the headliner leading and sizes strictly descending (92 → 52 → 30), each act's
+  time paired to its own name at the top and bottom of the bill, the strip at
+  full page width with four tiles and no gutters, the countdown in the accent,
+  the title glowing, and no dead anchors.
+- All six templates measured clean — zero contrast failures, nothing under the
+  12px floor, nothing clipped, no console errors.
+- Sports 18/18, business 30/30, the two architect harnesses 6/6 and 8/8, the
+  sports wizard 7/7, wizard 9/9, review 15/15, accessibility 8/8, deck 9/9, and
+  the 32-route audit unchanged at **76**.
+- Bangla clean with 0 missing-message warnings. `tsc`, `npm run build` and
+  `eslint` clean; i18n parity **0 missing / 0 extra** across 31 namespaces.
+
+### One harness correction
+
+The glow check read `document.querySelector("h1")`, which is the OS page
+header's title rather than the template's — the same scoping mistake the nav
+check made earlier today. The glow had been visible in the render the whole
+time.

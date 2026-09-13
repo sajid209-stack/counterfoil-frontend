@@ -58,6 +58,9 @@ export function useTemplateLabels(categoryId: CategoryId | null) {
       checkout: t("tpl.checkout"),
       viewAllSpeakers: t("tpl.viewAllSpeakers"),
       viewAgenda: t("tpl.viewAgenda"),
+      viewLineup: t("tpl.viewLineup"),
+      ticketsSold: t("tpl.ticketsSold"),
+      ofCapacity: t("tpl.ofCapacity"),
       viewOnMap: t("tpl.viewOnMap"),
       // Kept as a raw ICU-free string with a {count} the template fills: it is
       // rendered inside an inline style tree, not JSX, so there is no element
