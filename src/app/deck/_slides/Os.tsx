@@ -1,6 +1,26 @@
-import { Archive, Check, Eye, MonitorSmartphone } from "lucide-react";
+import {
+  Archive,
+  Armchair,
+  CalendarRange,
+  Clock,
+  Coins,
+  Compass,
+  DoorOpen,
+  GraduationCap,
+  Hourglass,
+  LandPlot,
+  ListOrdered,
+  MonitorSmartphone,
+  Package,
+  Search,
+  Ticket as TicketIcon,
+  Timer,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Callout, Crop, Floor, Glow, Hotspot, Laptop, Phone, Pill, Slide, Step, Ticket, deckStyles as s } from "../_components/Parts";
+import { Crop, Floor, Glow, Hotspot, Laptop, Phone, Pill, SheetCard, Slide, Step, TextBlock, Ticket, Ticks, deckStyles as s } from "../_components/Parts";
 import dashLight from "../_media/os-dashboard-light.jpg";
 import calendar from "../_media/os-calendar-light.jpg";
 import bookings from "../_media/os-bookings.jpg";
@@ -13,54 +33,27 @@ import reportsDark from "../_media/os-reports-dark.jpg";
 import eventOs from "../_media/os-event.jpg";
 import turfPhone from "../_media/web-turfcup-phone.jpg";
 import settings from "../_media/os-settings.jpg";
+import sheetSeats from "../_media/sheet-seats.jpg";
+import sheetSlots from "../_media/sheet-slots.jpg";
 
 /*
  * Chapter 01 — Counterfoil OS, one slide per part of the admin app.
  *
- * Paper is the OS chapter's ground and ink is Go's, so where a slide sits in
- * the product can be told before a word of it is read. Each slide names at most
- * three or four things, and no two neighbours share a composition: a laptop, a
- * flat crop with a close-up, a bento, a list over its record, the same mirrored.
+ * Paper is the OS chapter's ground and ink is Go's. No two neighbours share a
+ * composition: a laptop with numbered points, a crop with a close-up, a bento,
+ * a list above its record, a device on ink.
+ *
+ * Every crop is cut on a row boundary of its screenshot, so no screen stops
+ * halfway through a line of text.
  */
 
-/** Stacked below 1280: a screen area that does not outgrow a tablet-width slide. */
-const SCREENS = "relative mx-auto w-full max-w-[680px] xl:mx-0 xl:max-w-none";
-
-function Intro({ eyebrow, title, lead, className }: { eyebrow: string; title: string; lead?: string; className?: string }) {
-  return (
-    <div className={className}>
-      <p className={s.eyebrow}>{eyebrow}</p>
-      <h2 className={cn(s.title, "mt-[max(10px,1.4cqw)]")}>{title}</h2>
-      {lead && <p className={cn(s.lead, "mt-[max(10px,1.6cqw)]")}>{lead}</p>}
-    </div>
-  );
-}
-
-function Ticks({ items, tone }: { items: string[]; tone: "ink" | "paper" }) {
-  return (
-    <ul className="flex flex-col gap-[max(10px,0.9cqw)]">
-      {items.map((line) => (
-        <li key={line} className={cn(s.body, "flex items-start gap-[max(10px,0.8cqw)]", tone === "paper" && "text-[#22211f]")}>
-          <span
-            aria-hidden
-            className={cn(
-              "mt-[0.2em] grid h-[max(20px,1.5cqw)] w-[max(20px,1.5cqw)] shrink-0 place-items-center rounded-full",
-              tone === "paper" ? "bg-[#141413] text-[#f5f2eb]" : "bg-white/10 text-[#ffa572]",
-            )}
-          >
-            <Check className="h-[60%] w-[60%]" strokeWidth={2.4} />
-          </span>
-          {line}
-        </li>
-      ))}
-    </ul>
-  );
-}
+export const OS_SECTION = "01 · Counterfoil OS";
 
 /** A chapter opens on ink, with its number printed on the stub. */
 export function ChapterDivider({
   n,
   chapter,
+  product,
   word,
   title,
   lead,
@@ -68,341 +61,493 @@ export function ChapterDivider({
 }: {
   n: number;
   chapter: string;
+  product: string;
   word: string;
   title: string;
   lead: string;
   contents: string[];
 }) {
   return (
-    <Slide tone="ink" n={n} section={`Chapter ${chapter}`} label={title}>
-      <Glow className="right-[-6%] top-[-30%] h-[120%] w-[62%]" />
+    <Slide tone="ink" n={n} section={`${chapter} · ${product}`} label={title}>
+      <Glow className="left-[840px] top-[-260px] h-[940px] w-[940px]" />
       <Floor />
-      <div className="relative grid h-full gap-10 xl:grid-cols-12 xl:gap-0">
-        <div className="flex flex-col justify-between gap-8 xl:col-span-6">
-          <p className={s.eyebrow}>Chapter {chapter}</p>
-          <div>
-            <h2 className={s.display}>{title}</h2>
-            <p className={cn(s.lead, "mt-[max(12px,1.8cqw)] max-w-[40ch]")}>{lead}</p>
-          </div>
-          <ul className="flex flex-wrap gap-[max(6px,0.6cqw)]">
-            {contents.map((c) => (
-              <li key={c}>
-                <Pill>{c}</Pill>
-              </li>
-            ))}
-          </ul>
-        </div>
-        {/* Capped below 1280: sized to a wide stacked slide, the tilted stub grew
-            up over the chapter's own contents. */}
-        <div className="relative mx-auto min-h-[240px] w-full max-w-[520px] sm:min-h-[340px] xl:col-span-6 xl:mx-0 xl:min-h-0 xl:max-w-none">
-          <Ticket
-            variant="glass"
-            className="absolute left-[6%] top-[40%] w-[56%] [transform:perspective(1000px)_rotateX(26deg)_rotateY(-24deg)_rotateZ(-16deg)] xl:left-[2%] xl:top-[44%]"
-          />
-          <Ticket
-            word={word}
-            kicker={`Chapter ${chapter}`}
-            code={`CF-2026-CH${chapter}`}
-            className={cn(s.float, "absolute right-[2%] top-[4%] w-[74%] xl:right-[4%] xl:top-[16%] xl:w-[70%]")}
-          />
-        </div>
+      <p className={cn(s.eyebrow, "absolute left-[96px] top-[92px]")}>Chapter {chapter}</p>
+      <div className={s.text} style={{ left: 96, top: 246, width: 700 }}>
+        <h2 className={s.display}>{title}</h2>
+        <p className={cn(s.lead, "mt-8 w-[620px]")}>{lead}</p>
+        <ul className="mt-11 flex w-[660px] flex-wrap gap-3">
+          {contents.map((c) => (
+            <li key={c}>
+              <Pill>{c}</Pill>
+            </li>
+          ))}
+        </ul>
       </div>
+      <Ticket
+        variant="glass"
+        width={400}
+        tilt="perspective(1000px) rotateX(26deg) rotateY(-24deg) rotateZ(-16deg)"
+        className="absolute left-[930px] top-[470px]"
+      />
+      <Ticket word={word} kicker={`Chapter ${chapter}`} code={`CF-2026-CH${chapter}`} width={500} className="absolute left-[990px] top-[228px]" />
     </Slide>
   );
 }
 
 export function DashboardSlide({ n }: { n: number }) {
   return (
-    <Slide tone="paper" n={n} section="Counterfoil OS" label="The day, at a glance">
-      <div className="grid h-full gap-10 xl:grid-cols-12 xl:gap-0">
-        <div className="flex flex-col justify-between gap-8 xl:col-span-4 xl:pr-[2cqw]">
-          <Intro eyebrow="Dashboard" title="The day, at a glance." lead="What came in, what is filling up, and what needs a decision before it costs money." />
-          <ol className="flex flex-col gap-[max(14px,1.5cqw)]">
-            <Step n={1} title="Four numbers" body="Revenue, capacity sold, arrivals and what is booked ahead." />
-            <Step n={2} title="Revenue trend" body="The last 30 days against the 30 before them." />
-            <Step n={3} title="Needs attention" body="A short cash count, a booking about to stop, a tablet gone quiet." />
-          </ol>
-        </div>
-        <div className={cn(SCREENS, "xl:col-span-8")}>
-          <div className="relative xl:absolute xl:right-[-4%] xl:top-[8%] xl:w-[102%]">
-            <Laptop src={dashLight} alt="The Counterfoil OS dashboard for Lalbagh Heritage Attractions" tilt="none" />
-            <Hotspot n={1} className="left-[19%] top-[18%]" />
-            <Hotspot n={2} className="left-[47%] top-[42%]" />
-            <Hotspot n={3} className="left-[85%] top-[38.5%]" />
-          </div>
-        </div>
-      </div>
+    <Slide tone="paper" n={n} section={OS_SECTION} label="The day, at a glance">
+      <TextBlock
+        eyebrow="Dashboard"
+        title={
+          <>
+            The day,
+            <br />
+            at a glance.
+          </>
+        }
+        lead="What came in, what is filling up, and what needs a decision before it costs money."
+      >
+        <ol className="flex flex-col gap-6">
+          <Step n={1} title="Four numbers" body="Revenue, capacity sold, arrivals and what is booked ahead." />
+          <Step n={2} title="Revenue trend" body="The last 30 days against the 30 before them." />
+          <Step n={3} title="Needs attention" body="A short cash count, a booking about to stop, a tablet gone quiet." />
+        </ol>
+      </TextBlock>
+      <Laptop src={dashLight} width={864} alt="The Counterfoil OS dashboard for Lalbagh Heritage Attractions" className="absolute left-[640px] top-[170px]">
+        {/* 1 sits on the corner of the first figure, not over its label. */}
+        <Hotspot n={1} x={17.2} y={14.1} />
+        <Hotspot n={2} x={47} y={42} />
+        <Hotspot n={3} x={85} y={38.5} />
+      </Laptop>
     </Slide>
   );
 }
 
-const STATES = [
-  { name: "Booked", swatch: "bg-[#fde2d4] ring-[#f3b495]" },
-  { name: "Arrived", swatch: "bg-[#dcefe2] ring-[#9fd0ae]" },
-  { name: "No-show", swatch: "bg-[#ebe7df] ring-[#cfc9bd]" },
-  { name: "Held back", swatch: "bg-[#f4e4c6] ring-[#dcc08c]" },
-  { name: "Session closed", swatch: "bg-[#f7d6d6] ring-[#e3a3a3]" },
+const CALENDAR_KEY = [
+  { label: "Today", body: "Marked, with a line at the current time." },
+  { label: "Side by side", body: "Two bookings at one time never hide each other." },
+  { label: "The key", body: "Each state is also a filter, with its count." },
 ];
 
 export function CalendarSlide({ n }: { n: number }) {
   return (
-    <Slide tone="paper" n={n} section="Counterfoil OS" label="Every session, lane and hold on one grid">
-      <div className="grid h-full gap-10 xl:grid-cols-12 xl:gap-[2.4cqw]">
-        <div className="flex flex-col justify-between gap-8 xl:col-span-4">
-          <Intro eyebrow="Calendar" title="Every session, lane and hold on one grid." lead="By day, week or month — with the capacity held back shown beside what is sold." />
-          <div className="flex flex-col gap-[max(12px,1.2cqw)]">
-            <ul className="flex flex-wrap gap-[max(6px,0.5cqw)]">
-              {STATES.map((st) => (
-                <li key={st.name}>
-                  <Pill>
-                    <span aria-hidden className={cn("h-[0.8em] w-[0.8em] rounded-[3px] ring-1 ring-inset", st.swatch)} />
-                    {st.name}
-                  </Pill>
-                </li>
-              ))}
-            </ul>
-            <p className={s.body}>Hover a block for the whole booking; filter by booking, category or lane.</p>
-          </div>
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Every session, lane and hold on one grid">
+      <TextBlock
+        eyebrow="Calendar"
+        title="Every session, lane and hold on one grid."
+        lead="By day, week or month — held capacity shown beside what is sold."
+        width={464}
+      />
+
+      {/* The close-up belongs to the words, so it sits in their column. */}
+      <div className="absolute left-[96px] top-[468px] w-[464px]">
+        {/* Clipped, with a short shadow: a long one darkened the caption under it below its reading floor. */}
+        <div className="overflow-hidden rounded-[22px] bg-[#f94a00] p-[4px] shadow-[0_16px_30px_-20px_rgb(20_20_19/0.45)]">
+          <Crop src={calendar} alt="" x={0.645} y={0.548} w={0.13} h={0.1} width={456} />
         </div>
-        <div className={cn(SCREENS, "xl:col-span-8")}>
-          <Crop src={calendar} alt="The calendar week view with bookings, a held private event and today marked" x={0.17} y={0.23} w={0.83} h={0.77} className="w-full xl:mt-[1cqw]" />
-          {/* The close-up: a session held for a private event, drawn hatched. */}
-          <div className="absolute bottom-[3%] left-[-3%] w-[40%] rounded-[max(14px,1.3cqw)] bg-[#f94a00] p-[max(3px,0.25cqw)] shadow-[0_30px_60px_-24px_rgb(20_20_19/0.5)] xl:bottom-[-2%] xl:left-[-5%] xl:w-[34%]">
-            <Crop src={calendar} alt="" x={0.64} y={0.535} w={0.1} h={0.085} />
-          </div>
-        </div>
+        <p className={cn(s.mono, "mt-8 uppercase text-[#aa3000]")}>Held back · Fri 31 Jul, 14:00</p>
+        <p className={cn(s.body, "mt-2")}>A private event, off sale — hatched, so it never reads as booked.</p>
       </div>
+
+      <Crop
+        src={calendar}
+        alt="The calendar week view: bookings, attendance and held capacity above a grid with a held private event"
+        x={0.17}
+        y={0.128}
+        w={0.825}
+        h={0.822}
+        width={896}
+        className="absolute left-[608px] top-[92px]"
+      >
+        {/* Where the close-up comes from. */}
+        <span aria-hidden className="absolute rounded-[10px] ring-[3px] ring-[#f94a00]" style={{ left: "57.6%", top: "51.1%", width: "15.8%", height: "12.2%" }} />
+      </Crop>
+      <ul className="absolute left-[608px] top-[686px] grid w-[896px] grid-cols-3 gap-6">
+        {CALENDAR_KEY.map(({ label, body }) => (
+          <li key={label} className="border-t border-[#dcd6cb] pt-4">
+            <p className={cn(s.mono, "uppercase text-[#aa3000]")}>{label}</p>
+            <p className={cn(s.body, "mt-2")}>{body}</p>
+          </li>
+        ))}
+      </ul>
     </Slide>
   );
 }
 
 export function BookingsSlide({ n }: { n: number }) {
   return (
-    <Slide tone="paper" n={n} section="Counterfoil OS" label="Everything you sell, in one catalogue">
-      <div className="grid h-full gap-[max(12px,1.4cqw)] xl:grid-cols-12 xl:grid-rows-3">
-        <div className={cn(s.card, s.paperCard, "relative flex min-h-[420px] flex-col overflow-hidden xl:col-span-7 xl:row-span-3 xl:min-h-0")}>
-          <Intro
-            eyebrow="Bookings"
-            title="Everything you sell, in one catalogue."
-            lead="Admission, tours, courts and events — each with its price, its category and where it is sold."
-            className="relative z-10 p-[max(18px,2.4cqw)] pb-0"
-          />
-          <div className={cn(s.washPanel, "absolute inset-x-0 bottom-0 h-[55%]")} />
-          <div className="relative mt-auto px-[max(14px,2cqw)]">
-            <Crop src={bookings} alt="The bookings catalogue with prices, channels and status" x={0.17} y={0.33} w={0.83} h={0.55} className="w-full translate-y-[6%]" />
-          </div>
-        </div>
-        <div className={cn(s.card, "flex items-center justify-between gap-6 bg-[#141413] p-[max(16px,2cqw)] text-[#f5f2eb] xl:col-span-5")}>
-          <div>
-            <p className="font-mono text-[max(12px,0.85cqw)] uppercase tracking-[0.12em] text-[#ffa572]">Not sellable</p>
-            <p className="mt-[max(6px,0.5cqw)] max-w-[30ch] text-[clamp(14px,1.1cqw,17px)] leading-snug text-[rgb(245_242_235/0.8)]">
-              A booking missing a price, a schedule or somewhere to sell says so before a customer finds out.
-            </p>
-          </div>
-          <span className={cn(s.numeral, s.accentInk)}>0</span>
-        </div>
-        {[
-          { icon: Archive, title: "On, off or archived — in bulk", body: "Tick the rows, then activate, deactivate or archive. Duplicate one to start the next." },
-          { icon: MonitorSmartphone, title: "Sold where you choose", body: "Counter, online or both — with seat layouts for rooms that have seats." },
-        ].map(({ icon: Icon, title, body }) => (
-          <div key={title} className={cn(s.card, s.paperCard, "flex flex-col justify-between gap-6 p-[max(16px,2cqw)] xl:col-span-5")}>
-            <span className="grid h-[max(36px,2.8cqw)] w-[max(36px,2.8cqw)] shrink-0 place-items-center rounded-[0.8cqw] bg-[#fff1e8] text-[#aa3000]">
-              <Icon className="h-[52%] w-[52%]" strokeWidth={1.6} aria-hidden />
-            </span>
-            <div>
-              <h3 className={s.heading}>{title}</h3>
-              <p className={cn(s.body, "mt-[max(4px,0.4cqw)]")}>{body}</p>
-            </div>
-          </div>
-        ))}
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Everything you sell, in one catalogue">
+      <TextBlock eyebrow="Bookings" title="Everything you sell, in one catalogue." width={860} />
+      <p className={cn(s.lead, s.text)} style={{ left: 1024, top: 128, width: 480 }}>
+        Admission, tours, courts and events — each with its price, its category and where it is sold.
+      </p>
+
+      <div className={cn(s.card, s.washPanel, "absolute left-[96px] top-[325px] grid h-[475px] w-[896px] place-items-center")}>
+        <Crop src={bookings} alt="The bookings catalogue, with bulk selection, prices, categories, channels and status" x={0.17} y={0.258} w={0.825} h={0.652} width={832} />
       </div>
+
+      <div className={cn(s.card, "absolute left-[1024px] top-[325px] flex h-[141px] w-[480px] items-center justify-between gap-6 bg-[#141413] px-8 text-[#f5f2eb]")}>
+        <div>
+          <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#ffa572]">Not sellable</p>
+          <p className="mt-2 w-[300px] text-[17px] leading-[1.45] text-[rgb(245_242_235/0.82)]">A booking missing a price, a schedule or somewhere to sell says so first.</p>
+        </div>
+        <span className="text-[88px] font-semibold leading-none tracking-[-0.06em] text-[#ff7a3d]">0</span>
+      </div>
+      {[
+        { icon: Archive, title: "On, off or archived — in bulk", body: "Tick the rows and act on them; duplicate one to start the next.", top: 492 },
+        { icon: MonitorSmartphone, title: "Sold where you choose", body: "Counter, online or both, with seat layouts for rooms with seats.", top: 659 },
+      ].map(({ icon: Icon, title, body, top }) => (
+        <div key={title} className={cn(s.card, s.paperCard, "absolute left-[1024px] flex h-[141px] w-[480px] items-center gap-5 px-8")} style={{ top }}>
+          <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[14px] bg-[#fff1e8] text-[#aa3000]">
+            <Icon size={24} strokeWidth={1.6} aria-hidden />
+          </span>
+          <div>
+            <h3 className={s.heading}>{title}</h3>
+            <p className={cn(s.body, "mt-1.5")}>{body}</p>
+          </div>
+        </div>
+      ))}
     </Slide>
   );
 }
+
+const WAYS: { icon: LucideIcon; name: string; hint: string }[] = [
+  { icon: DoorOpen, name: "Open entry", hint: "Walk in, any time" },
+  { icon: CalendarRange, name: "Date passes", hint: "A day, a week, a season" },
+  { icon: Clock, name: "Timed sessions", hint: "A show every 45 minutes" },
+  { icon: LandPlot, name: "Courts & fields", hint: "Hourly slots per resource" },
+  { icon: Timer, name: "Flexible duration", hint: "A lane by the hour" },
+  { icon: Hourglass, name: "Daily capacity", hint: "200 a day, any time" },
+  { icon: Compass, name: "Guided tours", hint: "Only when a guide is free" },
+  { icon: UserRound, name: "Appointments", hint: "A therapist and a time" },
+  { icon: GraduationCap, name: "Courses", hint: "Eight sessions, one sale" },
+  { icon: Coins, name: "Credit packs", hint: "Ten classes, used over time" },
+  { icon: Package, name: "Bundles", hint: "Three attractions, one price" },
+  { icon: ListOrdered, name: "Waitlists", hint: "When a session is full" },
+  { icon: TicketIcon, name: "Quick passes", hint: "Parking by the plate" },
+];
+
+export function BookingTypesSlide({ n }: { n: number }) {
+  return (
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Fourteen ways to sell time">
+      <TextBlock
+        eyebrow="Booking types"
+        title="Fourteen ways to sell time."
+        lead="One engine behind all of them, so a court and a concert can’t sell the same hour twice."
+        width={500}
+      />
+      {/* The label has its own row, and both sheets fit inside the panel whole. */}
+      <div className={cn(s.card, s.washPanel, "absolute left-[96px] top-[420px] h-[380px] w-[520px]")}>
+        <span className="absolute left-[24px] top-[20px] z-10 inline-flex items-center gap-2 rounded-full bg-[#141413] px-4 py-2 text-[15px] font-medium text-[#f5f2eb]">
+          <Armchair size={16} strokeWidth={1.6} aria-hidden /> Seat maps · Slots
+        </span>
+        <SheetCard src={sheetSeats} alt="The seat map sheet for an evening film, three seats chosen" width={196} className="absolute left-[56px] top-[78px] rotate-[-5deg]" />
+        <SheetCard src={sheetSlots} alt="Hourly slots on a futsal field" width={196} className="absolute left-[276px] top-[70px] rotate-[5deg]" />
+      </div>
+      <ul className="absolute left-[680px] top-[92px] grid h-[708px] w-[824px] grid-cols-3 grid-rows-5 gap-4">
+        {WAYS.map(({ icon: Icon, name, hint }) => (
+          <li key={name} className={cn(s.card, s.paperCard, "flex items-center gap-4 px-5")}>
+            <span className="grid h-[48px] w-[48px] shrink-0 place-items-center rounded-[13px] bg-[#fff1e8] text-[#aa3000]">
+              <Icon size={23} strokeWidth={1.6} aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[18px] font-semibold leading-tight tracking-[-0.01em]">{name}</span>
+              <span className="mt-1 block text-[15px] leading-snug text-[#6b675f]">{hint}</span>
+            </span>
+          </li>
+        ))}
+        <li className={cn(s.card, "col-span-2 flex items-center justify-between bg-[#141413] px-8 text-[#f5f2eb]")}>
+          <span>
+            <span className="block font-mono text-[14px] uppercase tracking-[0.12em] text-[rgb(245_242_235/0.7)]">One engine</span>
+            <span className="mt-1.5 block text-[18px] font-medium text-[rgb(245_242_235/0.88)]">Plus seat maps — fourteen in all.</span>
+          </span>
+          <span className="text-[72px] font-semibold leading-none tracking-[-0.05em] text-[#ff7a3d]">14</span>
+        </li>
+      </ul>
+    </Slide>
+  );
+}
+
+const HOLD_KINDS: { icon: LucideIcon; label: string }[] = [
+  { icon: Users, label: "A number of places" },
+  { icon: Clock, label: "A whole session" },
+  { icon: LandPlot, label: "A lane or court" },
+  { icon: Armchair, label: "Named seats" },
+];
 
 export function HoldsSlide({ n }: { n: number }) {
   return (
-    <Slide tone="paper" n={n} section="Counterfoil OS" label="Keep places back without faking a booking">
-      <div className="grid h-full gap-10 xl:grid-cols-12 xl:gap-[2.4cqw]">
-        <div className="flex flex-col justify-between gap-8 xl:col-span-4">
-          <Intro eyebrow="Holds" title="Hold places, on the record." lead="Every hold says who it is for, who placed it, and when it goes back on sale." />
-          <Ticks
-            tone="paper"
-            items={["A number of places, a whole session, a lane or named seats", "Released by hand, or on its own when its time is up", "A till holds its cart’s places for ten minutes"]}
-          />
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Hold places, on the record">
+      <TextBlock eyebrow="Holds" title="Hold places, on the record." width={900} />
+      <p className={cn(s.lead, s.text)} style={{ left: 1024, top: 128, width: 480 }}>
+        Every hold says who it is for and who placed it — and goes back on sale by hand, or when its time is up.
+      </p>
+
+      <div className={cn(s.card, s.paperCard, "absolute left-[96px] top-[256px] h-[190px] w-[692px] px-7 py-6")}>
+        <div className="flex items-baseline justify-between">
+          <h3 className={s.heading}>Planetarium Show · 1 Aug, 11:00</h3>
+          <span className={cn(s.mono, "text-[#6b675f]")}>40 places</span>
         </div>
-        <div className={cn(SCREENS, "flex flex-col justify-center gap-[max(14px,1.6cqw)] xl:col-span-8")}>
-          <Crop src={holds} alt="Holds for maintenance on lane 3, a private event and a school group" x={0.17} y={0.415} w={0.83} h={0.585} className="w-full" />
-          <div className={cn(s.card, s.paperCard, "p-[max(16px,2cqw)]")}>
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className={s.heading}>Planetarium Show · 1 Aug, 11:00</h3>
-              <span className={cn(s.mono, "text-[#6b675f]")}>40 places</span>
-            </div>
-            <div aria-hidden className="mt-[max(12px,1.2cqw)] flex h-[max(18px,1.6cqw)] overflow-hidden rounded-full ring-1 ring-inset ring-[#e2ded5]">
-              <span
-                className="h-full"
-                style={{
-                  width: `${(25 / 40) * 100}%`,
-                  background: "repeating-linear-gradient(135deg, #e9c79b 0 6px, #f4e4c6 6px 12px)",
-                }}
-              />
-              <span className="h-full flex-1 bg-[#f5f2eb]" />
-            </div>
-            <div className="mt-[max(10px,0.9cqw)] flex flex-wrap justify-between gap-2">
-              <p className={s.body}>
-                <span className="font-semibold text-[#22211f]">25 held</span> for Sunbeams School — Class 6
-              </p>
-              <p className={s.body}>The rest stay on sale</p>
-            </div>
-          </div>
+        <div aria-hidden className="mt-4 grid grid-cols-[repeat(20,26px)] gap-1">
+          {Array.from({ length: 40 }, (_, i) => (
+            <span
+              key={i}
+              className={cn("h-[22px] rounded-[5px]", i < 25 ? "ring-1 ring-inset ring-[#dcc08c]" : "bg-[#f5f2eb] ring-1 ring-inset ring-[#e2ded5]")}
+              style={i < 25 ? { background: "repeating-linear-gradient(135deg, #e9c79b 0 5px, #f4e4c6 5px 10px)" } : undefined}
+            />
+          ))}
+        </div>
+        <div className="mt-4 flex justify-between">
+          <p className={s.body}>
+            <span className="font-semibold text-[#22211f]">25 held</span> for Sunbeams School — Class 6
+          </p>
+          <p className={s.body}>15 still on sale</p>
         </div>
       </div>
+
+      {/* Four kinds as a 2 × 2 list — as pills they wrapped and cut the card's last line. */}
+      <div className={cn(s.card, s.paperCard, "absolute left-[812px] top-[256px] h-[190px] w-[692px] px-7 py-6")}>
+        <p className={cn(s.mono, "uppercase text-[#aa3000]")}>What can be held</p>
+        <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3">
+          {HOLD_KINDS.map(({ icon: Icon, label }) => (
+            <li key={label} className="flex items-center gap-3.5">
+              <span className="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-[12px] bg-[#fff1e8] text-[#aa3000]">
+                <Icon size={21} strokeWidth={1.6} aria-hidden />
+              </span>
+              <span className="text-[18px] font-semibold tracking-[-0.01em]">{label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <Crop
+        src={holds}
+        alt="Holds for maintenance on lane 3, a private event and a school group, each with who placed it"
+        x={0.17}
+        y={0.415}
+        w={0.825}
+        h={0.585}
+        width={1408}
+        className="absolute left-[96px] top-[470px]"
+      />
     </Slide>
   );
 }
 
+const STATUS_CHIPS = [
+  { label: "Paid", cls: "bg-[#e4f3e8] text-[#1f6f3d] ring-[#b9dfc5]" },
+  { label: "Partial", cls: "bg-[#fbe7cf] text-[#8a4a0b] ring-[#eec08a]" },
+  { label: "Pending", cls: "bg-[#e6eefb] text-[#2c55a0] ring-[#bfd0f0]" },
+  { label: "Refunded", cls: "bg-[#fbe4e2] text-[#a1302a] ring-[#f0bdb8]" },
+  { label: "Cancelled", cls: "bg-[#efebe4] text-[#57534c] ring-[#dcd6cb]" },
+];
+
 export function OrdersSlide({ n }: { n: number }) {
   return (
-    <Slide tone="paper" n={n} section="Counterfoil OS" label="Every sale, and the money behind it">
-      <div className="grid h-full gap-10 xl:grid-cols-12 xl:gap-[2.4cqw]">
-        <div className="flex flex-col justify-between gap-8 xl:col-span-4">
-          <Intro eyebrow="Orders" title="Every sale, and the money behind it." lead="Counter and online in one list — with what is collected and what is still owed." />
-          <Ticks
-            tone="paper"
-            items={["Each line kept as it was sold — add-ons, discounts and VAT", "Refund a line with a reason, resend a ticket, move a date", "Internal notes a guest never sees"]}
-          />
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Every sale, and the money behind it">
+      <TextBlock eyebrow="Orders" title="Every sale, and the money behind it." lead="Counter and online in one list — what was collected, and what is still owed.">
+        <Ticks tone="paper" items={["Each line kept as it was sold — add-ons, discounts and VAT", "Refund a line with a reason, resend a ticket, move a date", "Internal notes a guest never sees"]} />
+        <p className={cn(s.mono, "mt-9 uppercase text-[#aa3000]")}>Where an order stands</p>
+        <ul className="mt-3.5 flex gap-2">
+          {STATUS_CHIPS.map((c) => (
+            <li key={c.label} className={cn("rounded-[8px] px-3 py-1.5 font-mono text-[14px] font-medium uppercase tracking-[0.08em] ring-1 ring-inset", c.cls)}>
+              {c.label}
+            </li>
+          ))}
+        </ul>
+      </TextBlock>
+
+      {/* A bento, not a pile: the list, the money it adds up to, and one order opened. */}
+      <Crop src={orders} alt="The orders list: every sale with its customer, location, items, total and status" x={0.17} y={0.245} w={0.825} h={0.4646} width={840} className="absolute left-[664px] top-[92px]" />
+      <div className={cn(s.card, "absolute left-[664px] top-[412px] flex h-[388px] w-[356px] flex-col justify-between bg-[#141413] p-8 text-[#f5f2eb]")}>
+        <div>
+          <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#ffa572]">Outstanding</p>
+          <p className="mt-3 text-[46px] font-semibold leading-none tracking-[-0.04em] tabular-nums text-[#ff7a3d]">৳47,011.37</p>
+          <p className="mt-4 text-[17px] leading-[1.45] text-[rgb(245_242_235/0.78)]">Still owed — and shown on the order as a balance due.</p>
         </div>
-        <div className={cn(SCREENS, "sm:min-h-[520px] xl:col-span-8 xl:min-h-0")}>
-          <Crop src={orders} alt="The orders list with collected, orders, average order and outstanding" x={0.17} y={0.13} w={0.83} h={0.6} className="w-[90%]" />
-          <Crop
-            src={order}
-            alt="Order CF-2026-999001: paid in full, with its items, add-ons, discounts and VAT"
-            x={0.17}
-            y={0.17}
-            w={0.55}
-            h={0.62}
-            className="relative -mt-[14%] ml-auto w-[64%] sm:absolute sm:bottom-0 sm:right-0 sm:mt-0 sm:w-[52%] xl:bottom-[2%]"
-          />
-          <Callout tone="ink" label="Outstanding" value="৳47,011.37 still owed" className="absolute left-[4%] top-[52%] hidden sm:flex xl:top-[60%]" />
-        </div>
+        <dl className="flex flex-col gap-3 border-t border-white/12 pt-5">
+          {[
+            ["Collected", "৳605,564.78"],
+            ["Orders", "151"],
+            ["Average order", "৳5,138.39"],
+          ].map(([k, v]) => (
+            <div key={k} className="flex items-baseline justify-between text-[17px]">
+              <dt className="text-[rgb(245_242_235/0.66)]">{k}</dt>
+              <dd className="font-semibold tabular-nums">{v}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
+      <Crop
+        src={order}
+        alt="Order CF-2026-999001: paid in full, with its items, add-ons, discounts, VAT and total"
+        x={0.17}
+        y={0.172}
+        w={0.555}
+        h={0.6738}
+        width={460}
+        className="absolute left-[1044px] top-[412px]"
+      />
     </Slide>
   );
 }
 
 export function CustomersSlide({ n }: { n: number }) {
   return (
-    <Slide tone="paper" n={n} section="Counterfoil OS" label="Know the guest in front of you">
-      <div className="grid h-full gap-10 xl:grid-cols-12 xl:gap-[2.4cqw]">
-        <div className={cn(SCREENS, "order-2 sm:min-h-[500px] xl:order-1 xl:col-span-8 xl:min-h-0")}>
-          <Crop src={customers} alt="The customers list, ranked by spend, with marketing consent" x={0.17} y={0.15} w={0.83} h={0.6} className="ml-auto w-[90%]" />
-          <Crop
-            src={customer}
-            alt="Sabbir Alam’s record, flagged for staff attention, with spend and orders"
-            x={0.17}
-            y={0.13}
-            w={0.83}
-            h={0.62}
-            className="relative -mt-[12%] w-[80%] sm:absolute sm:left-0 sm:top-[46%] sm:mt-0 sm:w-[76%]"
-          />
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Know the guest in front of you">
+      <Crop src={customers} alt="The customers list, ranked by spend, with marketing consent" x={0.17} y={0.15} w={0.825} h={0.498} width={840} className="absolute left-[96px] top-[92px]">
+        {/* The row the record below opens. */}
+        <span aria-hidden className="absolute rounded-[8px] ring-[3px] ring-[#f94a00]" style={{ left: "1.2%", top: "43.2%", width: "97.6%", height: "12.4%" }} />
+      </Crop>
+      <Crop
+        src={customer}
+        alt="Sabbir Alam’s record: flagged for staff attention, with spend, orders and activity"
+        x={0.17}
+        y={0.135}
+        w={0.825}
+        h={0.505}
+        width={840}
+        className="absolute left-[96px] top-[433px]"
+      />
+
+      <TextBlock eyebrow="Customers" title="Know the guest in front of you." lead="One record per person — what they have bought, agreed to and still owe." left={984}>
+        <Ticks tone="paper" items={["Matched by phone, however the number is typed", "Email and SMS consent, kept as a record", "Merge duplicates; erase personal data on request"]} />
+        <div className={cn(s.card, "mt-9 bg-[#141413] px-7 py-6 text-[#f5f2eb]")}>
+          <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#ffa572]">Flagged for staff</p>
+          <p className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-[-0.015em]">“Repeated no-shows on booked tours. Take payment in full at booking.”</p>
+          <p className="mt-3 text-[16px] leading-[1.45] text-[rgb(245_242_235/0.72)]">Attach Sabbir to a sale and the till shows why.</p>
         </div>
-        <div className="order-1 flex flex-col justify-between gap-8 xl:order-2 xl:col-span-4">
-          <Intro eyebrow="Customers" title="Know the guest in front of you." lead="One record per person — what they have bought, agreed to and still owe." />
-          <Ticks
-            tone="paper"
-            items={["Matched by phone, however the number is typed", "Email and SMS consent, kept as a record", "Flag a guest, and the till shows why", "Merge duplicates; erase personal data on request"]}
-          />
-        </div>
-      </div>
+      </TextBlock>
     </Slide>
   );
 }
+
+const CHARTS = ["Revenue vs. last period", "Sales by hour", "Sales by weekday", "Payment mix", "Capacity used", "No-show rate", "Lead time", "Top bookings"];
 
 export function ReportsSlide({ n }: { n: number }) {
   return (
-    <Slide tone="ink" n={n} section="Counterfoil OS" label="Read the business by the hour">
-      <Glow className="bottom-[-40%] left-[20%] h-[90%] w-[50%] opacity-70" />
-      <div className="relative grid h-full gap-10 xl:grid-cols-12 xl:gap-0">
-        <div className="flex flex-col justify-between gap-8 xl:col-span-4">
-          <Intro eyebrow="Reports" title="Read the business by the hour." lead="Transactions, a summary, what is outstanding and analytics — all from one ledger." />
-          <div className={cn(s.card, s.inkCard, "flex items-center gap-[max(14px,1.6cqw)] p-[max(16px,1.8cqw)]")}>
-            <span className={cn(s.numeral, s.accentInk)}>8</span>
-            <p className={s.body}>charts: revenue against the period before, hour, weekday, payment mix, capacity, no-shows, lead time and top bookings.</p>
+    <Slide tone="ink" n={n} section={OS_SECTION} label="Read the business by the hour">
+      <Glow className="left-[760px] top-[380px] h-[700px] w-[800px] opacity-70" />
+      <TextBlock eyebrow="Reports" title="Read the business by the hour." lead="Transactions, a summary, what is outstanding and analytics — all from one ledger.">
+        <div className={cn(s.card, s.inkCard, "px-7 py-6")}>
+          <div className="flex items-end gap-4">
+            <span className="text-[72px] font-semibold leading-[0.8] tracking-[-0.06em] text-[#ff7a3d]">8</span>
+            <span className={cn(s.heading, "pb-[2px]")}>charts in Analytics</span>
           </div>
-          <div className="flex flex-wrap gap-[max(6px,0.6cqw)]">
-            <Pill>CSV export</Pill>
-            <Pill>Saved views</Pill>
-            <Pill>Shareable links</Pill>
-          </div>
+          <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-2.5">
+            {CHARTS.map((c) => (
+              <li key={c} className="flex items-center gap-2.5 text-[17px] text-[rgb(245_242_235/0.8)]">
+                <span aria-hidden className="h-[6px] w-[6px] shrink-0 rounded-full bg-[#ff7a3d]" />
+                {c}
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className={cn(SCREENS, "xl:col-span-8")}>
-          <div className="relative xl:absolute xl:right-[-6%] xl:top-[8%] xl:w-[102%]">
-            <Laptop src={reportsDark} alt="Sales analytics with revenue over time, sales by weekday and payment mix" tilt="left" />
-          </div>
-        </div>
-      </div>
+        <ul className="mt-7 flex gap-3">
+          {["CSV export", "Saved views", "Shareable links"].map((p) => (
+            <li key={p}>
+              <Pill>{p}</Pill>
+            </li>
+          ))}
+        </ul>
+      </TextBlock>
+      <Laptop src={reportsDark} width={820} tilt="left" alt="Sales analytics: revenue over time, sales by weekday and payment mix" className="absolute left-[676px] top-[184px]" />
     </Slide>
   );
 }
+
+/** Each template's own accent, from the event catalogue. */
+const TEMPLATES = [
+  { name: "Entertainment", accent: "#FF3D71" },
+  { name: "Sports", accent: "#2BE07C" },
+  { name: "Business", accent: "#1D4ED8" },
+  { name: "Arts", accent: "#2E4A3F" },
+  { name: "Travel", accent: "#B0004E" },
+  { name: "Nightlife", accent: "#B026FF" },
+];
 
 export function EventsSlide({ n }: { n: number }) {
   return (
-    <Slide tone="ink" n={n} section="Counterfoil OS" label="A page for every event">
-      <Glow className="right-[10%] top-[-40%] h-[90%] w-[55%] opacity-80" />
-      <div className="relative grid h-full gap-10 xl:grid-cols-12 xl:gap-0">
-        <div className="flex flex-col justify-between gap-8 xl:col-span-4">
-          <Intro eyebrow="Events" title="A page for every event." lead="Six templates, one per kind of event, selling the same tickets as the counter." />
-          <div className="grid grid-cols-2 gap-[max(8px,0.8cqw)]">
-            {[
-              { value: "6", label: "Events on sale" },
-              { value: "4,867", label: "Tickets sold" },
-            ].map(({ value, label }) => (
-              <div key={label} className={cn(s.card, s.inkCard, "p-[max(14px,1.4cqw)]")}>
-                <p className="text-[clamp(28px,2.8cqw,46px)] font-semibold leading-none tracking-[-0.04em]">{value}</p>
-                <p className="mt-[max(6px,0.5cqw)] font-mono text-[max(12px,0.85cqw)] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.66)]">{label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-[max(6px,0.6cqw)]">
-            {["Concerts", "Sports", "Conferences", "Galleries", "Tours", "Nightlife"].map((k) => (
-              <Pill key={k}>{k}</Pill>
-            ))}
-          </div>
+    <Slide tone="ink" n={n} section={OS_SECTION} label="A page for every event">
+      <Glow className="left-[820px] top-[-280px] h-[820px] w-[860px] opacity-80" />
+      <TextBlock eyebrow="Events" title="A page for every event." lead="Six templates, one per kind of event — each page built from the event’s own bill, tickets and venue.">
+        <div className="grid grid-cols-2 gap-4">
+          {[
+            { value: "6", label: "Events on sale" },
+            { value: "4,867", label: "Tickets sold" },
+          ].map(({ value, label }) => (
+            <div key={label} className={cn(s.card, s.inkCard, "px-6 py-5")}>
+              <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] tabular-nums">{value}</p>
+              <p className="mt-3 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.68)]">{label}</p>
+            </div>
+          ))}
         </div>
-        <div className={cn(SCREENS, "min-h-[300px] sm:min-h-[440px] xl:col-span-8 xl:min-h-0")}>
-          <div className="xl:absolute xl:right-[10%] xl:top-[6%] xl:w-[88%]">
-            <Laptop src={eventOs} alt="Chattogram Turf Cup in Counterfoil OS: 622 of 1,216 tickets sold, with a live preview of its page" tilt="left" />
-          </div>
-          <div className="absolute bottom-[-4%] right-[0%] w-[26%] xl:bottom-[-2%] xl:right-[-1%] xl:w-[22%]">
-            <Phone src={turfPhone} alt="The Chattogram Turf Cup page on a phone" tilt="right" />
-          </div>
-          <Callout tone="ink" label="Chattogram Turf Cup" value={<span className="text-[#ffa572]">622 / 1,216 sold</span>} className="absolute bottom-[2%] left-[0%] hidden sm:flex" />
-        </div>
-      </div>
+        <ul className="mt-4 grid grid-cols-3 gap-3">
+          {TEMPLATES.map(({ name, accent }) => (
+            <li key={name} className={cn(s.card, s.inkCard, "flex h-[56px] items-center gap-3 px-4 [--card-r:16px]")}>
+              <span aria-hidden className="h-[18px] w-[18px] shrink-0 rounded-full ring-2 ring-white/20" style={{ background: accent }} />
+              <span className="text-[16px] font-semibold">{name}</span>
+            </li>
+          ))}
+        </ul>
+      </TextBlock>
+      <Laptop
+        src={eventOs}
+        width={800}
+        tilt="left"
+        alt="Chattogram Turf Cup in Counterfoil OS: 622 of 1,216 tickets sold, with a live preview of its page"
+        className="absolute left-[660px] top-[160px]"
+      />
+      <Phone src={turfPhone} width={196} tilt="right" alt="The Chattogram Turf Cup page on a phone" className="absolute left-[1300px] top-[382px]" />
     </Slide>
   );
 }
 
+/** Settings that reach the counter, and where each one shows up. */
+const REACHES = [
+  ["Payment methods", "the till’s pay buttons"],
+  ["Tax", "every line of a sale"],
+  ["Opening float", "the start of a shift"],
+  ["Receipt message", "the foot of every receipt"],
+  ["Wrong PINs allowed", "the PIN screen"],
+];
+
+const SEARCHES = [
+  ["vat", "Tax"],
+  ["bkash", "Payments"],
+  ["dark mode", "Preferences"],
+  ["quiet hours", "Notifications"],
+];
+
 export function SettingsSlide({ n }: { n: number }) {
   return (
-    <Slide tone="paper" n={n} size="half" section="Counterfoil OS" label="Set up once, change it any time">
-      <div className="grid h-full items-center gap-8 xl:grid-cols-12 xl:gap-[2.2cqw]">
-        <Intro eyebrow="Settings" title="Set up once." lead="Every section shows what it is set to before you open it." className="xl:col-span-3" />
-        <Crop src={settings} alt="Settings, with each section’s current value beside it" x={0.17} y={0.215} w={0.83} h={0.49} className="w-full xl:col-span-6" />
-        <ul className="flex flex-col gap-[max(6px,0.5cqw)] xl:col-span-3">
-          {[
-            ["Tax", "VAT 15% · reduced 7.5%"],
-            ["Payments", "bKash · cash"],
-            ["Team", "9 members · 2 invited"],
-            ["Sign-in", "Two-step for managers"],
-            ["Notifications", "5 of 6 messages on"],
-          ].map(([name, value]) => (
-            <li key={name} className={cn(s.card, s.paperCard, "flex items-center justify-between gap-3 px-[max(12px,1cqw)] py-[max(8px,0.6cqw)]")}>
-              <span className="text-[clamp(13px,0.95cqw,15px)] font-semibold">{name}</span>
-              <span className="flex items-center gap-1.5 text-[clamp(12px,0.9cqw,14px)] text-[#57534c]">
-                <Eye className="hidden h-[1em] w-[1em] sm:block" strokeWidth={1.6} aria-hidden />
-                {value}
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Set up once, and the till follows">
+      <TextBlock eyebrow="Settings" title="Set up once." lead="Change a setting and the till follows — there is no second place to update it." width={464}>
+        <ul className="flex flex-col gap-3">
+          {REACHES.map(([name, where]) => (
+            <li key={name} className={cn(s.card, s.paperCard, "flex h-[72px] items-center justify-between gap-4 px-5 [--card-r:16px]")}>
+              <span className="text-[17px] font-semibold">{name}</span>
+              <span className="flex items-center gap-2 text-[16px] text-[#57534c]">
+                <span aria-hidden className="text-[#aa3000]">→</span>
+                {where}
               </span>
+            </li>
+          ))}
+        </ul>
+      </TextBlock>
+
+      <Crop src={settings} alt="Settings: each section with what it is set to, and search" x={0.17} y={0.128} w={0.825} h={0.617} width={896} className="absolute left-[608px] top-[92px]" />
+      <div className={s.text} style={{ left: 608, top: 551, width: 896 }}>
+        <p className={cn(s.mono, "flex items-center gap-2 uppercase text-[#aa3000]")}>
+          <Search size={15} strokeWidth={2} aria-hidden /> Search by what you’d type
+        </p>
+        <ul className="mt-4 grid grid-cols-2 gap-3">
+          {SEARCHES.map(([q, a]) => (
+            <li key={q} className={cn(s.card, s.paperCard, "flex h-[68px] items-center gap-3 px-5 [--card-r:16px]")}>
+              <span className="font-mono text-[16px] text-[#6b675f]">“{q}”</span>
+              <span aria-hidden className="text-[#aa3000]">→</span>
+              <span className="text-[17px] font-semibold">{a}</span>
             </li>
           ))}
         </ul>

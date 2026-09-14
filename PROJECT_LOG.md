@@ -7131,3 +7131,126 @@ Sources: [Shopify Editions — Summer 2025](https://www.shopify.com/editions/sum
 [Square — cash drawer sessions](https://squareup.com/help/us/en/article/8344-start-and-end-a-cash-drawer-session) ·
 [Gateway Ticketing](https://www.gatewayticketing.com/attraction-ticketing-software/) ·
 [Mock-it — mockup shadows](https://mock-it.co/mockups/step-by-step-adding-realistic-shadows-to-mockups/)
+
+## Counterfoil Deck, part three — one page size, a PDF, and a designer's review (2026-09-14)
+
+Owner asked for every page the same height and width, square corners, a full
+design review — layout, spacing, text, image-to-content ratio — with the pages
+they screenshotted rebuilt, and a Download PDF that is the same deck as the
+website.
+
+### Every slide is one 1600 × 900 canvas
+
+The old deck was sized in container units, so a slide's composition changed
+with the window and two slides were never quite the same shape. Now each slide
+is laid out once in real pixels and scaled to the column: `.frame` is a square
+16:9 box, `.canvas` is 1600 × 900 scaled by `--deck-scale`. The stylesheet
+carries a first guess per band of widths and `DeckScale` sets the exact figure
+(column width ÷ 1600) with a ResizeObserver, so there is no inline script and
+nothing jumps on client navigation.
+
+The grid every slide keeps: 96px side margins, the eyebrow at y 92, the footer
+40px from the bottom, nothing readable below y 812, and split slides at 520px
+of text to 840px of picture (about 38 : 62). The footer now names the chapter
+("01 · Counterfoil OS") rather than repeating the eyebrow.
+
+### Download PDF
+
+`npm run deck:pdf` (`scripts/deck-pdf.mjs`) opens `/deck` in Chromium at
+scale 1, hides the header, waits for every image on each slide and screenshots
+the 1600 × 900 canvas at 2×, then writes a minimal PDF by hand: one JPEG per
+page, 960 × 540pt (a standard 13.33 × 7.5in slide), with the cross-reference
+table checked before the file is written. `playwright-core` 1.62.1 is a pinned
+devDependency; `CHROME_PATH` points it at a Chromium binary.
+
+**The pages are pictures, on purpose.** A vector PDF (`page.pdf`) would keep
+text selectable, but PDF cannot draw the deck's blurs, masks and 3D device
+angles, and the brief was no difference between the website and the PDF. The
+trade: no selectable text or links in the PDF. The file is 25 pages, 8.5 MB, in
+`public/`. **It does not rebuild itself** — rerun `npm run deck:pdf` against a
+running app whenever a slide changes.
+
+### Found by looking
+
+- **The cover's lead ran into its pills**, because they were placed separately.
+  They are one block now.
+- **"cash-up" read "cash - up".** The app sets tabular figures on `body` for its
+  money columns, and in Inter that widens the hyphen too. The canvas sets figures
+  normally and asks for tabular ones only where digits line up.
+- **Crops cut screens mid-line.** Every crop is now cut on a row boundary of its
+  screenshot: the calendar, bookings, orders, order, customers, customer,
+  settings and all three POS sheets.
+- **Calendar:** the key and close-up were crammed under the grid. The close-up
+  moved into the text column with its caption, and the key became three
+  explained points under the grid.
+- **Holds:** four pills wrapped and cut the card's last line — now a 2 × 2 list
+  with icons. **Orders:** a bento (list, the money it adds up to, one order
+  opened) instead of a pile. **Customers:** the list's Sabbir row is ringed and
+  his record sits below it, with the staff flag quoted beside.
+- **Settings** was a half-height band; every slide is now the same size, so it
+  became a full slide saying what reaches the till.
+- **Gate:** two markers sat on top of each other and a third covered a word.
+  Each now lands on its control and clear of text. The shift receipt shows the
+  cash sales between float and expected.
+- **Bangladesh:** "Canada" wrapped alone onto a second line, and the ticket
+  covered a pill. **Ticket:** the SMS broke the reference code across two lines.
+- **Two contrast failures from the review itself:** a drawn "Take balance"
+  button, white on ember at 17px (3.50:1) — now 19px bold, which is large text
+  with a 3:1 floor — and the calendar caption, darkened to 4.06:1 by the
+  close-up's shadow, which is now clipped and shorter.
+- Module rules beat Tailwind utilities, so a card's corner is a CSS variable
+  (`[--card-r:16px]`) and a pill's size is a `style` prop rather than a utility
+  that would silently lose.
+- **Four heading sizes.** Slide titles were 62px, but the cover was 88, the
+  chapter openers 100 and the close 92 — each set by hand to fit. The deck now
+  has exactly two: 92 for display, 62 for titles; the cover's text column
+  widened by 40px to keep its three lines.
+- **The shift receipt's paper had no colour of its own**, only a gradient, so an
+  element-based contrast check read its dark type against the ink slide
+  (1.01:1). It now has a paper colour under the gradient — the right fallback
+  anyway.
+
+### A harness that was measuring the wrong thing
+
+The pixel-contrast check reported 136 failures — body text on ink at 1.1:1 —
+on slides that were plainly readable. It sampled one full-page screenshot, and
+the canvas deck is taller than the 16,384px Chromium captures in one texture,
+so the samples drifted off their text. It now shoots each slide on its own with
+text boxes recorded relative to their slide, and reports 0.
+
+### Verified
+
+- Layout at 1780, 1440, 1024 and 390: 25 slides all the same size at every
+  width, scale exactly 1 at 1780, no page overflow, no readable text outside the
+  margins, under the footer, clipped or covered, no console errors.
+- Pixel contrast, per slide: **0 of 361 text boxes below their floor** at 1780
+  and 1440.
+- The PDF read back: 25 pages, all 960 × 540pt, 25 intact 3200 × 1800 JPEGs,
+  xref found, title "Counterfoil Deck". Pages 1, 7 and 21 extracted and compared
+  by eye with the slides on the website — identical. Served as
+  `application/pdf`.
+- Deck harness 9/9, accessibility 8/8, review 15/15.
+- The 32-route audit first came back at 115: **45 on `/deck`** (the two causes
+  above) and the other routes unchanged at 70 — 69 the declared white-on-ember
+  rule, 1 the kitchen-sink inline link. After the fixes `/deck` alone audits at
+  **0**, so the full audit is back at its baseline of 70.
+- `tsc` and `eslint` on the deck and the script clean.
+
+### Open
+
+- **On a phone a slide is about 358px wide**, so its text is small. The page
+  allows pinch zoom, and the PDF reads well on a phone; reflowing slides for
+  phones would break the "same page everywhere" rule the owner set.
+- The PDF must be rebuilt by hand after slide changes, and has no selectable
+  text.
+- `npm install` pruned an optional peer entry (`next-intl`'s nested
+  `@swc/helpers`) from the lockfile alongside adding `playwright-core`.
+- The screenshots are static, and the deck is English only.
+
+Sources: [reveal.js — presentation size](https://revealjs.com/presentation-size/) ·
+[reveal.js — PDF export](https://revealjs.com/pdf-export/) ·
+[Slidev — exporting](https://sli.dev/guide/exporting) ·
+[Playwright — page.pdf](https://playwright.dev/docs/api/class-page#page-pdf) ·
+[Microsoft — slide size](https://support.microsoft.com/en-us/office/change-the-size-of-your-slides-040a811c-be43-40b9-8d04-0de5ed79987e) ·
+[WCAG 2.2 — contrast minimum](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) ·
+[YC — how to design a better pitch deck](https://www.ycombinator.com/blog/how-to-design-a-better-pitch-deck)
