@@ -6913,3 +6913,119 @@ Sources: [Square — payment types](https://squareup.com/help/us/en/article/6389
 [Linear — preferences](https://linear.app/docs/account-preferences) ·
 [Slack — accessibility](https://slack.com/help/articles/4455747966739-Accessibility-in-Slack) ·
 [Notion — account settings](https://www.notion.com/help/account-settings)
+
+## Counterfoil Deck — the company deck at /deck (2026-09-14)
+
+Owner asked for the `/deck` scaffold to become a company deck: researched against
+the best-designed SaaS decks, one scrolling page, not interactive, in Counterfoil's
+design system, with website and POS shown in 3D device mockups plus abstract
+graphics, reviewed and redrawn until it holds up.
+
+### What it is
+
+Twelve slides, each a 16:9 stage from 1280px up and its own height below that:
+cover · the problem · one system (OS + Go) · how it works · Go at the counter ·
+fourteen booking types · built in Bangladesh · OS reporting · the platform ·
+event pages · today · close.
+
+**Everything shown is real.** The screens are the product's own, captured from
+the app (dashboard light and dark, sales reports, calendar, the tablet till with a
+sale in the cart, the till in Bangla, the seat-map and time-slot sheets, the
+concert and conference event pages). The figures are the project record's: about
+twenty operators, four countries, fourteen booking types, two languages. There
+are no market-size, revenue or team slides, because there are no real numbers
+for them in this repo, and a deck that invents one statistic teaches its reader
+to doubt the rest.
+
+### The design, and where it came from
+
+The research (Sequoia's outline, YC's slide rules, DocSend's attention study,
+2025–26 SaaS visual trends, how Square, Fresha and Eventbrite show product) gave
+the rules the deck keeps:
+
+- **One idea a slide, headlines short enough to read at a glance**, and the
+  product on slide 3 rather than slide 9.
+- **Ink and paper alternate**: paper for explaining, ink for the moments. One
+  ember focal point a slide.
+- **One device composition a slide, at one angle**, with at most two pieces of UI
+  lifted off the screen as callouts.
+- **Grain on paper only**, never behind UI or small text.
+- **Mono eyebrows and page numbers**, the Swiss-grid pairing that Inter + DM Mono
+  already are.
+
+**Devices are CSS, not images**: a laptop lid and base, a tablet, and a phone
+bezel with a dynamic island, tilted with perspective, each showing a real
+screenshot through `next/image` with blur placeholders.
+
+**The signature object is a counterfoil**: a perforated ember ticket stub with
+two notches cut by intersecting masks and a darker copy behind it for depth. It
+floats on the cover, is voided on the problem slide and prints in taka and Bangla
+on the market slide. It is the one graphic the company is named after, so it is
+the one abstract element the deck repeats.
+
+The deck is mode-locked (a company deck has one look) and reads the brand scale
+directly. Type and spacing are container-query units with px floors, so a slide
+keeps its composition from a laptop to a wall screen and nothing goes under the
+12px floor on a phone. It sits outside the OS shell, as `/pos` does.
+
+### Found by looking and measuring, not by the checks
+
+- **Tickets fell into the flow and stacked, and every callout showed on a
+  phone.** A CSS-module rule for `position` or `display` loads after Tailwind and
+  silently beats `absolute` and `hidden sm:flex`. Neither property is set in the
+  module any more, and the file says why. **Worth remembering for any CSS module
+  mixed with utilities.**
+- **At 1024 the densest slides ran into their own footers.** A 16:9 slide there
+  is 540px tall while its text holds a readable floor. 16:9 now starts at 1280;
+  below it slides stack, with device areas capped so a phone does not fill a
+  tablet-width slide.
+- **82 spacings in `cqw` had no floor.** 2cqw is 26px on a laptop slide and 7px on
+  a phone one, which put text against card edges.
+- **White body text on the orange cards measured 3.0–4.4:1** where the gradient
+  was brightest. Brand ember #F94A00 under white is 3.50:1, right for display
+  type and wrong for a sentence, so the cards start at brand-600 depth and the
+  vivid ember lives in a corner highlight and the glow around them.
+- A payment tag read "Cash৳800", an event browser card covered the category
+  pills, and the warm panel behind the booking-type sheets crossed their
+  description.
+
+### Two measuring tools, one new and one corrected
+
+- `deckcontrast.mjs` (scratchpad) measures contrast on **pixels**: it records
+  every text box, hides the text, screenshots the page and samples the real
+  background under each box. It exists because the deck paints with gradients,
+  and a `background-color` walk cannot see a gradient.
+- **The route audit reported 133 findings on `/deck` that were not there**: light
+  text on ink slides measured against the pale page behind the deck. Both slide
+  styles now also declare a `background-color` under the gradient, which is the
+  correct fallback anyway. The audit also had a real bug on text below the fold:
+  its sibling path forgot the element's own fill, so a dark pill measured
+  light-on-pale. Fixed in the harness, which took it back to its baseline.
+
+### Verified
+
+- Pixel contrast: **0 text boxes below their floor** at 1440, 1024 and 390; the
+  lowest is 5.13:1.
+- Layout at 1440 · 1280 · 1024 · 390: no page overflow, no text clipped by its
+  slide or under its footer, nothing under 12px, no console errors.
+- Deck harness 9/9 (sidebar link, outside the shell, mobile More sheet),
+  accessibility 8/8, review 15/15. The 32-route audit is back at **70**, with
+  `/deck` contributing none.
+- `tsc`, `eslint` on the deck and `npm run build` clean.
+
+### Open
+
+- **The screenshots are static.** They will drift as the product changes; the
+  capture scripts are in the scratchpad, not the repo.
+- English only, while the rest of the app is bilingual.
+- A deck for investors would add market, business model, team and the ask. Those
+  need real figures from the owner.
+
+Sources: [Sequoia — writing a business plan](https://www.sequoiacap.com/article/writing-a-business-plan/) ·
+[YC — how to design a better pitch deck](https://www.ycombinator.com/blog/how-to-design-a-better-pitch-deck) ·
+[DocSend deck study](https://techcrunch.com/2015/06/08/lessons-from-a-study-of-perfect-pitch-decks-vcs-spend-an-average-of-3-minutes-44-seconds-on-them) ·
+[Linear-style design](https://blog.logrocket.com/ux-design/linear-design/) ·
+[Bento grids](https://www.orbix.studio/blogs/bento-grid-dashboard-design-aesthetics) ·
+[SaaS screenshots](https://screenhance.com/blog/saas-landing-page-screenshots) ·
+[Square hardware](https://squareup.com/us/en/hardware) ·
+[Fresha for business](https://www.fresha.com/for-business)
