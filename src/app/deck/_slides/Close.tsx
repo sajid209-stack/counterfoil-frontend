@@ -188,39 +188,28 @@ export function BangladeshSlide({ n }: { n: number }) {
         }
         lead="Bangla and English, bKash and Bangla QR, VAT and taka — with Stripe for cards abroad."
         width={548}
-      >
-        {/* Names and marks, no boxes: the six rails read as a list, with room around it. */}
+      />
+      {/* The six rails in three rows of two, on the slide's bottom line — level with the foot of the cards on the right. */}
+      <div className={s.text} style={{ left: 96, bottom: 100, width: 548 }}>
         <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Takes payment by</p>
-        <ul className="mt-6 grid grid-cols-3 gap-x-4 gap-y-8">
+        <ul className="mt-6 grid grid-cols-2 gap-x-8 gap-y-7">
           {PAY.map(({ name, note, mark, color, icon: Icon }) => (
-            <li key={name} className="flex items-center gap-3">
+            <li key={name} className="flex items-center gap-3.5">
               {mark ? (
-                <span aria-hidden className="grid h-[36px] min-w-[36px] shrink-0 place-items-center rounded-[11px] px-1.5 text-[12px] font-bold text-white" style={{ background: color }}>
+                <span aria-hidden className="grid h-[40px] min-w-[40px] shrink-0 place-items-center rounded-[12px] px-1.5 text-[13px] font-bold text-white" style={{ background: color }}>
                   {mark}
                 </span>
               ) : (
                 Icon && (
-                  <span aria-hidden className="grid h-[36px] w-[36px] shrink-0 place-items-center rounded-[11px] bg-white/10 text-[#ffa572]">
-                    <Icon size={18} strokeWidth={1.7} />
+                  <span aria-hidden className="grid h-[40px] w-[40px] shrink-0 place-items-center rounded-[12px] bg-white/10 text-[#ffa572]">
+                    <Icon size={19} strokeWidth={1.7} />
                   </span>
                 )
               )}
               <span className="min-w-0">
-                <span className="block text-[17px] font-semibold leading-tight">{name}</span>
-                <span className="mt-0.5 block text-[14px] text-[rgb(245_242_235/0.64)]">{note}</span>
+                <span className="block text-[18px] font-semibold leading-tight">{name}</span>
+                <span className="mt-0.5 block text-[15px] text-[rgb(245_242_235/0.64)]">{note}</span>
               </span>
-            </li>
-          ))}
-        </ul>
-      </TextBlock>
-      {/* On the slide's bottom line, level with the foot of the cards on the right. */}
-      <div className={s.text} style={{ left: 96, bottom: 100, width: 548 }}>
-        <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Selling in</p>
-        <ul className="mt-4 flex gap-5">
-          {COUNTRIES.map(([code, name]) => (
-            <li key={code} className="flex items-baseline gap-2 text-[17px] font-medium">
-              <span className="font-mono text-[13px] font-semibold text-[#ffa572]">{code}</span>
-              {name}
             </li>
           ))}
         </ul>

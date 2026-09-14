@@ -7480,3 +7480,19 @@ Verified: layout at 1780, 1440, 1024 and 390 (25 slides the same size,
 nothing clipped, covered or outside the margins, no console errors); pixel
 contrast 0 of 428 below the floor; `/deck` audits at 0; PDF rebuilt;
 `tsc` and `eslint` clean.
+
+## Counterfoil Deck, part eight — payment rails on the bottom line (2026-09-15)
+
+Owner asked for "Selling in" to go from the Bangladesh slide, and for "Takes
+payment by" to be three rows of two, bottom-aligned.
+
+- "Selling in" is removed (the countries remain on the Today slide).
+- The six rails sit in their own block anchored at `bottom: 100`, so their
+  foot is level with the cards on the right: a 40px mark, the name at 18px and
+  a note at 15px, in two columns of three.
+- The lead above is now the TextBlock's last line; the open space between it
+  and the rails is deliberate, the same bottom-line treatment as the order
+  statuses and the Pay picker.
+
+Verified: layout at 1780, 1440, 1024 and 390; pixel contrast 0 of 419 below
+the floor; `/deck` audits at 0; PDF rebuilt; `tsc` and `eslint` clean.
