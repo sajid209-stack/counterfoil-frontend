@@ -164,24 +164,14 @@ export function TodaySlide({ n }: { n: number }) {
   );
 }
 
-/* Local rails and the ones that travel, each with what it is for. */
-const RAILS: { group: string; items: { name: string; note: string; mark?: string; color?: string; icon?: LucideIcon }[] }[] = [
-  {
-    group: "In Bangladesh",
-    items: [
-      { name: "bKash", note: "By transaction ID", mark: "b", color: "#d1115f" },
-      { name: "Bangla QR", note: "Any bank app", mark: "QR", color: "#0b7a4b" },
-      { name: "SSLCOMMERZ", note: "Cards, online", mark: "SSL", color: "#2458a8" },
-    ],
-  },
-  {
-    group: "Anywhere",
-    items: [
-      { name: "Stripe", note: "Cards abroad", mark: "S", color: "#5a4fe6" },
-      { name: "Card terminal", note: "Tap or insert", icon: CreditCard },
-      { name: "Cash", note: "Counted at close", icon: Banknote },
-    ],
-  },
+/* The local rails first, then the ones that travel. */
+const PAY: { name: string; note: string; mark?: string; color?: string; icon?: LucideIcon }[] = [
+  { name: "bKash", note: "By transaction ID", mark: "b", color: "#d1115f" },
+  { name: "Bangla QR", note: "Any bank app", mark: "QR", color: "#0b7a4b" },
+  { name: "SSLCOMMERZ", note: "Cards, online", mark: "SSL", color: "#2458a8" },
+  { name: "Stripe", note: "Cards abroad", mark: "S", color: "#5a4fe6" },
+  { name: "Card terminal", note: "Tap or insert", icon: CreditCard },
+  { name: "Cash", note: "Counted at close", icon: Banknote },
 ];
 
 export function BangladeshSlide({ n }: { n: number }) {
@@ -199,44 +189,42 @@ export function BangladeshSlide({ n }: { n: number }) {
         lead="Bangla and English, bKash and Bangla QR, VAT and taka — with Stripe for cards abroad."
         width={548}
       >
-        <div className="flex flex-col gap-5">
-          {RAILS.map(({ group, items }) => (
-            <div key={group}>
-              <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">{group}</p>
-              <ul className="mt-2.5 grid grid-cols-3 gap-3">
-                {items.map(({ name, note, mark, color, icon: Icon }) => (
-                  <li key={name} className="flex h-[108px] flex-col justify-between rounded-[16px] bg-white/[0.05] p-4 ring-1 ring-inset ring-white/10">
-                    {mark ? (
-                      <span aria-hidden className="grid h-[30px] w-fit min-w-[30px] place-items-center rounded-[9px] px-1.5 text-[12px] font-bold text-white" style={{ background: color }}>
-                        {mark}
-                      </span>
-                    ) : (
-                      Icon && (
-                        <span aria-hidden className="grid h-[30px] w-[30px] place-items-center rounded-[9px] bg-white/10 text-[#ffa572]">
-                          <Icon size={17} strokeWidth={1.7} />
-                        </span>
-                      )
-                    )}
-                    <span>
-                      <span className="block text-[17px] font-semibold leading-tight">{name}</span>
-                      <span className="mt-0.5 block text-[14px] text-[rgb(245_242_235/0.66)]">{note}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <p className="mt-7 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Selling in</p>
-        <ul className="mt-2.5 flex gap-2">
-          {COUNTRIES.map(([code, name]) => (
-            <li key={code} className="inline-flex h-[40px] items-center gap-2 rounded-full bg-white/[0.06] px-3 ring-1 ring-inset ring-white/10">
-              <span className="font-mono text-[12px] font-semibold text-[#ffa572]">{code}</span>
-              <span className="text-[15px] font-medium">{name}</span>
+        {/* Names and marks, no boxes: the six rails read as a list, with room around it. */}
+        <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Takes payment by</p>
+        <ul className="mt-6 grid grid-cols-3 gap-x-4 gap-y-8">
+          {PAY.map(({ name, note, mark, color, icon: Icon }) => (
+            <li key={name} className="flex items-center gap-3">
+              {mark ? (
+                <span aria-hidden className="grid h-[36px] min-w-[36px] shrink-0 place-items-center rounded-[11px] px-1.5 text-[12px] font-bold text-white" style={{ background: color }}>
+                  {mark}
+                </span>
+              ) : (
+                Icon && (
+                  <span aria-hidden className="grid h-[36px] w-[36px] shrink-0 place-items-center rounded-[11px] bg-white/10 text-[#ffa572]">
+                    <Icon size={18} strokeWidth={1.7} />
+                  </span>
+                )
+              )}
+              <span className="min-w-0">
+                <span className="block text-[17px] font-semibold leading-tight">{name}</span>
+                <span className="mt-0.5 block text-[14px] text-[rgb(245_242_235/0.64)]">{note}</span>
+              </span>
             </li>
           ))}
         </ul>
       </TextBlock>
+      {/* On the slide's bottom line, level with the foot of the cards on the right. */}
+      <div className={s.text} style={{ left: 96, bottom: 100, width: 548 }}>
+        <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Selling in</p>
+        <ul className="mt-4 flex gap-5">
+          {COUNTRIES.map(([code, name]) => (
+            <li key={code} className="flex items-baseline gap-2 text-[17px] font-medium">
+              <span className="font-mono text-[13px] font-semibold text-[#ffa572]">{code}</span>
+              {name}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <Phone src={posPhoneBn} width={290} tilt="right" alt="Counterfoil Go in Bangla on a phone" className="absolute left-[808px] top-[104px]" />
       <Ticket word="৳500" kicker="বিকাশ · bKash" width={320} className="absolute left-[680px] top-[580px]" />

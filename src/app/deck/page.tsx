@@ -88,7 +88,6 @@ export default function DeckPage() {
           title="Run the business."
           lead="Counterfoil OS is where a venue is set up, watched and reconciled — on the web, for one location or all of them."
           contents={OS_CONTENTS}
-          thumb="landscape"
         />
         <DashboardSlide n={6} />
         <CalendarSlide n={7} />
@@ -109,7 +108,6 @@ export default function DeckPage() {
           title="Sell at the counter."
           lead="Counterfoil Go is the till and the gate — on a tablet or a phone, in the hands of the person selling."
           contents={GO_CONTENTS}
-          thumb="portrait"
         />
         <PosFindSlide n={17} />
         <PosChooseSlide n={18} />

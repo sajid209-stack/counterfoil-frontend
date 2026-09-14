@@ -4,17 +4,33 @@ import {
   ArrowRight,
   Armchair,
   Bookmark,
+  Briefcase,
   CalendarCheck,
+  CalendarDays,
+  ChartNoAxesColumn,
   Clock,
   Columns2,
   CornerDownLeft,
   Download,
   LandPlot,
+  LayoutDashboard,
   Link2,
   ListFilter,
+  Lock,
+  Moon,
+  Music,
+  Palette,
+  PartyPopper,
+  Plane,
   Receipt,
+  ReceiptText,
   Search,
+  Settings,
+  Shapes,
+  Ticket as TicketIcon,
+  Trophy,
   Users,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -37,12 +53,6 @@ import {
 } from "../_components/Parts";
 import { GoLockup } from "../_components/GoLogo";
 import logoOnPaper from "../_media/logo-counterfoil.png";
-import tplEntertainment from "../_media/tpl-entertainment.jpg";
-import tplSports from "../_media/tpl-sports.jpg";
-import tplBusiness from "../_media/tpl-business.jpg";
-import tplArts from "../_media/tpl-arts.jpg";
-import tplTravel from "../_media/tpl-travel.jpg";
-import tplNightlife from "../_media/tpl-nightlife.jpg";
 import dashLight from "../_media/os-dashboard-light.jpg";
 import calendar from "../_media/os-calendar-light.jpg";
 import bookings from "../_media/os-bookings.jpg";
@@ -71,47 +81,31 @@ import sheetSlots from "../_media/sheet-slots.jpg";
 
 export const OS_SECTION = "01 · Counterfoil OS";
 
-/** The parts of chapter 01, each with the screen it opens on. */
+/** The parts of chapter 01, each with the icon the OS sidebar gives it. */
 export const OS_CONTENTS: ChapterPart[] = [
-  { name: "Dashboard", page: 6, src: dashLight, x: 0.17, y: 0.08, w: 0.5 },
-  { name: "Calendar", page: 7, src: calendar, x: 0.4, y: 0.34, w: 0.45 },
-  { name: "Bookings", page: 8, src: bookings, x: 0.17, y: 0.26, w: 0.5 },
-  { name: "Booking types", page: 9, src: sheetSlots, x: 0.04, y: 0.3, w: 0.92 },
-  { name: "Holds", page: 10, src: holds, x: 0.17, y: 0.28, w: 0.36 },
-  { name: "Orders", page: 11, src: orders, x: 0.17, y: 0.24, w: 0.5 },
-  { name: "Customers", page: 12, src: customers, x: 0.17, y: 0.12, w: 0.5 },
-  { name: "Reports", page: 13, src: reportsDark, x: 0.3, y: 0.24, w: 0.5 },
-  { name: "Events", page: 14, src: eventOs, x: 0.3, y: 0.14, w: 0.5 },
-  { name: "Settings", page: 15, src: settings, x: 0.17, y: 0.12, w: 0.5 },
+  { name: "Dashboard", page: 6, icon: LayoutDashboard },
+  { name: "Calendar", page: 7, icon: CalendarDays },
+  { name: "Bookings", page: 8, icon: TicketIcon },
+  { name: "Booking types", page: 9, icon: Shapes },
+  { name: "Holds", page: 10, icon: Lock },
+  { name: "Orders", page: 11, icon: ReceiptText },
+  { name: "Customers", page: 12, icon: UsersRound },
+  { name: "Reports", page: 13, icon: ChartNoAxesColumn },
+  { name: "Events", page: 14, icon: PartyPopper },
+  { name: "Settings", page: 15, icon: Settings },
 ];
 
-const THUMB = { landscape: { w: 124, h: 78 }, portrait: { w: 100, h: 150 } } as const;
-
-/** A part's own screen, cropped to a thumbnail, with the page it starts on. */
-function PartThumb({ part, shape }: { part: ChapterPart; shape: keyof typeof THUMB }) {
-  const box = THUMB[shape];
-  const h = (part.w * part.src.width) / (box.w / box.h) / part.src.height;
-  return (
-    <div className="relative overflow-hidden rounded-[10px] bg-[#1c1b19] ring-1 ring-white/15" style={{ width: box.w, height: box.h }}>
-      <Image
-        src={part.src}
-        alt=""
-        sizes={`${Math.min(3840, Math.round(box.w / part.w) * 2)}px`}
-        className={s.cropImg}
-        style={{ width: `${100 / part.w}%`, left: `${(-part.x / part.w) * 100}%`, top: `${(-part.y / h) * 100}%` }}
-      />
-      <span className="absolute left-1.5 top-1.5 rounded-[6px] bg-[#141413]/90 px-1.5 py-[3px] font-mono text-[12px] leading-none text-[#f5f2eb]">
-        {String(part.page).padStart(2, "0")}
-      </span>
-    </div>
-  );
-}
+/* A contents item is an icon tile over its name and page. */
+const PART_W = 124;
+const PART_H = 112;
+const PART_GAP_Y = 28;
 
 /**
  * A chapter opens on ink, with the product's own marque printed on the ticket
  * and the chapter's number on its stub. The Counterfoil logotype is OS's own
  * mark — the app draws no OS tag beside it — and Go carries the Go artwork,
- * streaks and all. What the chapter holds is shown as the screens themselves.
+ * streaks and all. What the chapter holds is set like an app's home screen:
+ * each part's icon, its name, and the page it starts on.
  */
 export function ChapterDivider({
   n,
@@ -121,7 +115,6 @@ export function ChapterDivider({
   title,
   lead,
   contents,
-  thumb,
 }: {
   n: number;
   chapter: string;
@@ -130,27 +123,26 @@ export function ChapterDivider({
   title: string;
   lead: string;
   contents: ChapterPart[];
-  thumb: keyof typeof THUMB;
 }) {
   const logo = marque === "go" ? <GoLockup /> : <Image src={logoOnPaper} alt="" sizes="360px" />;
-  const box = THUMB[thumb];
-  const cols = Math.round((700 + 20) / (box.w + 20));
-  const rows = Math.ceil(contents.length / cols);
-  const contentsHeight = rows * (box.h + 27) + (rows - 1) * 18;
+  const cols = contents.length > 6 ? 5 : contents.length;
   return (
     <Slide tone="ink" n={n} section={`${chapter} · ${product}`} label={title}>
       <Glow className="left-[840px] top-[-260px] h-[940px] w-[940px]" />
       <Floor />
       <p className={cn(s.eyebrow, "absolute left-[96px] top-[92px]")}>Chapter {chapter}</p>
-      {/* Both openers finish on the same line, however many parts they hold. */}
-      <div className={s.text} style={{ left: 96, top: 206 + (228 - contentsHeight), width: 700 }}>
+      {/* Anchored by its foot: title, lead and contents end on the same line (y 730) on both openers, however many parts they hold. */}
+      <div className={s.text} style={{ left: 96, bottom: 170, width: 760 }}>
         <h2 className={s.display}>{title}</h2>
         <p className={cn(s.lead, "mt-8 w-[620px]")}>{lead}</p>
-        <ol className="mt-11 grid gap-x-5 gap-y-[18px]" style={{ gridTemplateColumns: `repeat(${cols}, ${box.w}px)` }}>
-          {contents.map((part) => (
-            <li key={part.name}>
-              <PartThumb part={part} shape={thumb} />
-              <p className="mt-2 text-[15px] font-medium leading-[19px] text-[rgb(245_242_235/0.88)]">{part.name}</p>
+        <ol className="mt-11 grid" style={{ gridTemplateColumns: `repeat(${cols}, ${PART_W}px)`, rowGap: PART_GAP_Y }}>
+          {contents.map(({ name, page, icon: Icon }) => (
+            <li key={name} className="flex flex-col" style={{ height: PART_H }}>
+              <span className="grid h-[60px] w-[60px] place-items-center rounded-[18px] bg-white/[0.06] text-[#ffa572] ring-1 ring-inset ring-white/10">
+                <Icon size={26} strokeWidth={1.5} aria-hidden />
+              </span>
+              <span className="mt-3 text-[16px] font-medium leading-tight text-[#f5f2eb]">{name}</span>
+              <span className="mt-1 font-mono text-[13px] tabular-nums text-[rgb(245_242_235/0.62)]">{String(page).padStart(2, "0")}</span>
             </li>
           ))}
         </ol>
@@ -715,26 +707,26 @@ export function ReportsSlide({ n }: { n: number }) {
           ))}
         </ul>
       </TextBlock>
-      <Laptop src={reportsDark} width={820} tilt="left" alt="Sales analytics: revenue over time, sales by weekday and payment mix" className="absolute left-[676px] top-[184px]" />
+      <Laptop src={reportsDark} width={760} tilt="left" alt="Sales analytics: revenue over time, sales by weekday and payment mix" className="absolute left-[744px] top-[196px]" />
     </Slide>
   );
 }
 
-/** The six templates, each shown by the top of a real event page built with it. */
-const TEMPLATES = [
-  { name: "Entertainment", src: tplEntertainment, event: "Mega concert" },
-  { name: "Sports", src: tplSports, event: "Turf cup" },
-  { name: "Business", src: tplBusiness, event: "Tech summit" },
-  { name: "Arts", src: tplArts, event: "Exhibition" },
-  { name: "Travel", src: tplTravel, event: "Sundarbans trip" },
-  { name: "Nightlife", src: tplNightlife, event: "Underground night" },
+/** The six templates, one per kind of event. */
+const TEMPLATES: { name: string; hint: string; icon: LucideIcon }[] = [
+  { name: "Entertainment", hint: "Concerts, shows", icon: Music },
+  { name: "Sports", hint: "Tournaments", icon: Trophy },
+  { name: "Business", hint: "Conferences", icon: Briefcase },
+  { name: "Arts", hint: "Exhibitions", icon: Palette },
+  { name: "Travel", hint: "Tours, trips", icon: Plane },
+  { name: "Nightlife", hint: "Club nights", icon: Moon },
 ];
 
 export function EventsSlide({ n }: { n: number }) {
   return (
     <Slide tone="ink" n={n} section={OS_SECTION} label="A page for every event">
       <Glow className="left-[820px] top-[-280px] h-[820px] w-[860px] opacity-80" />
-      <TextBlock eyebrow="Events" title="A page for every event." lead="Six templates, one per kind of event, each built from the event’s own bill and tickets.">
+      <TextBlock eyebrow="Events" title="A page for every event." lead="One template per kind of event, each built from the event’s own bill and tickets." width={500}>
         <div className="flex gap-2.5">
           {[
             ["6", "events on sale"],
@@ -746,26 +738,30 @@ export function EventsSlide({ n }: { n: number }) {
             </p>
           ))}
         </div>
-        <ul className="mt-8 grid grid-cols-3 gap-x-[14px] gap-y-[18px]">
-          {TEMPLATES.map(({ name, src, event }) => (
-            <li key={name}>
-              <div className="relative aspect-[16/10] overflow-hidden rounded-[10px] ring-1 ring-white/12">
-                <Image src={src} alt={`The ${name} template: the ${event.toLowerCase()} page`} fill sizes="200px" placeholder="blur" className="object-cover object-top" />
-              </div>
-              <p className="mt-2.5 text-[16px] font-semibold leading-none">{name}</p>
+        <p className="mt-11 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Six templates</p>
+        <ul className="mt-5 grid grid-cols-2 gap-x-8 gap-y-6">
+          {TEMPLATES.map(({ name, hint, icon: Icon }) => (
+            <li key={name} className="flex items-center gap-4">
+              <span className="grid h-[48px] w-[48px] shrink-0 place-items-center rounded-[14px] bg-white/[0.06] text-[#ffa572] ring-1 ring-inset ring-white/10">
+                <Icon size={22} strokeWidth={1.6} aria-hidden />
+              </span>
+              <span>
+                <span className="block text-[18px] font-semibold leading-tight">{name}</span>
+                <span className="mt-0.5 block text-[15px] text-[rgb(245_242_235/0.66)]">{hint}</span>
+              </span>
             </li>
           ))}
         </ul>
       </TextBlock>
-      {/* Both in dark: OS in its dark theme, and the event's own floodlit page on the phone. */}
+      {/* Both in dark: OS in its dark theme, and the event's own floodlit page on the phone. Set well clear of the words. */}
       <Laptop
         src={eventOs}
-        width={800}
+        width={760}
         tilt="left"
         alt="Chattogram Turf Cup in Counterfoil OS, dark theme: 622 of 1,216 tickets sold, with a live preview of its page"
-        className="absolute left-[660px] top-[160px]"
+        className="absolute left-[740px] top-[176px]"
       />
-      <Phone src={turfPhone} bar="#09160f" ink="light" width={196} tilt="right" alt="The Chattogram Turf Cup page on a phone" className="absolute left-[1300px] top-[372px]" />
+      <Phone src={turfPhone} bar="#09160f" ink="light" width={188} tilt="right" alt="The Chattogram Turf Cup page on a phone" className="absolute left-[1316px] top-[388px]" />
     </Slide>
   );
 }

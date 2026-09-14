@@ -7247,6 +7247,14 @@ text boxes recorded relative to their slide, and reports 0.
   `@swc/helpers`) from the lockfile alongside adding `playwright-core`.
 - The screenshots are static, and the deck is English only.
 
+Sources: [reveal.js — presentation size](https://revealjs.com/presentation-size/) ·
+[reveal.js — PDF export](https://revealjs.com/pdf-export/) ·
+[Slidev — exporting](https://sli.dev/guide/exporting) ·
+[Playwright — page.pdf](https://playwright.dev/docs/api/class-page#page-pdf) ·
+[Microsoft — slide size](https://support.microsoft.com/en-us/office/change-the-size-of-your-slides-040a811c-be43-40b9-8d04-0de5ed79987e) ·
+[WCAG 2.2 — contrast minimum](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) ·
+[YC — how to design a better pitch deck](https://www.ycombinator.com/blog/how-to-design-a-better-pitch-deck)
+
 ## Counterfoil Deck, part four — Go on its own devices (2026-09-15)
 
 Owner review of the live deck marked eight slides: the POS sheets needed real
@@ -7443,10 +7451,32 @@ Sources: [SaaSFrame — bento grid patterns](https://www.saasframe.io/patterns/b
 [Setproduct — Vercel's blueprint grid](https://www.setproduct.com/blog/complete-guide-to-blueprint-grid-design) ·
 [Deckary — traction slides](https://deckary.com/blog/traction-slide-pitch-deck)
 
-Sources: [reveal.js — presentation size](https://revealjs.com/presentation-size/) ·
-[reveal.js — PDF export](https://revealjs.com/pdf-export/) ·
-[Slidev — exporting](https://sli.dev/guide/exporting) ·
-[Playwright — page.pdf](https://playwright.dev/docs/api/class-page#page-pdf) ·
-[Microsoft — slide size](https://support.microsoft.com/en-us/office/change-the-size-of-your-slides-040a811c-be43-40b9-8d04-0de5ed79987e) ·
-[WCAG 2.2 — contrast minimum](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) ·
-[YC — how to design a better pitch deck](https://www.ycombinator.com/blog/how-to-design-a-better-pitch-deck)
+## Counterfoil Deck, part seven — room to breathe (2026-09-15)
+
+Owner review marked seven spots: the Bangladesh payment cards were crowded;
+the Pay slide's method picker should sit on the bottom line; the Find phone
+needed room from the tiles; the chapter openers and the Events categories
+should drop their screenshots for something minimal; and the Reports and
+Events laptops sat too close to the words.
+
+- **Chapter openers:** the screen thumbnails became each part's icon — the
+  same glyph the OS sidebar uses — over its name and page number, like an
+  app's home screen. The block is anchored by its foot (`bottom: 170`), so
+  both openers end on one line however many parts they hold. `ChapterPart` is
+  now `{ name, page, icon }`.
+- **Events:** the six template thumbnails became an icon, a name and what it
+  is for ("Concerts, shows", "Tournaments"…). The laptop is smaller and 80px
+  further right. The six `tpl-*.jpg` captures were deleted.
+- **Reports:** the laptop is 760 wide at x 744, well clear of the charts.
+- **Find:** the stand steps right and down a size (676 at x 828); the phone
+  sits clear of the tiles and over the stand's edge rather than its screen.
+- **Pay:** the method picker is placed on its own at y 694–754, level with the
+  foot of the first phone.
+- **Bangladesh:** the six cards became an open list — a mark, the name and a
+  short note — and "Selling in" moved to the slide's bottom line, level with
+  the cards on the right.
+
+Verified: layout at 1780, 1440, 1024 and 390 (25 slides the same size,
+nothing clipped, covered or outside the margins, no console errors); pixel
+contrast 0 of 428 below the floor; `/deck` audits at 0; PDF rebuilt;
+`tsc` and `eslint` clean.

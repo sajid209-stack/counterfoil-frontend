@@ -1,4 +1,4 @@
-import { ArrowRight, Banknote, CreditCard, MessageSquare, Printer, QrCode, Send, Ticket as TicketIcon, type LucideIcon } from "lucide-react";
+import { ArrowRight, Banknote, CreditCard, KeyRound, MessageSquare, MousePointerClick, Printer, QrCode, ScanLine, Search, Send, Ticket as TicketIcon, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Glow, Hotspot, Phone, PosStand, Slide, Step, TextBlock, Ticket, deckStyles as s, type ChapterPart } from "../_components/Parts";
 import till from "../_media/go-till.jpg";
@@ -26,14 +26,14 @@ import pin from "../_media/go-pin.jpg";
 
 export const GO_SECTION = "02 · Counterfoil Go";
 
-/** The parts of chapter 02, each with the phone screen it opens on. */
+/** The parts of chapter 02, each with the icon of what the cashier does. */
 export const GO_CONTENTS: ChapterPart[] = [
-  { name: "Find", page: 17, src: phoneSell, x: 0, y: 0.05, w: 1 },
-  { name: "Choose", page: 18, src: sheetShow, x: 0, y: 0.26, w: 1 },
-  { name: "Pay", page: 19, src: cash, x: 0, y: 0.26, w: 1 },
-  { name: "Ticket", page: 20, src: complete, x: 0, y: 0.04, w: 1 },
-  { name: "Admit", page: 21, src: scan, x: 0, y: 0.08, w: 1 },
-  { name: "Shift", page: 22, src: pin, x: 0, y: 0.14, w: 1 },
+  { name: "Find", page: 17, icon: Search },
+  { name: "Choose", page: 18, icon: MousePointerClick },
+  { name: "Pay", page: 19, icon: Banknote },
+  { name: "Ticket", page: 20, icon: TicketIcon },
+  { name: "Admit", page: 21, icon: ScanLine },
+  { name: "Shift", page: 22, icon: KeyRound },
 ];
 
 /** Behind a sheet the page is dimmed, so the phone's status bar takes that grey rather than paper. */
@@ -78,13 +78,13 @@ export function PosFindSlide({ n }: { n: number }) {
           ))}
         </ul>
       </TextBlock>
-      <PosStand src={till} width={724} alt="Counterfoil Go on a countertop stand: the sell wall with a sale in the cart" className="absolute left-[780px] top-[150px]">
+      <PosStand src={till} width={676} alt="Counterfoil Go on a countertop stand: the sell wall with a sale in the cart" className="absolute left-[828px] top-[172px]">
         <Hotspot n={1} x={60} y={12.8} />
         <Hotspot n={2} x={34} y={61} />
         <Hotspot n={3} x={74.6} y={13.8} />
       </PosStand>
-      {/* The same wall on a phone, for a counter that is a person with a phone. */}
-      <Phone src={phoneSell} width={190} alt="The sell wall on a phone, with one item in the cart" className="absolute left-[640px] top-[372px]" />
+      {/* The same wall on a phone, for a counter that is a person with a phone — clear of the tiles, over the stand's edge rather than its screen. */}
+      <Phone src={phoneSell} width={186} alt="The sell wall on a phone, with one item in the cart" className="absolute left-[676px] top-[400px]" />
     </Slide>
   );
 }
@@ -165,22 +165,22 @@ export function PosPaySlide({ n }: { n: number }) {
           <Step n={2} title="Cash" body="Tap Exact or a note; the change is worked out." />
           <Step n={3} title="bKash or Bangla QR" body="Confirmed with the transaction ID before the sale lands." />
         </ol>
-        {/* The payment picker as the cart draws it, cash chosen. */}
-        <div role="list" aria-label="Payment methods" className="mt-10 inline-flex rounded-full bg-white/[0.06] p-1.5 ring-1 ring-inset ring-white/10">
-          {METHODS.map(({ icon: Icon, label }, i) => (
-            <span
-              key={label}
-              role="listitem"
-              className={cn(
-                "flex h-[48px] items-center gap-2 rounded-full px-5 text-[17px]",
-                i === 0 ? "bg-[#f5f2eb] font-semibold text-[#141413] shadow-[0_8px_18px_-10px_rgb(0_0_0/0.8)]" : "font-medium text-[rgb(245_242_235/0.82)]",
-              )}
-            >
-              <Icon size={18} strokeWidth={1.8} className={i === 0 ? "text-[#d93f00]" : undefined} aria-hidden /> {label}
-            </span>
-          ))}
-        </div>
       </TextBlock>
+      {/* The payment picker as the cart draws it, cash chosen — its foot level with the foot of the first phone (y 754). */}
+      <div role="list" aria-label="Payment methods" className="absolute left-[96px] top-[694px] inline-flex rounded-full bg-white/[0.06] p-1.5 ring-1 ring-inset ring-white/10">
+        {METHODS.map(({ icon: Icon, label }, i) => (
+          <span
+            key={label}
+            role="listitem"
+            className={cn(
+              "flex h-[48px] items-center gap-2 rounded-full px-5 text-[17px]",
+              i === 0 ? "bg-[#f5f2eb] font-semibold text-[#141413] shadow-[0_8px_18px_-10px_rgb(0_0_0/0.8)]" : "font-medium text-[rgb(245_242_235/0.82)]",
+            )}
+          >
+            <Icon size={18} strokeWidth={1.8} className={i === 0 ? "text-[#d93f00]" : undefined} aria-hidden /> {label}
+          </span>
+        ))}
+      </div>
       {/* Stepped up to the right: the order the three screens come in. */}
       <Phone src={cart} width={262} alt="The cart: General Admission and a yoga session, paying by cash" className="absolute left-[668px] top-[206px]">
         <Hotspot n={1} x={50} y={24.7} small />

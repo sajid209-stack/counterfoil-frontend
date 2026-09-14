@@ -1,6 +1,6 @@
 import Image, { type StaticImageData } from "next/image";
 import type { CSSProperties, ReactNode } from "react";
-import { Check } from "lucide-react";
+import { Check, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import s from "../deck.module.css";
 import markBlack from "../_media/mark-plain.png";
@@ -9,11 +9,8 @@ export const TOTAL = 25;
 
 export type Tone = "ink" | "paper";
 
-/**
- * One part of a chapter, shown on its opener as a thumbnail of its own screen:
- * `x`, `y` and `w` are the region of the screenshot to show, as fractions.
- */
-export type ChapterPart = { name: string; page: number; src: StaticImageData; x: number; y: number; w: number };
+/** One part of a chapter, shown on its opener by the icon the product gives it and the page it starts on. */
+export type ChapterPart = { name: string; page: number; icon: LucideIcon };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
