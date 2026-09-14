@@ -22,5 +22,8 @@
   "previousMonth": "Previous month",
   "nextMonth": "Next month",
   "today": "Today",
-  "openCalendar": "Choose a date"
+  "openCalendar": "Choose a date",
+  "light": "Light",
+  "dark": "Dark",
+  "system": "System"
 }

@@ -7,7 +7,7 @@ import { CircleCheck, MessageSquare, Printer, Ticket as TicketIcon } from "lucid
 import { Button, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
-import { formatMoney } from "@/lib/format";
+import { formatDay, formatMoney } from "@/lib/format";
 import { DEFAULT_SMS_TEMPLATE, renderSms } from "@/lib/sms";
 
 const TODAY = "2026-07-29";
@@ -33,7 +33,9 @@ export default function CompletePage() {
   const smsText = renderSms(operatorQ.data?.smsTemplate || DEFAULT_SMS_TEMPLATE, {
     business,
     code: info?.code ?? "",
-    date: TODAY,
+    // A date a customer reads, not "2026-07-29" — the same form the Ticket
+    // messages preview in Settings shows, so the preview is the message.
+    date: formatDay(TODAY, { weekday: true }),
   });
 
   return (

@@ -25,6 +25,7 @@ import {
   type Order,
 } from "@/lib/api";
 import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
+import { isDeviceQuiet } from "@/lib/devices";
 import { formatDateTime, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { cn } from "@/lib/cn";
@@ -440,7 +441,7 @@ export default function DashboardPage() {
       });
     }
     (devicesQ.data?.data ?? []).forEach((d) => {
-      if (!d.lastSeenAt || d.lastSeenAt.slice(0, 10) <= dayShift(TODAY, -7)) items.push({
+      if (isDeviceQuiet(d, TODAY)) items.push({
         tone: "info", Icon: WifiOff,
         title: t("noticeDeviceTitle"),
         body: t("deviceNotSeen", { name: d.name }),

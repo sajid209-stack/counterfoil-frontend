@@ -8,23 +8,16 @@ import {
   CalendarDays,
   Check,
   ChartLine,
-  CreditCard,
   Ellipsis,
-  LandPlot,
   LayoutDashboard,
   SquareStack,
-  MapPin,
-  MonitorSmartphone,
   Package,
   PartyPopper,
   ReceiptText,
   Search,
   Settings,
-  ShieldCheck,
   Store,
   TicketPercent,
-  UserCog,
-  Users,
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -58,15 +51,12 @@ const DESTINATIONS = [
   { href: "/promotions", key: "promotions", icon: TicketPercent },
   { href: "/pos", key: "pos", icon: Store },
   { href: "/deck", key: "deck", icon: SquareStack },
-  { href: "/settings/resources", key: "resources", icon: LandPlot },
-  { href: "/settings/counters", key: "counters", icon: Store },
-  { href: "/settings/locations", key: "locations", icon: MapPin },
-  { href: "/settings/team", key: "team", icon: Users },
-  { href: "/settings/devices", key: "devices", icon: MonitorSmartphone },
-  { href: "/settings/payments", key: "payments", icon: CreditCard },
-  { href: "/settings/roles", key: "roles", icon: UserCog },
-  { href: "/settings/security", key: "security", icon: ShieldCheck },
-  { href: "/settings/business", key: "settings", icon: Settings },
+  // One Settings entry, to the index. The grid used to list eight settings
+  // pages as separate destinations — nearly half of it — and send "Settings"
+  // itself to Business, so the one door labelled Settings opened onto a single
+  // page of it. The index shows every section with its current value, which a
+  // grid of icons never could.
+  { href: "/settings", key: "settings", icon: Settings },
 ] as const;
 
 /**

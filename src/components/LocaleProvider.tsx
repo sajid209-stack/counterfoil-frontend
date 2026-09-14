@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useId, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Languages } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -39,18 +39,37 @@ export function LocaleToggle({ className }: { className?: string }) {
 }
 
 /** The language picker — OS Settings and the Go shift menu share it. */
-export function LanguagePicker({ className }: { className?: string }) {
+export function LanguagePicker({
+  className,
+  showLabel = true,
+  labelledBy,
+  describedBy,
+}: {
+  className?: string;
+  /** Off where the surrounding row already names the control. */
+  showLabel?: boolean;
+  labelledBy?: string;
+  describedBy?: string;
+}) {
   const locale = useLocale() as Locale;
   const { setLocale } = useSetLocale();
   const t = useTranslations("common");
+  const ownLabelId = useId();
   return (
     <div className={className}>
-      <span className="type-label mb-tight block text-[12px] text-muted">{t("language")}</span>
-      <div className="flex gap-tight">
+      {showLabel && (
+        <span id={ownLabelId} className="type-label mb-tight block text-[12px] text-muted">
+          {t("language")}
+        </span>
+      )}
+      <div role="group" aria-labelledby={showLabel ? ownLabelId : labelledBy} aria-describedby={describedBy} className="flex gap-tight">
         {LOCALES.map((l) => (
           <button
             key={l}
             type="button"
+            // Each option is written in its own language, so a screen reader
+            // has to be told to pronounce "বাংলা" as Bangla.
+            lang={l}
             onClick={() => setLocale(l)}
             aria-pressed={locale === l}
             className={`h-11 flex-1 rounded-sm border text-sm transition-colors duration-quick ${locale === l ? "border-ember bg-ember/5 font-medium" : "border-line bg-card"}`}

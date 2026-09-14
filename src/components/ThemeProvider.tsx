@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useId, useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ThemeProvider as NextThemes, useTheme } from "next-themes";
 
 /** Class-strategy theming (light · dark · system), persisted, no flash. */
@@ -65,8 +66,23 @@ export function ModeButton({ className, shape = "square" }: { className?: string
 }
 
 /** The appearance picker — OS Settings and the Go shift menu share it. */
-export function AppearancePicker({ className }: { className?: string }) {
+export function AppearancePicker({
+  className,
+  showLabel = true,
+  labelledBy,
+  describedBy,
+}: {
+  className?: string;
+  /** Off where the surrounding row already names the control. */
+  showLabel?: boolean;
+  labelledBy?: string;
+  describedBy?: string;
+}) {
   const { theme, setTheme } = useTheme();
+  // Light, Dark and System were rendered straight from the theme ids with a
+  // CSS capitalise, so the picker stayed English inside a Bangla screen.
+  const t = useTranslations("common");
+  const ownLabelId = useId();
   /* The stored theme only exists in the browser, so the server cannot know
    * which of the three is pressed. Rendering that guess and then correcting it
    * is exactly the hydration mismatch React warns about — and the warning is
@@ -80,17 +96,21 @@ export function AppearancePicker({ className }: { className?: string }) {
   const current = ready ? theme : undefined;
   return (
     <div className={className}>
-      <span className="type-label mb-tight block text-[12px] text-muted">Appearance</span>
-      <div className="flex gap-tight">
-        {(["light", "dark", "system"] as const).map((t) => (
+      {showLabel && (
+        <span id={ownLabelId} className="type-label mb-tight block text-[12px] text-muted">
+          {t("appearance")}
+        </span>
+      )}
+      <div role="group" aria-labelledby={showLabel ? ownLabelId : labelledBy} aria-describedby={describedBy} className="flex gap-tight">
+        {(["light", "dark", "system"] as const).map((mode) => (
           <button
-            key={t}
+            key={mode}
             type="button"
-            onClick={() => setTheme(t)}
-            aria-pressed={current === t}
-            className={`h-11 flex-1 rounded-sm border text-sm capitalize transition-colors duration-quick ${current === t ? "border-ember bg-ember/5 font-medium" : "border-line bg-card"}`}
+            onClick={() => setTheme(mode)}
+            aria-pressed={current === mode}
+            className={`h-11 flex-1 rounded-sm border text-sm transition-colors duration-quick ${current === mode ? "border-ember bg-ember/5 font-medium" : "border-line bg-card"}`}
           >
-            {t}
+            {t(mode)}
           </button>
         ))}
       </div>

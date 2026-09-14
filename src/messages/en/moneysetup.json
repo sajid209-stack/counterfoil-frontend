@@ -1,6 +1,6 @@
 {
-  "title": "Money setup",
-  "description": "Connect how you take payment, and set your tax.",
+  "title": "Payments",
+  "description": "The accounts money arrives through, and how much a customer can pay up front.",
   "accounts": {
     "title": "Payment accounts",
     "description": "Connect a provider to take card and wallet payments. Cash always works.",
@@ -41,17 +41,6 @@
     "helper": "Always available at the counter — no setup needed.",
     "always": "Always on"
   },
-  "tax": {
-    "title": "Tax",
-    "mode": "Tax mode",
-    "inclusive": "Included in price",
-    "exclusive": "Added at checkout",
-    "rate": "Rate (%)",
-    "name": "Tax name",
-    "regNumber": "Registration number",
-    "save": "Save tax",
-    "saved": "Tax settings saved."
-  },
   "requirement": {
     "business_profile": "Business profile",
     "bank_account": "Bank account",
@@ -64,14 +53,12 @@
     "counterHelp": "Cashiers taking a phone booking or a walk-in.",
     "online": "Online",
     "onlineHelp": "Your storefront, when customers book themselves.",
-    "allow": "Take advances",
-    "minKind": "Minimum is",
+    "minKind": "Set the minimum as",
     "percentOfTotal": "A percentage of the total",
     "fixedAmount": "A fixed amount",
-    "minPercent": "Least accepted (%)",
-    "minAmount": "Least accepted (৳)",
+    "minPercent": "Least accepted",
+    "minAmount": "Least accepted",
     "minHelp": "A cashier can always take more, up to the full amount.",
-    "save": "Save advance rules",
     "saved": "Advance rules saved."
   }
 }

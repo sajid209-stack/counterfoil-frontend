@@ -6362,3 +6362,111 @@ seed that demonstrates a rule needs a case the rule leaves alone.
 Cover art is still a generated plate on every template. For this one that
 matters least — the header is the route, not a photograph — but a real chart
 extract or a river photograph would be the natural next thing.
+
+## Settings — rebuilt as a settings product, not a stack of forms (2026-09-14)
+
+Owner asked for Settings researched against SaaS and booking-system settings,
+then reviewed and reworked round by round. Measured first.
+
+### What was wrong, measured
+
+- **The tab strip lost pages.** Ten tabs over every settings screen: at 1024
+  Security sat 100px past the right edge; at 390 **six of ten were offscreen**
+  (494px of overflow) with nothing to say they existed.
+- **Two navigations for one thing.** A hub page listing the sections *and* the
+  strip listing them again; the mobile More sheet added eight settings pages to
+  the OS destinations, and its "Settings" card opened Business.
+- **Tax lived in two places, and one of them did nothing.** Payments → Tax
+  wrote `TaxConfig`, which nothing in the product reads, while the till charges
+  `Operator.taxRatePct` from Business. The reduced rate had no control at all.
+- **A permanent disabled Save bar** sliced across the Business page whether or
+  not anything had changed, and Business also held appearance and language —
+  per-browser choices filed as business settings.
+- **The SMS preview printed `2026-07-29`** to a customer.
+
+### Information architecture
+
+`settings/_lib/nav.ts` is one registry — five groups (Your business · Money ·
+Team and access · Customer messages · Your account), fifteen items — read by
+the index and the rail. **No strip at any width**: from `xl` a grouped rail
+beside the page (`aria-current` on exactly the current page); below `xl` the
+index *is* the navigation and every page carries an "All settings" link back,
+the drill-in shape phone settings use. The OS nav's nine settings entries are
+one.
+
+**The index states each section's current value** — `BDT · Asia/Dhaka`,
+`bKash · cash`, `VAT 15% · reduced 7.5%`, `9 members · 2 invited` — so reading
+the list answers most questions without opening anything. An attention panel
+names what needs a decision: cash only, a reduced rate at 0% while bookings use
+it, devices unseen for a week (`lib/devices.ts`, now shared with the dashboard
+so both say "quiet" by the same rule). On a phone a row with a value shows the
+value in place of its description: 2,142px → **1,684px**.
+
+### One anatomy (`settings/_components/SettingsKit`)
+
+`SettingsSection` (titled card, hairline rows) · `SettingRow` (what it is and
+does on the left, the control on the right, stacked on a phone) ·
+`SuffixInput` · `Switch` (`role="switch"`, 44px target) · **`SaveBar`, which
+exists only while something has changed**: Discard beside Save, Save disabled
+with the reason stated when a field is invalid, and a `beforeunload` guard.
+
+### Pages
+
+- **Tax** (new) is the single source of truth: one save writes both fields the
+  till and the records read. Standard / reduced / exempt, each with how many
+  bookings use it, a worked example that follows the fields before saving, and
+  registration. The inclusive/exclusive switch was dropped — the till adds tax
+  on top, and a switch that changes nothing is a false promise.
+- **Ticket messages** (new, out of Business): placeholders insert at the caret,
+  reset to default, and a live preview with a date a customer reads
+  ("Wed 29 Jul") and what it costs — GSM-7 vs UCS-2 segments, "133 characters ·
+  Sent as 1 SMS". The three completion screens send the same date form.
+- **Preferences** (new, out of Business): appearance and language, applied
+  instantly, no save bar, stated as this browser's.
+- **Business profile**: name, currency, time zone, reservation-history lock —
+  and only those fields are patched.
+- **Payments**: the tax section is gone; account actions stay immediate; the
+  advance rules moved onto `Switch` + `SaveBar` (the old Save was always
+  enabled). Its heading now matches the nav ("Payments", not "Money setup …
+  and set your tax").
+- **Security**: onto the same anatomy. Password change keeps its own button —
+  "discard your new password" is not something to offer. Turning two-step on
+  hands over backup codes in the same motion; sign-ins are rows with the
+  outcome in words.
+
+### Found by looking, not by the checks
+
+- **The switch thumb sat outside its track when on, and on the right when
+  off.** A button centres its text, and an absolute span with no `left` starts
+  from that centre. `left-0`.
+- **The rail sat 16px low** on every page whose header has no actions:
+  `top-36` → `top-32` (shortest bar 104 + the 24px gap), still clear of the
+  tallest bar once scrolled.
+- **A section header's action squeezed its title into a three-word column** on
+  a phone; the aside now drops under the heading.
+
+### Verified
+
+- **Behaviour probe 106/106**: an impossible tax rate is explained and cannot
+  be saved; Discard restores it; the example follows the field; a saved rate
+  reaches the index through client navigation; placeholders insert at the
+  caret; an empty business name is refused in words; two-step hands over codes;
+  an advance-rule change raises the save bar and Discard puts it back; the rail
+  marks exactly the current page and stays below the sticky bar. Plus, across
+  seven routes at 1440 light and dark and 390: contrast, the 12px floor, 44px
+  targets on a phone, no sideways scroll or hidden overflow, no console errors.
+- Dark and Bangla renders reviewed at 1440 and 390.
+- `tsc` clean. Lint compared per file against `HEAD`'s own copies: identical
+  everywhere except Payments (one pre-existing `set-state-in-effect` error
+  removed) and the dashboard (same five warnings, line numbers moved).
+- i18n parity **0 missing / 0 extra** across 31 namespaces. Orphaned keys
+  removed with attribution against `HEAD`: ten `settings.business` keys, the
+  whole `moneysetup.tax` object, `advance.allow` / `advance.save`,
+  `hub.onlyYou`.
+- Standing harnesses hold: accessibility 8/8, review 15/15, deck 9/9. The 32-route audit went **76 → 70** — every one of the 69 contrast findings is the declared white-on-ember rule at 3.50:1 (on Settings: the New / Add / Connect primaries), and the one touch-target is the kitchen-sink inline-link exemption. The drop is the old settings forms' primary buttons going with them.
+
+### Open
+
+- The e-mail row reads "Current: {email}" as its label — correct, not elegant.
+- Password, two-step, e-mail and recovery remain mock actions; logo upload is
+  still "Coming soon".

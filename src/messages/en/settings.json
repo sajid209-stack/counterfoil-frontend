@@ -17,7 +17,7 @@
     "saveChanges": "Save changes",
     "details": "Details",
     "country": "Country",
-    "timezone": "Timezone",
+    "timezone": "Time zone",
     "role": "Role",
     "unlimited": "Unlimited",
     "notFound": "Not found",
@@ -32,25 +32,30 @@
     "daySat": "Sat"
   },
   "business": {
-    "title": "Business setup",
-    "description": "Operator identity, currency, timezone, and tax.",
+    "title": "Business profile",
+    "description": "How your business is named, priced and timed across Counterfoil.",
     "saved": "Business settings saved.",
-    "identity": "Identity",
     "businessName": "Business name",
     "logo": "Logo",
-    "logoHint": "Two-colour logo — upload is a follow-up",
-    "regional": "Regional",
     "currency": "Currency",
-    "taxRate": "Tax rate (%)",
-    "smsSection": "Ticket SMS",
-    "smsTemplate": "Message template",
-    "smsHelp": "Sent when staff choose SMS after a sale.",
-    "preview": "Preview:",
-    "appearance": "Appearance",
-    "appearanceNote": "Per user, on this browser. Scan screens and printed tickets keep their designed look in both modes.",
     "saveChanges": "Save changes",
     "pastEditLock": "Close reservations for editing after",
-    "pastEditLockHelp": "In days. Older reservations cannot be changed or refunded. Leave empty to keep history open."
+    "pastEditLockHelp": "Older reservations can no longer be changed or refunded. Leave it empty to keep history open.",
+    "profileTitle": "Profile",
+    "profileDesc": "Shown on tickets, receipts and customer messages.",
+    "nameDesc": "The name customers see.",
+    "logoDesc": "Logo upload is on the way. Your name is used until then.",
+    "logoPending": "Coming soon",
+    "regionalTitle": "Currency and time",
+    "regionalDesc": "Every price and every schedule follows these.",
+    "currencyDesc": "Prices are set and charged in this currency.",
+    "timezoneDesc": "Sessions, opening hours and reports follow this clock.",
+    "historyTitle": "Reservation history",
+    "historyDesc": "Close old reservations so the months you have reconciled stay reconciled.",
+    "days": "days",
+    "lockPlaceholder": "Always editable",
+    "lockInvalid": "Enter a whole number of days, or leave it empty.",
+    "nameRequired": "Your business needs a name."
   },
   "security": {
     "title": "Security",
@@ -81,15 +86,23 @@
     "noRecovery": "No recovery contact",
     "recoverySet": "Recovery contact set.",
     "recentSignins": "Recent sign-ins",
-    "ok": "OK",
-    "failed": "FAILED",
+    "ok": "Signed in",
+    "failed": "Failed",
     "signOutAll": "Sign out of all devices",
     "signedOutAll": "Signed out everywhere. Devices will ask for the PIN or password again.",
     "codesTitle": "Backup codes — save these now",
     "codesSaved": "I've saved them",
     "codesNote": "Each code works once, when you can't use your authenticator. They will not be shown again.",
     "copyAll": "Copy all",
-    "copied": "Copied."
+    "copied": "Copied.",
+    "passwordDesc": "Used to sign in to Counterfoil on the web.",
+    "newDesc": "At least 8 characters.",
+    "pwTooShort": "Use at least 8 characters.",
+    "emailDesc": "The address you sign in with.",
+    "backupCodes": "Backup codes",
+    "backupCodesDesc": "One-time codes for when your phone is not with you. Each works once.",
+    "recoveryWho": "Who can restore your access",
+    "signinsDesc": "The last places your account was used. If one of them was not you, sign out everywhere."
   },
   "devices": {
     "title": "Devices",
@@ -298,5 +311,187 @@
     "moveUp": "Move up",
     "moveDown": "Move down",
     "reorderFailed": "Could not reorder. Try again."
+  },
+  "nav": {
+    "label": "Settings sections",
+    "back": "All settings",
+    "groups": {
+      "business": {
+        "title": "Your business",
+        "desc": "Who you are, where you sell, and what you sell from."
+      },
+      "money": {
+        "title": "Money",
+        "desc": "How you get paid, and what the till adds to a sale."
+      },
+      "people": {
+        "title": "Team and access",
+        "desc": "Who can sign in, what they can do, and on which devices."
+      },
+      "messages": {
+        "title": "Customer messages",
+        "desc": "What people receive after they buy."
+      },
+      "account": {
+        "title": "Your account",
+        "desc": "Only affects you, not the rest of your team."
+      }
+    },
+    "items": {
+      "business": {
+        "title": "Business profile",
+        "desc": "Name, currency, time zone and reservation history."
+      },
+      "locations": {
+        "title": "Locations",
+        "desc": "Venues you sell from, with addresses and opening hours."
+      },
+      "counters": {
+        "title": "Counters",
+        "desc": "Points of sale at each location."
+      },
+      "resources": {
+        "title": "Resources",
+        "desc": "Spaces and equipment that bookings take up."
+      },
+      "categories": {
+        "title": "Categories",
+        "desc": "How bookings are grouped, and the chips at the till."
+      },
+      "payments": {
+        "title": "Payments",
+        "desc": "Payment accounts, payouts and advance payments."
+      },
+      "tax": {
+        "title": "Tax",
+        "desc": "The rates the till adds to every sale."
+      },
+      "memberships": {
+        "title": "Memberships",
+        "desc": "Membership tiers and what they include."
+      },
+      "loyalty": {
+        "title": "Loyalty points",
+        "desc": "How points are earned and what they are worth."
+      },
+      "team": {
+        "title": "Team",
+        "desc": "Staff, their PINs and where they work."
+      },
+      "roles": {
+        "title": "Roles",
+        "desc": "What each role can do, and its refund and discount limits."
+      },
+      "devices": {
+        "title": "Devices",
+        "desc": "Tablets and scanners paired to your counters."
+      },
+      "notifications": {
+        "title": "Ticket messages",
+        "desc": "The SMS customers receive with their ticket."
+      },
+      "security": {
+        "title": "Security",
+        "desc": "Your password, two-step sign-in and recent sign-ins."
+      },
+      "preferences": {
+        "title": "Preferences",
+        "desc": "Appearance and language on this browser."
+      }
+    }
+  },
+  "hub": {
+    "title": "Settings",
+    "description": "Everything that shapes how you sell, book and get paid.",
+    "attentionCount": "{count, plural, one {# thing needs} other {# things need}} your attention",
+    "fix": "Open",
+    "cashOnly": "Only cash can be taken",
+    "cashOnlyBody": "No card or wallet account is live, so the till offers cash alone.",
+    "devicesQuiet": "{count, plural, one {# device has} other {# devices have}} gone quiet",
+    "devicesQuietBody": "Not seen in the last seven days. It may be switched off or no longer paired.",
+    "reducedUnset": "The reduced tax rate is 0%",
+    "reducedUnsetBody": "{count, plural, one {# booking is} other {# bookings are}} filed under the reduced rate, so they are being sold without tax.",
+    "statusProfile": "{currency} · {timezone}",
+    "statusLocations": "{count, plural, =0 {None yet} one {# location} other {# locations}}",
+    "statusCounters": "{count, plural, =0 {None yet} one {# counter} other {# counters}}",
+    "statusActive": "{count, plural, =0 {None yet} other {# active}}",
+    "statusCategories": "{count, plural, =0 {None yet} one {# category} other {# categories}}",
+    "statusLive": "{providers} · cash",
+    "statusCashOnly": "Cash only",
+    "statusTax": "{name} {standard}% · reduced {reduced}%",
+    "statusTeam": "{count, plural, =0 {Just you} one {# member} other {# members}}",
+    "statusInvited": "{count} invited",
+    "statusRoles": "{count, plural, =0 {None yet} one {# role} other {# roles}}",
+    "statusDevices": "{count, plural, =0 {None paired} one {# device} other {# devices}}",
+    "statusQuiet": "{count} quiet",
+    "statusSmsCustom": "Your own wording",
+    "statusSmsDefault": "Default wording",
+    "statusPrefs": "{theme} · {language}"
+  },
+  "save": {
+    "unsaved": "Unsaved changes",
+    "discard": "Discard",
+    "save": "Save changes",
+    "invalid": "Fix the highlighted field to save"
+  },
+  "tax": {
+    "title": "Tax",
+    "description": "The rates the till adds to every sale.",
+    "ratesTitle": "Rates",
+    "ratesDesc": "Every booking is filed under one of these. Change a rate and the next sale uses it; sales already made keep the rate they were sold at.",
+    "standard": "Standard rate",
+    "standardDesc": "{count, plural, =0 {No bookings use it yet.} one {Used by # booking.} other {Used by # bookings.}}",
+    "reduced": "Reduced rate",
+    "reducedDesc": "{count, plural, =0 {No bookings use it yet.} one {Used by # booking.} other {Used by # bookings.}}",
+    "exempt": "Exempt",
+    "exemptDesc": "{count, plural, =0 {No bookings are exempt.} one {# booking carries no tax.} other {# bookings carry no tax.}}",
+    "noTax": "No tax",
+    "rateInvalid": "Enter a rate from 0 to 100.",
+    "exampleTitle": "What a {amount} sale comes to",
+    "exampleDesc": "Tax is added on top of the price.",
+    "colClass": "Rate",
+    "colPrice": "Price",
+    "colTax": "Tax",
+    "colTotal": "Customer pays",
+    "registrationTitle": "Registration",
+    "registrationDesc": "Kept for your records and your accountant.",
+    "name": "Tax name",
+    "nameDesc": "What the tax is called where you trade, such as VAT.",
+    "regNumber": "Registration number",
+    "regNumberDesc": "Your tax authority's number for this business.",
+    "saved": "Tax saved. The next sale uses the new rates."
+  },
+  "notifications": {
+    "title": "Ticket messages",
+    "description": "What customers receive after they buy.",
+    "smsTitle": "Ticket SMS",
+    "smsDesc": "Sent when staff choose SMS at the end of a sale.",
+    "message": "Message",
+    "messageDesc": "Insert a placeholder where the cursor is, and it is filled in for each sale.",
+    "insert": "Insert {placeholder}",
+    "ph": {
+      "business": "your business name",
+      "code": "the ticket code",
+      "date": "the visit date"
+    },
+    "preview": "Preview",
+    "previewDesc": "How it reads on a customer's phone.",
+    "length": "{count, plural, one {# character} other {# characters}}",
+    "segments": "{count, plural, one {Sent as # SMS} other {Sent as # SMS, each billed}}",
+    "unicode": "Contains characters outside the basic SMS set, so each SMS holds 70 characters instead of 160.",
+    "reset": "Use the default wording",
+    "saved": "Message saved",
+    "empty": "Write a message before saving."
+  },
+  "preferences": {
+    "title": "Preferences",
+    "description": "How Counterfoil looks and reads for you.",
+    "displayTitle": "Display",
+    "displayDesc": "Saved on this browser only, and applied straight away.",
+    "appearance": "Appearance",
+    "appearanceDesc": "Light, dark, or follow your device.",
+    "language": "Language",
+    "languageDesc": "The language of menus and labels.",
+    "note": "Printed tickets and scan screens keep their own look in both modes."
   }
 }

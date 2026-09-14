@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, CircleAlert, Wallet } from "lucide-react";
+import { useState } from "react";
+import { Check, CircleAlert, CreditCard, Wallet } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button, FormField, PageShell, StatusPill, useToast, type PillTone } from "@/components/ui";
+import { Button, PageShell, StatusPill, useToast, type PillTone } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import {
   activatePaymentAccount,
@@ -11,12 +12,11 @@ import {
   createPaymentAccount,
   disablePaymentAccount,
   getAdvancePolicy,
-  getTaxConfig,
   listPaymentAccounts,
   updateAdvancePolicy,
-  updateTaxConfig,
 } from "@/lib/api";
-import type { AdvancePolicy, AdvanceRule, PaymentAccount, PaymentAccountStatus, PaymentProvider, TaxConfig } from "@/lib/api";
+import type { AdvancePolicy, AdvanceRule, PaymentAccount, PaymentAccountStatus, PaymentProvider } from "@/lib/api";
+import { SaveBar, SettingRow, SettingsSection, SuffixInput, Switch, controlCls } from "../_components/SettingsKit";
 
 const PROVIDERS: { provider: PaymentProvider; posture: PaymentAccount["posture"] }[] = [
   { provider: "bkash", posture: "merchant_of_record" },
@@ -31,36 +31,47 @@ const STATUS_TONE: Record<PaymentAccountStatus, PillTone> = {
   disabled: "neutral",
 };
 
+/*
+ * Payments — the accounts money arrives through, and when a customer may pay
+ * part now.
+ *
+ * Tax used to have a section here and was removed, not moved silently: its
+ * rate, inclusive/exclusive switch, name and registration number were saved to
+ * a record nothing in the product read, while the till charged a different
+ * field on Business setup. Tax has its own page now and writes what the till
+ * uses.
+ *
+ * Connecting or disabling an account is an action that happens at once, so the
+ * account rows carry their own buttons. The advance rules are a form, so they
+ * share the save bar every other settings form uses — they used to have a Save
+ * button that was always enabled, whether or not anything had changed.
+ */
 export default function MoneySetupPage() {
   const t = useTranslations("moneysetup");
   const toast = useToast();
   const accountsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
-  const taxQ = useApiQuery(() => getTaxConfig(), []);
   const accounts = accountsQ.data?.data ?? [];
   const byProvider = (p: PaymentProvider) => accounts.find((a) => a.provider === p);
   const [busy, setBusy] = useState<string | null>(null);
 
-  // Tax form state, hydrated from the config.
-  const [tax, setTax] = useState<TaxConfig | null>(null);
-  const [savingTax, setSavingTax] = useState(false);
-  useEffect(() => { if (taxQ.data) setTax(taxQ.data); }, [taxQ.data]);
-
   const advanceQ = useApiQuery(() => getAdvancePolicy(), []);
-  // The saved policy until the operator touches it, the draft after — no
-  // effect needed to hydrate a form from a query, and no cascading render.
+  const [advBase, setAdvBase] = useState<AdvancePolicy | null>(null);
   const [advDraft, setAdvDraft] = useState<AdvancePolicy | null>(null);
-  const adv = advDraft ?? advanceQ.data ?? null;
   const [savingAdv, setSavingAdv] = useState(false);
-  const setRule = (ch: keyof AdvancePolicy, patch: Partial<AdvanceRule>) =>
-    setAdvDraft(adv ? { ...adv, [ch]: { ...adv[ch], ...patch } } : null);
+  const savedAdv = advBase ?? advanceQ.data ?? null;
+  const adv = advDraft ?? savedAdv;
+  const advDirty = !!advDraft && !!savedAdv && JSON.stringify(advDraft) !== JSON.stringify(savedAdv);
+  const setRule = (ch: keyof AdvancePolicy, patch: Partial<AdvanceRule>) => {
+    if (adv) setAdvDraft({ ...adv, [ch]: { ...adv[ch], ...patch } });
+  };
   const saveAdvance = async () => {
     if (!adv) return;
     setSavingAdv(true);
     await updateAdvancePolicy(adv);
     setSavingAdv(false);
-    toast.success(t("advance.saved"));
+    setAdvBase(adv);
     setAdvDraft(null);
-    advanceQ.reload();
+    toast.success(t("advance.saved"));
   };
 
   const connect = async (provider: PaymentProvider, posture: PaymentAccount["posture"]) => {
@@ -72,161 +83,169 @@ export default function MoneySetupPage() {
     accountsQ.reload();
   };
   const activate = async (id: string, provider: PaymentProvider) => {
-    setBusy(provider); await activatePaymentAccount(id); setBusy(null);
+    setBusy(provider);
+    await activatePaymentAccount(id);
+    setBusy(null);
     toast.success(t("accounts.activated", { provider: t(`provider.${provider}`) }));
     accountsQ.reload();
   };
   const disable = async (id: string, provider: PaymentProvider) => {
-    setBusy(provider); await disablePaymentAccount(id); setBusy(null);
+    setBusy(provider);
+    await disablePaymentAccount(id);
+    setBusy(null);
     toast.success(t("accounts.disabledToast", { provider: t(`provider.${provider}`) }));
     accountsQ.reload();
   };
 
-  const saveTax = async () => {
-    if (!tax) return;
-    setSavingTax(true);
-    await updateTaxConfig(tax);
-    setSavingTax(false);
-    toast.success(t("tax.saved"));
-    taxQ.reload();
-  };
-
   return (
     <PageShell title={t("title")} description={t("description")}>
-      <div className="flex max-w-2xl flex-col gap-major">
-        {/* ── Payment accounts ─────────────────────────────────────────── */}
-        <section>
-          <h2 className="type-h2 mb-inline text-base">{t("accounts.title")}</h2>
-          <p className="mb-section text-[13px] text-muted">{t("accounts.description")}</p>
-
-          <div className="overflow-hidden card-surface">
-            {/* Cash — always on, no account */}
-            <div className="flex items-center gap-section border-b border-line p-section">
-              <Wallet size={20} strokeWidth={1.5} className="shrink-0 text-muted" />
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium">{t("cash.title")}</div>
-                <div className="text-[12px] text-muted">{t("cash.helper")}</div>
-              </div>
-              <StatusPill tone="success">{t("cash.always")}</StatusPill>
+      <div className="flex max-w-3xl flex-col gap-section pb-hero">
+        <SettingsSection title={t("accounts.title")} description={t("accounts.description")}>
+          <div className="flex items-center gap-section px-major py-section">
+            <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-subtle text-muted sm:flex">
+              <Wallet size={18} strokeWidth={1.5} aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-fg">{t("cash.title")}</p>
+              <p className="mt-inline text-[13px] text-muted">{t("cash.helper")}</p>
             </div>
+            <StatusPill tone="success">{t("cash.always")}</StatusPill>
+          </div>
 
-            {PROVIDERS.map(({ provider, posture }) => {
-              const acct = byProvider(provider);
-              const isBusy = busy === provider;
-              return (
-                <div key={provider} className="flex flex-col gap-tight border-b border-line p-section last:border-0 sm:flex-row sm:items-center">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-tight">
-                      <span className="text-sm font-medium">{t(`provider.${provider}`)}</span>
-                      {acct
-                        ? <StatusPill tone={STATUS_TONE[acct.status]}>{t(`status.${acct.status}`)}</StatusPill>
-                        : <StatusPill tone="neutral">{t("accounts.notConnected")}</StatusPill>}
-                    </div>
-                    <div className="mt-inline text-[12px] text-muted">{t(`provider.${provider}Helper`)} · {t(`posture.${posture}`)}</div>
-                    {acct && (
-                      <div className="mt-tight flex flex-wrap gap-x-major gap-y-inline font-mono text-[12px]">
-                        <span className={acct.chargesEnabled ? "text-success" : "text-muted"}>{t("accounts.charges")}: {acct.chargesEnabled ? t("accounts.enabled") : t("accounts.off")}</span>
-                        <span className={acct.payoutsEnabled ? "text-success" : "text-muted"}>{t("accounts.payouts")}: {acct.payoutsEnabled ? t("accounts.enabled") : t("accounts.off")}</span>
-                      </div>
+          {PROVIDERS.map(({ provider, posture }) => {
+            const acct = byProvider(provider);
+            const isBusy = busy === provider;
+            return (
+              <div key={provider} className="flex flex-col gap-section px-major py-section sm:flex-row sm:items-start">
+                <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-subtle text-muted sm:flex">
+                  <CreditCard size={18} strokeWidth={1.5} aria-hidden />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-tight">
+                    <p className="text-sm font-medium text-fg">{t(`provider.${provider}`)}</p>
+                    {acct ? (
+                      <StatusPill tone={STATUS_TONE[acct.status]}>{t(`status.${acct.status}`)}</StatusPill>
+                    ) : (
+                      <StatusPill tone="neutral">{t("accounts.notConnected")}</StatusPill>
                     )}
-                    {acct && acct.requirementsDue.length > 0 && (
-                      <div className="mt-tight flex flex-col gap-inline">
-                        <span className="type-label text-[12px] text-warning">{t("accounts.requirementsDue")}</span>
+                  </div>
+                  <p className="mt-inline text-[13px] text-muted">
+                    {t(`provider.${provider}Helper`)} · {t(`posture.${posture}`)}
+                  </p>
+                  {acct && (
+                    <p className="mt-tight flex flex-wrap gap-x-section gap-y-inline text-[13px]">
+                      {[
+                        { on: acct.chargesEnabled, label: t("accounts.charges") },
+                        { on: acct.payoutsEnabled, label: t("accounts.payouts") },
+                      ].map(({ on, label }) => (
+                        <span key={label} className={cn("inline-flex items-center gap-inline", on ? "text-success" : "text-muted")}>
+                          {on ? (
+                            <Check size={14} strokeWidth={2} aria-hidden />
+                          ) : (
+                            <span aria-hidden className="mx-1 h-1.5 w-1.5 rounded-full bg-strong" />
+                          )}
+                          {label}: {on ? t("accounts.enabled") : t("accounts.off")}
+                        </span>
+                      ))}
+                    </p>
+                  )}
+                  {acct && acct.requirementsDue.length > 0 && (
+                    <div className="mt-section rounded-sm border border-warning/30 bg-warning-wash p-comfortable">
+                      <p className="text-[13px] font-medium text-fg">{t("accounts.requirementsDue")}</p>
+                      <ul className="mt-inline flex flex-col gap-inline">
                         {acct.requirementsDue.map((r) => (
-                          <span key={r} className="flex items-center gap-inline text-[12px] text-muted"><CircleAlert size={13} strokeWidth={1.5} className="text-warning" />{t(`requirement.${r}`)}</span>
+                          <li key={r} className="flex items-center gap-inline text-[13px] text-muted">
+                            <CircleAlert size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-warning" />
+                            {t(`requirement.${r}`)}
+                          </li>
                         ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <div className="flex shrink-0 gap-tight">
+                  {!acct && (
+                    <Button size="sm" loading={isBusy} onClick={() => connect(provider, posture)}>
+                      {t("accounts.connect")}
+                    </Button>
+                  )}
+                  {acct && acct.status !== "active" && (
+                    <Button size="sm" loading={isBusy} onClick={() => activate(acct.id, provider)}>
+                      {t("accounts.completeOnboarding")}
+                    </Button>
+                  )}
+                  {acct && acct.status === "active" && (
+                    <Button size="sm" variant="secondary" loading={isBusy} onClick={() => disable(acct.id, provider)}>
+                      {t("accounts.disable")}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </SettingsSection>
+
+        <SettingsSection title={t("advance.title")} description={t("advance.description")}>
+          {adv ? (
+            (["counter", "online"] as const).map((ch) => {
+              const rule = adv[ch];
+              return (
+                <div key={ch} className="divide-y divide-hairline">
+                  <SettingRow label={t(`advance.${ch}`)} description={t(`advance.${ch}Help`)} labelFor={false}>
+                    {({ labelId, describedBy }) => (
+                      <div className="flex sm:justify-end">
+                        <Switch checked={rule.enabled} onChange={(on) => setRule(ch, { enabled: on })} labelledBy={labelId} describedBy={describedBy} />
                       </div>
                     )}
-                  </div>
-                  <div className="flex shrink-0 gap-tight">
-                    {!acct && <Button size="sm" loading={isBusy} onClick={() => connect(provider, posture)}>{t("accounts.connect")}</Button>}
-                    {acct && acct.status !== "active" && <Button size="sm" loading={isBusy} onClick={() => activate(acct.id, provider)}>{t("accounts.completeOnboarding")}</Button>}
-                    {acct && acct.status === "active" && <Button size="sm" variant="secondary" loading={isBusy} onClick={() => disable(acct.id, provider)}>{t("accounts.disable")}</Button>}
-                  </div>
+                  </SettingRow>
+                  {rule.enabled && (
+                    <>
+                      <SettingRow label={t("advance.minKind")}>
+                        {({ id }) => (
+                          <select
+                            id={id}
+                            value={rule.minKind}
+                            onChange={(e) => setRule(ch, { minKind: e.target.value as AdvanceRule["minKind"] })}
+                            className={cn(controlCls(), "pr-section")}
+                          >
+                            <option value="percent">{t("advance.percentOfTotal")}</option>
+                            <option value="amount">{t("advance.fixedAmount")}</option>
+                          </select>
+                        )}
+                      </SettingRow>
+                      <SettingRow
+                        label={rule.minKind === "percent" ? t("advance.minPercent") : t("advance.minAmount")}
+                        description={t("advance.minHelp")}
+                      >
+                        {({ id, describedBy }) => (
+                          <SuffixInput
+                            id={id}
+                            value={rule.minKind === "percent" ? String(rule.minValue) : String(rule.minValue / 100)}
+                            onChange={(v) => {
+                              const n = parseFloat(v) || 0;
+                              setRule(ch, {
+                                minValue: rule.minKind === "percent" ? Math.max(0, Math.min(100, Math.round(n))) : Math.round(n * 100),
+                              });
+                            }}
+                            suffix={rule.minKind === "percent" ? "%" : "৳"}
+                            describedBy={describedBy}
+                            inputMode={rule.minKind === "percent" ? "numeric" : "decimal"}
+                          />
+                        )}
+                      </SettingRow>
+                    </>
+                  )}
                 </div>
               );
-            })}
-          </div>
-        </section>
-
-        {/* ── Tax ──────────────────────────────────────────────────────── */}
-        <section className="card-surface p-major">
-          <h2 className="type-h2 mb-section text-base">{t("tax.title")}</h2>
-          {tax && (
-            <div className="grid gap-section sm:grid-cols-2">
-              <FormField
-                label={t("tax.mode")}
-                variant="select"
-                value={tax.mode}
-                onChange={(e) => setTax({ ...tax, mode: e.target.value as TaxConfig["mode"] })}
-                options={[{ value: "exclusive", label: t("tax.exclusive") }, { value: "inclusive", label: t("tax.inclusive") }]}
-              />
-              <FormField
-                label={t("tax.rate")}
-                variant="number"
-                value={String(tax.rateBasisPoints / 100)}
-                onChange={(e) => setTax({ ...tax, rateBasisPoints: Math.round((parseFloat(e.target.value) || 0) * 100) })}
-              />
-              <FormField label={t("tax.name")} value={tax.taxName} onChange={(e) => setTax({ ...tax, taxName: e.target.value })} />
-              <FormField label={t("tax.regNumber")} value={tax.registrationNumber ?? ""} onChange={(e) => setTax({ ...tax, registrationNumber: e.target.value })} />
+            })
+          ) : (
+            <div className="px-major py-section">
+              <div className="h-11 animate-pulse rounded-sm bg-line/50" />
             </div>
           )}
-          <Button className="mt-section" loading={savingTax} onClick={saveTax}><Check size={16} strokeWidth={1.5} /> {t("tax.save")}</Button>
-        </section>
+        </SettingsSection>
 
-        {/* ── Advance payments ─────────────────────────────────────────── */}
-        <section className="card-surface p-major">
-          <h2 className="type-h2 mb-inline text-base">{t("advance.title")}</h2>
-          <p className="mb-section text-[13px] text-muted">{t("advance.description")}</p>
-          {adv && (
-            <div className="flex flex-col gap-section">
-              {(["counter", "online"] as const).map((ch) => {
-                const rule = adv[ch];
-                return (
-                  <div key={ch} className="rounded-sm border border-line p-section">
-                    <div className="flex flex-wrap items-center justify-between gap-tight">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">{t(`advance.${ch}`)}</p>
-                        <p className="text-[12px] text-muted">{t(`advance.${ch}Help`)}</p>
-                      </div>
-                      <FormField
-                        label={t("advance.allow")}
-                        variant="toggle"
-                        checked={rule.enabled}
-                        onChange={(e) => setRule(ch, { enabled: (e.target as HTMLInputElement).checked })}
-                      />
-                    </div>
-                    {rule.enabled && (
-                      <div className="mt-section grid gap-section sm:grid-cols-2">
-                        <FormField
-                          label={t("advance.minKind")}
-                          variant="select"
-                          value={rule.minKind}
-                          onChange={(e) => setRule(ch, { minKind: e.target.value as AdvanceRule["minKind"] })}
-                          options={[
-                            { value: "percent", label: t("advance.percentOfTotal") },
-                            { value: "amount", label: t("advance.fixedAmount") },
-                          ]}
-                        />
-                        <FormField
-                          label={rule.minKind === "percent" ? t("advance.minPercent") : t("advance.minAmount")}
-                          variant="number"
-                          value={rule.minKind === "percent" ? String(rule.minValue) : String(rule.minValue / 100)}
-                          onChange={(e) => {
-                            const n = parseFloat(e.target.value) || 0;
-                            setRule(ch, { minValue: rule.minKind === "percent" ? Math.max(0, Math.min(100, n)) : Math.round(n * 100) });
-                          }}
-                          help={t("advance.minHelp")}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          <Button className="mt-section" loading={savingAdv} onClick={saveAdvance}><Check size={16} strokeWidth={1.5} /> {t("advance.save")}</Button>
-        </section>
+        <SaveBar dirty={advDirty} saving={savingAdv} onSave={saveAdvance} onDiscard={() => setAdvDraft(null)} />
       </div>
     </PageShell>
   );

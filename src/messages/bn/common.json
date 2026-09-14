@@ -22,5 +22,8 @@
   "previousMonth": "আগের মাস",
   "nextMonth": "পরের মাস",
   "today": "আজ",
-  "openCalendar": "তারিখ বাছুন"
+  "openCalendar": "তারিখ বাছুন",
+  "light": "হালকা",
+  "dark": "গাঢ়",
+  "system": "সিস্টেম"
 }
