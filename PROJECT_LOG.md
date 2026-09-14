@@ -7311,6 +7311,69 @@ the closing ADMIT 2 ticket should become something with more idea behind it.
 - PDF rebuilt and read back: 25 pages at 960 × 540pt, intact JPEGs, xref found.
 - `tsc` and `eslint` on the deck clean.
 
+## Counterfoil Deck, part five — less template, more editorial (2026-09-15)
+
+Owner review marked six things: the cover's device placement read as odd and
+its phone should be dark; the "OS" beside the Counterfoil logo looked wrong,
+because the Counterfoil logotype already is the OS mark; the order statuses
+should sit on the slide's bottom line; the event-category tiles and the
+"takes payment by" boxes looked machine-made; and the closing seat plan was too
+large to breathe. They also asked for a pass over the whole deck for anything
+that read as AI-built.
+
+### The six marked points
+
+- **Cover:** every device faces the reader and they stand on shared ground
+  lines. OS is on the laptop at the back, and Go sits in front of it on the
+  counter stand and on a phone, recaptured in dark mode. The four pills became
+  three facts — ~20 operators, 4 countries, 14 ways to book — under a rule.
+- **Chapter openers:** the OS tag is gone; the ticket carries the logotype
+  alone. The pill list is now a contents page, set like a book's: each part
+  with the page it starts on, joined by dotted leaders.
+- **Orders:** the statuses sit on the slide's bottom line, level with the foot
+  of the bento beside them.
+- **Events:** six coloured dots became six thumbnails of real event pages, one
+  per template, captured from the app. The two stat cards became an inline row
+  of figures.
+- **Bangladesh:** the six boxes became a two-column ledger, local rails and the
+  ones that travel, each with what it is for. The right-hand cards became a list
+  between hairlines, and the countries a line of text.
+- **Close:** the seat plan is drawn at 70%, with room above the headline.
+
+### The rest of the pass
+
+The tell that kept recurring was one rounded card for everything. Where a slide
+lists things, it now sets them as a list — rules, hairlines and type doing the
+structuring, the way a printed report does:
+
+- **How it works:** four cards became a sequence. One line runs through all
+  four steps, each with a dot on it.
+- **Bookings:** the washed panel is gone; the catalogue sits straight on the
+  page, beside three facts between rules.
+- **Booking types:** fourteen identical icon cards became three ruled lists,
+  grouped by what the guest is buying (a way in, a time or a place, more than
+  one visit), with the two till sheets laid above like printouts.
+- **Reports:** the "8 charts" card and pills became a ruled list and a line of
+  text. **Settings:** a table — setting beside where it shows up — and the
+  searches as ruled rows. **Find** and **Pay** set their lists as text too.
+- **Today:** four tiles became a report summary: one heavy rule, columns
+  divided by hairlines, "Built for" as a run of type.
+
+The slash dividers in these text lists are `aria-hidden`: they are decoration,
+and a screen reader should not read "slash" between countries. The washed panel
+and dotted step styles left the stylesheet with the slides that used them.
+
+### Verified
+
+- Layout at 1780, 1440, 1024 and 390: 25 slides the same size, no page
+  overflow, no text outside the margins, clipped, covered or under the footer,
+  no console errors.
+- Pixel contrast per slide: **0 of 380** text boxes below their floor at 1780
+  and 1440 (the first run caught the slash dividers at 2.67:1, fixed as above).
+  `/deck` audits at **0**.
+- PDF rebuilt and read back: 25 pages at 960 × 540pt.
+- `tsc` and `eslint` on the deck clean.
+
 Sources: [reveal.js — presentation size](https://revealjs.com/presentation-size/) ·
 [reveal.js — PDF export](https://revealjs.com/pdf-export/) ·
 [Slidev — exporting](https://sli.dev/guide/exporting) ·

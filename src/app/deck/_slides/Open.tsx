@@ -1,60 +1,81 @@
 import Image from "next/image";
 import { CalendarX, Check, Compass, ScanLine, Store } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Callout, Floor, Glow, Laptop, Phone, Pill, PosStand, Slide, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
+import { Callout, Floor, Glow, Laptop, Phone, PosStand, Slide, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
 import logoOnInk from "../_media/logo-counterfoil-dark.png";
 import dashDark from "../_media/os-dashboard-dark.jpg";
 import dashLight from "../_media/os-dashboard-light.jpg";
 import till from "../_media/go-till.jpg";
-import phoneSell from "../_media/go-phone-sell.jpg";
+import phoneSellDark from "../_media/go-phone-sell-dark.jpg";
 import phoneSeats from "../_media/go-sheet-cinema.jpg";
 
 /* Slides 1–4: what Counterfoil is, the problem, the system and how it works. */
 
+const PROOF = [
+  ["~20", "operators"],
+  ["4", "countries"],
+  ["14", "ways to book"],
+];
+
 export function CoverSlide({ n }: { n: number }) {
   return (
     <Slide tone="ink" n={n} section="" label="Counterfoil runs the places that sell time">
-      <Glow className="left-[760px] top-[-340px] h-[880px] w-[1000px]" />
+      <Glow className="left-[820px] top-[-300px] h-[860px] w-[900px]" />
       <Floor />
       <div className="absolute left-[96px] top-[80px] flex items-center gap-6">
         <Image src={logoOnInk} alt="Counterfoil" sizes="240px" priority className="h-[40px] w-auto" />
         <span aria-hidden className="h-6 w-px bg-white/20" />
         <span className={s.eyebrow}>Company deck · 2026</span>
       </div>
-      {/* Title, lead and pills are one block, so the lead can never run into the pills. */}
-      <div className={s.text} style={{ left: 96, top: 226, width: 660 }}>
+      {/* Title, lead and the three facts are one block, so nothing can run into anything. */}
+      <div className={s.text} style={{ left: 96, top: 218, width: 660 }}>
         <h2 className={s.display}>
           Counterfoil runs the places that sell <span className={s.accentInk}>time.</span>
         </h2>
         <p className={cn(s.lead, "mt-8 w-[540px]")}>
           Tickets, sessions, courts and tours — sold at the counter, checked at the gate and reconciled by close.
         </p>
-        <ul className="mt-10 flex gap-3">
-          {["Timed entry", "Courts & lanes", "Tours", "Seat maps"].map((label) => (
-            <li key={label}>
-              <Pill>{label}</Pill>
-            </li>
+        <dl className="mt-10 flex w-[540px] gap-10 border-t border-white/12 pt-6">
+          {PROOF.map(([value, label]) => (
+            <div key={label}>
+              <dt className="sr-only">{label}</dt>
+              <dd className="flex items-baseline gap-2.5">
+                <span className="text-[34px] font-semibold leading-none tracking-[-0.03em]">{value}</span>
+                <span className="text-[17px] text-[rgb(245_242_235/0.66)]">{label}</span>
+              </dd>
+            </div>
           ))}
-        </ul>
+        </dl>
       </div>
-      {/* OS on the laptop behind; Go in front of it, on the counter and in the hand. */}
+      {/*
+        One family, standing on one line: OS on the laptop at the back, Go in
+        front of it on the counter and in the hand. Every device faces the
+        reader, and the stand and the phone share a ground line in front of
+        the laptop's, which is what puts them nearer.
+      */}
       <Laptop
         src={dashDark}
-        width={780}
-        tilt="left"
+        width={720}
         priority
         alt="Counterfoil OS dashboard with revenue, capacity and what needs attention"
-        className="absolute left-[764px] top-[150px]"
+        className="absolute left-[784px] top-[146px]"
       />
       <PosStand
         src={till}
-        width={420}
-        tilt="left"
+        width={372}
         priority
         alt="Counterfoil Go on a countertop stand, with a sale in the cart"
-        className="absolute left-[704px] top-[430px]"
+        className="absolute left-[742px] top-[478px]"
       />
-      <Phone src={phoneSell} width={172} tilt="left" priority alt="Counterfoil Go on a phone: the sell wall" className="absolute left-[1340px] top-[392px]" />
+      <Phone
+        src={phoneSellDark}
+        bar="#141413"
+        ink="light"
+        width={168}
+        priority
+        alt="Counterfoil Go on a phone in dark mode: the sell wall"
+        className="absolute left-[1318px] top-[418px]"
+      />
     </Slide>
   );
 }
@@ -151,12 +172,12 @@ export function SystemSlide({ n }: { n: number }) {
         </ul>
       </TextBlock>
 
-      <Laptop src={dashLight} width={820} tilt="left" alt="Counterfoil OS dashboard on a laptop" className="absolute left-[684px] top-[176px]" />
-      <PosStand src={till} width={380} tilt="left" alt="Counterfoil Go on a countertop stand" className="absolute left-[660px] top-[456px]" />
-      <Phone src={phoneSeats} bar="#989793" width={150} tilt="right" alt="Choosing seats for an evening film on a phone" className="absolute left-[1350px] top-[436px]" />
-      {/* Labels sit on the devices' edges, never on the screens they name. */}
-      <Callout tone="paper" label="OS · on the web" value="Runs the business" className="absolute left-[1284px] top-[92px]" />
-      <Callout tone="paper" label="Go · counter & phone" value="Sells and admits" className="absolute left-[1072px] top-[716px]" />
+      {/* The same family as the cover, standing on one line, with a label under each surface. */}
+      <Laptop src={dashLight} width={740} alt="Counterfoil OS dashboard on a laptop" className="absolute left-[764px] top-[132px]" />
+      <PosStand src={till} width={372} alt="Counterfoil Go on a countertop stand" className="absolute left-[700px] top-[440px]" />
+      <Phone src={phoneSeats} bar="#989793" width={160} alt="Choosing seats for an evening film on a phone" className="absolute left-[1328px] top-[386px]" />
+      <Callout tone="paper" label="OS · on the web" value="Runs the business" className="absolute left-[1284px] top-[74px]" />
+      <Callout tone="paper" label="Go · counter & phone" value="Sells and admits" className="absolute left-[1086px] top-[706px]" />
     </Slide>
   );
 }
@@ -246,20 +267,23 @@ export function HowItWorksSlide({ n }: { n: number }) {
       <p className={cn(s.lead, s.text)} style={{ left: 1024, top: 128, width: 480 }}>
         Four steps every venue already takes — done in one place, by the people already doing them.
       </p>
-      <ol className="absolute left-[96px] top-[292px] grid h-[508px] w-[1408px] grid-cols-4 gap-6">
-        {STEPS.map((step) => (
-          <li key={step.n} className={cn(s.card, s.paperCard, "flex flex-col")}>
-            <div className={cn(s.stepPanel, "grid flex-1 place-items-center")}>
-              <StepArt art={step.art} />
-            </div>
-            <div className="flex h-[196px] flex-col gap-2 border-t border-[#efe9df] p-7">
-              <span className={cn(s.mono, "text-[#aa3000]")}>{step.n}</span>
-              <h3 className={s.heading}>{step.name}</h3>
-              <p className={s.body}>{step.body}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+      {/* The steps as the sequence they are: one line runs through all four, left to right. */}
+      <div className="absolute left-[96px] top-[292px] w-[1408px]">
+        <div aria-hidden className="absolute inset-x-0 top-[311px] h-[2px] bg-[#141413]" />
+        <ol className="grid grid-cols-4 gap-x-8">
+          {STEPS.map((step) => (
+            <li key={step.n}>
+              <div className="grid h-[280px] place-items-center rounded-[18px] bg-[#ebe5d9]">
+                <StepArt art={step.art} />
+              </div>
+              <span aria-hidden className="relative z-10 mt-[24px] block h-[16px] w-[16px] rounded-full border-2 border-[#141413] bg-[#f94a00]" />
+              <p className={cn(s.mono, "mt-6 text-[#aa3000]")}>{step.n}</p>
+              <h3 className={cn(s.heading, "mt-2")}>{step.name}</h3>
+              <p className={cn(s.body, "mt-2 w-[300px]")}>{step.body}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
     </Slide>
   );
 }

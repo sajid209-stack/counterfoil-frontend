@@ -72,9 +72,10 @@ function Seat({ state, x, y, deg }: { state: State; x: number; y: number; deg: n
   return <rect {...common} fill="none" stroke="rgb(245 242 235 / 0.34)" strokeWidth={1.5} />;
 }
 
-export function SeatPlan({ className }: { className?: string }) {
+/** `scale` sizes the drawing; the plan is laid out on a 1600 × 480 board. */
+export function SeatPlan({ scale = 1, className }: { scale?: number; className?: string }) {
   return (
-    <svg aria-hidden className={className} width={1600} height={480} viewBox="0 0 1600 480">
+    <svg aria-hidden className={className} width={1600 * scale} height={480 * scale} viewBox="0 0 1600 480">
       <defs>
         <pattern id="deck-held" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect width="6" height="6" fill="rgb(224 165 79 / 0.18)" />

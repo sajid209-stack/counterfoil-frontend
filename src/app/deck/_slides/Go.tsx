@@ -1,6 +1,6 @@
-import { ArrowRight, Banknote, CreditCard, MessageSquare, Printer, QrCode, Send, Ticket as TicketIcon, type LucideIcon } from "lucide-react";
+import { ArrowRight, MessageSquare, Printer, Ticket as TicketIcon, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Glow, Hotspot, Phone, Pill, PosStand, Slide, Step, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
+import { Glow, Hotspot, Phone, PosStand, Slide, Step, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
 import till from "../_media/go-till.jpg";
 import phoneSell from "../_media/go-phone-sell.jpg";
 import sheetShow from "../_media/go-sheet-show.jpg";
@@ -49,17 +49,14 @@ export function PosFindSlide({ n }: { n: number }) {
           <Step n={2} title="Read the tile" body="Its price, and what is left right now." />
           <Step n={3} title="The cart stays beside it" body="Every line, the payment method and Charge." />
         </ol>
-        <div className={cn(s.card, s.inkCard, "mt-8 px-6 py-5 [--card-r:20px]")}>
-          <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">What a tile says</p>
-          <ul className="mt-3 flex flex-col gap-2">
-            {TILE_STATES.map(({ text, tone }) => (
-              <li key={text} className={cn("flex items-center gap-3 text-[18px] font-medium", tone)}>
-                <span aria-hidden className="h-[7px] w-[7px] rounded-full bg-current" />
-                {text}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <p className="mt-9 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">What a tile says</p>
+        <ul className="mt-3 border-t border-white/12">
+          {TILE_STATES.map(({ text, tone }) => (
+            <li key={text} className={cn("border-b border-white/12 py-3 text-[18px] font-medium", tone)}>
+              {text}
+            </li>
+          ))}
+        </ul>
       </TextBlock>
       <PosStand src={till} width={724} alt="Counterfoil Go on a countertop stand: the sell wall with a sale in the cart" className="absolute left-[780px] top-[150px]">
         <Hotspot n={1} x={60} y={12.8} />
@@ -141,20 +138,11 @@ export function PosPaySlide({ n }: { n: number }) {
           <Step n={2} title="Cash" body="Tap Exact or a note; the change is worked out." />
           <Step n={3} title="bKash or Bangla QR" body="Confirmed with the transaction ID before the sale lands." />
         </ol>
-        <ul className="mt-8 flex gap-2.5">
-          {[
-            { icon: Banknote, label: "Cash" },
-            { icon: Send, label: "bKash" },
-            { icon: QrCode, label: "Bangla QR" },
-            { icon: CreditCard, label: "Card" },
-          ].map(({ icon: Icon, label }) => (
-            <li key={label}>
-              <Pill>
-                <Icon size={17} strokeWidth={1.6} aria-hidden /> {label}
-              </Pill>
-            </li>
-          ))}
-        </ul>
+        <p className="mt-9 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Takes</p>
+        <p className="mt-3 text-[21px] font-medium tracking-[-0.01em]">
+          Cash <span aria-hidden className="px-1.5 text-white/30">/</span> bKash <span aria-hidden className="px-1.5 text-white/30">/</span> Bangla QR{" "}
+          <span aria-hidden className="px-1.5 text-white/30">/</span> Card
+        </p>
       </TextBlock>
       {/* Stepped up to the right: the order the three screens come in. */}
       <Phone src={cart} width={262} alt="The cart: General Admission and a yoga session, paying by cash" className="absolute left-[668px] top-[206px]">

@@ -1,29 +1,15 @@
-import {
-  Archive,
-  Armchair,
-  CalendarRange,
-  Clock,
-  Coins,
-  Compass,
-  DoorOpen,
-  GraduationCap,
-  Hourglass,
-  LandPlot,
-  ListOrdered,
-  MonitorSmartphone,
-  Package,
-  Search,
-  Ticket as TicketIcon,
-  Timer,
-  UserRound,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { Armchair, Clock, LandPlot, Search, Users, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
-import { Crop, Floor, Glow, Hotspot, Laptop, Phone, Pill, SheetCard, Slide, Step, TextBlock, Ticket, Ticks, deckStyles as s } from "../_components/Parts";
+import { Crop, Floor, Glow, Hotspot, Laptop, Phone, SheetCard, Slide, Step, TextBlock, Ticket, Ticks, deckStyles as s } from "../_components/Parts";
 import { GoLockup } from "../_components/GoLogo";
 import logoOnPaper from "../_media/logo-counterfoil.png";
+import tplEntertainment from "../_media/tpl-entertainment.jpg";
+import tplSports from "../_media/tpl-sports.jpg";
+import tplBusiness from "../_media/tpl-business.jpg";
+import tplArts from "../_media/tpl-arts.jpg";
+import tplTravel from "../_media/tpl-travel.jpg";
+import tplNightlife from "../_media/tpl-nightlife.jpg";
 import dashLight from "../_media/os-dashboard-light.jpg";
 import calendar from "../_media/os-calendar-light.jpg";
 import bookings from "../_media/os-bookings.jpg";
@@ -54,8 +40,8 @@ export const OS_SECTION = "01 · Counterfoil OS";
 
 /**
  * A chapter opens on ink, with the product's own marque printed on the ticket
- * and the chapter's number on its stub. OS carries the platform lockup with its
- * OS tag, exactly as the app's own Logo draws it; Go carries the Go artwork,
+ * and the chapter's number on its stub. The Counterfoil logotype is OS's own
+ * mark — the app draws no OS tag beside it — and Go carries the Go artwork,
  * streaks and all.
  */
 export function ChapterDivider({
@@ -73,34 +59,30 @@ export function ChapterDivider({
   marque: "os" | "go";
   title: string;
   lead: string;
-  contents: string[];
+  /** Each part of the chapter, with the page it starts on. */
+  contents: [string, number][];
 }) {
   const logo =
-    marque === "go" ? (
-      <GoLockup />
-    ) : (
-      <span className="flex items-center gap-[2.8cqw]">
-        <span className="block w-[74%]">
-          <Image src={logoOnPaper} alt="" sizes="360px" />
-        </span>
-        <span className="font-mono text-[4.4cqw] font-medium tracking-[0.12em] text-[#57534c]">OS</span>
-      </span>
-    );
+    marque === "go" ? <GoLockup /> : <Image src={logoOnPaper} alt="" sizes="360px" />;
   return (
     <Slide tone="ink" n={n} section={`${chapter} · ${product}`} label={title}>
       <Glow className="left-[840px] top-[-260px] h-[940px] w-[940px]" />
       <Floor />
       <p className={cn(s.eyebrow, "absolute left-[96px] top-[92px]")}>Chapter {chapter}</p>
-      <div className={s.text} style={{ left: 96, top: 246, width: 700 }}>
+      {/* A shorter contents list sits lower, so both openers keep the same weight on the page. */}
+      <div className={s.text} style={{ left: 96, top: 206 + (5 - Math.ceil(contents.length / 2)) * 26, width: 700 }}>
         <h2 className={s.display}>{title}</h2>
         <p className={cn(s.lead, "mt-8 w-[620px]")}>{lead}</p>
-        <ul className="mt-11 flex w-[660px] flex-wrap gap-3">
-          {contents.map((c) => (
-            <li key={c}>
-              <Pill>{c}</Pill>
+        {/* The chapter's contents, set like a book's: each part with the page it starts on, read down then across. */}
+        <ol className="mt-12 grid w-[660px] grid-flow-col grid-cols-2 gap-x-12" style={{ gridTemplateRows: `repeat(${Math.ceil(contents.length / 2)}, auto)` }}>
+          {contents.map(([name, page]) => (
+            <li key={name} className="flex items-baseline gap-3 border-t border-white/10 py-[11px] text-[19px]">
+              <span className="font-medium">{name}</span>
+              <span aria-hidden className="mb-[5px] flex-1 border-b border-dotted border-white/25" />
+              <span className="font-mono text-[15px] tabular-nums text-[#ffa572]">{String(page).padStart(2, "0")}</span>
             </li>
           ))}
-        </ul>
+        </ol>
       </div>
       <Ticket
         variant="glass"
@@ -214,49 +196,72 @@ export function BookingsSlide({ n }: { n: number }) {
         Admission, tours, courts and events — each with its price, its category and where it is sold.
       </p>
 
-      <div className={cn(s.card, s.washPanel, "absolute left-[96px] top-[325px] grid h-[475px] w-[896px] place-items-center")}>
-        <Crop src={bookings} alt="The bookings catalogue, with bulk selection, prices, categories, channels and status" x={0.17} y={0.258} w={0.825} h={0.652} width={832} />
-      </div>
+      {/* The catalogue set straight on the page, its foot on the slide's bottom line. */}
+      <Crop
+        src={bookings}
+        alt="The bookings catalogue, with bulk selection, prices, categories, channels and status"
+        x={0.17}
+        y={0.258}
+        w={0.825}
+        h={0.652}
+        width={896}
+        className="absolute left-[96px] top-[357px]"
+      />
 
-      <div className={cn(s.card, "absolute left-[1024px] top-[325px] flex h-[141px] w-[480px] items-center justify-between gap-6 bg-[#141413] px-8 text-[#f5f2eb]")}>
-        <div>
-          <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#ffa572]">Not sellable</p>
-          <p className="mt-2 w-[300px] text-[17px] leading-[1.45] text-[rgb(245_242_235/0.82)]">A booking missing a price, a schedule or somewhere to sell says so first.</p>
-        </div>
-        <span className="text-[88px] font-semibold leading-none tracking-[-0.06em] text-[#ff7a3d]">0</span>
-      </div>
-      {[
-        { icon: Archive, title: "On, off or archived — in bulk", body: "Tick the rows and act on them; duplicate one to start the next.", top: 492 },
-        { icon: MonitorSmartphone, title: "Sold where you choose", body: "Counter, online or both, with seat layouts for rooms with seats.", top: 659 },
-      ].map(({ icon: Icon, title, body, top }) => (
-        <div key={title} className={cn(s.card, s.paperCard, "absolute left-[1024px] flex h-[141px] w-[480px] items-center gap-5 px-8")} style={{ top }}>
-          <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[14px] bg-[#fff1e8] text-[#aa3000]">
-            <Icon size={24} strokeWidth={1.6} aria-hidden />
-          </span>
+      {/* Three facts as a list between rules, level with the catalogue top and bottom. */}
+      <ul className="absolute left-[1024px] top-[357px] flex h-[443px] w-[480px] flex-col border-b border-[#d9d3c7]">
+        <li className="flex flex-1 items-center justify-between gap-6 border-t-2 border-[#141413]">
           <div>
+            <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Not sellable</p>
+            <p className={cn(s.body, "mt-2 w-[330px]")}>A booking missing a price, a schedule or somewhere to sell says so first.</p>
+          </div>
+          <span className="text-[104px] font-semibold leading-none tracking-[-0.06em] text-[#d93f00]">0</span>
+        </li>
+        {[
+          { title: "On, off or archived — in bulk", body: "Tick the rows and act on them; duplicate one to start the next." },
+          { title: "Sold where you choose", body: "Counter, online or both, with seat layouts for rooms with seats." },
+        ].map(({ title, body }) => (
+          <li key={title} className="flex flex-1 flex-col justify-center border-t border-[#d9d3c7]">
             <h3 className={s.heading}>{title}</h3>
             <p className={cn(s.body, "mt-1.5")}>{body}</p>
-          </div>
-        </div>
-      ))}
+          </li>
+        ))}
+      </ul>
     </Slide>
   );
 }
 
-const WAYS: { icon: LucideIcon; name: string; hint: string }[] = [
-  { icon: DoorOpen, name: "Open entry", hint: "Walk in, any time" },
-  { icon: CalendarRange, name: "Date passes", hint: "A day, a week, a season" },
-  { icon: Clock, name: "Timed sessions", hint: "A show every 45 minutes" },
-  { icon: LandPlot, name: "Courts & fields", hint: "Hourly slots per resource" },
-  { icon: Timer, name: "Flexible duration", hint: "A lane by the hour" },
-  { icon: Hourglass, name: "Daily capacity", hint: "200 a day, any time" },
-  { icon: Compass, name: "Guided tours", hint: "Only when a guide is free" },
-  { icon: UserRound, name: "Appointments", hint: "A therapist and a time" },
-  { icon: GraduationCap, name: "Courses", hint: "Eight sessions, one sale" },
-  { icon: Coins, name: "Credit packs", hint: "Ten classes, used over time" },
-  { icon: Package, name: "Bundles", hint: "Three attractions, one price" },
-  { icon: ListOrdered, name: "Waitlists", hint: "When a session is full" },
-  { icon: TicketIcon, name: "Quick passes", hint: "Parking by the plate" },
+/* The fourteen, grouped by what the guest is buying: a way in, a time or a place, or more than one visit. */
+const WAYS: [string, [string, string][]][] = [
+  [
+    "A way in",
+    [
+      ["Open entry", "Walk in, any time"],
+      ["Date passes", "A day, a week, a season"],
+      ["Daily capacity", "200 a day, any time"],
+      ["Quick passes", "Parking by the plate"],
+    ],
+  ],
+  [
+    "A time or a place",
+    [
+      ["Timed sessions", "A show every 45 minutes"],
+      ["Seat maps", "The seat, on a plan"],
+      ["Courts & fields", "Hourly, per court"],
+      ["Flexible duration", "A lane by the hour"],
+      ["Guided tours", "When a guide is free"],
+      ["Appointments", "A therapist and a time"],
+    ],
+  ],
+  [
+    "More than one visit",
+    [
+      ["Courses", "Eight sessions, one sale"],
+      ["Credit packs", "Ten classes, over time"],
+      ["Bundles", "Three attractions, one price"],
+      ["Waitlists", "Sold when a place frees"],
+    ],
+  ],
 ];
 
 export function BookingTypesSlide({ n }: { n: number }) {
@@ -266,36 +271,30 @@ export function BookingTypesSlide({ n }: { n: number }) {
         eyebrow="Booking types"
         title="Fourteen ways to sell time."
         lead="One engine behind all of them, so a court and a concert can’t sell the same hour twice."
-        width={500}
+        width={620}
       />
-      {/* The label has its own row, and both sheets fit inside the panel whole. */}
-      <div className={cn(s.card, s.washPanel, "absolute left-[96px] top-[420px] h-[380px] w-[520px]")}>
-        <span className="absolute left-[24px] top-[20px] z-10 inline-flex items-center gap-2 rounded-full bg-[#141413] px-4 py-2 text-[15px] font-medium text-[#f5f2eb]">
-          <Armchair size={16} strokeWidth={1.6} aria-hidden /> Seat maps · Slots
-        </span>
-        <SheetCard src={sheetSeats} alt="The seat map sheet for an evening film, three seats chosen" width={196} className="absolute left-[56px] top-[78px] rotate-[-5deg]" />
-        <SheetCard src={sheetSlots} alt="Hourly slots on a futsal field" width={196} className="absolute left-[276px] top-[70px] rotate-[5deg]" />
-      </div>
-      <ul className="absolute left-[680px] top-[92px] grid h-[708px] w-[824px] grid-cols-3 grid-rows-5 gap-4">
-        {WAYS.map(({ icon: Icon, name, hint }) => (
-          <li key={name} className={cn(s.card, s.paperCard, "flex items-center gap-4 px-5")}>
-            <span className="grid h-[48px] w-[48px] shrink-0 place-items-center rounded-[13px] bg-[#fff1e8] text-[#aa3000]">
-              <Icon size={23} strokeWidth={1.6} aria-hidden />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-[18px] font-semibold leading-tight tracking-[-0.01em]">{name}</span>
-              <span className="mt-1 block text-[15px] leading-snug text-[#6b675f]">{hint}</span>
-            </span>
-          </li>
+      {/* Two of the sheets the till opens for them, laid on the page like printouts. */}
+      <SheetCard src={sheetSeats} alt="The seat map sheet for an evening film, three seats chosen" width={200} className="absolute left-[1086px] top-[92px] rotate-[-4deg]" />
+      <SheetCard src={sheetSlots} alt="Hourly slots on a futsal field" width={200} className="absolute left-[1296px] top-[76px] rotate-[5deg]" />
+
+      <div className="absolute left-[96px] top-[452px] grid w-[1408px] grid-cols-3 gap-x-12">
+        {WAYS.map(([group, rows]) => (
+          <div key={group}>
+            <p className={cn(s.mono, "flex items-baseline justify-between uppercase text-[#aa3000]")}>
+              {group}
+              <span className="text-[#6b675f]">{String(rows.length).padStart(2, "0")}</span>
+            </p>
+            <ul className="mt-3.5 border-t-2 border-[#141413]">
+              {rows.map(([name, hint]) => (
+                <li key={name} className="flex h-[52px] items-center justify-between gap-4 border-b border-[#d9d3c7]">
+                  <span className="text-[19px] font-semibold tracking-[-0.01em]">{name}</span>
+                  <span className="text-[16px] text-[#6b675f]">{hint}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-        <li className={cn(s.card, "col-span-2 flex items-center justify-between bg-[#141413] px-8 text-[#f5f2eb]")}>
-          <span>
-            <span className="block font-mono text-[14px] uppercase tracking-[0.12em] text-[rgb(245_242_235/0.7)]">One engine</span>
-            <span className="mt-1.5 block text-[18px] font-medium text-[rgb(245_242_235/0.88)]">Plus seat maps — fourteen in all.</span>
-          </span>
-          <span className="text-[72px] font-semibold leading-none tracking-[-0.05em] text-[#ff7a3d]">14</span>
-        </li>
-      </ul>
+      </div>
     </Slide>
   );
 }
@@ -379,7 +378,10 @@ export function OrdersSlide({ n }: { n: number }) {
     <Slide tone="paper" n={n} section={OS_SECTION} label="Every sale, and the money behind it">
       <TextBlock eyebrow="Orders" title="Every sale, and the money behind it." lead="Counter and online in one list — what was collected, and what is still owed.">
         <Ticks tone="paper" items={["Each line kept as it was sold — add-ons, discounts and VAT", "Refund a line with a reason, resend a ticket, move a date", "Internal notes a guest never sees"]} />
-        <p className={cn(s.mono, "mt-9 uppercase text-[#aa3000]")}>Where an order stands</p>
+      </TextBlock>
+      {/* On the slide's bottom line, level with the foot of the bento beside it. */}
+      <div className={s.text} style={{ left: 96, bottom: 100, width: 548 }}>
+        <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Where an order stands</p>
         <ul className="mt-3.5 flex gap-2">
           {STATUS_CHIPS.map((c) => (
             <li key={c.label} className={cn("rounded-[8px] px-3 py-1.5 font-mono text-[14px] font-medium uppercase tracking-[0.08em] ring-1 ring-inset", c.cls)}>
@@ -387,7 +389,7 @@ export function OrdersSlide({ n }: { n: number }) {
             </li>
           ))}
         </ul>
-      </TextBlock>
+      </div>
 
       {/* A bento, not a pile: the list, the money it adds up to, and one order opened. */}
       <Crop src={orders} alt="The orders list: every sale with its customer, location, items, total and status" x={0.17} y={0.245} w={0.825} h={0.4646} width={840} className="absolute left-[664px] top-[92px]" />
@@ -461,64 +463,57 @@ export function ReportsSlide({ n }: { n: number }) {
     <Slide tone="ink" n={n} section={OS_SECTION} label="Read the business by the hour">
       <Glow className="left-[760px] top-[380px] h-[700px] w-[800px] opacity-70" />
       <TextBlock eyebrow="Reports" title="Read the business by the hour." lead="Transactions, a summary, what is outstanding and analytics — all from one ledger.">
-        <div className={cn(s.card, s.inkCard, "px-7 py-6")}>
-          <div className="flex items-end gap-4">
-            <span className="text-[72px] font-semibold leading-[0.8] tracking-[-0.06em] text-[#ff7a3d]">8</span>
-            <span className={cn(s.heading, "pb-[2px]")}>charts in Analytics</span>
-          </div>
-          <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-2.5">
-            {CHARTS.map((c) => (
-              <li key={c} className="flex items-center gap-2.5 text-[17px] text-[rgb(245_242_235/0.8)]">
-                <span aria-hidden className="h-[6px] w-[6px] shrink-0 rounded-full bg-[#ff7a3d]" />
-                {c}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <ul className="mt-7 flex gap-3">
-          {["CSV export", "Saved views", "Shareable links"].map((p) => (
-            <li key={p}>
-              <Pill>{p}</Pill>
+        <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Analytics · eight charts</p>
+        <ul className="mt-3.5 grid grid-cols-2 gap-x-8 border-t border-white/12">
+          {CHARTS.map((c) => (
+            <li key={c} className="border-b border-white/12 py-3 text-[18px] text-[rgb(245_242_235/0.88)]">
+              {c}
             </li>
           ))}
         </ul>
+        <p className="mt-9 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Every view</p>
+        <p className="mt-3 text-[21px] font-medium tracking-[-0.01em]">
+          Export to CSV <span aria-hidden className="px-1.5 text-white/30">/</span> Save a view <span aria-hidden className="px-1.5 text-white/30">/</span> Share a link
+        </p>
       </TextBlock>
       <Laptop src={reportsDark} width={820} tilt="left" alt="Sales analytics: revenue over time, sales by weekday and payment mix" className="absolute left-[676px] top-[184px]" />
     </Slide>
   );
 }
 
-/** Each template's own accent, from the event catalogue. */
+/** The six templates, each shown by the top of a real event page built with it. */
 const TEMPLATES = [
-  { name: "Entertainment", accent: "#FF3D71" },
-  { name: "Sports", accent: "#2BE07C" },
-  { name: "Business", accent: "#1D4ED8" },
-  { name: "Arts", accent: "#2E4A3F" },
-  { name: "Travel", accent: "#B0004E" },
-  { name: "Nightlife", accent: "#B026FF" },
+  { name: "Entertainment", src: tplEntertainment, event: "Mega concert" },
+  { name: "Sports", src: tplSports, event: "Turf cup" },
+  { name: "Business", src: tplBusiness, event: "Tech summit" },
+  { name: "Arts", src: tplArts, event: "Exhibition" },
+  { name: "Travel", src: tplTravel, event: "Sundarbans trip" },
+  { name: "Nightlife", src: tplNightlife, event: "Underground night" },
 ];
 
 export function EventsSlide({ n }: { n: number }) {
   return (
     <Slide tone="ink" n={n} section={OS_SECTION} label="A page for every event">
       <Glow className="left-[820px] top-[-280px] h-[820px] w-[860px] opacity-80" />
-      <TextBlock eyebrow="Events" title="A page for every event." lead="Six templates, one per kind of event — each page built from the event’s own bill, tickets and venue.">
-        <div className="grid grid-cols-2 gap-4">
+      <TextBlock eyebrow="Events" title="A page for every event." lead="Six templates, one per kind of event, each built from the event’s own bill and tickets.">
+        <div className="flex items-end gap-8 border-t border-white/12 pt-5">
           {[
-            { value: "6", label: "Events on sale" },
-            { value: "4,867", label: "Tickets sold" },
-          ].map(({ value, label }) => (
-            <div key={label} className={cn(s.card, s.inkCard, "px-6 py-5")}>
-              <p className="text-[44px] font-semibold leading-none tracking-[-0.04em] tabular-nums">{value}</p>
-              <p className="mt-3 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.68)]">{label}</p>
-            </div>
+            ["6", "events on sale"],
+            ["4,867", "tickets sold"],
+          ].map(([value, label]) => (
+            <p key={label} className="flex items-baseline gap-2.5">
+              <span className="text-[34px] font-semibold leading-none tracking-[-0.03em] tabular-nums">{value}</span>
+              <span className="text-[17px] text-[rgb(245_242_235/0.66)]">{label}</span>
+            </p>
           ))}
         </div>
-        <ul className="mt-4 grid grid-cols-3 gap-3">
-          {TEMPLATES.map(({ name, accent }) => (
-            <li key={name} className={cn(s.card, s.inkCard, "flex h-[56px] items-center gap-3 px-4 [--card-r:16px]")}>
-              <span aria-hidden className="h-[18px] w-[18px] shrink-0 rounded-full ring-2 ring-white/20" style={{ background: accent }} />
-              <span className="text-[16px] font-semibold">{name}</span>
+        <ul className="mt-8 grid grid-cols-3 gap-x-[14px] gap-y-[18px]">
+          {TEMPLATES.map(({ name, src, event }) => (
+            <li key={name}>
+              <div className="relative aspect-[16/10] overflow-hidden rounded-[10px] ring-1 ring-white/12">
+                <Image src={src} alt={`The ${name} template: the ${event.toLowerCase()} page`} fill sizes="200px" placeholder="blur" className="object-cover object-top" />
+              </div>
+              <p className="mt-2.5 text-[16px] font-semibold leading-none">{name}</p>
             </li>
           ))}
         </ul>
@@ -556,17 +551,23 @@ export function SettingsSlide({ n }: { n: number }) {
   return (
     <Slide tone="paper" n={n} section={OS_SECTION} label="Set up once, and the till follows">
       <TextBlock eyebrow="Settings" title="Set up once." lead="Change a setting and the till follows — there is no second place to update it." width={464}>
-        <ul className="flex flex-col gap-3">
-          {REACHES.map(([name, where]) => (
-            <li key={name} className={cn(s.card, s.paperCard, "flex h-[72px] items-center justify-between gap-4 px-5 [--card-r:16px]")}>
-              <span className="text-[17px] font-semibold">{name}</span>
-              <span className="flex items-center gap-2 text-[16px] text-[#57534c]">
-                <span aria-hidden className="text-[#aa3000]">→</span>
-                {where}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {/* A table, because it is one: each setting beside the place it shows up. */}
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b-2 border-[#141413]">
+              <th className={cn(s.mono, "pb-3 text-left font-normal uppercase text-[#aa3000]")}>Setting</th>
+              <th className={cn(s.mono, "pb-3 text-right font-normal uppercase text-[#aa3000]")}>Shows up in</th>
+            </tr>
+          </thead>
+          <tbody>
+            {REACHES.map(([name, where]) => (
+              <tr key={name} className="border-b border-[#d9d3c7]">
+                <td className="py-[20px] text-[18px] font-semibold">{name}</td>
+                <td className="py-[20px] text-right text-[17px] text-[#57534c]">{where}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </TextBlock>
 
       <Crop src={settings} alt="Settings: each section with what it is set to, and search" x={0.17} y={0.128} w={0.825} h={0.617} width={896} className="absolute left-[608px] top-[92px]" />
@@ -574,12 +575,12 @@ export function SettingsSlide({ n }: { n: number }) {
         <p className={cn(s.mono, "flex items-center gap-2 uppercase text-[#aa3000]")}>
           <Search size={15} strokeWidth={2} aria-hidden /> Search by what you’d type
         </p>
-        <ul className="mt-4 grid grid-cols-2 gap-3">
+        <ul className="mt-4 grid grid-cols-2 gap-x-12 border-t-2 border-[#141413]">
           {SEARCHES.map(([q, a]) => (
-            <li key={q} className={cn(s.card, s.paperCard, "flex h-[68px] items-center gap-3 px-5 [--card-r:16px]")}>
-              <span className="font-mono text-[16px] text-[#6b675f]">“{q}”</span>
+            <li key={q} className="flex h-[60px] items-center gap-3 border-b border-[#d9d3c7]">
+              <span className="font-mono text-[17px] text-[#57534c]">“{q}”</span>
               <span aria-hidden className="text-[#aa3000]">→</span>
-              <span className="text-[17px] font-semibold">{a}</span>
+              <span className="text-[19px] font-semibold">{a}</span>
             </li>
           ))}
         </ul>
