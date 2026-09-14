@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { KeyRound, Mail, UserCheck, UserX } from "lucide-react";
+import { KeyRound, Mail, UserCheck, UserMinus, UserX } from "lucide-react";
 import { Button, StatusPill } from "@/components/ui";
 import type { Staff } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
@@ -14,15 +14,20 @@ import { useSince } from "../../_lib/time";
  * Status used to be a select — Invited / Active / Suspended — which let an
  * admin "choose" that a person had accepted an invite they had never opened.
  * A status is something that happens to a person; what an admin controls is
- * the action. So each state offers only the actions that apply to it: resend
- * an invite that is still pending, reset or suspend someone active, reactivate
- * someone suspended. You cannot suspend yourself — the button says so rather
- * than locking you out.
+ * the action. So each state offers only the actions that apply to it: resend or
+ * revoke an invite that is still pending, reset or suspend someone active,
+ * reactivate someone suspended. You cannot suspend yourself — the button says so
+ * rather than locking you out.
+ *
+ * Revoking is for an invite sent to the wrong address or to someone who never
+ * started. It was missing, so the only way to take back an invite was to leave
+ * a live link in someone's inbox.
  */
 export function AccessSection({
   member,
   busy,
   onResend,
+  onRevoke,
   onReset,
   onSuspend,
   onReactivate,
@@ -30,6 +35,7 @@ export function AccessSection({
   member: Staff;
   busy: boolean;
   onResend: () => void;
+  onRevoke: () => void;
   onReset: () => void;
   onSuspend: () => void;
   onReactivate: () => void;
@@ -57,15 +63,26 @@ export function AccessSection({
       </SettingRow>
 
       {member.status === "invited" && (
-        <SettingRow label={t("team.resendLabel")} description={t("team.resendDesc")} labelFor={false}>
-          {() => (
-            <div className="flex sm:justify-end">
-              <Button variant="secondary" icon={<Mail size={16} strokeWidth={1.5} />} onClick={onResend}>
-                {t("team.resendInvite")}
-              </Button>
-            </div>
-          )}
-        </SettingRow>
+        <>
+          <SettingRow label={t("team.resendLabel")} description={t("team.resendDesc")} labelFor={false}>
+            {() => (
+              <div className="flex sm:justify-end">
+                <Button variant="secondary" icon={<Mail size={16} strokeWidth={1.5} />} onClick={onResend}>
+                  {t("team.resendInvite")}
+                </Button>
+              </div>
+            )}
+          </SettingRow>
+          <SettingRow label={t("team.revokeLabel")} description={t("team.revokeDesc")} labelFor={false}>
+            {() => (
+              <div className="flex sm:justify-end">
+                <Button variant="secondary" icon={<UserMinus size={16} strokeWidth={1.5} />} onClick={onRevoke} disabled={busy}>
+                  {t("team.revokeInvite")}
+                </Button>
+              </div>
+            )}
+          </SettingRow>
+        </>
       )}
 
       {member.status === "active" && (

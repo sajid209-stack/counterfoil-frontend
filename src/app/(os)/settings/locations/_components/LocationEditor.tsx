@@ -73,6 +73,7 @@ export function LocationEditor({
 }) {
   const t = useTranslations("settings");
   const router = useRouter();
+  const [allResources, setAllResources] = useState(false);
   const toast = useToast();
   const initial = useMemo(() => (location ? fromLocation(location) : BLANK), [location]);
   const [base, setBase] = useState<Draft | null>(null);
@@ -239,9 +240,9 @@ export function LocationEditor({
                   ))
                 ) : (
                   <li>
-                    <Link href="/settings/counters/new" className={chip}>
+                    <Button variant="secondary" size="sm" onClick={() => router.push("/settings/counters/new")}>
                       {t("locations.addCounter")}
-                    </Link>
+                    </Button>
                   </li>
                 )}
               </ul>
@@ -251,16 +252,24 @@ export function LocationEditor({
             <SettingRow label={t("nav.items.resources.title")} labelFor={false}>
               {() => (
                 <ul className="flex flex-wrap gap-tight sm:justify-end">
-                  {resources.slice(0, 6).map((r) => (
+                  {(allResources ? resources : resources.slice(0, 6)).map((r) => (
                     <li key={r.id}>
                       <Link href={`/settings/resources/${r.id}`} className={chip}>
                         {r.name}
                       </Link>
                     </li>
                   ))}
-                  {resources.length > 6 && (
-                    <li className="inline-flex min-h-9 items-center text-[13px] text-muted">
-                      {t("roles.membersMore", { count: resources.length - 6 })}
+                  {/* It was "+2 more" in grey — a count of things you could
+                      not get to. */}
+                  {resources.length > 6 && !allResources && (
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => setAllResources(true)}
+                        className="inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-fg underline-offset-2 transition-colors duration-quick hover:underline md:min-h-9"
+                      >
+                        {t("locations.showAll", { count: resources.length })}
+                      </button>
                     </li>
                   )}
                 </ul>
@@ -270,9 +279,13 @@ export function LocationEditor({
           <SettingRow label={t("team.title")} description={t("locations.teamCount", { count: teamCount })} labelFor={false}>
             {() => (
               <div className="flex sm:justify-end">
-                <Link href="/settings/team" className={chip}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => router.push(location ? `/settings/team?location=${location.id}` : "/settings/team")}
+                >
                   {t("locations.viewTeam")}
-                </Link>
+                </Button>
               </div>
             )}
           </SettingRow>

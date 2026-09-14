@@ -112,7 +112,7 @@ export default function RegisterDevicePage() {
               />
             )}
           </SettingRow>
-          <SettingRow label={t("devices.counterLabel")} description={t("devices.counterDesc")}>
+          <SettingRow label={t("devices.counterLabel")} description={t("devices.counterDescNew")}>
             {({ id, describedBy }) => (
               <CounterSelect
                 id={id}

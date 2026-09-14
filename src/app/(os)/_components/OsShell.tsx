@@ -14,7 +14,6 @@ import {
   Package,
   PartyPopper,
   ReceiptText,
-  Search,
   Settings,
   Store,
   TicketPercent,
@@ -27,6 +26,7 @@ import { Logo } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { HeaderSearch } from "./HeaderSearch";
 import { Sidebar } from "./Sidebar";
 
 // F10 — on mobile the hamburger drawer is gone: a bottom tab bar carries the
@@ -90,6 +90,25 @@ export function OsShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setCollapsed(localStorage.getItem("os_sidebar_collapsed") === "1");
+    // Settings → Preferences writes the same key and says so, so the rail
+    // follows the switch without a reload.
+    const onPrefs = () => setCollapsed(localStorage.getItem("os_sidebar_collapsed") === "1");
+    window.addEventListener("cf-prefs", onPrefs);
+    return () => window.removeEventListener("cf-prefs", onPrefs);
+  }, []);
+
+  // The bar has shown a Ctrl K hint since it was drawn, and nothing listened.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "k") return;
+      const box = document.getElementById("os-search");
+      if (!(box instanceof HTMLInputElement) || box.offsetParent === null) return;
+      e.preventDefault();
+      box.focus();
+      box.select();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   useEffect(() => {
@@ -107,6 +126,8 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   const toggleCollapsed = () => {
     setCollapsed((c) => {
       localStorage.setItem("os_sidebar_collapsed", c ? "0" : "1");
+      // Tell Preferences, outside this updater so no listener sets state mid-render.
+      queueMicrotask(() => window.dispatchEvent(new Event("cf-prefs")));
       return !c;
     });
   };
@@ -168,18 +189,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               at 120px, where the old bar-plus-header pair cost 183px. */}
           <div className="flex shrink-0 flex-col items-end gap-tight">
           <div className="flex shrink-0 items-center gap-tight">
-            <div className="hidden items-center gap-tight rounded-sm border border-line bg-card/60 px-comfortable py-tight text-sm text-muted transition-colors duration-quick hover:bg-card focus-within:ring-2 focus-within:ring-ember/20 lg:flex lg:w-64">
-              <Search size={16} strokeWidth={1.5} className="text-muted" />
-              <input
-                aria-label={t("search")}
-                placeholder={t("search")}
-                className="min-w-0 flex-1 bg-transparent text-fg outline-none placeholder:text-faint"
-              />
-              {/* `muted`, not `faint`: faint is the disabled-foreground token and this
-                  is a live hint on a filled chip — it measured 1.77:1 on every OS
-                  page. */}
-              <kbd className="rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-[12px] text-muted">{shortcutKey}</kbd>
-            </div>
+            <HeaderSearch destinations={DESTINATIONS} shortcutKey={shortcutKey} />
             <LocaleToggle />
             <ModeButton />
             <span className="ml-inline grid h-9 w-9 place-items-center rounded-sm bg-subtle text-[12px] font-bold text-fg ring-1 ring-line">

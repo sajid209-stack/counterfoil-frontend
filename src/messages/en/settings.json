@@ -205,7 +205,8 @@
     },
     "powerSwitch": "{name}: on",
     "offTag": "Off",
-    "emptyTab": "No devices in this list."
+    "emptyTab": "No devices in this list.",
+    "counterDescNew": "The till this tablet will open. You can move it to another counter later."
   },
   "locations": {
     "title": "Locations",
@@ -275,7 +276,10 @@
     },
     "sellingSwitch": "{name}: selling",
     "offTag": "Not selling",
-    "emptyTab": "No locations here."
+    "emptyTab": "No locations here.",
+    "addHoursOn": "Add more hours on {day}",
+    "copyDayToAll": "Copy {day}’s hours to every day",
+    "showAll": "Show all {count, number}"
   },
   "counters": {
     "title": "Counters",
@@ -436,7 +440,13 @@
     "anyRole": "Any role",
     "filterLocation": "Location",
     "anyLocation": "Any location",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "revokeInvite": "Revoke invite",
+    "revokeLabel": "Revoke invite",
+    "revokeDesc": "The link stops working and they’re taken off the team. You can invite them again at any time.",
+    "revokeTitle": "Revoke {name}’s invite?",
+    "revokeBody": "The invite link stops working straight away. Nothing else changes — you can invite them again later.",
+    "revoked": "{name}’s invite revoked"
   },
   "roles": {
     "title": "Roles",
@@ -519,7 +529,7 @@
     "ratePremium": "Charge extra on this one",
     "rateReplace": "Its own hourly rate",
     "extraPerBooking": "Extra per reservation (৳)",
-    "ratePerHour": "Rate per hour (৳)",
+    "ratePerHour": "Rate per hour",
     "reason": "Reason",
     "reasonPlaceholder": "Maintenance / rain",
     "added": "{noun} added.",
@@ -585,7 +595,7 @@
     "add": "Add category",
     "added": "{name} added.",
     "newPlaceholder": "New category name",
-    "count": "{count, plural, =0 {nothing in it} one {# booking} other {# bookings}}",
+    "count": "{count, plural, =0 {No bookings} one {# booking} other {# bookings}}",
     "reorderFailed": "Could not reorder. Try again.",
     "addLabel": "New category name",
     "moveUpNamed": "Move {name} up",
@@ -652,8 +662,8 @@
       },
       "payments": {
         "title": "Payments",
-        "desc": "Payment accounts, payouts and advance payments.",
-        "keywords": "bkash sslcommerz stripe card payouts advance deposit partial payment account"
+        "desc": "Payment methods, accounts, advances, payouts and the cash drawer.",
+        "keywords": "bkash sslcommerz stripe card qr cash payment methods tender order payouts payout schedule advance deposit partial float drawer count tolerance account"
       },
       "tax": {
         "title": "Tax",
@@ -697,8 +707,8 @@
       },
       "preferences": {
         "title": "Preferences",
-        "desc": "Appearance and language on this browser.",
-        "keywords": "dark mode light mode theme appearance language bangla english"
+        "desc": "Appearance, language, accessibility and shortcuts on this browser.",
+        "keywords": "dark mode light mode theme appearance language bangla english reduce motion animation contrast accessibility sidebar collapsed keyboard shortcuts"
       },
       "signIn": {
         "title": "Sign-in rules",
@@ -879,7 +889,7 @@
       },
       "cashVariance": {
         "title": "Cash doesn't match at close",
-        "desc": "When a till closes more than ৳100 short or over."
+        "desc": "When a till closes outside the count tolerance set in Payments."
       },
       "deviceOffline": {
         "title": "A till goes quiet",
@@ -897,14 +907,31 @@
   },
   "preferences": {
     "title": "Preferences",
-    "description": "How Counterfoil looks and reads for you.",
+    "description": "How Counterfoil looks, reads and moves for you — on this browser.",
     "displayTitle": "Display",
-    "displayDesc": "Saved on this browser only, and applied straight away.",
+    "displayDesc": "Applied straight away, and saved on this browser only.",
     "appearance": "Appearance",
     "appearanceDesc": "Light, dark, or follow your device.",
     "language": "Language",
     "languageDesc": "The language of menus and labels.",
-    "note": "Printed tickets and scan screens keep their own look in both modes."
+    "note": "Printed tickets and scan screens keep their own look in both modes.",
+    "accessTitle": "Accessibility",
+    "accessDesc": "For easier reading and calmer screens. Saved on this browser only.",
+    "reduceMotion": "Reduce motion",
+    "reduceMotionDesc": "Cuts sliding and fading, whatever your device is set to. Off follows your device.",
+    "contrast": "Increase contrast",
+    "contrastDesc": "Darker secondary text and firmer dividers. Colours that carry meaning stay the same.",
+    "workspaceTitle": "Workspace",
+    "workspaceDesc": "How the admin app is laid out on this browser.",
+    "sidebar": "Keep the sidebar collapsed",
+    "sidebarDesc": "Icons only, so pages get more room. The button at the top of the sidebar does the same.",
+    "shortcutsTitle": "Keyboard shortcuts",
+    "shortcutsDesc": "They work anywhere in the admin app.",
+    "shortcut": {
+      "search": "Go to search",
+      "close": "Close a dialog or menu",
+      "days": "Move between days in a date picker"
+    }
   },
   "perm": {
     "posSell": {

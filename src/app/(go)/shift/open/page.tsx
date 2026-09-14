@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
+import { peekPaymentSettings } from "@/lib/api";
 
 export default function ShiftOpenPage() {
   const router = useRouter();
   const t = useTranslations("shift");
-  const [float, setFloat] = useState("2000.00");
+  // The float the business suggests, set in Settings → Payments.
+  const [float, setFloat] = useState(() => (peekPaymentSettings().defaultFloat / 100).toFixed(2));
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">

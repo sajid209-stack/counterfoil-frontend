@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, ConfirmDialog, EmptyState, PageShell, StatusPill, useToast } from "@/components/ui";
@@ -17,9 +16,6 @@ interface Draft {
 }
 
 const fromDevice = (d: Device): Draft => ({ name: d.name, counterId: d.counterId ?? "" });
-
-const chip =
-  "inline-flex min-h-11 items-center rounded-full border border-line px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-subtle/60 md:min-h-9";
 
 /**
  * One tablet.
@@ -174,9 +170,9 @@ export default function DevicePage() {
           <SettingRow label={t("devices.replaceLabel")} description={t("devices.replaceDesc")} labelFor={false}>
             {() => (
               <div className="flex sm:justify-end">
-                <Link href="/settings/devices/new" className={chip}>
+                <Button variant="secondary" onClick={() => router.push("/settings/devices/new")}>
                   {t("devices.register")}
-                </Link>
+                </Button>
               </div>
             )}
           </SettingRow>

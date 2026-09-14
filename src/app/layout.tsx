@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { ToastProvider } from "@/components/ui";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { PREFS_BOOT } from "@/lib/prefsBoot";
 import { PwaSetup } from "@/components/PwaSetup";
 import "./globals.css";
 
@@ -76,6 +77,9 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${dmMono.variable} ${hindSiliguri.variable} h-full`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: PREFS_BOOT }} />
+      </head>
       <body className="min-h-full antialiased">
         <ThemeProvider>
           <NextIntlClientProvider locale={locale} messages={messages}>

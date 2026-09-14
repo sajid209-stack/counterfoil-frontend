@@ -7,7 +7,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { AlertTriangle, ArrowRight, Archive, Banknote, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
@@ -24,12 +24,6 @@ import { Keypad } from "../_components/Keypad";
 
 const TODAY = DEMO_TODAY;
 // Payment methods this counter takes (would come from counter config).
-const COUNTER_METHODS: { value: PaymentMethod }[] = [
-  { value: "cash" },
-  { value: "bkash" },
-  { value: "bangla_qr" },
-  { value: "card_terminal" },
-];
 // The signed-in staff member (mock session): Nadia, whose role sets her limits.
 /** A method is recognised at the counter as an object, not a word: cash is a
  *  note, bKash is a send, the QR is a code, the terminal is a card. */
@@ -139,7 +133,8 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const advanceQ = useApiQuery(() => getAdvancePolicy(), []);
   // Non-cash tender needs a live PSP account (charges enabled). Cash always works.
   const nonCashOk = (payAcctsQ.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled);
-  const availableMethods = COUNTER_METHODS.filter((m) => m.value === "cash" || nonCashOk);
+  // Which buttons, and in what order, is the business's call — Settings → Payments.
+  const availableMethods = tillMethods(nonCashOk).map((value) => ({ value }));
 
   // "Ask a manager" gating reads the signed-in staff's ROLE — no hardcoded cap.
   const myRole = rolesQ.data?.data.find((r) => r.id === teamQ.data?.data.find((s) => s.id === SIGNED_IN_STAFF_ID)?.roleId);

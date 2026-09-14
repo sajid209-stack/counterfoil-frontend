@@ -1177,3 +1177,18 @@ export interface AccessPolicy {
   /** Staff can only open a till on a device paired to one of their counters. */
   deviceBound: boolean;
 }
+
+// ── payments.v2 — the till's payment buttons, payouts and the cash drawer ────
+export type TillMethod = Extract<PaymentMethod, "cash" | "bkash" | "bangla_qr" | "card_terminal">;
+export type PayoutSchedule = "daily" | "weekly" | "monthly";
+export interface PaymentSettings {
+  /** The till's payment buttons, in the order shown. Cash is always on. */
+  methods: { method: TillMethod; enabled: boolean }[];
+  payoutSchedule: PayoutSchedule;
+  /** Weekly: 0–6, Sunday first. Monthly: 1–28. Unused when daily. */
+  payoutDay: number;
+  /** The opening cash suggested when a shift opens. */
+  defaultFloat: Minor;
+  /** A closing count within this of expected is square; beyond it needs a reason. */
+  countTolerance: Minor;
+}

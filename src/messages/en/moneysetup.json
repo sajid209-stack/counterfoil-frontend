@@ -1,54 +1,66 @@
 {
   "title": "Payments",
-  "description": "The accounts money arrives through, and how much a customer can pay up front.",
+  "description": "How customers pay at the till, where the money goes, and how the cash drawer is counted.",
   "accounts": {
     "title": "Payment accounts",
-    "description": "Connect a provider to take card and wallet payments. Cash always works.",
+    "description": "Where wallet, QR and card money goes. Cash needs no account.",
     "connect": "Connect",
-    "completeOnboarding": "Complete onboarding",
     "disable": "Disable",
-    "charges": "Charges",
-    "payouts": "Payouts",
     "enabled": "Enabled",
     "off": "Off",
-    "requirementsDue": "Still needed",
     "connected": "Connected",
     "notConnected": "Not connected",
-    "linkOpened": "Onboarding link opened (demo).",
+    "linkOpened": "Setup link opened (demo).",
     "activated": "{provider} is live — you can take payments now.",
-    "disabledToast": "{provider} disabled."
+    "disabledToast": "{provider} turned off",
+    "finish": "Finish setup",
+    "turnOn": "Turn on",
+    "turnOff": "Turn off",
+    "turnOffTitle": "Turn off {provider}?",
+    "turnOffBody": "Tills stop offering it straight away. Payments already taken are not affected, and you can turn it on again.",
+    "state": {
+      "active": "Taking payments, and paying out.",
+      "pending_onboarding": "Not taking payments yet. Still needed: {items}.",
+      "restricted": "Taking payments, but payouts are paused. Still needed: {items}.",
+      "disabled": "Turned off. Nothing is charged through it."
+    }
   },
   "status": {
-    "pending_onboarding": "Onboarding",
-    "active": "Active",
-    "restricted": "Restricted",
-    "disabled": "Disabled"
+    "pending_onboarding": "Setting up",
+    "active": "Live",
+    "restricted": "Payouts paused",
+    "disabled": "Off"
   },
   "posture": {
-    "merchant_of_record": "Counterfoil collects",
-    "connect": "Settles to you"
+    "merchant_of_record": "Counterfoil collects the money and pays it out to you.",
+    "connect": "Money goes straight to your own Stripe account."
   },
   "provider": {
     "bkash": "bKash",
     "sslcommerz": "SSLCommerz",
     "stripe": "Card (Stripe)",
-    "bkashHelper": "Mobile wallet — Bangladesh.",
-    "sslcommerzHelper": "Cards & local rails — Bangladesh.",
-    "stripeHelper": "Global card processing."
+    "bkashHelper": "Mobile wallet payments in Bangladesh.",
+    "sslcommerzHelper": "Cards, wallets and bank transfers in Bangladesh.",
+    "stripeHelper": "Card payments in most countries."
   },
   "cash": {
-    "title": "Cash",
-    "helper": "Always available at the counter — no setup needed.",
-    "always": "Always on"
+    "title": "Cash drawer",
+    "description": "What a till starts the day with, and how close a count has to be.",
+    "float": "Opening float",
+    "floatDesc": "Suggested when a cashier opens a shift. They can change it.",
+    "tolerance": "Count tolerance",
+    "toleranceDesc": "A closing count this close to expected closes as square. Further out, the cashier records why.",
+    "example": "{near} out closes as square; {far} out asks for a reason.",
+    "invalid": "Enter an amount of zero or more."
   },
   "requirement": {
-    "business_profile": "Business profile",
-    "bank_account": "Bank account",
-    "identity_verification": "Identity verification"
+    "business_profile": "business details",
+    "bank_account": "a bank account",
+    "identity_verification": "identity verification"
   },
   "advance": {
     "title": "Advance payments",
-    "description": "Whether a booking can be held on part of the money, and the least you will accept. Set per channel — plenty of operators take an advance online, where the alternative is losing the booking, but collect in full at the counter.",
+    "description": "Whether a booking can be held on part of the money, and the least you will take. Set per channel — plenty of operators take an advance online, where the alternative is losing the booking, but collect in full at the counter.",
     "counter": "At the counter",
     "counterHelp": "Cashiers taking a phone booking or a walk-in.",
     "online": "Online",
@@ -59,6 +71,59 @@
     "minPercent": "Least accepted",
     "minAmount": "Least accepted",
     "minHelp": "A cashier can always take more, up to the full amount.",
-    "saved": "Advance rules saved."
-  }
+    "saved": "Advance rules saved.",
+    "least": "Least taken up front",
+    "example": "On a {total} booking, at least {min} is taken now. A cashier can always take more.",
+    "invalidPercent": "Enter a whole percentage from 1 to 100.",
+    "invalidAmount": "Enter an amount above zero.",
+    "policiesNote": "Cancellation and no-show fees are set on each booking, under Policies.",
+    "policiesLink": "Go to bookings"
+  },
+  "methods": {
+    "title": "Payment methods at the till",
+    "description": "The buttons a cashier chooses from, in this order. Changes reach every till straight away.",
+    "cash": {
+      "name": "Cash",
+      "desc": "Notes and coins, with the change worked out at the till."
+    },
+    "bkash": {
+      "name": "bKash",
+      "desc": "The customer pays from their bKash wallet."
+    },
+    "bangla_qr": {
+      "name": "Bangla QR",
+      "desc": "The customer scans a QR code with any banking or wallet app."
+    },
+    "card_terminal": {
+      "name": "Card terminal",
+      "desc": "A card reader connected to the till."
+    },
+    "cashLocked": "Always offered, so a till can still sell when everything else is down.",
+    "needsAccount": "Hidden at the till until a payment account below is taking payments.",
+    "switch": "Offer {method} at the till",
+    "moveUp": "Move {method} up",
+    "moveDown": "Move {method} down",
+    "turnedOn": "{method} is offered at the till",
+    "turnedOff": "{method} is no longer offered at the till",
+    "previewLabel": "At the till now",
+    "previewNote": "The payment step a cashier sees, first button selected.",
+    "alwaysOn": "Always on"
+  },
+  "payouts": {
+    "title": "Payouts",
+    "description": "When money collected through bKash and SSLCommerz is paid into your bank. Stripe pays out from your own Stripe account.",
+    "schedule": "Payout schedule",
+    "daily": "Every day",
+    "dailyDesc": "Each day's takings, paid the next business day.",
+    "weekly": "Every week",
+    "weeklyDesc": "The week's takings, on the day you choose.",
+    "monthly": "Every month",
+    "monthlyDesc": "The month's takings, on the date you choose.",
+    "weekday": "Paid on",
+    "monthDay": "Paid on the",
+    "dayOfMonth": "{day, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+    "next": "Next payout: {date}.",
+    "note": "Your bank may take a business day or more to show it."
+  },
+  "saved": "Payment settings saved"
 }

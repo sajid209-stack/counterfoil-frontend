@@ -12,7 +12,7 @@
   "variance": "Variance",
   "countedCash": "Counted cash (৳)",
   "closeShift": "Close shift",
-  "varianceOff": "This drawer is out by more than ৳100. Record why before closing.",
+  "varianceOff": "This drawer is out by more than {amount}. Record why before closing.",
   "varianceReason": "Reason for the variance",
   "varianceReasonPlaceholder": "What happened? e.g. float short at open, refund paid in cash"
 }

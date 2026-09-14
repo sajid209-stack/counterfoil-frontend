@@ -594,6 +594,17 @@
   }
 }
 
+/* The same, chosen in Settings → Preferences on this browser, whatever the
+   device is set to. */
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 /* A wide table scrolls inside its own card rather than pushing the page
    sideways — but a container that simply cuts its last column looks broken
    rather than scrollable. These shadows are painted by the SCROLLER itself
@@ -622,3 +633,19 @@
   to   { opacity: 1; transform: none; }
 }
 
+/* Settings → Preferences → Increase contrast. Secondary text moves toward the
+   foreground and dividers firm up; the brand accent and the status colours stay
+   exactly as they are, so nothing changes meaning. html[...] outranks :root and
+   html.dark[...] outranks .dark, whatever order the blocks sit in. */
+html[data-contrast="more"] {
+  --color-muted: #4a463f;
+  --color-line: #c4bfb4;
+  --color-strong: #aaa498;
+  --color-hairline: #d6d1c6;
+}
+html.dark[data-contrast="more"] {
+  --color-muted: #c4bfb5;
+  --color-line: #5a564f;
+  --color-strong: #736f67;
+  --color-hairline: #48453f;
+}

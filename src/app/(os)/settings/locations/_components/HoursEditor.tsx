@@ -9,8 +9,8 @@ import { Switch } from "../../_components/SettingsKit";
 import { TimeField } from "../../_components/TimeField";
 import { DAY_KEY, WEEK, dayProblem } from "../_lib/hours";
 
-const quiet =
-  "inline-flex min-h-11 items-center gap-inline rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg md:min-h-9";
+const iconButton =
+  "inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg";
 
 /**
  * A week of opening hours.
@@ -21,6 +21,12 @@ const quiet =
  * or closed, a span of times, more than one span for a day with a break, and a
  * way to copy one day to the rest so a week of identical hours is one change
  * rather than seven. Problems are named on the day they belong to.
+ *
+ * "Add hours" and "Copy to all days" were text links under every open day —
+ * twelve links down a six-day week, doubling each row's height to repeat the
+ * same two words. They sit at the end of the day's row now as icon buttons,
+ * the way Calendly's availability editor draws them, each named for the day it
+ * acts on so a screen reader hears "Copy Tuesday's hours to every day".
  */
 export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChange: (next: OpeningHours[]) => void }) {
   const t = useTranslations("settings");
@@ -79,8 +85,9 @@ export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChan
                         <button
                           type="button"
                           aria-label={t("locations.removeHours")}
+                          title={t("locations.removeHours")}
                           onClick={() => setDay(d, day.intervals.filter((_, j) => j !== i))}
-                          className="inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg"
+                          className={iconButton}
                         >
                           <X size={16} strokeWidth={1.5} aria-hidden />
                         </button>
@@ -92,37 +99,42 @@ export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChan
                       {problem === "backwards" ? t("locations.hoursBackwards") : t("locations.hoursOverlap")}
                     </p>
                   )}
-                  <div className="-ml-tight flex flex-wrap gap-x-tight">
-                    <button
-                      type="button"
-                      className={quiet}
-                      onClick={() => {
-                        const last = day.intervals[day.intervals.length - 1];
-                        const start = Math.min(toMinutes(last.closesAt) + 60, 22 * 60);
-                        const end = Math.min(start + 120, 23 * 60 + 59);
-                        setDay(d, [...day.intervals, { opensAt: toTime(start), closesAt: toTime(end) }]);
-                      }}
-                    >
-                      <Plus size={14} strokeWidth={1.5} aria-hidden />
-                      {t("locations.addHours")}
-                    </button>
-                    <button
-                      type="button"
-                      className={quiet}
-                      onClick={() => {
-                        onChange(hours.map((h) => ({ ...h, intervals: day.intervals.map((i) => ({ ...i })) })));
-                        toast.success(t("locations.copied", { day: name }));
-                      }}
-                    >
-                      <Copy size={14} strokeWidth={1.5} aria-hidden />
-                      {t("locations.copyToAll")}
-                    </button>
-                  </div>
                 </div>
               ) : (
                 <p className="flex min-h-11 items-center text-sm text-muted">{t("locations.closed")}</p>
               )}
             </div>
+
+            {open && (
+              <div className="flex shrink-0 items-center">
+                <button
+                  type="button"
+                  aria-label={t("locations.addHoursOn", { day: name })}
+                  title={t("locations.addHours")}
+                  className={iconButton}
+                  onClick={() => {
+                    const last = day.intervals[day.intervals.length - 1];
+                    const start = Math.min(toMinutes(last.closesAt) + 60, 22 * 60);
+                    const end = Math.min(start + 120, 23 * 60 + 59);
+                    setDay(d, [...day.intervals, { opensAt: toTime(start), closesAt: toTime(end) }]);
+                  }}
+                >
+                  <Plus size={16} strokeWidth={1.5} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  aria-label={t("locations.copyDayToAll", { day: name })}
+                  title={t("locations.copyToAll")}
+                  className={iconButton}
+                  onClick={() => {
+                    onChange(hours.map((h) => ({ ...h, intervals: day.intervals.map((i) => ({ ...i })) })));
+                    toast.success(t("locations.copied", { day: name }));
+                  }}
+                >
+                  <Copy size={16} strokeWidth={1.5} aria-hidden />
+                </button>
+              </div>
+            )}
           </li>
         );
       })}

@@ -12,6 +12,8 @@ export interface ActionMenuItem {
   /** Archive and the like — drawn in danger, and expected to confirm. */
   destructive?: boolean;
   disabled?: boolean;
+  /** A second line under the label — for a disabled item, why it is disabled. */
+  hint?: string;
 }
 
 /**
@@ -25,6 +27,9 @@ export interface ActionMenuItem {
  *
  * It stops its own click and key events, so it is safe inside a table row that
  * navigates.
+ *
+ * A disabled item can say why beneath its label. A greyed-out "Suspend" on your
+ * own row reads as a fault; "You can't suspend your own account" reads as a rule.
  */
 export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: string }) {
   const [open, setOpen] = useState(false);
@@ -88,7 +93,7 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: s
           id={id}
           role="menu"
           className={cn(
-            "absolute right-0 z-30 min-w-[11rem] rounded-md border border-line bg-card py-inline shadow-lg",
+            "absolute right-0 z-30 min-w-[11rem] max-w-[17rem] rounded-md border border-line bg-card py-inline shadow-lg",
             up ? "bottom-[calc(100%+4px)]" : "top-[calc(100%+4px)]",
           )}
         >
@@ -108,8 +113,10 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: s
                 trigger.current?.focus();
                 item.onSelect();
               }}
+              // 44px on a phone, where these are pressed with a thumb; the
+              // desktop keeps the denser row.
               className={cn(
-                "flex w-full items-center gap-tight px-comfortable py-tight text-left text-[13px] transition-colors duration-quick",
+                "flex min-h-11 w-full items-center gap-tight px-comfortable py-tight text-left text-[13px] transition-colors duration-quick md:min-h-9",
                 item.disabled
                   ? "cursor-not-allowed text-muted"
                   : item.destructive
@@ -118,7 +125,14 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: s
               )}
             >
               {item.icon}
-              {item.label}
+              {item.hint ? (
+                <span className="min-w-0">
+                  <span className="block">{item.label}</span>
+                  <span className="mt-[2px] block text-[12px] leading-snug text-muted">{item.hint}</span>
+                </span>
+              ) : (
+                item.label
+              )}
             </button>
           ))}
         </div>

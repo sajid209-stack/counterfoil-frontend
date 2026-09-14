@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 import { formatMoney } from "@/lib/format";
+import { peekPaymentSettings } from "@/lib/api";
 
 // Expected drawer is mocked here; the real screen sums the shift's cash sales.
 const EXPECTED = 4785000; // ৳47,850.00
@@ -29,7 +30,7 @@ export default function ShiftClosePage() {
      artefact; one that is thousands out is an incident, and only the second
      needs a reason recorded. The threshold is stated once here so the colour,
      the wording and the required note cannot disagree. */
-  const TOLERANCE = 10000; // ৳100 — inside this, call it square.
+  const TOLERANCE = peekPaymentSettings().countTolerance; // Settings → Payments — inside this, call it square.
   const tier = !entered ? "idle" : Math.abs(variance) <= TOLERANCE ? "ok" : "off";
   const tone = tier === "idle" ? "text-muted" : tier === "ok" ? "text-success" : "text-warning";
 
@@ -49,7 +50,7 @@ export default function ShiftClosePage() {
           <span className="font-mono">{!entered ? "—" : `${variance > 0 ? "+" : ""}${formatMoney(variance)}`}</span>
         </div>
         {tier === "off" && (
-          <p className="mt-tight text-[13px] text-warning">{t("varianceOff")}</p>
+          <p className="mt-tight text-[13px] text-warning">{t("varianceOff", { amount: formatMoney(TOLERANCE) })}</p>
         )}
       </div>
 

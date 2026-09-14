@@ -5,7 +5,17 @@ import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, ConfirmDialog, EmptyState, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getStaff, listCounters, listLocations, listRoles, listStaff, updateStaff, type Staff, type StaffStatus } from "@/lib/api";
+import {
+  getStaff,
+  listCounters,
+  listLocations,
+  listRoles,
+  listStaff,
+  revokeInvite,
+  updateStaff,
+  type Staff,
+  type StaffStatus,
+} from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { SectionSkeleton } from "../../_components/SettingsKit";
 import { countByRole } from "../../_lib/roles";
@@ -25,7 +35,7 @@ export default function MemberPage() {
   // The record as last written from this page, so a status change shows at once
   // without reloading the form out from under an edit in progress.
   const [latest, setLatest] = useState<Staff | null>(null);
-  const [confirm, setConfirm] = useState(false);
+  const [confirm, setConfirm] = useState<null | "suspend" | "revoke">(null);
   const [busy, setBusy] = useState(false);
 
   if (!memberQ.loading && (memberQ.error || !memberQ.data)) {
@@ -53,13 +63,27 @@ export default function MemberPage() {
     setBusy(true);
     const res = await updateStaff(member.id, { status });
     setBusy(false);
-    setConfirm(false);
+    setConfirm(null);
     if (!res.ok) {
       toast.error(res.error.message);
       return;
     }
     setLatest(res.data);
     toast.success(status === "suspended" ? t("team.suspendedToast", { name: member.name }) : t("team.reactivated", { name: member.name }));
+  };
+
+  // A revoked invite has no page to stay on, so this goes back to the team.
+  const revoke = async () => {
+    setBusy(true);
+    const res = await revokeInvite(member.id);
+    setBusy(false);
+    setConfirm(null);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    toast.success(t("team.revoked", { name: member.name }));
+    router.push("/settings/team");
   };
 
   return (
@@ -69,8 +93,9 @@ export default function MemberPage() {
           member={member}
           busy={busy}
           onResend={() => toast.success(t("team.inviteResent", { who: via }))}
+          onRevoke={() => setConfirm("revoke")}
           onReset={() => toast.success(t("team.resetSent", { who: via }))}
-          onSuspend={() => setConfirm(true)}
+          onSuspend={() => setConfirm("suspend")}
           onReactivate={() => setStatus("active")}
         />
         <MemberForm
@@ -85,12 +110,12 @@ export default function MemberPage() {
       </div>
 
       <ConfirmDialog
-        open={confirm}
-        onClose={() => setConfirm(false)}
-        onConfirm={() => setStatus("suspended")}
-        title={t("team.suspendTitle", { name: member.name })}
-        message={t("team.suspendBody")}
-        confirmLabel={t("team.suspend")}
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        onConfirm={() => (confirm === "revoke" ? revoke() : setStatus("suspended"))}
+        title={confirm === "revoke" ? t("team.revokeTitle", { name: member.name }) : t("team.suspendTitle", { name: member.name })}
+        message={confirm === "revoke" ? t("team.revokeBody") : t("team.suspendBody")}
+        confirmLabel={confirm === "revoke" ? t("team.revokeInvite") : t("team.suspend")}
         loading={busy}
       />
     </PageShell>

@@ -6767,3 +6767,149 @@ Sources: [Cieden — toggle lists](https://cieden.com/book/atoms/toggle-switch/h
 [GitHub — active sessions](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/viewing-and-managing-your-active-saml-sessions) ·
 [Cin7 POS settings](https://help.core.cin7.com/hc/en-us/articles/10553610629391-POS-settings) ·
 [Toast cash rounding](https://support.toasttab.com/en/article/Use-Cash-Rounding)
+
+## Settings, part four — a menu that was painted over, and payments and preferences that act (2026-09-14)
+
+Owner sent a screenshot of the Team list with a row menu open and the next row's
+"Active 18 hours ago" and "···" drawn straight through "Suspend", asked for that
+and every other settings UI error to be found and fixed, and for Payments and
+Preferences to be researched and rebuilt.
+
+### The bug in the screenshot
+
+Not transparency — the menu is `bg-card`. The trailing box on a settings row
+(the switch and the "···") was centred with `top-1/2 -translate-y-1/2`. **A
+transform makes a stacking context**, so the open menu's `z-30` only counted
+inside that box, and every later row — positioned, and later in the document —
+painted over it. It hit every settings list with a row menu: Team, Roles,
+Resources. The box is centred with `inset-y-0` and flex now.
+
+**Worth remembering: an absolutely positioned popover inside anything with a
+`transform` cannot rise above that thing's siblings, whatever its z-index.**
+
+`menus.mjs` opens every row menu in Team, Roles, Resources, the bookings catalogue
+and an order, and asks `elementFromPoint` at each item's centre whether the item
+is on top. It also found the second problem: **menu items were 36px on a phone**,
+now 44px there and 36px from `md`.
+
+### Other errors, found by reviewing every record page
+
+- **Your own Suspend was greyed out with no reason.** `ActionMenu` items take a
+  `hint`; the row now says "You can't suspend your own account."
+- **An invite could not be taken back.** Revoke invite, in the row menu and on
+  the member page, confirmed. `revokeInvite` refuses anything but a pending
+  invite: someone who has signed in is suspended instead, so their sales stay
+  attributed.
+- **"View team" on a location opened everyone.** The team list reads
+  `?location=` and `?role=`, and the button opens the people who work there.
+- **Action pills.** "Register a device", "View team" and "Add a counter" were
+  rounded-full tags — the shape this app uses for links to records. They are
+  buttons. Record links stay tags.
+- **"+2 more" was a count of things you could not reach.** It opens the rest.
+- **Opening hours repeated "Add hours" and "Copy to all days" under every open
+  day** — twelve text links down a six-day week. Icon buttons at the end of each
+  day's row, named for the day they act on.
+- **Registering a device** said "Change it to move the tablet to another
+  counter" about a tablet that did not exist yet.
+- "Rate per hour (৳)" beside a field suffixed ৳; "nothing in it" beside
+  "6 bookings"; the Roles page drew its people as solid black discs.
+
+### Payments
+
+Research (Square, Stripe, Shopify, Toast, Fresha, Zoho Bookings; sources below)
+agreed on what a payments page answers. The page now has five parts.
+
+- **Payment methods at the till.** Cash, bKash, Bangla QR, card terminal, each
+  with a switch (cash says "Always on") and up/down to reorder, acting at once
+  with Undo, and the payment step drawn as a cashier sees it. **This is wired.**
+  The buttons were a constant in each till; `tillMethods()` in
+  `api/paymentSettings.ts` now decides them for the v1 till, the classic till
+  and the scrolling till. Verified by moving bKash first and adding a sale: the
+  till read "bKash | Cash | Bangla QR | Card".
+- **Payment accounts.** Each state is said in words under its pill ("Taking
+  payments, but payouts are paused. Still needed: a bank account"). Connect is a
+  secondary button — it had been solid orange twice in one list. Turning off a
+  live account asks first, and a turned-off account can be turned on.
+- **Advance payments.** A % / ৳ toggle, a text field that is parsed rather than
+  rewritten as you type — "12." used to lose its decimal point — and a worked
+  example on a ৳2,000 booking. Cancellation and no-show fees are pointed at,
+  because they already live on each booking's Policies tab.
+- **Payouts.** Daily / weekly / monthly, the day, and the next payout date.
+  Stored for the backend; no payout is simulated.
+- **Cash drawer.** Opening float and count tolerance. **Both wired:** shift open
+  suggests the float and shift close measures the variance against the
+  tolerance, which were hardcoded ৳2,000 and ৳100. The notification about a cash
+  variance now points here instead of quoting ৳100.
+
+The currency is `narrowSymbol`: English formatting names the taka "BDT".
+
+### Preferences
+
+GitHub, Linear, Slack and Notion all put the same few things beside the theme.
+Each here does what it says the moment it is switched, on this browser.
+
+- **Reduce motion** — `html[data-motion="reduce"]`, the same rules as the media
+  query.
+- **Increase contrast** — `html[data-contrast="more"]` darkens `--color-muted`
+  and firms `--color-line`/`--color-hairline`, in both themes. The accent and the
+  status colours are untouched, so nothing changes meaning.
+- **Keep the sidebar collapsed** — the same key the sidebar's own button writes,
+  with an event, so the rail moves at once and the switch follows the button.
+- **Keyboard shortcuts** — only the ones that exist.
+
+`lib/prefsBoot.ts` applies both attributes from a script in `<head>` before the
+first paint, kept apart from `lib/prefs.ts` so the server layout imports no
+client hooks. Text size and a 12-hour clock were left out on purpose: sizes are
+set in pixels and dates are formatted in one place, so either switch would
+change some screens and not others.
+
+### The search box that did not search
+
+The top bar's search was an `<input>` with no behaviour and a "Ctrl K" hint that
+nothing listened to. `HeaderSearch` is a combobox over every page and every
+settings section, using the settings keywords — "vat" finds Tax, "dark mode"
+finds Preferences — with arrow keys, Enter and Esc, and Ctrl/⌘ K focuses it.
+
+### Verified
+
+- `menus.mjs` **12/12**: every row menu on top and on screen at 1440 and 390,
+  items 44px on a phone.
+- `r4.mjs` **31/31**: method switches, order and Undo; the till's buttons
+  following them; account buttons and the turn-off confirmation; advance
+  validation, the decimal point and the example; payouts; tolerance; saving;
+  reduce motion and contrast applied, surviving a reload; the sidebar switch;
+  Ctrl K; search by keyword, Enter and click; no console errors.
+- Shift open suggests ৳2,000.00 and shift close says "out by more than ৳100",
+  both read from settings, with no console errors.
+- Payments and Preferences in Bangla at 390 and 1440: **0 console errors**.
+- Settings probe across 18 settings routes at 1440 light and dark and 390:
+  **238/238**, after pointing its outdated payments step at the advance switch.
+- Earlier suites hold: notifications / sign-in / security 37/37, locations / tax
+  / receipts 20/20, list switches 23/23, settings search 24/24, accessibility
+  8/8, review 15/15, deck 9/9, route audit **70**.
+- `tsc` and `npm run build` clean; eslint clean on every settings file and every
+  new file; `PosScreen` (6), `OsShell` (1), the classic and scrolling tills (0)
+  report exactly what they did at `HEAD`.
+- i18n parity **0 missing / 0 extra**; six `moneysetup` keys the old page used,
+  now unused, removed from both locales.
+
+### Open
+
+- **Per-counter payment methods are still not read by any till** — a
+  pre-existing gap, now more visible beside a business-wide list that is. The
+  counter page's switches need the same `tillMethods` treatment, per counter.
+- The Check-In and scan-result balance screens keep their own fixed list of
+  methods.
+- Payout schedule is stored, not acted on. Cash rounding and service charges
+  were again left out: both change what a sale totals.
+
+Sources: [Square — payment types](https://squareup.com/help/us/en/article/6389-manage-payment-types-with-the-square-app) ·
+[Stripe — account statuses](https://docs.stripe.com/connect/dashboard) ·
+[Stripe — payouts](https://docs.stripe.com/payouts) ·
+[Shopify — payout schedule](https://help.shopify.com/en/manual/payments/shopify-payments/payouts/schedule-payouts) ·
+[Fresha — payment policies](https://www.fresha.com/help-center/knowledge-base/payments/101660-set-up-payment-policies) ·
+[Zoho Bookings — payments](https://help.zoho.com/portal/en/kb/bookings/integrations/payments/articles/bookings-configure-payments) ·
+[GitHub — accessibility settings](https://docs.github.com/en/account-and-profile/how-tos/account-settings/managing-accessibility-settings) ·
+[Linear — preferences](https://linear.app/docs/account-preferences) ·
+[Slack — accessibility](https://slack.com/help/articles/4455747966739-Accessibility-in-Slack) ·
+[Notion — account settings](https://www.notion.com/help/account-settings)

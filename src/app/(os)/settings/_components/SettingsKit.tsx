@@ -384,8 +384,12 @@ export function RecordRow({
         {aside ? <span className="hidden max-w-[40%] shrink-0 text-right text-[13px] text-muted sm:block">{aside}</span> : null}
         {trailing > 0 ? null : <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
       </Link>
+      {/* Centred with inset-y-0 and flex, not top-1/2 and a translate. A
+          transform makes a stacking context, which trapped an open row menu's
+          z-index inside this box — so every later row, painted after it, drew
+          its text and its own "···" straight through the menu. */}
       {trailing > 0 ? (
-        <div className="absolute right-section top-1/2 flex -translate-y-1/2 items-center gap-tight sm:right-major">
+        <div className="absolute inset-y-0 right-section flex items-center gap-tight sm:right-major">
           {control}
           {menu}
         </div>

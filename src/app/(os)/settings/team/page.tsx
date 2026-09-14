@@ -1,19 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { KeyRound, Mail, Plus, UserCheck, UserX } from "lucide-react";
+import { KeyRound, Mail, Plus, UserCheck, UserMinus, UserX } from "lucide-react";
 import { ActionMenu, Avatar, Button, ConfirmDialog, PageShell, StatusPill, Tabs, useToast, type ActionMenuItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { listLocations, listRoles, listStaff, updateStaff, type Staff, type StaffStatus } from "@/lib/api";
+import { listLocations, listRoles, listStaff, revokeInvite, updateStaff, type Staff, type StaffStatus } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { RecordList, RecordRow, SearchField, SectionSkeleton, controlCls } from "../_components/SettingsKit";
 import { useSince } from "../_lib/time";
 
 type Tab = "all" | StaffStatus;
 const TABS: Tab[] = ["all", "active", "invited", "suspended"];
+
+type Confirm = { staff: Staff; kind: "suspend" | "revoke" };
 
 /**
  * The team.
@@ -29,7 +31,9 @@ const TABS: Tab[] = ["all", "active", "invited", "suspended"];
  * The questions a manager actually asks of this list — who are my cashiers,
  * who works at the museum — are a role and a place, so both are filters beside
  * the search, and the tab counts follow them: "Invited 1" means one invited
- * cashier once Cashier is chosen, not one invited person somewhere.
+ * cashier once Cashier is chosen, not one invited person somewhere. Both can be
+ * set from a link (`?location=`, `?role=`), so a location's "View team" opens on
+ * the people who work there.
  *
  * Suspending stays in the menu, behind a confirmation, and is not a switch on
  * the row. It signs a person out everywhere; that is not something to be one
@@ -39,11 +43,12 @@ export default function TeamPage() {
   const t = useTranslations("settings");
   const router = useRouter();
   const toast = useToast();
+  const params = useSearchParams();
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
-  const [roleId, setRoleId] = useState("");
-  const [locationId, setLocationId] = useState("");
-  const [confirm, setConfirm] = useState<Staff | null>(null);
+  const [roleId, setRoleId] = useState(() => params.get("role") ?? "");
+  const [locationId, setLocationId] = useState(() => params.get("location") ?? "");
+  const [confirm, setConfirm] = useState<Confirm | null>(null);
   const [busy, setBusy] = useState(false);
 
   const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
@@ -95,6 +100,19 @@ export default function TeamPage() {
     staffQ.reload();
   };
 
+  const revoke = async (s: Staff) => {
+    setBusy(true);
+    const res = await revokeInvite(s.id);
+    setBusy(false);
+    setConfirm(null);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    toast.success(t("team.revoked", { name: s.name }));
+    staffQ.reload();
+  };
+
   const actions = (s: Staff): ActionMenuItem[] => {
     const who = s.email ?? s.phone ?? s.name;
     if (s.status === "invited") {
@@ -104,6 +122,13 @@ export default function TeamPage() {
           label: t("team.resendInvite"),
           icon: <Mail size={16} strokeWidth={1.5} />,
           onSelect: () => toast.success(t("team.inviteResent", { who })),
+        },
+        {
+          key: "revoke",
+          label: t("team.revokeInvite"),
+          icon: <UserMinus size={16} strokeWidth={1.5} />,
+          destructive: true,
+          onSelect: () => setConfirm({ staff: s, kind: "revoke" }),
         },
       ];
     }
@@ -117,6 +142,7 @@ export default function TeamPage() {
         },
       ];
     }
+    const isYou = s.id === DEMO_STAFF_ID;
     return [
       {
         key: "reset",
@@ -129,8 +155,9 @@ export default function TeamPage() {
         label: t("team.suspend"),
         icon: <UserX size={16} strokeWidth={1.5} />,
         destructive: true,
-        disabled: s.id === DEMO_STAFF_ID,
-        onSelect: () => setConfirm(s),
+        disabled: isYou,
+        hint: isYou ? t("team.suspendSelf") : undefined,
+        onSelect: () => setConfirm({ staff: s, kind: "suspend" }),
       },
     ];
   };
@@ -246,11 +273,19 @@ export default function TeamPage() {
         open={confirm !== null}
         onClose={() => setConfirm(null)}
         onConfirm={() => {
-          if (confirm) setStatus(confirm, "suspended");
+          if (!confirm) return;
+          if (confirm.kind === "revoke") void revoke(confirm.staff);
+          else void setStatus(confirm.staff, "suspended");
         }}
-        title={confirm ? t("team.suspendTitle", { name: confirm.name }) : ""}
-        message={t("team.suspendBody")}
-        confirmLabel={t("team.suspend")}
+        title={
+          confirm
+            ? confirm.kind === "revoke"
+              ? t("team.revokeTitle", { name: confirm.staff.name })
+              : t("team.suspendTitle", { name: confirm.staff.name })
+            : ""
+        }
+        message={confirm?.kind === "revoke" ? t("team.revokeBody") : t("team.suspendBody")}
+        confirmLabel={confirm?.kind === "revoke" ? t("team.revokeInvite") : t("team.suspend")}
         loading={busy}
       />
     </PageShell>

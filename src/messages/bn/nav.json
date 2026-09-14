@@ -34,5 +34,7 @@
   "switchUser": "ইউজার পরিবর্তন",
   "help": "সহায়তা",
   "more": "আরও",
-  "search": "খুঁজুন"
+  "search": "খুঁজুন",
+  "searchEmpty": "“{query}”-এর সাথে কিছু মেলেনি",
+  "searchPage": "পাতা"
 }

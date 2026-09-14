@@ -34,5 +34,7 @@
   "switchUser": "Switch user",
   "help": "Help",
   "more": "More",
-  "search": "Search"
+  "search": "Search",
+  "searchEmpty": "Nothing matches “{query}”",
+  "searchPage": "Page"
 }

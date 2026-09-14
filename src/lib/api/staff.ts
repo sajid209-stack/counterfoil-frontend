@@ -58,3 +58,16 @@ export function updateStaff(id: string, patch: StaffPatch): Promise<ApiResult<St
 }
 
 export const peekStaff = () => resource.peek();
+
+/**
+ * Take back an invite nobody has accepted: the link stops working and the
+ * record goes. Someone who has already signed in is suspended instead, so their
+ * sales and shifts stay attributed to a person.
+ */
+export function revokeInvite(id: string): Promise<ApiResult<Staff>> {
+  const member = resource.peek().find((s) => s.id === id);
+  if (!member || member.status !== "invited") {
+    return Promise.resolve(fail(validationError({ status: "Only an invite that hasn't been accepted can be revoked." })));
+  }
+  return resource.remove(id);
+}

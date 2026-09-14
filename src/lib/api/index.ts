@@ -30,3 +30,4 @@ export * from "./holds";
 export * from "./events";
 export * from "./notifications";
 export * from "./accessPolicy";
+export * from "./paymentSettings";

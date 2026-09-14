@@ -33,6 +33,7 @@ import { Check, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
+  tillMethods,
   advanceMinimum,
   checkout,
   getAdvancePolicy,
@@ -134,9 +135,7 @@ export default function SellPage() {
 
   // Non-cash tender needs a live PSP account. Cash always works.
   const nonCashOk = (payAcctsQ.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled);
-  const methods: PaymentMethod[] = nonCashOk
-    ? ["cash", "bkash", "bangla_qr", "card_terminal"]
-    : ["cash"];
+  const methods: PaymentMethod[] = tillMethods(nonCashOk);
 
   /* ── Resolving every block ───────────────────────────────────────────────
      Done in one pass so the blocks, the totals and the eventual payload can
