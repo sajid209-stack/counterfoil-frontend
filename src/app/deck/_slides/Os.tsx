@@ -1,7 +1,40 @@
-import { Armchair, Clock, LandPlot, Search, Users, type LucideIcon } from "lucide-react";
 import Image from "next/image";
+import type { ReactNode } from "react";
+import {
+  ArrowRight,
+  Armchair,
+  Bookmark,
+  CalendarCheck,
+  Clock,
+  Columns2,
+  CornerDownLeft,
+  Download,
+  LandPlot,
+  Link2,
+  ListFilter,
+  Receipt,
+  Search,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Crop, Floor, Glow, Hotspot, Laptop, Phone, SheetCard, Slide, Step, TextBlock, Ticket, Ticks, deckStyles as s } from "../_components/Parts";
+import {
+  Crop,
+  Floor,
+  Glow,
+  Hotspot,
+  Laptop,
+  Phone,
+  Pill,
+  SheetCard,
+  Slide,
+  Step,
+  TextBlock,
+  Ticket,
+  Ticks,
+  deckStyles as s,
+  type ChapterPart,
+} from "../_components/Parts";
 import { GoLockup } from "../_components/GoLogo";
 import logoOnPaper from "../_media/logo-counterfoil.png";
 import tplEntertainment from "../_media/tpl-entertainment.jpg";
@@ -28,9 +61,9 @@ import sheetSlots from "../_media/sheet-slots.jpg";
 /*
  * Chapter 01 — Counterfoil OS, one slide per part of the admin app.
  *
- * Paper is the OS chapter's ground and ink is Go's. No two neighbours share a
- * composition: a laptop with numbered points, a crop with a close-up, a bento,
- * a list above its record, a device on ink.
+ * Paper is the OS chapter's ground and ink is Go's. Where a slide lists
+ * things, each is shown as a piece of the product — a slot grid, a punch card,
+ * a bulk bar, a search result — rather than an icon and a line of text.
  *
  * Every crop is cut on a row boundary of its screenshot, so no screen stops
  * halfway through a line of text.
@@ -38,11 +71,47 @@ import sheetSlots from "../_media/sheet-slots.jpg";
 
 export const OS_SECTION = "01 · Counterfoil OS";
 
+/** The parts of chapter 01, each with the screen it opens on. */
+export const OS_CONTENTS: ChapterPart[] = [
+  { name: "Dashboard", page: 6, src: dashLight, x: 0.17, y: 0.08, w: 0.5 },
+  { name: "Calendar", page: 7, src: calendar, x: 0.4, y: 0.34, w: 0.45 },
+  { name: "Bookings", page: 8, src: bookings, x: 0.17, y: 0.26, w: 0.5 },
+  { name: "Booking types", page: 9, src: sheetSlots, x: 0.04, y: 0.3, w: 0.92 },
+  { name: "Holds", page: 10, src: holds, x: 0.17, y: 0.28, w: 0.36 },
+  { name: "Orders", page: 11, src: orders, x: 0.17, y: 0.24, w: 0.5 },
+  { name: "Customers", page: 12, src: customers, x: 0.17, y: 0.12, w: 0.5 },
+  { name: "Reports", page: 13, src: reportsDark, x: 0.3, y: 0.24, w: 0.5 },
+  { name: "Events", page: 14, src: eventOs, x: 0.3, y: 0.14, w: 0.5 },
+  { name: "Settings", page: 15, src: settings, x: 0.17, y: 0.12, w: 0.5 },
+];
+
+const THUMB = { landscape: { w: 124, h: 78 }, portrait: { w: 100, h: 150 } } as const;
+
+/** A part's own screen, cropped to a thumbnail, with the page it starts on. */
+function PartThumb({ part, shape }: { part: ChapterPart; shape: keyof typeof THUMB }) {
+  const box = THUMB[shape];
+  const h = (part.w * part.src.width) / (box.w / box.h) / part.src.height;
+  return (
+    <div className="relative overflow-hidden rounded-[10px] bg-[#1c1b19] ring-1 ring-white/15" style={{ width: box.w, height: box.h }}>
+      <Image
+        src={part.src}
+        alt=""
+        sizes={`${Math.min(3840, Math.round(box.w / part.w) * 2)}px`}
+        className={s.cropImg}
+        style={{ width: `${100 / part.w}%`, left: `${(-part.x / part.w) * 100}%`, top: `${(-part.y / h) * 100}%` }}
+      />
+      <span className="absolute left-1.5 top-1.5 rounded-[6px] bg-[#141413]/90 px-1.5 py-[3px] font-mono text-[12px] leading-none text-[#f5f2eb]">
+        {String(part.page).padStart(2, "0")}
+      </span>
+    </div>
+  );
+}
+
 /**
  * A chapter opens on ink, with the product's own marque printed on the ticket
  * and the chapter's number on its stub. The Counterfoil logotype is OS's own
  * mark — the app draws no OS tag beside it — and Go carries the Go artwork,
- * streaks and all.
+ * streaks and all. What the chapter holds is shown as the screens themselves.
  */
 export function ChapterDivider({
   n,
@@ -52,6 +121,7 @@ export function ChapterDivider({
   title,
   lead,
   contents,
+  thumb,
 }: {
   n: number;
   chapter: string;
@@ -59,27 +129,28 @@ export function ChapterDivider({
   marque: "os" | "go";
   title: string;
   lead: string;
-  /** Each part of the chapter, with the page it starts on. */
-  contents: [string, number][];
+  contents: ChapterPart[];
+  thumb: keyof typeof THUMB;
 }) {
-  const logo =
-    marque === "go" ? <GoLockup /> : <Image src={logoOnPaper} alt="" sizes="360px" />;
+  const logo = marque === "go" ? <GoLockup /> : <Image src={logoOnPaper} alt="" sizes="360px" />;
+  const box = THUMB[thumb];
+  const cols = Math.round((700 + 20) / (box.w + 20));
+  const rows = Math.ceil(contents.length / cols);
+  const contentsHeight = rows * (box.h + 27) + (rows - 1) * 18;
   return (
     <Slide tone="ink" n={n} section={`${chapter} · ${product}`} label={title}>
       <Glow className="left-[840px] top-[-260px] h-[940px] w-[940px]" />
       <Floor />
       <p className={cn(s.eyebrow, "absolute left-[96px] top-[92px]")}>Chapter {chapter}</p>
-      {/* A shorter contents list sits lower, so both openers keep the same weight on the page. */}
-      <div className={s.text} style={{ left: 96, top: 206 + (5 - Math.ceil(contents.length / 2)) * 26, width: 700 }}>
+      {/* Both openers finish on the same line, however many parts they hold. */}
+      <div className={s.text} style={{ left: 96, top: 206 + (228 - contentsHeight), width: 700 }}>
         <h2 className={s.display}>{title}</h2>
         <p className={cn(s.lead, "mt-8 w-[620px]")}>{lead}</p>
-        {/* The chapter's contents, set like a book's: each part with the page it starts on, read down then across. */}
-        <ol className="mt-12 grid w-[660px] grid-flow-col grid-cols-2 gap-x-12" style={{ gridTemplateRows: `repeat(${Math.ceil(contents.length / 2)}, auto)` }}>
-          {contents.map(([name, page]) => (
-            <li key={name} className="flex items-baseline gap-3 border-t border-white/10 py-[11px] text-[19px]">
-              <span className="font-medium">{name}</span>
-              <span aria-hidden className="mb-[5px] flex-1 border-b border-dotted border-white/25" />
-              <span className="font-mono text-[15px] tabular-nums text-[#ffa572]">{String(page).padStart(2, "0")}</span>
+        <ol className="mt-11 grid gap-x-5 gap-y-[18px]" style={{ gridTemplateColumns: `repeat(${cols}, ${box.w}px)` }}>
+          {contents.map((part) => (
+            <li key={part.name}>
+              <PartThumb part={part} shape={thumb} />
+              <p className="mt-2 text-[15px] font-medium leading-[19px] text-[rgb(245_242_235/0.88)]">{part.name}</p>
             </li>
           ))}
         </ol>
@@ -137,10 +208,10 @@ export function DashboardSlide({ n }: { n: number }) {
   );
 }
 
-const CALENDAR_KEY = [
-  { label: "Today", body: "Marked, with a line at the current time." },
-  { label: "Side by side", body: "Two bookings at one time never hide each other." },
-  { label: "The key", body: "Each state is also a filter, with its count." },
+const CALENDAR_KEY: { icon: LucideIcon; label: string; body: string }[] = [
+  { icon: CalendarCheck, label: "Today", body: "Marked, with a line at the current time." },
+  { icon: Columns2, label: "Side by side", body: "Two bookings at one time never hide each other." },
+  { icon: ListFilter, label: "The key", body: "Each state is also a filter, with its count." },
 ];
 
 export function CalendarSlide({ n }: { n: number }) {
@@ -176,15 +247,29 @@ export function CalendarSlide({ n }: { n: number }) {
         {/* Where the close-up comes from. */}
         <span aria-hidden className="absolute rounded-[10px] ring-[3px] ring-[#f94a00]" style={{ left: "57.6%", top: "51.1%", width: "15.8%", height: "12.2%" }} />
       </Crop>
-      <ul className="absolute left-[608px] top-[686px] grid w-[896px] grid-cols-3 gap-6">
-        {CALENDAR_KEY.map(({ label, body }) => (
-          <li key={label} className="border-t border-[#dcd6cb] pt-4">
-            <p className={cn(s.mono, "uppercase text-[#aa3000]")}>{label}</p>
-            <p className={cn(s.body, "mt-2")}>{body}</p>
+      <ul className="absolute left-[608px] top-[684px] grid w-[896px] grid-cols-3 gap-6">
+        {CALENDAR_KEY.map(({ icon: Icon, label, body }) => (
+          <li key={label} className="flex gap-3.5">
+            <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-[12px] bg-white text-[#aa3000] shadow-[0_1px_2px_rgb(20_20_19/0.06)] ring-1 ring-[#e7e2d8]">
+              <Icon size={20} strokeWidth={1.7} aria-hidden />
+            </span>
+            <span>
+              <span className="block text-[18px] font-semibold leading-tight">{label}</span>
+              <span className={cn(s.body, "mt-1 block text-[16px]")}>{body}</span>
+            </span>
           </li>
         ))}
       </ul>
     </Slide>
+  );
+}
+
+/** A switch as the settings pages draw it, on. */
+function SwitchOn() {
+  return (
+    <span aria-hidden className="relative h-[24px] w-[42px] shrink-0 rounded-full bg-[#f94a00]">
+      <span className="absolute right-[3px] top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-[0_1px_2px_rgb(20_20_19/0.3)]" />
+    </span>
   );
 }
 
@@ -196,7 +281,6 @@ export function BookingsSlide({ n }: { n: number }) {
         Admission, tours, courts and events — each with its price, its category and where it is sold.
       </p>
 
-      {/* The catalogue set straight on the page, its foot on the slide's bottom line. */}
       <Crop
         src={bookings}
         alt="The bookings catalogue, with bulk selection, prices, categories, channels and status"
@@ -208,43 +292,125 @@ export function BookingsSlide({ n }: { n: number }) {
         className="absolute left-[96px] top-[357px]"
       />
 
-      {/* Three facts as a list between rules, level with the catalogue top and bottom. */}
-      <ul className="absolute left-[1024px] top-[357px] flex h-[443px] w-[480px] flex-col border-b border-[#d9d3c7]">
-        <li className="flex flex-1 items-center justify-between gap-6 border-t-2 border-[#141413]">
-          <div>
-            <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Not sellable</p>
-            <p className={cn(s.body, "mt-2 w-[330px]")}>A booking missing a price, a schedule or somewhere to sell says so first.</p>
+      {/* Three facts, each shown with the piece of the catalogue that does it. */}
+      <div className="absolute left-[1024px] top-[357px] flex h-[443px] w-[480px] flex-col gap-4">
+        <div className={cn(s.card, "relative flex h-[151px] shrink-0 items-center justify-between gap-6 bg-[#141413] px-8 text-[#f5f2eb]")}>
+          <Glow className="left-[260px] top-[-60px] h-[260px] w-[260px] opacity-60" />
+          <div className="relative">
+            <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#ffa572]">Not sellable</p>
+            <p className="mt-2 w-[280px] text-[17px] leading-[1.45] text-[rgb(245_242_235/0.8)]">A booking missing a price, a schedule or somewhere to sell says so first.</p>
           </div>
-          <span className="text-[104px] font-semibold leading-none tracking-[-0.06em] text-[#d93f00]">0</span>
-        </li>
-        {[
-          { title: "On, off or archived — in bulk", body: "Tick the rows and act on them; duplicate one to start the next." },
-          { title: "Sold where you choose", body: "Counter, online or both, with seat layouts for rooms with seats." },
-        ].map(({ title, body }) => (
-          <li key={title} className="flex flex-1 flex-col justify-center border-t border-[#d9d3c7]">
-            <h3 className={s.heading}>{title}</h3>
-            <p className={cn(s.body, "mt-1.5")}>{body}</p>
-          </li>
-        ))}
-      </ul>
+          <span className="relative text-[96px] font-semibold leading-none tracking-[-0.06em] text-[#ff7a3d]">0</span>
+        </div>
+        <div className={cn(s.card, s.paperCard, "flex flex-1 flex-col justify-between px-6 py-5")}>
+          <h3 className={s.heading}>On, off or archived — in bulk</h3>
+          <div aria-hidden className="flex items-center gap-1.5 rounded-[14px] bg-[#141413] py-1.5 pl-4 pr-1.5 text-[15px] text-[#f5f2eb]">
+            <span className="mr-auto font-medium">2 selected</span>
+            {["Activate", "Deactivate", "Archive"].map((a) => (
+              <span key={a} className="rounded-[10px] bg-white/10 px-3 py-1.5">
+                {a}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className={cn(s.card, s.paperCard, "flex flex-1 flex-col justify-between px-6 py-5")}>
+          <h3 className={s.heading}>Sold where you choose</h3>
+          <div className="flex gap-3">
+            {["Counter", "Online"].map((c) => (
+              <span key={c} className="flex flex-1 items-center justify-between rounded-[14px] bg-[#f5f2eb] py-2.5 pl-4 pr-3 text-[16px] font-medium">
+                {c}
+                <SwitchOn />
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
     </Slide>
   );
 }
 
+/** Daily capacity, as a tile on the sell wall reads it. */
+function CapacityMeter() {
+  return (
+    <div className="w-full">
+      <div className="flex items-center justify-between">
+        <span className="text-[16px] font-semibold">Yoga Session</span>
+        <span className="rounded-full bg-[#141413] px-2.5 py-1 text-[13px] font-medium leading-none text-[#f5f2eb]">Limited</span>
+      </div>
+      <div aria-hidden className="mt-4 h-[12px] overflow-hidden rounded-full bg-[#e2ddd2]">
+        <div className="h-full w-[85%] rounded-full bg-[#f94a00]" />
+      </div>
+      <p className="mt-2.5 text-[15px] text-[#57534c]">
+        <span className="font-semibold text-[#141413]">3 of 20</span> left today
+      </p>
+    </div>
+  );
+}
+
+const SLOT_TIMES = ["15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"];
+
+/** Hourly slots on a field: one taken, one chosen. */
+function SlotGrid() {
+  return (
+    <div className="w-full">
+      <p className="text-[15px]">
+        <span className="font-semibold">Futsal · Outdoor Field</span> <span className="text-[#57534c]">· Sat 1 Aug</span>
+      </p>
+      <div aria-hidden className="mt-3 grid grid-cols-4 gap-2">
+        {SLOT_TIMES.map((t) => (
+          <span
+            key={t}
+            className={cn(
+              "grid h-[36px] place-items-center rounded-[10px] text-[15px] font-medium tabular-nums",
+              t === "17:00" ? "text-[#6b675f] line-through" : t === "19:00" ? "bg-[#141413] text-[#f5f2eb]" : "bg-white ring-1 ring-inset ring-[#e2ddd2]",
+            )}
+          >
+            {t}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** A credit pack: ten classes, three used. */
+function PunchCard() {
+  return (
+    <div className="w-full">
+      <div className="flex items-center justify-between">
+        <span className="text-[16px] font-semibold">10-Class Yoga Pack</span>
+        <span className="text-[15px] text-[#57534c]">7 left</span>
+      </div>
+      <div aria-hidden className="mt-4 grid grid-cols-10 gap-[7px]">
+        {Array.from({ length: 10 }, (_, i) => (
+          <span key={i} className={cn("aspect-square rounded-full", i < 3 ? "bg-[#141413]" : "bg-white ring-1 ring-inset ring-[#d9d3c7]")} />
+        ))}
+      </div>
+      <p className="mt-2.5 font-mono text-[13px] text-[#57534c]">CF-2026-PASS01 · 3 used</p>
+    </div>
+  );
+}
+
 /* The fourteen, grouped by what the guest is buying: a way in, a time or a place, or more than one visit. */
-const WAYS: [string, [string, string][]][] = [
-  [
-    "A way in",
-    [
+const WAYS: { group: string; cols: number; width: number; visual: ReactNode; items: [string, string][] }[] = [
+  {
+    group: "A way in",
+    cols: 2,
+    width: 392,
+    visual: <CapacityMeter />,
+    items: [
       ["Open entry", "Walk in, any time"],
       ["Date passes", "A day, a week, a season"],
       ["Daily capacity", "200 a day, any time"],
       ["Quick passes", "Parking by the plate"],
     ],
-  ],
-  [
-    "A time or a place",
-    [
+  },
+  {
+    group: "A time or a place",
+    cols: 3,
+    width: 576,
+    visual: <SlotGrid />,
+    items: [
       ["Timed sessions", "A show every 45 minutes"],
       ["Seat maps", "The seat, on a plan"],
       ["Courts & fields", "Hourly, per court"],
@@ -252,16 +418,19 @@ const WAYS: [string, [string, string][]][] = [
       ["Guided tours", "When a guide is free"],
       ["Appointments", "A therapist and a time"],
     ],
-  ],
-  [
-    "More than one visit",
-    [
+  },
+  {
+    group: "More than one visit",
+    cols: 2,
+    width: 392,
+    visual: <PunchCard />,
+    items: [
       ["Courses", "Eight sessions, one sale"],
       ["Credit packs", "Ten classes, over time"],
-      ["Bundles", "Three attractions, one price"],
-      ["Waitlists", "Sold when a place frees"],
+      ["Bundles", "Three sights, one price"],
+      ["Waitlists", "When a place frees up"],
     ],
-  ],
+  },
 ];
 
 export function BookingTypesSlide({ n }: { n: number }) {
@@ -277,22 +446,23 @@ export function BookingTypesSlide({ n }: { n: number }) {
       <SheetCard src={sheetSeats} alt="The seat map sheet for an evening film, three seats chosen" width={200} className="absolute left-[1086px] top-[92px] rotate-[-4deg]" />
       <SheetCard src={sheetSlots} alt="Hourly slots on a futsal field" width={200} className="absolute left-[1296px] top-[76px] rotate-[5deg]" />
 
-      <div className="absolute left-[96px] top-[452px] grid w-[1408px] grid-cols-3 gap-x-12">
-        {WAYS.map(([group, rows]) => (
-          <div key={group}>
-            <p className={cn(s.mono, "flex items-baseline justify-between uppercase text-[#aa3000]")}>
+      <div className="absolute left-[96px] top-[424px] flex h-[376px] gap-6">
+        {WAYS.map(({ group, cols, width, visual, items }) => (
+          <section key={group} className={cn(s.card, s.paperCard, "flex flex-col p-6")} style={{ width }}>
+            <p className={cn(s.mono, "flex items-center justify-between uppercase text-[#aa3000]")}>
               {group}
-              <span className="text-[#6b675f]">{String(rows.length).padStart(2, "0")}</span>
+              <span className="rounded-full bg-[#f5f2eb] px-2.5 py-1 text-[13px] leading-none text-[#57534c]">{items.length}</span>
             </p>
-            <ul className="mt-3.5 border-t-2 border-[#141413]">
-              {rows.map(([name, hint]) => (
-                <li key={name} className="flex h-[52px] items-center justify-between gap-4 border-b border-[#d9d3c7]">
-                  <span className="text-[19px] font-semibold tracking-[-0.01em]">{name}</span>
-                  <span className="text-[16px] text-[#6b675f]">{hint}</span>
+            <div className="mt-4 flex h-[138px] items-center rounded-[16px] bg-[#f5f2eb] px-5">{visual}</div>
+            <ul className="mt-5 grid gap-x-5 gap-y-4" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+              {items.map(([name, hint]) => (
+                <li key={name}>
+                  <p className="text-[17px] font-semibold leading-tight tracking-[-0.01em]">{name}</p>
+                  <p className="mt-1 text-[14px] leading-snug text-[#6b675f]">{hint}</p>
                 </li>
               ))}
             </ul>
-          </div>
+          </section>
         ))}
       </div>
     </Slide>
@@ -336,7 +506,6 @@ export function HoldsSlide({ n }: { n: number }) {
         </div>
       </div>
 
-      {/* Four kinds as a 2 × 2 list — as pills they wrapped and cut the card's last line. */}
       <div className={cn(s.card, s.paperCard, "absolute left-[812px] top-[256px] h-[190px] w-[692px] px-7 py-6")}>
         <p className={cn(s.mono, "uppercase text-[#aa3000]")}>What can be held</p>
         <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3">
@@ -456,25 +625,95 @@ export function CustomersSlide({ n }: { n: number }) {
   );
 }
 
-const CHARTS = ["Revenue vs. last period", "Sales by hour", "Sales by weekday", "Payment mix", "Capacity used", "No-show rate", "Lead time", "Top bookings"];
+const EMBER = "#ff7a3d";
+const FAINT = "rgb(245 242 235 / 0.26)";
+
+/** The eight analytics charts, each drawn as the shape it takes in Reports. */
+const CHARTS: { name: string; art: ReactNode }[] = [
+  {
+    name: "Revenue trend",
+    art: (
+      <>
+        <polyline points="2,40 16,36 30,37 44,30 58,32 72,24 86,26 98,20" fill="none" stroke={FAINT} strokeWidth={2} strokeDasharray="3 3" />
+        <polyline points="2,38 16,28 30,32 44,16 58,22 72,10 86,15 98,6" fill="none" stroke={EMBER} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+      </>
+    ),
+  },
+  {
+    name: "By hour",
+    art: [6, 10, 16, 24, 20, 30, 40, 28, 18, 24, 14, 8].map((h, i) => <rect key={i} x={3 + i * 8} y={44 - h} width={5} height={h} rx={1.5} fill={i === 6 ? EMBER : FAINT} />),
+  },
+  {
+    name: "By weekday",
+    art: [22, 26, 20, 28, 34, 42, 36].map((h, i) => <rect key={i} x={4 + i * 13.5} y={44 - h} width={9} height={h} rx={2} fill={i === 5 ? EMBER : FAINT} />),
+  },
+  {
+    name: "Payment mix",
+    art: (
+      <g transform="translate(50 24) rotate(-90)">
+        <circle r={16} fill="none" stroke={FAINT} strokeWidth={8} />
+        <circle r={16} fill="none" stroke={EMBER} strokeWidth={8} strokeDasharray="31 70" />
+        <circle r={16} fill="none" stroke="rgb(245 242 235 / 0.72)" strokeWidth={8} strokeDasharray="25 76" strokeDashoffset={-33} />
+      </g>
+    ),
+  },
+  {
+    name: "Capacity",
+    art: (
+      <>
+        <rect x={4} y={10} width={92} height={10} rx={5} fill={FAINT} />
+        <rect x={4} y={10} width={64} height={10} rx={5} fill={EMBER} />
+        <rect x={4} y={28} width={92} height={10} rx={5} fill={FAINT} />
+        <rect x={4} y={28} width={38} height={10} rx={5} fill="rgb(245 242 235 / 0.72)" />
+      </>
+    ),
+  },
+  {
+    name: "No-shows",
+    art: Array.from({ length: 20 }, (_, i) => (
+      <circle key={i} cx={9 + (i % 10) * 9.2} cy={i < 10 ? 15 : 33} r={3.4} fill={i === 13 ? "none" : FAINT} stroke={i === 13 ? EMBER : "none"} strokeWidth={1.8} />
+    )),
+  },
+  {
+    name: "Lead time",
+    art: [40, 32, 25, 19, 14, 10, 7, 4].map((h, i) => <rect key={i} x={4 + i * 11.8} y={44 - h} width={8} height={h} rx={2} fill={i === 0 ? EMBER : FAINT} />),
+  },
+  {
+    name: "Top bookings",
+    art: [92, 70, 54, 38].map((w, i) => <rect key={i} x={4} y={4 + i * 11} width={w} height={7} rx={3.5} fill={i === 0 ? EMBER : FAINT} />),
+  },
+];
 
 export function ReportsSlide({ n }: { n: number }) {
   return (
     <Slide tone="ink" n={n} section={OS_SECTION} label="Read the business by the hour">
       <Glow className="left-[760px] top-[380px] h-[700px] w-[800px] opacity-70" />
       <TextBlock eyebrow="Reports" title="Read the business by the hour." lead="Transactions, a summary, what is outstanding and analytics — all from one ledger.">
-        <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Analytics · eight charts</p>
-        <ul className="mt-3.5 grid grid-cols-2 gap-x-8 border-t border-white/12">
-          {CHARTS.map((c) => (
-            <li key={c} className="border-b border-white/12 py-3 text-[18px] text-[rgb(245_242_235/0.88)]">
-              {c}
+        <ul className="grid grid-cols-4 gap-x-3.5 gap-y-5">
+          {CHARTS.map(({ name, art }) => (
+            <li key={name}>
+              <div className="rounded-[14px] bg-white/[0.05] px-3 py-3 ring-1 ring-inset ring-white/10">
+                <svg aria-hidden viewBox="0 0 100 48" className="block h-[48px] w-full">
+                  {art}
+                </svg>
+              </div>
+              <p className="mt-2 text-[15px] font-medium text-[rgb(245_242_235/0.86)]">{name}</p>
             </li>
           ))}
         </ul>
-        <p className="mt-9 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Every view</p>
-        <p className="mt-3 text-[21px] font-medium tracking-[-0.01em]">
-          Export to CSV <span aria-hidden className="px-1.5 text-white/30">/</span> Save a view <span aria-hidden className="px-1.5 text-white/30">/</span> Share a link
-        </p>
+        <ul className="mt-8 flex gap-2.5">
+          {[
+            { icon: Download, label: "Export CSV" },
+            { icon: Bookmark, label: "Save a view" },
+            { icon: Link2, label: "Share a link" },
+          ].map(({ icon: Icon, label }) => (
+            <li key={label}>
+              <Pill>
+                <Icon size={17} strokeWidth={1.6} aria-hidden /> {label}
+              </Pill>
+            </li>
+          ))}
+        </ul>
       </TextBlock>
       <Laptop src={reportsDark} width={820} tilt="left" alt="Sales analytics: revenue over time, sales by weekday and payment mix" className="absolute left-[676px] top-[184px]" />
     </Slide>
@@ -496,14 +735,14 @@ export function EventsSlide({ n }: { n: number }) {
     <Slide tone="ink" n={n} section={OS_SECTION} label="A page for every event">
       <Glow className="left-[820px] top-[-280px] h-[820px] w-[860px] opacity-80" />
       <TextBlock eyebrow="Events" title="A page for every event." lead="Six templates, one per kind of event, each built from the event’s own bill and tickets.">
-        <div className="flex items-end gap-8 border-t border-white/12 pt-5">
+        <div className="flex gap-2.5">
           {[
             ["6", "events on sale"],
             ["4,867", "tickets sold"],
           ].map(([value, label]) => (
-            <p key={label} className="flex items-baseline gap-2.5">
-              <span className="text-[34px] font-semibold leading-none tracking-[-0.03em] tabular-nums">{value}</span>
-              <span className="text-[17px] text-[rgb(245_242_235/0.66)]">{label}</span>
+            <p key={label} className="flex items-baseline gap-2 rounded-full bg-white/[0.06] px-5 py-3 ring-1 ring-inset ring-white/10">
+              <span className="text-[24px] font-semibold leading-none tracking-[-0.02em] tabular-nums">{value}</span>
+              <span className="text-[16px] text-[rgb(245_242_235/0.72)]">{label}</span>
             </p>
           ))}
         </div>
@@ -533,15 +772,14 @@ export function EventsSlide({ n }: { n: number }) {
 
 /** Settings that reach the counter, and where each one shows up. */
 const REACHES = [
-  ["Payment methods", "the till’s pay buttons"],
-  ["Tax", "every line of a sale"],
-  ["Opening float", "the start of a shift"],
-  ["Receipt message", "the foot of every receipt"],
-  ["Wrong PINs allowed", "the PIN screen"],
+  ["Payment methods", "Till pay buttons"],
+  ["Tax", "Every line of a sale"],
+  ["Opening float", "Start of a shift"],
+  ["Receipt message", "Every receipt"],
+  ["Wrong PINs allowed", "PIN screen"],
 ];
 
 const SEARCHES = [
-  ["vat", "Tax"],
   ["bkash", "Payments"],
   ["dark mode", "Preferences"],
   ["quiet hours", "Notifications"],
@@ -551,23 +789,22 @@ export function SettingsSlide({ n }: { n: number }) {
   return (
     <Slide tone="paper" n={n} section={OS_SECTION} label="Set up once, and the till follows">
       <TextBlock eyebrow="Settings" title="Set up once." lead="Change a setting and the till follows — there is no second place to update it." width={464}>
-        {/* A table, because it is one: each setting beside the place it shows up. */}
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b-2 border-[#141413]">
-              <th className={cn(s.mono, "pb-3 text-left font-normal uppercase text-[#aa3000]")}>Setting</th>
-              <th className={cn(s.mono, "pb-3 text-right font-normal uppercase text-[#aa3000]")}>Shows up in</th>
-            </tr>
-          </thead>
-          <tbody>
-            {REACHES.map(([name, where]) => (
-              <tr key={name} className="border-b border-[#d9d3c7]">
-                <td className="py-[20px] text-[18px] font-semibold">{name}</td>
-                <td className="py-[20px] text-right text-[17px] text-[#57534c]">{where}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Where each one shows up</p>
+        {/* Each setting joined to the place a cashier meets it. */}
+        <ul className="mt-4 flex flex-col gap-3.5">
+          {REACHES.map(([name, where]) => (
+            <li key={name} className="flex h-[56px] items-center">
+              <span className="flex h-full shrink-0 items-center rounded-[14px] bg-white px-4 text-[17px] font-semibold shadow-[0_1px_2px_rgb(20_20_19/0.06)] ring-1 ring-[#e7e2d8]">
+                {name}
+              </span>
+              <span aria-hidden className="mx-2 flex min-w-[28px] flex-1 items-center">
+                <span className="h-[2px] flex-1 bg-[repeating-linear-gradient(90deg,#e0a27f_0_6px,transparent_6px_11px)]" />
+                <ArrowRight size={16} strokeWidth={2.2} className="-ml-1 text-[#d9814f]" />
+              </span>
+              <span className="flex h-[40px] shrink-0 items-center rounded-full bg-[#141413] px-4 text-[15px] font-medium text-[#f5f2eb]">{where}</span>
+            </li>
+          ))}
+        </ul>
       </TextBlock>
 
       <Crop src={settings} alt="Settings: each section with what it is set to, and search" x={0.17} y={0.128} w={0.825} h={0.617} width={896} className="absolute left-[608px] top-[92px]" />
@@ -575,15 +812,37 @@ export function SettingsSlide({ n }: { n: number }) {
         <p className={cn(s.mono, "flex items-center gap-2 uppercase text-[#aa3000]")}>
           <Search size={15} strokeWidth={2} aria-hidden /> Search by what you’d type
         </p>
-        <ul className="mt-4 grid grid-cols-2 gap-x-12 border-t-2 border-[#141413]">
-          {SEARCHES.map(([q, a]) => (
-            <li key={q} className="flex h-[60px] items-center gap-3 border-b border-[#d9d3c7]">
-              <span className="font-mono text-[17px] text-[#57534c]">“{q}”</span>
-              <span aria-hidden className="text-[#aa3000]">→</span>
-              <span className="text-[19px] font-semibold">{a}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-4 flex h-[215px] gap-5">
+          {/* The settings search, with “vat” typed and the one section it finds. */}
+          <div className={cn(s.card, s.paperCard, "flex w-[544px] flex-col")}>
+            <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-[#efe9df] px-5">
+              <Search size={18} strokeWidth={1.8} className="text-[#57534c]" aria-hidden />
+              <span className="text-[19px] font-medium">vat</span>
+              <span aria-hidden className="-ml-2 h-[22px] w-[2px] rounded-full bg-[#f94a00]" />
+            </div>
+            <p className="px-5 pt-3.5 font-mono text-[12px] uppercase tracking-[0.1em] text-[#6b675f]">Settings</p>
+            <div className="mx-2.5 mt-2 flex items-center gap-3.5 rounded-[14px] bg-[#fbeee6] px-3.5 py-3">
+              <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-[11px] bg-white text-[#aa3000] ring-1 ring-[#f1d6c6]">
+                <Receipt size={20} strokeWidth={1.7} aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[17px] font-semibold leading-tight">Tax</span>
+                <span className="mt-0.5 block text-[15px] text-[#57534c]">VAT 15% · reduced 7.5%</span>
+              </span>
+              <CornerDownLeft size={18} strokeWidth={1.8} className="ml-auto text-[#aa3000]" aria-hidden />
+            </div>
+            <p className="mt-auto px-5 pb-3.5 text-[14px] text-[#6b675f]">One result · Enter to open</p>
+          </div>
+          <ul className="flex flex-1 flex-col gap-3">
+            {SEARCHES.map(([q, a]) => (
+              <li key={q} className="flex flex-1 items-center gap-3 rounded-[14px] bg-white px-4 shadow-[0_1px_2px_rgb(20_20_19/0.05)] ring-1 ring-[#e7e2d8]">
+                <span className="font-mono text-[15px] text-[#57534c]">“{q}”</span>
+                <ArrowRight size={16} strokeWidth={2} className="text-[#aa3000]" aria-hidden />
+                <span className="text-[17px] font-semibold">{a}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </Slide>
   );

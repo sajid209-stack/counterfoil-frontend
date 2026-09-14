@@ -1,4 +1,28 @@
 import Image from "next/image";
+import {
+  Armchair,
+  Banknote,
+  CalendarRange,
+  Clapperboard,
+  Clock,
+  Coins,
+  Compass,
+  CreditCard,
+  Disc3,
+  DoorOpen,
+  Flower2,
+  GraduationCap,
+  Hourglass,
+  LandPlot,
+  Landmark,
+  ListOrdered,
+  Package,
+  Ticket as TicketIcon,
+  Timer,
+  Trophy,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Floor, Glow, Phone, Slide, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
 import { SEAT_LEGEND, SeatPlan, SeatSwatch } from "../_components/SeatPlan";
@@ -7,83 +31,157 @@ import posPhoneBn from "../_media/go-phone-sell-bn.jpg";
 
 /* Slides 23–25: where Counterfoil is today, the market it is built for, and the close. */
 
-const STATS = [
-  { value: "20", approx: true, label: "Operators", body: "running their day on Counterfoil" },
-  { value: "4", label: "Countries", body: "Bangladesh, Malaysia, the US and Canada" },
-  { value: "14", label: "Booking types", body: "sold from one engine" },
-  { value: "2", label: "Languages", body: "Bangla and English, on every screen" },
+const KINDS: { icon: LucideIcon; name: string }[] = [
+  { icon: Landmark, name: "Heritage sites" },
+  { icon: Trophy, name: "Turfs & courts" },
+  { icon: Disc3, name: "Bowling" },
+  { icon: Flower2, name: "Spas" },
+  { icon: Clapperboard, name: "Cinemas" },
+  { icon: Compass, name: "Tours" },
 ];
 
-const KINDS = ["Heritage sites", "Turfs & courts", "Bowling", "Spas", "Cinemas", "Tours"];
+/** The fourteen booking types, by the glyph the product gives each. */
+const TYPE_GLYPHS: LucideIcon[] = [DoorOpen, CalendarRange, Hourglass, TicketIcon, Clock, Armchair, LandPlot, Timer, Compass, UserRound, GraduationCap, Coins, Package, ListOrdered];
+
+const COUNTRIES = [
+  ["BD", "Bangladesh"],
+  ["MY", "Malaysia"],
+  ["US", "United States"],
+  ["CA", "Canada"],
+];
+
+/* A figure set large: one size for every tile on the page. */
+const FIGURE = { fontSize: 104 } as const;
 
 /*
- * Figures set like a report's summary rather than four tiles: one rule above,
- * columns divided by hairlines, the numbers doing the work.
+ * Today as a bento: one tall tile for the figure that matters most, and three
+ * that each carry the thing they count — the countries by name, the booking
+ * types by glyph, the two languages in their own scripts.
  */
 export function TodaySlide({ n }: { n: number }) {
   return (
     <Slide tone="paper" n={n} section="Counterfoil" label="Already at the counter">
-      <TextBlock eyebrow="Today" title="Already at the counter." width={880} />
-      <p className={cn(s.lead, s.text)} style={{ left: 1024, top: 128, width: 480 }}>
-        Venues, tours and attractions run their day on the current version.
-      </p>
-      <dl className="absolute left-[96px] top-[300px] grid w-[1408px] grid-cols-4 border-t-2 border-[#141413]">
-        {STATS.map(({ value, approx, label, body }, i) => (
-          <div key={label} className={cn("flex flex-col pt-7", i > 0 ? "border-l border-[#d9d3c7] pl-8" : "pr-8")}>
-            <dt className={cn(s.mono, "uppercase text-[#aa3000]")}>{label}</dt>
-            <dd className="mt-10">
-              <span className={cn(s.numeral, "block", i === 0 && "text-[#e04400]")}>
-                {approx && <span className="mr-[0.04em] inline-block align-[0.22em] text-[0.56em]">~</span>}
-                {value}
-              </span>
-              <span className="mt-6 block w-[260px] text-[19px] leading-[1.4] text-[#57534c]">{body}</span>
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <div className="absolute left-[96px] top-[668px] w-[1408px] border-t border-[#d9d3c7] pt-7">
-        <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Built for</p>
-        <p className="mt-4 text-[38px] font-semibold leading-none tracking-[-0.03em]">
-          {KINDS.map((kind, i) => (
-            <span key={kind}>
-              {i > 0 && (
-                <span aria-hidden className="px-[0.42em] font-normal text-[#c9c1b2]">
-                  /
-                </span>
-              )}
-              {kind}
-            </span>
+      <TextBlock eyebrow="Today" title="Already at the counter." lead="Venues, tours and attractions run their day on the current version." width={720} />
+      <div className={s.text} style={{ left: 1024, top: 92, width: 480 }}>
+        <p className={s.eyebrow}>Built for</p>
+        <ul className="mt-5 flex flex-wrap gap-2.5">
+          {KINDS.map(({ icon: Icon, name }) => (
+            <li key={name} className="inline-flex h-[44px] items-center gap-2 rounded-full bg-white px-4 text-[16px] font-medium shadow-[0_1px_2px_rgb(20_20_19/0.05)] ring-1 ring-[#e2ded5]">
+              <Icon size={17} strokeWidth={1.7} className="text-[#aa3000]" aria-hidden />
+              {name}
+            </li>
           ))}
-        </p>
+        </ul>
+      </div>
+
+      <div className="absolute left-[96px] top-[284px] grid h-[516px] w-[1408px] grid-cols-3 grid-rows-2 gap-6">
+        {/* Operators: the tall tile, a wall of venues above the figure. */}
+        <div className={cn(s.card, "relative row-span-2 flex flex-col bg-[#141413] p-9 text-[#f5f2eb]")}>
+          <Glow className="left-[120px] top-[230px] h-[380px] w-[380px] opacity-60" />
+          <p className="relative font-mono text-[15px] uppercase tracking-[0.12em] text-[#ffa572]">Operators</p>
+          <ul aria-hidden className="relative mt-7 grid w-fit grid-cols-5 gap-2">
+            {Array.from({ length: 20 }, (_, i) => {
+              const Icon = KINDS[i % KINDS.length].icon;
+              const lit = i === 7 || i === 13;
+              return (
+                <li
+                  key={i}
+                  className={cn("grid h-[40px] w-[40px] place-items-center rounded-[11px]", lit ? "bg-[#f94a00] text-[#141413]" : "bg-white/[0.06] text-[#ffa572] ring-1 ring-inset ring-white/10")}
+                >
+                  <Icon size={18} strokeWidth={1.6} />
+                </li>
+              );
+            })}
+          </ul>
+          <p className={cn(s.numeral, s.accentInk, "relative mt-auto")} style={{ fontSize: 136 }}>
+            <span className="mr-[0.03em] inline-block align-[0.24em] text-[0.5em]">~</span>20
+          </p>
+          <p className="relative mt-4 w-[320px] text-[19px] leading-[1.4] text-[rgb(245_242_235/0.8)]">venues, tours and attractions running their day on Counterfoil</p>
+        </div>
+
+        <div className={cn(s.card, s.paperCard, "flex justify-between gap-6 p-8")}>
+          <div className="flex flex-col">
+            <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Countries</p>
+            <p className={cn(s.numeral, "mt-auto")} style={FIGURE}>
+              4
+            </p>
+            <p className="mt-2 text-[17px] text-[#57534c]">selling today</p>
+          </div>
+          <ul className="flex w-[196px] flex-col justify-center gap-2">
+            {COUNTRIES.map(([code, name]) => (
+              <li key={code} className="flex h-[38px] items-center gap-2.5 rounded-[11px] bg-[#f5f2eb] px-3">
+                <span className="font-mono text-[13px] font-semibold text-[#aa3000]">{code}</span>
+                <span className="text-[15px] font-medium">{name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className={cn(s.card, s.paperCard, "flex justify-between gap-6 p-8")}>
+          <div className="flex flex-col">
+            <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Booking types</p>
+            <p className={cn(s.numeral, "mt-auto")} style={FIGURE}>
+              14
+            </p>
+            <p className="mt-2 whitespace-nowrap text-[17px] text-[#57534c]">sold from one engine</p>
+          </div>
+          {/* Narrow enough that the caption beside it stays on one line, leaving the figure room under its label. */}
+          <ul aria-hidden className="grid h-fit shrink-0 grid-cols-5 gap-[6px] self-center">
+            {TYPE_GLYPHS.map((Icon, i) => (
+              <li key={i} className={cn("grid h-[32px] w-[32px] place-items-center rounded-[9px]", i === 5 ? "bg-[#141413] text-[#f5f2eb]" : "bg-[#f5f2eb] text-[#57534c]")}>
+                <Icon size={15} strokeWidth={1.6} />
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className={cn(s.card, s.paperCard, "col-span-2 flex gap-8 p-8")}>
+          <div className="flex w-[250px] shrink-0 flex-col">
+            <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Languages</p>
+            <p className={cn(s.numeral, "mt-auto")} style={FIGURE}>
+              2
+            </p>
+            <p className="mt-2 whitespace-nowrap text-[17px] text-[#57534c]">on every screen and receipt</p>
+          </div>
+          {/* The same moment in both languages, as the till shows it. */}
+          <div className="grid flex-1 grid-cols-2 gap-4">
+            {[
+              { script: "বাংলা", said: "টিকিট ইস্যু হয়েছে", lang: "bn" },
+              { script: "English", said: "Ticket issued", lang: "en" },
+            ].map(({ script, said, lang }) => (
+              <div key={lang} lang={lang} className="flex flex-col justify-between rounded-[18px] bg-[#f5f2eb] px-6 py-5">
+                <p className="text-[56px] font-semibold leading-none tracking-[-0.02em]">{script}</p>
+                <p className="flex items-center gap-2.5 text-[18px] text-[#3f3b35]">
+                  <span aria-hidden className="grid h-[22px] w-[22px] place-items-center rounded-full bg-[#1f9d55] text-[12px] font-bold text-white">✓</span>
+                  {said}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </Slide>
   );
 }
 
-/* Local rails and the ones that travel, each with what it is actually for. */
-const RAILS: [string, [string, string][]][] = [
-  [
-    "In Bangladesh",
-    [
-      ["bKash", "Wallet, confirmed by its ID"],
-      ["Bangla QR", "One code for every bank app"],
-      ["SSLCOMMERZ", "Cards and banking, online"],
+/* Local rails and the ones that travel, each with what it is for. */
+const RAILS: { group: string; items: { name: string; note: string; mark?: string; color?: string; icon?: LucideIcon }[] }[] = [
+  {
+    group: "In Bangladesh",
+    items: [
+      { name: "bKash", note: "By transaction ID", mark: "b", color: "#d1115f" },
+      { name: "Bangla QR", note: "Any bank app", mark: "QR", color: "#0b7a4b" },
+      { name: "SSLCOMMERZ", note: "Cards, online", mark: "SSL", color: "#2458a8" },
     ],
-  ],
-  [
-    "Anywhere",
-    [
-      ["Stripe", "Cards, for sales abroad"],
-      ["Card terminal", "Tap or insert at the till"],
-      ["Cash", "Counted when the shift closes"],
+  },
+  {
+    group: "Anywhere",
+    items: [
+      { name: "Stripe", note: "Cards abroad", mark: "S", color: "#5a4fe6" },
+      { name: "Card terminal", note: "Tap or insert", icon: CreditCard },
+      { name: "Cash", note: "Counted at close", icon: Banknote },
     ],
-  ],
-];
-
-const LOCAL = [
-  { label: "ভাষা · Language", title: "বাংলা · English", body: "Every screen, receipt and message in both." },
-  { label: "Currency", title: "Taka, to the paisa", body: "Prices, VAT and change worked in whole paisa." },
-  { label: "Tax", title: "VAT on every line", body: "15% standard, 7.5% reduced, the BIN on the receipt." },
+  },
 ];
 
 export function BangladeshSlide({ n }: { n: number }) {
@@ -101,41 +199,80 @@ export function BangladeshSlide({ n }: { n: number }) {
         lead="Bangla and English, bKash and Bangla QR, VAT and taka — with Stripe for cards abroad."
         width={548}
       >
-        <div className="grid grid-cols-2 gap-x-7">
-          {RAILS.map(([head, rows]) => (
-            <div key={head}>
-              <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">{head}</p>
-              <ul className="mt-3 border-b border-white/12">
-                {rows.map(([name, note]) => (
-                  <li key={name} className="border-t border-white/12 py-3">
-                    <p className="text-[19px] font-semibold leading-tight tracking-[-0.01em]">{name}</p>
-                    <p className="mt-1 text-[15px] leading-snug text-[rgb(245_242_235/0.66)]">{note}</p>
+        <div className="flex flex-col gap-5">
+          {RAILS.map(({ group, items }) => (
+            <div key={group}>
+              <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">{group}</p>
+              <ul className="mt-2.5 grid grid-cols-3 gap-3">
+                {items.map(({ name, note, mark, color, icon: Icon }) => (
+                  <li key={name} className="flex h-[108px] flex-col justify-between rounded-[16px] bg-white/[0.05] p-4 ring-1 ring-inset ring-white/10">
+                    {mark ? (
+                      <span aria-hidden className="grid h-[30px] w-fit min-w-[30px] place-items-center rounded-[9px] px-1.5 text-[12px] font-bold text-white" style={{ background: color }}>
+                        {mark}
+                      </span>
+                    ) : (
+                      Icon && (
+                        <span aria-hidden className="grid h-[30px] w-[30px] place-items-center rounded-[9px] bg-white/10 text-[#ffa572]">
+                          <Icon size={17} strokeWidth={1.7} />
+                        </span>
+                      )
+                    )}
+                    <span>
+                      <span className="block text-[17px] font-semibold leading-tight">{name}</span>
+                      <span className="mt-0.5 block text-[14px] text-[rgb(245_242_235/0.66)]">{note}</span>
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
           ))}
         </div>
-        <p className="mt-9 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Selling in</p>
-        <p className="mt-3 text-[21px] font-medium tracking-[-0.01em]">
-          Bangladesh <span aria-hidden className="px-1.5 text-white/30">/</span> Malaysia <span aria-hidden className="px-1.5 text-white/30">/</span> United States{" "}
-          <span aria-hidden className="px-1.5 text-white/30">/</span> Canada
-        </p>
+        <p className="mt-7 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Selling in</p>
+        <ul className="mt-2.5 flex gap-2">
+          {COUNTRIES.map(([code, name]) => (
+            <li key={code} className="inline-flex h-[40px] items-center gap-2 rounded-full bg-white/[0.06] px-3 ring-1 ring-inset ring-white/10">
+              <span className="font-mono text-[12px] font-semibold text-[#ffa572]">{code}</span>
+              <span className="text-[15px] font-medium">{name}</span>
+            </li>
+          ))}
+        </ul>
       </TextBlock>
 
       <Phone src={posPhoneBn} width={290} tilt="right" alt="Counterfoil Go in Bangla on a phone" className="absolute left-[808px] top-[104px]" />
       <Ticket word="৳500" kicker="বিকাশ · bKash" width={320} className="absolute left-[680px] top-[580px]" />
 
-      {/* A list, not three boxes: hairlines between, the way the ledger on the left is set. */}
-      <ul className="absolute left-[1184px] top-[140px] flex h-[660px] w-[320px] flex-col border-b border-white/12">
-        {LOCAL.map(({ label, title, body }) => (
-          <li key={title} className="flex flex-1 flex-col justify-center border-t border-white/12">
-            <span className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">{label}</span>
-            <p className="mt-3 text-[27px] font-semibold leading-tight tracking-[-0.02em]">{title}</p>
-            <p className="mt-2 text-[16px] leading-[1.45] text-[rgb(245_242_235/0.72)]">{body}</p>
-          </li>
-        ))}
-      </ul>
+      {/* Three facts, each shown the way the product shows it. */}
+      <div className="absolute left-[1184px] top-[140px] flex h-[660px] w-[320px] flex-col gap-4">
+        <div className={cn(s.card, s.inkCard, "flex flex-1 flex-col justify-between p-6")}>
+          <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">ভাষা · Language</p>
+          <div aria-hidden className="flex rounded-full bg-white/[0.06] p-1 ring-1 ring-inset ring-white/10">
+            <span className="flex-1 rounded-full bg-[#f5f2eb] py-2 text-center text-[17px] font-semibold text-[#141413]">বাংলা</span>
+            <span className="flex-1 py-2 text-center text-[17px] font-medium text-[rgb(245_242_235/0.8)]">English</span>
+          </div>
+          <p className="text-[16px] leading-[1.4] text-[rgb(245_242_235/0.76)]">Every screen, receipt and message in both.</p>
+        </div>
+        <div className={cn(s.card, s.inkCard, "flex flex-1 flex-col justify-between p-6")}>
+          <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Currency</p>
+          <p className="text-[44px] font-semibold leading-none tracking-[-0.03em] tabular-nums">৳1,437.50</p>
+          <p className="text-[16px] leading-[1.4] text-[rgb(245_242_235/0.76)]">Taka to the paisa — prices, VAT and change.</p>
+        </div>
+        <div className={cn(s.card, s.inkCard, "flex flex-1 flex-col justify-between p-6")}>
+          <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Tax</p>
+          <dl className="rounded-[12px] bg-[#f5f2eb] px-4 py-2.5 font-mono text-[14px] text-[#141413]">
+            {[
+              ["Subtotal", "৳900.00"],
+              ["VAT 15%", "৳135.00"],
+              ["Total", "৳1,035.00"],
+            ].map(([k, v]) => (
+              <div key={k} className={cn("flex justify-between py-[3px]", k === "VAT 15%" && "font-semibold text-[#aa3000]")}>
+                <dt>{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-[16px] leading-[1.4] text-[rgb(245_242_235/0.76)]">15% or 7.5%, worked per line.</p>
+        </div>
+      </div>
     </Slide>
   );
 }

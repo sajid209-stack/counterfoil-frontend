@@ -1,6 +1,6 @@
-import { ArrowRight, MessageSquare, Printer, Ticket as TicketIcon, type LucideIcon } from "lucide-react";
+import { ArrowRight, Banknote, CreditCard, MessageSquare, Printer, QrCode, Send, Ticket as TicketIcon, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Glow, Hotspot, Phone, PosStand, Slide, Step, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
+import { Glow, Hotspot, Phone, PosStand, Slide, Step, TextBlock, Ticket, deckStyles as s, type ChapterPart } from "../_components/Parts";
 import till from "../_media/go-till.jpg";
 import phoneSell from "../_media/go-phone-sell.jpg";
 import sheetShow from "../_media/go-sheet-show.jpg";
@@ -26,17 +26,27 @@ import pin from "../_media/go-pin.jpg";
 
 export const GO_SECTION = "02 · Counterfoil Go";
 
+/** The parts of chapter 02, each with the phone screen it opens on. */
+export const GO_CONTENTS: ChapterPart[] = [
+  { name: "Find", page: 17, src: phoneSell, x: 0, y: 0.05, w: 1 },
+  { name: "Choose", page: 18, src: sheetShow, x: 0, y: 0.26, w: 1 },
+  { name: "Pay", page: 19, src: cash, x: 0, y: 0.26, w: 1 },
+  { name: "Ticket", page: 20, src: complete, x: 0, y: 0.04, w: 1 },
+  { name: "Admit", page: 21, src: scan, x: 0, y: 0.08, w: 1 },
+  { name: "Shift", page: 22, src: pin, x: 0, y: 0.14, w: 1 },
+];
+
 /** Behind a sheet the page is dimmed, so the phone's status bar takes that grey rather than paper. */
 const DIMMED = "#999894";
 
 /** The reference the sale on these slides issued, as the till printed it. */
 const REFERENCE = "CF-2026-236111-01";
 
-/** What a tile on the sell wall says, in the till's own words. */
-const TILE_STATES = [
-  { text: "Next 17:00 · 18 left", tone: "text-[rgb(245_242_235/0.86)]" },
-  { text: "Limited · 3 of 20 left today", tone: "text-[#ffa572]" },
-  { text: "Next Fri 31 Jul 10:00", tone: "text-[rgb(245_242_235/0.86)]" },
+/** Three tiles from the sell wall, each saying what is left in the till's own words. */
+const TILES: { name: string; price: string; status: string; tone: "open" | "limited" | "later" }[] = [
+  { name: "Grand Heritage Tour", price: "৳1,800", status: "Next 17:00 · 18 left", tone: "open" },
+  { name: "Yoga Session", price: "৳500", status: "3 of 20 left today", tone: "limited" },
+  { name: "Heritage Walking Tour", price: "৳800", status: "Next Fri 31 Jul", tone: "later" },
 ];
 
 export function PosFindSlide({ n }: { n: number }) {
@@ -49,11 +59,21 @@ export function PosFindSlide({ n }: { n: number }) {
           <Step n={2} title="Read the tile" body="Its price, and what is left right now." />
           <Step n={3} title="The cart stays beside it" body="Every line, the payment method and Charge." />
         </ol>
-        <p className="mt-9 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">What a tile says</p>
-        <ul className="mt-3 border-t border-white/12">
-          {TILE_STATES.map(({ text, tone }) => (
-            <li key={text} className={cn("border-b border-white/12 py-3 text-[18px] font-medium", tone)}>
-              {text}
+        <ul aria-label="Tiles on the sell wall" className="mt-9 grid grid-cols-3 gap-3">
+          {TILES.map(({ name, price, status, tone }) => (
+            <li key={name} className="flex h-[150px] flex-col rounded-[16px] bg-[#f5f2eb] p-3.5 text-[#141413] shadow-[0_18px_30px_-20px_rgb(0_0_0/0.8)]">
+              <div className="flex items-start justify-between">
+                <span className="grid h-[30px] w-[30px] place-items-center rounded-[9px] bg-white text-[#57534c] ring-1 ring-[#e2ded5]">
+                  <TicketIcon size={15} strokeWidth={1.7} aria-hidden />
+                </span>
+                {tone === "limited" && <span className="rounded-full bg-[#141413] px-2 py-[3px] text-[12px] font-semibold leading-none text-[#f5f2eb]">Limited</span>}
+              </div>
+              <p className="mt-auto text-[15px] font-semibold leading-tight">{name}</p>
+              <p className="mt-1 text-[17px] font-bold tabular-nums text-[#b83600]">{price}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-[13px] text-[#57534c]">
+                <span aria-hidden className={cn("h-[7px] w-[7px] shrink-0 rounded-full", tone === "open" ? "bg-[#1f9d55]" : tone === "limited" ? "bg-[#f94a00]" : "bg-[#a39e94]")} />
+                {status}
+              </p>
             </li>
           ))}
         </ul>
@@ -118,6 +138,13 @@ export function PosChooseSlide({ n }: { n: number }) {
   );
 }
 
+const METHODS: { icon: LucideIcon; label: string }[] = [
+  { icon: Banknote, label: "Cash" },
+  { icon: Send, label: "bKash" },
+  { icon: QrCode, label: "Bangla QR" },
+  { icon: CreditCard, label: "Card" },
+];
+
 export function PosPaySlide({ n }: { n: number }) {
   return (
     <Slide tone="ink" n={n} section={GO_SECTION} label="Take the money, however it comes">
@@ -138,11 +165,21 @@ export function PosPaySlide({ n }: { n: number }) {
           <Step n={2} title="Cash" body="Tap Exact or a note; the change is worked out." />
           <Step n={3} title="bKash or Bangla QR" body="Confirmed with the transaction ID before the sale lands." />
         </ol>
-        <p className="mt-9 font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">Takes</p>
-        <p className="mt-3 text-[21px] font-medium tracking-[-0.01em]">
-          Cash <span aria-hidden className="px-1.5 text-white/30">/</span> bKash <span aria-hidden className="px-1.5 text-white/30">/</span> Bangla QR{" "}
-          <span aria-hidden className="px-1.5 text-white/30">/</span> Card
-        </p>
+        {/* The payment picker as the cart draws it, cash chosen. */}
+        <div role="list" aria-label="Payment methods" className="mt-10 inline-flex rounded-full bg-white/[0.06] p-1.5 ring-1 ring-inset ring-white/10">
+          {METHODS.map(({ icon: Icon, label }, i) => (
+            <span
+              key={label}
+              role="listitem"
+              className={cn(
+                "flex h-[48px] items-center gap-2 rounded-full px-5 text-[17px]",
+                i === 0 ? "bg-[#f5f2eb] font-semibold text-[#141413] shadow-[0_8px_18px_-10px_rgb(0_0_0/0.8)]" : "font-medium text-[rgb(245_242_235/0.82)]",
+              )}
+            >
+              <Icon size={18} strokeWidth={1.8} className={i === 0 ? "text-[#d93f00]" : undefined} aria-hidden /> {label}
+            </span>
+          ))}
+        </div>
       </TextBlock>
       {/* Stepped up to the right: the order the three screens come in. */}
       <Phone src={cart} width={262} alt="The cart: General Admission and a yoga session, paying by cash" className="absolute left-[668px] top-[206px]">
@@ -191,11 +228,11 @@ export function PosTicketSlide({ n }: { n: number }) {
     <Slide tone="ink" n={n} section={GO_SECTION} label="The ticket, printed or sent">
       <Glow className="left-[640px] top-[-240px] h-[860px] w-[900px]" />
       <TextBlock eyebrow="Go · 4 of 6 · Ticket" title="The ticket, printed or sent." lead="Every sale issues a reference the gate can scan — on paper, by SMS, or both.">
-        <ul className="flex flex-col">
+        <ul className="flex flex-col gap-6">
           {OUTPUTS.map(({ icon: Icon, title, body }) => (
-            <li key={title} className="flex items-center gap-4 border-t border-white/10 py-4">
-              <span className="grid h-[48px] w-[48px] shrink-0 place-items-center rounded-[14px] bg-white/[0.07] text-[#ffa572] ring-1 ring-inset ring-white/10">
-                <Icon size={22} strokeWidth={1.6} aria-hidden />
+            <li key={title} className="flex items-center gap-4">
+              <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[15px] bg-white/[0.07] text-[#ffa572] ring-1 ring-inset ring-white/10">
+                <Icon size={23} strokeWidth={1.6} aria-hidden />
               </span>
               <span className="min-w-0">
                 <span className={cn(s.heading, "block text-[22px]")}>{title}</span>

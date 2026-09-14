@@ -7374,6 +7374,75 @@ and dotted step styles left the stylesheet with the slides that used them.
 - PDF rebuilt and read back: 25 pages at 960 × 540pt.
 - `tsc` and `eslint` on the deck clean.
 
+## Counterfoil Deck, part six — product fragments instead of rules (2026-09-15)
+
+Owner review of part five: the Today slide needed a proper redesign; the
+hairline-and-rule lists (the chapter contents' dotted leaders, the empty rule
+above "Not sellable", the booking-type columns) read as a bad attempt at
+editorial rather than a human touch.
+
+### What the research said
+
+Current SaaS marketing (Stripe, Linear, Vercel, and the bento grids that came
+out of Apple's keynotes) shows a feature by a piece of the product doing it,
+not by an icon and a sentence, and not by rules. Tiles vary in size so one
+reads first; a monochrome base carries a single accent. A traction page leads
+with its biggest figure and makes it the largest thing on the slide.
+
+### The pattern, applied
+
+Where a slide lists things, each is now shown as a small working piece of the
+product:
+
+- **Today (rebuilt):** a bento. The tall ink tile leads with ~20 operators over
+  a wall of venue glyphs; Countries lists the four by code; Booking types
+  carries the fourteen glyphs; Languages shows the same moment in both scripts
+  ("টিকিট ইস্যু হয়েছে" / "Ticket issued", the till's own strings). "Built for"
+  became icon chips in the header.
+- **Chapter openers:** the dotted contents list became thumbnails of each
+  part's own screen with its page number — landscape OS screens for chapter 01,
+  phone screens for chapter 02.
+- **How it works:** four cards with arrows in the gaps and a step chip.
+- **Bookings:** "Not sellable 0" on an ink tile; bulk actions shown as the bulk
+  bar; channels as two switches.
+- **Booking types:** three tiles, each opening on a fragment — a daily-capacity
+  meter, an hourly slot grid, a punch card for a credit pack.
+- **Reports:** eight mini charts, each drawn as the shape it takes in Reports,
+  and the three actions as pills.
+- **Settings:** each setting joined to where it shows up by an arrow; the
+  searches as a real search box with "vat" typed and Tax found.
+- **Calendar key**, **Find** (three sell-wall tiles), **Pay** (the payment
+  picker, cash chosen), **Events** and the **cover** figures as pills, and
+  **Bangladesh**: payment rails as cards, language as the toggle, currency as a
+  figure, tax as a receipt fragment.
+
+White on ember stays the rule: the "Limited" badge and the chosen payment are
+ink or paper rather than dark text on orange.
+
+### Found by measuring
+
+At 1024 and 390 the layout check reported slide 23's "Booking types" and
+"Languages" labels covered by their figures. A probe showed the layout is
+identical at every width: the figure's text box (line-height 0.9, so its
+content area overhangs) sat 9px under the label because the captions wrapped
+to two lines and took the free space. The glyph grid is narrower and the
+captions fit one line; the gap is now 35px.
+
+### Verified
+
+- Layout at 1780, 1440, 1024 and 390: 25 slides the same size, nothing clipped,
+  covered or outside the margins, no console errors.
+- Pixel contrast per slide: **0 of 422** text boxes below their floor.
+  `/deck` audits at **0**.
+- PDF rebuilt and read back: 25 pages at 960 × 540pt.
+- `tsc` and `eslint` on the deck clean.
+
+Sources: [SaaSFrame — bento grid patterns](https://www.saasframe.io/patterns/bento-grid) ·
+[SaaSFrame — designing bento grids, 2026](https://www.saasframe.io/blog/designing-bento-grids-that-actually-work-a-2026-practical-guide) ·
+[Pixeldarts — principles behind Stripe, Linear and Vercel](https://www.pixeldarts.com/en/post/four-design-principles-behind-stripe-linear-and-vercel) ·
+[Setproduct — Vercel's blueprint grid](https://www.setproduct.com/blog/complete-guide-to-blueprint-grid-design) ·
+[Deckary — traction slides](https://deckary.com/blog/traction-slide-pitch-deck)
+
 Sources: [reveal.js — presentation size](https://revealjs.com/presentation-size/) ·
 [reveal.js — PDF export](https://revealjs.com/pdf-export/) ·
 [Slidev — exporting](https://sli.dev/guide/exporting) ·

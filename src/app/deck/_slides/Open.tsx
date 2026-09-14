@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { CalendarX, Check, Compass, ScanLine, Store } from "lucide-react";
+import { ArrowRight, CalendarX, Check, Compass, ScanLine, Store } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Callout, Floor, Glow, Laptop, Phone, PosStand, Slide, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
 import logoOnInk from "../_media/logo-counterfoil-dark.png";
@@ -35,17 +35,14 @@ export function CoverSlide({ n }: { n: number }) {
         <p className={cn(s.lead, "mt-8 w-[540px]")}>
           Tickets, sessions, courts and tours — sold at the counter, checked at the gate and reconciled by close.
         </p>
-        <dl className="mt-10 flex w-[540px] gap-10 border-t border-white/12 pt-6">
+        <ul className="mt-10 flex gap-2.5">
           {PROOF.map(([value, label]) => (
-            <div key={label}>
-              <dt className="sr-only">{label}</dt>
-              <dd className="flex items-baseline gap-2.5">
-                <span className="text-[34px] font-semibold leading-none tracking-[-0.03em]">{value}</span>
-                <span className="text-[17px] text-[rgb(245_242_235/0.66)]">{label}</span>
-              </dd>
-            </div>
+            <li key={label} className="flex h-[54px] items-baseline gap-2 rounded-full bg-white/[0.06] px-5 pt-[13px] ring-1 ring-inset ring-white/10">
+              <span className="text-[24px] font-semibold leading-none tracking-[-0.02em]">{value}</span>
+              <span className="text-[16px] leading-none text-[rgb(245_242_235/0.72)]">{label}</span>
+            </li>
           ))}
-        </dl>
+        </ul>
       </div>
       {/*
         One family, standing on one line: OS on the laptop at the back, Go in
@@ -91,9 +88,9 @@ export function ProblemSlide({ n }: { n: number }) {
     <Slide tone="ink" n={n} section="Counterfoil" label="Venues sell time with tools built for shelves">
       <TextBlock eyebrow="The problem" title="Venues sell time with tools built for shelves." width={460}>
         <p className={s.heading}>A retail till knows a product. It doesn’t know 18:00.</p>
-        <ul className="mt-7 flex flex-col">
+        <ul className="mt-8 flex flex-col gap-5">
           {PAINS.map(({ icon: Icon, title, body }) => (
-            <li key={title} className="flex gap-4 border-t border-white/10 py-4">
+            <li key={title} className="flex gap-4">
               <span className="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-[13px] bg-white/[0.07] text-[#ffa572] ring-1 ring-inset ring-white/10">
                 <Icon size={21} strokeWidth={1.6} aria-hidden />
               </span>
@@ -182,11 +179,11 @@ export function SystemSlide({ n }: { n: number }) {
   );
 }
 
-const STEPS: { n: string; name: string; body: string; art: "grid" | "tags" | "scan" | "bars" }[] = [
-  { n: "01", name: "Set up", body: "Locations, counters, what you sell, its prices and its tax.", art: "grid" },
-  { n: "02", name: "Sell", body: "At the till or online — bKash, Bangla QR, card or cash.", art: "tags" },
-  { n: "03", name: "Admit", body: "Scan at the gate. A family ticket lets the whole family in.", art: "scan" },
-  { n: "04", name: "Reconcile", body: "Count the drawer, close the shift, read the day by the hour.", art: "bars" },
+const STEPS: { name: string; body: string; art: "grid" | "tags" | "scan" | "bars" }[] = [
+  { name: "Set up", body: "Locations, counters, what you sell, its prices and its tax.", art: "grid" },
+  { name: "Sell", body: "At the till or online — bKash, Bangla QR, card or cash.", art: "tags" },
+  { name: "Admit", body: "Scan at the gate. A family ticket lets the whole family in.", art: "scan" },
+  { name: "Reconcile", body: "Count the drawer, close the shift, read the day by the hour.", art: "bars" },
 ];
 
 /** Each step drawn as the thing it produces — a grid set up, a price, a scan, a day's bars. */
@@ -260,6 +257,9 @@ function StepArt({ art }: { art: (typeof STEPS)[number]["art"] }) {
   );
 }
 
+/* Four cards across the content width, 32px apart; an arrow sits in each gap. */
+const STEP_W = (1408 - 3 * 32) / 4;
+
 export function HowItWorksSlide({ n }: { n: number }) {
   return (
     <Slide tone="paper" n={n} section="Counterfoil" label="From first sale to cash-up">
@@ -267,22 +267,31 @@ export function HowItWorksSlide({ n }: { n: number }) {
       <p className={cn(s.lead, s.text)} style={{ left: 1024, top: 128, width: 480 }}>
         Four steps every venue already takes — done in one place, by the people already doing them.
       </p>
-      {/* The steps as the sequence they are: one line runs through all four, left to right. */}
-      <div className="absolute left-[96px] top-[292px] w-[1408px]">
-        <div aria-hidden className="absolute inset-x-0 top-[311px] h-[2px] bg-[#141413]" />
-        <ol className="grid grid-cols-4 gap-x-8">
-          {STEPS.map((step) => (
-            <li key={step.n}>
-              <div className="grid h-[280px] place-items-center rounded-[18px] bg-[#ebe5d9]">
+      <div className="absolute left-[96px] top-[292px] h-[508px] w-[1408px]">
+        <ol className="grid h-full grid-cols-4 gap-8">
+          {STEPS.map((step, i) => (
+            <li key={step.name} className={cn(s.card, s.paperCard, "flex flex-col p-2.5")}>
+              <div className="grid h-[272px] shrink-0 place-items-center rounded-[16px] bg-[#f3eee6]">
                 <StepArt art={step.art} />
               </div>
-              <span aria-hidden className="relative z-10 mt-[24px] block h-[16px] w-[16px] rounded-full border-2 border-[#141413] bg-[#f94a00]" />
-              <p className={cn(s.mono, "mt-6 text-[#aa3000]")}>{step.n}</p>
-              <h3 className={cn(s.heading, "mt-2")}>{step.name}</h3>
-              <p className={cn(s.body, "mt-2 w-[300px]")}>{step.body}</p>
+              <div className="flex flex-1 flex-col px-5 pb-5 pt-6">
+                <span className="w-fit rounded-full bg-[#141413] px-3 py-[5px] font-mono text-[13px] leading-none text-[#f5f2eb]">Step {i + 1}</span>
+                <h3 className={cn(s.heading, "mt-4")}>{step.name}</h3>
+                <p className={cn(s.body, "mt-2")}>{step.body}</p>
+              </div>
             </li>
           ))}
         </ol>
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            aria-hidden
+            className="absolute top-[126px] z-10 grid h-[44px] w-[44px] place-items-center rounded-full bg-[#f94a00] text-white shadow-[0_10px_20px_-8px_rgb(249_74_0/0.7)] ring-[5px] ring-[#f5f2eb]"
+            style={{ left: STEP_W * (i + 1) + 32 * i + 16 - 22 }}
+          >
+            <ArrowRight size={20} strokeWidth={2.2} />
+          </span>
+        ))}
       </div>
     </Slide>
   );

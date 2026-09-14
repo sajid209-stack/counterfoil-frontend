@@ -9,6 +9,12 @@ export const TOTAL = 25;
 
 export type Tone = "ink" | "paper";
 
+/**
+ * One part of a chapter, shown on its opener as a thumbnail of its own screen:
+ * `x`, `y` and `w` are the region of the screenshot to show, as fractions.
+ */
+export type ChapterPart = { name: string; page: number; src: StaticImageData; x: number; y: number; w: number };
+
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
