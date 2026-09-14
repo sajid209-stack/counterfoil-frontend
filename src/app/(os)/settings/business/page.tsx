@@ -7,9 +7,9 @@ import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, updateOperator, type Operator } from "@/lib/api";
 import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, SuffixInput, controlCls } from "../_components/SettingsKit";
+import { TIMEZONES, zoneLabel } from "../_lib/zones";
 
 const CURRENCIES = ["BDT", "MYR", "USD", "CAD"];
-const TIMEZONES = ["Asia/Dhaka", "Asia/Kuala_Lumpur", "America/New_York", "America/Toronto"];
 
 interface Draft {
   name: string;
@@ -25,19 +25,6 @@ const toDraft = (op: Operator): Draft => ({
   lockDays: op.pastEditLockDays == null ? "" : String(op.pastEditLockDays),
 });
 
-/** "GMT+6". The offset is what an operator actually checks a zone against. */
-function offsetOf(zone: string): string {
-  try {
-    return (
-      new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "shortOffset" })
-        .formatToParts(new Date())
-        .find((part) => part.type === "timeZoneName")?.value ?? ""
-    );
-  } catch {
-    return "";
-  }
-}
-
 /** "BDT — Bangladeshi Taka", in the reader's own language. A code alone is a quiz. */
 function currencyName(code: string, locale: string): string {
   try {
@@ -45,17 +32,6 @@ function currencyName(code: string, locale: string): string {
   } catch {
     return code;
   }
-}
-
-function initials(name: string): string {
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((word) => word[0]?.toUpperCase() ?? "")
-      .join("") || "·"
-  );
 }
 
 /**
@@ -66,6 +42,10 @@ function initials(name: string): string {
  * from), the SMS template (Settings → Ticket messages), and appearance and
  * language (Settings → Preferences, because they are per person and per
  * browser). What is left is what somebody opens this page to change.
+ *
+ * The Logo row came out too. It could not be used — it said "Coming soon" beside
+ * the business's initials — and a row with nothing to do is a row somebody reads
+ * for nothing. It returns when upload exists.
  */
 export default function BusinessProfilePage() {
   const t = useTranslations("settings");
@@ -85,6 +65,7 @@ export default function BusinessProfilePage() {
 
   const nameErr = form && !form.name.trim() ? t("business.nameRequired") : undefined;
   const lockErr = form && form.lockDays.trim() !== "" && !/^\d{1,4}$/.test(form.lockDays.trim()) ? t("business.lockInvalid") : undefined;
+  const zones = form && !TIMEZONES.includes(form.timezone) ? [form.timezone, ...TIMEZONES] : TIMEZONES;
 
   const save = async () => {
     if (!form || nameErr || lockErr) return;
@@ -127,22 +108,6 @@ export default function BusinessProfilePage() {
                 />
               )}
             </SettingRow>
-            {/* Not a dashed drop zone. The old one looked like a place to drop
-                a file and did nothing when you did — here the row says plainly
-                that upload is coming, and shows what stands in until then. */}
-            <SettingRow label={t("business.logo")} description={t("business.logoDesc")} labelFor={false}>
-              {() => (
-                <div className="flex h-11 items-center gap-comfortable">
-                  <span
-                    aria-hidden
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-line bg-subtle text-sm font-semibold text-fg"
-                  >
-                    {initials(form.name)}
-                  </span>
-                  <span className="text-[13px] text-muted">{t("business.logoPending")}</span>
-                </div>
-              )}
-            </SettingRow>
           </SettingsSection>
 
           <SettingsSection title={t("business.regionalTitle")} description={t("business.regionalDesc")}>
@@ -160,9 +125,9 @@ export default function BusinessProfilePage() {
             <SettingRow label={t("common.timezone")} description={t("business.timezoneDesc")}>
               {({ id, describedBy }) => (
                 <select id={id} value={form.timezone} onChange={(e) => set("timezone", e.target.value)} aria-describedby={describedBy} className={cn(controlCls(), "pr-section")}>
-                  {TIMEZONES.map((zone) => (
+                  {zones.map((zone) => (
                     <option key={zone} value={zone}>
-                      {zone.replace(/_/g, " ")} ({offsetOf(zone)})
+                      {zoneLabel(zone)}
                     </option>
                   ))}
                 </select>

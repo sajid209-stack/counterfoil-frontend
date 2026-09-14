@@ -32,6 +32,14 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   if (pathname === "/settings") return <>{children}</>;
 
+  // A record (/settings/team/stf_nadia, /settings/roles/new) goes back to its
+  // list rather than to the index two levels up — the list is where someone who
+  // opened the record came from.
+  const parent = SETTINGS_GROUPS.flatMap((g) => g.items).find((item) => pathname.startsWith(`${item.href}/`));
+  const back = parent
+    ? { href: parent.href, label: parent.key === "resources" && noun ? noun : t(`nav.items.${parent.key}.title`) }
+    : { href: "/settings", label: t("nav.back") };
+
   return (
     <div className="xl:flex">
       {/* The nav stretches to the page's height so the list inside it can
@@ -86,11 +94,11 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
       <div className="min-w-0 flex-1">
         <div className="px-section pt-section sm:px-major xl:hidden">
           <Link
-            href="/settings"
+            href={back.href}
             className="-ml-comfortable inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg md:min-h-9"
           >
             <ChevronLeft size={16} strokeWidth={1.5} aria-hidden />
-            {t("nav.back")}
+            {back.label}
           </Link>
         </div>
         {children}

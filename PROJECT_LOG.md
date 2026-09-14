@@ -6470,3 +6470,157 @@ with the reason stated when a field is invalid, and a `beforeunload` guard.
 - The e-mail row reads "Current: {email}" as its label — correct, not elegant.
 - Password, two-step, e-mail and recovery remain mock actions; logo upload is
   still "Coming soon".
+
+## Settings, part two — every page on one anatomy (2026-09-14)
+
+Owner asked for all of Settings researched against SaaS and booking-system
+settings and reworked round by round. The first pass (same day) rebuilt the
+index, Business profile, Tax, Ticket messages, Preferences, Payments and
+Security. This one takes everything else — Team, Roles, Locations, Counters,
+Resources, Devices, Categories — and gives the index and Business profile a
+second look.
+
+### What the research changed
+
+- **Team screens** are read for name, role and whether someone can get in;
+  each row offers only the actions that apply to its state (resend a pending
+  invite, reset or suspend someone active, reactivate someone suspended); the
+  role is chosen in the same step as the invite, with what each role allows
+  written where it is chosen; and an admin cannot lock themselves out.
+- **Permissions** stay readable when roles are few, grouped by area, and
+  "allowed" and "not allowed" have different shapes rather than a wall of
+  identical ticks.
+- **Opening-hours editors** share one shape: a row per day, open or closed, a
+  span of times, more than one span for a day with a break, and a way to copy
+  one day to the rest.
+
+### What was wrong, measured
+
+- **Seven collections drawn with the orders table**: sortable headers, status
+  filters, search and "1–3 of 3 · 1 / 1" pagination around three to thirteen
+  rows, and columns that named nothing — "Bookings: 1 selected",
+  "Permissions: 2", "Open days 2/7", and an Updated date identical on every row.
+- **Team** was titled "Staff" under a nav reading Team, printed "Reset
+  password" on every row — invited people and suspended people included — and
+  made status a select, so an admin could "choose" that someone had accepted
+  an invite they had never opened.
+- **Roles** were ten ungrouped checkboxes, with the limits in a separate card as
+  an Unlimited toggle beside an amount.
+- **Location hours were read-only**, under a note shipped to operators saying an
+  editor was "a follow-up — an engineer picks it up here".
+- **Counters** listed six unexplained payment checkboxes; ticking bKash with no
+  live payment account did nothing at the till and nothing said so.
+- **Devices** printed every tablet's pairing code — a key meant to be shown once
+  — in a list column; device rows opened nothing, and registering a tablet ended
+  on the dashboard.
+- **Every record page** had two back links and a Save button that sat disabled
+  whether or not anything had changed.
+
+### Shared pieces
+
+`SettingsKit` gained `RecordList` / `RecordRow` (the whole row is the link, a
+row menu sits beside it, a status pill appears only where it is the exception),
+`IconTile`, `SearchField` (offered only where a list is long), `CreateBar` (a
+new record's foot: what happens, Cancel, and the verb — Send invite, Create
+role), and `TimeField` (a compact typed time for rows of them). Breadcrumbs link
+back up inside Settings, and a record's phone back link returns to its list,
+not the index. New: `lib/permissions.ts` (one registry of what a role can do),
+`lib/session.ts` (`DEMO_STAFF_ID`, so "yourself" is read from one place),
+`settings/_lib/roles.ts` (a role said in words), `_lib/time.ts` ("4 hours ago"
+in the reader's language — the shared helper was English-only), `_lib/zones.ts`.
+
+### Pages
+
+- **Team** — status tabs with counts, search, rows with role / workplace / last
+  active, a row menu that changes with the person. Invite and edit are one form:
+  profile; role as cards that say what each allows and how many people hold it
+  (a new invite starts on the least powerful); where they work, with counters
+  under the location they belong to. A member page opens on Access — resend,
+  reset, suspend or reactivate — and does not offer to suspend yourself.
+- **Roles** — each role said in words with its headcount, then **Compare roles**:
+  every permission side by side, grouped, limits in the group they limit, the
+  permission column pinned on a phone. The editor groups permissions by where
+  the work happens, a sentence under each, the discount cap under Sell at the
+  till and the refund cap under Refund orders, and warns when you remove Manage
+  settings or Manage the team from your own role.
+- **Locations** — each row says whether it is open today, and a venue with no
+  hours says so in warning. The editor has address, time zone, a week of hours
+  (split shifts, copy to all days, backwards and overlapping spans named on the
+  day), **Used here** (counters, resources, team), and Stop selling as its own
+  confirmed action.
+- **Counters** — grouped under their location, payment methods and what they
+  sell in words. The editor explains each method, warns when card, bKash or QR
+  are ticked with no live account, groups bookings by category with select-all,
+  shows the tablets paired to it, and closes or opens with a confirmation.
+- **Resources** — grouped by kind (Courts, Fields, Lanes), what each is doing
+  right now, a price that differs from the booking's beside it; the location is
+  shown only once there is more than one. The editor makes price a choice of
+  three cards, puts out of service with its reason in the draft, lists today's
+  bookings, and retires as a confirmed action.
+- **Devices** — no pairing codes in the list; last seen, and a quiet tablet in
+  warning. A new device page moves a tablet to another counter, turns it off or
+  removes it. Registration ends on the code, set large with three steps, and
+  Done returns to Devices.
+- **Categories** — "Shown at the till" in chip order with named reorder buttons
+  and inline rename; retired categories sit apart.
+- **Index** — counts that match the lists ("3 locations · 1 not selling",
+  "6 counters · 2 closed", "3 devices · 1 off"; they used to count only active
+  records, so the page said 2 above a list of 3), and **settings search** by
+  keyword in the reader's language — "VAT", "bKash", "password", "dark mode".
+- **Business profile** — the Logo row that could only say "Coming soon" is gone.
+
+### Found by looking, not by the checks
+
+- **Every time on the hours editor stretched across its row**, stacking each day
+  three lines high: `controlCls` carries `w-full`, and `cn` does not merge
+  conflicting utilities, so a narrower width lost.
+- **The Roles page scrolled sideways by 114px on a phone.** Every container
+  clipped correctly; the culprit was an `sr-only` caption, absolutely
+  positioned, escaping the table's scroll box. The table is named with
+  `aria-label` instead.
+- **The pinned column drew a whiter stripe**: `bg-card` against a card that is
+  72% card over the page. It uses that composite, made solid.
+- **Search for "vat" found Business profile** inside "reser*vat*ion". Words now
+  match the start of a word.
+- **The shared row-menu trigger was 32px on touch** — raised to 44, which also
+  helps the bookings catalogue that uses it.
+- In dark, subtle and card are the same value, so the **"You" badge and every
+  icon tile lost their edge**; both carry a line now.
+- A suspended member read "**Active** 30 May"; the invite form warned "pick a
+  location" before anyone had typed; Bangla titles said "ভূমিকা" under a nav
+  that says "রোল".
+
+### Verified
+
+- **Probe** (contrast, nothing under 12px, 44px targets on a phone, no sideways
+  scroll or hidden overflow, no console errors, the rail marking the list a
+  record belongs to) at 1440 light and dark and at 390: Team and Roles
+  **106/106**, Locations **70/70**, Counters and Devices **94/94**, Resources,
+  Categories and the fixed hours editor **82/82**. A final sweep of all 26
+  settings routes passed **332/334**; both failures were a dev-server connection
+  reset mid-run, and the routes re-ran clean at **46/46**.
+- **Search test 24/24** in English and Bangla: "vat" finds exactly Tax, "bkash"
+  finds Payments and Counters, "dark mode" exactly Preferences, "password"
+  Security and Team, "court" Resources, a nonsense word says nothing matches,
+  the attention panel steps aside while searching, clearing brings all 13 back,
+  and the Bangla word for VAT finds exactly Tax.
+- Dark and Bangla renders reviewed for Team, Roles, the invite form, Locations,
+  Counters, Resources and Categories.
+- `tsc` and `npm run build` clean; `eslint` clean on every settings file. The
+  three shared UI files touched (ActionMenu, ChoiceCard, PageShell) lint
+  identically to `HEAD`; the four errors elsewhere in `src/components/ui`
+  (DurationInput, ProductThumb, TimeInput, charts) are pre-existing and untouched.
+- The 32-route audit is unchanged at **70**, every one the declared
+  white-on-ember rule or the kitchen-sink inline-link exemption. Standing
+  harnesses hold: accessibility 8/8, review 15/15, deck 9/9.
+- i18n parity **0 missing / 0 extra**. The 74 message keys only the old forms
+  used were removed with attribution against `HEAD`; keys the new pages build at
+  runtime (day names, payment methods, permissions) were excluded from removal.
+
+### Open
+
+- Special dates and closures for a location — the model has no field for them.
+- Hours past midnight are not modelled; an interval belongs to one day, so they
+  read as backwards.
+- Invite, resend, password reset and suspend are mock actions.
+- Logo upload returns to Business profile when it exists.

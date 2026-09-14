@@ -1,21 +1,26 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
 import { Button, EmptyState, PageShell, StatusPill } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getLocation } from "@/lib/api";
-import { LocationForm } from "../_components/LocationForm";
+import { getLocation, listCounters, listResources, listStaff, type Location } from "@/lib/api";
+import { SectionSkeleton } from "../../_components/SettingsKit";
+import { LocationEditor } from "../_components/LocationEditor";
 
-export default function LocationDetailPage() {
+export default function LocationPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const t = useTranslations("settings");
-  const { data, loading, error } = useApiQuery(() => getLocation(params.id), [params.id]);
+  const locationQ = useApiQuery(() => getLocation(params.id), [params.id]);
+  const countersQ = useApiQuery(() => listCounters({ pageSize: 200, filters: { locationId: params.id } }), [params.id]);
+  const resourcesQ = useApiQuery(() => listResources({ pageSize: 200, filters: { locationId: params.id } }), [params.id]);
+  const staffQ = useApiQuery(() => listStaff({ pageSize: 500, filters: { locationId: params.id } }), [params.id]);
+  // The location as last written here, so a rename or a status change shows at once.
+  const [latest, setLatest] = useState<Location | null>(null);
 
-  if (!loading && (error || !data)) {
+  if (!locationQ.loading && (locationQ.error || !locationQ.data)) {
     return (
       <PageShell title={t("locations.singular")}>
         <EmptyState
@@ -26,20 +31,29 @@ export default function LocationDetailPage() {
     );
   }
 
+  const location = latest?.id === params.id ? latest : locationQ.data;
+  if (!location || countersQ.loading || resourcesQ.loading || staffQ.loading) {
+    return (
+      <PageShell title={t("locations.singular")}>
+        <SectionSkeleton />
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell
-      title={data?.name ?? t("locations.singular")}
-      description={data ? `${data.city}, ${data.country}` : undefined}
-      actions={data ? <StatusPill status={data.status} /> : undefined}
+      title={location.name}
+      description={[location.addressLine1, location.city].filter(Boolean).join(", ")}
+      actions={location.status !== "active" ? <StatusPill status={location.status} /> : undefined}
     >
-      <Link href="/settings/locations" className="mb-section inline-flex items-center gap-inline text-[13px] text-muted hover:text-fg">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("locations.title")}
-      </Link>
-      {loading || !data ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
-      ) : (
-        <LocationForm mode="edit" location={data} />
-      )}
+      <LocationEditor
+        mode="edit"
+        location={location}
+        counters={countersQ.data?.data ?? []}
+        resources={resourcesQ.data?.data ?? []}
+        teamCount={staffQ.data?.data.length ?? 0}
+        onSaved={setLatest}
+      />
     </PageShell>
   );
 }

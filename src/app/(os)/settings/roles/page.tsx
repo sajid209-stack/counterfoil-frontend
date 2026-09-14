@@ -1,67 +1,63 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Search } from "lucide-react";
-import {
-  Button,
-  DataTable,
-  EmptyState,
-  PageShell,
-  type Column,
-} from "@/components/ui";
+import { Plus, UserCog } from "lucide-react";
+import { Button, PageShell } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { listRoles, type Role } from "@/lib/api";
-import { formatMoney } from "@/lib/format";
+import { listRoles, listStaff } from "@/lib/api";
+import { IconTile, RecordList, RecordRow, SectionSkeleton } from "../_components/SettingsKit";
+import { countByRole, useRoleSummary } from "../_lib/roles";
+import { RoleMatrix } from "./_components/RoleMatrix";
 
+/**
+ * Roles.
+ *
+ * The list read "Permissions 2 · Refund limit ৳0.00 · Discount limit 10%" —
+ * a count, a limit on something the role could not do, and no way to tell what
+ * the two permissions were. Each role now says what it lets someone do, in
+ * words, and how many people hold it; beneath the list every role is laid side
+ * by side, because "what changes between these two?" is the question this page
+ * is opened to answer.
+ */
 export default function RolesPage() {
-  const router = useRouter();
   const t = useTranslations("settings");
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "name", order: "asc" });
-  const [page, setPage] = useState(1);
-
-  const { data, loading } = useApiQuery(
-    () => listRoles({ page, pageSize: 10, search, sort: sort.key, order: sort.order }),
-    [search, sort.key, sort.order, page],
-  );
-
-  const columns: Column<Role>[] = [
-    { key: "name", header: t("common.name"), sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
-    { key: "permissions", header: t("roles.colPermissions"), align: "center", render: (r) => <span className="font-mono text-[13px]">{r.permissions.length}</span> },
-    { key: "refund", header: t("roles.colRefundLimit"), align: "right", render: (r) => <span className="font-mono text-[13px]">{r.refundLimit == null ? t("common.unlimited") : formatMoney(r.refundLimit)}</span> },
-    { key: "discount", header: t("roles.colDiscountLimit"), align: "right", render: (r) => <span className="font-mono text-[13px]">{r.discountLimitPct == null ? t("common.unlimited") : `${r.discountLimitPct}%`}</span> },
-  ];
+  const router = useRouter();
+  const summary = useRoleSummary();
+  const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
+  const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
+  const roles = rolesQ.data?.data ?? [];
+  const counts = countByRole(staffQ.data?.data ?? []);
 
   return (
     <PageShell
       title={t("roles.title")}
       description={t("roles.description")}
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/roles/new")}>{t("roles.newRole")}</Button>}
+      actions={
+        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/roles/new")}>
+          {t("roles.newRole")}
+        </Button>
+      }
     >
-      <DataTable
-        columns={columns}
-        rows={data?.data ?? []}
-        getRowId={(r) => r.id}
-        loading={loading}
-        sort={sort}
-        onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
-        onRowClick={(r) => router.push(`/settings/roles/${r.id}`)}
-        toolbar={
-          <div className="relative">
-            <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-            <input
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              placeholder={t("roles.searchPlaceholder")}
-              className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
-            />
-          </div>
-        }
-        emptyState={<EmptyState title={t("roles.emptyTitle")} message={t("roles.emptyMessage")} />}
-        pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}
-      />
+      {rolesQ.loading || staffQ.loading ? (
+        <SectionSkeleton />
+      ) : (
+        <div className="flex max-w-4xl flex-col gap-wide pb-hero">
+          <RecordList label={t("roles.title")}>
+            {roles.map((r) => (
+              <RecordRow
+                key={r.id}
+                href={`/settings/roles/${r.id}`}
+                leading={<IconTile icon={UserCog} />}
+                title={r.name}
+                meta={summary(r)}
+                aside={t("roles.peopleCount", { count: counts[r.id] ?? 0 })}
+              />
+            ))}
+          </RecordList>
+          <RoleMatrix roles={roles} />
+        </div>
+      )}
     </PageShell>
   );
 }

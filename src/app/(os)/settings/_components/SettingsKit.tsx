@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { ChevronRight, Search, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
@@ -282,6 +284,173 @@ export function Switch({
         />
       </span>
     </button>
+  );
+}
+
+/** The 36px icon tile that leads a settings row. */
+export function IconTile({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    // The ring is for dark, where subtle and card are the same value and a
+    // fill alone leaves the glyph floating with no tile around it.
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-subtle text-muted ring-1 ring-inset ring-hairline">
+      <Icon size={18} strokeWidth={1.5} aria-hidden />
+    </span>
+  );
+}
+
+/**
+ * A settings collection: one card, one row per record.
+ *
+ * Locations, counters, roles and devices were drawn with the orders table —
+ * sortable headers, a status filter, a search box and "1–3 of 3 · 1 / 1"
+ * pagination around three rows. That is the right tool for a ledger of
+ * thousands and the wrong one for the handful of things a business sets up
+ * once: it spends the page on controls and says nothing about each record. A
+ * row says what the record is in words and opens it; a search appears only
+ * where a list is long enough to need one.
+ *
+ * No overflow-hidden on the card, because a row menu opening near the last row
+ * would be clipped by it; the rounded corners go to the first and last rows.
+ */
+export function RecordList({ label, header, children }: { label: string; header?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="card-surface">
+      {header}
+      <ul
+        aria-label={label}
+        className={cn("divide-y divide-hairline [&>li:last-child>a]:rounded-b-md", !header && "[&>li:first-child>a]:rounded-t-md")}
+      >
+        {children}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * One record. The whole row is the link — a 16px chevron is not a target —
+ * and a row menu, when there is one, sits beside the link rather than inside
+ * it, so opening the menu never also opens the record.
+ */
+export function RecordRow({
+  href,
+  leading,
+  title,
+  badges,
+  meta,
+  aside,
+  columns,
+  menu,
+}: {
+  href: string;
+  leading?: React.ReactNode;
+  title: string;
+  /** Small marks after the name: a status that is the exception, "You". */
+  badges?: React.ReactNode;
+  /** What the record is, in words, under its name. */
+  meta?: React.ReactNode;
+  /** One short value on the right; it drops under the meta on a phone. */
+  aside?: React.ReactNode;
+  /** Aligned values for wider screens; the page repeats them in meta below md. */
+  columns?: React.ReactNode;
+  menu?: React.ReactNode;
+}) {
+  return (
+    <li className="relative">
+      <Link
+        href={href}
+        className={cn(
+          "flex min-h-16 items-center gap-section px-section py-comfortable transition-colors duration-quick hover:bg-subtle/60 sm:px-major",
+          menu ? "pr-[4.5rem] sm:pr-[5rem]" : undefined,
+        )}
+      >
+        {leading}
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-x-tight gap-y-inline">
+            <span className="text-sm font-medium text-fg">{title}</span>
+            {badges}
+          </span>
+          {meta ? <span className="mt-inline block text-[13px] leading-relaxed text-muted">{meta}</span> : null}
+          {aside ? <span className="mt-inline block text-[13px] text-muted sm:hidden">{aside}</span> : null}
+        </span>
+        {columns ? <span className="hidden shrink-0 items-center gap-section md:flex">{columns}</span> : null}
+        {aside ? <span className="hidden max-w-[40%] shrink-0 text-right text-[13px] text-muted sm:block">{aside}</span> : null}
+        {menu ? null : <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
+      </Link>
+      {menu ? <div className="absolute right-section top-1/2 -translate-y-1/2 sm:right-major">{menu}</div> : null}
+    </li>
+  );
+}
+
+/** Search inside a settings collection — offered only where a list is long. */
+export function SearchField({
+  value,
+  onChange,
+  label,
+  placeholder,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  label: string;
+  placeholder?: string;
+}) {
+  return (
+    <div className="relative w-full sm:w-72">
+      <Search size={16} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+        placeholder={placeholder}
+        className={cn(controlCls(), "pl-10")}
+      />
+    </div>
+  );
+}
+
+/**
+ * The foot of a "new" page: what happens, Cancel, and the one verb.
+ *
+ * A save bar that appears on change suits a record that exists. A record that
+ * does not exist yet has nothing to discard back to, so this bar is always
+ * there, and its button names the act — Send invite, Create role — rather than
+ * a generic Save.
+ */
+export function CreateBar({
+  dirty,
+  invalid,
+  saving,
+  note,
+  invalidNote,
+  submitLabel,
+  onSubmit,
+  onCancel,
+}: {
+  dirty: boolean;
+  invalid: boolean;
+  saving: boolean;
+  note: string;
+  invalidNote: string;
+  submitLabel: string;
+  onSubmit: () => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations("settings");
+  useUnsavedGuard(dirty);
+  return (
+    <div className="sticky bottom-section z-10 max-md:bottom-[calc(56px+env(safe-area-inset-bottom)+12px)]">
+      <div className="flex flex-wrap items-center justify-between gap-tight rounded-md border border-line bg-card px-section py-tight shadow-lg">
+        <p className="min-w-0 text-[13px] text-muted">{invalid ? invalidNote : note}</p>
+        <div className="flex shrink-0 gap-tight">
+          <Button variant="secondary" onClick={onCancel} disabled={saving}>
+            {t("save.cancel")}
+          </Button>
+          <Button onClick={onSubmit} loading={saving} disabled={invalid}>
+            {submitLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

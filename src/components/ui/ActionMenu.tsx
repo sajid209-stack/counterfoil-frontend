@@ -76,7 +76,7 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: s
           setOpen((v) => !v);
         }}
         className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg",
+          "flex h-11 w-11 items-center justify-center rounded-sm text-muted md:h-8 md:w-8 transition-colors duration-quick hover:bg-subtle hover:text-fg",
           open && "bg-subtle text-fg",
         )}
       >

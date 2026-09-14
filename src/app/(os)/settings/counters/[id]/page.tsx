@@ -1,44 +1,75 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
 import { Button, EmptyState, PageShell, StatusPill } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getCounter, listLocations, listProducts } from "@/lib/api";
-import { CounterForm } from "../_components/CounterForm";
+import {
+  getCounter,
+  listCategories,
+  listDevices,
+  listLocations,
+  listPaymentAccounts,
+  listProducts,
+  type Counter,
+} from "@/lib/api";
+import { SectionSkeleton } from "../../_components/SettingsKit";
+import { CounterEditor } from "../_components/CounterEditor";
 
-export default function CounterDetailPage() {
+export default function CounterPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const t = useTranslations("settings");
-  const counter = useApiQuery(() => getCounter(params.id), [params.id]);
-  const locs = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const prods = useApiQuery(() => listProducts({ pageSize: 100 }), []);
-  const loading = counter.loading || locs.loading || prods.loading;
+  const counterQ = useApiQuery(() => getCounter(params.id), [params.id]);
+  const locationsQ = useApiQuery(() => listLocations({ pageSize: 200 }), []);
+  const productsQ = useApiQuery(() => listProducts({ pageSize: 500 }), []);
+  const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
+  const devicesQ = useApiQuery(() => listDevices({ pageSize: 200, filters: { counterId: params.id } }), [params.id]);
+  const accountsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
+  // The counter as last written here, so a rename or a status change shows at once.
+  const [latest, setLatest] = useState<Counter | null>(null);
 
-  if (!counter.loading && (counter.error || !counter.data)) {
+  if (!counterQ.loading && (counterQ.error || !counterQ.data)) {
     return (
       <PageShell title={t("counters.fallbackTitle")}>
-        <EmptyState title={t("counters.notFoundTitle")} action={<Button onClick={() => router.push("/settings/counters")}>{t("counters.backButton")}</Button>} />
+        <EmptyState
+          title={t("counters.notFoundTitle")}
+          action={<Button onClick={() => router.push("/settings/counters")}>{t("counters.backButton")}</Button>}
+        />
       </PageShell>
     );
   }
 
+  const counter = latest?.id === params.id ? latest : counterQ.data;
+  const loading = locationsQ.loading || productsQ.loading || categoriesQ.loading || devicesQ.loading || accountsQ.loading;
+  if (!counter || loading) {
+    return (
+      <PageShell title={t("counters.fallbackTitle")}>
+        <SectionSkeleton />
+      </PageShell>
+    );
+  }
+
+  const locations = locationsQ.data?.data ?? [];
+  const place = locations.find((l) => l.id === counter.locationId);
+
   return (
     <PageShell
-      title={counter.data?.name ?? t("counters.fallbackTitle")}
-      actions={counter.data ? <StatusPill status={counter.data.status} /> : undefined}
+      title={counter.name}
+      description={place?.name}
+      actions={counter.status !== "active" ? <StatusPill status={counter.status} /> : undefined}
     >
-      <Link href="/settings/counters" className="mb-section inline-flex items-center gap-inline text-[13px] text-muted hover:text-fg">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("counters.backToCounters")}
-      </Link>
-      {loading || !counter.data ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
-      ) : (
-        <CounterForm mode="edit" counter={counter.data} locations={locs.data?.data ?? []} products={prods.data?.data ?? []} />
-      )}
+      <CounterEditor
+        mode="edit"
+        counter={counter}
+        locations={locations}
+        products={productsQ.data?.data ?? []}
+        categories={categoriesQ.data?.data ?? []}
+        devices={(devicesQ.data?.data ?? []).filter((d) => d.status !== "archived")}
+        liveAccount={(accountsQ.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled)}
+        onSaved={setLatest}
+      />
     </PageShell>
   );
 }

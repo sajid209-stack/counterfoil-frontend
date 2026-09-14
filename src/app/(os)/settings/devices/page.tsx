@@ -1,74 +1,92 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Search } from "lucide-react";
-import {
-  Button,
-  DataTable,
-  EmptyState,
-  PageShell,
-  StatusPill,
-  type Column,
-} from "@/components/ui";
+import { MonitorSmartphone, Plus } from "lucide-react";
+import { Button, EmptyState, PageShell, StatusPill } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { listCounters, listDevices, type Device } from "@/lib/api";
-import { formatDateTime } from "@/lib/format";
+import { listCounters, listDevices, listLocations, type Device } from "@/lib/api";
+import { isDeviceQuiet } from "@/lib/devices";
+import { DEMO_TODAY } from "@/lib/schedule";
+import { IconTile, RecordList, RecordRow, SectionSkeleton } from "../_components/SettingsKit";
+import { useSince } from "../_lib/time";
 
+/**
+ * Devices.
+ *
+ * The table printed every tablet's pairing code in a column. A pairing code is
+ * a key — it is meant to be shown once, when the tablet is registered — and a
+ * list of them is a list of keys anyone at the screen can read. It is gone from
+ * here. What a manager needs from this list is which till each tablet opens,
+ * and whether it is still checking in; a tablet quiet for a week, or never
+ * connected, is said in warning, by the same rule the dashboard uses.
+ */
 export default function DevicesPage() {
-  const router = useRouter();
   const t = useTranslations("settings");
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "name", order: "asc" });
-  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const since = useSince();
+  const devicesQ = useApiQuery(() => listDevices({ pageSize: 500 }), []);
+  const countersQ = useApiQuery(() => listCounters({ pageSize: 500 }), []);
+  const locationsQ = useApiQuery(() => listLocations({ pageSize: 200 }), []);
 
-  const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
-  const counterName = (id: string | null) => (id ? countersQ.data?.data.find((c) => c.id === id)?.name ?? "—" : t("devices.unpaired"));
+  const devices = [...(devicesQ.data?.data ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  const counters = countersQ.data?.data ?? [];
+  const locations = locationsQ.data?.data ?? [];
 
-  const { data, loading } = useApiQuery(
-    () => listDevices({ page, pageSize: 10, search, sort: sort.key, order: sort.order, filters: { status } }),
-    [search, status, sort.key, sort.order, page],
-  );
-
-  const columns: Column<Device>[] = [
-    { key: "name", header: t("devices.colName"), sortable: true, render: (d) => <span className="font-medium">{d.name}</span> },
-    { key: "counter", header: t("devices.colCounter"), render: (d) => counterName(d.counterId) },
-    { key: "code", header: t("devices.colPairingCode"), render: (d) => <span className="font-mono text-[12px] text-muted">{d.pairingCode}</span> },
-    { key: "status", header: t("devices.colStatus"), sortable: true, render: (d) => <StatusPill status={d.status} /> },
-    { key: "lastSeen", header: t("devices.colLastSeen"), render: (d) => <span className="text-muted">{formatDateTime(d.lastSeenAt)}</span> },
-  ];
+  const where = (d: Device): { text: string; warn: boolean } => {
+    const counter = counters.find((c) => c.id === d.counterId);
+    if (!counter) return { text: t("devices.notPaired"), warn: true };
+    const place = locations.find((l) => l.id === counter.locationId);
+    return { text: place ? `${counter.name} · ${place.name}` : counter.name, warn: false };
+  };
+  const seen = (d: Device): { text: string; warn: boolean } => {
+    if (!d.lastSeenAt) return { text: t("devices.neverSeen"), warn: d.status === "active" };
+    const quiet = d.status === "active" && isDeviceQuiet(d, DEMO_TODAY);
+    return { text: quiet ? t("devices.quiet") : t("devices.seen", { when: since(d.lastSeenAt) }), warn: quiet };
+  };
 
   return (
     <PageShell
       title={t("devices.title")}
       description={t("devices.description")}
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/devices/new")}>{t("devices.register")}</Button>}
+      actions={
+        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/devices/new")}>
+          {t("devices.register")}
+        </Button>
+      }
     >
-      <DataTable
-        columns={columns}
-        rows={data?.data ?? []}
-        getRowId={(d) => d.id}
-        loading={loading}
-        sort={sort}
-        onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
-        toolbar={
-          <div className="flex flex-wrap items-center gap-tight">
-            <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-              <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder={t("devices.searchPlaceholder")} className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse" />
-            </div>
-            <select aria-label={t("common.allStatuses")} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
-              <option value="all">{t("common.allStatuses")}</option>
-              <option value="active">{t("common.active")}</option>
-              <option value="inactive">{t("common.inactive")}</option>
-            </select>
-          </div>
-        }
-        emptyState={<EmptyState title={t("devices.emptyTitle")} message={t("devices.emptyMessage")} action={<Button onClick={() => router.push("/settings/devices/new")}>{t("devices.register")}</Button>} />}
-        pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}
-      />
+      {devicesQ.loading || countersQ.loading || locationsQ.loading ? (
+        <SectionSkeleton />
+      ) : devices.length === 0 ? (
+        <div className="max-w-3xl">
+          <EmptyState
+            title={t("devices.emptyTitle")}
+            message={t("devices.emptyMessage")}
+            action={<Button onClick={() => router.push("/settings/devices/new")}>{t("devices.register")}</Button>}
+          />
+        </div>
+      ) : (
+        <div className="flex max-w-4xl flex-col gap-section pb-hero">
+          <RecordList label={t("devices.title")}>
+            {devices.map((d) => {
+              const place = where(d);
+              const last = seen(d);
+              return (
+                <RecordRow
+                  key={d.id}
+                  href={`/settings/devices/${d.id}`}
+                  leading={<IconTile icon={MonitorSmartphone} />}
+                  title={d.name}
+                  badges={d.status !== "active" ? <StatusPill status={d.status} /> : null}
+                  meta={<span className={cn("block", place.warn ? "text-warning" : undefined)}>{place.text}</span>}
+                  aside={<span className={last.warn ? "text-warning" : undefined}>{last.text}</span>}
+                />
+              );
+            })}
+          </RecordList>
+        </div>
+      )}
     </PageShell>
   );
 }

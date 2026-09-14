@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -25,6 +25,7 @@ import { DEFAULT_SMS_TEMPLATE } from "@/lib/sms";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { isDeviceQuiet } from "@/lib/devices";
 import { LOCALE_LABELS, type Locale } from "@/i18n/locale";
+import { SearchField } from "./_components/SettingsKit";
 import { SETTINGS_GROUPS, resourceNoun, type SettingsItemKey } from "./_lib/nav";
 
 type Status = { text: string; tone?: "warn" } | null | undefined;
@@ -41,6 +42,9 @@ const noSubscribe = () => () => {};
 const onClient = () => true;
 const onServer = () => false;
 
+/** "6 counters · 2 closed" — the parts that apply, and nothing for the ones that do not. */
+const joined = (...parts: (string | null | false)[]) => parts.filter(Boolean).join(" · ");
+
 /**
  * Settings, as a board rather than a menu.
  *
@@ -51,6 +55,15 @@ const onServer = () => false;
  * 1 quiet"), read from the same records the rest of the product runs on, and
  * anything that is costing the operator money or silently misbehaving is lifted
  * above the groups where it cannot be missed.
+ *
+ * The counts are the counts the lists behind them show. They used to count
+ * only what was active, so this page said "2 locations" above a list of three
+ * and "4 counters" above six; now they count everything that exists and say
+ * how many of those are closed, off or out of service.
+ *
+ * Search finds a setting by what someone would type rather than where it is
+ * filed: "VAT", "bKash", "password", "dark mode". Each item carries keywords in
+ * the reader's language, so a phrase that is not in its title still finds it.
  *
  * A status that the product does not actually store is left blank rather than
  * guessed: two-step sign-in has no saved state yet, so Security says nothing.
@@ -64,6 +77,7 @@ export default function SettingsIndex() {
   // The stored theme only exists in the browser; naming it before hydration
   // would render one word on the server and another on the client.
   const mounted = useSyncExternalStore(noSubscribe, onClient, onServer);
+  const [query, setQuery] = useState("");
 
   const opQ = useApiQuery(() => getOperator(), []);
   const taxQ = useApiQuery(() => getTaxConfig(), []);
@@ -78,17 +92,21 @@ export default function SettingsIndex() {
   const prodQ = useApiQuery(() => listProducts({ pageSize: 500 }), []);
 
   const op = opQ.data;
-  const locations = locQ.data?.data.filter((r) => r.status === "active");
-  const counters = ctrQ.data?.data.filter((r) => r.status === "active");
+  const locations = locQ.data?.data.filter((r) => r.status !== "archived");
+  const notSelling = locations?.filter((r) => r.status === "inactive").length ?? 0;
+  const counters = ctrQ.data?.data.filter((r) => r.status !== "archived");
+  const closedCounters = counters?.filter((r) => r.status === "inactive").length ?? 0;
   const resources = resQ.data?.data.filter((r) => r.status === "active");
+  const outOfService = resources?.filter((r) => r.outOfService).length ?? 0;
   const categories = catQ.data?.data.filter((c) => c.active);
   const live = payQ.data?.data.filter((a) => a.status === "active").map((a) => tm(`provider.${a.provider}`));
   const staff = staffQ.data?.data;
   const members = staff?.filter((s) => s.status === "active").length ?? 0;
   const invited = staff?.filter((s) => s.status === "invited").length ?? 0;
   const roles = roleQ.data?.data;
-  const devices = devQ.data?.data.filter((d) => d.status === "active");
-  const quiet = devices?.filter((d) => isDeviceQuiet(d, DEMO_TODAY)).length ?? 0;
+  const devices = devQ.data?.data.filter((d) => d.status !== "archived");
+  const devicesOff = devices?.filter((d) => d.status === "inactive").length ?? 0;
+  const quiet = devices?.filter((d) => d.status === "active" && isDeviceQuiet(d, DEMO_TODAY)).length ?? 0;
   const reducedBookings = (prodQ.data?.data ?? []).filter((p) => p.status === "active" && p.taxClass === "reduced").length;
   // A reduced class nobody uses is a harmless zero; a reduced class that
   // bookings ARE filed under, at 0%, is those bookings being sold untaxed.
@@ -97,9 +115,16 @@ export default function SettingsIndex() {
 
   const status: Record<SettingsItemKey, Status> = {
     business: op && { text: t("hub.statusProfile", { currency: op.currency, timezone: op.defaultTimezone.replace(/_/g, " ") }) },
-    locations: locations && { text: t("hub.statusLocations", { count: locations.length }) },
-    counters: counters && { text: t("hub.statusCounters", { count: counters.length }) },
-    resources: resources && { text: t("hub.statusActive", { count: resources.length }) },
+    locations: locations && {
+      text: joined(t("hub.statusLocations", { count: locations.length }), notSelling > 0 && t("hub.statusNotSelling", { count: notSelling })),
+    },
+    counters: counters && {
+      text: joined(t("hub.statusCounters", { count: counters.length }), closedCounters > 0 && t("hub.statusClosed", { count: closedCounters })),
+    },
+    resources: resources && {
+      text: joined(t("hub.statusActive", { count: resources.length }), outOfService > 0 && t("hub.statusOut", { count: outOfService })),
+      tone: outOfService > 0 ? "warn" : undefined,
+    },
     categories: categories && { text: t("hub.statusCategories", { count: categories.length }) },
     payments: live && {
       text: live.length ? t("hub.statusLive", { providers: live.join(", ") }) : t("hub.statusCashOnly"),
@@ -119,16 +144,16 @@ export default function SettingsIndex() {
     memberships: null,
     loyalty: null,
     team: staff && {
-      text: invited
-        ? `${t("hub.statusTeam", { count: members })} · ${t("hub.statusInvited", { count: invited })}`
-        : t("hub.statusTeam", { count: members }),
+      text: joined(t("hub.statusTeam", { count: members }), invited > 0 && t("hub.statusInvited", { count: invited })),
     },
     roles: roles && { text: t("hub.statusRoles", { count: roles.length }) },
     devices: devices && {
-      text: quiet
-        ? `${t("hub.statusDevices", { count: devices.length })} · ${t("hub.statusQuiet", { count: quiet })}`
-        : t("hub.statusDevices", { count: devices.length }),
-      tone: quiet ? "warn" : undefined,
+      text: joined(
+        t("hub.statusDevices", { count: devices.length }),
+        quiet > 0 && t("hub.statusQuiet", { count: quiet }),
+        devicesOff > 0 && t("hub.statusOff", { count: devicesOff }),
+      ),
+      tone: quiet > 0 ? "warn" : undefined,
     },
     notifications: op && {
       text:
@@ -165,10 +190,41 @@ export default function SettingsIndex() {
     });
   }
 
+  // Every word typed has to START a word somewhere in the item — its title,
+  // description or keywords — so "card payment" narrows rather than widens.
+  // Starts, not substrings: "vat" was finding Business profile inside
+  // "reser-vat-ion".
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const titleOf = (key: SettingsItemKey) => (key === "resources" && noun ? noun : t(`nav.items.${key}.title`));
+  const matches = (key: SettingsItemKey) => {
+    if (words.length === 0) return true;
+    const hay = [titleOf(key), t(`nav.items.${key}.title`), t(`nav.items.${key}.desc`), t(`nav.items.${key}.keywords`)]
+      .join(" ")
+      .toLowerCase()
+      .split(/[\s,.·—–()/]+/)
+      .filter(Boolean);
+    return words.every((w) => hay.some((h) => h.startsWith(w)));
+  };
+  const groups = SETTINGS_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => matches(i.key)) })).filter((g) => g.items.length > 0);
+  const found = groups.reduce((n, g) => n + g.items.length, 0);
+  const searching = words.length > 0;
+
   return (
     <PageShell title={t("hub.title")} description={t("hub.description")}>
       <div className="flex flex-col gap-wide pb-hero">
-        {attention.length > 0 && (
+        <div className="flex max-w-3xl flex-col gap-tight sm:flex-row sm:items-center sm:gap-section">
+          <SearchField value={query} onChange={setQuery} label={t("hub.searchLabel")} placeholder={t("hub.searchPlaceholder")} />
+          {/* The examples sit beside the field rather than in its placeholder,
+              where they were cut off at "try “VAT” or “pa". While searching
+              the same line says how many settings match. */}
+          <p aria-live="polite" className="text-[13px] text-muted">
+            {searching ? t("hub.searchCount", { count: found }) : t("hub.searchHint")}
+          </p>
+        </div>
+
+        {/* While searching, the attention panel steps aside: someone looking for
+            "password" has already said what they came for. */}
+        {!searching && attention.length > 0 && (
           <section aria-labelledby="settings-attention" className="max-w-3xl rounded-md border border-warning/30 bg-warning-wash">
             <h2 id="settings-attention" className="px-section pb-tight pt-section text-sm font-semibold text-fg">
               {t("hub.attentionCount", { count: attention.length })}
@@ -196,77 +252,80 @@ export default function SettingsIndex() {
           </section>
         )}
 
-        {/* Two balanced columns on a wide screen, each group kept whole. A
-            single 768px column left half a 1440 display empty; a grid would
-            have stretched the two-row groups to the height of the five-row
-            one beside them. */}
-        <div className="xl:columns-2 xl:gap-wide">
-          {SETTINGS_GROUPS.map((group) => (
-            <section
-              key={group.key}
-              aria-labelledby={`settings-group-${group.key}`}
-              className="mb-wide break-inside-avoid"
-            >
-              <div className="mb-section flex items-end justify-between gap-section">
-                <div className="min-w-0">
-                  <h2 id={`settings-group-${group.key}`} className="text-base font-semibold text-fg">
-                    {t(`nav.groups.${group.key}.title`)}
-                  </h2>
-                  <p className="mt-inline text-[13px] text-muted">{t(`nav.groups.${group.key}.desc`)}</p>
+        {groups.length === 0 ? (
+          <p className="max-w-3xl text-sm text-muted">{t("hub.searchEmpty", { query: query.trim() })}</p>
+        ) : (
+          // Two balanced columns on a wide screen, each group kept whole. A
+          // single 768px column left half a 1440 display empty; a grid would
+          // have stretched the two-row groups to the height of the five-row
+          // one beside them.
+          <div className="xl:columns-2 xl:gap-wide">
+            {groups.map((group) => (
+              <section
+                key={group.key}
+                aria-labelledby={`settings-group-${group.key}`}
+                className="mb-wide break-inside-avoid"
+              >
+                <div className="mb-section flex items-end justify-between gap-section">
+                  <div className="min-w-0">
+                    <h2 id={`settings-group-${group.key}`} className="text-base font-semibold text-fg">
+                      {t(`nav.groups.${group.key}.title`)}
+                    </h2>
+                    <p className="mt-inline text-[13px] text-muted">{t(`nav.groups.${group.key}.desc`)}</p>
+                  </div>
                 </div>
-              </div>
-              <ul className="card-surface divide-y divide-hairline overflow-hidden">
-                {group.items.map(({ key, href, icon: Icon }) => {
-                  const s = status[key];
-                  const title = key === "resources" && noun ? noun : t(`nav.items.${key}.title`);
-                  const statusText =
-                    s === undefined ? (
-                      <span aria-hidden className="inline-block h-3 w-24 animate-pulse rounded-xs bg-line" />
-                    ) : s ? (
-                      <span className={cn("inline-flex items-center gap-inline", s.tone === "warn" ? "text-warning" : "text-muted")}>
-                        {s.tone === "warn" && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning" />}
-                        {s.text}
-                      </span>
-                    ) : null;
-                  return (
-                    <li key={key}>
-                      <Link
-                        href={href}
-                        className="group flex min-h-16 items-center gap-section px-section py-comfortable transition-colors duration-quick hover:bg-subtle/60"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-subtle text-muted transition-colors duration-quick group-hover:text-fg">
-                          <Icon size={18} strokeWidth={1.5} aria-hidden />
+                <ul className="card-surface divide-y divide-hairline overflow-hidden">
+                  {group.items.map(({ key, href, icon: Icon }) => {
+                    const s = status[key];
+                    const statusText =
+                      s === undefined ? (
+                        <span aria-hidden className="inline-block h-3 w-24 animate-pulse rounded-xs bg-line" />
+                      ) : s ? (
+                        <span className={cn("inline-flex items-center gap-inline", s.tone === "warn" ? "text-warning" : "text-muted")}>
+                          {s.tone === "warn" && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning" />}
+                          {s.text}
                         </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium text-fg">{title}</span>
-                          {/* On a phone a row with a value shows the value
-                              instead of the description — the phone settings
-                              pattern. Both made every row four lines and the
-                              index 2,142px tall; the value is what someone
-                              scanning the list is looking for, and the page
-                              behind the row still explains itself. */}
-                          <span className={cn("mt-inline block text-[13px] text-muted", statusText && "max-sm:hidden")}>
-                            {t(`nav.items.${key}.desc`)}
+                      ) : null;
+                    return (
+                      <li key={key}>
+                        <Link
+                          href={href}
+                          className="group flex min-h-16 items-center gap-section px-section py-comfortable transition-colors duration-quick hover:bg-subtle/60"
+                        >
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-subtle text-muted ring-1 ring-inset ring-hairline transition-colors duration-quick group-hover:text-fg">
+                            <Icon size={18} strokeWidth={1.5} aria-hidden />
                           </span>
-                          {statusText && <span className="mt-inline block text-[13px] sm:hidden">{statusText}</span>}
-                        </span>
-                        {statusText && (
-                          <span className="hidden max-w-[45%] shrink-0 text-right text-[13px] sm:block">{statusText}</span>
-                        )}
-                        <ChevronRight
-                          size={16}
-                          strokeWidth={1.5}
-                          aria-hidden
-                          className="shrink-0 text-muted transition-transform duration-quick group-hover:translate-x-0.5"
-                        />
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))}
-        </div>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-medium text-fg">{titleOf(key)}</span>
+                            {/* On a phone a row with a value shows the value
+                                instead of the description — the phone settings
+                                pattern. Both made every row four lines and the
+                                index 2,142px tall; the value is what someone
+                                scanning the list is looking for, and the page
+                                behind the row still explains itself. */}
+                            <span className={cn("mt-inline block text-[13px] text-muted", statusText && "max-sm:hidden")}>
+                              {t(`nav.items.${key}.desc`)}
+                            </span>
+                            {statusText && <span className="mt-inline block text-[13px] sm:hidden">{statusText}</span>}
+                          </span>
+                          {statusText && (
+                            <span className="hidden max-w-[45%] shrink-0 text-right text-[13px] sm:block">{statusText}</span>
+                          )}
+                          <ChevronRight
+                            size={16}
+                            strokeWidth={1.5}
+                            aria-hidden
+                            className="shrink-0 text-muted transition-transform duration-quick group-hover:translate-x-0.5"
+                          />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
       </div>
     </PageShell>
   );

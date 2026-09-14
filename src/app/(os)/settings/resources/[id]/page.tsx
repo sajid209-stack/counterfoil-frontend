@@ -1,42 +1,59 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
 import { Button, EmptyState, PageShell, StatusPill } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getResource, listLocations } from "@/lib/api";
-import { ResourceForm } from "../_components/ResourceForm";
+import { getResource, listLocations, type Resource } from "@/lib/api";
+import { SectionSkeleton } from "../../_components/SettingsKit";
+import { ResourceEditor } from "../_components/ResourceEditor";
 
-export default function ResourceDetailPage() {
+export default function ResourcePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const t = useTranslations("settings");
-  const res = useApiQuery(() => getResource(params.id), [params.id]);
-  const locs = useApiQuery(() => listLocations({ pageSize: 100 }), []);
+  const resourceQ = useApiQuery(() => getResource(params.id), [params.id]);
+  const locationsQ = useApiQuery(() => listLocations({ pageSize: 200 }), []);
+  // The resource as last written here, so a rename or a status change shows at once.
+  const [latest, setLatest] = useState<Resource | null>(null);
 
-  if (!res.loading && (res.error || !res.data)) {
+  if (!resourceQ.loading && (resourceQ.error || !resourceQ.data)) {
     return (
       <PageShell title={t("resources.fallbackTitle")}>
-        <EmptyState title={t("resources.notFoundTitle")} action={<Button onClick={() => router.push("/settings/resources")}>{t("resources.backButton")}</Button>} />
+        <EmptyState
+          title={t("resources.notFoundTitle")}
+          action={<Button onClick={() => router.push("/settings/resources")}>{t("resources.backButton")}</Button>}
+        />
       </PageShell>
     );
   }
 
+  const resource = latest?.id === params.id ? latest : resourceQ.data;
+  if (!resource || locationsQ.loading) {
+    return (
+      <PageShell title={t("resources.fallbackTitle")}>
+        <SectionSkeleton />
+      </PageShell>
+    );
+  }
+
+  const locations = locationsQ.data?.data ?? [];
+  const place = locations.find((l) => l.id === resource.locationId)?.name;
+
   return (
     <PageShell
-      title={res.data?.name ?? t("resources.fallbackTitle")}
-      actions={res.data ? (res.data.outOfService ? <StatusPill tone="danger">{t("resources.outOfService")}</StatusPill> : <StatusPill status={res.data.status} />) : undefined}
+      title={resource.name}
+      description={[resource.nounSingular, place].filter(Boolean).join(" · ")}
+      actions={
+        resource.outOfService ? (
+          <StatusPill tone="danger">{t("resources.outOfService")}</StatusPill>
+        ) : resource.status !== "active" ? (
+          <StatusPill status={resource.status} />
+        ) : undefined
+      }
     >
-      <Link href="/settings/resources" className="mb-section inline-flex items-center gap-inline text-[13px] text-muted hover:text-fg">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("resources.backToResources")}
-      </Link>
-      {res.loading || locs.loading || !res.data ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
-      ) : (
-        <ResourceForm mode="edit" resource={res.data} locations={locs.data?.data ?? []} />
-      )}
+      <ResourceEditor mode="edit" resource={resource} locations={locations} onSaved={setLatest} />
     </PageShell>
   );
 }

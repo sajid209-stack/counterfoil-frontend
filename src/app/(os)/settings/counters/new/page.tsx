@@ -1,28 +1,32 @@
 "use client";
 
-import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
 import { PageShell } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { listLocations, listProducts } from "@/lib/api";
-import { CounterForm } from "../_components/CounterForm";
+import { listCategories, listLocations, listPaymentAccounts, listProducts } from "@/lib/api";
+import { SectionSkeleton } from "../../_components/SettingsKit";
+import { CounterEditor } from "../_components/CounterEditor";
 
 export default function NewCounterPage() {
   const t = useTranslations("settings");
-  const locs = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const prods = useApiQuery(() => listProducts({ pageSize: 100 }), []);
-  const loading = locs.loading || prods.loading;
+  const locations = useApiQuery(() => listLocations({ pageSize: 200 }), []);
+  const products = useApiQuery(() => listProducts({ pageSize: 500 }), []);
+  const categories = useApiQuery(() => listCategories({ pageSize: 100 }), []);
+  const accounts = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
+  const loading = locations.loading || products.loading || categories.loading || accounts.loading;
 
   return (
-    <PageShell title={t("counters.newTitle")} description={t("counters.newDescription")}>
-      <Link href="/settings/counters" className="mb-section inline-flex items-center gap-inline text-[13px] text-muted hover:text-fg">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("counters.backToCounters")}
-      </Link>
+    <PageShell title={t("counters.newTitle")} description={t("counters.createDesc")}>
       {loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
+        <SectionSkeleton />
       ) : (
-        <CounterForm mode="create" locations={locs.data?.data ?? []} products={prods.data?.data ?? []} />
+        <CounterEditor
+          mode="create"
+          locations={locations.data?.data ?? []}
+          products={products.data?.data ?? []}
+          categories={categories.data?.data ?? []}
+          liveAccount={(accounts.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled)}
+        />
       )}
     </PageShell>
   );

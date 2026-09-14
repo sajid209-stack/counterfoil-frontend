@@ -1,110 +1,130 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Search } from "lucide-react";
-import {
-  Button,
-  DataTable,
-  EmptyState,
-  PageShell,
-  StatusPill,
-  type Column,
-} from "@/components/ui";
+import { LandPlot, Plus } from "lucide-react";
+import { Button, EmptyState, PageShell, StatusPill } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listLocations, listResources, ownerBusyDetailed, type Resource } from "@/lib/api";
-import { toTime } from "@/lib/schedule";
+import { formatPriceShort } from "@/lib/format";
+import { DEMO_TODAY, toTime } from "@/lib/schedule";
+import { IconTile, RecordList, RecordRow, SectionSkeleton } from "../_components/SettingsKit";
 
-const TODAY = "2026-07-29";
+/** The demo's "now": the same noon the till and the dashboard read. */
 const NOW_MIN = 12 * 60;
 
+/**
+ * Resources, grouped by what they are.
+ *
+ * One table mixed a centre court, two fields and four lanes, with a Type column
+ * repeating the word down the rows and the page titled "Courts" over all of it
+ * when the first row happened to be a court. The groups are now the kinds —
+ * Courts, Fields, Lanes — so the heading is always true, and each row says where
+ * it is and what it is doing right now. Out of service is said with its reason;
+ * a price that differs from the booking's is said beside it.
+ */
 export default function ResourcesPage() {
-  const router = useRouter();
   const t = useTranslations("settings");
+  const router = useRouter();
+  const resourcesQ = useApiQuery(() => listResources({ pageSize: 500 }), []);
+  const locationsQ = useApiQuery(() => listLocations({ pageSize: 200 }), []);
 
-  // The same live derivation the POS lane cards use.
-  const liveState = (r: Resource): { text: string; busy: boolean } => {
-    if (r.outOfService) return { text: t("resources.outOfService"), busy: true };
-    const spans = ownerBusyDetailed(r.id, TODAY);
+  const resources = resourcesQ.data?.data ?? [];
+  const locations = locationsQ.data?.data ?? [];
+  const uniform = resources.length > 0 && resources.every((r) => r.nounSingular === resources[0].nounSingular);
+  const title = uniform ? resources[0].nounPlural : t("nav.items.resources.title");
+  const addLabel = uniform ? t("resources.addResource", { noun: resources[0].nounSingular }) : t("resources.addGeneric");
+
+  const kinds = Array.from(new Set(resources.map((r) => r.nounPlural))).sort((a, b) => a.localeCompare(b));
+  // A business with one venue does not need "Lalbagh Fort" printed on every
+  // row; the place is only information once there is more than one.
+  const onePlace = new Set(resources.map((r) => r.locationId)).size <= 1;
+
+  const now = (r: Resource): { text: string; warn: boolean } => {
+    if (r.outOfService) {
+      return {
+        text: r.outOfServiceReason ? t("resources.outWithReason", { reason: r.outOfServiceReason }) : t("resources.outOfService"),
+        warn: true,
+      };
+    }
+    const spans = ownerBusyDetailed(r.id, DEMO_TODAY);
     const current = spans.find((s) => s.start <= NOW_MIN && NOW_MIN < s.end);
-    if (current) return { text: t("resources.inUseUntil", { time: toTime(current.end), label: current.label }), busy: true };
+    if (current) return { text: t("resources.inUseUntil", { time: toTime(current.end), label: current.label }), warn: false };
     const next = spans.find((s) => s.start > NOW_MIN);
-    return { text: next ? t("resources.freeNext", { time: toTime(next.start) }) : t("resources.free"), busy: false };
+    return { text: next ? t("resources.freeNext", { time: toTime(next.start) }) : t("resources.free"), warn: false };
   };
 
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "name", order: "asc" });
-  const [page, setPage] = useState(1);
-
-  const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const locationName = (id: string | null) => (id ? locationsQ.data?.data.find((l) => l.id === id)?.name ?? "—" : "—");
-
-  const { data, loading } = useApiQuery(
-    () => listResources({ page, pageSize: 10, search, sort: sort.key, order: sort.order, filters: { status } }),
-    [search, status, sort.key, sort.order, page],
-  );
-
-  // Only borrow the operator's word when they all share one. A turf running
-  // fields AND a court was being headed "Courts" over a list of fields — the
-  // same uniformity rule the sidebar and the settings hub already apply.
-  const rows = data?.data ?? [];
-  const noun =
-    rows.length && rows.every((r) => r.nounPlural === rows[0].nounPlural)
-      ? rows[0].nounPlural
-      : t("resources.fallbackNoun");
-
-  const columns: Column<Resource>[] = [
-    { key: "name", header: t("common.name"), sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
-    { key: "type", header: t("resources.colType"), render: (r) => r.nounSingular },
-    { key: "location", header: t("common.location"), render: (r) => locationName(r.locationId) },
-    {
-      key: "now",
-      header: t("resources.colRightNow"),
-      render: (r) => {
-        const s = liveState(r);
-        return <span className={`font-mono text-[12px] ${s.busy ? "text-muted" : "text-success"}`}>{s.text}</span>;
-      },
-    },
-    {
-      key: "status",
-      header: t("common.status"),
-      sortable: true,
-      render: (r) => (r.outOfService ? <StatusPill tone="danger">{t("resources.outOfService")}</StatusPill> : <StatusPill status={r.status} />),
-    },
-  ];
+  const rate = (r: Resource) =>
+    !r.rateOverride
+      ? null
+      : r.rateOverride.kind === "premium"
+        ? t("resources.ratePremiumShort", { amount: formatPriceShort(r.rateOverride.amount) })
+        : t("resources.rateReplaceShort", { amount: formatPriceShort(r.rateOverride.amount) });
 
   return (
     <PageShell
-      title={noun}
+      title={title}
       description={t("resources.descriptionList")}
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/resources/new")}>{t("resources.addResource", { noun: data?.data[0]?.nounSingular ?? t("resources.fallbackNounSingular") })}</Button>}
+      actions={
+        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/resources/new")}>
+          {addLabel}
+        </Button>
+      }
     >
-      <DataTable
-        columns={columns}
-        rows={data?.data ?? []}
-        getRowId={(r) => r.id}
-        loading={loading}
-        sort={sort}
-        onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
-        onRowClick={(r) => router.push(`/settings/resources/${r.id}`)}
-        toolbar={
-          <div className="flex flex-wrap items-center gap-tight">
-            <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-              <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder={t("resources.searchPlaceholder")} className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse" />
-            </div>
-            <select aria-label={t("common.allStatuses")} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
-              <option value="all">{t("common.allStatuses")}</option>
-              <option value="active">{t("common.active")}</option>
-              <option value="inactive">{t("common.inactive")}</option>
-            </select>
-          </div>
-        }
-        emptyState={<EmptyState title={t("resources.emptyTitle")} message={t("resources.emptyMessage")} action={<Button onClick={() => router.push("/settings/resources/new")}>{t("resources.emptyAction")}</Button>} />}
-        pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}
-      />
+      {resourcesQ.loading || locationsQ.loading ? (
+        <SectionSkeleton />
+      ) : resources.length === 0 ? (
+        <div className="max-w-3xl">
+          <EmptyState
+            title={t("resources.emptyTitle")}
+            message={t("resources.emptyMessage")}
+            action={<Button onClick={() => router.push("/settings/resources/new")}>{t("resources.emptyAction")}</Button>}
+          />
+        </div>
+      ) : (
+        <div className="flex max-w-4xl flex-col gap-wide pb-hero">
+          {kinds.map((kind) => {
+            const group = resources.filter((r) => r.nounPlural === kind).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+            const headingId = `resources-${kind}`;
+            return (
+              <section key={kind} aria-labelledby={headingId} className="flex flex-col gap-tight">
+                <h2 id={headingId} className="text-base font-semibold text-fg">
+                  {kind} <span className="font-normal text-muted">{group.length}</span>
+                </h2>
+                <RecordList label={kind}>
+                  {group.map((r) => {
+                    const state = now(r);
+                    const place = locations.find((l) => l.id === r.locationId)?.name ?? t("resources.noLocation");
+                    return (
+                      <RecordRow
+                        key={r.id}
+                        href={`/settings/resources/${r.id}`}
+                        leading={<IconTile icon={LandPlot} />}
+                        title={r.name}
+                        badges={
+                          r.outOfService ? (
+                            <StatusPill tone="danger">{t("resources.outOfService")}</StatusPill>
+                          ) : r.status !== "active" ? (
+                            <StatusPill status={r.status} />
+                          ) : null
+                        }
+                        meta={
+                          <>
+                            {onePlace ? null : <span className="block">{place}</span>}
+                            <span className={cn("block", state.warn ? "text-danger" : undefined)}>{state.text}</span>
+                          </>
+                        }
+                        aside={rate(r)}
+                      />
+                    );
+                  })}
+                </RecordList>
+              </section>
+            );
+          })}
+        </div>
+      )}
     </PageShell>
   );
 }

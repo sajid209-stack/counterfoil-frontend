@@ -62,7 +62,17 @@ export function ChoiceCard({
 }
 
 /** 40px initials avatar for providers, guides and staff. */
-export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
+export function Avatar({
+  name,
+  size = 40,
+  soft = false,
+}: {
+  name: string;
+  size?: number;
+  /** A quiet tile for long lists, where a column of solid ink circles becomes
+   *  the loudest thing on the page. */
+  soft?: boolean;
+}) {
   const initials = name
     .split(/\s+/)
     .slice(0, 2)
@@ -70,7 +80,10 @@ export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
     .join("");
   return (
     <span
-      className="flex shrink-0 items-center justify-center rounded-full bg-inverse font-semibold text-inverse-fg"
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-full font-semibold",
+        soft ? "bg-subtle text-fg ring-1 ring-inset ring-line" : "bg-inverse text-inverse-fg",
+      )}
       style={{ width: size, height: size, fontSize: size * 0.35 }}
       aria-hidden
     >

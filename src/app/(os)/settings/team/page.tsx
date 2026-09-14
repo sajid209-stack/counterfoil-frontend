@@ -1,125 +1,215 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Search } from "lucide-react";
-import {
-  Button,
-  DataTable,
-  EmptyState,
-  PageShell,
-  StatusPill,
-  useToast,
-  type Column,
-} from "@/components/ui";
+import { KeyRound, Mail, Plus, UserCheck, UserX } from "lucide-react";
+import { ActionMenu, Avatar, Button, ConfirmDialog, PageShell, StatusPill, Tabs, useToast, type ActionMenuItem } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { listRoles, listStaff, type Staff } from "@/lib/api";
-import { formatDateTime } from "@/lib/format";
+import { listLocations, listRoles, listStaff, updateStaff, type Staff, type StaffStatus } from "@/lib/api";
+import { DEMO_STAFF_ID } from "@/lib/session";
+import { RecordList, RecordRow, SearchField, SectionSkeleton } from "../_components/SettingsKit";
+import { useSince } from "../_lib/time";
 
-export default function StaffPage() {
-  const router = useRouter();
+type Tab = "all" | StaffStatus;
+const TABS: Tab[] = ["all", "active", "invited", "suspended"];
+
+/**
+ * The team.
+ *
+ * It was the orders table with a "Reset password" button printed on every
+ * row — including for someone invited who had never set a password, and for
+ * people already suspended. Team screens that work are read for name, role and
+ * whether the person can get in, and each row offers only the actions that
+ * apply to its state. So status is a set of tabs with counts, a status pill
+ * appears only where it is the exception (a column of "Active" says nothing),
+ * and the actions sit in a row menu that changes with the person: resend a
+ * pending invite, reset or suspend someone active, reactivate someone
+ * suspended.
+ */
+export default function TeamPage() {
   const t = useTranslations("settings");
+  const router = useRouter();
   const toast = useToast();
+  const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [roleId, setRoleId] = useState("");
-  const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "name", order: "asc" });
-  const [page, setPage] = useState(1);
+  const [confirm, setConfirm] = useState<Staff | null>(null);
+  const [busy, setBusy] = useState(false);
 
+  const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
-  const roles = rolesQ.data?.data ?? [];
-  const roleName = (id: string) => roles.find((r) => r.id === id)?.name ?? "—";
+  const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
 
-  const { data, loading } = useApiQuery(
-    () =>
-      listStaff({
-        page,
-        pageSize: 10,
-        search,
-        sort: sort.key,
-        order: sort.order,
-        filters: { status: status || undefined, roleId: roleId || undefined },
-      }),
-    [search, status, roleId, sort.key, sort.order, page],
-  );
+  const staff = useMemo(() => staffQ.data?.data ?? [], [staffQ.data]);
+  const locations = locationsQ.data?.data ?? [];
+  const roleName = (id: string) => rolesQ.data?.data.find((r) => r.id === id)?.name ?? "—";
+  const since = useSince();
 
-  const columns: Column<Staff>[] = [
-    {
-      key: "name",
-      header: t("common.name"),
-      sortable: true,
-      render: (s) => (
-        <div>
-          <div className="font-medium">{s.name}</div>
-          <div className="font-mono text-[12px] text-muted">{s.email ?? s.phone ?? "—"}</div>
-        </div>
-      ),
-    },
-    { key: "role", header: t("common.role"), render: (s) => roleName(s.roleId) },
-    { key: "locations", header: t("team.colLocations"), align: "center", render: (s) => <span className="font-mono text-[13px]">{s.locationIds.length}</span> },
-    { key: "status", header: t("common.status"), sortable: true, render: (s) => <StatusPill status={s.status} /> },
-    { key: "lastActiveAt", header: t("team.colLastActive"), sortable: true, render: (s) => <span className="text-muted">{formatDateTime(s.lastActiveAt)}</span> },
-    {
-      key: "actions",
-      header: "",
-      align: "right",
-      render: (s) => (
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={(e) => {
-            e.stopPropagation();
-            toast.success(t("team.resetSent", { who: s.email ?? s.name }));
-          }}
-        >
-          {t("team.resetPassword")}
-        </Button>
-      ),
-    },
-  ];
+  const counts = useMemo(() => {
+    const c: Record<Tab, number> = { all: staff.length, active: 0, invited: 0, suspended: 0 };
+    for (const s of staff) c[s.status] += 1;
+    return c;
+  }, [staff]);
 
-  const selectCls = "h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
+  const q = search.trim().toLowerCase();
+  const rows = staff
+    .filter((s) => tab === "all" || s.status === tab)
+    .filter((s) => !q || [s.name, s.email ?? "", s.phone ?? ""].some((v) => v.toLowerCase().includes(q)));
+
+  const workplace = (s: Staff) => {
+    if (s.locationIds.length === 0) return t("team.nowhere");
+    if (s.locationIds.length === 1) return locations.find((l) => l.id === s.locationIds[0])?.name ?? "—";
+    return t("team.locationsCount", { count: s.locationIds.length });
+  };
+  // "Active 30 May" reads as a claim that a suspended person is active. The
+  // pill already says suspended, so their line says when they last were.
+  const activity = (s: Staff) =>
+    s.status === "invited"
+      ? t("team.inviteSent")
+      : !s.lastActiveAt
+        ? t("team.neverActive")
+        : s.status === "suspended"
+          ? t("team.lastActive", { when: since(s.lastActiveAt) })
+          : t("team.activeAgo", { when: since(s.lastActiveAt) });
+
+  const setStatus = async (s: Staff, status: StaffStatus) => {
+    setBusy(true);
+    const res = await updateStaff(s.id, { status });
+    setBusy(false);
+    setConfirm(null);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    toast.success(status === "suspended" ? t("team.suspendedToast", { name: s.name }) : t("team.reactivated", { name: s.name }));
+    staffQ.reload();
+  };
+
+  const actions = (s: Staff): ActionMenuItem[] => {
+    const who = s.email ?? s.phone ?? s.name;
+    if (s.status === "invited") {
+      return [
+        {
+          key: "resend",
+          label: t("team.resendInvite"),
+          icon: <Mail size={16} strokeWidth={1.5} />,
+          onSelect: () => toast.success(t("team.inviteResent", { who })),
+        },
+      ];
+    }
+    if (s.status === "suspended") {
+      return [
+        {
+          key: "reactivate",
+          label: t("team.reactivate"),
+          icon: <UserCheck size={16} strokeWidth={1.5} />,
+          onSelect: () => setStatus(s, "active"),
+        },
+      ];
+    }
+    return [
+      {
+        key: "reset",
+        label: t("team.resetPassword"),
+        icon: <KeyRound size={16} strokeWidth={1.5} />,
+        onSelect: () => toast.success(t("team.resetSent", { who })),
+      },
+      {
+        key: "suspend",
+        label: t("team.suspend"),
+        icon: <UserX size={16} strokeWidth={1.5} />,
+        destructive: true,
+        disabled: s.id === DEMO_STAFF_ID,
+        onSelect: () => setConfirm(s),
+      },
+    ];
+  };
 
   return (
     <PageShell
       title={t("team.title")}
       description={t("team.description")}
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/team/new")}>{t("team.addStaff")}</Button>}
+      actions={
+        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/team/new")}>
+          {t("team.invite")}
+        </Button>
+      }
     >
-      <DataTable
-        columns={columns}
-        rows={data?.data ?? []}
-        getRowId={(s) => s.id}
-        loading={loading}
-        sort={sort}
-        onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
-        onRowClick={(s) => router.push(`/settings/team/${s.id}`)}
-        toolbar={
-          <div className="flex flex-wrap items-center gap-tight">
-            <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder={t("team.searchPlaceholder")}
-                className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
-              />
-            </div>
-            <select aria-label={t("team.allRoles")} value={roleId} onChange={(e) => { setRoleId(e.target.value); setPage(1); }} className={selectCls}>
-              <option value="">{t("team.allRoles")}</option>
-              {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-            </select>
-            <select aria-label={t("common.allStatuses")} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className={selectCls}>
-              <option value="">{t("common.allStatuses")}</option>
-              <option value="active">{t("common.active")}</option>
-              <option value="invited">{t("common.invited")}</option>
-              <option value="suspended">{t("common.suspended")}</option>
-            </select>
-          </div>
-        }
-        emptyState={<EmptyState title={t("team.emptyTitle")} message={t("team.emptyMessage")} />}
-        pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}
+      <div className="flex max-w-5xl flex-col gap-section pb-hero">
+        <Tabs
+          items={TABS.map((v) => ({ value: v, label: t(`team.tab.${v}`), count: counts[v] }))}
+          value={tab}
+          onChange={(v) => setTab(v as Tab)}
+        />
+        {staffQ.loading ? (
+          <SectionSkeleton />
+        ) : (
+          <RecordList
+            label={t("team.title")}
+            header={
+              <div className="flex flex-col gap-tight border-b border-hairline px-section py-tight sm:flex-row sm:items-center sm:justify-between sm:px-major">
+                <SearchField value={search} onChange={setSearch} label={t("team.searchLabel")} placeholder={t("team.searchPlaceholder")} />
+                {/* The tab already carries the count; this line speaks only while
+                    a search is narrowing the list. */}
+                <p className="text-[13px] text-muted" aria-live="polite">
+                  {q ? t("team.showing", { count: rows.length }) : null}
+                </p>
+              </div>
+            }
+          >
+            {rows.length === 0 ? (
+              <li className="px-major py-wide text-center text-sm text-muted">{q ? t("team.noMatch") : t("team.emptyTab")}</li>
+            ) : (
+              rows.map((s) => {
+                const isYou = s.id === DEMO_STAFF_ID;
+                const nowhere = s.locationIds.length === 0;
+                return (
+                  <RecordRow
+                    key={s.id}
+                    href={`/settings/team/${s.id}`}
+                    leading={<Avatar name={s.name} size={36} soft />}
+                    title={s.name}
+                    badges={
+                      <>
+                        {isYou ? <span className="rounded-xs border border-line px-tight text-[12px] font-medium text-muted">{t("team.you")}</span> : null}
+                        {s.status !== "active" ? <StatusPill status={s.status} /> : null}
+                      </>
+                    }
+                    meta={
+                      <>
+                        <span className="block truncate">{s.email ?? s.phone}</span>
+                        <span className="block md:hidden">
+                          {roleName(s.roleId)} · <span className={cn(nowhere ? "text-warning" : undefined)}>{workplace(s)}</span> · {activity(s)}
+                        </span>
+                      </>
+                    }
+                    columns={
+                      <>
+                        <span className="w-28 truncate text-sm text-fg">{roleName(s.roleId)}</span>
+                        <span className={cn("hidden w-40 truncate text-[13px] lg:block", nowhere ? "text-warning" : "text-muted")}>{workplace(s)}</span>
+                        <span className="w-44 text-[13px] text-muted">{activity(s)}</span>
+                      </>
+                    }
+                    menu={<ActionMenu label={t("team.actionsFor", { name: s.name })} items={actions(s)} />}
+                  />
+                );
+              })
+            )}
+          </RecordList>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        onConfirm={() => {
+          if (confirm) setStatus(confirm, "suspended");
+        }}
+        title={confirm ? t("team.suspendTitle", { name: confirm.name }) : ""}
+        message={t("team.suspendBody")}
+        confirmLabel={t("team.suspend")}
+        loading={busy}
       />
     </PageShell>
   );

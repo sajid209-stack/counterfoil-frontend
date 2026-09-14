@@ -1,45 +1,98 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
-import { Button, EmptyState, PageShell, StatusPill } from "@/components/ui";
+import { Button, ConfirmDialog, EmptyState, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getStaff, listCounters, listLocations, listRoles } from "@/lib/api";
-import { StaffForm } from "../_components/StaffForm";
+import { getStaff, listCounters, listLocations, listRoles, listStaff, updateStaff, type Staff, type StaffStatus } from "@/lib/api";
+import { DEMO_STAFF_ID } from "@/lib/session";
+import { SectionSkeleton } from "../../_components/SettingsKit";
+import { countByRole } from "../../_lib/roles";
+import { AccessSection } from "../_components/AccessSection";
+import { MemberForm } from "../_components/MemberForm";
 
-export default function StaffDetailPage() {
+export default function MemberPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const t = useTranslations("settings");
-  const member = useApiQuery(() => getStaff(params.id), [params.id]);
-  const roles = useApiQuery(() => listRoles({ pageSize: 100 }), []);
-  const locs = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const counters = useApiQuery(() => listCounters({ pageSize: 100 }), []);
-  const loading = member.loading || roles.loading || locs.loading || counters.loading;
+  const toast = useToast();
+  const memberQ = useApiQuery(() => getStaff(params.id), [params.id]);
+  const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
+  const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
+  const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
+  const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
+  // The record as last written from this page, so a status change shows at once
+  // without reloading the form out from under an edit in progress.
+  const [latest, setLatest] = useState<Staff | null>(null);
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  if (!member.loading && (member.error || !member.data)) {
+  if (!memberQ.loading && (memberQ.error || !memberQ.data)) {
     return (
       <PageShell title={t("team.fallbackTitle")}>
-        <EmptyState title={t("team.notFoundTitle")} action={<Button onClick={() => router.push("/settings/team")}>{t("team.backButton")}</Button>} />
+        <EmptyState
+          title={t("team.notFoundTitle")}
+          action={<Button onClick={() => router.push("/settings/team")}>{t("team.backButton")}</Button>}
+        />
       </PageShell>
     );
   }
 
+  const member = latest?.id === params.id ? latest : memberQ.data;
+  if (!member || rolesQ.loading || locationsQ.loading || countersQ.loading || staffQ.loading) {
+    return (
+      <PageShell title={t("team.fallbackTitle")}>
+        <SectionSkeleton />
+      </PageShell>
+    );
+  }
+
+  const via = member.email ?? member.phone ?? "";
+  const setStatus = async (status: StaffStatus) => {
+    setBusy(true);
+    const res = await updateStaff(member.id, { status });
+    setBusy(false);
+    setConfirm(false);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    setLatest(res.data);
+    toast.success(status === "suspended" ? t("team.suspendedToast", { name: member.name }) : t("team.reactivated", { name: member.name }));
+  };
+
   return (
-    <PageShell
-      title={member.data?.name ?? t("team.fallbackTitle")}
-      actions={member.data ? <StatusPill status={member.data.status} /> : undefined}
-    >
-      <Link href="/settings/team" className="mb-section inline-flex items-center gap-inline text-[13px] text-muted hover:text-fg">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("team.backToStaff")}
-      </Link>
-      {loading || !member.data ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
-      ) : (
-        <StaffForm mode="edit" staff={member.data} roles={roles.data?.data ?? []} locations={locs.data?.data ?? []} counters={counters.data?.data ?? []} />
-      )}
+    <PageShell title={member.name} description={member.id === DEMO_STAFF_ID ? `${via} · ${t("team.youNote")}` : via}>
+      <div className="flex max-w-3xl flex-col gap-section">
+        <AccessSection
+          member={member}
+          busy={busy}
+          onResend={() => toast.success(t("team.inviteResent", { who: via }))}
+          onReset={() => toast.success(t("team.resetSent", { who: via }))}
+          onSuspend={() => setConfirm(true)}
+          onReactivate={() => setStatus("active")}
+        />
+        <MemberForm
+          mode="edit"
+          staff={member}
+          roles={rolesQ.data?.data ?? []}
+          locations={locationsQ.data?.data ?? []}
+          counters={countersQ.data?.data ?? []}
+          staffCounts={countByRole(staffQ.data?.data ?? [])}
+          onSaved={setLatest}
+        />
+      </div>
+
+      <ConfirmDialog
+        open={confirm}
+        onClose={() => setConfirm(false)}
+        onConfirm={() => setStatus("suspended")}
+        title={t("team.suspendTitle", { name: member.name })}
+        message={t("team.suspendBody")}
+        confirmLabel={t("team.suspend")}
+        loading={busy}
+      />
     </PageShell>
   );
 }

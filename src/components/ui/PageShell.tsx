@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 
 // Standard page frame for OS screens: breadcrumb (derived from the path),
@@ -33,10 +34,12 @@ export function PageShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  // Words only — ids stay out. Each crumb carries the path up to it, so the
+  // trail can lead back up: a settings record's crumb returns to its list,
+  // which is where someone who opened the record came from.
   const crumbs = pathname
     .split("/")
-    .filter((s) => s && /^[a-z-]+$/.test(s)) // words only — ids stay out
-    .map((s) => s.replace(/-/g, " "));
+    .flatMap((s, i, parts) => (s && /^[a-z-]+$/.test(s) ? [{ label: s.replace(/-/g, " "), href: parts.slice(0, i + 1).join("/") }] : []));
 
   // Resolved after mount: the slot lives in OsShell, above this in the tree,
   // so it exists by the time effects run. Null on the first paint and on any
@@ -67,7 +70,20 @@ export function PageShell({
     <div className="min-w-0">
       {crumbs.length > 0 && (
         <p className="mb-inline font-mono text-[12px] uppercase tracking-wide text-muted">
-          {crumbs.join(" / ")}
+          {crumbs.map((c, i) => (
+            <span key={c.href}>
+              {i > 0 && " / "}
+              {/* Linked only inside Settings, where every level of the path is a
+                  real page; elsewhere a word in a path (/reports) need not be. */}
+              {c.href !== pathname && (c.href === "/settings" || c.href.startsWith("/settings/")) ? (
+                <Link href={c.href} className="transition-colors duration-quick hover:text-fg hover:underline">
+                  {c.label}
+                </Link>
+              ) : (
+                c.label
+              )}
+            </span>
+          ))}
         </p>
       )}
       {/* References and long names must wrap, never bleed out of the header. */}

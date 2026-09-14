@@ -3,50 +3,55 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Search } from "lucide-react";
-import {
-  Button,
-  DataTable,
-  EmptyState,
-  PageShell,
-  StatusPill,
-  type Column,
-} from "@/components/ui";
+import { MapPin, Plus } from "lucide-react";
+import { Button, EmptyState, PageShell, StatusPill } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { listLocations, type Location } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { listCounters, listLocations, type Location } from "@/lib/api";
+import { DEMO_TODAY } from "@/lib/schedule";
+import { IconTile, RecordList, RecordRow, SearchField, SectionSkeleton } from "../_components/SettingsKit";
+import { DAY_KEY, normalizeHours, openDays, spans, weekdayOf } from "./_lib/hours";
 
-const openDays = (l: Location) =>
-  l.openingHours.filter((h) => h.intervals.length > 0).length;
+/** Past this many, a list is long enough to be worth searching. */
+const SEARCH_FROM = 8;
 
+/**
+ * Locations.
+ *
+ * It was a sortable table whose columns were "Open days 2/7" and an Updated
+ * date identical on every row, under a search box and pagination for three
+ * venues. What a manager opens this list to learn is whether each place is
+ * open today and what runs there, so each row says exactly that — and a venue
+ * with no hours at all says so in warning, because nothing can be booked there.
+ */
 export default function LocationsPage() {
-  const router = useRouter();
   const t = useTranslations("settings");
+  const router = useRouter();
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "name", order: "asc" });
-  const [page, setPage] = useState(1);
+  const locationsQ = useApiQuery(() => listLocations({ pageSize: 200 }), []);
+  const countersQ = useApiQuery(() => listCounters({ pageSize: 500 }), []);
 
-  const { data, loading } = useApiQuery(
-    () =>
-      listLocations({
-        page,
-        pageSize: 10,
-        search,
-        sort: sort.key,
-        order: sort.order,
-        filters: { status },
-      }),
-    [search, status, sort.key, sort.order, page],
-  );
+  const locations = locationsQ.data?.data ?? [];
+  const counters = countersQ.data?.data ?? [];
+  const today = weekdayOf(DEMO_TODAY);
+  const q = search.trim().toLowerCase();
+  const rows = locations.filter((l) => !q || `${l.name} ${l.city}`.toLowerCase().includes(q));
 
-  const columns: Column<Location>[] = [
-    { key: "name", header: t("common.name"), sortable: true, render: (l) => <span className="font-medium">{l.name}</span> },
-    { key: "city", header: t("common.city"), sortable: true },
-    { key: "hours", header: t("locations.openDays"), align: "center", render: (l) => <span className="font-mono text-[13px]">{openDays(l)}/7</span> },
-    { key: "status", header: t("common.status"), sortable: true, render: (l) => <StatusPill status={l.status} /> },
-    { key: "updatedAt", header: t("common.updated"), render: (l) => <span className="text-muted">{formatDate(l.updatedAt)}</span> },
-  ];
+  const todayLine = (l: Location): { text: string; warn: boolean } => {
+    const hours = normalizeHours(l.openingHours);
+    if (openDays(hours) === 0) return { text: t("locations.noHours"), warn: true };
+    if (hours[today].intervals.length > 0) return { text: t("locations.openToday", { hours: spans(hours[today].intervals) }), warn: false };
+    for (let k = 1; k <= 7; k++) {
+      const d = (today + k) % 7;
+      if (hours[d].intervals.length > 0) {
+        return {
+          text: t("locations.closedTodayNext", { day: t(`common.${DAY_KEY[d]}`), time: hours[d].intervals[0].opensAt }),
+          warn: false,
+        };
+      }
+    }
+    return { text: t("locations.noHours"), warn: true };
+  };
 
   return (
     <PageShell
@@ -54,44 +59,55 @@ export default function LocationsPage() {
       description={t("locations.description")}
       actions={
         <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/locations/new")}>
-          {t("locations.new")}
+          {t("locations.add")}
         </Button>
       }
     >
-      <DataTable
-        columns={columns}
-        rows={data?.data ?? []}
-        getRowId={(l) => l.id}
-        loading={loading}
-        sort={sort}
-        onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
-        onRowClick={(l) => router.push(`/settings/locations/${l.id}`)}
-        toolbar={
-          <div className="flex flex-wrap items-center gap-tight">
-            <div className="relative">
-              <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder={t("locations.searchPlaceholder")}
-                className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
-              />
-            </div>
-            <select aria-label={t("common.allStatuses")}
-              value={status}
-              onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-              className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse"
-            >
-              <option value="all">{t("common.allStatuses")}</option>
-              <option value="active">{t("common.active")}</option>
-              <option value="inactive">{t("common.inactive")}</option>
-              <option value="archived">{t("common.archived")}</option>
-            </select>
-          </div>
-        }
-        emptyState={<EmptyState title={t("locations.emptyTitle")} message={t("locations.emptyMessage")} />}
-        pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}
-      />
+      {locationsQ.loading || countersQ.loading ? (
+        <SectionSkeleton />
+      ) : locations.length === 0 ? (
+        <div className="max-w-3xl">
+          <EmptyState
+            title={t("locations.emptyTitle")}
+            message={t("locations.emptyMessage")}
+            action={<Button onClick={() => router.push("/settings/locations/new")}>{t("locations.add")}</Button>}
+          />
+        </div>
+      ) : (
+        <div className="flex max-w-4xl flex-col gap-section pb-hero">
+          <RecordList
+            label={t("locations.title")}
+            header={
+              locations.length > SEARCH_FROM ? (
+                <div className="border-b border-hairline px-section py-tight sm:px-major">
+                  <SearchField value={search} onChange={setSearch} label={t("locations.searchLabel")} placeholder={t("locations.searchPlaceholder")} />
+                </div>
+              ) : undefined
+            }
+          >
+            {rows.map((l) => {
+              const line = todayLine(l);
+              const here = counters.filter((c) => c.locationId === l.id).length;
+              return (
+                <RecordRow
+                  key={l.id}
+                  href={`/settings/locations/${l.id}`}
+                  leading={<IconTile icon={MapPin} />}
+                  title={l.name}
+                  badges={l.status !== "active" ? <StatusPill status={l.status} /> : null}
+                  meta={
+                    <>
+                      <span className="block">{[l.addressLine1, l.city].filter(Boolean).join(", ")}</span>
+                      <span className={cn("block", line.warn ? "text-warning" : undefined)}>{line.text}</span>
+                    </>
+                  }
+                  aside={t("locations.countersCount", { count: here })}
+                />
+              );
+            })}
+          </RecordList>
+        </div>
+      )}
     </PageShell>
   );
 }
