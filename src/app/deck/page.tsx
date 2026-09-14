@@ -3,9 +3,6 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Armchair,
-  BarChart3,
-  Bell,
-  CalendarDays,
   CalendarRange,
   Check,
   Clock,
@@ -16,20 +13,15 @@ import {
   Hourglass,
   LandPlot,
   ListOrdered,
-  Lock,
   Package,
-  Receipt,
-  ShieldCheck,
   Store,
   Ticket as TicketIcon,
   Timer,
   UserRound,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
-  BrowserCard,
   Callout,
   Floor,
   Glow,
@@ -42,19 +34,17 @@ import {
   Ticket,
   deckStyles as s,
 } from "./_components/Parts";
+import { ChapterDivider, BookingsSlide, CalendarSlide, CustomersSlide, DashboardSlide, EventsSlide, HoldsSlide, OrdersSlide, ReportsSlide, SettingsSlide } from "./_slides/Os";
+import { PosChooseSlide, PosFindSlide, PosGateSlide, PosPaySlide, PosShiftSlide, PosTicketSlide } from "./_slides/Go";
 import logoOnPaper from "./_media/logo-counterfoil.png";
 import logoOnInk from "./_media/logo-counterfoil-dark.png";
 import dashDark from "./_media/os-dashboard-dark.jpg";
 import dashLight from "./_media/os-dashboard-light.jpg";
-import reportsDark from "./_media/os-reports-dark.jpg";
-import calendarLight from "./_media/os-calendar-light.jpg";
 import posTablet from "./_media/go-pos-tablet.jpg";
 import posPhoneBn from "./_media/go-pos-phone-bn.jpg";
 import phoneSeats from "./_media/go-sheet-seats.jpg";
 import sheetSeats from "./_media/sheet-seats.jpg";
 import sheetSlots from "./_media/sheet-slots.jpg";
-import webConcert from "./_media/web-event.jpg";
-import webSummit from "./_media/web-event-2.jpg";
 
 export const metadata = { title: "Counterfoil Deck" };
 
@@ -153,7 +143,7 @@ function StepArt({ art }: { art: (typeof STEPS)[number]["art"] }) {
 }
 
 /**
- * Counterfoil Deck — the company, in twelve slides.
+ * Counterfoil Deck — the company, in twenty-five slides.
  *
  * Not interactive: a deck to read top to bottom, or to screenshot a slide from.
  * Deliberately outside the OS shell, the same way `/pos` and `/tills` are, so
@@ -219,7 +209,7 @@ export default function DeckPage() {
               <div className="relative -mt-[18%] ml-[-2%] w-[58%] xl:absolute xl:bottom-[-4%] xl:left-[-8%] xl:mt-0 xl:w-[50%]">
                 <Tablet src={posTablet} alt="Counterfoil Go point of sale on a tablet with a sale in the cart" tilt="left" priority />
               </div>
-              <Ticket className={cn(s.float, "absolute right-[-2%] top-[-6%] w-[28%] xl:right-[-3%] xl:top-[-2%] xl:w-[22%]")} />
+              <Ticket className={cn(s.float, "absolute right-[0%] top-[-2%] w-[28%] xl:right-[1%] xl:top-[3%] xl:w-[24%]")} />
             </div>
           </div>
         </Slide>
@@ -339,41 +329,27 @@ export default function DeckPage() {
           </div>
         </Slide>
 
-        {/* 05 — Go at the counter ───────────────────────────────────────── */}
-        <Slide tone="paper" n={5} section="Counterfoil Go" label="Sell in three taps">
-          <div className="grid h-full gap-8 xl:grid-cols-12 xl:gap-[max(8px,2cqw)]">
-            <div className="flex flex-col justify-between gap-8 xl:col-span-4">
-              <div>
-                <p className={s.eyebrow}>Counterfoil Go</p>
-                <h2 className={cn(s.title, "mt-[max(8px,1.4cqw)]")}>Sell in three taps.</h2>
-                <p className={cn(s.lead, "mt-[max(8px,1.6cqw)]")}>Every tile shows what is left. Every sheet asks only what that booking needs.</p>
-              </div>
-              <ul className="flex flex-col gap-[max(8px,1cqw)]">
-                {["Live availability on every tile", "Deposits, balances and group tickets", "bKash, Bangla QR, card or cash"].map((line) => (
-                  <li key={line} className={cn(s.body, "flex items-center gap-[max(6px,0.8cqw)] text-[#22211f]")}>
-                    <span aria-hidden className="h-[max(8px,0.6cqw)] w-[max(8px,0.6cqw)] shrink-0 rounded-full bg-[#f94a00]" />
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className={cn(s.card, s.washPanel, "relative min-h-[320px] overflow-hidden sm:min-h-[440px] xl:col-span-8 xl:min-h-0")}>
-              <div className="absolute left-[7%] right-[-10%] top-[12%]">
-                <Tablet src={posTablet} alt="Counterfoil Go selling General Admission and a yoga session" tilt="left" />
-              </div>
-              <Callout tone="paper" dot label="Grand Heritage Tour" value="Next 17:00 · 18 left" className="absolute left-[4%] top-[6%] hidden sm:flex" />
-              <Callout
-                tone="ink"
-                label="Charge"
-                value={<span className="text-[#ffa572]">৳2,875.00 — Cash</span>}
-                className="absolute bottom-[8%] right-[5%] hidden sm:flex"
-              />
-            </div>
-          </div>
-        </Slide>
+        {/* 05 — Chapter 01: Counterfoil OS */}
+        <ChapterDivider
+          n={5}
+          chapter="01"
+          word="OS"
+          title="Run the business."
+          lead="Counterfoil OS is where a venue is set up, watched and reconciled — on the web, for one location or all of them."
+          contents={["Dashboard", "Calendar", "Bookings", "Holds", "Orders", "Customers", "Reports", "Events", "Settings"]}
+        />
 
-        {/* 06 — Every way to sell time ─────────────────────────────────── */}
-        <Slide tone="paper" n={6} section="Booking types" label="Fourteen ways to sell time">
+        {/* 06 — Dashboard */}
+        <DashboardSlide n={6} />
+
+        {/* 07 — Calendar */}
+        <CalendarSlide n={7} />
+
+        {/* 08 — Bookings */}
+        <BookingsSlide n={8} />
+
+        {/* 09 — Fourteen booking types ─────────────────────────────────── */}
+        <Slide tone="paper" n={9} section="Booking types" label="Fourteen ways to sell time">
           <div className="grid h-full gap-[max(8px,1.6cqw)] xl:grid-cols-12">
             <div className={cn(s.card, s.paperCard, "relative flex min-h-[440px] flex-col overflow-hidden p-[max(16px,2.4cqw)] sm:min-h-[560px] xl:col-span-5 xl:min-h-0")}>
               <p className={cn(s.eyebrow, "relative z-10")}>Booking types</p>
@@ -419,153 +395,54 @@ export default function DeckPage() {
           </div>
         </Slide>
 
-        {/* 07 — Built in Bangladesh ─────────────────────────────────────── */}
-        <Slide tone="ink" n={7} section="Made for the market" label="Built in Bangladesh, ready anywhere">
-          <Glow className="bottom-[-40%] right-[4%] h-[110%] w-[55%]" />
-          <Floor />
-          <div className="relative grid h-full gap-10 xl:grid-cols-12 xl:gap-0">
-            <div className="flex flex-col justify-between gap-8 xl:col-span-6">
-              <div>
-                <p className={s.eyebrow}>Made for the market</p>
-                <h2 className={cn(s.title, "mt-[max(8px,1.4cqw)]")}>
-                  Built in Bangladesh. <span className={s.accentInk}>Ready anywhere.</span>
-                </h2>
-                <p className={cn(s.lead, "mt-[max(8px,1.6cqw)] max-w-[38ch]")}>
-                  Bangla and English, bKash and Bangla QR, VAT and taka — with Stripe for cards abroad.
-                </p>
-              </div>
-              <div className="flex flex-col gap-[max(8px,1.4cqw)]">
-                <div className="grid grid-cols-2 gap-[max(6px,0.8cqw)] sm:grid-cols-3">
-                  {["bKash", "SSLCOMMERZ", "Bangla QR", "Stripe", "Cash", "VAT & receipts"].map((name) => (
-                    <span key={name} className={cn(s.card, s.inkCard, "px-[max(10px,1.2cqw)] py-[max(6px,1cqw)] text-[clamp(14px,1.1cqw,17px)] font-semibold")}>
-                      {name}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex flex-wrap items-center gap-[max(6px,0.6cqw)]">
-                  {["Bangladesh", "Malaysia", "United States", "Canada"].map((country) => (
-                    <Pill key={country}>
-                      <span aria-hidden className="h-[0.5em] w-[0.5em] rounded-full bg-[#ff7a3d]" />
-                      {country}
-                    </Pill>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="relative min-h-[460px] xl:col-span-6 xl:min-h-0">
-              <div className="mx-auto w-[52%] sm:w-[34%] md:w-[28%] xl:absolute xl:left-[32%] xl:top-[0%] xl:mx-0 xl:w-[37%]">
-                <Phone src={posPhoneBn} alt="Counterfoil Go in Bangla on a phone" tilt="right" />
-              </div>
-              <Ticket word="৳500" kicker="বিকাশ · bKash" className={cn(s.float, "absolute bottom-[6%] left-[-2%] w-[44%] sm:left-[10%] sm:w-[30%] xl:bottom-[12%] xl:left-[2%] xl:w-[38%]")} />
-              <Callout tone="ink" label="ভাষা · Language" value="বাংলা · English" className="absolute right-[0%] top-[24%] hidden sm:flex" />
-            </div>
-          </div>
-        </Slide>
+        {/* 10 — Holds */}
+        <HoldsSlide n={10} />
 
-        {/* 08 — Counterfoil OS ─────────────────────────────────────────── */}
-        <Slide tone="paper" n={8} section="Counterfoil OS" label="See the day as it happens">
-          <div className="grid h-full gap-8 xl:grid-cols-12 xl:gap-0">
-            <div className="flex flex-col justify-between gap-8 xl:col-span-4">
-              <div>
-                <p className={s.eyebrow}>Counterfoil OS</p>
-                <h2 className={cn(s.title, "mt-[max(8px,1.4cqw)]")}>See the day as it happens.</h2>
-                <p className={cn(s.lead, "mt-[max(8px,1.6cqw)]")}>Revenue, capacity, arrivals and what needs a decision — for one venue or all of them.</p>
-              </div>
-              <ul className="flex flex-col gap-[max(8px,1.1cqw)]">
-                {[
-                  { icon: BarChart3, text: "Reports by hour, day, product and channel" },
-                  { icon: CalendarDays, text: "Every session and lane on one calendar" },
-                  { icon: ShieldCheck, text: "Roles, refund limits and sign-in rules" },
-                ].map(({ icon: Icon, text }) => (
-                  <li key={text} className={cn(s.body, "flex items-center gap-[max(6px,0.9cqw)] text-[#22211f]")}>
-                    <Icon className="h-[max(18px,1.4cqw)] w-[max(18px,1.4cqw)] shrink-0 text-[#aa3000]" strokeWidth={1.6} aria-hidden />
-                    {text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="relative sm:min-h-[420px] mx-auto w-full max-w-[680px] xl:mx-0 xl:max-w-none xl:col-span-8 xl:min-h-0">
-              <div className="xl:absolute xl:right-[-6%] xl:top-[6%] xl:w-[98%]">
-                <Laptop src={reportsDark} alt="Counterfoil sales reports with revenue over time and payment mix" tilt="left" />
-              </div>
-              <Callout tone="paper" label="Payment mix" value="bKash · 26% of takings" className="absolute bottom-[6%] left-[2%] hidden sm:flex xl:bottom-[12%]" />
-              <Callout tone="ink" label="Needs attention" value="Cash short at close" className="absolute right-[2%] top-[-2%] hidden sm:flex" />
-            </div>
-          </div>
-        </Slide>
+        {/* 11 — Orders */}
+        <OrdersSlide n={11} />
 
-        {/* 09 — Everything behind the counter ─────────────────────────── */}
-        <Slide tone="paper" n={9} section="The platform" label="Everything behind the counter">
-          <div className="flex h-full flex-col gap-[max(8px,1.8cqw)]">
-            <div className="grid gap-6 xl:grid-cols-12 xl:items-end">
-              <div className="xl:col-span-7">
-                <p className={s.eyebrow}>The platform</p>
-                <h2 className={cn(s.title, "mt-[max(8px,1.4cqw)]")}>Everything behind the counter.</h2>
-              </div>
-              <p className={cn(s.lead, "xl:col-span-5")}>The work that happens around a sale, built into the same system that made it.</p>
-            </div>
-            <div className="grid flex-1 gap-[max(8px,1.2cqw)] xl:grid-cols-12 xl:grid-rows-2">
-              <div className={cn(s.card, s.paperCard, "relative min-h-[320px] overflow-hidden xl:col-span-6 xl:row-span-2 xl:min-h-0")}>
-                <div className="relative z-10 p-[max(16px,2cqw)]">
-                  <CalendarDays className="h-[max(22px,1.8cqw)] w-[max(22px,1.8cqw)] text-[#aa3000]" strokeWidth={1.6} aria-hidden />
-                  <h3 className={cn(s.heading, "mt-[max(8px,1cqw)]")}>A calendar that knows capacity</h3>
-                  <p className={cn(s.body, "mt-[max(4px,0.5cqw)] max-w-[36ch]")}>Sessions, lanes and holds in one view, with every booking a click from its order.</p>
-                </div>
-                <div className="absolute bottom-0 left-[8%] right-[-18%] top-[42%] overflow-hidden rounded-tl-[1.4cqw] border border-[#e7e2d8] shadow-[0_20px_50px_-24px_rgb(20_20_19/0.35)]">
-                  <Image src={calendarLight} alt="Counterfoil calendar week view" sizes="(min-width: 1280px) 640px, 92vw" className="h-auto w-[140%] max-w-none" placeholder="blur" />
-                </div>
-              </div>
-              {[
-                { icon: Users, title: "Customers", body: "One record per guest — found by phone, merged when they’re the same person." },
-                { icon: Lock, title: "Holds & locks", body: "Keep 25 places for a school group. Close last month to edits." },
-                { icon: Bell, title: "Messages", body: "Tickets by SMS, reminders the day before, quiet hours at night." },
-                { icon: Receipt, title: "Tax & receipts", body: "VAT on every line, the registration number on every receipt." },
-              ].map(({ icon: Icon, title, body }, i) => (
-                <div key={title} className={cn(s.card, i === 0 ? s.emberCard : s.paperCard, "flex flex-col justify-between gap-6 p-[max(16px,1.8cqw)] xl:col-span-3")}>
-                  <Icon className={cn("h-[max(22px,1.8cqw)] w-[max(22px,1.8cqw)]", i === 0 ? "text-white" : "text-[#aa3000]")} strokeWidth={1.6} aria-hidden />
-                  <div>
-                    <h3 className={s.heading}>{title}</h3>
-                    <p className={cn("mt-[max(4px,0.5cqw)] text-[clamp(14px,1.05cqw,16px)] leading-snug", i === 0 ? "text-white" : "text-[#57534c]")}>{body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Slide>
+        {/* 12 — Customers */}
+        <CustomersSlide n={12} />
 
-        {/* 10 — Sell online ────────────────────────────────────────────── */}
-        <Slide tone="ink" n={10} section="Online" label="A page for every event">
-          <Glow className="left-[36%] top-[-40%] h-[90%] w-[60%] opacity-80" />
-          <div className="relative grid h-full gap-10 xl:grid-cols-12 xl:gap-0">
-            <div className="flex flex-col justify-between gap-8 xl:col-span-4">
-              <div>
-                <p className={s.eyebrow}>Online</p>
-                <h2 className={cn(s.title, "mt-[max(8px,1.4cqw)]")}>A page for every event.</h2>
-                <p className={cn(s.lead, "mt-[max(8px,1.6cqw)]")}>
-                  Six templates, one per kind of event — selling the same tickets the counter sells.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-[max(6px,0.6cqw)]">
-                {["Concerts", "Sports", "Conferences", "Galleries", "Tours", "Nightlife"].map((kind) => (
-                  <Pill key={kind}>{kind}</Pill>
-                ))}
-              </div>
-            </div>
-            <div className="relative min-h-[320px] sm:min-h-[440px] mx-auto w-full max-w-[680px] xl:mx-0 xl:max-w-none xl:col-span-8 xl:min-h-0">
-              <div className="xl:absolute xl:right-[-8%] xl:top-[2%] xl:w-[96%]">
-                <Laptop src={webConcert} alt="A concert page built with Counterfoil — Nogor Baul: The Return" tilt="left" />
-              </div>
-              <BrowserCard
-                src={webSummit}
-                alt="A conference page built with Counterfoil — Sylhet Tech Summit 2026"
-                className="absolute bottom-[4%] left-[0%] w-[52%] xl:bottom-[0%] xl:left-[4%] xl:w-[42%]"
-              />
-            </div>
-          </div>
-        </Slide>
+        {/* 13 — Reports */}
+        <ReportsSlide n={13} />
 
-        {/* 11 — Already at the counter ────────────────────────────────── */}
-        <Slide tone="paper" n={11} section="Today" label="Already at the counter">
+        {/* 14 — Events */}
+        <EventsSlide n={14} />
+
+        {/* 15 — Settings (half) */}
+        <SettingsSlide n={15} />
+
+        {/* 16 — Chapter 02: Counterfoil Go */}
+        <ChapterDivider
+          n={16}
+          chapter="02"
+          word="GO"
+          title="Sell at the counter."
+          lead="Counterfoil Go is the till and the gate — on a tablet or a phone, in the hands of the person selling."
+          contents={["Find", "Choose", "Pay", "Ticket", "Admit", "Shift"]}
+        />
+
+        {/* 17 — Go: find */}
+        <PosFindSlide n={17} />
+
+        {/* 18 — Go: choose */}
+        <PosChooseSlide n={18} />
+
+        {/* 19 — Go: pay */}
+        <PosPaySlide n={19} />
+
+        {/* 20 — Go: ticket */}
+        <PosTicketSlide n={20} />
+
+        {/* 21 — Go: admit */}
+        <PosGateSlide n={21} />
+
+        {/* 22 — Go: shift (half) */}
+        <PosShiftSlide n={22} />
+
+        {/* 23 — Today ────────────────────────────────── */}
+        <Slide tone="paper" n={23} section="Today" label="Already at the counter">
           <div className="flex h-full flex-col gap-[max(8px,1.8cqw)]">
             <div className="grid gap-6 xl:grid-cols-12 xl:items-end">
               <div className="xl:col-span-7">
@@ -611,8 +488,51 @@ export default function DeckPage() {
           </div>
         </Slide>
 
-        {/* 12 — Close ──────────────────────────────────────────────────── */}
-        <Slide tone="ink" n={12} section="Counterfoil" label="Every seat, slot and session, accounted for">
+        {/* 24 — Built in Bangladesh ─────────────────────────────────────── */}
+        <Slide tone="ink" n={24} section="Made for the market" label="Built in Bangladesh, ready anywhere">
+          <Glow className="bottom-[-40%] right-[4%] h-[110%] w-[55%]" />
+          <Floor />
+          <div className="relative grid h-full gap-10 xl:grid-cols-12 xl:gap-0">
+            <div className="flex flex-col justify-between gap-8 xl:col-span-6">
+              <div>
+                <p className={s.eyebrow}>Made for the market</p>
+                <h2 className={cn(s.title, "mt-[max(8px,1.4cqw)]")}>
+                  Built in Bangladesh. <span className={s.accentInk}>Ready anywhere.</span>
+                </h2>
+                <p className={cn(s.lead, "mt-[max(8px,1.6cqw)] max-w-[38ch]")}>
+                  Bangla and English, bKash and Bangla QR, VAT and taka — with Stripe for cards abroad.
+                </p>
+              </div>
+              <div className="flex flex-col gap-[max(8px,1.4cqw)]">
+                <div className="grid grid-cols-2 gap-[max(6px,0.8cqw)] sm:grid-cols-3">
+                  {["bKash", "SSLCOMMERZ", "Bangla QR", "Stripe", "Cash", "VAT & receipts"].map((name) => (
+                    <span key={name} className={cn(s.card, s.inkCard, "px-[max(10px,1.2cqw)] py-[max(6px,1cqw)] text-[clamp(14px,1.1cqw,17px)] font-semibold")}>
+                      {name}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-[max(6px,0.6cqw)]">
+                  {["Bangladesh", "Malaysia", "United States", "Canada"].map((country) => (
+                    <Pill key={country}>
+                      <span aria-hidden className="h-[0.5em] w-[0.5em] rounded-full bg-[#ff7a3d]" />
+                      {country}
+                    </Pill>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="relative min-h-[460px] xl:col-span-6 xl:min-h-0">
+              <div className="mx-auto w-[52%] sm:w-[34%] md:w-[28%] xl:absolute xl:left-[32%] xl:top-[0%] xl:mx-0 xl:w-[37%]">
+                <Phone src={posPhoneBn} alt="Counterfoil Go in Bangla on a phone" tilt="right" />
+              </div>
+              <Ticket word="৳500" kicker="বিকাশ · bKash" className={cn(s.float, "absolute bottom-[6%] left-[-2%] w-[44%] sm:left-[10%] sm:w-[30%] xl:bottom-[12%] xl:left-[2%] xl:w-[38%]")} />
+              <Callout tone="ink" label="ভাষা · Language" value="বাংলা · English" className="absolute right-[0%] top-[24%] hidden sm:flex" />
+            </div>
+          </div>
+        </Slide>
+
+        {/* 25 — Close ──────────────────────────────────────────────────── */}
+        <Slide tone="ink" n={25} section="Counterfoil" label="Every seat, slot and session, accounted for">
           <Glow className="left-[20%] top-[0%] h-[100%] w-[60%]" />
           <Floor />
           <div className="relative flex h-full flex-col items-center justify-center pt-8 text-center xl:pt-0">

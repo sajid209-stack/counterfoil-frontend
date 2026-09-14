@@ -506,7 +506,7 @@
   aspect-ratio: 1.9 / 1;
   container-type: inline-size;
   transform: perspective(1000px) rotateX(24deg) rotateY(-30deg) rotateZ(-11deg);
-  filter: drop-shadow(0 34px 34px rgb(111 32 0 / 0.42));
+  filter: drop-shadow(0 34px 34px rgb(10 8 6 / 0.42));
 }
 
 .ticketFace,
@@ -524,14 +524,15 @@
   mask-composite: intersect;
 }
 
+/* The stock's edge: a card is thick, and the edge is darker than its face. */
 .ticketDepth {
   transform: translate(1.6%, 3.2%);
-  background: #5c1b00;
+  background: #c9c1b2;
 }
 
 .ticketFace {
   overflow: hidden;
-  background: linear-gradient(150deg, #ffab7c 0%, #ff6d24 26%, #f94a00 54%, #c43a00 100%);
+  background: linear-gradient(150deg, #ffffff 0%, #fbf8f2 42%, #ece5d8 100%);
 }
 
 .ticketFace::before {
@@ -540,30 +541,36 @@
   top: 14%;
   bottom: 14%;
   left: 70%;
-  border-left: max(2px, 0.5cqw) dashed rgb(255 255 255 / 0.55);
+  border-left: max(2px, 0.5cqw) dashed rgb(20 20 19 / 0.26);
 }
 
 .ticketFace::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(118deg, rgb(255 255 255 / 0.42) 0%, rgb(255 255 255 / 0) 36%);
+  background:
+    linear-gradient(118deg, rgb(255 255 255 / 0.75) 0%, rgb(255 255 255 / 0) 38%),
+    linear-gradient(0deg, rgb(20 20 19 / 0.05) 0%, rgb(20 20 19 / 0) 30%);
 }
 
 .ticketGlass .ticketFace {
-  background: linear-gradient(150deg, rgb(255 255 255 / 0.95) 0%, rgb(255 244 236 / 0.8) 50%, rgb(255 226 208 / 0.72) 100%);
+  background: linear-gradient(150deg, rgb(255 255 255 / 0.24) 0%, rgb(255 255 255 / 0.1) 55%, rgb(255 255 255 / 0.05) 100%);
 }
 
 .ticketGlass .ticketFace::before {
-  border-left-color: rgb(170 48 0 / 0.35);
+  border-left-color: rgb(255 255 255 / 0.32);
+}
+
+.ticketGlass .ticketFace::after {
+  background: linear-gradient(118deg, rgb(255 255 255 / 0.22) 0%, rgb(255 255 255 / 0) 40%);
 }
 
 .ticketGlass .ticketDepth {
-  background: #e2cdbd;
+  background: rgb(255 255 255 / 0.06);
 }
 
 .ticketGlass {
-  filter: drop-shadow(0 30px 30px rgb(111 32 0 / 0.2));
+  filter: drop-shadow(0 30px 30px rgb(0 0 0 / 0.3));
 }
 
 .ticketWord {
@@ -576,7 +583,7 @@
   font-weight: 700;
   line-height: 0.9;
   letter-spacing: -0.04em;
-  color: #ffffff;
+  color: #141413;
 }
 
 .ticketWord small {
@@ -586,7 +593,7 @@
   font-size: 0.26em;
   font-weight: 500;
   letter-spacing: 0.18em;
-  opacity: 0.9;
+  opacity: 0.6;
 }
 
 .ticketMark {
@@ -612,4 +619,108 @@
   50% {
     translate: 0 -2.5%;
   }
+}
+
+/* A printed code in the corner of the stub, the way a real counterfoil is
+   numbered. Decorative, so it sits under aria-hidden with the rest of it. */
+.ticketCode {
+  position: absolute;
+  z-index: 1;
+  left: 8%;
+  bottom: 15%;
+  font-family: var(--font-mono);
+  font-size: 3.6cqw;
+  letter-spacing: 0.08em;
+  color: rgb(20 20 19 / 0.55);
+}
+
+/* ── half-height slide ──────────────────────────────────────────────────── */
+
+@media (min-width: 1280px) {
+  .half {
+    aspect-ratio: 32 / 11;
+  }
+}
+
+/* ── walkthrough marks ──────────────────────────────────────────────────── */
+
+/* A numbered point on a screen, matched by the same number in the steps. */
+.hotspot {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: max(26px, 2.2cqw);
+  height: max(26px, 2.2cqw);
+  border-radius: 999px;
+  background: #f94a00;
+  color: #ffffff;
+  font-size: max(12px, 1cqw);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    0 0 0 max(3px, 0.28cqw) #ffffff,
+    0 0 0 max(8px, 0.7cqw) rgb(249 74 0 / 0.28),
+    0 10px 22px -8px rgb(20 20 19 / 0.55);
+}
+
+.stepNum {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: max(26px, 2.2cqw);
+  height: max(26px, 2.2cqw);
+  border-radius: 999px;
+  font-size: max(12px, 1cqw);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ink .stepNum {
+  background: rgb(255 255 255 / 0.1);
+  color: #f5f2eb;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.16);
+}
+
+.paper .stepNum {
+  background: #141413;
+  color: #f5f2eb;
+}
+
+/* ── a close-up of one part of a screen ─────────────────────────────────── */
+
+/* The outer box takes the caller's placement; the frame inside owns the
+   clipping, so no position rule here can beat a utility on the outer box. */
+.cropFrame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: clamp(12px, 1.2cqw, 20px);
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgb(20 20 19 / 0.07),
+    0 30px 60px -28px rgb(20 20 19 / 0.5);
+}
+
+.cropFrameInk {
+  background: #141413;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.1),
+    0 30px 60px -28px rgb(0 0 0 / 0.7);
+}
+
+.cropImg {
+  position: absolute;
+  max-width: none;
+  height: auto;
+}
+
+/* A thin line from a close-up to where it came from. */
+.connector {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  border-top: 2px dashed rgb(249 74 0 / 0.55);
+  transform-origin: 0 50%;
 }

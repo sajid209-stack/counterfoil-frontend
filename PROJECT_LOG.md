@@ -7029,3 +7029,105 @@ Sources: [Sequoia — writing a business plan](https://www.sequoiacap.com/articl
 [SaaS screenshots](https://screenhance.com/blog/saas-landing-page-screenshots) ·
 [Square hardware](https://squareup.com/us/en/hardware) ·
 [Fresha for business](https://www.fresha.com/for-business)
+
+## Counterfoil Deck, part two — the product page by page, and a POS walkthrough (2026-09-14)
+
+Owner asked for the deck to cover the product itself: one slide each for the
+dashboard, calendar, events, orders with an order record, customers with a
+customer record, holds, bookings and reports, half a slide for settings, and
+several slides that walk someone through the POS on device mockups. Also: the
+orange counterfoils become white paper with black type and the black logo.
+
+### Shape
+
+25 slides in two chapters, each opened by an ink divider whose number is
+printed on a ticket stub:
+
+- **Opening (1–4):** cover, the problem, one system, how it works.
+- **Chapter 01, Counterfoil OS (5–15):** divider, dashboard, calendar,
+  bookings, fourteen booking types, holds, orders, customers, reports, events,
+  settings (a half-height 32:11 band).
+- **Chapter 02, Counterfoil Go (16–22):** divider, then find, choose, pay,
+  ticket, admit, and a half-height shift slide.
+- **Close (23–25):** today, built in Bangladesh, close.
+
+The slides live in `deck/_slides/Os.tsx` and `Go.tsx`; `page.tsx` keeps the
+opening and closing slides and the order.
+
+### What the research changed
+
+- **Chapters with dividers, and the ground marks the product:** paper for OS,
+  ink for Go (Shopify Editions and Stripe Sessions group long release decks into
+  chapters).
+- **At most three numbered points a slide, matched by number to the steps
+  beside it** (screenshot guidance: few callouts, one accent colour).
+- **No two neighbouring slides share a composition:** laptop with hotspots, a
+  flat crop with a close-up, a bento, a list overlapping its record and the same
+  mirrored, a comic-strip row of three sheets joined by arrows.
+- **The till is explained step by step**, the way Shopify POS and Square
+  describe checkout and a cash-drawer session. Walkthrough devices face the
+  reader flat, because a numbered point has to land on the control it names.
+
+### The screens
+
+Every screen is the app's own, scripted and captured mid-flow: a sale with two
+lines in the cart, cash with Exact, bKash with a transaction ID, the ticket
+issued, a refused scan at the gate, check-in by session, the PIN pad, and a
+drawer counted within tolerance. The capture scripts are in the scratchpad.
+
+- **`Crop`** shows one region of a screenshot as fractions of the image, and
+  fetches the image larger in proportion to the zoom. The first version asked
+  `next/image` for the box's size, so every close-up was an upscaled blur.
+- **`Hotspot` and `Step`** share numbers. **`Slide size="half"`** is the 32:11
+  band.
+
+### The counterfoil in paper
+
+White stock with a warm edge, black type, a dashed tear line in ink at 26%,
+the black mark on the stub and a printed code in DM Mono. The stub behind it on
+dark slides is frosted glass rather than a second sheet of paper, so a pair
+still reads as two objects.
+
+### Found by looking
+
+- **Hotspots pointed at nothing:** the till's search marker sat on empty tiles,
+  and the tile and payment markers were misplaced. They were re-placed against
+  the screenshots.
+- **Two slides ran into their footer at 1440:** the three sheet panels and the
+  payment pills.
+- **On a phone** the order and customer records sat far below their lists, and
+  the two payment phones piled their hotspots on each other. The records now
+  overlap in the flow, and the phones sit in a two-column grid.
+- **The scan result was captured as the scanner**, because the result hands
+  back after about two seconds. It is now shot as the result page opens.
+- **At 1024 the chapter stub grew over the chapter's own contents list:**
+  pixel contrast measured the "Settings" pill at 1.04:1 on the white ticket.
+  The stub area is capped below 1280.
+- The lane sheet's crop cut its own header, and the seat map's legend showed a
+  stray "Sold" row.
+
+### Verified
+
+- Layout at 1440, 1024 and 390: 25 slides, no page overflow, no text clipped
+  by its slide or under its footer, nothing under 12px, no console errors.
+- Pixel contrast: **0 of about 270 text boxes below their floor** at each width.
+- Deck harness 9/9, accessibility 8/8, review 15/15. The 32-route audit is
+  unchanged at **70**, with `/deck` contributing none.
+- `tsc`, `eslint` on the deck and `npm run build` clean.
+
+### Open
+
+- The screenshots are static and will drift as the product changes.
+- English only.
+- The events slide quotes the seed's figures (6 events, 4,867 tickets). Like
+  the rest of the deck, they come from the demo data.
+
+Sources: [Shopify Editions — Summer 2025](https://www.shopify.com/editions/summer2025) ·
+[Stripe — Sessions 2025 updates](https://stripe.com/blog/top-product-updates-sessions-2025) ·
+[Attio](https://attio.com/) ·
+[Rally — feature screenshots](https://rally.space/blog/engaging-feature-screenshot-tips) ·
+[Screenhance — SaaS screenshots](https://screenhance.com/blog/saas-landing-page-screenshots) ·
+[Shopify POS](https://www.shopify.com/pos) ·
+[Square — cash drawer sessions](https://squareup.com/help/us/en/article/8344-start-and-end-a-cash-drawer-session) ·
+[Gateway Ticketing](https://www.gatewayticketing.com/attraction-ticketing-software/) ·
+[Mock-it — mockup shadows](https://mock-it.co/mockups/step-by-step-adding-realistic-shadows-to-mockups/)
