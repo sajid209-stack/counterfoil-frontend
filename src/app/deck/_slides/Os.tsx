@@ -19,8 +19,11 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 import { Crop, Floor, Glow, Hotspot, Laptop, Phone, Pill, SheetCard, Slide, Step, TextBlock, Ticket, Ticks, deckStyles as s } from "../_components/Parts";
+import { GoLockup } from "../_components/GoLogo";
+import logoOnPaper from "../_media/logo-counterfoil.png";
 import dashLight from "../_media/os-dashboard-light.jpg";
 import calendar from "../_media/os-calendar-light.jpg";
 import bookings from "../_media/os-bookings.jpg";
@@ -30,7 +33,7 @@ import order from "../_media/os-order.jpg";
 import customers from "../_media/os-customers.jpg";
 import customer from "../_media/os-customer.jpg";
 import reportsDark from "../_media/os-reports-dark.jpg";
-import eventOs from "../_media/os-event.jpg";
+import eventOs from "../_media/os-event-dark.jpg";
 import turfPhone from "../_media/web-turfcup-phone.jpg";
 import settings from "../_media/os-settings.jpg";
 import sheetSeats from "../_media/sheet-seats.jpg";
@@ -49,12 +52,17 @@ import sheetSlots from "../_media/sheet-slots.jpg";
 
 export const OS_SECTION = "01 · Counterfoil OS";
 
-/** A chapter opens on ink, with its number printed on the stub. */
+/**
+ * A chapter opens on ink, with the product's own marque printed on the ticket
+ * and the chapter's number on its stub. OS carries the platform lockup with its
+ * OS tag, exactly as the app's own Logo draws it; Go carries the Go artwork,
+ * streaks and all.
+ */
 export function ChapterDivider({
   n,
   chapter,
   product,
-  word,
+  marque,
   title,
   lead,
   contents,
@@ -62,11 +70,22 @@ export function ChapterDivider({
   n: number;
   chapter: string;
   product: string;
-  word: string;
+  marque: "os" | "go";
   title: string;
   lead: string;
   contents: string[];
 }) {
+  const logo =
+    marque === "go" ? (
+      <GoLockup />
+    ) : (
+      <span className="flex items-center gap-[2.8cqw]">
+        <span className="block w-[74%]">
+          <Image src={logoOnPaper} alt="" sizes="360px" />
+        </span>
+        <span className="font-mono text-[4.4cqw] font-medium tracking-[0.12em] text-[#57534c]">OS</span>
+      </span>
+    );
   return (
     <Slide tone="ink" n={n} section={`${chapter} · ${product}`} label={title}>
       <Glow className="left-[840px] top-[-260px] h-[940px] w-[940px]" />
@@ -89,7 +108,19 @@ export function ChapterDivider({
         tilt="perspective(1000px) rotateX(26deg) rotateY(-24deg) rotateZ(-16deg)"
         className="absolute left-[930px] top-[470px]"
       />
-      <Ticket word={word} kicker={`Chapter ${chapter}`} code={`CF-2026-CH${chapter}`} width={500} className="absolute left-[990px] top-[228px]" />
+      <Ticket
+        logo={logo}
+        kicker={`Chapter ${chapter}`}
+        stub={
+          <>
+            <small>No.</small>
+            {chapter}
+          </>
+        }
+        code={`CF-2026-CH${chapter}`}
+        width={500}
+        className="absolute left-[990px] top-[228px]"
+      />
     </Slide>
   );
 }
@@ -116,9 +147,9 @@ export function DashboardSlide({ n }: { n: number }) {
       </TextBlock>
       <Laptop src={dashLight} width={864} alt="The Counterfoil OS dashboard for Lalbagh Heritage Attractions" className="absolute left-[640px] top-[170px]">
         {/* 1 sits on the corner of the first figure, not over its label. */}
-        <Hotspot n={1} x={17.2} y={14.1} />
-        <Hotspot n={2} x={47} y={42} />
-        <Hotspot n={3} x={85} y={38.5} />
+        <Hotspot n={1} x={18.4} y={16.4} />
+        <Hotspot n={2} x={49} y={46.5} />
+        <Hotspot n={3} x={88.1} y={42.8} />
       </Laptop>
     </Slide>
   );
@@ -492,14 +523,15 @@ export function EventsSlide({ n }: { n: number }) {
           ))}
         </ul>
       </TextBlock>
+      {/* Both in dark: OS in its dark theme, and the event's own floodlit page on the phone. */}
       <Laptop
         src={eventOs}
         width={800}
         tilt="left"
-        alt="Chattogram Turf Cup in Counterfoil OS: 622 of 1,216 tickets sold, with a live preview of its page"
+        alt="Chattogram Turf Cup in Counterfoil OS, dark theme: 622 of 1,216 tickets sold, with a live preview of its page"
         className="absolute left-[660px] top-[160px]"
       />
-      <Phone src={turfPhone} width={196} tilt="right" alt="The Chattogram Turf Cup page on a phone" className="absolute left-[1300px] top-[382px]" />
+      <Phone src={turfPhone} bar="#09160f" ink="light" width={196} tilt="right" alt="The Chattogram Turf Cup page on a phone" className="absolute left-[1300px] top-[372px]" />
     </Slide>
   );
 }

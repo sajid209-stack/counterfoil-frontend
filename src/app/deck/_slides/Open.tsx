@@ -1,12 +1,13 @@
 import Image from "next/image";
 import { CalendarX, Check, Compass, ScanLine, Store } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Callout, Floor, Glow, Laptop, Phone, Pill, Slide, Tablet, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
+import { Callout, Floor, Glow, Laptop, Phone, Pill, PosStand, Slide, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
 import logoOnInk from "../_media/logo-counterfoil-dark.png";
 import dashDark from "../_media/os-dashboard-dark.jpg";
 import dashLight from "../_media/os-dashboard-light.jpg";
-import posTablet from "../_media/go-pos-tablet.jpg";
-import phoneSeats from "../_media/go-sheet-seats.jpg";
+import till from "../_media/go-till.jpg";
+import phoneSell from "../_media/go-phone-sell.jpg";
+import phoneSeats from "../_media/go-sheet-cinema.jpg";
 
 /* Slides 1–4: what Counterfoil is, the problem, the system and how it works. */
 
@@ -36,24 +37,24 @@ export function CoverSlide({ n }: { n: number }) {
           ))}
         </ul>
       </div>
+      {/* OS on the laptop behind; Go in front of it, on the counter and in the hand. */}
       <Laptop
         src={dashDark}
-        width={820}
+        width={780}
         tilt="left"
         priority
         alt="Counterfoil OS dashboard with revenue, capacity and what needs attention"
-        className="absolute left-[724px] top-[206px]"
+        className="absolute left-[764px] top-[150px]"
       />
-      <Tablet
-        src={posTablet}
+      <PosStand
+        src={till}
         width={420}
         tilt="left"
         priority
-        alt="Counterfoil Go point of sale on a tablet with a sale in the cart"
-        className="absolute left-[736px] top-[500px]"
+        alt="Counterfoil Go on a countertop stand, with a sale in the cart"
+        className="absolute left-[704px] top-[430px]"
       />
-      {/* Tucked over the laptop's top edge, clear of the screen it would otherwise cover. */}
-      <Ticket width={232} className="absolute left-[1268px] top-[62px]" />
+      <Phone src={phoneSell} width={172} tilt="left" priority alt="Counterfoil Go on a phone: the sell wall" className="absolute left-[1340px] top-[392px]" />
     </Slide>
   );
 }
@@ -150,12 +151,12 @@ export function SystemSlide({ n }: { n: number }) {
         </ul>
       </TextBlock>
 
-      <Laptop src={dashLight} width={820} tilt="left" alt="Counterfoil OS dashboard on a laptop" className="absolute left-[684px] top-[184px]" />
-      <Tablet src={posTablet} width={400} tilt="left" alt="Counterfoil Go point of sale on a tablet" className="absolute left-[664px] top-[512px]" />
-      <Phone src={phoneSeats} width={156} tilt="right" alt="Choosing seats for an evening film on a phone" className="absolute left-[1336px] top-[448px]" />
+      <Laptop src={dashLight} width={820} tilt="left" alt="Counterfoil OS dashboard on a laptop" className="absolute left-[684px] top-[176px]" />
+      <PosStand src={till} width={380} tilt="left" alt="Counterfoil Go on a countertop stand" className="absolute left-[660px] top-[456px]" />
+      <Phone src={phoneSeats} bar="#989793" width={150} tilt="right" alt="Choosing seats for an evening film on a phone" className="absolute left-[1350px] top-[436px]" />
       {/* Labels sit on the devices' edges, never on the screens they name. */}
-      <Callout tone="paper" label="OS · on the web" value="Runs the business" className="absolute left-[1284px] top-[96px]" />
-      <Callout tone="paper" label="Go · tablet & phone" value="Sells and admits" className="absolute left-[1080px] top-[700px]" />
+      <Callout tone="paper" label="OS · on the web" value="Runs the business" className="absolute left-[1284px] top-[92px]" />
+      <Callout tone="paper" label="Go · counter & phone" value="Sells and admits" className="absolute left-[1072px] top-[716px]" />
     </Slide>
   );
 }

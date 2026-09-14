@@ -473,19 +473,151 @@
 }
 
 .phone .screen {
-  border-radius: 12% / 5.6%;
+  border-radius: 12.4% / 5.7%;
+}
+
+/* The screen plus anything placed on it. Hotspots live here, outside the
+   screen's clip, so a point near an edge keeps its whole ring. */
+.screenBox {
+  position: relative;
+}
+
+/* A phone's status bar is drawn, not captured. The app is shot at 393 × 798 —
+   an iPhone's 852pt screen less its 54pt bar — so the island sits in the bar
+   between the time and the icons, never on the app's own header. */
+.statusBar {
+  position: relative;
+  aspect-ratio: 393 / 54;
+  container-type: inline-size;
+  background: var(--bar-bg, #f5f2eb);
+  color: var(--bar-ink, #141413);
+}
+
+.statusTime,
+.statusIcons {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 34%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 1.4cqw;
+}
+
+.statusTime {
+  left: 0;
+  font-size: 4.3cqw;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.statusIcons {
+  right: 0;
+  gap: 1.5cqw;
+}
+
+.statusIcons svg {
+  display: block;
+  height: 3.1cqw;
+  width: auto;
+}
+
+.shot {
+  position: relative;
+  aspect-ratio: 393 / 798;
+  overflow: hidden;
+  background: var(--bar-bg, #f5f2eb);
+}
+
+.shot img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
 }
 
 .island {
   position: absolute;
   z-index: 2;
-  top: 4.3%;
+  top: 1.35%;
   left: 50%;
-  width: 27%;
-  height: 2.7%;
+  width: 31.5%;
+  height: 4.3%;
   transform: translateX(-50%);
   border-radius: 999px;
   background: #050505;
+}
+
+/* Hotspots on a phone are placed on the app's screen, below the drawn bar. */
+.shotLayer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 6.34%;
+}
+
+/* Counterfoil Go on a countertop stand — the till the way a venue mounts it:
+   the tablet in a graphite shell, on an aluminium neck and base that match the
+   laptop's. */
+.posHead {
+  position: relative;
+  z-index: 1;
+  padding: 2.1%;
+  border-radius: 3.6% / 5.8%;
+  background: linear-gradient(155deg, #3a3935 0%, #111110 42%, #0a0a09 100%);
+  box-shadow:
+    inset 0 0 0 1.5px rgb(255 255 255 / 0.14),
+    0 0 0 2px #77746c,
+    0 0 0 3.5px #cfcbc2;
+}
+
+.posHead .screen {
+  border-radius: 1.6% / 2.6%;
+}
+
+.posNeck {
+  position: relative;
+  margin: 0 auto;
+  width: 10%;
+  aspect-ratio: 10 / 11;
+  background: linear-gradient(90deg, #6f6c65 0%, #d8d4cb 42%, #b4b0a7 64%, #66635c 100%);
+  clip-path: polygon(20% 0, 80% 0, 100% 100%, 0 100%);
+}
+
+.posBase {
+  position: relative;
+  margin: -0.6% auto 0;
+  width: 40%;
+  aspect-ratio: 40 / 3.6;
+  border-radius: 50% / 46%;
+  background: linear-gradient(180deg, #efebe3 0%, #bdb9b0 46%, #7a776f 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.85),
+    0 22px 30px -14px rgb(0 0 0 / 0.6);
+}
+
+.posPortrait .posHead {
+  padding: 3.3%;
+  border-radius: 6% / 3.8%;
+}
+
+.posPortrait .posHead .screen {
+  border-radius: 2.6% / 1.7%;
+}
+
+.posPortrait .posNeck {
+  width: 15%;
+  aspect-ratio: 15 / 13;
+}
+
+.posPortrait .posBase {
+  width: 64%;
+  aspect-ratio: 64 / 5.6;
 }
 
 /* A piece of the UI lifted off the screen. */
@@ -631,6 +763,63 @@
   opacity: 0.6;
 }
 
+/* A product's own logo printed on the face, in place of a word. */
+.ticketLogo {
+  position: absolute;
+  z-index: 1;
+  left: 8%;
+  top: 50%;
+  width: 54%;
+  transform: translateY(-58%);
+  color: #141413;
+}
+
+.ticketLogo small {
+  display: block;
+  margin-bottom: 3.4cqw;
+  font-family: var(--font-mono);
+  font-size: 3.1cqw;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.ticketLogo svg,
+.ticketLogo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The stub's number, the way a real counterfoil carries one. */
+.ticketStub {
+  position: absolute;
+  z-index: 1;
+  left: 70%;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: center;
+  color: #141413;
+  font-size: 11cqw;
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ticketStub small {
+  display: block;
+  margin-bottom: 1.6cqw;
+  font-family: var(--font-mono);
+  font-size: 2.6cqw;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
 .ticketMark {
   position: absolute;
   z-index: 1;
@@ -654,10 +843,12 @@
 /* ── walkthrough marks ──────────────────────────────────────────────────── */
 
 /* A numbered point on a screen, matched by the same number in the steps. The
-   slide gives its left and top as a share of the device. */
+   slide gives the point it marks as a share of the screen; the mark is centred
+   on that point. */
 .hotspot {
   position: absolute;
   z-index: 3;
+  transform: translate(-50%, -50%);
   display: grid;
   place-items: center;
   width: 36px;
@@ -672,6 +863,18 @@
     0 0 0 4px #ffffff,
     0 0 0 11px rgb(249 74 0 / 0.28),
     0 12px 24px -8px rgb(20 20 19 / 0.55);
+}
+
+/* On a phone or a portrait tablet a full-size mark covers a third of a row;
+   this one keeps the same ring at a size those screens can carry. */
+.hotspotSm {
+  width: 30px;
+  height: 30px;
+  font-size: 15px;
+  box-shadow:
+    0 0 0 3px #ffffff,
+    0 0 0 8px rgb(249 74 0 / 0.3),
+    0 10px 20px -8px rgb(20 20 19 / 0.55);
 }
 
 .stepNum {

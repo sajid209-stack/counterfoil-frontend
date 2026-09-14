@@ -107,7 +107,7 @@ interface DeviceProps {
   priority?: boolean;
   /** Placement on the canvas — `absolute left-[…] top-[…]`. */
   className?: string;
-  /** Hotspots, placed as a share of the device. */
+  /** Hotspots, placed as a share of the screen. */
   children?: ReactNode;
 }
 
@@ -115,12 +115,14 @@ export function Laptop({ src, alt, width, tilt = "none", priority, className, ch
   return (
     <div className={cn(s.device, tiltClass(tilt), className)} style={{ width, "--device-w": `${width}px` } as CSSProperties}>
       <div className={s.lid}>
-        <div className={s.screen}>
-          <Image src={src} alt={alt} sizes={`${width}px`} priority={priority} placeholder="blur" />
+        <div className={s.screenBox}>
+          <div className={s.screen}>
+            <Image src={src} alt={alt} sizes={`${width}px`} priority={priority} placeholder="blur" />
+          </div>
+          {children}
         </div>
       </div>
       <div aria-hidden className={s.base} />
-      {children}
     </div>
   );
 }
@@ -129,25 +131,113 @@ export function Tablet({ src, alt, width, tilt = "none", priority, className, ch
   return (
     <div className={cn(s.device, tiltClass(tilt), className)} style={{ width }}>
       <div className={s.tablet}>
-        <div className={s.screen}>
-          <Image src={src} alt={alt} sizes={`${width}px`} priority={priority} placeholder="blur" />
+        <div className={s.screenBox}>
+          <div className={s.screen}>
+            <Image src={src} alt={alt} sizes={`${width}px`} priority={priority} placeholder="blur" />
+          </div>
+          {children}
         </div>
       </div>
-      {children}
     </div>
   );
 }
 
-export function Phone({ src, alt, width, tilt = "none", className, children }: DeviceProps) {
+/**
+ * Counterfoil Go on a countertop stand: the tablet the till runs on, mounted
+ * the way a venue mounts it. Landscape at the counter, portrait at the gate.
+ */
+export function PosStand({
+  src,
+  alt,
+  width,
+  tilt = "none",
+  priority,
+  orientation = "landscape",
+  className,
+  children,
+}: DeviceProps & { orientation?: "landscape" | "portrait" }) {
+  return (
+    <div className={cn(s.device, tiltClass(tilt), orientation === "portrait" && s.posPortrait, className)} style={{ width }}>
+      <div className={s.posHead}>
+        <div className={s.screenBox}>
+          <div className={s.screen}>
+            <Image src={src} alt={alt} sizes={`${width}px`} priority={priority} placeholder="blur" />
+          </div>
+          {children}
+        </div>
+      </div>
+      <div aria-hidden className={s.posNeck} />
+      <div aria-hidden className={s.posBase} />
+    </div>
+  );
+}
+
+/** Signal, Wi-Fi and battery, drawn in the status bar's ink. */
+function StatusIcons() {
+  return (
+    <span aria-hidden className={s.statusIcons}>
+      <svg viewBox="0 0 18 12" fill="currentColor">
+        <rect x="0" y="8" width="3" height="4" rx="0.8" />
+        <rect x="5" y="5.5" width="3" height="6.5" rx="0.8" />
+        <rect x="10" y="3" width="3" height="9" rx="0.8" />
+        <rect x="15" y="0" width="3" height="12" rx="0.8" />
+      </svg>
+      <svg viewBox="0 0 16 12" fill="currentColor">
+        <path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.4A10.6 10.6 0 0 0 8 .3 10.6 10.6 0 0 0 .5 3.3l1.3 1.4A8.7 8.7 0 0 1 8 2.2Z" />
+        <path d="M8 5.8c1.4 0 2.7.5 3.7 1.4L13 5.8A7.1 7.1 0 0 0 8 3.9a7.1 7.1 0 0 0-5 1.9l1.3 1.4A5.2 5.2 0 0 1 8 5.8Z" />
+        <path d="M8 9.3c.6 0 1.1.2 1.5.6L8 11.6 6.5 9.9c.4-.4.9-.6 1.5-.6Z" />
+      </svg>
+      <svg viewBox="0 0 27 12" fill="none">
+        <rect x="0.6" y="0.6" width="22.8" height="10.8" rx="3.2" stroke="currentColor" strokeOpacity="0.4" strokeWidth="1.2" />
+        <rect x="2.4" y="2.4" width="19.2" height="7.2" rx="1.8" fill="currentColor" />
+        <path d="M25 4v4c.8-.3 1.4-1.1 1.4-2S25.8 4.3 25 4Z" fill="currentColor" fillOpacity="0.45" />
+      </svg>
+    </span>
+  );
+}
+
+/**
+ * A phone. Its status bar — the time, the island, signal, Wi-Fi and battery —
+ * is drawn here rather than captured, so every phone in the deck shows the
+ * same one and the island never sits on the app's own header.
+ *
+ * `bar` is the colour behind the status bar: the app's own top edge, so the
+ * bar reads as part of the screen. `screen` replaces the screenshot with
+ * content drawn on the slide, such as a guest's messages.
+ */
+export function Phone({
+  src,
+  alt,
+  width,
+  tilt = "none",
+  priority,
+  bar = "#f5f2eb",
+  ink = "dark",
+  screen,
+  className,
+  children,
+}: Omit<DeviceProps, "src" | "alt"> & {
+  src?: StaticImageData;
+  alt?: string;
+  bar?: string;
+  ink?: "dark" | "light";
+  screen?: ReactNode;
+}) {
   return (
     <div className={cn(s.device, tiltClass(tilt), className)} style={{ width }}>
       <div className={s.phone}>
-        <span aria-hidden className={s.island} />
-        <div className={s.screen}>
-          <Image src={src} alt={alt} sizes={`${width}px`} placeholder="blur" />
+        <div className={s.screenBox} style={{ "--bar-bg": bar, "--bar-ink": ink === "dark" ? "#141413" : "#ffffff" } as CSSProperties}>
+          <div className={s.screen}>
+            <div aria-hidden className={s.statusBar}>
+              <span className={s.statusTime}>9:41</span>
+              <StatusIcons />
+            </div>
+            <div className={s.shot}>{src ? <Image src={src} alt={alt ?? ""} sizes={`${width}px`} priority={priority} placeholder="blur" /> : screen}</div>
+          </div>
+          <span aria-hidden className={s.island} />
+          {children && <div className={s.shotLayer}>{children}</div>}
         </div>
       </div>
-      {children}
     </div>
   );
 }
@@ -174,14 +264,17 @@ export function Callout({
 /**
  * The counterfoil itself — the one object this company is named after.
  *
- * Printed on paper: white stock, black type, the black mark on the stub. The
- * frosted variant is the ticket behind it on dark slides, so a pair still
- * reads as two objects. Nothing moves: the website and the PDF are one picture.
+ * Printed on paper: white stock, black type, the black mark on the stub. A
+ * ticket can carry a word (ADMIT 1) or a product's own logo, and its stub can
+ * carry the mark or a number. The frosted variant is the ticket behind it on
+ * dark slides, so a pair still reads as two objects.
  */
 export function Ticket({
   word = "ADMIT 2",
   kicker = "Counterfoil",
   code,
+  logo,
+  stub,
   variant = "paper",
   width,
   tilt,
@@ -190,6 +283,10 @@ export function Ticket({
   word?: string;
   kicker?: string;
   code?: string;
+  /** A logo printed on the face in place of the word. */
+  logo?: ReactNode;
+  /** What the stub carries in place of the mark. */
+  stub?: ReactNode;
   variant?: "paper" | "glass";
   width: number;
   /** A CSS transform, to set this ticket's own angle. */
@@ -206,12 +303,19 @@ export function Ticket({
       <div className={s.ticketFace} />
       {variant === "paper" && (
         <>
-          <span className={s.ticketWord}>
-            <small>{kicker}</small>
-            {word}
-          </span>
+          {logo ? (
+            <span className={s.ticketLogo}>
+              <small>{kicker}</small>
+              {logo}
+            </span>
+          ) : (
+            <span className={s.ticketWord}>
+              <small>{kicker}</small>
+              {word}
+            </span>
+          )}
           {code && <span className={s.ticketCode}>{code}</span>}
-          <Image src={markBlack} alt="" className={s.ticketMark} sizes="96px" />
+          {stub ? <span className={s.ticketStub}>{stub}</span> : <Image src={markBlack} alt="" className={s.ticketMark} sizes="96px" />}
         </>
       )}
     </div>
@@ -289,13 +393,12 @@ export function Crop({
 }
 
 /**
- * A numbered point on a screen. `x`% and `y`% of the device it sits on place
- * the mark's top-left corner, so a point centred on a control sits 18px up and
- * to the left of it.
+ * A numbered point on a screen. `x`% and `y`% are the point it marks, as a
+ * share of the screen it sits on — the mark is centred there.
  */
-export function Hotspot({ n, x, y }: { n: number; x: number; y: number }) {
+export function Hotspot({ n, x, y, small }: { n: number; x: number; y: number; small?: boolean }) {
   return (
-    <span aria-hidden className={s.hotspot} style={{ left: `${x}%`, top: `${y}%` }}>
+    <span aria-hidden className={cn(s.hotspot, small && s.hotspotSm)} style={{ left: `${x}%`, top: `${y}%` }}>
       {n}
     </span>
   );

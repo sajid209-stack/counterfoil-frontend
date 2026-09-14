@@ -83,7 +83,7 @@ export default function DeckPage() {
           n={5}
           chapter="01"
           product="Counterfoil OS"
-          word="OS"
+          marque="os"
           title="Run the business."
           lead="Counterfoil OS is where a venue is set up, watched and reconciled — on the web, for one location or all of them."
           contents={["Dashboard", "Calendar", "Bookings", "Holds", "Orders", "Customers", "Reports", "Events", "Settings"]}
@@ -103,7 +103,7 @@ export default function DeckPage() {
           n={16}
           chapter="02"
           product="Counterfoil Go"
-          word="GO"
+          marque="go"
           title="Sell at the counter."
           lead="Counterfoil Go is the till and the gate — on a tablet or a phone, in the hands of the person selling."
           contents={["Find", "Choose", "Pay", "Ticket", "Admit", "Shift"]}

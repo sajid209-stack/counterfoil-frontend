@@ -7247,6 +7247,70 @@ text boxes recorded relative to their slide, and reports 0.
   `@swc/helpers`) from the lockfile alongside adding `playwright-core`.
 - The screenshots are static, and the deck is English only.
 
+## Counterfoil Deck, part four — Go on its own devices (2026-09-15)
+
+Owner review of the live deck marked eight slides: the POS sheets needed real
+phone screens with space between them; the cover and the Find slide should show
+Go on a phone and a POS device; the event mockups should be dark; the Go chapter
+should carry the real Go logo (SVG supplied); the ticket slide's phone was
+broken, with no status bar; a slide was missing its third numbered point; and
+the closing ADMIT 2 ticket should become something with more idea behind it.
+
+### Go on the devices it runs on
+
+- **`PosStand`** — the till tablet on an aluminium neck and base, landscape at
+  the counter and portrait at the gate. It replaces the loose tablet everywhere
+  Go is shown.
+- **`Phone` draws its own status bar**: 9:41, the island, signal, Wi-Fi and
+  battery. Every phone screen is now captured at 393 × 798 — an iPhone's 852pt
+  less the 54pt bar — so the island sits in the bar, never on the app's header
+  (which is what "broken" was). `bar` matches the app's top edge, including the
+  dimmed grey behind a sheet; `screen` takes drawn content in place of a capture.
+- **Fifteen new captures** by a script that drives the real till — a sale in the
+  cart, cash with Exact, bKash with a transaction ID, the ticket it issued
+  (`CF-2026-236111-01`), a refused scan, the PIN pad, check-in with a balance to
+  take, the three selection sheets, and the event in OS dark and on a phone.
+  The script also **measures each control's position on screen**, and every
+  hotspot is placed from those numbers rather than by eye. The dev-only "demo
+  PIN 1234" hint is hidden in the capture.
+- Hotspots are now centred on the point they mark and live outside the screen's
+  clip, so a point at an edge keeps its ring; phones and the portrait tablet use
+  a smaller mark.
+
+### Slides
+
+- **Cover:** OS on the laptop, Go on the counter stand and a phone in front of
+  it; the ticket is gone.
+- **Choose:** three phones on one row, centred in equal columns, joined by
+  arrows on dashed rules, each with its step underneath.
+- **Pay:** three phones stepped up in the order the screens come, markers on
+  the stepper, Exact and the transaction ID.
+- **Ticket:** the till's "Ticket issued" phone, the guest's phone receiving the
+  SMS, and the printed stub between them; the outputs listed with what each is.
+- **Gate:** the portrait stand at the gate, markers on the session count and
+  Take balance, the refusal on the phone.
+- **Shift:** the third point, on the variance the count produces.
+- **Events:** OS in its dark theme and the floodlit event page on a phone.
+- **Chapter openers:** the ticket carries the product's own marque — the Go SVG
+  inline (sharp at the PDF's 2×) and the platform lockup with its OS tag — with
+  the chapter number on the stub.
+- **Close:** ADMIT 2 replaced by an auditorium seen from the back, every seat in
+  a state the system knows — sold, admitted, held for a group, on sale — with
+  the key beneath it and the promise under that. The line is drawn rather than
+  written. Seat states come from a fixed hash, so the drawing is identical on
+  every render and in the PDF.
+- Nine screenshots no slide uses any more were removed.
+
+### Verified
+
+- Layout at 1780, 1440, 1024 and 390: 25 slides the same size, no page
+  overflow, no text outside the margins, clipped, covered or under the footer,
+  no console errors.
+- Pixel contrast per slide: **0 of 355** text boxes below their floor at 1780
+  and 1440. `/deck` audits at **0**.
+- PDF rebuilt and read back: 25 pages at 960 × 540pt, intact JPEGs, xref found.
+- `tsc` and `eslint` on the deck clean.
+
 Sources: [reveal.js — presentation size](https://revealjs.com/presentation-size/) ·
 [reveal.js — PDF export](https://revealjs.com/pdf-export/) ·
 [Slidev — exporting](https://sli.dev/guide/exporting) ·

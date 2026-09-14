@@ -2,8 +2,9 @@ import Image from "next/image";
 import { Languages, QrCode, Receipt } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Floor, Glow, Phone, Pill, Slide, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
+import { SEAT_LEGEND, SeatPlan, SeatSwatch } from "../_components/SeatPlan";
 import logoOnInk from "../_media/logo-counterfoil-dark.png";
-import posPhoneBn from "../_media/go-pos-phone-bn.jpg";
+import posPhoneBn from "../_media/go-phone-sell-bn.jpg";
 
 /* Slides 23–25: where Counterfoil is today, the market it is built for, and the close. */
 
@@ -90,8 +91,8 @@ export function BangladeshSlide({ n }: { n: number }) {
         </ul>
       </TextBlock>
 
-      <Phone src={posPhoneBn} width={300} tilt="right" alt="Counterfoil Go in Bangla on a phone" className="absolute left-[800px] top-[92px]" />
-      <Ticket word="৳500" kicker="বিকাশ · bKash" width={320} className="absolute left-[680px] top-[572px]" />
+      <Phone src={posPhoneBn} width={290} tilt="right" alt="Counterfoil Go in Bangla on a phone" className="absolute left-[808px] top-[104px]" />
+      <Ticket word="৳500" kicker="বিকাশ · bKash" width={320} className="absolute left-[680px] top-[580px]" />
 
       {[
         { icon: Languages, label: "ভাষা · Language", title: "বাংলা · English", body: "Every screen in both languages.", top: 152 },
@@ -115,23 +116,25 @@ export function BangladeshSlide({ n }: { n: number }) {
 
 export function CloseSlide({ n }: { n: number }) {
   return (
-    <Slide tone="ink" n={n} section="Counterfoil" label="Every seat, slot and session, accounted for">
-      <Glow className="left-[400px] top-[-120px] h-[900px] w-[800px]" />
-      <Floor />
-      <Ticket
-        variant="glass"
-        width={300}
-        tilt="perspective(1000px) rotateX(26deg) rotateY(-26deg) rotateZ(-16deg)"
-        className="absolute left-[588px] top-[168px]"
-      />
-      <Ticket width={320} className="absolute left-[764px] top-[92px]" />
-      <div className={cn(s.text, "text-center")} style={{ left: 150, top: 392, width: 1300 }}>
+    <Slide tone="ink" n={n} section="" label="Every seat, slot and session, accounted for">
+      <Glow className="left-[350px] top-[-320px] h-[760px] w-[900px] opacity-75" />
+      {/* The promise, drawn: a house where every seat is in a state the system knows. */}
+      <SeatPlan className="absolute left-0 top-0" />
+      <ul aria-hidden className="absolute inset-x-0 top-[402px] flex justify-center gap-9">
+        {SEAT_LEGEND.map(({ state, label }) => (
+          <li key={state} className="flex items-center gap-2.5 font-mono text-[14px] uppercase tracking-[0.12em] text-[rgb(245_242_235/0.66)]">
+            <SeatSwatch state={state} size={18} />
+            {label}
+          </li>
+        ))}
+      </ul>
+      <div className={cn(s.text, "text-center")} style={{ left: 150, top: 468, width: 1300 }}>
         <h2 className={s.display}>
           Every seat, slot and session — <span className={s.accentInk}>accounted for.</span>
         </h2>
-        <p className={cn(s.lead, "mx-auto mt-8 w-[720px]")}>Counterfoil is built by Ternary Solutions for the people who run venues, tours and attractions.</p>
+        <p className={cn(s.lead, "mx-auto mt-7 w-[1160px]")}>Counterfoil is built by Ternary Solutions for the people who run venues, tours and attractions.</p>
       </div>
-      <Image src={logoOnInk} alt="Counterfoil" sizes="280px" className="absolute left-1/2 top-[724px] h-[44px] w-auto -translate-x-1/2" />
+      <Image src={logoOnInk} alt="Counterfoil" sizes="280px" className="absolute left-1/2 top-[758px] h-[38px] w-auto -translate-x-1/2" />
     </Slide>
   );
 }

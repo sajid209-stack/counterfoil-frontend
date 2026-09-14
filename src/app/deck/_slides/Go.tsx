@@ -1,27 +1,36 @@
-import { ArrowRight, Banknote, CreditCard, MessageSquare, Printer, QrCode, Send, Ticket as TicketIcon } from "lucide-react";
+import { ArrowRight, Banknote, CreditCard, MessageSquare, Printer, QrCode, Send, Ticket as TicketIcon, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Crop, Glow, Hotspot, Phone, Pill, Slide, Step, Tablet, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
-import posTablet from "../_media/go-pos-tablet.jpg";
-import sessions from "../_media/go-sheet-sessions.jpg";
-import seats from "../_media/sheet-seats.jpg";
-import bowling from "../_media/go-sheet-bowling.jpg";
+import { Glow, Hotspot, Phone, Pill, PosStand, Slide, Step, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
+import till from "../_media/go-till.jpg";
+import phoneSell from "../_media/go-phone-sell.jpg";
+import sheetShow from "../_media/go-sheet-show.jpg";
+import sheetCinema from "../_media/go-sheet-cinema.jpg";
+import sheetLane from "../_media/go-sheet-lane.jpg";
 import cart from "../_media/go-cart.jpg";
 import cash from "../_media/go-cash.jpg";
 import bkash from "../_media/go-bkash.jpg";
 import complete from "../_media/go-complete.jpg";
-import scanResult from "../_media/go-scan-result.jpg";
-import checkin from "../_media/go-checkin.jpg";
-import loginPin from "../_media/go-login-pin.jpg";
+import scan from "../_media/go-scan.jpg";
+import gate from "../_media/go-gate.jpg";
+import pin from "../_media/go-pin.jpg";
 
 /*
  * Chapter 02 — Counterfoil Go, walked through the way a cashier works it.
  *
- * Ink is Go's ground. Devices face the reader flat, because a numbered point
- * has to land on the control it names. Every screen is from the till, captured
+ * Ink is Go's ground. Go is shown on the two devices it runs on: a tablet on a
+ * countertop stand, and a phone. Devices face the reader flat, because a
+ * numbered point has to land on the control it names; each point's position is
+ * measured from the screen it sits on. Every screen is from the till, captured
  * mid-sale.
  */
 
 export const GO_SECTION = "02 · Counterfoil Go";
+
+/** Behind a sheet the page is dimmed, so the phone's status bar takes that grey rather than paper. */
+const DIMMED = "#999894";
+
+/** The reference the sale on these slides issued, as the till printed it. */
+const REFERENCE = "CF-2026-236111-01";
 
 /** What a tile on the sell wall says, in the till's own words. */
 const TILE_STATES = [
@@ -52,65 +61,62 @@ export function PosFindSlide({ n }: { n: number }) {
           </ul>
         </div>
       </TextBlock>
-      <Tablet src={posTablet} width={864} alt="Counterfoil Go on a tablet: the sell wall with a sale in the cart" className="absolute left-[640px] top-[170px]">
-        <Hotspot n={1} x={63} y={11} />
-        <Hotspot n={2} x={66} y={70} />
-        <Hotspot n={3} x={94} y={72} />
-      </Tablet>
+      <PosStand src={till} width={724} alt="Counterfoil Go on a countertop stand: the sell wall with a sale in the cart" className="absolute left-[780px] top-[150px]">
+        <Hotspot n={1} x={60} y={12.8} />
+        <Hotspot n={2} x={34} y={61} />
+        <Hotspot n={3} x={74.6} y={13.8} />
+      </PosStand>
+      {/* The same wall on a phone, for a counter that is a person with a phone. */}
+      <Phone src={phoneSell} width={190} alt="The sell wall on a phone, with one item in the cart" className="absolute left-[640px] top-[372px]" />
     </Slide>
   );
 }
 
-/* Three sheets at one aspect (4 : 3), each cut on a row boundary. */
 const PANELS = [
-  {
-    title: "A show",
-    body: "Pick the day and the session; each one says how many seats are left.",
-    crop: { src: sessions, alt: "Planetarium Show: today’s sessions, 40 seats each", x: 0, y: 0.466, w: 1, h: 0.3466 },
-  },
-  {
-    title: "A cinema",
-    body: "Pick the seats on the map; stalls and balcony price themselves.",
-    crop: { src: seats, alt: "Evening Film: three seats chosen in the stalls", x: 0.02, y: 0.168, w: 0.96, h: 0.5315 },
-  },
-  {
-    title: "A lane",
-    body: "Say how long, which lane and when — or tap Start now.",
-    crop: { src: bowling, alt: "Bowling Lane: the day, start now, duration and lane", x: 0.08, y: 0.124, w: 0.54, h: 0.6496 },
-  },
+  { title: "A show", body: "The day, then a session with its seats left.", src: sheetShow, alt: "Planetarium Show: the day and the sessions, 40 seats each" },
+  { title: "A cinema", body: "Seats on the map; each section prices itself.", src: sheetCinema, alt: "Evening Film: three seats chosen in the stalls" },
+  { title: "A lane", body: "How long, which lane and when — or Start now.", src: sheetLane, alt: "Bowling Lane: start now, the duration and the lane" },
 ];
+
+/* Three columns across the content width, a phone centred in each. */
+const COLUMN = 1408 / 3;
+const PHONE_W = 226;
+const PHONE_TOP = 238;
+const PHONE_H = 473;
 
 export function PosChooseSlide({ n }: { n: number }) {
   return (
     <Slide tone="ink" n={n} section={GO_SECTION} label="One sheet asks only what the booking needs">
-      <TextBlock eyebrow="Go · 2 of 6 · Choose" title="One sheet asks only what the booking needs." width={880} />
-      <p className={cn(s.lead, s.text)} style={{ left: 1024, top: 128, width: 480 }}>
-        A show, a seat and a lane are different questions. Each gets its own.
-      </p>
-      <ol className="absolute left-[96px] top-[302px] grid w-[1408px] grid-cols-3 gap-11">
-        {PANELS.map((p, i) => (
-          <li key={p.title} className="relative">
-            <Crop {...p.crop} width={440} />
-            <div className="mt-6 flex gap-4">
-              <span aria-hidden className={s.stepNum}>
-                {i + 1}
-              </span>
-              <div className="min-w-0 pt-[3px]">
+      <Glow className="left-[520px] top-[260px] h-[640px] w-[860px] opacity-50" />
+      <TextBlock eyebrow="Go · 2 of 6 · Choose" title="One sheet asks only what the booking needs." width={1408} />
+      {PANELS.map((p, i) => {
+        const centre = 96 + COLUMN * i + COLUMN / 2;
+        return (
+          <div key={p.title}>
+            <div className="absolute" style={{ left: centre - PHONE_W / 2, top: PHONE_TOP }}>
+              <Phone src={p.src} alt={p.alt} bar={DIMMED} width={PHONE_W} />
+            </div>
+            <div className={cn(s.text, "text-center")} style={{ left: centre - 200, top: PHONE_TOP + PHONE_H + 22, width: 400 }}>
+              <div className="flex items-center justify-center gap-3">
+                <span aria-hidden className={s.stepNum}>
+                  {i + 1}
+                </span>
                 <h3 className={s.heading}>{p.title}</h3>
-                <p className={cn(s.body, "mt-1.5")}>{p.body}</p>
               </div>
+              <p className={cn(s.body, "mt-1.5")}>{p.body}</p>
             </div>
             {i < PANELS.length - 1 && (
-              <span
-                aria-hidden
-                className="absolute left-[462px] top-[145px] z-10 grid h-[40px] w-[40px] -translate-x-1/2 place-items-center rounded-full bg-[#f94a00] text-white shadow-[0_8px_20px_-6px_rgb(249_74_0/0.7)]"
-              >
-                <ArrowRight size={22} strokeWidth={2.2} />
-              </span>
+              <div aria-hidden className="absolute flex items-center" style={{ left: centre + PHONE_W / 2 + 28, top: PHONE_TOP + PHONE_H / 2 - 20, width: COLUMN - PHONE_W - 56, height: 40 }}>
+                <span className="h-px flex-1 border-t-2 border-dashed border-white/20" />
+                <span className="mx-3 grid h-[40px] w-[40px] shrink-0 place-items-center rounded-full bg-[#f94a00] text-white shadow-[0_8px_20px_-6px_rgb(249_74_0/0.7)]">
+                  <ArrowRight size={22} strokeWidth={2.2} />
+                </span>
+                <span className="h-px flex-1 border-t-2 border-dashed border-white/20" />
+              </div>
             )}
-          </li>
-        ))}
-      </ol>
+          </div>
+        );
+      })}
     </Slide>
   );
 }
@@ -118,7 +124,7 @@ export function PosChooseSlide({ n }: { n: number }) {
 export function PosPaySlide({ n }: { n: number }) {
   return (
     <Slide tone="ink" n={n} section={GO_SECTION} label="Take the money, however it comes">
-      <Glow className="left-[760px] top-[420px] h-[640px] w-[860px] opacity-70" />
+      <Glow className="left-[760px] top-[360px] h-[640px] w-[860px] opacity-70" />
       <TextBlock
         eyebrow="Go · 3 of 6 · Pay"
         title={
@@ -150,16 +156,45 @@ export function PosPaySlide({ n }: { n: number }) {
           ))}
         </ul>
       </TextBlock>
-      <Phone src={cart} width={262} alt="The cart: General Admission and a yoga session, paying by cash" className="absolute left-[668px] top-[160px]">
-        <Hotspot n={1} x={72} y={19} />
+      {/* Stepped up to the right: the order the three screens come in. */}
+      <Phone src={cart} width={262} alt="The cart: General Admission and a yoga session, paying by cash" className="absolute left-[668px] top-[206px]">
+        <Hotspot n={1} x={50} y={24.7} small />
       </Phone>
-      <Phone src={cash} width={262} alt="Cash: ৳1,725.00 due, exact cash received, no change" className="absolute left-[955px] top-[160px]">
-        <Hotspot n={2} x={2} y={45} />
+      <Phone src={cash} bar={DIMMED} width={262} alt="Cash: ৳2,875.00 due, exact cash received, no change" className="absolute left-[955px] top-[150px]">
+        <Hotspot n={2} x={1} y={48.9} small />
       </Phone>
-      <Phone src={bkash} width={262} alt="bKash: the guest’s transaction ID entered before the payment is received" className="absolute left-[1242px] top-[160px]">
-        <Hotspot n={3} x={2} y={53} />
+      <Phone src={bkash} bar={DIMMED} width={262} alt="bKash: the guest’s transaction ID entered before the payment is received" className="absolute left-[1242px] top-[94px]">
+        <Hotspot n={3} x={84} y={55.4} small />
       </Phone>
     </Slide>
+  );
+}
+
+const OUTPUTS: { icon: LucideIcon; title: string; body: string }[] = [
+  { icon: TicketIcon, title: "Print tickets", body: "A stub per guest, with the code the gate scans." },
+  { icon: Printer, title: "Print receipt", body: "Every line, the VAT and how it was paid." },
+  { icon: MessageSquare, title: "Send SMS", body: "The reference, straight to the guest’s phone." },
+];
+
+/** The guest's side of the sale: the SMS arriving in their messages. */
+function GuestMessages() {
+  return (
+    <div aria-hidden className="absolute inset-0 flex flex-col bg-white text-[#141413]">
+      <div className="flex flex-col items-center border-b border-[#ececec] bg-[#f7f7f7] pb-2.5 pt-1.5">
+        <span className="grid h-[34px] w-[34px] place-items-center rounded-full bg-gradient-to-b from-[#a6a6ab] to-[#8a8a8f] text-[12px] font-semibold text-white">LH</span>
+        <span className="mt-1 text-[10px] font-medium">LALBAGH</span>
+      </div>
+      <p className="mt-3 text-center text-[9px] text-[#8a8a8e]">
+        <span className="font-semibold">Text message</span> · Today 12:04
+      </p>
+      <div className="mx-2.5 mt-2 w-[84%] rounded-[16px] rounded-bl-[5px] bg-[#e9e9eb] px-3 py-2 text-[11.5px] leading-[1.38]">
+        Your Lalbagh Heritage Attractions ticket <span className="font-semibold">{REFERENCE}</span> is confirmed for Wed 29 Jul. Show this SMS or the code at the gate. Thank you!
+      </div>
+      <div className="mt-auto flex items-center gap-2 px-2.5 pb-5 pt-2">
+        <span className="grid h-[24px] w-[24px] place-items-center rounded-full bg-[#ececec] text-[15px] leading-none text-[#8a8a8e]">+</span>
+        <span className="flex h-[26px] flex-1 items-center rounded-full border border-[#dcdcdc] px-2.5 text-[10px] text-[#b0b0b3]">Text Message</span>
+      </div>
+    </div>
   );
 }
 
@@ -168,29 +203,31 @@ export function PosTicketSlide({ n }: { n: number }) {
     <Slide tone="ink" n={n} section={GO_SECTION} label="The ticket, printed or sent">
       <Glow className="left-[640px] top-[-240px] h-[860px] w-[900px]" />
       <TextBlock eyebrow="Go · 4 of 6 · Ticket" title="The ticket, printed or sent." lead="Every sale issues a reference the gate can scan — on paper, by SMS, or both.">
-        <ul className="flex flex-wrap gap-2.5">
-          {[
-            { icon: TicketIcon, label: "Print tickets" },
-            { icon: Printer, label: "Print receipt" },
-            { icon: MessageSquare, label: "Send SMS" },
-          ].map(({ icon: Icon, label }) => (
-            <li key={label}>
-              <Pill>
-                <Icon size={17} strokeWidth={1.6} aria-hidden /> {label}
-              </Pill>
+        <ul className="flex flex-col">
+          {OUTPUTS.map(({ icon: Icon, title, body }) => (
+            <li key={title} className="flex items-center gap-4 border-t border-white/10 py-4">
+              <span className="grid h-[48px] w-[48px] shrink-0 place-items-center rounded-[14px] bg-white/[0.07] text-[#ffa572] ring-1 ring-inset ring-white/10">
+                <Icon size={22} strokeWidth={1.6} aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className={cn(s.heading, "block text-[22px]")}>{title}</span>
+                <span className={cn(s.body, "block")}>{body}</span>
+              </span>
             </li>
           ))}
         </ul>
-        <div className="mt-9 w-[460px] rounded-[22px] rounded-bl-[6px] bg-white/[0.08] px-6 py-5 ring-1 ring-inset ring-white/12">
-          <p className="font-mono text-[14px] uppercase tracking-[0.1em] text-[rgb(245_242_235/0.64)]">SMS to the guest</p>
-          <p className="mt-2 text-[18px] leading-[1.45] text-[#f5f2eb]">
-            Your Lalbagh Heritage Attractions ticket <span className="whitespace-nowrap">CF-2026-213912-01</span> is confirmed for Wed 29 Jul. Show this SMS or the code at the gate. Thank you!
-          </p>
-        </div>
       </TextBlock>
-      <Phone src={complete} width={300} alt="Ticket issued: reservation reference CF-2026-213912-01" className="absolute left-[704px] top-[100px]" />
-      {/* The printed ticket comes out over the empty half of the screen that issued it. */}
-      <Ticket word="ADMIT 1" kicker="General Admission" code="CF-2026-213912-01" width={520} className="absolute left-[930px] top-[392px]" />
+      {/* The till that issued it, the guest's phone that received it, and the stub printed between them. */}
+      <Phone src={complete} width={262} alt={`Ticket issued: reservation reference ${REFERENCE}`} className="absolute left-[700px] top-[150px]" />
+      <Phone bar="#f7f7f7" width={262} alt="" screen={<GuestMessages />} className="absolute left-[1196px] top-[92px]" />
+      <Ticket
+        word="ADMIT 1"
+        kicker="General Admission"
+        code={REFERENCE}
+        width={430}
+        tilt="perspective(1100px) rotateX(16deg) rotateY(-22deg) rotateZ(-9deg)"
+        className="absolute left-[888px] top-[500px]"
+      />
     </Slide>
   );
 }
@@ -198,7 +235,7 @@ export function PosTicketSlide({ n }: { n: number }) {
 export function PosGateSlide({ n }: { n: number }) {
   return (
     <Slide tone="ink" n={n} section={GO_SECTION} label="Checked in at the gate">
-      <Glow className="left-[980px] top-[80px] h-[720px] w-[700px] opacity-60" />
+      <Glow className="left-[880px] top-[60px] h-[760px] w-[760px] opacity-60" />
       <TextBlock eyebrow="Go · 5 of 6 · Admit" title="Checked in at the gate." lead="Scan a ticket and the phone says who to let in — a family ticket lets the whole family in.">
         <ol className="flex flex-col gap-6">
           <Step n={1} title="Scan" body="A used ticket is refused, and says why." />
@@ -206,30 +243,18 @@ export function PosGateSlide({ n }: { n: number }) {
           <Step n={3} title="Settle first" body="A balance still owed is taken before anyone goes in." />
         </ol>
       </TextBlock>
-
-      <div className="absolute left-[664px] top-[176px]">
-        <Crop src={checkin} alt="Check-in by session: Sculpture Garden 3 of 3 in, then cricket, bowling and futsal" x={0.27} y={0.085} w={0.53} h={0.605} width={556} />
-        {/* On the row, just short of its count, so it never crowds the phone's own point. */}
-        <Hotspot n={2} x={81} y={31.5} />
-      </div>
-
-      <div className={cn(s.card, s.paperCard, "absolute left-[664px] top-[597px] flex h-[203px] w-[556px] flex-col justify-between px-7 py-6 text-[#141413]")}>
-        <div>
-          <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#aa3000]">Settle first</p>
-          <p className="mt-2 text-[22px] font-semibold tracking-[-0.015em]">Balance due on arrival</p>
-          <p className="mt-1 text-[17px] text-[#57534c]">One arrival today still owes ৳1,437.50.</p>
-        </div>
-        <div className="flex items-center gap-16">
-          {/* 19px bold is large text, so white on ember clears its 3 : 1 floor. */}
-          <span className="rounded-full bg-[#f94a00] px-5 py-2 text-[19px] font-bold text-white">Take balance</span>
-          <span className="text-[16px] text-[#57534c]">then check in</span>
-        </div>
-        {/* In the gap after the button, level with it — clear of its label and the sentence above. */}
-        <Hotspot n={3} x={36} y={68} />
-      </div>
-
-      <Phone src={scanResult} width={264} alt="A scanned ticket refused at the gate: already redeemed" className="absolute left-[1240px] top-[196px]">
-        <Hotspot n={1} x={19} y={26} />
+      <PosStand
+        src={gate}
+        orientation="portrait"
+        width={380}
+        alt="Check-in by session on a tablet at the gate: Sculpture Garden 3 of 3 in, and a balance of ৳1,437.50 to take"
+        className="absolute left-[732px] top-[104px]"
+      >
+        <Hotspot n={2} x={77.5} y={18.9} small />
+        <Hotspot n={3} x={35} y={35.6} small />
+      </PosStand>
+      <Phone src={scan} width={254} alt="A scanned ticket refused at the gate: already redeemed" className="absolute left-[1236px] top-[190px]">
+        <Hotspot n={1} x={71} y={21} small />
       </Phone>
     </Slide>
   );
@@ -254,12 +279,9 @@ export function PosShiftSlide({ n }: { n: number }) {
         </ol>
       </TextBlock>
 
-      <div className="absolute left-[664px] top-[176px] w-[400px]">
-        <Crop src={loginPin} alt="Signing in to the till as Nadia Islam with a PIN" x={0.38} y={0.18} w={0.31} h={0.65} width={400} />
-        <span className="absolute left-[-14px] top-[-14px]">
-          <Hotspot n={1} x={0} y={0} />
-        </span>
-      </div>
+      <Phone src={pin} width={262} alt="Signing in to the till as Nadia Islam with a PIN, two digits entered" className="absolute left-[740px] top-[150px]">
+        <Hotspot n={1} x={74} y={36.9} small />
+      </Phone>
 
       <div className={cn(s.receipt, "absolute left-[1112px] top-[196px] w-[392px] rotate-[3deg]")}>
         <div className={s.receiptPaper}>
@@ -282,8 +304,12 @@ export function PosShiftSlide({ n }: { n: number }) {
           </div>
           <p className="mt-3 text-[15px] text-[#57534c]">Within ৳100 — closed square</p>
         </div>
-        <span className="absolute left-[-18px] top-[46%]">
+        {/* 2 on the count, 3 on the variance it produces — both on the receipt's edge, clear of its figures. */}
+        <span className="absolute left-0 top-[46%]">
           <Hotspot n={2} x={0} y={0} />
+        </span>
+        <span className="absolute left-0 top-[77%]">
+          <Hotspot n={3} x={0} y={0} />
         </span>
       </div>
     </Slide>
