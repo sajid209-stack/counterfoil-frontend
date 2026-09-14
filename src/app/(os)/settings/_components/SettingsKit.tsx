@@ -248,18 +248,22 @@ export function Switch({
   labelledBy,
   describedBy,
   disabled,
+  label,
 }: {
   checked: boolean;
   onChange: (next: boolean) => void;
   labelledBy?: string;
   describedBy?: string;
   disabled?: boolean;
+  /** Accessible name, for a switch no visible label points at (one per list row). */
+  label?: string;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={label}
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       disabled={disabled}
@@ -339,6 +343,7 @@ export function RecordRow({
   meta,
   aside,
   columns,
+  control,
   menu,
 }: {
   href: string;
@@ -352,15 +357,18 @@ export function RecordRow({
   aside?: React.ReactNode;
   /** Aligned values for wider screens; the page repeats them in meta below md. */
   columns?: React.ReactNode;
+  /** A switch that acts on the record in place — open, on, shown. */
+  control?: React.ReactNode;
   menu?: React.ReactNode;
 }) {
+  const trailing = (control ? 1 : 0) + (menu ? 1 : 0);
   return (
     <li className="relative">
       <Link
         href={href}
         className={cn(
           "flex min-h-16 items-center gap-section px-section py-comfortable transition-colors duration-quick hover:bg-subtle/60 sm:px-major",
-          menu ? "pr-[4.5rem] sm:pr-[5rem]" : undefined,
+          trailing === 2 ? "pr-[7.75rem] sm:pr-[8.25rem]" : trailing === 1 ? "pr-[4.5rem] sm:pr-[5rem]" : undefined,
         )}
       >
         {leading}
@@ -374,9 +382,14 @@ export function RecordRow({
         </span>
         {columns ? <span className="hidden shrink-0 items-center gap-section md:flex">{columns}</span> : null}
         {aside ? <span className="hidden max-w-[40%] shrink-0 text-right text-[13px] text-muted sm:block">{aside}</span> : null}
-        {menu ? null : <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
+        {trailing > 0 ? null : <ChevronRight size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
       </Link>
-      {menu ? <div className="absolute right-section top-1/2 -translate-y-1/2 sm:right-major">{menu}</div> : null}
+      {trailing > 0 ? (
+        <div className="absolute right-section top-1/2 flex -translate-y-1/2 items-center gap-tight sm:right-major">
+          {control}
+          {menu}
+        </div>
+      ) : null}
     </li>
   );
 }

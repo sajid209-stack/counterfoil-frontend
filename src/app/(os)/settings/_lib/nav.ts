@@ -4,6 +4,7 @@ import {
   CreditCard,
   Gift,
   LandPlot,
+  LockKeyhole,
   MapPin,
   MessageSquare,
   MonitorSmartphone,
@@ -33,6 +34,7 @@ export type SettingsItemKey =
   | "loyalty"
   | "team"
   | "roles"
+  | "signIn"
   | "devices"
   | "notifications"
   | "security"
@@ -92,6 +94,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     items: [
       { key: "team", href: "/settings/team", icon: Users },
       { key: "roles", href: "/settings/roles", icon: UserCog },
+      { key: "signIn", href: "/settings/sign-in", icon: LockKeyhole },
       { key: "devices", href: "/settings/devices", icon: MonitorSmartphone },
     ],
   },

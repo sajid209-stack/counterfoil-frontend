@@ -1,4 +1,5 @@
 import { createResource, fail, validationError } from "./client";
+import { peekStaff } from "./staff";
 import type {
   ApiResult,
   ListParams,
@@ -41,4 +42,13 @@ export function updateRole(id: string, patch: RolePatch): Promise<ApiResult<Role
   const errors = validate(patch);
   if (Object.keys(errors).length) return Promise.resolve(fail(validationError(errors)));
   return resource.update(id, patch);
+}
+
+/** Delete a role nobody holds. A role in use is refused rather than leaving the
+ *  people who have it without one. */
+export function deleteRole(id: string): Promise<ApiResult<Role>> {
+  if (peekStaff().some((s) => s.roleId === id)) {
+    return Promise.resolve(fail(validationError({ role: "Move the people who have this role to another one first." })));
+  }
+  return resource.remove(id);
 }

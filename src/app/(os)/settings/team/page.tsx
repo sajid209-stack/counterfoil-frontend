@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listLocations, listRoles, listStaff, updateStaff, type Staff, type StaffStatus } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
-import { RecordList, RecordRow, SearchField, SectionSkeleton } from "../_components/SettingsKit";
+import { RecordList, RecordRow, SearchField, SectionSkeleton, controlCls } from "../_components/SettingsKit";
 import { useSince } from "../_lib/time";
 
 type Tab = "all" | StaffStatus;
@@ -23,10 +23,17 @@ const TABS: Tab[] = ["all", "active", "invited", "suspended"];
  * people already suspended. Team screens that work are read for name, role and
  * whether the person can get in, and each row offers only the actions that
  * apply to its state. So status is a set of tabs with counts, a status pill
- * appears only where it is the exception (a column of "Active" says nothing),
- * and the actions sit in a row menu that changes with the person: resend a
- * pending invite, reset or suspend someone active, reactivate someone
- * suspended.
+ * appears only where it is the exception, and the actions sit in a row menu
+ * that changes with the person.
+ *
+ * The questions a manager actually asks of this list — who are my cashiers,
+ * who works at the museum — are a role and a place, so both are filters beside
+ * the search, and the tab counts follow them: "Invited 1" means one invited
+ * cashier once Cashier is chosen, not one invited person somewhere.
+ *
+ * Suspending stays in the menu, behind a confirmation, and is not a switch on
+ * the row. It signs a person out everywhere; that is not something to be one
+ * mis-tap away.
  */
 export default function TeamPage() {
   const t = useTranslations("settings");
@@ -34,6 +41,8 @@ export default function TeamPage() {
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
+  const [roleId, setRoleId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [confirm, setConfirm] = useState<Staff | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -42,20 +51,20 @@ export default function TeamPage() {
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
 
   const staff = useMemo(() => staffQ.data?.data ?? [], [staffQ.data]);
+  const roles = rolesQ.data?.data ?? [];
   const locations = locationsQ.data?.data ?? [];
-  const roleName = (id: string) => rolesQ.data?.data.find((r) => r.id === id)?.name ?? "—";
+  const roleName = (id: string) => roles.find((r) => r.id === id)?.name ?? "—";
   const since = useSince();
 
-  const counts = useMemo(() => {
-    const c: Record<Tab, number> = { all: staff.length, active: 0, invited: 0, suspended: 0 };
-    for (const s of staff) c[s.status] += 1;
-    return c;
-  }, [staff]);
-
   const q = search.trim().toLowerCase();
-  const rows = staff
-    .filter((s) => tab === "all" || s.status === tab)
+  const filtered = staff
+    .filter((s) => !roleId || s.roleId === roleId)
+    .filter((s) => !locationId || s.locationIds.includes(locationId))
     .filter((s) => !q || [s.name, s.email ?? "", s.phone ?? ""].some((v) => v.toLowerCase().includes(q)));
+  const counts: Record<Tab, number> = { all: filtered.length, active: 0, invited: 0, suspended: 0 };
+  for (const s of filtered) counts[s.status] += 1;
+  const rows = filtered.filter((s) => tab === "all" || s.status === tab);
+  const filtering = !!q || !!roleId || !!locationId;
 
   const workplace = (s: Staff) => {
     if (s.locationIds.length === 0) return t("team.nowhere");
@@ -126,6 +135,8 @@ export default function TeamPage() {
     ];
   };
 
+  const select = cn(controlCls(), "pr-section sm:w-44");
+
   return (
     <PageShell
       title={t("team.title")}
@@ -142,24 +153,55 @@ export default function TeamPage() {
           value={tab}
           onChange={(v) => setTab(v as Tab)}
         />
-        {staffQ.loading ? (
+        {!staffQ.data ? (
           <SectionSkeleton />
         ) : (
           <RecordList
             label={t("team.title")}
             header={
-              <div className="flex flex-col gap-tight border-b border-hairline px-section py-tight sm:flex-row sm:items-center sm:justify-between sm:px-major">
+              <div className="flex flex-col gap-tight border-b border-hairline px-section py-tight sm:flex-row sm:flex-wrap sm:items-center sm:px-major">
                 <SearchField value={search} onChange={setSearch} label={t("team.searchLabel")} placeholder={t("team.searchPlaceholder")} />
-                {/* The tab already carries the count; this line speaks only while
-                    a search is narrowing the list. */}
-                <p className="text-[13px] text-muted" aria-live="polite">
-                  {q ? t("team.showing", { count: rows.length }) : null}
-                </p>
+                <select aria-label={t("team.filterRole")} value={roleId} onChange={(e) => setRoleId(e.target.value)} className={select}>
+                  <option value="">{t("team.anyRole")}</option>
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+                <select aria-label={t("team.filterLocation")} value={locationId} onChange={(e) => setLocationId(e.target.value)} className={select}>
+                  <option value="">{t("team.anyLocation")}</option>
+                  {locations
+                    .filter((l) => l.status !== "archived")
+                    .map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name}
+                      </option>
+                    ))}
+                </select>
+                <div className="flex items-center gap-tight sm:ml-auto">
+                  <p className="text-[13px] text-muted" aria-live="polite">
+                    {filtering ? t("team.showing", { count: rows.length }) : null}
+                  </p>
+                  {filtering && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearch("");
+                        setRoleId("");
+                        setLocationId("");
+                      }}
+                      className="inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg md:min-h-9"
+                    >
+                      {t("team.clearFilters")}
+                    </button>
+                  )}
+                </div>
               </div>
             }
           >
             {rows.length === 0 ? (
-              <li className="px-major py-wide text-center text-sm text-muted">{q ? t("team.noMatch") : t("team.emptyTab")}</li>
+              <li className="px-major py-wide text-center text-sm text-muted">{filtering ? t("team.noMatch") : t("team.emptyTab")}</li>
             ) : (
               rows.map((s) => {
                 const isYou = s.id === DEMO_STAFF_ID;

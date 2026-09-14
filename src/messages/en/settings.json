@@ -29,11 +29,12 @@
     "dayWed": "Wed",
     "dayThu": "Thu",
     "dayFri": "Fri",
-    "daySat": "Sat"
+    "daySat": "Sat",
+    "undo": "Undo"
   },
   "business": {
     "title": "Business profile",
-    "description": "How your business is named, priced and timed across Counterfoil.",
+    "description": "Your name and contact details, what receipts say, and the currency and clock everything runs on.",
     "saved": "Business settings saved.",
     "businessName": "Business name",
     "currency": "Currency",
@@ -52,11 +53,27 @@
     "days": "days",
     "lockPlaceholder": "Always editable",
     "lockInvalid": "Enter a whole number of days, or leave it empty.",
-    "nameRequired": "Your business needs a name."
+    "nameRequired": "Your business needs a name.",
+    "phone": "Phone",
+    "phoneDesc": "Printed on receipts, so a customer can call.",
+    "phoneInvalid": "Enter a phone number, or leave it empty.",
+    "email": "E-mail",
+    "emailDesc": "Shown in the e-mails customers receive.",
+    "emailInvalid": "Enter an e-mail address, or leave it empty.",
+    "website": "Website",
+    "websiteDesc": "Printed on receipts beside the phone number.",
+    "websiteInvalid": "Enter a web address such as lalbagh.com, or leave it empty.",
+    "receiptsTitle": "Receipts",
+    "receiptsDesc": "The top and bottom of every printed receipt.",
+    "footer": "Message under the total",
+    "footerDesc": "Returns, opening hours or a thank-you. Up to 160 characters.",
+    "receiptPreview": "Preview",
+    "receiptPreviewDesc": "The location of the sale prints under your name, and the tax registration number if it is switched on in Tax.",
+    "receiptItems": "Items, tax and total"
   },
   "security": {
     "title": "Security",
-    "description": "Password, two-step login, backup codes and recovery — per user.",
+    "description": "Your password, two-step sign-in, recovery and where you're signed in.",
     "password": "Password",
     "current": "Current",
     "new": "New",
@@ -64,7 +81,7 @@
     "noMatch": "Doesn't match.",
     "changePassword": "Change password",
     "passwordChanged": "Password changed.",
-    "twoStep": "Two-step login",
+    "twoStep": "Two-step sign-in",
     "twoStepLabel": "Require a code as well as a password",
     "twoStepHelp": "A code from an authenticator app is asked for on new devices.",
     "regenerateCodes": "Regenerate backup codes",
@@ -85,8 +102,6 @@
     "recentSignins": "Recent sign-ins",
     "ok": "Signed in",
     "failed": "Failed",
-    "signOutAll": "Sign out of all devices",
-    "signedOutAll": "Signed out everywhere. Devices will ask for the PIN or password again.",
     "codesTitle": "Backup codes — save these now",
     "codesSaved": "I've saved them",
     "codesNote": "Each code works once, when you can't use your authenticator. They will not be shown again.",
@@ -99,7 +114,22 @@
     "backupCodes": "Backup codes",
     "backupCodesDesc": "One-time codes for when your phone is not with you. Each works once.",
     "recoveryWho": "Who can restore your access",
-    "signinsDesc": "The last places your account was used. If one of them was not you, sign out everywhere."
+    "signinsDesc": "Every recent attempt to use your account, including the ones that failed.",
+    "sessionsTitle": "Where you're signed in",
+    "sessionsDesc": "Signing out of a place ends that sign-in straight away.",
+    "thisBrowser": "This browser",
+    "activeNow": "Active now",
+    "sessionMeta": "{place} · {since}",
+    "signOut": "Sign out",
+    "signOutOthers": "Sign out everywhere else",
+    "signOutOthersTitle": "Sign out everywhere else?",
+    "signOutOthersBody": "{count, plural, one {# other place} other {# other places}} will ask for your password or PIN again. You stay signed in here.",
+    "signedOutOne": "Signed out of {device}",
+    "signedOutOthers": "Signed out everywhere else",
+    "requiredBy": "Your business requires two-step sign-in for your role.",
+    "requiredOff": "Turn it on now, or you'll be asked to set it up the next time you sign in.",
+    "requiredOn": "It stays on while the business requires it.",
+    "requiredLink": "Sign-in rules"
   },
   "devices": {
     "title": "Devices",
@@ -166,7 +196,16 @@
     "step3": "Enter the code above.",
     "notFoundTitle": "Device not found",
     "backButton": "Back to devices",
-    "fallbackTitle": "Device"
+    "fallbackTitle": "Device",
+    "tab": {
+      "all": "All",
+      "on": "On",
+      "off": "Off",
+      "attention": "Needs attention"
+    },
+    "powerSwitch": "{name}: on",
+    "offTag": "Off",
+    "emptyTab": "No devices in this list."
   },
   "locations": {
     "title": "Locations",
@@ -228,7 +267,15 @@
     "started": "{name} is selling again.",
     "createDesc": "Name it, say where it is, and set when it’s open.",
     "createNote": "The location isn’t created until you press Create location.",
-    "createInvalid": "Add a name and a city to create the location."
+    "createInvalid": "Add a name and a city to create the location.",
+    "tab": {
+      "all": "All",
+      "selling": "Selling",
+      "off": "Not selling"
+    },
+    "sellingSwitch": "{name}: selling",
+    "offTag": "Not selling",
+    "emptyTab": "No locations here."
   },
   "counters": {
     "title": "Counters",
@@ -298,7 +345,15 @@
     "createDesc": "Name it, choose where it is, and how customers pay there.",
     "createNote": "The counter isn’t created until you press Create counter.",
     "createInvalid": "Add a name and at least one way to pay.",
-    "pairedLabel": "Paired here"
+    "pairedLabel": "Paired here",
+    "tab": {
+      "all": "All",
+      "open": "Open",
+      "closed": "Closed"
+    },
+    "openSwitch": "{name}: open for sales",
+    "closedTag": "Closed",
+    "emptyTab": "No counters in this list."
   },
   "team": {
     "title": "Team",
@@ -376,7 +431,12 @@
     "resendDesc": "Sends the link again. The earlier one keeps working until it’s used.",
     "reactivateLabel": "Reactivate",
     "reactivateDesc": "They can sign in again with their existing password and PIN.",
-    "lastActive": "Last active {when}"
+    "lastActive": "Last active {when}",
+    "filterRole": "Role",
+    "anyRole": "Any role",
+    "filterLocation": "Location",
+    "anyLocation": "Any location",
+    "clearFilters": "Clear filters"
   },
   "roles": {
     "title": "Roles",
@@ -420,7 +480,16 @@
     "selfWarning": "You have this role. Turning this off takes it away from you too, as soon as you save.",
     "createDesc": "Name the job, then switch on what it needs. People with the role pick up changes the next time they sign in.",
     "createNote": "The role isn’t created until you press Create role.",
-    "createInvalid": "Give the role a name to create it."
+    "createInvalid": "Give the role a name to create it.",
+    "actionsFor": "Actions for {name}",
+    "duplicate": "Duplicate",
+    "copyOf": "Copy of {name}",
+    "duplicated": "Copied {name}. Rename it and adjust what it allows.",
+    "delete": "Delete",
+    "deleteBlocked": "Delete — {count, plural, one {# person has it} other {# people have it}}",
+    "deleteTitle": "Delete {name}?",
+    "deleteBody": "Nobody has this role, so nothing else changes. This can’t be undone.",
+    "deleted": "{name} was deleted."
   },
   "resources": {
     "descriptionList": "Courts, lanes, fields and rooms that bookings take up. Availability is worked out for each one.",
@@ -492,7 +561,22 @@
     "restored": "{name} is back in use.",
     "createDesc": "Name it, say what kind of thing it is, and where it is.",
     "createNote": "Nothing is added until you press Add.",
-    "createInvalid": "Give it a name to add it."
+    "createInvalid": "Give it a name to add it.",
+    "tab": {
+      "all": "All",
+      "available": "Available",
+      "out": "Out of service",
+      "retired": "Retired"
+    },
+    "availableSwitch": "{name}: available for booking",
+    "outTitle": "Take {name} out of service?",
+    "outBody": "Bookings that use it stop selling straight away. Say why — staff see this at the till.",
+    "takeOut": "Take out of service",
+    "tookOut": "{name} is out of service.",
+    "backIn": "{name} is back in service.",
+    "retiredTag": "Retired",
+    "actionsFor": "Actions for {name}",
+    "emptyTab": "Nothing in this list."
   },
   "categories": {
     "title": "Categories",
@@ -502,20 +586,18 @@
     "added": "{name} added.",
     "newPlaceholder": "New category name",
     "count": "{count, plural, =0 {nothing in it} one {# booking} other {# bookings}}",
-    "retire": "Retire",
-    "restore": "Restore",
-    "retired": "{name} retired.",
-    "restored": "{name} is back.",
     "reorderFailed": "Could not reorder. Try again.",
-    "activeTitle": "Shown at the till",
-    "activeDesc": "In the order the chips appear. Put the busiest first — it’s the one tapped all day.",
-    "retiredTitle": "Retired",
-    "retiredDesc": "Hidden at the till. Bookings filed under them keep their category and still sell.",
     "addLabel": "New category name",
     "moveUpNamed": "Move {name} up",
     "moveDownNamed": "Move {name} down",
     "renameNamed": "Rename {name}",
-    "renamed": "Renamed to {name}."
+    "renamed": "Renamed to {name}.",
+    "listTitle": "Chips at the till",
+    "listDesc": "In the order the chips appear. Put the busiest first — it’s tapped all day. A hidden category keeps its bookings, and they still sell.",
+    "showSwitch": "Show {name} at the till",
+    "hiddenTag": "Hidden",
+    "shownToast": "{name} is shown at the till.",
+    "hiddenToast": "{name} is hidden at the till."
   },
   "nav": {
     "label": "Settings sections",
@@ -534,8 +616,8 @@
         "desc": "Who can sign in, what they can do, and on which devices."
       },
       "messages": {
-        "title": "Customer messages",
-        "desc": "What people receive after they buy."
+        "title": "Messages",
+        "desc": "What customers and your team are sent, and when."
       },
       "account": {
         "title": "Your account",
@@ -545,8 +627,8 @@
     "items": {
       "business": {
         "title": "Business profile",
-        "desc": "Name, currency, time zone and reservation history.",
-        "keywords": "name company brand currency money time zone timezone clock reservation history lock"
+        "desc": "Name, contact details, receipts, currency and time zone.",
+        "keywords": "name company brand phone email website contact receipt footer currency money time zone timezone clock reservation history lock"
       },
       "locations": {
         "title": "Locations",
@@ -604,19 +686,24 @@
         "keywords": "tablet ipad scanner pairing code pair"
       },
       "notifications": {
-        "title": "Ticket messages",
-        "desc": "The SMS customers receive with their ticket.",
-        "keywords": "sms text message ticket message template wording"
+        "title": "Notifications",
+        "desc": "Customer messages, reminders, quiet hours and staff alerts.",
+        "keywords": "sms email e-mail text message ticket template wording reminder follow-up quiet hours sender alerts daily summary"
       },
       "security": {
         "title": "Security",
-        "desc": "Your password, two-step sign-in and recent sign-ins.",
-        "keywords": "password two-step 2fa backup codes sign-ins login email recovery"
+        "desc": "Your password, two-step sign-in and where you're signed in.",
+        "keywords": "password two-step 2fa backup codes sign-ins login email recovery sessions sign out devices"
       },
       "preferences": {
         "title": "Preferences",
         "desc": "Appearance and language on this browser.",
         "keywords": "dark mode light mode theme appearance language bangla english"
+      },
+      "signIn": {
+        "title": "Sign-in rules",
+        "desc": "Two-step sign-in, how long a sign-in lasts, and till PINs.",
+        "keywords": "2fa mfa two-step session timeout sign out auto lock idle pin attempts lockout paired device"
       }
     }
   },
@@ -644,8 +731,6 @@
     "statusRoles": "{count, plural, =0 {None yet} one {# role} other {# roles}}",
     "statusDevices": "{count, plural, =0 {None paired} one {# device} other {# devices}}",
     "statusQuiet": "{count} quiet",
-    "statusSmsCustom": "Your own wording",
-    "statusSmsDefault": "Default wording",
     "statusPrefs": "{theme} · {language}",
     "statusNotSelling": "{count} not selling",
     "statusClosed": "{count} closed",
@@ -655,7 +740,16 @@
     "searchPlaceholder": "Search settings",
     "searchEmpty": "No setting matches “{query}”.",
     "searchCount": "{count, plural, =0 {No settings} one {# setting} other {# settings}}",
-    "searchHint": "Try “VAT”, “bKash” or “dark mode”."
+    "searchHint": "Try “VAT”, “bKash” or “dark mode”.",
+    "statusMessagesOn": "{on, number} of {total, number} messages on",
+    "statusTwoStep": {
+      "off": "Two-step optional",
+      "managers": "Two-step for managers",
+      "everyone": "Two-step for everyone"
+    },
+    "statusNoLock": "tills never lock",
+    "noTicket": "Customers aren't sent their tickets",
+    "noTicketBody": "Booking confirmed is off for SMS and e-mail, so a ticket code only reaches a customer at the counter."
   },
   "save": {
     "unsaved": "Unsaved changes",
@@ -684,18 +778,21 @@
     "colTax": "Tax",
     "colTotal": "Customer pays",
     "registrationTitle": "Registration",
-    "registrationDesc": "Kept for your records and your accountant.",
+    "registrationDesc": "For your records — and printed on receipts if you choose.",
     "name": "Tax name",
     "nameDesc": "What the tax is called where you trade, such as VAT.",
     "regNumber": "Registration number",
     "regNumberDesc": "Your tax authority's number for this business.",
-    "saved": "Tax saved. The next sale uses the new rates."
+    "saved": "Tax saved. The next sale uses the new rates.",
+    "onReceipts": "Print on receipts",
+    "onReceiptsDesc": "Receipts show “{line}” under the business name.",
+    "onReceiptsNeedsNumber": "Add a registration number to print it."
   },
   "notifications": {
-    "title": "Ticket messages",
-    "description": "What customers receive after they buy.",
+    "title": "Notifications",
+    "description": "What customers and your team are sent, and when.",
     "smsTitle": "Ticket SMS",
-    "smsDesc": "Sent when staff choose SMS at the end of a sale.",
+    "smsDesc": "The wording of the booking-confirmed SMS. Staff can also send it again from the order.",
     "message": "Message",
     "messageDesc": "Insert a placeholder where the cursor is, and it is filled in for each sale.",
     "insert": "Insert {placeholder}",
@@ -710,8 +807,93 @@
     "segments": "{count, plural, one {Sent as # SMS} other {Sent as # SMS, each billed}}",
     "unicode": "Contains characters outside the basic SMS set, so each SMS holds 70 characters instead of 160.",
     "reset": "Use the default wording",
-    "saved": "Message saved",
-    "empty": "Write a message before saving."
+    "saved": "Notifications saved",
+    "empty": "Write a message before saving.",
+    "customerTitle": "Customer messages",
+    "customerDesc": "Sent automatically as a booking moves along. Turn each one on by SMS, e-mail or both.",
+    "channel": {
+      "sms": "SMS",
+      "email": "E-mail"
+    },
+    "channelSwitch": "{event} by {channel}",
+    "event": {
+      "confirmation": {
+        "title": "Booking confirmed",
+        "desc": "As soon as the sale is complete, with the ticket code."
+      },
+      "reminder": {
+        "title": "Reminder",
+        "desc": "{hours, plural, one {# hour} other {# hours}} before the visit."
+      },
+      "rescheduled": {
+        "title": "Date or time changed",
+        "desc": "When staff move a reservation to another slot."
+      },
+      "cancelled": {
+        "title": "Booking cancelled",
+        "desc": "When a reservation is cancelled, with any refund that is due."
+      },
+      "refunded": {
+        "title": "Refund issued",
+        "desc": "When money goes back, with the amount and how it was paid."
+      },
+      "followUp": {
+        "title": "After the visit",
+        "desc": "A thank-you and a link to book again, {hours, plural, one {# hour} other {# hours}} later."
+      }
+    },
+    "noTicket": "Customers won't be sent their ticket code — staff will have to hand it over at the counter.",
+    "timingTitle": "Timing",
+    "timingDesc": "When the scheduled messages go out.",
+    "reminderHours": "Send reminders",
+    "reminderHoursDesc": "How long before the visit.",
+    "followUpHours": "Send follow-ups",
+    "followUpHoursDesc": "How long after the visit ends.",
+    "hours": "hours",
+    "hoursRange": "Enter a whole number between {min} and {max}.",
+    "quiet": "Quiet hours",
+    "quietOn": "Reminders and follow-ups due between these times wait until {to}. Tickets and changes still go at once.",
+    "quietOff": "Messages go out whenever they are due, including at night.",
+    "quietFrom": "Quiet hours start",
+    "quietTo": "Quiet hours end",
+    "to": "to",
+    "quietSame": "Start and end can't be the same time.",
+    "senderTitle": "Sender",
+    "senderDesc": "Who customers see a message is from.",
+    "senderName": "SMS sender name",
+    "senderNameDesc": "Shown instead of a phone number. 3 to 11 letters or numbers — networks reject anything else.",
+    "senderInvalid": "Use 3 to 11 letters or numbers, with no spaces.",
+    "replyTo": "Reply-to e-mail",
+    "replyToDesc": "Where a customer's reply to an e-mail goes. Leave it empty and e-mails can't be replied to.",
+    "replyInvalid": "Enter an e-mail address, or leave it empty.",
+    "from": "From {sender}",
+    "staffTitle": "Staff alerts",
+    "staffDesc": "Sent by e-mail to everyone in the roles you choose.",
+    "sendTo": "Send to",
+    "sendToLabel": "Who gets “{alert}”",
+    "pickRoles": "Choose at least one role, or turn this alert off.",
+    "alert": {
+      "soldOut": {
+        "title": "A session sells out",
+        "desc": "So someone can open more places or tell the queue."
+      },
+      "cashVariance": {
+        "title": "Cash doesn't match at close",
+        "desc": "When a till closes more than ৳100 short or over."
+      },
+      "deviceOffline": {
+        "title": "A till goes quiet",
+        "desc": "When a paired tablet hasn't been in touch for 30 minutes while its location is open."
+      },
+      "largeRefund": {
+        "title": "A large refund",
+        "desc": "Any refund over ৳5,000, whoever approved it."
+      },
+      "dailySummary": {
+        "title": "Daily summary",
+        "desc": "Takings, arrivals and no-shows for each location, sent at closing time."
+      }
+    }
   },
   "preferences": {
     "title": "Preferences",
@@ -793,5 +975,52 @@
       "title": "Running the business",
       "desc": "Reports, the team and settings."
     }
+  },
+  "signIn": {
+    "title": "Sign-in rules",
+    "description": "How your team signs in — to Counterfoil on the web and to the till.",
+    "twoStepTitle": "Two-step sign-in",
+    "twoStepDesc": "A code from an authenticator app as well as the password, when signing in on the web.",
+    "twoStep": {
+      "off": {
+        "title": "Let each person choose",
+        "desc": "Nobody is required to. Anyone can turn it on for themselves in Security."
+      },
+      "managers": {
+        "title": "Required for managers",
+        "desc": "Anyone whose role can refund, manage the team or change settings."
+      },
+      "managersRoles": "Today: {roles}.",
+      "everyone": {
+        "title": "Required for everyone",
+        "desc": "Everyone who signs in to Counterfoil on the web."
+      }
+    },
+    "recommended": "Recommended",
+    "applies": "{count, plural, =0 {Nobody at the moment} one {Applies to # person} other {Applies to # people}}",
+    "stricter": "People this now applies to who haven't set it up will be asked to the next time they sign in.",
+    "sessionTitle": "Staying signed in",
+    "sessionDesc": "How long before Counterfoil asks again.",
+    "sessionHours": "Web sign-ins last",
+    "sessionHoursDesc": "After this, Counterfoil on the web asks for the password again.",
+    "hours": "{count, plural, one {# hour} other {# hours}}",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "never": "Never",
+    "tillLock": "Lock an idle till after",
+    "tillLockDesc": "The till asks for a PIN again. The sale on it is kept.",
+    "neverWarn": "An unattended till stays open to whoever walks up to it.",
+    "pinTitle": "Till PINs",
+    "pinDesc": "The PIN each person uses to open a till.",
+    "pinLength": "PIN length",
+    "pinLengthDesc": "A longer PIN is harder to read over someone's shoulder.",
+    "digits": "{count, number} digits",
+    "pinChanged": "Everyone will choose a new {count, number}-digit PIN the next time they open a till.",
+    "pinAttempts": "Wrong PINs allowed",
+    "pinAttemptsDesc": "Then that person's sign-in pauses for 30 seconds, or until a manager unlocks it.",
+    "tries": "{count, number} in a row",
+    "deviceBound": "Only on paired tablets",
+    "deviceBoundDesc": "Staff can open a till only on a tablet paired to one of their counters.",
+    "saved": "Sign-in rules saved"
   }
 }

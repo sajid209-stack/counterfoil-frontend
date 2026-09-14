@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, Button, FormField, Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { listStaff, type Staff } from "@/lib/api";
+import { getAccessPolicy, listStaff, type Staff } from "@/lib/api";
 import { Keypad } from "../_components/Keypad";
 
 // Mock session facts: this device is paired to the Fort Main Gate counter and
@@ -15,11 +15,14 @@ const DEVICE_NAME = "Fort iPad 1";
 const BUSINESS = "Lalbagh Heritage Attractions";
 const OPEN_SHIFT = { staffId: "stf_nadia", since: "09:14" };
 const DEMO_PIN = "1234";
-const MAX_ATTEMPTS = 3;
 
 export default function GoLoginPage() {
   const router = useRouter();
   const staffQ = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
+  // How many wrong PINs before the pause is the business's call, made in
+  // Settings → Sign-in rules; three until that answer arrives.
+  const policyQ = useApiQuery(() => getAccessPolicy(), []);
+  const maxAttempts = policyQ.data?.pinAttempts ?? 3;
 
   const [who, setWho] = useState<Staff | { id: "guest"; name: string } | null>(null);
   const [pin, setPin] = useState("");
@@ -53,7 +56,7 @@ export default function GoLoginPage() {
         setAttempts(n);
         setShake(true);
         setTimeout(() => { setShake(false); setPin(""); }, 200);
-        if (n >= MAX_ATTEMPTS) setLocked(true);
+        if (n >= maxAttempts) setLocked(true);
       }
     }
   };
@@ -139,7 +142,7 @@ export default function GoLoginPage() {
           ) : (
             attempts > 0 && (
               <p className="mt-tight text-[13px] text-danger">
-                PIN not recognised. {MAX_ATTEMPTS - attempts} attempt{MAX_ATTEMPTS - attempts === 1 ? "" : "s"} left.
+                PIN not recognised. {maxAttempts - attempts} attempt{maxAttempts - attempts === 1 ? "" : "s"} left.
               </p>
             )
           )}

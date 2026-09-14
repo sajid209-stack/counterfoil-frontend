@@ -6,8 +6,9 @@ import { ArrowLeft, Printer } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, EmptyState } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { getOperator, getOrder } from "@/lib/api";
+import { getOperator, getOrder, getTaxConfig, listLocations } from "@/lib/api";
 import { OrderLinesDetail } from "@/components/OrderLinesDetail";
+import { ReceiptFooter, ReceiptHeader } from "@/components/ReceiptParts";
 import { formatDate } from "@/lib/format";
 
 export default function PrintReceiptPage() {
@@ -16,9 +17,14 @@ export default function PrintReceiptPage() {
   const router = useRouter();
   const orderQ = useApiQuery(() => getOrder(params.orderId), [params.orderId]);
   const opQ = useApiQuery(() => getOperator(), []);
+  const taxQ = useApiQuery(() => getTaxConfig(), []);
+  // The whole list rather than the one location: every query here starts
+  // together, so the print dialog never opens on a header still missing its
+  // address.
+  const locQ = useApiQuery(() => listLocations({ pageSize: 200 }), []);
   const o = orderQ.data;
-  const business = opQ.data?.name ?? "Counterfoil";
-  const ready = !orderQ.loading && !opQ.loading;
+  const place = o ? locQ.data?.data.find((l) => l.id === o.locationId) ?? null : null;
+  const ready = !orderQ.loading && !opQ.loading && !taxQ.loading && !locQ.loading;
 
   const printed = useRef(false);
   useEffect(() => {
@@ -40,14 +46,13 @@ export default function PrintReceiptPage() {
 
       {ready && !o ? (
         <EmptyState title={t("noTickets")} />
-      ) : o ? (
+      ) : o && ready ? (
         <div className="mx-auto w-full card-surface p-major print:border-0">
-          <div className="mb-section text-center">
-            <p className="type-h2 text-base">{business}</p>
-            <p className="font-mono text-[12px] text-muted">{o.reference} · {formatDate(o.createdAt)}</p>
-          </div>
+          <ReceiptHeader operator={opQ.data ?? { name: "Counterfoil" }} place={place} tax={taxQ.data}>
+            <p className="mt-inline font-mono text-[12px] text-muted">{o.reference} · {formatDate(o.createdAt)}</p>
+          </ReceiptHeader>
           <OrderLinesDetail order={o} />
-          <p className="mt-major text-center font-mono text-[12px] text-muted">{t("poweredBy")}</p>
+          <ReceiptFooter message={opQ.data?.receiptFooter} />
         </div>
       ) : null}
     </main>

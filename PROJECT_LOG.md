@@ -6624,3 +6624,146 @@ in the reader's language — the shared helper was English-only), `_lib/zones.ts
   read as backwards.
 - Invite, resend, password reset and suspend are mock actions.
 - Logo upload returns to Business profile when it exists.
+
+## Settings, part three — lists you can act on, and the settings that were missing (2026-09-14)
+
+Owner asked for all twelve settings pages researched again against SaaS and
+booking-system settings, with enable/disable and active/inactive options in the
+lists where they help, and for anything settings was missing to be added. Four
+rounds, each measured, reviewed in screenshots and fixed before the next.
+
+### What the research changed
+
+- **A list switch acts at once; the confirmation offers Undo.** Toggle-list
+  guidance is consistent that a switch should take effect when pressed, not wait
+  for a save — and that the rare switch whose effect lands on someone else asks
+  first. So closing a till, hiding a category chip and starting a venue are one
+  press with Undo; turning a paired tablet off, taking a court out of service and
+  stopping a whole venue ask, because a cashier or a customer is the one who
+  finds out.
+- **Booking systems send a set of messages, not one SMS.** Zoho Bookings, Acuity,
+  Microsoft Bookings and Booknetic all settle on events (confirmed, reminder,
+  changed, cancelled, follow-up) switched on per channel, a reminder lead time, a
+  quiet window, and a sender name — with staff alerts beside them.
+- **Team products put business sign-in rules above the personal ones** —
+  required two-step, session length, idle lock — and let a person see and end
+  their own sessions.
+
+### Lists
+
+- **Counters**: an open switch on every row, tabs All / Open / Closed with counts.
+- **Devices**: an on switch (off asks), tabs including Needs attention — a tablet
+  that is on but unpaired, never seen or quiet.
+- **Resources**: an available switch; taking one out asks for the reason, which
+  then shows on the row. Retire and Bring back in the row menu. Tabs by state.
+- **Categories**: one ordered list with a "show at the till" switch. Hiding used
+  to move a row into a second list, so the order an operator had just set jumped.
+- **Locations**: a selling switch, the one list Round 1 missed.
+- **Team**: role and location filters whose counts follow them, and Clear filters.
+- **Roles**: Duplicate (opens the copy) and Delete. A role people hold cannot be
+  deleted, the menu says how many hold it, and `deleteRole` refuses as well.
+  `createResource` gained `remove`.
+
+Rows keep the latest record from the update response, so a switch moves under the
+finger instead of after a reload, and a reload keeps the list on screen rather
+than flashing the skeleton.
+
+### New and rebuilt pages
+
+- **Notifications** (was Ticket messages; group Customer messages → Messages).
+  Six customer messages × SMS and e-mail; warning in place when Booking confirmed
+  is off on both, because then a ticket code only reaches someone at the counter
+  (the index lifts the same warning). Reminder and follow-up lead times whose
+  sentences follow the fields. Quiet hours, with the rule that tickets and changes
+  still go at once. Sender name (3–11 letters or digits, counted) and reply-to.
+  The ticket SMS editor stays, with the sender above the preview. Five staff
+  alerts, each sent to chosen roles; an alert sent to nobody cannot be saved. One
+  save bar writes the operator's template and the new `notifications.v1` record.
+- **Sign-in rules** (`/settings/sign-in`, under Team and access). Two-step: let
+  each person choose / required for managers / required for everyone, each
+  counting who it reaches. "Managers" is read from permissions — any role that can
+  refund, manage the team or change settings (`_lib/access.ts`) — so today it
+  names Manager and Supervisor. A stricter choice says what happens to people who
+  have not set it up. Web session length, idle till lock (Never warns), PIN
+  length, wrong PINs allowed, paired tablets only. `access-policy.v1`. **Wrong
+  PINs allowed is wired:** the Go PIN screen reads it instead of its hardcoded 3,
+  and the seed is 3 so nothing changed for anyone.
+- **Security** gains Where you're signed in — each place with its own Sign out,
+  this browser marked, and Sign out everywhere else behind a confirm. Where the
+  business requires two-step of your role the section says so, links to Sign-in
+  rules, and will not switch it back off.
+- **Business profile** gains phone, e-mail and website, and a Receipts section:
+  the message under the total, with a live receipt preview.
+- **Tax** gains Print on receipts, quoting the exact line it prints and waiting,
+  off, until there is a number to print.
+- **The printed receipt** now shows the location of the sale, phone · website,
+  the tax registration line and the footer. `components/ReceiptParts` draws the
+  top and bottom for both the receipt and the preview, so they cannot drift.
+
+Contract additions for the backend lane: `NotificationSettings`, `AccessPolicy`,
+`Operator.contactPhone / contactEmail / website / receiptFooter`,
+`TaxConfig.showOnReceipts`. A demo business loaded from the landing page does not
+inherit Lalbagh's contact details.
+
+### Found by looking or measuring, not by the checks
+
+- **The index statuses wrapped.** "Two-step for managers · tills lock after 5 min"
+  and "5 customer messages on · quiet 21:00–08:00" each took two lines and pushed
+  their descriptions to three. Statuses now carry the exception only: "5 of 6
+  messages on", "Two-step for managers", and "tills never lock" in warning.
+- **Security said "Two-step login"** while everything around it says two-step
+  sign-in.
+- **Bangla mixed its digits on one page** — "১১ জনের জন্য" beside "পরপর 3 বার".
+  A bare `{count}` is interpolated as typed; a plural's `#` is formatted in the
+  page's numbering. The plain counts now use `{count, number}`.
+- **Security failed hydration in Bangla on every load.** Node spells the Bangla
+  hour ঘণ্টা and Chromium ঘন্টা, so a relative time drawn on the server never
+  matched the one drawn in the browser and React rebuilt the page, logging a
+  script-tag warning. `useSince` gives the date until the browser has taken over.
+  The Team page never showed it only because its rows load in the browser.
+  **Worth remembering: any relative time rendered on the server has this bug in
+  Bangla.**
+- The settings probe's `getByLabel("Message")` began matching the new "Customer
+  messages" section; now exact.
+
+### Verified
+
+- Behaviour tests: list switches **23/23**, notifications / sign-in rules /
+  security **37/37**, locations / tax / receipts **20/20** (including a footer saved
+  in Settings appearing on the next receipt printed), settings search **24/24**.
+- Settings probe on every changed page at 1440 light and dark and 390: contrast,
+  nothing under 12px, 44px targets on a phone, no sideways scroll or hidden
+  overflow, no console errors.
+- Security in Bangla at 390 and 1440: **0 console errors** after the fix.
+- Standing harnesses hold: accessibility 8/8, review 15/15, deck 9/9; the route
+  audit unchanged at **70** (69 the declared white-on-ember rule, 1 the
+  kitchen-sink inline link).
+- `tsc` and `npm run build` clean; `eslint` clean on every settings file. The one
+  warning in `(go)/login` (an unused `Avatar` import) is at `HEAD` too.
+- i18n parity **0 missing / 0 extra**; nothing orphaned (checked against `HEAD`),
+  after removing `security.signOutAll`, `security.signedOutAll`,
+  `hub.statusSmsDefault`, `hub.statusSmsCustom`, `hub.statusQuietHours` and
+  `hub.statusLock`.
+
+### Open
+
+- **Stored, not yet enforced:** session length, idle lock, PIN length, paired
+  tablets only, quiet hours, sender name, the customer messages and staff alerts.
+  The mock has nothing that signs anyone out or sends anything; these are the
+  contract for the backend. Wrong PINs allowed is the one that already acts.
+- The sessions list is mock data.
+- **Cash rounding and service charges were considered and left out.** Both change
+  the money path (`orderMath`, the till, receipts and reports) and belong in their
+  own change, not a settings pass.
+- Logo upload still does not exist, so Business profile has no logo row.
+
+Sources: [Cieden — toggle lists](https://cieden.com/book/atoms/toggle-switch/how-to-design-a-toggle-list) ·
+[Cieden — toggle switch UX](https://cieden.com/book/atoms/toggle-switch/toggle-switch-ux-best-practices) ·
+[SaaS data table patterns](https://www.saasui.design/blog/saas-data-table-ux-patterns) ·
+[Zoho Bookings notifications](https://www.zoho.com/bookings/features/appointment-notifications-and-reminders.html) ·
+[Acuity reminders](https://acuityscheduling.com/features/appointment-reminders) ·
+[Microsoft Bookings SMS](https://learn.microsoft.com/en-us/microsoft-365/bookings/bookings-sms?view=o365-worldwide) ·
+[Booknetic reminders](https://www.booknetic.com/documentation/reminders) ·
+[GitHub — active sessions](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/viewing-and-managing-your-active-saml-sessions) ·
+[Cin7 POS settings](https://help.core.cin7.com/hc/en-us/articles/10553610629391-POS-settings) ·
+[Toast cash rounding](https://support.toasttab.com/en/article/Use-Cash-Rounding)

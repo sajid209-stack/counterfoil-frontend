@@ -1,8 +1,11 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { useFormatter } from "next-intl";
 import { formatDateTime } from "@/lib/format";
 import { demoNow } from "@/lib/schedule";
+
+const noSubscribe = () => () => {};
 
 /**
  * How long ago something happened, in the reader's language.
@@ -11,10 +14,18 @@ import { demoNow } from "@/lib/schedule";
  * which put "সক্রিয় 4h ago" on the Bangla team list. next-intl's formatter says
  * it in the page's language; past a week the relative form stops helping
  * ("23 days ago" is not a date anyone can place), so it hands back to the date.
+ *
+ * Until the browser has taken over, it gives the date instead. Node and the
+ * browser carry different Unicode data — Node spells the Bangla hour one way
+ * and Chromium another — so a relative time drawn on the server did not match
+ * the one drawn on hydration, and the Security page was thrown away and
+ * rebuilt on every Bangla load.
  */
 export function useSince() {
   const format = useFormatter();
+  const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
   return (iso: string): string => {
+    if (!hydrated) return formatDateTime(iso);
     const then = new Date(iso);
     const now = demoNow();
     const days = (now.getTime() - then.getTime()) / 86_400_000;

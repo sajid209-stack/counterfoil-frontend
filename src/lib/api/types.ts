@@ -86,11 +86,19 @@ export interface Operator {
   /** Bookings older than this many days cannot be edited (§61.10). Null means
    *  history stays editable. */
   pastEditLockDays?: number | null;
+  /** Printed on receipts, so a customer holding one can call. */
+  contactPhone?: string;
+  /** Shown in the e-mails customers receive. */
+  contactEmail?: string;
+  /** Printed on receipts beside the phone number. */
+  website?: string;
+  /** Printed under the total on every receipt — returns, opening hours, a thank-you. */
+  receiptFooter?: string;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
 export type OperatorPatch = Partial<
-  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct" | "smsTemplate" | "pastEditLockDays">
+  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct" | "smsTemplate" | "pastEditLockDays" | "contactPhone" | "contactEmail" | "website" | "receiptFooter">
 >;
 
 export type TaxClass = "standard" | "reduced" | "exempt";
@@ -697,6 +705,8 @@ export interface TaxConfig {
   rateBasisPoints: number; // 1500 = 15%
   taxName: string; // "VAT"
   registrationNumber?: string;
+  /** Print "{taxName} reg. {number}" under the business name on receipts. */
+  showOnReceipts?: boolean;
 }
 
 // ── catalog.v1 · seat maps (layouts / seats / seat-categories) ───────────────
@@ -1133,4 +1143,37 @@ export interface Unavailability {
   message: string;
   /** The hold responsible, when one is. */
   holdId?: ID;
+}
+
+// ── notifications.v1 — what customers and staff are sent, and when ───────────
+export type NotificationChannel = "sms" | "email";
+export type CustomerNotificationEvent = "confirmation" | "reminder" | "rescheduled" | "cancelled" | "refunded" | "followUp";
+export type StaffNotificationEvent = "soldOut" | "cashVariance" | "deviceOffline" | "largeRefund" | "dailySummary";
+export interface NotificationSettings {
+  customer: Record<CustomerNotificationEvent, Record<NotificationChannel, boolean>>;
+  /** Hours before the visit the reminder is sent. */
+  reminderHours: number;
+  /** Hours after the visit the follow-up is sent. */
+  followUpHours: number;
+  /** No SMS between these local times; anything due waits for the window to end. */
+  quietHours: { enabled: boolean; from: string; to: string };
+  /** The SMS sender ID customers see: up to 11 letters or digits. */
+  senderName: string;
+  replyToEmail: string | null;
+  staff: Record<StaffNotificationEvent, { enabled: boolean; roleIds: ID[] }>;
+}
+
+// ── access-policy.v1 — sign-in rules for the whole team ──────────────────────
+export type TwoStepRequirement = "off" | "managers" | "everyone";
+export interface AccessPolicy {
+  twoStep: TwoStepRequirement;
+  /** An OS sign-in lasts this many hours before asking again. */
+  sessionHours: number;
+  /** The till locks itself after this many idle minutes; null never locks. */
+  tillLockMinutes: number | null;
+  pinLength: number;
+  /** Wrong PINs in a row before the till pauses that person's sign-in. */
+  pinAttempts: number;
+  /** Staff can only open a till on a device paired to one of their counters. */
+  deviceBound: boolean;
 }

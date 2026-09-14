@@ -45,6 +45,10 @@ export const operator: Operator = {
   defaultTimezone: "Asia/Dhaka",
   taxRatePct: 15,
   reducedRatePct: 7.5,
+  contactPhone: "+880 1711-000100",
+  contactEmail: "hello@lalbagh.example",
+  website: "lalbagh.example",
+  receiptFooter: "Thank you for visiting. Tickets are valid only on the date shown.",
   createdAt: T,
   updatedAt: T,
 };
@@ -81,6 +85,7 @@ export const taxConfig: TaxConfig = {
   rateBasisPoints: 1500, // 15% VAT
   taxName: "VAT",
   registrationNumber: "BIN-000123456-0201",
+  showOnReceipts: true,
 };
 
 // Seat maps (M1): a cinema hall — 8 rows × 12, Stalls (A–F) + Balcony (G–H),

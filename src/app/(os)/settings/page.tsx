@@ -4,11 +4,13 @@ import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import { ChevronRight, Percent, Wallet, WifiOff, type LucideIcon } from "lucide-react";
+import { ChevronRight, MessageSquareOff, Percent, Wallet, WifiOff, type LucideIcon } from "lucide-react";
 import { PageShell } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import {
+  getAccessPolicy,
+  getNotificationSettings,
   getOperator,
   getTaxConfig,
   listCategories,
@@ -21,7 +23,6 @@ import {
   listRoles,
   listStaff,
 } from "@/lib/api";
-import { DEFAULT_SMS_TEMPLATE } from "@/lib/sms";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { isDeviceQuiet } from "@/lib/devices";
 import { LOCALE_LABELS, type Locale } from "@/i18n/locale";
@@ -90,6 +91,8 @@ export default function SettingsIndex() {
   const roleQ = useApiQuery(() => listRoles({ pageSize: 500 }), []);
   const devQ = useApiQuery(() => listDevices({ pageSize: 500 }), []);
   const prodQ = useApiQuery(() => listProducts({ pageSize: 500 }), []);
+  const notifQ = useApiQuery(() => getNotificationSettings(), []);
+  const accessQ = useApiQuery(() => getAccessPolicy(), []);
 
   const op = opQ.data;
   const locations = locQ.data?.data.filter((r) => r.status !== "archived");
@@ -112,6 +115,12 @@ export default function SettingsIndex() {
   // bookings ARE filed under, at 0%, is those bookings being sold untaxed.
   const reducedUntaxed = !!op && (op.reducedRatePct ?? 0) === 0 && reducedBookings > 0;
   const noun = resources ? resourceNoun(resources) : null;
+  const notif = notifQ.data;
+  const access = accessQ.data;
+  const messagesOn = notif ? Object.values(notif.customer).filter((c) => c.sms || c.email).length : 0;
+  // With Booking confirmed off on both channels a ticket code reaches nobody
+  // who did not stand at the counter — worth lifting above the list.
+  const ticketsSilent = !!notif && !notif.customer.confirmation.sms && !notif.customer.confirmation.email;
 
   const status: Record<SettingsItemKey, Status> = {
     business: op && { text: t("hub.statusProfile", { currency: op.currency, timezone: op.defaultTimezone.replace(/_/g, " ") }) },
@@ -155,11 +164,16 @@ export default function SettingsIndex() {
       ),
       tone: quiet > 0 ? "warn" : undefined,
     },
-    notifications: op && {
-      text:
-        (op.smsTemplate ?? DEFAULT_SMS_TEMPLATE) === DEFAULT_SMS_TEMPLATE
-          ? t("hub.statusSmsDefault")
-          : t("hub.statusSmsCustom"),
+    // Short, and the exception only. With quiet hours and the lock time added
+    // both values wrapped to two lines and squeezed their descriptions to three;
+    // a till that locks after five minutes is the setting working, not news.
+    notifications: notif && {
+      text: t("hub.statusMessagesOn", { on: messagesOn, total: Object.keys(notif.customer).length }),
+      tone: ticketsSilent ? "warn" : undefined,
+    },
+    signIn: access && {
+      text: joined(t(`hub.statusTwoStep.${access.twoStep}`), access.tillLockMinutes === null && t("hub.statusNoLock")),
+      tone: access.tillLockMinutes === null ? "warn" : undefined,
     },
     security: null,
     preferences: mounted
@@ -187,6 +201,16 @@ export default function SettingsIndex() {
       title: t("hub.devicesQuiet", { count: quiet }),
       body: t("hub.devicesQuietBody"),
       href: "/settings/devices",
+    });
+  }
+
+  if (ticketsSilent) {
+    attention.push({
+      key: "tickets",
+      icon: MessageSquareOff,
+      title: t("hub.noTicket"),
+      body: t("hub.noTicketBody"),
+      href: "/settings/notifications",
     });
   }
 

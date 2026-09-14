@@ -11,5 +11,6 @@
   "back": "পেছনে",
   "noTickets": "এই অর্ডারের জন্য কোনো টিকিট নেই।",
   "seat": "সিট {label}",
-  "poweredBy": "Counterfoil দ্বারা পরিচালিত"
+  "poweredBy": "Counterfoil দ্বারা পরিচালিত",
+  "taxReg": "{name} নিবন্ধন {number}"
 }

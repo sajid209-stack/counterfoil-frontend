@@ -118,7 +118,8 @@ export function patchManualDiscountPolicyState(patch: Partial<ManualDiscountPoli
  *  fresh 30-day order history for them. Shared entities (locations, staff,
  *  counters, resources) stay so the demo is coherent. */
 export function loadBusiness(name: string, currency: string, productIds: string[]): void {
-  operatorState = { ...structuredClone(seed.operator), name, currency };
+  // Contact details belong to the seeded business; another demo prints none.
+  operatorState = { ...structuredClone(seed.operator), name, currency, contactPhone: undefined, contactEmail: undefined, website: undefined };
   (store as Record<string, unknown[]>).products = structuredClone(seed.products).filter((p) => productIds.includes(p.id));
   // Only the resources this business actually books on. Copying all of them
   // meant a turf owner opened Settings and found four bowling lanes, and a
@@ -171,6 +172,8 @@ export interface Resource<T> {
   update(id: string, patch: Partial<T>): Promise<ApiResult<T>>;
   /** soft-delete: sets status → "archived" (+ archivedAt when present) */
   archive(id: string): Promise<ApiResult<T>>;
+  /** hard delete: only for a record nothing else can point at (a role nobody holds) */
+  remove(id: string): Promise<ApiResult<T>>;
   /** unmediated read for cross-entity lookups within the api layer only */
   peek(): T[];
 }
@@ -257,6 +260,15 @@ export function createResource<T extends Row>(
       } as unknown as T;
       list[idx] = next;
       return ok(next);
+    },
+
+    async remove(id) {
+      await delay();
+      const list = rows();
+      const idx = list.findIndex((r) => r.id === id);
+      if (idx === -1) return fail<T>(notFoundError(label));
+      const [removed] = list.splice(idx, 1);
+      return ok(removed);
     },
 
     peek() {

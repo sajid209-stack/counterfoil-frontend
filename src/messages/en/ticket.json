@@ -11,5 +11,6 @@
   "back": "Back",
   "noTickets": "No tickets for this order.",
   "seat": "Seat {label}",
-  "poweredBy": "Powered by Counterfoil"
+  "poweredBy": "Powered by Counterfoil",
+  "taxReg": "{name} reg. {number}"
 }
