@@ -97,9 +97,9 @@ const PANELS = [
 
 /* Three columns across the content width, a phone centred in each. */
 const COLUMN = 1408 / 3;
-const PHONE_W = 226;
-const PHONE_TOP = 238;
-const PHONE_H = 473;
+const PHONE_W = 222;
+const PHONE_TOP = 236;
+const PHONE_H = 465;
 
 export function PosChooseSlide({ n }: { n: number }) {
   return (
@@ -308,7 +308,7 @@ export function PosShiftSlide({ n }: { n: number }) {
         <Hotspot n={1} x={74} y={36.9} small />
       </Phone>
 
-      <div className={cn(s.receipt, "absolute left-[1112px] top-[196px] w-[392px] rotate-[3deg]")}>
+      <div className={cn(s.receipt, "absolute left-[1100px] top-[196px] w-[392px] rotate-[3deg]")}>
         <div className={s.receiptPaper}>
           <p className="text-[15px] font-medium uppercase tracking-[0.16em]">Shift close</p>
           <p className="mt-2 text-[15px] text-[#57534c]">Fort Main Gate · Fort iPad 1</p>

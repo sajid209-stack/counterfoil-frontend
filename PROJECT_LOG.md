@@ -7496,3 +7496,52 @@ payment by" to be three rows of two, bottom-aligned.
 
 Verified: layout at 1780, 1440, 1024 and 390; pixel contrast 0 of 419 below
 the floor; `/deck` audits at 0; PDF rebuilt; `tsc` and `eslint` clean.
+
+## Counterfoil Deck, part nine — a full review (2026-09-15)
+
+Owner asked for the whole deck reviewed — placement, alignment, layout, text,
+sizes and colours — and every error fixed. All 25 slides were rendered at full
+canvas size and read by eye, alongside a measuring pass (`alignprobe.mjs`,
+scratchpad) that reports in canvas pixels where each slide's eyebrow and title
+start, the lowest content against the bottom line (y 800), pictures past the
+side margins (x 96 / 1504), the gap between words and pictures, and every font
+size in use.
+
+### Found and fixed
+
+- **Slide 3:** the "OS · on the web" label sat above the grid's top line
+  (y 74) and over the laptop's screen. It now sits on y 92 over the bezel; the
+  laptop, stand and phone step down with it; the phone takes the right margin
+  and the "Go" label is centred in the gap between stand and phone (it was 5px
+  from the phone).
+- **Slide 6:** the lead ran to 24px from the laptop. The laptop is 840 wide at
+  x 664.
+- **Slide 7:** the close-up's caption ran past the bottom line (y 807). Both
+  lower groups are anchored to the bottom line, and the caption fits one line.
+- **Slide 9:** the two till sheets ran above the top line (y 68) and past the
+  right margin (x 1509); they are smaller and inside both. "A show every 45
+  minutes" wrapped to two lines in its tile; it reads "Every 45 minutes".
+- **Slide 10:** the holds table ended 4px short of the bottom line.
+- **Slide 13:** the laptop hung from the top, ending at y 712 with an empty
+  band below. It steps down 40px and is centred on the content area.
+- **Slide 15:** the settings list ended at y 799 beside a search block ending
+  at 800; it is anchored to the bottom line.
+- **Slide 18:** the captions under the three phones ran past the bottom line
+  (y 802). The phones are 222 wide; the captions end at 792.
+- **Slide 22:** the tilted shift receipt ran past the right margin (x 1516).
+
+### Checked and left as they are
+
+The font census shows one-off sizes only where a figure is meant to be the
+largest thing on its slide (~20, 14, ৳47,011.37) or inside a drawn product
+fragment. The probe's other flags were false positives: a text box wider than
+its text beside a picture, and a label inside the Pay picker's pill.
+
+### Verified
+
+- Layout at 1780, 1440, 1024 and 390: 25 slides the same size, nothing
+  clipped, covered or outside the margins, no console errors.
+- Pixel contrast per slide: 0 of 419 text boxes below their floor. `/deck`
+  audits at 0.
+- PDF rebuilt and read back: 25 pages at 960 × 540pt.
+- `tsc` and `eslint` on the deck clean.

@@ -190,7 +190,7 @@ export function DashboardSlide({ n }: { n: number }) {
           <Step n={3} title="Needs attention" body="A short cash count, a booking about to stop, a tablet gone quiet." />
         </ol>
       </TextBlock>
-      <Laptop src={dashLight} width={864} alt="The Counterfoil OS dashboard for Lalbagh Heritage Attractions" className="absolute left-[640px] top-[170px]">
+      <Laptop src={dashLight} width={840} alt="The Counterfoil OS dashboard for Lalbagh Heritage Attractions" className="absolute left-[664px] top-[180px]">
         {/* 1 sits on the corner of the first figure, not over its label. */}
         <Hotspot n={1} x={18.4} y={16.4} />
         <Hotspot n={2} x={49} y={46.5} />
@@ -217,13 +217,13 @@ export function CalendarSlide({ n }: { n: number }) {
       />
 
       {/* The close-up belongs to the words, so it sits in their column. */}
-      <div className="absolute left-[96px] top-[468px] w-[464px]">
+      <div className="absolute bottom-[100px] left-[96px] w-[464px]">
         {/* Clipped, with a short shadow: a long one darkened the caption under it below its reading floor. */}
         <div className="overflow-hidden rounded-[22px] bg-[#f94a00] p-[4px] shadow-[0_16px_30px_-20px_rgb(20_20_19/0.45)]">
           <Crop src={calendar} alt="" x={0.645} y={0.548} w={0.13} h={0.1} width={456} />
         </div>
         <p className={cn(s.mono, "mt-8 uppercase text-[#aa3000]")}>Held back · Fri 31 Jul, 14:00</p>
-        <p className={cn(s.body, "mt-2")}>A private event, off sale — hatched, so it never reads as booked.</p>
+        <p className={cn(s.body, "mt-2")}>Off sale, and hatched so it never reads as booked.</p>
       </div>
 
       <Crop
@@ -239,7 +239,7 @@ export function CalendarSlide({ n }: { n: number }) {
         {/* Where the close-up comes from. */}
         <span aria-hidden className="absolute rounded-[10px] ring-[3px] ring-[#f94a00]" style={{ left: "57.6%", top: "51.1%", width: "15.8%", height: "12.2%" }} />
       </Crop>
-      <ul className="absolute left-[608px] top-[684px] grid w-[896px] grid-cols-3 gap-6">
+      <ul className="absolute bottom-[100px] left-[608px] grid w-[896px] grid-cols-3 gap-6">
         {CALENDAR_KEY.map(({ icon: Icon, label, body }) => (
           <li key={label} className="flex gap-3.5">
             <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-[12px] bg-white text-[#aa3000] shadow-[0_1px_2px_rgb(20_20_19/0.06)] ring-1 ring-[#e7e2d8]">
@@ -403,7 +403,7 @@ const WAYS: { group: string; cols: number; width: number; visual: ReactNode; ite
     width: 576,
     visual: <SlotGrid />,
     items: [
-      ["Timed sessions", "A show every 45 minutes"],
+      ["Timed sessions", "Every 45 minutes"],
       ["Seat maps", "The seat, on a plan"],
       ["Courts & fields", "Hourly, per court"],
       ["Flexible duration", "A lane by the hour"],
@@ -435,8 +435,8 @@ export function BookingTypesSlide({ n }: { n: number }) {
         width={620}
       />
       {/* Two of the sheets the till opens for them, laid on the page like printouts. */}
-      <SheetCard src={sheetSeats} alt="The seat map sheet for an evening film, three seats chosen" width={200} className="absolute left-[1086px] top-[92px] rotate-[-4deg]" />
-      <SheetCard src={sheetSlots} alt="Hourly slots on a futsal field" width={200} className="absolute left-[1296px] top-[76px] rotate-[5deg]" />
+      <SheetCard src={sheetSeats} alt="The seat map sheet for an evening film, three seats chosen" width={184} className="absolute left-[1098px] top-[104px] rotate-[-4deg]" />
+      <SheetCard src={sheetSlots} alt="Hourly slots on a futsal field" width={184} className="absolute left-[1300px] top-[96px] rotate-[5deg]" />
 
       <div className="absolute left-[96px] top-[424px] flex h-[376px] gap-6">
         {WAYS.map(({ group, cols, width, visual, items }) => (
@@ -476,7 +476,7 @@ export function HoldsSlide({ n }: { n: number }) {
         Every hold says who it is for and who placed it — and goes back on sale by hand, or when its time is up.
       </p>
 
-      <div className={cn(s.card, s.paperCard, "absolute left-[96px] top-[256px] h-[190px] w-[692px] px-7 py-6")}>
+      <div className={cn(s.card, s.paperCard, "absolute left-[96px] top-[260px] h-[190px] w-[692px] px-7 py-6")}>
         <div className="flex items-baseline justify-between">
           <h3 className={s.heading}>Planetarium Show · 1 Aug, 11:00</h3>
           <span className={cn(s.mono, "text-[#6b675f]")}>40 places</span>
@@ -498,7 +498,7 @@ export function HoldsSlide({ n }: { n: number }) {
         </div>
       </div>
 
-      <div className={cn(s.card, s.paperCard, "absolute left-[812px] top-[256px] h-[190px] w-[692px] px-7 py-6")}>
+      <div className={cn(s.card, s.paperCard, "absolute left-[812px] top-[260px] h-[190px] w-[692px] px-7 py-6")}>
         <p className={cn(s.mono, "uppercase text-[#aa3000]")}>What can be held</p>
         <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3">
           {HOLD_KINDS.map(({ icon: Icon, label }) => (
@@ -520,7 +520,7 @@ export function HoldsSlide({ n }: { n: number }) {
         w={0.825}
         h={0.585}
         width={1408}
-        className="absolute left-[96px] top-[470px]"
+        className="absolute left-[96px] top-[474px]"
       />
     </Slide>
   );
@@ -707,7 +707,7 @@ export function ReportsSlide({ n }: { n: number }) {
           ))}
         </ul>
       </TextBlock>
-      <Laptop src={reportsDark} width={760} tilt="left" alt="Sales analytics: revenue over time, sales by weekday and payment mix" className="absolute left-[744px] top-[196px]" />
+      <Laptop src={reportsDark} width={760} tilt="left" alt="Sales analytics: revenue over time, sales by weekday and payment mix" className="absolute left-[744px] top-[236px]" />
     </Slide>
   );
 }
@@ -784,12 +784,13 @@ const SEARCHES = [
 export function SettingsSlide({ n }: { n: number }) {
   return (
     <Slide tone="paper" n={n} section={OS_SECTION} label="Set up once, and the till follows">
-      <TextBlock eyebrow="Settings" title="Set up once." lead="Change a setting and the till follows — there is no second place to update it." width={464}>
+      <TextBlock eyebrow="Settings" title="Set up once." lead="Change a setting and the till follows — there is no second place to update it." width={464} />
+      {/* Each setting joined to the place a cashier meets it — on the bottom line, level with the search block. */}
+      <div className={s.text} style={{ left: 96, bottom: 100, width: 464 }}>
         <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Where each one shows up</p>
-        {/* Each setting joined to the place a cashier meets it. */}
-        <ul className="mt-4 flex flex-col gap-3.5">
+        <ul className="mt-4 flex flex-col gap-[18px]">
           {REACHES.map(([name, where]) => (
-            <li key={name} className="flex h-[56px] items-center">
+            <li key={name} className="flex h-[62px] items-center">
               <span className="flex h-full shrink-0 items-center rounded-[14px] bg-white px-4 text-[17px] font-semibold shadow-[0_1px_2px_rgb(20_20_19/0.06)] ring-1 ring-[#e7e2d8]">
                 {name}
               </span>
@@ -797,11 +798,11 @@ export function SettingsSlide({ n }: { n: number }) {
                 <span className="h-[2px] flex-1 bg-[repeating-linear-gradient(90deg,#e0a27f_0_6px,transparent_6px_11px)]" />
                 <ArrowRight size={16} strokeWidth={2.2} className="-ml-1 text-[#d9814f]" />
               </span>
-              <span className="flex h-[40px] shrink-0 items-center rounded-full bg-[#141413] px-4 text-[15px] font-medium text-[#f5f2eb]">{where}</span>
+              <span className="flex h-[42px] shrink-0 items-center rounded-full bg-[#141413] px-4 text-[15px] font-medium text-[#f5f2eb]">{where}</span>
             </li>
           ))}
         </ul>
-      </TextBlock>
+      </div>
 
       <Crop src={settings} alt="Settings: each section with what it is set to, and search" x={0.17} y={0.128} w={0.825} h={0.617} width={896} className="absolute left-[608px] top-[92px]" />
       <div className={s.text} style={{ left: 608, top: 551, width: 896 }}>

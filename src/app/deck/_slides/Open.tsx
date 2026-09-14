@@ -170,11 +170,11 @@ export function SystemSlide({ n }: { n: number }) {
       </TextBlock>
 
       {/* The same family as the cover, standing on one line, with a label under each surface. */}
-      <Laptop src={dashLight} width={740} alt="Counterfoil OS dashboard on a laptop" className="absolute left-[764px] top-[132px]" />
-      <PosStand src={till} width={372} alt="Counterfoil Go on a countertop stand" className="absolute left-[700px] top-[440px]" />
-      <Phone src={phoneSeats} bar="#989793" width={160} alt="Choosing seats for an evening film on a phone" className="absolute left-[1328px] top-[386px]" />
-      <Callout tone="paper" label="OS · on the web" value="Runs the business" className="absolute left-[1284px] top-[74px]" />
-      <Callout tone="paper" label="Go · counter & phone" value="Sells and admits" className="absolute left-[1086px] top-[706px]" />
+      <Laptop src={dashLight} width={740} alt="Counterfoil OS dashboard on a laptop" className="absolute left-[764px] top-[180px]" />
+      <PosStand src={till} width={372} alt="Counterfoil Go on a countertop stand" className="absolute left-[700px] top-[486px]" />
+      <Phone src={phoneSeats} bar="#989793" width={160} alt="Choosing seats for an evening film on a phone" className="absolute left-[1344px] top-[432px]" />
+      <Callout tone="paper" label="OS · on the web" value="Runs the business" className="absolute left-[1284px] top-[92px]" />
+      <Callout tone="paper" label="Go · counter & phone" value="Sells and admits" className="absolute left-[1090px] top-[708px]" />
     </Slide>
   );
 }
