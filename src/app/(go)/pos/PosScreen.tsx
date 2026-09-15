@@ -21,6 +21,7 @@ import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { Keypad } from "../_components/Keypad";
+import { ticketSnapshot } from "./_lib/handover";
 
 const TODAY = DEMO_TODAY;
 // Payment methods this counter takes (would come from counter config).
@@ -735,6 +736,11 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     await earnPoints(customerId, paidAmount, orderId);
   };
 
+  /** Who the sale was for, carried to the completion screen so its SMS goes to
+   *  the attached guest's number without the cashier typing it again. */
+  const completedCustomer = () =>
+    attached ? { name: attached.name, phone: attached.phone ?? null } : customer ? { name: customer, phone: null } : null;
+
   // Non-cash settle: no change step; runs after the wallet flow confirms.
   const settleInline = async (txnNote?: string, txnRef?: string) => {
     const { lines, bookings, credits, payload, receipt } = buildSale();
@@ -742,7 +748,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     if (res.ok) {
       if (txnNote) await logOrderAction(res.data.order.id, txnNote);
       await settleMemberEffects(res.data.order.id, dueNow);
-      sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, code: res.data.firstTicketCode, change: 0, balance, receipt, payments: [{ method, amount: dueNow }] }));
+      sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, reference: res.data.order.reference, code: res.data.firstTicketCode, tickets: ticketSnapshot(res.data.order, res.data.tickets), change: 0, balance, receipt, payments: [{ method, amount: dueNow }], customer: completedCustomer() }));
       router.push("/pos/complete");
     } else toast.error(res.error.message);
   };
@@ -755,7 +761,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     setCashSaving(false);
     if (res.ok) {
       await settleMemberEffects(res.data.order.id, dueNow);
-      sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, code: res.data.firstTicketCode, change: changeMinor, balance, receipt, payments: [{ method: "cash", amount: dueNow, tendered: tenderedMinor, change: changeMinor }] }));
+      sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, reference: res.data.order.reference, code: res.data.firstTicketCode, tickets: ticketSnapshot(res.data.order, res.data.tickets), change: changeMinor, balance, receipt, payments: [{ method: "cash", amount: dueNow, tendered: tenderedMinor, change: changeMinor }], customer: completedCustomer() }));
       setCashOpen(false);
       router.push("/pos/complete");
     } else toast.error(res.error.message);

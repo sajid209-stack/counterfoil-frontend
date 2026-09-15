@@ -2,7 +2,7 @@ import { createBooking } from "./bookings";
 import { createResource } from "./client";
 import { issueTicket, redeemCredits, voidOrderTickets } from "./tickets";
 import { buildOrderLines, type LineInput } from "@/lib/orderMath";
-import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod, WriteOffCategory } from "./types";
+import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod, Ticket, WriteOffCategory } from "./types";
 
 const resource = createResource<Order>("orders", "Order", {
   search: (o, q) =>
@@ -193,7 +193,7 @@ export interface CheckoutInput {
  *  issued code is real and scannable. Returns the order + first ticket code. */
 export async function checkout(
   input: CheckoutInput,
-): Promise<ApiResult<{ order: Order; firstTicketCode: string }>> {
+): Promise<ApiResult<{ order: Order; firstTicketCode: string; tickets: Ticket[] }>> {
   const now = new Date().toISOString();
   const reference = `CF-2026-${String(Math.floor(Date.parse(now) % 900000) + 100000)}`;
 
@@ -243,14 +243,19 @@ export async function checkout(
   // Tickets generate PER LINE: quantity × admits. A line of 2 Family tickets
   // (admits 4) mints 2 tickets, each admitting 4. Add-on child lines admit
   // nobody and mint nothing. Each ticket carries its line id.
+  // The issued tickets come back with the sale, as a real checkout's would: the
+  // till's completion screen draws from them, rather than asking the server
+  // again for what it has only just been told.
   let firstTicketCode = "";
+  const tickets: Ticket[] = [];
   let t = 0;
   for (const line of order.lines) {
     if (line.parentLineId || line.admits <= 0 || line.unitPrice < 0) continue;
     for (let q = 0; q < line.quantity && t < 20; q++, t++) {
       const code = `${reference}-${String(t + 1).padStart(2, "0")}`;
       if (!firstTicketCode) firstTicketCode = code;
-      await issueTicket({ code, orderId: order.id, lineId: line.id, productId: line.productId, tierName: line.tierName, admits: line.admits, validFor: now.slice(0, 10) });
+      const issued = await issueTicket({ code, orderId: order.id, lineId: line.id, productId: line.productId, tierName: line.tierName, admits: line.admits, validFor: now.slice(0, 10) });
+      if (issued.ok) tickets.push(issued.data);
     }
   }
 
@@ -259,5 +264,5 @@ export async function checkout(
     await createBooking({ orderId: order.id, productId: b.productId, locationId: input.locationId, resourceId: b.resourceId ?? null, slotStart: b.slotStart, slotEnd: b.slotEnd, partySize: b.partySize });
   }
 
-  return { ok: true, data: { order, firstTicketCode } };
+  return { ok: true, data: { order, firstTicketCode, tickets } };
 }

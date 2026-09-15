@@ -7602,3 +7602,108 @@ Verified: layout at 1780, 1440, 1024 and 390; pixel contrast 0 below the floor;
 Sources: [NN/g — proximity principle](https://www.nngroup.com/articles/gestalt-proximity/) ·
 [IxDF — law of proximity](https://ixdf.org/literature/topics/law-of-proximity) ·
 [Designary — spacing systems and scales](https://blog.designary.com/p/spacing-systems-and-scales-ui-design)
+
+## The completion screen — what a cashier does after the money (2026-09-15)
+
+Owner asked for `/pos/complete` researched against SaaS, booking-system and POS
+checkout and ticket-issue flows, and reworked round by round until it holds up.
+Three rounds, each driven in a real browser, reviewed in screenshots and fixed
+before the next.
+
+### What the research settled
+
+- **Change due stays on screen until the next sale starts** (Square). It is the
+  one figure on the screen that is an action, so it is the largest thing there.
+- **Receipt delivery is a choice made on this screen** — print, text or none —
+  and then the till moves on (Shopify POS).
+- **Every ticket carries its own QR and reaches the guest more than one way**:
+  printed, by SMS, or shown on a screen (box-office systems). A counter in
+  Bangladesh often has no printer running, so showing the code large, for the
+  guest to photograph, is a real hand-over rather than a nicety.
+
+### The screen, in the order a cashier works
+
+1. **Sale complete**, with how many tickets it issued.
+2. **The money.** With change: "Give change" at 44px over what was received and
+   the total. Otherwise: how it was paid, and — on a part-paid sale — "Collect
+   ৳X at arrival" as a warning strip, because the slip is the only place the
+   person who owes it will see it.
+3. **Give the guest their tickets**: Print tickets, Print receipt, Send SMS.
+   On a phone this is **one card of full-width rows**, so a phone number or a
+   long Bangla label is read in full; from `sm` it becomes three tiles. A sale
+   that issued no tickets is titled "Give the guest their receipt" and offers
+   only the receipt.
+4. **New sale** — pinned above the tab bar, as wide as the cards, focused so
+   Enter starts the next sale.
+5. **Tickets**, each with its QR. A row opens the ticket **large** (216px QR,
+   code, day) for the guest to photograph or the gate to scan. Three are drawn,
+   then "Show all N tickets" — not "print to see all".
+6. **The sale**: lines, VAT, total, how it was paid, with the reference in the
+   card's header.
+
+The SMS goes to the attached customer's number without retyping it
+(`PosScreen` now hands the customer over), with a native tel input, the exact
+message it will send, and an **inline refusal in words** — "Use an 11-digit
+mobile number that starts with 01." — instead of a Send button that is simply
+disabled.
+
+### A defect that would have shipped: the screen lost its tickets on a reload
+
+The page fetched the order and its tickets by id. The mock store lives in
+memory, so after a reload the order was gone and the screen said **"No tickets
+issued"** and **"0 tickets"** about a sale that had just issued two. On a real
+backend the same screen would still have waited on a round-trip for what the
+till had only just been told.
+
+`checkout()` now returns the tickets it issues, as a real checkout's would, and
+the till hands a snapshot to the screen (`pos/_lib/handover.ts`:
+`CompleteInfo`, `CompleteTicket`, `ticketSnapshot`). The screen draws the moment
+it opens, needs no skeleton, and a reload loses nothing. A handover written
+before this change does not claim there were no tickets — it says nothing about
+the count.
+
+**Contract note for the backend lane:** the checkout response gains `tickets`.
+
+### Found by looking, not by the checks
+
+- **Tabular figures split phone numbers and codes.** The app sets tabular
+  figures on `body`; in Inter that widens the hyphen, so "01712-345678" and the
+  ticket code in the SMS preview read as "01712 - 345678". Prose that carries
+  numbers here uses `normal-nums` — the same fix the deck needed for "cash-up".
+- **Three separate cards for one question** made the phone screen six cards
+  deep. They are one grouped card now. `.go-surface` is a component-layer
+  class, so `sm:` utilities can take its surface off the wrapper and give it to
+  each tile.
+- The first error message broke its own example number across two lines.
+- The SMS dialog's label and help text came from the OS `Field` — uppercase and
+  12px, under the till's 13px floor. The dialog writes its own label now.
+- The status line truncated the order reference at 320; the reference moved to
+  the sale card, where it belongs.
+
+### Verified
+
+- **23 checks across 17 states, all passing**: cash with change; a ticket opened
+  large; a reload keeping both tickets; exact cash; bKash part-paid with a known
+  customer; the SMS dialog, a refused number and a sent SMS; a sale with no
+  tickets; an old handover; dark; Bangla; five tickets at 320 with Show all; 768
+  portrait; 1280 landscape. In every state: no page overflow, nothing clipped or
+  ellipsed, nothing under 13px, no target under 44px, no console errors, focus
+  on New sale.
+- `tsc` clean. `eslint` clean on the page, `handover.ts` and `orders.ts`;
+  `PosScreen` holds at its 6 pre-existing problems.
+- i18n parity 0 missing / 0 extra across 31 namespaces; every new key authored
+  in en and bn. The keys the Classic and Scroll completion screens share
+  (`newSale`, `sendSms`, `smsTitle`, `smsMeta`…) are kept.
+
+### Open
+
+- Print tickets and Print receipt leave the screen for the print routes, which
+  still fetch the order — after a reload in the mock they have nothing to print.
+- The classic till's completion screen reads the same session key and is
+  unchanged.
+
+Sources: [Square — change due](https://community.squareup.com/t5/Square-Point-of-Sale/Change-due-screen/td-p/135011) ·
+[Square Terminal — receipts](https://squareup.com/help/us/en/article/7686-issue-receipts-with-square-terminal) ·
+[Shopify POS — customer receipts](https://help.shopify.com/en/manual/sell-in-person/shopify-pos/order-management/receipts) ·
+[Baymard — order confirmation](https://baymard.com/blog/order-confirmation-page) ·
+[Ticketor — QR ticketing](https://www.ticketor.com/how-to/QR-Code-Ticketing-and-Mobile-Tickets)
