@@ -481,6 +481,26 @@
   --color-danger-solid: #b91c1c;
 }
 
+/* A printed document is paper: dark type on white whatever the app's theme.
+   The ticket receipt reuses the receipt header and line detail, which are drawn
+   in theme tokens, so it pins the light values of those tokens for its own
+   subtree — a custom property declared here outranks the one `.dark` sets on
+   <html>, however the blocks are ordered. */
+.paper {
+  color-scheme: light;
+  --color-surface: #f5f2eb;
+  --color-card: #ffffff;
+  --color-fg: #22211f;
+  --color-muted: #6b675f;
+  --color-faint: #b8b3a8;
+  --color-line: #e2ded5;
+  --color-strong: #d1cdc3;
+  --color-subtle: #efece5;
+  --color-success: #166534;
+  --color-warning: #92400e;
+  --color-danger: #b91c1c;
+}
+
 /* Dark: tonal direction reverses — content lightens, surfaces deepen.
    Elevation comes from surface steps + 1px lines, not shadows.
    ember + status colours brighten one region so they stay legible on ink. */

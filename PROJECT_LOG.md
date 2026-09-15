@@ -7871,3 +7871,42 @@ prints the tickets and the receipt together.
   print an order differently.
 
 **Verified**: 45 checks, all passing. On the completion screen (28): four buttons on one line at 320, 390, 768 and 1280 and in dark Bangla (66px each at 320, nothing ellipsed), each name carrying its visible word, contrast, the no-tickets receipt alone, and every earlier state unchanged. On the print pages (17): Print all from a real sale lands on the receipt then both tickets, the dialog opening once by itself; clean at 390, 320 and 1280; in print the receipt ends its page, one ticket to a page with no blank last page, toolbar and headings hidden; Bangla on a seeded order; the receipt-only and tickets-only pages unchanged; a missing order says so without opening the dialog; no console errors. `tsc` and `eslint` clean; i18n parity 0 / 0.
+
+### Second pass, same day — one page: the ticket receipt
+
+Owner review: the receipt and the tickets should be one page, a ticket and a
+receipt together.
+
+**Research.** Receipts that read at a glance keep one order — business,
+transaction, line items, totals, payment — and give the total its own
+separated space. Box-office systems let a lead ticket double as the order
+receipt and print on 80mm thermal rolls or A4 with a large QR. Together that
+suggests a single strip that reads as a receipt first and then tears into its
+tickets.
+
+**The ticket receipt** (`app/print/_components/TicketReceipt.tsx`) replaces the
+receipt-then-tickets pages at `/print/order/[orderId]`:
+
+- **Receipt half**: the same `ReceiptHeader` and `OrderLinesDetail` the
+  receipt page prints — business, address, VAT registration, reference, date
+  and time, lines, discounts, subtotal, VAT, total, payment — so the two can
+  never disagree about the money.
+- **A tear that says how many**: a dashed rule with "2 tickets" in the middle
+  and a notch cut into each edge.
+- **One stub per ticket**, torn off from the next: a 96px QR beside the
+  booking, "1 of 2", the tier, date, time, place, guests and holder, and the
+  code in DM Mono. Stubs never split across a page and stack on the narrowest
+  phones.
+- The gate hint, the operator's footer message and "Powered by Counterfoil".
+- One strip, 380px wide, no forced page breaks: a two-ticket sale is 761px —
+  well inside one A4 page — and a thermal printer simply feeds the roll.
+
+**`.paper`** (globals.css) pins the light values of the theme tokens for the
+strip's subtree, so reused parts drawn in theme tokens stay dark type on white
+in dark mode and print as they appear. The page resolves `--page` outside the
+paper, so the notches are cut in the page's real colour in either theme.
+
+The receipt-only and tickets-only print pages are unchanged. The page is
+retitled "Ticket receipt"; one label added in both locales.
+
+**Verified**: 20 checks, all passing — Print all from a real sale lands on one document with no separate receipt or ticket cards: the totals, a tear saying "2 tickets", a stub with a 96px QR for each, the gate hint, the receipt read before the tickets, the dialog opened once. Clean at 390, 320 (stubs stacked and centred) and 1280; dark theme keeps dark type on white paper; in print the toolbar is hidden, no page break is forced, stubs never split, and the whole strip is 761px of a 1,032px A4 page. Bangla on a seeded order; the receipt-only and tickets-only pages unchanged; a missing order says so without opening the dialog; no console errors. `tsc` and `eslint` clean; i18n parity 0 / 0.

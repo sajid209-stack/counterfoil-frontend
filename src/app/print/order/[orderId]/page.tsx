@@ -7,15 +7,13 @@ import { EmptyState } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getOrder, getTaxConfig, listLocations, listTickets } from "@/lib/api";
 import { PrintToolbar } from "@/app/print/_components/PrintToolbar";
-import { ReceiptSheet } from "@/app/print/_components/ReceiptSheet";
-import { TicketSheets } from "@/app/print/_components/TicketSheets";
+import { TicketReceipt } from "@/app/print/_components/TicketReceipt";
 import { ticketCards, useTicketLabels } from "@/app/print/_lib/ticketCards";
 
 /**
- * The whole hand-over in one print job: the receipt on its own page, then each
- * ticket on its own page — what a counter with a printer gives most guests.
- * The receipt and the tickets are the same components the single-purpose print
- * pages use, so the three can never print an order differently.
+ * Print all: the receipt and every ticket on one strip of paper — what a
+ * counter hands most guests in one tear-off, rather than a receipt and a stack
+ * of separate tickets.
  */
 export default function PrintOrderPage() {
   const t = useTranslations("ticket");
@@ -43,38 +41,16 @@ export default function PrintOrderPage() {
   }, [ready, order]);
 
   return (
-    <main className="mx-auto min-h-screen max-w-md bg-surface px-section py-section print:max-w-none print:bg-white print:p-0">
+    // `--page` is resolved here, outside the paper, so the strip's notches are cut in the page's real colour in either theme.
+    <main className="mx-auto min-h-screen max-w-md bg-surface px-section py-section [--page:var(--color-surface)] print:max-w-none print:bg-white print:p-0">
       <h1 className="sr-only">{t("printAllTitle")}</h1>
       <PrintToolbar />
       {!ready ? (
-        <div aria-busy="true" className="mx-auto h-[520px] w-full animate-pulse rounded-[24px] bg-card" />
+        <div aria-busy="true" className="mx-auto h-[640px] w-full max-w-[380px] animate-pulse rounded-[18px] bg-card" />
       ) : !order ? (
         <EmptyState title={t("orderNotFound")} />
       ) : (
-        // Block, not flex, in print: Chrome does not break pages reliably inside a flex container.
-        <div className="flex flex-col gap-wide print:block">
-          <section aria-labelledby="print-receipt">
-            <h2 id="print-receipt" className="mb-tight text-sm font-semibold text-fg print:hidden">
-              {t("receiptTitle")}
-            </h2>
-            <ReceiptSheet
-              order={order}
-              operator={opQ.data ?? { name: "Counterfoil" }}
-              place={place}
-              tax={taxQ.data}
-              footer={opQ.data?.receiptFooter}
-              className={cards.length > 0 ? "print:break-after-page" : undefined}
-            />
-          </section>
-          {cards.length > 0 && (
-            <section aria-labelledby="print-tickets">
-              <h2 id="print-tickets" className="mb-tight text-sm font-semibold text-fg print:hidden">
-                {t("ticketsTitle")}
-              </h2>
-              <TicketSheets cards={cards} />
-            </section>
-          )}
-        </div>
+        <TicketReceipt order={order} operator={opQ.data ?? { name: "Counterfoil" }} place={place} tax={taxQ.data} footer={opQ.data?.receiptFooter} cards={cards} />
       )}
     </main>
   );
