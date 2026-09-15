@@ -7736,3 +7736,52 @@ dark), a reload keeping the tickets, the SMS refusal and sent state, no
 tickets, an old handover, Show all, no overflow, clipping, ellipsis, text under
 13px, target under 44px or console error. `tsc` and `eslint` clean on the page;
 i18n parity 0 / 0.
+
+## The printed ticket — black on white, like a boarding pass (2026-09-15)
+
+Owner asked for `/print/tickets/[orderId]` redesigned modern and minimal: white
+background, black text. `TicketCard` is used only by this page, so the card was
+rebuilt rather than restyled.
+
+### What the old ticket got wrong
+
+- **Ink on screen, white on paper** — two tickets: what the cashier saw was not
+  what printed.
+- **Every fact in one mono run-on**: "15 Sept 2026 · Badminton Court · 12:00",
+  wrapping so the time sat alone on its own line.
+- **The same fact twice**: a court booked as "Badminton Court" also printed
+  "Badminton Court" as its place.
+- A 92px QR in the corner of the thing whose whole job is to be scanned.
+
+### The ticket
+
+- **Top — what it is for.** The venue, the booking at 26px semibold, then a
+  labelled grid: Date (with its year, since a printed ticket outlives the week
+  it was sold in), Time as a range, Where, and Guests when it admits more than
+  one. A field only appears when the ticket has it; a place or tier the booking
+  name already says is left out. "1 of 3" on multi-ticket orders.
+- **The tear.** A dashed line between two notches cut with a CSS mask, so they
+  are real holes — the page shows through in either theme and the card's drop
+  shadow follows the shape. In print, where a notch can only be a gap in the
+  border, the card draws one unbroken edge instead.
+- **The stub — what the gate needs.** A 168px QR, centred, the code under it in
+  DM Mono, and the gate hint.
+- **Mode-locked** to white and near-black (`neutral-950`, labels `neutral-600`
+  at 5.3:1): the same in light, dark and print.
+- The two-column field grid is a container query: one column on the narrowest
+  phones, so "Championship Court 1" wraps at its spaces, not mid-word.
+- One ticket to a printed page, with no blank page after the last.
+
+`TicketCardData` changed shape (`fields`, `indexLabel` in place of
+`dateLabel`/`seatOrResource`/`admitsLabel`); five labels added to `ticket` in
+both locales.
+
+### Verified
+
+18 checks across 7 states, all passing: a Badminton Court slot sold through the
+till and printed from its completion screen at 390, in dark, at 1280, as the
+printer sees it and at 320 with stress-length text; a plain seeded ticket in
+English and Bangla. White card, near-black type, contrast measured against the
+composited background, notch masks on screen and off in print, QR 168px, no
+field repeating the title, no overflow, clipping or text under 12px, toolbar
+hidden in print, no console errors. `tsc` and `eslint` clean; i18n parity 0 / 0.

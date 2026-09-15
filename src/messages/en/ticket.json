@@ -12,5 +12,10 @@
   "noTickets": "No tickets for this order.",
   "seat": "Seat {label}",
   "poweredBy": "Powered by Counterfoil",
-  "taxReg": "{name} reg. {number}"
+  "taxReg": "{name} reg. {number}",
+  "dateLabel": "Date",
+  "timeLabel": "Time",
+  "whereLabel": "Where",
+  "guestsLabel": "Guests",
+  "indexOf": "{index} of {total}"
 }

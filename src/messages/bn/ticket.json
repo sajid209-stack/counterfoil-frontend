@@ -12,5 +12,10 @@
   "noTickets": "এই অর্ডারের জন্য কোনো টিকিট নেই।",
   "seat": "সিট {label}",
   "poweredBy": "Counterfoil দ্বারা পরিচালিত",
-  "taxReg": "{name} নিবন্ধন {number}"
+  "taxReg": "{name} নিবন্ধন {number}",
+  "dateLabel": "তারিখ",
+  "timeLabel": "সময়",
+  "whereLabel": "স্থান",
+  "guestsLabel": "অতিথি",
+  "indexOf": "{total}টির মধ্যে {index}"
 }
