@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check, ChevronRight, Clock, MessageSquare, Plus, Printer, ReceiptText, Ticket as TicketIcon } from "lucide-react";
+import { Check, ChevronRight, Clock, Mail, MessageSquare, Plus, Printer, ReceiptText, Send, Ticket as TicketIcon } from "lucide-react";
 import { Button, Modal, Qr, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -18,8 +18,9 @@ import type { CompleteInfo, CompleteTicket } from "../_lib/handover";
  * The moment a sale lands, for the person still standing at the counter.
  *
  * One figure leads — the change to hand back, or what was paid — set large and
- * centred on the page itself rather than boxed in a card. Under it, one row of
- * three buttons hands the guest their tickets (print, receipt, SMS), and New
+ * centred on the page itself rather than boxed in a card. Under it the guest
+ * gets their tickets in one of two ways, each its own group: printed (all of
+ * it, just the tickets, just the receipt) or sent (SMS, email, or both). New
  * sale stays pinned in reach and focused. The tickets and the sale sit below
  * as quiet lists, for checking.
  *
@@ -30,6 +31,8 @@ import type { CompleteInfo, CompleteTicket } from "../_lib/handover";
 /** Tickets drawn before the list offers to show the rest. */
 const TICKETS_SHOWN = 3;
 
+type Channel = "sms" | "email" | "both";
+
 const noSubscribe = () => () => {};
 const readComplete = () => sessionStorage.getItem("pos_complete");
 
@@ -38,6 +41,9 @@ const isMobile = (value: string) => {
   const digits = value.replace(/\D/g, "");
   return /^01\d{9}$/.test(digits) || /^8801\d{9}$/.test(digits);
 };
+
+/** Something shaped like an address: a name, an @, a domain with a dot. The mail server is the real test. */
+const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
 
 export default function CompletePage() {
   const router = useRouter();
@@ -57,23 +63,25 @@ export default function CompletePage() {
 
   const operatorQ = useApiQuery(() => getOperator(), []);
 
-  const [smsOpen, setSmsOpen] = useState(false);
+  const [sending, setSending] = useState<Channel | null>(null);
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [phoneTouched, setPhoneTouched] = useState(false);
-  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [smsSentTo, setSmsSentTo] = useState<string | null>(null);
+  const [emailSentTo, setEmailSentTo] = useState<string | null>(null);
   const [allTickets, setAllTickets] = useState(false);
   const [shown, setShown] = useState<CompleteTicket | null>(null);
   const phoneId = useId();
   const phoneHelpId = useId();
+  const emailId = useId();
+  const emailHelpId = useId();
 
   const tickets = info?.tickets ?? [];
-  const smsText = renderSms(operatorQ.data?.smsTemplate || DEFAULT_SMS_TEMPLATE, {
-    business: operatorQ.data?.name ?? "Counterfoil",
-    code: info?.code ?? "",
-    // The ticket’s own date, in the form a customer reads — so the message never
-    // names a different day from the ticket it confirms.
-    date: formatDay(tickets[0]?.date ?? DEMO_TODAY, { weekday: true }),
-  });
+  const business = operatorQ.data?.name ?? "Counterfoil";
+  // The ticket’s own date, in the form a customer reads — so a message never names a different day from the ticket it confirms.
+  const ticketDay = formatDay(tickets[0]?.date ?? DEMO_TODAY, { weekday: true });
+  const smsText = renderSms(operatorQ.data?.smsTemplate || DEFAULT_SMS_TEMPLATE, { business, code: info?.code ?? "", date: ticketDay });
 
   if (!info) return <main className="min-h-[60vh]" aria-busy="true" />;
 
@@ -88,6 +96,7 @@ export default function CompletePage() {
   const balance = info.balance ?? 0;
   const method = payment ? enumL.method(payment.method) : "";
   const knownPhone = info.customer?.phone ?? null;
+  const knownEmail = info.customer?.email ?? null;
   const orderId = info.orderId ?? "";
 
   const ticketMeta = (ticket: CompleteTicket) =>
@@ -101,17 +110,35 @@ export default function CompletePage() {
       .filter(Boolean)
       .join(" · ");
 
-  const openSms = () => {
-    setPhone((current) => current || knownPhone || "");
-    setPhoneTouched(false);
-    setSmsOpen(true);
-  };
-  const sendSms = () => {
-    setSmsOpen(false);
-    setSentTo(phone);
-    toast.success(t("complete.smsSentTo", { phone }));
-  };
+  // One dialog for all three ways of sending: it asks for whichever of the number and the address the channel needs.
+  const wantsSms = sending === "sms" || sending === "both";
+  const wantsEmail = sending === "email" || sending === "both";
   const phoneInvalid = phoneTouched && phone.trim() !== "" && !isMobile(phone);
+  const emailInvalid = emailTouched && email.trim() !== "" && !isEmail(email);
+  const canSend = (!wantsSms || isMobile(phone)) && (!wantsEmail || isEmail(email));
+  const emailSubject = t("complete.emailSubject", { business, ref: info.reference ?? info.code });
+  const emailBody = t("complete.emailBody", { count: Math.max(tickets.length, 1), date: ticketDay, total: formatMoney(total) });
+
+  const openSend = (channel: Channel) => {
+    setPhone((current) => current || knownPhone || "");
+    setEmail((current) => current || knownEmail || "");
+    setPhoneTouched(false);
+    setEmailTouched(false);
+    setSending(channel);
+  };
+  const send = () => {
+    if (wantsSms) setSmsSentTo(phone);
+    if (wantsEmail) setEmailSentTo(email.trim());
+    toast.success(
+      sending === "both"
+        ? t("complete.bothSentTo", { phone, email: email.trim() })
+        : sending === "email"
+          ? t("complete.emailSentTo", { email: email.trim() })
+          : t("complete.smsSentTo", { phone }),
+    );
+    setSending(null);
+  };
+  const sentName = (name: string, sent: boolean) => (sent ? `${name} · ${t("complete.smsSentState")}` : name);
 
   const visibleTickets = allTickets ? tickets : tickets.slice(0, TICKETS_SHOWN);
 
@@ -163,50 +190,54 @@ export default function CompletePage() {
             )}
           </section>
 
-          {/* Hand-over: four ways on one line — both printed together (what most guests at a counter
-              with a printer get), the tickets, the receipt, or an SMS. The visible word is short so
-              four fit a 320px phone; each button's name says the whole action. */}
-          <section aria-labelledby="hand-over">
-            <h2 id="hand-over" className="text-center text-sm font-semibold text-fg">
+          {/* Hand-over, as two decisions rather than six loose buttons: printed or sent. Each group is one card of
+              three joined segments, so what belongs together reads together — side by side once there is room,
+              stacked on a phone. The visible word is short; each button's name says the whole action. */}
+          <section aria-labelledby="hand-over" className={cn("flex flex-col gap-section", hasTickets && "sm:grid sm:grid-cols-2 sm:gap-comfortable")}>
+            <h2 id="hand-over" className="sr-only">
               {hasTickets ? t("complete.handOverTitle") : t("complete.handOverReceiptTitle")}
             </h2>
-            <div className="mt-comfortable flex gap-tight">
+            <HandOverGroup label={t("complete.printGroup")}>
               {hasTickets && (
-                <HandOver
-                  icon={<Printer size={20} strokeWidth={1.8} />}
-                  label={t("complete.handOverAll")}
-                  name={tk("printAll")}
-                  disabled={!orderId}
-                  onClick={() => router.push(`/print/order/${orderId}`)}
-                />
+                <HandOver icon={<Printer size={20} strokeWidth={1.8} />} label={t("complete.handOverAll")} name={tk("printAll")} disabled={!orderId} onClick={() => router.push(`/print/order/${orderId}`)} />
               )}
               {hasTickets && (
-                <HandOver
-                  icon={<TicketIcon size={20} strokeWidth={1.8} />}
-                  label={t("complete.handOverTickets")}
-                  name={tk("printTickets")}
-                  disabled={!orderId}
-                  onClick={() => router.push(`/print/tickets/${orderId}`)}
-                />
+                <HandOver icon={<TicketIcon size={20} strokeWidth={1.8} />} label={t("complete.handOverTickets")} name={tk("printTickets")} disabled={!orderId} onClick={() => router.push(`/print/tickets/${orderId}`)} />
               )}
               <HandOver
                 icon={<ReceiptText size={20} strokeWidth={1.8} />}
                 label={t("complete.handOverReceipt")}
                 name={tk("printReceipt")}
                 disabled={!orderId}
-                wide={!hasTickets}
+                row={!hasTickets}
                 onClick={() => router.push(`/print/receipt/${orderId}`)}
               />
-              {hasTickets && (
+            </HandOverGroup>
+            {hasTickets && (
+              <HandOverGroup label={t("complete.sendGroup")}>
                 <HandOver
-                  icon={sentTo ? <Check size={20} strokeWidth={2.4} /> : <MessageSquare size={20} strokeWidth={1.8} />}
+                  icon={smsSentTo ? <Check size={20} strokeWidth={2.4} /> : <MessageSquare size={20} strokeWidth={1.8} />}
                   label={t("complete.handOverSms")}
-                  name={sentTo ? `${t("complete.sendSms")} · ${t("complete.smsSentState")}` : t("complete.sendSms")}
-                  done={!!sentTo}
-                  onClick={openSms}
+                  name={sentName(t("complete.sendSms"), !!smsSentTo)}
+                  done={!!smsSentTo}
+                  onClick={() => openSend("sms")}
                 />
-              )}
-            </div>
+                <HandOver
+                  icon={emailSentTo ? <Check size={20} strokeWidth={2.4} /> : <Mail size={20} strokeWidth={1.8} />}
+                  label={t("complete.handOverEmail")}
+                  name={sentName(t("complete.sendEmail"), !!emailSentTo)}
+                  done={!!emailSentTo}
+                  onClick={() => openSend("email")}
+                />
+                <HandOver
+                  icon={smsSentTo && emailSentTo ? <Check size={20} strokeWidth={2.4} /> : <Send size={20} strokeWidth={1.8} />}
+                  label={t("complete.handOverBoth")}
+                  name={sentName(t("complete.sendBoth"), !!smsSentTo && !!emailSentTo)}
+                  done={!!smsSentTo && !!emailSentTo}
+                  onClick={() => openSend("both")}
+                />
+              </HandOverGroup>
+            )}
           </section>
 
           {/* New sale: pinned above the tab bar on a phone, inline on a landscape tablet. Focused, so Enter starts the next sale. */}
@@ -332,59 +363,122 @@ export default function CompletePage() {
         )}
       </Modal>
 
-      {/* SMS: the number it goes to, and the exact message it sends. */}
+      {/* Sending: the number and/or the address it goes to, and exactly what each carries. */}
       <Modal
-        open={smsOpen}
-        onClose={() => setSmsOpen(false)}
-        title={t("complete.smsTitle")}
+        open={!!sending}
+        onClose={() => setSending(null)}
+        title={sending === "both" ? t("complete.bothTitle") : sending === "email" ? t("complete.emailTitle") : t("complete.smsTitle")}
         footer={
           <>
-            <Button shape="pill" variant="secondary" onClick={() => setSmsOpen(false)}>
+            <Button shape="pill" variant="secondary" onClick={() => setSending(null)}>
               {t("complete.cancel")}
             </Button>
-            <Button shape="pill" disabled={!isMobile(phone)} onClick={sendSms}>
-              {t("complete.sendSmsButton")}
+            <Button shape="pill" disabled={!canSend} onClick={send}>
+              {sending === "both" ? t("complete.sendBoth") : sending === "email" ? t("complete.sendEmail") : t("complete.sendSmsButton")}
             </Button>
           </>
         }
       >
         {/* Written out rather than the OS Field, whose uppercase 12px label is a form convention and under the till's 13px floor.
             Proportional figures in this dialog: the app's tabular ones widen a hyphen, so "01712-345678" and the ticket code read as split. */}
-        <div className="flex flex-col gap-tight text-left normal-nums">
-          <label htmlFor={phoneId} className="text-sm font-medium text-fg">
-            {t("complete.smsTo")}
-          </label>
-          {/* A native tel input, so a phone opens its number pad and the browser can offer the guest’s number. */}
-          <input
-            id={phoneId}
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            onBlur={() => setPhoneTouched(true)}
-            aria-invalid={phoneInvalid || undefined}
-            aria-describedby={phoneHelpId}
-            placeholder="01XXXXXXXXX"
-            className={cn(
-              "h-12 w-full rounded-go-sm border bg-card px-comfortable font-mono text-[15px] text-fg outline-none transition-colors duration-quick placeholder:text-faint focus:border-ember focus:ring-2 focus:ring-ember/20",
-              phoneInvalid ? "border-danger" : "border-line",
-            )}
-          />
-          <p id={phoneHelpId} className={cn("text-[13px]", phoneInvalid ? "text-danger" : "text-muted")}>
-            {phoneInvalid ? t("complete.smsInvalid") : t("complete.smsToHelp")}
-          </p>
+        <div className="flex flex-col gap-section text-left normal-nums">
+          {wantsSms && (
+            <div className="flex flex-col gap-tight">
+              <label htmlFor={phoneId} className="text-sm font-medium text-fg">
+                {t("complete.smsTo")}
+              </label>
+              {/* A native tel input, so a phone opens its number pad and the browser can offer the guest’s number. */}
+              <input
+                id={phoneId}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                onBlur={() => setPhoneTouched(true)}
+                aria-invalid={phoneInvalid || undefined}
+                aria-describedby={phoneHelpId}
+                placeholder="01XXXXXXXXX"
+                className={cn(
+                  "h-12 w-full rounded-go-sm border bg-card px-comfortable font-mono text-[15px] text-fg outline-none transition-colors duration-quick placeholder:text-faint focus:border-ember focus:ring-2 focus:ring-ember/20",
+                  phoneInvalid ? "border-danger" : "border-line",
+                )}
+              />
+              <p id={phoneHelpId} className={cn("text-[13px]", phoneInvalid ? "text-danger" : "text-muted")}>
+                {phoneInvalid ? t("complete.smsInvalid") : t("complete.smsToHelp")}
+              </p>
+            </div>
+          )}
+          {wantsEmail && (
+            <div className="flex flex-col gap-tight">
+              <label htmlFor={emailId} className="text-sm font-medium text-fg">
+                {t("complete.emailTo")}
+              </label>
+              {/* A native email input, so a phone opens the keyboard with @ and the browser can offer the guest’s address. */}
+              <input
+                id={emailId}
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setEmailTouched(true)}
+                aria-invalid={emailInvalid || undefined}
+                aria-describedby={emailHelpId}
+                placeholder="name@example.com"
+                className={cn(
+                  "h-12 w-full rounded-go-sm border bg-card px-comfortable text-[15px] text-fg outline-none transition-colors duration-quick placeholder:text-faint focus:border-ember focus:ring-2 focus:ring-ember/20",
+                  emailInvalid ? "border-danger" : "border-line",
+                )}
+              />
+              <p id={emailHelpId} className={cn("text-[13px]", emailInvalid ? "text-danger" : "text-muted")}>
+                {emailInvalid ? t("complete.emailInvalid") : t("complete.emailToHelp")}
+              </p>
+            </div>
+          )}
+
+          {wantsSms && (
+            <div>
+              {sending === "both" && <p className="mb-1.5 text-[13px] font-medium text-muted">{t("complete.handOverSms")}</p>}
+              <div className="rounded-go-sm border border-line bg-subtle p-comfortable text-sm text-fg">{smsText}</div>
+              <p className="mt-tight text-[13px] text-muted">{t("complete.smsMeta", { count: smsText.length })}</p>
+            </div>
+          )}
+          {wantsEmail && (
+            <div>
+              {sending === "both" && <p className="mb-1.5 text-[13px] font-medium text-muted">{t("complete.handOverEmail")}</p>}
+              {/* The message as it will arrive: its subject, then what it says. */}
+              <div className="rounded-go-sm border border-line bg-subtle p-comfortable text-sm">
+                <p className="break-words font-semibold text-fg">{emailSubject}</p>
+                <p className="mt-1 break-words text-muted">{emailBody}</p>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="mt-section rounded-go-sm border border-line bg-subtle p-comfortable text-left text-sm text-fg normal-nums">{smsText}</div>
-        <p className="mt-tight text-left text-[13px] text-muted normal-nums">{t("complete.smsMeta", { count: smsText.length })}</p>
       </Modal>
     </main>
   );
 }
 
+/** A group of hand-over actions: a label, then one card of joined segments — shared edges say these are one decision. */
+function HandOverGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  const id = useId();
+  return (
+    <div role="group" aria-labelledby={id} className="min-w-0">
+      <p id={id} className="px-1 text-sm font-semibold text-fg">
+        {label}
+      </p>
+      <div className="go-surface mt-tight flex">{children}</div>
+    </div>
+  );
+}
+
 /** One way to hand the tickets over: an icon over a short word on screen, the whole action as its name.
- *  `wide` is for a button that has the row to itself, where the icon sits beside its word instead. */
-function HandOver({ icon, label, name, done, disabled, wide, onClick }: { icon: React.ReactNode; label: string; name: string; done?: boolean; disabled?: boolean; wide?: boolean; onClick: () => void }) {
+ *  Segments carry their own end radii rather than the card clipping them, so a keyboard focus ring is never cut off.
+ *  `row` is for a segment that has the card to itself, where the icon sits beside its word instead. */
+function HandOver({ icon, label, name, done, disabled, row, onClick }: { icon: React.ReactNode; label: string; name: string; done?: boolean; disabled?: boolean; row?: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -392,8 +486,8 @@ function HandOver({ icon, label, name, done, disabled, wide, onClick }: { icon: 
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "go-surface flex min-w-0 flex-1 items-center justify-center font-medium text-fg active:scale-[0.97] disabled:opacity-40",
-        wide ? "h-12 gap-1.5 rounded-full px-comfortable text-sm" : "h-16 flex-col gap-1 px-1 text-[13px]",
+        "flex min-w-0 flex-1 items-center justify-center border-l border-line font-medium text-fg transition-colors duration-quick first:rounded-l-go first:border-l-0 last:rounded-r-go active:bg-subtle disabled:opacity-40",
+        row ? "h-12 gap-1.5 px-comfortable text-sm" : "h-16 flex-col gap-1 px-1 text-[13px]",
       )}
     >
       <span aria-hidden className={cn("grid shrink-0 place-items-center", done ? "text-success" : "text-muted")}>

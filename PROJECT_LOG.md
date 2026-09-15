@@ -7910,3 +7910,55 @@ The receipt-only and tickets-only print pages are unchanged. The page is
 retitled "Ticket receipt"; one label added in both locales.
 
 **Verified**: 20 checks, all passing — Print all from a real sale lands on one document with no separate receipt or ticket cards: the totals, a tear saying "2 tickets", a stub with a 96px QR for each, the gate hint, the receipt read before the tickets, the dialog opened once. Clean at 390, 320 (stubs stacked and centred) and 1280; dark theme keeps dark type on white paper; in print the toolbar is hidden, no page break is forced, stubs never split, and the whole strip is 761px of a 1,032px A4 page. Bangla on a seeded order; the receipt-only and tickets-only pages unchanged; a missing order says so without opening the dialog; no console errors. `tsc` and `eslint` clean; i18n parity 0 / 0.
+
+## Email, and SMS & email — the hand-over in two groups (2026-09-15)
+
+Owner asked for an Email button and an SMS-and-email button on the completion
+screen, with a researched button layout.
+
+**Research.** Square offers print, text, email or no receipt on one screen.
+Grouping research (NN/g on common region; USWDS and Primer button groups) is
+consistent: items inside one boundary read as one group, joined segments read
+as one decision, related actions belong together and unrelated ones do not.
+Six buttons in one row cannot fit a phone, and six loose buttons in a grid
+read as six unrelated choices.
+
+**Layout: two decisions, not six buttons.**
+
+- **Print** — Print all · Tickets · Receipt
+- **Send** — SMS · Email · SMS & email
+
+Each group is one card of three joined segments (shared edges, a hairline
+between) under a small heading, the same heading style as Tickets and Sale
+below it. On a phone the groups stack; from `sm` they sit side by side. Each
+segment is an icon over a short word, 64px tall, with the whole action as its
+name ("Send SMS & email"), which contains the visible words. Segments carry
+their own end radii instead of the card clipping them, so a keyboard focus
+ring is never cut off. A sale with no tickets shows the Print group with the
+receipt alone.
+
+**One send dialog for three channels.** SMS asks for the number, Email for the
+address, SMS & email for both — each prefilled from the attached customer (the
+till now hands the customer's email to the screen as well as the phone), each
+refused in words beside its field when it is wrong, and each showing exactly
+what it sends: the SMS text, and the email's subject and message. SMS & email
+waits until both are valid. A segment that has sent says so ("Send email ·
+Sent", with a check), and SMS & email reads as sent once both channels have.
+The email input is a native `type="email"`, so a phone opens the keyboard
+with @ and the browser can offer the guest's address.
+
+Sending is a mock action; fifteen labels added in both locales.
+
+**Verified**: 28 checks, all passing — two labelled groups, stacked at 390 and
+320 (95–96px segments, nothing cut) and in dark Bangla, side by side at 768
+and 1280; every name carrying its visible word; SMS, Email and SMS & email each
+asking for the right fields, prefilled, refusing a bad value and marking the
+segment sent; a reload keeping the tickets; no tickets offering the receipt
+alone; no overflow, ellipsis, text under 13px, target under 44px, low contrast
+or console errors. `tsc` and `eslint` clean on the page and handover;
+`PosScreen` holds at its 6 pre-existing problems; i18n parity 0 / 0.
+
+Sources: [Square — print and send receipts](https://squareup.com/help/us/en/article/6139-print-receipts) ·
+[NN/g — common region](https://www.nngroup.com/articles/common-region/) ·
+[USWDS — button group](https://designsystem.digital.gov/components/button-group/) ·
+[Primer — button group](https://primer.style/components/button-group/)

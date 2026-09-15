@@ -216,7 +216,22 @@
     "handOverTickets": "টিকিট",
     "handOverReceipt": "রসিদ",
     "handOverSms": "SMS",
-    "handOverAll": "সব প্রিন্ট"
+    "handOverAll": "সব প্রিন্ট",
+    "printGroup": "প্রিন্ট",
+    "sendGroup": "পাঠান",
+    "handOverEmail": "ইমেইল",
+    "handOverBoth": "SMS ও ইমেইল",
+    "sendEmail": "ইমেইল পাঠান",
+    "sendBoth": "SMS ও ইমেইল পাঠান",
+    "emailTitle": "ইমেইলে পাঠান",
+    "bothTitle": "SMS ও ইমেইলে পাঠান",
+    "emailTo": "ইমেইল ঠিকানা",
+    "emailToHelp": "টিকিট ও রসিদ এই ঠিকানায় যাবে।",
+    "emailInvalid": "name@example.com-এর মতো একটি ইমেইল ঠিকানা দিন।",
+    "emailSubject": "{business} থেকে আপনার টিকিট · {ref}",
+    "emailBody": "{date}-এর {count, plural, other {#টি টিকিট}} ও {total}-এর রসিদ সংযুক্ত। গেটে QR কোড দেখান।",
+    "emailSentTo": "{email}-এ ইমেইল পাঠানো হয়েছে।",
+    "bothSentTo": "{phone}-এ SMS ও {email}-এ ইমেইল পাঠানো হয়েছে।"
   },
   "sheet": {
     "close": "বন্ধ করুন",

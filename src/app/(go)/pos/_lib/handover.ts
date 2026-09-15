@@ -35,7 +35,7 @@ export interface CompleteInfo {
   balance?: number;
   receipt?: Receipt;
   payments?: { method: string; amount: number; tendered?: number; change?: number }[];
-  customer?: { name: string; phone: string | null } | null;
+  customer?: { name: string; phone: string | null; email?: string | null } | null;
   /** Absent on a handover written before tickets travelled with the sale. */
   tickets?: CompleteTicket[];
 }

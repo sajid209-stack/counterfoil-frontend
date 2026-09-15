@@ -736,10 +736,14 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     await earnPoints(customerId, paidAmount, orderId);
   };
 
-  /** Who the sale was for, carried to the completion screen so its SMS goes to
-   *  the attached guest's number without the cashier typing it again. */
+  /** Who the sale was for, carried to the completion screen so its SMS and email go to
+   *  the attached guest's number and address without the cashier typing them again. */
   const completedCustomer = () =>
-    attached ? { name: attached.name, phone: attached.phone ?? null } : customer ? { name: customer, phone: null } : null;
+    attached
+      ? { name: attached.name, phone: attached.phone ?? null, email: attached.email ?? null }
+      : customer
+        ? { name: customer, phone: null, email: null }
+        : null;
 
   // Non-cash settle: no change step; runs after the wallet flow confirms.
   const settleInline = async (txnNote?: string, txnRef?: string) => {

@@ -216,7 +216,22 @@
     "handOverTickets": "Tickets",
     "handOverReceipt": "Receipt",
     "handOverSms": "SMS",
-    "handOverAll": "Print all"
+    "handOverAll": "Print all",
+    "printGroup": "Print",
+    "sendGroup": "Send",
+    "handOverEmail": "Email",
+    "handOverBoth": "SMS & email",
+    "sendEmail": "Send email",
+    "sendBoth": "Send SMS & email",
+    "emailTitle": "Send by email",
+    "bothTitle": "Send by SMS and email",
+    "emailTo": "Email address",
+    "emailToHelp": "The tickets and the receipt go to this address.",
+    "emailInvalid": "Enter an email address, like name@example.com.",
+    "emailSubject": "Your tickets from {business} · {ref}",
+    "emailBody": "{count, plural, one {Your ticket for {date} is attached} other {Your # tickets for {date} are attached}}, with the receipt for {total}. Show the QR code at the gate.",
+    "emailSentTo": "Email sent to {email}.",
+    "bothSentTo": "Sent by SMS to {phone} and by email to {email}."
   },
   "sheet": {
     "close": "Close",
