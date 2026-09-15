@@ -83,29 +83,36 @@ export const OS_SECTION = "01 · Counterfoil OS";
 
 /** The parts of chapter 01, each with the icon the OS sidebar gives it. */
 export const OS_CONTENTS: ChapterPart[] = [
-  { name: "Dashboard", page: 6, icon: LayoutDashboard },
-  { name: "Calendar", page: 7, icon: CalendarDays },
-  { name: "Bookings", page: 8, icon: TicketIcon },
-  { name: "Booking types", page: 9, icon: Shapes },
-  { name: "Holds", page: 10, icon: Lock },
-  { name: "Orders", page: 11, icon: ReceiptText },
-  { name: "Customers", page: 12, icon: UsersRound },
-  { name: "Reports", page: 13, icon: ChartNoAxesColumn },
-  { name: "Events", page: 14, icon: PartyPopper },
-  { name: "Settings", page: 15, icon: Settings },
+  { name: "Dashboard", icon: LayoutDashboard },
+  { name: "Calendar", icon: CalendarDays },
+  { name: "Bookings", icon: TicketIcon },
+  { name: "Booking types", icon: Shapes },
+  { name: "Holds", icon: Lock },
+  { name: "Orders", icon: ReceiptText },
+  { name: "Customers", icon: UsersRound },
+  { name: "Reports", icon: ChartNoAxesColumn },
+  { name: "Events", icon: PartyPopper },
+  { name: "Settings", icon: Settings },
 ];
 
-/* A contents item is an icon tile over its name and page. */
-const PART_W = 124;
-const PART_H = 112;
-const PART_GAP_Y = 28;
+/*
+ * A contents item is an icon tile over its name. The spacing follows the
+ * proximity rule: inside an item the label sits 12px under its icon; between
+ * items there is at least 32px, so each pair reads as one thing.
+ *
+ * Columns share one width, set by the longest label ("Booking types", about
+ * 120px at 16px) plus that 32px — so every icon keeps an even rhythm and no
+ * label runs up to its neighbour. Rows are 32px apart for the same reason.
+ */
+const PART_COL = 156;
+const PART_GAP_Y = 32;
 
 /**
  * A chapter opens on ink, with the product's own marque printed on the ticket
  * and the chapter's number on its stub. The Counterfoil logotype is OS's own
  * mark — the app draws no OS tag beside it — and Go carries the Go artwork,
  * streaks and all. What the chapter holds is set like an app's home screen:
- * each part's icon, its name, and the page it starts on.
+ * each part's icon over its name.
  */
 export function ChapterDivider({
   n,
@@ -125,27 +132,27 @@ export function ChapterDivider({
   contents: ChapterPart[];
 }) {
   const logo = marque === "go" ? <GoLockup /> : <Image src={logoOnPaper} alt="" sizes="360px" />;
-  const cols = contents.length > 6 ? 5 : contents.length;
+  // Two rows on both openers: ten parts in fives, six in threes. Both blocks are then the same height, so both titles sit on the same line.
+  const cols = Math.ceil(contents.length / 2);
   return (
     <Slide tone="ink" n={n} section={`${chapter} · ${product}`} label={title}>
       <Glow className="left-[840px] top-[-260px] h-[940px] w-[940px]" />
       <Floor />
       <p className={cn(s.eyebrow, "absolute left-[96px] top-[92px]")}>Chapter {chapter}</p>
-      {/* Anchored by its foot: title, lead and contents end on the same line (y 730) on both openers, however many parts they hold. */}
-      <div className={s.text} style={{ left: 96, bottom: 170, width: 760 }}>
+      {/* Anchored by its foot, so title, lead and contents end on the same line on both openers. */}
+      <div className={s.text} style={{ left: 96, bottom: 170, width: 780 }}>
         <h2 className={s.display}>{title}</h2>
         <p className={cn(s.lead, "mt-8 w-[620px]")}>{lead}</p>
-        <ol className="mt-11 grid" style={{ gridTemplateColumns: `repeat(${cols}, ${PART_W}px)`, rowGap: PART_GAP_Y }}>
-          {contents.map(({ name, page, icon: Icon }) => (
-            <li key={name} className="flex flex-col" style={{ height: PART_H }}>
+        <ul className="mt-11 grid" style={{ gridTemplateColumns: `repeat(${cols}, ${PART_COL}px)`, rowGap: PART_GAP_Y }}>
+          {contents.map(({ name, icon: Icon }) => (
+            <li key={name} className="flex flex-col items-start">
               <span className="grid h-[60px] w-[60px] place-items-center rounded-[18px] bg-white/[0.06] text-[#ffa572] ring-1 ring-inset ring-white/10">
                 <Icon size={26} strokeWidth={1.5} aria-hidden />
               </span>
-              <span className="mt-3 text-[16px] font-medium leading-tight text-[#f5f2eb]">{name}</span>
-              <span className="mt-1 font-mono text-[13px] tabular-nums text-[rgb(245_242_235/0.62)]">{String(page).padStart(2, "0")}</span>
+              <span className="mt-3 whitespace-nowrap text-[16px] font-medium leading-tight text-[#f5f2eb]">{name}</span>
             </li>
           ))}
-        </ol>
+        </ul>
       </div>
       <Ticket
         variant="glass"

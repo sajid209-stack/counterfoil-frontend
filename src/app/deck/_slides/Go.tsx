@@ -28,12 +28,12 @@ export const GO_SECTION = "02 · Counterfoil Go";
 
 /** The parts of chapter 02, each with the icon of what the cashier does. */
 export const GO_CONTENTS: ChapterPart[] = [
-  { name: "Find", page: 17, icon: Search },
-  { name: "Choose", page: 18, icon: MousePointerClick },
-  { name: "Pay", page: 19, icon: Banknote },
-  { name: "Ticket", page: 20, icon: TicketIcon },
-  { name: "Admit", page: 21, icon: ScanLine },
-  { name: "Shift", page: 22, icon: KeyRound },
+  { name: "Find", icon: Search },
+  { name: "Choose", icon: MousePointerClick },
+  { name: "Pay", icon: Banknote },
+  { name: "Ticket", icon: TicketIcon },
+  { name: "Admit", icon: ScanLine },
+  { name: "Shift", icon: KeyRound },
 ];
 
 /** Behind a sheet the page is dimmed, so the phone's status bar takes that grey rather than paper. */

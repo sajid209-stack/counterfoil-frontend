@@ -9,8 +9,8 @@ export const TOTAL = 25;
 
 export type Tone = "ink" | "paper";
 
-/** One part of a chapter, shown on its opener by the icon the product gives it and the page it starts on. */
-export type ChapterPart = { name: string; page: number; icon: LucideIcon };
+/** One part of a chapter, shown on its opener by the icon the product gives it. */
+export type ChapterPart = { name: string; icon: LucideIcon };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 

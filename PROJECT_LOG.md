@@ -7569,3 +7569,36 @@ and to speak about Counterfoil's specialities, briefly.
 Verified: layout at 1780, 1440, 1024 and 390; pixel contrast 0 of 404 text
 boxes below the floor; `/deck` audits at 0; PDF rebuilt; `tsc` and `eslint`
 clean.
+
+## Counterfoil Deck, part eleven — the chapter contents, spaced by proximity (2026-09-15)
+
+Owner asked for the page numbers to go from both chapter openers, and flagged
+the spacing: "Booking types" ran straight into "Holds".
+
+**Why it happened:** each part sat in a fixed 124px column, and the longest
+label is about 120px at 16px, so the label filled its column and met the next
+icon. That breaks the proximity rule — the space between items must be clearly
+larger than the space inside an item (here, 12px from icon to label) — and the
+guideline against squeezing a label into a fixed box narrower than its text.
+
+**The fix:**
+- Page numbers removed; `ChapterPart` is now `{ name, icon }`.
+- Columns are one width, 156px, set by the longest label plus at least 32px (the
+  8px scale's step for separating items). Every icon keeps an even rhythm and
+  stays left-aligned with the title; labels never wrap (`whitespace-nowrap`).
+- Rows are 32px apart.
+- Both openers use two rows — ten parts in fives, six in threes — so the blocks
+  are the same height and both titles sit on the same line (y 283). Six across
+  would also have run into the ticket.
+
+**Measured** (`contentsprobe.mjs`, scratchpad): before, the labels filled their
+columns with no gap to the next item. After, the tightest gap across is 49px
+("Booking types" → "Holds", 4.1× the icon-to-label gap) on chapter 01 and 98px
+on chapter 02; rows are 32px apart on both; icon pitch 156; no page numbers.
+
+Verified: layout at 1780, 1440, 1024 and 390; pixel contrast 0 below the floor;
+`/deck` audits at 0; PDF rebuilt; `tsc` and `eslint` clean.
+
+Sources: [NN/g — proximity principle](https://www.nngroup.com/articles/gestalt-proximity/) ·
+[IxDF — law of proximity](https://ixdf.org/literature/topics/law-of-proximity) ·
+[Designary — spacing systems and scales](https://blog.designary.com/p/spacing-systems-and-scales-ui-design)
