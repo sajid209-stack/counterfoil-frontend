@@ -17,5 +17,6 @@
   "timeLabel": "সময়",
   "whereLabel": "স্থান",
   "guestsLabel": "অতিথি",
-  "indexOf": "{total}টির মধ্যে {index}"
+  "indexOf": "{total}টির মধ্যে {index}",
+  "holderLabel": "টিকিটধারী"
 }

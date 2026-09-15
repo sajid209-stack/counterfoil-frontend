@@ -7785,3 +7785,37 @@ English and Bangla. White card, near-black type, contrast measured against the
 composited background, notch masks on screen and off in print, QR 168px, no
 field repeating the title, no overflow, clipping or text under 12px, toolbar
 hidden in print, no console errors. `tsc` and `eslint` clean; i18n parity 0 / 0.
+
+### Second pass, same day — black and white, with art drawn from the code
+
+Owner supplied a conference ticket with a photograph across the top and asked
+for something as striking without an image, in black and white.
+
+- **A black top with generated art.** A field of quarter discs, half discs,
+  dots and rings (a Truchet-style tiling), drawn in white and fading into the
+  black before the booking name, which sits under it at 30px in white. The art
+  is seeded by the ticket's own code (FNV-1a into xorshift), so it is not
+  decoration for its own sake: the same code always draws the same art, and two
+  tickets in one order look different — a guest can tell theirs from a
+  friend's at a glance. A hairline stroke lets neighbouring tiles overlap so no
+  seam shows between them.
+- **Three parts, like a paper ticket**: the black top; a white body with the
+  tier chip, "1 of 3" and the field grid, which gains **Ticket holder** from
+  the order's customer; and the stub, torn off at the dashed line, with a
+  116px QR beside the reference, the code and the gate hint. Notches cut both
+  seams. The stub stacks on the narrowest phones.
+- **No fake barcode.** The reference ends in a barcode; the gate scans QR, and
+  a barcode nothing can read would invite gate staff to try.
+- **Print keeps the black** (`print-color-adjust: exact`) and draws an unbroken
+  border in place of the notches. The ticket stays literal black and white in
+  either theme; in dark it gains a faint edge so the black top does not melt
+  into the page.
+
+**Verified**: 23 checks across 8 states, all passing — a Badminton Court slot sold through the
+till and printed, and a seeded ticket in English and Bangla, at 390, dark,
+1280, print and 320 with stress-length text. Black top with white title, white
+body and stub, the art drawn, different for a different code and identical
+after a reload, notches on screen and off in print, the printer asked to keep
+the black, QR beside the code (stacked at 320), no field repeating the name, no
+overflow, clipping, text under 12px or low contrast, no console errors. `tsc`
+and `eslint` clean; i18n parity 0 / 0.

@@ -17,5 +17,6 @@
   "timeLabel": "Time",
   "whereLabel": "Where",
   "guestsLabel": "Guests",
-  "indexOf": "{index} of {total}"
+  "indexOf": "{index} of {total}",
+  "holderLabel": "Ticket holder"
 }

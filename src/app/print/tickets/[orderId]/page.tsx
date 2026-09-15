@@ -52,6 +52,7 @@ export default function PrintTicketsPage() {
     const where = booking?.resourceName ?? booking?.providerName;
     if (where && !says(where)) fields.push({ label: t("whereLabel"), value: where });
     if (admits > 1) fields.push({ label: t("guestsLabel"), value: String(admits) });
+    if (order?.customerName) fields.push({ label: t("holderLabel"), value: order.customerName });
 
     return {
       business,
