@@ -7819,3 +7819,28 @@ after a reload, notches on screen and off in print, the printer asked to keep
 the black, QR beside the code (stacked at 320), no field repeating the name, no
 overflow, clipping, text under 12px or low contrast, no console errors. `tsc`
 and `eslint` clean; i18n parity 0 / 0.
+
+### Third pass, same day — no graphics, just the ticket
+
+Owner review of the art version: no graphics; something minimal, following the
+lower half of the conference-ticket reference.
+
+- The black top and its generated art are gone. The ticket is white with
+  near-black type, in two parts: the details and the stub.
+- **Details, in the reference's order**: the tier as a small grey chip (with
+  "1 of 3" on the right when there are several), the booking at 22px
+  semibold, the venue under it in grey, a hairline, then the field grid —
+  Date, Time, Where, Guests, Ticket holder — as quiet 13px sentence-case
+  labels over 15px semibold values. The uppercase tracked labels went; they
+  were louder than the facts they named.
+- **Stub**: dashed tear between two notches, then the QR beside the reference
+  label, the code in DM Mono and the gate hint; stacked on the narrowest phones.
+- Print still draws an unbroken border in place of the notches, one ticket to
+  a page. Still no barcode — the gate scans QR.
+
+**Verified**: 19 checks across 7 states, all passing — a Badminton Court slot sold through the
+till and printed, and a seeded ticket in English and Bangla, at 390, dark,
+1280, print and 320 with stress-length text: white parts and near-black title,
+no graphics, notches on screen and off in print, QR beside the code (stacked
+at 320), no field repeating the name, no overflow, clipping, text under 12px or
+low contrast, no console errors. `tsc` and `eslint` clean; i18n parity 0 / 0.

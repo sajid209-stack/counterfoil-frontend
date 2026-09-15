@@ -81,7 +81,7 @@ export default function PrintTicketsPage() {
       </div>
 
       {!ready ? (
-        <div aria-busy="true" className="mx-auto h-[560px] w-full max-w-sm animate-pulse rounded-[20px] bg-card" />
+        <div aria-busy="true" className="mx-auto h-[420px] w-full max-w-sm animate-pulse rounded-[24px] bg-card" />
       ) : tickets.length === 0 ? (
         <EmptyState title={t("noTickets")} />
       ) : (
