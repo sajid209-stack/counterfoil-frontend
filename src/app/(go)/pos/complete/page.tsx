@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check, ChevronRight, Clock, MessageSquare, Plus, ReceiptText, Ticket as TicketIcon } from "lucide-react";
+import { Check, ChevronRight, Clock, MessageSquare, Plus, Printer, ReceiptText, Ticket as TicketIcon } from "lucide-react";
 import { Button, Modal, Qr, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -163,7 +163,9 @@ export default function CompletePage() {
             )}
           </section>
 
-          {/* Hand-over: three buttons on one line. The visible word is short; each button's name says the whole action. */}
+          {/* Hand-over: four ways on one line — both printed together (what most guests at a counter
+              with a printer get), the tickets, the receipt, or an SMS. The visible word is short so
+              four fit a 320px phone; each button's name says the whole action. */}
           <section aria-labelledby="hand-over">
             <h2 id="hand-over" className="text-center text-sm font-semibold text-fg">
               {hasTickets ? t("complete.handOverTitle") : t("complete.handOverReceiptTitle")}
@@ -171,7 +173,16 @@ export default function CompletePage() {
             <div className="mt-comfortable flex gap-tight">
               {hasTickets && (
                 <HandOver
-                  icon={<TicketIcon size={18} strokeWidth={1.8} />}
+                  icon={<Printer size={20} strokeWidth={1.8} />}
+                  label={t("complete.handOverAll")}
+                  name={tk("printAll")}
+                  disabled={!orderId}
+                  onClick={() => router.push(`/print/order/${orderId}`)}
+                />
+              )}
+              {hasTickets && (
+                <HandOver
+                  icon={<TicketIcon size={20} strokeWidth={1.8} />}
                   label={t("complete.handOverTickets")}
                   name={tk("printTickets")}
                   disabled={!orderId}
@@ -179,15 +190,16 @@ export default function CompletePage() {
                 />
               )}
               <HandOver
-                icon={<ReceiptText size={18} strokeWidth={1.8} />}
+                icon={<ReceiptText size={20} strokeWidth={1.8} />}
                 label={t("complete.handOverReceipt")}
                 name={tk("printReceipt")}
                 disabled={!orderId}
+                wide={!hasTickets}
                 onClick={() => router.push(`/print/receipt/${orderId}`)}
               />
               {hasTickets && (
                 <HandOver
-                  icon={sentTo ? <Check size={18} strokeWidth={2.4} /> : <MessageSquare size={18} strokeWidth={1.8} />}
+                  icon={sentTo ? <Check size={20} strokeWidth={2.4} /> : <MessageSquare size={20} strokeWidth={1.8} />}
                   label={t("complete.handOverSms")}
                   name={sentTo ? `${t("complete.sendSms")} · ${t("complete.smsSentState")}` : t("complete.sendSms")}
                   done={!!sentTo}
@@ -370,20 +382,24 @@ export default function CompletePage() {
   );
 }
 
-/** One way to hand the tickets over: an icon and a short word on screen, the whole action as its name. */
-function HandOver({ icon, label, name, done, disabled, onClick }: { icon: React.ReactNode; label: string; name: string; done?: boolean; disabled?: boolean; onClick: () => void }) {
+/** One way to hand the tickets over: an icon over a short word on screen, the whole action as its name.
+ *  `wide` is for a button that has the row to itself, where the icon sits beside its word instead. */
+function HandOver({ icon, label, name, done, disabled, wide, onClick }: { icon: React.ReactNode; label: string; name: string; done?: boolean; disabled?: boolean; wide?: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       aria-label={name}
       onClick={onClick}
       disabled={disabled}
-      className="go-surface flex h-12 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-1.5 text-sm font-medium text-fg active:scale-[0.97] disabled:opacity-40"
+      className={cn(
+        "go-surface flex min-w-0 flex-1 items-center justify-center font-medium text-fg active:scale-[0.97] disabled:opacity-40",
+        wide ? "h-12 gap-1.5 rounded-full px-comfortable text-sm" : "h-16 flex-col gap-1 px-1 text-[13px]",
+      )}
     >
       <span aria-hidden className={cn("grid shrink-0 place-items-center", done ? "text-success" : "text-muted")}>
         {icon}
       </span>
-      <span className="truncate">{label}</span>
+      <span className="max-w-full truncate">{label}</span>
     </button>
   );
 }

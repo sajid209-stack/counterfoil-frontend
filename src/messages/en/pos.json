@@ -215,7 +215,8 @@
     "smsInvalid": "Use an 11-digit mobile number that starts with 01.",
     "handOverTickets": "Tickets",
     "handOverReceipt": "Receipt",
-    "handOverSms": "SMS"
+    "handOverSms": "SMS",
+    "handOverAll": "Print all"
   },
   "sheet": {
     "close": "Close",

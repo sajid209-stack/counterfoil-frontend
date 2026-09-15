@@ -215,7 +215,8 @@
     "smsInvalid": "০১ দিয়ে শুরু হওয়া ১১ সংখ্যার মোবাইল নম্বর দিন।",
     "handOverTickets": "টিকিট",
     "handOverReceipt": "রসিদ",
-    "handOverSms": "SMS"
+    "handOverSms": "SMS",
+    "handOverAll": "সব প্রিন্ট"
   },
   "sheet": {
     "close": "বন্ধ করুন",

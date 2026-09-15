@@ -18,5 +18,8 @@
   "whereLabel": "স্থান",
   "guestsLabel": "অতিথি",
   "indexOf": "{total}টির মধ্যে {index}",
-  "holderLabel": "টিকিটধারী"
+  "holderLabel": "টিকিটধারী",
+  "printAll": "সব প্রিন্ট: টিকিট ও রসিদ",
+  "printAllTitle": "টিকিট ও রসিদ",
+  "orderNotFound": "এই অর্ডারটি পাওয়া যায়নি।"
 }

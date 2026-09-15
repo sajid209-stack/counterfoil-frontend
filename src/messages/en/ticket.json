@@ -18,5 +18,8 @@
   "whereLabel": "Where",
   "guestsLabel": "Guests",
   "indexOf": "{index} of {total}",
-  "holderLabel": "Ticket holder"
+  "holderLabel": "Ticket holder",
+  "printAll": "Print all: tickets and receipt",
+  "printAllTitle": "Tickets and receipt",
+  "orderNotFound": "This order could not be found."
 }

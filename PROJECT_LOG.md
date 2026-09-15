@@ -7844,3 +7844,30 @@ till and printed, and a seeded ticket in English and Bangla, at 390, dark,
 no graphics, notches on screen and off in print, QR beside the code (stacked
 at 320), no field repeating the name, no overflow, clipping, text under 12px or
 low contrast, no console errors. `tsc` and `eslint` clean; i18n parity 0 / 0.
+
+## Print all — the receipt and the tickets in one job (2026-09-15)
+
+Owner asked for a fourth hand-over option on the completion screen that
+prints the tickets and the receipt together.
+
+- **The completion screen** now offers four ways on one line: **Print all**,
+  Tickets, Receipt and SMS. Four horizontal pills do not fit a 320px phone, so
+  each button is an icon over its word, 64px tall; the whole action is still
+  the button's name ("Print all: tickets and receipt"), which contains the
+  visible words. Print all comes first because it is what most guests at a
+  counter with a printer get. A sale with no tickets still shows the receipt
+  alone, as one wide button.
+- **`/print/order/[orderId]`**: the receipt on its own page, then each ticket
+  on its own page, with no blank page after the last, and the print dialog
+  opened once when everything has loaded. On screen the two parts are
+  labelled Receipt and Tickets; the labels and toolbar do not print. The page
+  is a block, not a flex column, in print — Chrome does not break pages
+  reliably inside a flex container. A missing order says so and does not open
+  the print dialog.
+- **One source for each printout.** The receipt sheet, the ticket list, the
+  ticket-card builder and the Back/Print toolbar moved into
+  `app/print/_components` and `app/print/_lib`, and the receipt page, the
+  tickets page and the new page all compose them — three pages that can never
+  print an order differently.
+
+**Verified**: 45 checks, all passing. On the completion screen (28): four buttons on one line at 320, 390, 768 and 1280 and in dark Bangla (66px each at 320, nothing ellipsed), each name carrying its visible word, contrast, the no-tickets receipt alone, and every earlier state unchanged. On the print pages (17): Print all from a real sale lands on the receipt then both tickets, the dialog opening once by itself; clean at 390, 320 and 1280; in print the receipt ends its page, one ticket to a page with no blank last page, toolbar and headings hidden; Bangla on a seeded order; the receipt-only and tickets-only pages unchanged; a missing order says so without opening the dialog; no console errors. `tsc` and `eslint` clean; i18n parity 0 / 0.
