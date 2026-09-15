@@ -7707,3 +7707,32 @@ Sources: [Square — change due](https://community.squareup.com/t5/Square-Point-
 [Shopify POS — customer receipts](https://help.shopify.com/en/manual/sell-in-person/shopify-pos/order-management/receipts) ·
 [Baymard — order confirmation](https://baymard.com/blog/order-confirmation-page) ·
 [Ticketor — QR ticketing](https://www.ticketor.com/how-to/QR-Code-Ticketing-and-Mobile-Tickets)
+
+### Second pass, same day — minimal, and the hand-over on one line
+
+Owner review: the three hand-over options took too much room as stacked rows,
+and the page should read minimal and modern.
+
+- **One line of three buttons**: Tickets · Receipt · SMS, each an icon and one
+  word in a 48px pill. The visible word is short so three fit at 320px (91px
+  each); the button's accessible name carries the whole action — "Print
+  tickets", "Print receipt", "Send SMS", then "Send SMS · Sent" — and always
+  contains the visible word, so speech input still works (WCAG 2.5.3). The
+  hand-over went from about 217px to **80px** on a phone. A sale with no
+  tickets shows the Receipt button alone, full width.
+- **Fewer boxes.** The lead figure is no longer in a card: a small green check
+  with "Sale complete · 2 tickets issued", then the change (or what was paid)
+  centred at `clamp(40px, 13vw, 56px)`, with the part-paid balance as a warning
+  chip under it. The tickets and the sale are the only cards, titled outside
+  the card rather than inside it.
+- The four hint strings the rows carried ("2 tickets", "Lines & VAT", "To
+  01712-345678", "Add a number") are gone with the rows; the customer's number
+  still pre-fills the SMS dialog.
+
+**Verified**: 28 checks across 15 states, all passing — the hand-over on one
+line at 320, 390, 768 and 1280 and in Bangla, each button's name, contrast
+measured against the composited background (none below its floor, light or
+dark), a reload keeping the tickets, the SMS refusal and sent state, no
+tickets, an old handover, Show all, no overflow, clipping, ellipsis, text under
+13px, target under 44px or console error. `tsc` and `eslint` clean on the page;
+i18n parity 0 / 0.

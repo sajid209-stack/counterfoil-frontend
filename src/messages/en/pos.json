@@ -200,10 +200,6 @@
     "paidNowOfTotal": "Paid now {paid} of {total}",
     "ticketsTitle": "Tickets",
     "handOverTitle": "Give the guest their tickets",
-    "ticketsCountHint": "{count, plural, one {# ticket} other {# tickets}}",
-    "printReceiptHint": "Lines & VAT",
-    "smsHintTo": "To {phone}",
-    "smsHintNoNumber": "Add a number",
     "smsSentState": "Sent",
     "smsTo": "Mobile number",
     "smsToHelp": "An 11-digit Bangladesh mobile number.",
@@ -216,7 +212,10 @@
     "handOverReceiptTitle": "Give the guest their receipt",
     "showAllTickets": "{count, plural, other {Show all # tickets}}",
     "qrHelp": "The guest can photograph this, and the gate scans it.",
-    "smsInvalid": "Use an 11-digit mobile number that starts with 01."
+    "smsInvalid": "Use an 11-digit mobile number that starts with 01.",
+    "handOverTickets": "Tickets",
+    "handOverReceipt": "Receipt",
+    "handOverSms": "SMS"
   },
   "sheet": {
     "close": "Close",

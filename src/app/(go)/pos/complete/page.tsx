@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check, ChevronRight, Clock, MessageSquare, Plus, Printer, ReceiptText, Ticket as TicketIcon } from "lucide-react";
+import { Check, ChevronRight, Clock, MessageSquare, Plus, ReceiptText, Ticket as TicketIcon } from "lucide-react";
 import { Button, Modal, Qr, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -17,13 +17,11 @@ import type { CompleteInfo, CompleteTicket } from "../_lib/handover";
 /*
  * The moment a sale lands, for the person still standing at the counter.
  *
- * It answers, in this order, what a cashier has to do next:
- *   1. hand back the change — the one figure that is an action, so it is the
- *      largest thing on the screen and stays until the next sale starts;
- *   2. give the guest their tickets — print them, print the receipt or send an
- *      SMS, and every ticket with its QR, which opens large for the guest;
- *   3. start the next sale — pinned in reach, and focused, so Enter starts it.
- * The sale itself (lines, VAT, how it was paid) sits below, for checking.
+ * One figure leads — the change to hand back, or what was paid — set large and
+ * centred on the page itself rather than boxed in a card. Under it, one row of
+ * three buttons hands the guest their tickets (print, receipt, SMS), and New
+ * sale stays pinned in reach and focused. The tickets and the sale sit below
+ * as quiet lists, for checking.
  *
  * Everything drawn here comes from the sale's own handover, so nothing waits on
  * the network and a reload loses nothing.
@@ -117,82 +115,81 @@ export default function CompletePage() {
 
   const visibleTickets = allTickets ? tickets : tickets.slice(0, TICKETS_SHOWN);
 
-  return (
-    <main className="mx-auto w-full max-w-xl px-section pb-[96px] pt-section sm:max-w-3xl rail:max-w-6xl rail:px-major rail:pb-major rail:pt-major">
-      <div className="flex flex-col gap-section rail:grid rail:grid-cols-[minmax(0,1fr)_minmax(0,460px)] rail:items-start rail:gap-major">
-        {/* ── Left: what just happened, and what to do now ── */}
-        <div className="flex flex-col gap-section">
-          <div id="sale-status" aria-live="polite" className="flex items-center gap-comfortable">
-            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-success/15 text-success">
-              <Check size={26} strokeWidth={2.4} aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <h1 className="type-h1 text-[26px] leading-tight text-fg">{t("complete.saleComplete")}</h1>
-              {ticketsKnown && <p className="mt-0.5 text-sm text-muted">{t("complete.ticketsIssuedCount", { count: tickets.length })}</p>}
-            </div>
-          </div>
+  // The lead figure: change is an action, so when there is change it IS the figure.
+  const lead =
+    change > 0
+      ? {
+          label: t("complete.giveChange"),
+          amount: formatMoney(change),
+          note: payment?.tendered !== undefined ? t("complete.receivedOfTotal", { received: formatMoney(payment.tendered), total: formatMoney(paidNow) }) : null,
+        }
+      : {
+          label: t("complete.paidBy", { method }),
+          amount: formatMoney(paidNow),
+          note: balance > 0 ? t("complete.paidNowOfTotal", { paid: formatMoney(paidNow), total: formatMoney(total) }) : payment?.method === "cash" ? t("complete.noChange") : t("complete.paidInFull"),
+        };
 
-          {/* The money. Change is an action, so when there is change it leads, at the largest size on the screen. */}
-          <section className="go-surface p-section">
-            {change > 0 ? (
-              <>
-                <p className="text-sm font-medium text-muted">{t("complete.giveChange")}</p>
-                <p className="mt-1.5 text-[44px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-fg">{formatMoney(change)}</p>
-                {payment?.tendered !== undefined && (
-                  <p className="mt-tight text-sm tabular-nums text-muted">{t("complete.receivedOfTotal", { received: formatMoney(payment.tendered), total: formatMoney(paidNow) })}</p>
-                )}
-              </>
-            ) : (
-              <>
-                <p className="text-sm font-medium text-muted">{t("complete.paidBy", { method })}</p>
-                <p className="mt-1.5 text-[40px] font-semibold leading-none tracking-[-0.02em] tabular-nums text-fg">{formatMoney(paidNow)}</p>
-                <p className="mt-tight text-sm tabular-nums text-muted">
-                  {balance > 0 ? t("complete.paidNowOfTotal", { paid: formatMoney(paidNow), total: formatMoney(total) }) : payment?.method === "cash" ? t("complete.noChange") : t("complete.paidInFull")}
-                </p>
-              </>
-            )}
+  return (
+    <main className="mx-auto w-full max-w-xl px-section pb-[96px] pt-major sm:max-w-3xl rail:max-w-6xl rail:px-major rail:pb-major">
+      <div className="flex flex-col gap-wide rail:grid rail:grid-cols-[minmax(0,1fr)_minmax(0,440px)] rail:items-start rail:gap-wide">
+        {/* ── What just happened, and what to do now ── */}
+        <div className="flex flex-col gap-major">
+          <section className="flex flex-col items-center text-center" aria-labelledby="sale-complete">
+            <div id="sale-status" aria-live="polite" className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+                <Check size={16} strokeWidth={2.6} aria-hidden />
+              </span>
+              <h1 id="sale-complete" className="text-[15px] font-semibold text-fg">
+                {t("complete.saleComplete")}
+              </h1>
+              {ticketsKnown && (
+                <>
+                  <span aria-hidden className="text-muted">
+                    ·
+                  </span>
+                  <span className="text-[15px] text-muted">{t("complete.ticketsIssuedCount", { count: tickets.length })}</span>
+                </>
+              )}
+            </div>
+
+            <p className="mt-major text-sm font-medium text-muted">{lead.label}</p>
+            <p className="mt-1.5 text-[clamp(40px,13vw,56px)] font-semibold leading-none tracking-[-0.03em] text-fg">{lead.amount}</p>
+            {lead.note && <p className="mt-tight text-sm text-muted">{lead.note}</p>}
             {balance > 0 && (
-              <p className="mt-section flex items-center gap-tight rounded-go-sm bg-warning/15 px-comfortable py-tight text-sm font-medium text-warning">
-                <Clock size={16} strokeWidth={2} aria-hidden className="shrink-0" />
+              <p className="mt-comfortable inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-comfortable py-1.5 text-[13px] font-medium text-warning">
+                <Clock size={14} strokeWidth={2.2} aria-hidden className="shrink-0" />
                 {t("complete.collectAtArrival", { amount: formatMoney(balance) })}
               </p>
             )}
           </section>
 
-          {/* Hand-over: one question with three answers, so on a phone it is one card of rows a thumb can read
-              in full; once there is width for three it becomes three tiles. .go-surface is a component-layer
-              class, so the sm: utilities below take its surface off the wrapper and give it to each tile. */}
+          {/* Hand-over: three buttons on one line. The visible word is short; each button's name says the whole action. */}
           <section aria-labelledby="hand-over">
-            <h2 id="hand-over" className="text-sm font-semibold text-fg">
+            <h2 id="hand-over" className="text-center text-sm font-semibold text-fg">
               {hasTickets ? t("complete.handOverTitle") : t("complete.handOverReceiptTitle")}
             </h2>
-            <div
-              className={cn(
-                "go-surface mt-tight flex flex-col overflow-hidden sm:grid sm:gap-tight sm:overflow-visible sm:rounded-none sm:border-0 sm:bg-transparent sm:shadow-none",
-                hasTickets ? "sm:grid-cols-3" : "sm:grid-cols-1",
-              )}
-            >
+            <div className="mt-comfortable flex gap-tight">
               {hasTickets && (
                 <HandOver
-                  icon={<TicketIcon size={20} strokeWidth={1.7} />}
-                  label={tk("printTickets")}
-                  hint={ticketsKnown ? t("complete.ticketsCountHint", { count: tickets.length }) : undefined}
+                  icon={<TicketIcon size={18} strokeWidth={1.8} />}
+                  label={t("complete.handOverTickets")}
+                  name={tk("printTickets")}
                   disabled={!orderId}
                   onClick={() => router.push(`/print/tickets/${orderId}`)}
                 />
               )}
               <HandOver
-                icon={<Printer size={20} strokeWidth={1.7} />}
-                label={tk("printReceipt")}
-                hint={t("complete.printReceiptHint")}
+                icon={<ReceiptText size={18} strokeWidth={1.8} />}
+                label={t("complete.handOverReceipt")}
+                name={tk("printReceipt")}
                 disabled={!orderId}
                 onClick={() => router.push(`/print/receipt/${orderId}`)}
               />
               {hasTickets && (
                 <HandOver
-                  icon={<MessageSquare size={20} strokeWidth={1.7} />}
-                  label={t("complete.sendSms")}
-                  hint={sentTo ? t("complete.smsSentState") : knownPhone ? t("complete.smsHintTo", { phone: knownPhone }) : t("complete.smsHintNoNumber")}
+                  icon={sentTo ? <Check size={18} strokeWidth={2.4} /> : <MessageSquare size={18} strokeWidth={1.8} />}
+                  label={t("complete.handOverSms")}
+                  name={sentTo ? `${t("complete.sendSms")} · ${t("complete.smsSentState")}` : t("complete.sendSms")}
                   done={!!sentTo}
                   onClick={openSms}
                 />
@@ -202,7 +199,7 @@ export default function CompletePage() {
 
           {/* New sale: pinned above the tab bar on a phone, inline on a landscape tablet. Focused, so Enter starts the next sale. */}
           <div className="fixed inset-x-comfortable z-30 rail:static rail:z-auto" style={{ bottom: "calc(82px + env(safe-area-inset-bottom))" }}>
-            {/* As wide as the cards above it: 48rem less the page's 16px gutters from sm. */}
+            {/* As wide as the content above it: 48rem less the page's 16px gutters from sm. */}
             <div className="mx-auto max-w-[34rem] sm:max-w-[calc(48rem-32px)] rail:max-w-none">
               <Button
                 shape="pill"
@@ -220,16 +217,16 @@ export default function CompletePage() {
           </div>
         </div>
 
-        {/* ── Right: the tickets and the sale, for checking ── */}
-        <div className="flex flex-col gap-section">
+        {/* ── The tickets and the sale, for checking ── */}
+        <div className="flex flex-col gap-major">
           {ticketsKnown && tickets.length > 0 && (
-            <section className="go-surface overflow-hidden" aria-labelledby="tickets-title">
-              <h2 id="tickets-title" className="px-section pb-tight pt-section text-sm font-semibold text-fg">
+            <section aria-labelledby="tickets-title">
+              <h2 id="tickets-title" className="px-1 text-sm font-semibold text-fg">
                 {t("complete.ticketsTitle")}
               </h2>
-              <ul className="flex flex-col">
+              <ul className="go-surface mt-tight overflow-hidden">
                 {visibleTickets.map((ticket) => (
-                  <li key={ticket.code} className="border-t border-line">
+                  <li key={ticket.code} className="border-t border-line first:border-t-0">
                     {/* The whole row opens the QR large, for the guest to photograph or the gate to scan. */}
                     <button
                       type="button"
@@ -238,69 +235,72 @@ export default function CompletePage() {
                     >
                       {/* The QR is what the gate scans, so it is dark on white in either theme. */}
                       <span className="shrink-0 rounded-[10px] bg-white p-1 ring-1 ring-line">
-                        <Qr value={ticket.code} size={52} />
+                        <Qr value={ticket.code} size={44} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[15px] font-semibold text-fg">{ticket.name}</span>
+                        <span className="block break-words text-[15px] font-semibold leading-snug text-fg">{ticket.name}</span>
                         <span className="mt-0.5 block truncate text-[13px] text-muted">{ticketMeta(ticket)}</span>
-                        <span className="mt-0.5 block truncate font-mono text-[13px] text-fg">{ticket.code}</span>
+                        <span className="mt-0.5 block truncate font-mono text-[13px] text-muted">{ticket.code}</span>
                       </span>
                       <ChevronRight size={18} strokeWidth={1.8} className="shrink-0 text-muted" aria-hidden />
                     </button>
                   </li>
                 ))}
+                {!allTickets && tickets.length > TICKETS_SHOWN && (
+                  <li className="border-t border-line">
+                    <button
+                      type="button"
+                      onClick={() => setAllTickets(true)}
+                      className="flex min-h-[48px] w-full items-center justify-center px-section text-sm font-medium text-brand-foreground transition-colors duration-quick active:bg-subtle"
+                    >
+                      {t("complete.showAllTickets", { count: tickets.length })}
+                    </button>
+                  </li>
+                )}
               </ul>
-              {!allTickets && tickets.length > TICKETS_SHOWN && (
-                <button
-                  type="button"
-                  onClick={() => setAllTickets(true)}
-                  className="flex min-h-[52px] w-full items-center justify-center border-t border-line px-section text-sm font-medium text-brand-foreground transition-colors duration-quick active:bg-subtle"
-                >
-                  {t("complete.showAllTickets", { count: tickets.length })}
-                </button>
-              )}
             </section>
           )}
 
           {info.receipt && (
-            <section className="go-surface p-section" aria-labelledby="sale-title">
-              <div className="flex items-center gap-tight">
-                <ReceiptText size={16} strokeWidth={1.8} className="shrink-0 text-muted" aria-hidden />
+            <section aria-labelledby="sale-title">
+              <div className="flex items-baseline justify-between gap-comfortable px-1">
                 <h2 id="sale-title" className="text-sm font-semibold text-fg">
                   {t("complete.saleTitle")}
                 </h2>
-                {info.reference && <span className="ml-auto min-w-0 truncate font-mono text-[13px] text-muted">{info.reference}</span>}
+                {info.reference && <span className="min-w-0 truncate font-mono text-[13px] text-muted">{info.reference}</span>}
               </div>
-              <ul className="mt-comfortable flex flex-col gap-tight">
-                {info.receipt.lines.map((line, i) => (
-                  <li key={i} className={cn("flex items-baseline justify-between gap-comfortable text-sm", line.child && "pl-section")}>
-                    <span className="min-w-0 text-fg">
-                      <span className={cn(line.child && "text-muted")}>{line.name}</span>
-                      <span className="text-muted"> × {line.qty}</span>
-                    </span>
-                    <span className="shrink-0 tabular-nums text-fg">{formatMoney(line.amount)}</span>
-                  </li>
-                ))}
-              </ul>
-              <dl className="mt-comfortable flex flex-col gap-1.5 border-t border-line pt-comfortable text-sm">
-                <Row label={t("complete.subtotal")} value={formatMoney(info.receipt.subtotal)} />
-                {info.receipt.lineDiscountTotal > 0 && <Row label={t("complete.lineDiscounts")} value={`−${formatMoney(info.receipt.lineDiscountTotal)}`} />}
-                {info.receipt.orderDiscount > 0 && <Row label={t("complete.discount")} value={`−${formatMoney(info.receipt.orderDiscount)}`} />}
-                <Row label={t("complete.vat")} value={formatMoney(info.receipt.tax)} />
-                <Row label={t("complete.total")} value={formatMoney(info.receipt.total)} strong />
-              </dl>
-              {payment && (
+              <div className="go-surface mt-tight p-section">
+                <ul className="flex flex-col gap-tight">
+                  {info.receipt.lines.map((line, i) => (
+                    <li key={i} className={cn("flex items-baseline justify-between gap-comfortable text-sm", line.child && "pl-section")}>
+                      <span className="min-w-0 text-fg">
+                        <span className={cn(line.child && "text-muted")}>{line.name}</span>
+                        <span className="text-muted"> × {line.qty}</span>
+                      </span>
+                      <span className="shrink-0 tabular-nums text-fg">{formatMoney(line.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
                 <dl className="mt-comfortable flex flex-col gap-1.5 border-t border-line pt-comfortable text-sm">
-                  <Row label={t("complete.paidMethod", { method })} value={formatMoney(paidNow)} />
-                  {payment.tendered !== undefined && change > 0 && (
-                    <>
-                      <Row label={t("complete.receivedLabel")} value={formatMoney(payment.tendered)} />
-                      <Row label={t("complete.changeLabel")} value={formatMoney(change)} />
-                    </>
-                  )}
-                  {balance > 0 && <Row label={t("complete.balanceDueAtArrival")} value={formatMoney(balance)} />}
+                  <Row label={t("complete.subtotal")} value={formatMoney(info.receipt.subtotal)} />
+                  {info.receipt.lineDiscountTotal > 0 && <Row label={t("complete.lineDiscounts")} value={`−${formatMoney(info.receipt.lineDiscountTotal)}`} />}
+                  {info.receipt.orderDiscount > 0 && <Row label={t("complete.discount")} value={`−${formatMoney(info.receipt.orderDiscount)}`} />}
+                  <Row label={t("complete.vat")} value={formatMoney(info.receipt.tax)} />
+                  <Row label={t("complete.total")} value={formatMoney(info.receipt.total)} strong />
                 </dl>
-              )}
+                {payment && (
+                  <dl className="mt-comfortable flex flex-col gap-1.5 border-t border-line pt-comfortable text-sm">
+                    <Row label={t("complete.paidMethod", { method })} value={formatMoney(paidNow)} />
+                    {payment.tendered !== undefined && change > 0 && (
+                      <>
+                        <Row label={t("complete.receivedLabel")} value={formatMoney(payment.tendered)} />
+                        <Row label={t("complete.changeLabel")} value={formatMoney(change)} />
+                      </>
+                    )}
+                    {balance > 0 && <Row label={t("complete.balanceDueAtArrival")} value={formatMoney(balance)} />}
+                  </dl>
+                )}
+              </div>
             </section>
           )}
         </div>
@@ -370,23 +370,20 @@ export default function CompletePage() {
   );
 }
 
-/** One way to hand the tickets over: a row of the shared card on a phone, its own tile once there is room for three. */
-function HandOver({ icon, label, hint, done, disabled, onClick }: { icon: React.ReactNode; label: string; hint?: string; done?: boolean; disabled?: boolean; onClick: () => void }) {
+/** One way to hand the tickets over: an icon and a short word on screen, the whole action as its name. */
+function HandOver({ icon, label, name, done, disabled, onClick }: { icon: React.ReactNode; label: string; name: string; done?: boolean; disabled?: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
+      aria-label={name}
       onClick={onClick}
       disabled={disabled}
-      className="flex min-h-[64px] w-full min-w-0 items-center gap-comfortable border-t border-line px-section py-comfortable text-left transition-[background-color,transform] duration-quick first:border-t-0 active:bg-subtle disabled:opacity-40 sm:min-h-[104px] sm:flex-col sm:justify-center sm:gap-1.5 sm:rounded-go sm:border-0 sm:bg-card sm:px-tight sm:text-center sm:shadow-go sm:active:scale-[0.98] sm:active:bg-card sm:dark:border sm:dark:border-line sm:dark:shadow-none"
+      className="go-surface flex h-12 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-1.5 text-sm font-medium text-fg active:scale-[0.97] disabled:opacity-40"
     >
-      <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-full", done ? "bg-success/15 text-success" : "bg-subtle text-fg dark:ring-1 dark:ring-line")}>
-        {done ? <Check size={20} strokeWidth={2.4} aria-hidden /> : icon}
+      <span aria-hidden className={cn("grid shrink-0 place-items-center", done ? "text-success" : "text-muted")}>
+        {icon}
       </span>
-      <span className="flex min-w-0 flex-1 flex-col sm:flex-none sm:items-center">
-        <span className="text-[15px] font-medium text-fg sm:text-sm">{label}</span>
-        {hint && <span className="break-words text-[13px] text-muted normal-nums">{hint}</span>}
-      </span>
-      <ChevronRight size={18} strokeWidth={1.8} className="shrink-0 text-muted sm:hidden" aria-hidden />
+      <span className="truncate">{label}</span>
     </button>
   );
 }
