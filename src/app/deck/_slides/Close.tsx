@@ -3,6 +3,7 @@ import {
   Armchair,
   Banknote,
   CalendarRange,
+  Check,
   Clapperboard,
   Clock,
   Coins,
@@ -23,13 +24,14 @@ import {
   UserRound,
   type LucideIcon,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { Floor, Glow, Phone, Slide, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
 import { SEAT_LEGEND, SeatPlan, SeatSwatch } from "../_components/SeatPlan";
 import logoOnInk from "../_media/logo-counterfoil-dark.png";
 import posPhoneBn from "../_media/go-phone-sell-bn.jpg";
 
-/* Slides 23–25: where Counterfoil is today, the market it is built for, and the close. */
+/* Slides 23–25: what sets Counterfoil apart, the market it is built for, and the close. */
 
 const KINDS: { icon: LucideIcon; name: string }[] = [
   { icon: Landmark, name: "Heritage sites" },
@@ -43,25 +45,64 @@ const KINDS: { icon: LucideIcon; name: string }[] = [
 /** The fourteen booking types, by the glyph the product gives each. */
 const TYPE_GLYPHS: LucideIcon[] = [DoorOpen, CalendarRange, Hourglass, TicketIcon, Clock, Armchair, LandPlot, Timer, Compass, UserRound, GraduationCap, Coins, Package, ListOrdered];
 
-const COUNTRIES = [
-  ["BD", "Bangladesh"],
-  ["MY", "Malaysia"],
-  ["US", "United States"],
-  ["CA", "Canada"],
-];
+/** One hour on two tills: sold at the first, gone at the second. */
+function OneCapacity() {
+  return (
+    <div aria-hidden className="grid grid-cols-2 gap-3">
+      {[
+        { till: "Counter 1", state: "Sold", sold: true },
+        { till: "Counter 2", state: "Taken", sold: false },
+      ].map(({ till, state, sold }) => (
+        <div key={till} className="flex h-[76px] flex-col justify-center rounded-[14px] bg-[#f5f2eb] px-4">
+          <p className="text-[13px] text-[#6b675f]">{till} · Field 1</p>
+          <p className="mt-1 flex items-center justify-between gap-2">
+            <span className={cn("text-[18px] font-semibold tabular-nums", !sold && "text-[#6b675f] line-through")}>18:00</span>
+            <span className={cn("rounded-full px-2.5 py-1 text-[12px] font-semibold leading-none", sold ? "bg-[#141413] text-[#f5f2eb]" : "bg-[#e2ddd2] text-[#57534c]")}>{state}</span>
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
 
-/* A figure set large: one size for every tile on the page. */
-const FIGURE = { fontSize: 104 } as const;
+/** A family ticket at the gate: four admitted on one scan, three in so far. */
+function FamilyScan() {
+  return (
+    <div aria-hidden className="flex h-[76px] items-center justify-between rounded-[14px] bg-[#141413] px-5 text-[#f5f2eb]">
+      <div>
+        <p className="text-[20px] font-bold leading-none tracking-[-0.01em]">ADMIT 4</p>
+        <p className="mt-1.5 text-[13px] text-[rgb(245_242_235/0.72)]">Family · 3 of 4 in</p>
+      </div>
+      <div className="flex gap-1.5">
+        {[0, 1, 2, 3].map((i) => (
+          <span key={i} className={cn("grid h-[30px] w-[30px] place-items-center rounded-full", i < 3 ? "bg-[#1f9d55] text-white" : "text-white/60 ring-1 ring-inset ring-white/30")}>
+            {i < 3 ? <Check size={15} strokeWidth={2.6} /> : <UserRound size={14} strokeWidth={1.8} />}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** A speciality: what it is in a line, and the product doing it underneath. */
+function Special({ title, body, children }: { title: string; body: string; children: ReactNode }) {
+  return (
+    <div className={cn(s.card, s.paperCard, "flex flex-col p-8")}>
+      <h3 className={s.heading}>{title}</h3>
+      <p className="mt-1.5 text-[17px] text-[#57534c]">{body}</p>
+      <div className="mt-auto">{children}</div>
+    </div>
+  );
+}
 
 /*
- * Today as a bento: one tall tile for the figure that matters most, and three
- * that each carry the thing they count — the countries by name, the booking
- * types by glyph, the two languages in their own scripts.
+ * The specialities as a bento: one tall tile for what no retail till has —
+ * fourteen ways to sell time — and three that each show a speciality working.
  */
 export function TodaySlide({ n }: { n: number }) {
   return (
-    <Slide tone="paper" n={n} section="Counterfoil" label="Already at the counter">
-      <TextBlock eyebrow="Today" title="Already at the counter." lead="Venues, tours and attractions run their day on the current version." width={720} />
+    <Slide tone="paper" n={n} section="Counterfoil" label="What sets it apart">
+      <TextBlock eyebrow="Specialities" title="What sets it apart." lead="What a retail till can’t do — built in from the first sale." width={720} />
       <div className={s.text} style={{ left: 1024, top: 92, width: 480 }}>
         <p className={s.eyebrow}>Built for</p>
         <ul className="mt-5 flex flex-wrap gap-2.5">
@@ -75,73 +116,38 @@ export function TodaySlide({ n }: { n: number }) {
       </div>
 
       <div className="absolute left-[96px] top-[284px] grid h-[516px] w-[1408px] grid-cols-3 grid-rows-2 gap-6">
-        {/* Operators: the tall tile, a wall of venues above the figure. */}
+        {/* The tall tile: every booking type by its glyph, over the one figure the slide leads with. */}
         <div className={cn(s.card, "relative row-span-2 flex flex-col bg-[#141413] p-9 text-[#f5f2eb]")}>
           <Glow className="left-[120px] top-[230px] h-[380px] w-[380px] opacity-60" />
-          <p className="relative font-mono text-[15px] uppercase tracking-[0.12em] text-[#ffa572]">Operators</p>
+          <p className="relative font-mono text-[15px] uppercase tracking-[0.12em] text-[#ffa572]">Booking types</p>
           <ul aria-hidden className="relative mt-7 grid w-fit grid-cols-5 gap-2">
-            {Array.from({ length: 20 }, (_, i) => {
-              const Icon = KINDS[i % KINDS.length].icon;
-              const lit = i === 7 || i === 13;
-              return (
-                <li
-                  key={i}
-                  className={cn("grid h-[40px] w-[40px] place-items-center rounded-[11px]", lit ? "bg-[#f94a00] text-[#141413]" : "bg-white/[0.06] text-[#ffa572] ring-1 ring-inset ring-white/10")}
-                >
-                  <Icon size={18} strokeWidth={1.6} />
-                </li>
-              );
-            })}
+            {TYPE_GLYPHS.map((Icon, i) => (
+              <li
+                key={i}
+                className={cn("grid h-[40px] w-[40px] place-items-center rounded-[11px]", i === 5 ? "bg-[#f94a00] text-[#141413]" : "bg-white/[0.06] text-[#ffa572] ring-1 ring-inset ring-white/10")}
+              >
+                <Icon size={18} strokeWidth={1.6} />
+              </li>
+            ))}
           </ul>
           <p className={cn(s.numeral, s.accentInk, "relative mt-auto")} style={{ fontSize: 136 }}>
-            <span className="mr-[0.03em] inline-block align-[0.24em] text-[0.5em]">~</span>20
+            14
           </p>
-          <p className="relative mt-4 w-[320px] text-[19px] leading-[1.4] text-[rgb(245_242_235/0.8)]">venues, tours and attractions running their day on Counterfoil</p>
+          <p className="relative mt-4 w-[380px] text-[19px] leading-[1.4] text-[rgb(245_242_235/0.8)]">ways to sell time, from one engine</p>
         </div>
 
-        <div className={cn(s.card, s.paperCard, "flex justify-between gap-6 p-8")}>
-          <div className="flex flex-col">
-            <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Countries</p>
-            <p className={cn(s.numeral, "mt-auto")} style={FIGURE}>
-              4
-            </p>
-            <p className="mt-2 text-[17px] text-[#57534c]">selling today</p>
-          </div>
-          <ul className="flex w-[196px] flex-col justify-center gap-2">
-            {COUNTRIES.map(([code, name]) => (
-              <li key={code} className="flex h-[38px] items-center gap-2.5 rounded-[11px] bg-[#f5f2eb] px-3">
-                <span className="font-mono text-[13px] font-semibold text-[#aa3000]">{code}</span>
-                <span className="text-[15px] font-medium">{name}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Special title="Never sold twice" body="Sold at one counter, gone at every other.">
+          <OneCapacity />
+        </Special>
 
-        <div className={cn(s.card, s.paperCard, "flex justify-between gap-6 p-8")}>
-          <div className="flex flex-col">
-            <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Booking types</p>
-            <p className={cn(s.numeral, "mt-auto")} style={FIGURE}>
-              14
-            </p>
-            <p className="mt-2 whitespace-nowrap text-[17px] text-[#57534c]">sold from one engine</p>
-          </div>
-          {/* Narrow enough that the caption beside it stays on one line, leaving the figure room under its label. */}
-          <ul aria-hidden className="grid h-fit shrink-0 grid-cols-5 gap-[6px] self-center">
-            {TYPE_GLYPHS.map((Icon, i) => (
-              <li key={i} className={cn("grid h-[32px] w-[32px] place-items-center rounded-[9px]", i === 5 ? "bg-[#141413] text-[#f5f2eb]" : "bg-[#f5f2eb] text-[#57534c]")}>
-                <Icon size={15} strokeWidth={1.6} />
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Special title="One scan, the whole family" body="A family ticket lets everyone in.">
+          <FamilyScan />
+        </Special>
 
         <div className={cn(s.card, s.paperCard, "col-span-2 flex gap-8 p-8")}>
-          <div className="flex w-[250px] shrink-0 flex-col">
-            <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Languages</p>
-            <p className={cn(s.numeral, "mt-auto")} style={FIGURE}>
-              2
-            </p>
-            <p className="mt-2 whitespace-nowrap text-[17px] text-[#57534c]">on every screen and receipt</p>
+          <div className="w-[270px] shrink-0">
+            <h3 className={s.heading}>Bangla and English</h3>
+            <p className="mt-1.5 text-[17px] leading-[1.45] text-[#57534c]">Every screen, receipt and SMS.</p>
           </div>
           {/* The same moment in both languages, as the till shows it. */}
           <div className="grid flex-1 grid-cols-2 gap-4">

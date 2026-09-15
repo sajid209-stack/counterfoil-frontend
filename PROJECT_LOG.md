@@ -7545,3 +7545,27 @@ its text beside a picture, and a label inside the Pay picker's pill.
   audits at 0.
 - PDF rebuilt and read back: 25 pages at 960 × 540pt.
 - `tsc` and `eslint` on the deck clean.
+
+## Counterfoil Deck, part ten — specialities instead of counts (2026-09-15)
+
+Owner asked for the deck to stop citing "~20 operators" and "4 countries"
+and to speak about Counterfoil's specialities, briefly.
+
+- **Cover:** the three figure pills became three specialities, each with an
+  icon — "14 ways to book", "Never sold twice", "বাংলা & English".
+- **Slide 23:** "Today · Already at the counter" became "Specialities · What
+  sets it apart". The bento keeps its shape, but every tile is a speciality
+  shown working rather than a count:
+  - the tall ink tile leads with the one figure kept — 14 ways to sell time —
+    over the fourteen booking-type glyphs;
+  - **Never sold twice:** one 18:00 slot, sold at Counter 1 and struck through
+    as taken at Counter 2;
+  - **One scan, the whole family:** an ADMIT 4 family ticket, three of four in;
+  - **Bangla and English:** the same "Ticket issued" moment in both scripts.
+- "Built for" and its venue chips stay. The `COUNTRIES` list and the
+  operator glyph wall are gone; nothing in `src/app/deck` mentions operators
+  or countries any more.
+
+Verified: layout at 1780, 1440, 1024 and 390; pixel contrast 0 of 404 text
+boxes below the floor; `/deck` audits at 0; PDF rebuilt; `tsc` and `eslint`
+clean.

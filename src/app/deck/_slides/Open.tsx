@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ArrowRight, CalendarX, Check, Compass, ScanLine, Store } from "lucide-react";
+import { ArrowRight, CalendarCheck, CalendarX, Check, Compass, Languages, ScanLine, Shapes, Store, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Callout, Floor, Glow, Laptop, Phone, PosStand, Slide, TextBlock, Ticket, deckStyles as s } from "../_components/Parts";
 import logoOnInk from "../_media/logo-counterfoil-dark.png";
@@ -11,10 +11,11 @@ import phoneSeats from "../_media/go-sheet-cinema.jpg";
 
 /* Slides 1–4: what Counterfoil is, the problem, the system and how it works. */
 
-const PROOF = [
-  ["~20", "operators"],
-  ["4", "countries"],
-  ["14", "ways to book"],
+/** What sets Counterfoil apart, a few words each. */
+const SPECIALS: { icon: LucideIcon; label: string }[] = [
+  { icon: Shapes, label: "14 ways to book" },
+  { icon: CalendarCheck, label: "Never sold twice" },
+  { icon: Languages, label: "বাংলা & English" },
 ];
 
 export function CoverSlide({ n }: { n: number }) {
@@ -27,7 +28,7 @@ export function CoverSlide({ n }: { n: number }) {
         <span aria-hidden className="h-6 w-px bg-white/20" />
         <span className={s.eyebrow}>Company deck · 2026</span>
       </div>
-      {/* Title, lead and the three facts are one block, so nothing can run into anything. */}
+      {/* Title, lead and the three specialities are one block, so nothing can run into anything. */}
       <div className={s.text} style={{ left: 96, top: 218, width: 660 }}>
         <h2 className={s.display}>
           Counterfoil runs the places that sell <span className={s.accentInk}>time.</span>
@@ -36,10 +37,10 @@ export function CoverSlide({ n }: { n: number }) {
           Tickets, sessions, courts and tours — sold at the counter, checked at the gate and reconciled by close.
         </p>
         <ul className="mt-10 flex gap-2.5">
-          {PROOF.map(([value, label]) => (
-            <li key={label} className="flex h-[54px] items-baseline gap-2 rounded-full bg-white/[0.06] px-5 pt-[13px] ring-1 ring-inset ring-white/10">
-              <span className="text-[24px] font-semibold leading-none tracking-[-0.02em]">{value}</span>
-              <span className="text-[16px] leading-none text-[rgb(245_242_235/0.72)]">{label}</span>
+          {SPECIALS.map(({ icon: Icon, label }) => (
+            <li key={label} className="flex h-[54px] items-center gap-2.5 rounded-full bg-white/[0.06] px-5 text-[17px] font-medium ring-1 ring-inset ring-white/10">
+              <Icon size={18} strokeWidth={1.7} className="text-[#ffa572]" aria-hidden />
+              {label}
             </li>
           ))}
         </ul>
