@@ -367,13 +367,6 @@
   mask-image: linear-gradient(to top, #000 0%, transparent 78%);
 }
 
-.perforation {
-  height: 2px;
-  background-image: radial-gradient(circle, currentColor 1px, transparent 1.4px);
-  background-size: 8px 2px;
-  opacity: 0.35;
-}
-
 /* ── devices ────────────────────────────────────────────────────────────── */
 
 .device {
@@ -911,27 +904,4 @@
   position: absolute;
   max-width: none;
   height: auto;
-}
-
-/* ── the shift receipt ──────────────────────────────────────────────────── */
-
-.receipt {
-  filter: drop-shadow(0 34px 40px rgb(0 0 0 / 0.5));
-}
-
-/* Torn top and bottom edges: two rows of teeth cut by conic masks. */
-.receiptPaper {
-  padding: 48px 36px;
-  background: linear-gradient(180deg, #fffdf8 0%, #f3eee3 100%);
-  /* The paper's colour under its gradient: the fallback where gradients don't
-     paint, and what an element-based contrast check reads. */
-  background-color: #f8f4eb;
-  color: #141413;
-  font-family: var(--font-mono);
-  -webkit-mask:
-    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 28px 51% repeat-x,
-    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 28px 51% repeat-x;
-  mask:
-    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 28px 51% repeat-x,
-    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 28px 51% repeat-x;
 }

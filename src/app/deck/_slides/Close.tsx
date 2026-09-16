@@ -1,5 +1,6 @@
 import Image from "next/image";
 import {
+  ArrowUpRight,
   Armchair,
   Banknote,
   CalendarRange,
@@ -31,7 +32,7 @@ import { SEAT_LEGEND, SeatPlan, SeatSwatch } from "../_components/SeatPlan";
 import logoOnInk from "../_media/logo-counterfoil-dark.png";
 import posPhoneBn from "../_media/go-phone-sell-bn.jpg";
 
-/* Slides 23–25: what sets Counterfoil apart, the market it is built for, and the close. */
+/* What sets Counterfoil apart, the market it is built for, and the close. */
 
 const KINDS: { icon: LucideIcon; name: string }[] = [
   { icon: Landmark, name: "Heritage sites" },
@@ -278,9 +279,28 @@ export function CloseSlide({ n }: { n: number }) {
         <h2 className={s.display}>
           Every seat, slot and session — <span className={s.accentInk}>accounted for.</span>
         </h2>
-        <p className={cn(s.lead, "mx-auto mt-7 w-[1160px]")}>Counterfoil is built by Ternary Solutions for the people who run venues, tours and attractions.</p>
+        {/*
+          The ask: one next step a reader can take today, with the address written
+          out. Drawn, not a link, like every other control on a slide: the slide
+          scales to a fifth of its size on a phone, where no link could be tapped,
+          and a reader on the website is already on the demo.
+        */}
+        <div className="mt-9 flex items-center justify-center gap-6">
+          <p className={s.lead}>Start with one counter.</p>
+          <p className="inline-flex h-[60px] items-center gap-3.5 rounded-full bg-[#f5f2eb] pl-7 pr-2 text-[20px] font-semibold text-[#141413] shadow-[0_24px_50px_-24px_rgb(249_74_0/0.7)]">
+            Try the live demo
+            <span className="font-mono text-[16px] font-normal tracking-[0.02em] text-[#57534c]">counterfoil-frontend.vercel.app</span>
+            <span aria-hidden className="grid h-[46px] w-[46px] place-items-center rounded-full bg-[#141413] text-[#f5f2eb]">
+              <ArrowUpRight size={22} strokeWidth={2} />
+            </span>
+          </p>
+        </div>
       </div>
-      <Image src={logoOnInk} alt="Counterfoil" sizes="280px" className="absolute left-1/2 top-[736px] h-[36px] w-auto -translate-x-1/2" />
+      <div className="absolute left-1/2 top-[736px] flex -translate-x-1/2 items-center gap-5">
+        <Image src={logoOnInk} alt="Counterfoil" sizes="280px" className="h-[36px] w-auto" />
+        <span aria-hidden className="h-6 w-px bg-white/20" />
+        <span className="whitespace-nowrap font-mono text-[14px] uppercase tracking-[0.12em] text-[rgb(245_242_235/0.64)]">Built by Ternary Solutions</span>
+      </div>
     </Slide>
   );
 }
