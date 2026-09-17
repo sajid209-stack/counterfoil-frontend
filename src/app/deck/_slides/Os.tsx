@@ -79,7 +79,7 @@ import sheetSlots from "../_media/sheet-slots.jpg";
  * halfway through a line of text.
  */
 
-export const OS_SECTION = "01 · Counterfoil OS";
+export const OS_SECTION = "Counterfoil OS";
 
 /** The parts of chapter 01, each with the icon the OS sidebar gives it. */
 export const OS_CONTENTS: ChapterPart[] = [
@@ -731,7 +731,7 @@ const TEMPLATES: { name: string; hint: string; icon: LucideIcon }[] = [
 
 export function EventsSlide({ n }: { n: number }) {
   return (
-    <Slide tone="ink" n={n} section={OS_SECTION} label="A page for every event">
+    <Slide tone="ink" n={n} section="Events" label="A page for every event">
       <Glow className="left-[820px] top-[-280px] h-[820px] w-[860px] opacity-80" />
       <TextBlock eyebrow="Events" title="A page for every event." lead="One template per kind of event, each built from the event’s own bill and tickets." width={500}>
         <div className="flex gap-2.5">

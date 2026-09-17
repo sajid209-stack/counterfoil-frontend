@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import s from "../deck.module.css";
 import markBlack from "../_media/mark-plain.png";
 
-export const TOTAL = 25;
+export const TOTAL = 22;
 
 export type Tone = "ink" | "paper";
 

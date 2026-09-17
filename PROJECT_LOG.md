@@ -7981,3 +7981,130 @@ Vercel CLI is signed in as `ishmamullhasan` (team `kishmam`), which is the
 designer's mirror project, not `sajid209-stacks-projects/counterfoil-frontend`
 that serves counterfoil-frontend.vercel.app. Rolling back or cancelling a
 deployment there is a dashboard action on the owner's account.
+
+## Counterfoil Deck — the sales cut, on the real price list (2026-09-17)
+
+Owner asked for the sales narrative back — what makes Counterfoil better,
+pricing charts, and an events comparison with the marketplaces — this time with
+**the real Bangladesh price list** (screenshots of the plan and entitlement
+tables) and with **no competitor named anywhere**. Plus: research SaaS pricing
+pages, POS UX and checkout/ticket-issue, and rework the deck until it holds up.
+
+### The cut: 22 slides
+
+Cover · the problem · **what gets better** · one system · how it works ·
+dashboard · booking types · calendar · reports · **find · choose · pay ·
+ticket · gate · designed for the counter** · built in Bangladesh · event pages ·
+**what a marketplace costs** · **pricing** · **what each plan includes** ·
+**what it costs** · close with the ask.
+
+Nine of the old twenty-five go (both chapter openers, Bookings, Holds, Orders,
+Customers, Settings, Shift and Specialities) and six arrive, so the Go
+walkthrough grows from the money to the whole counter. The Go slides no longer count themselves
+("Go · 3 of 6 · Pay" → "Go · Pay") and the footers name the part of the story
+rather than a chapter number.
+
+**The dropped slides stay in the files, unused.** This deck has been re-cut
+twice in two days; a slide that is one line away in `page.tsx` is cheaper than
+one that needs a revert.
+
+### What the research changed
+
+- **The old-way/new-way contrast is the strongest pattern in a B2B deck**, so
+  *What gets better on day one* opens the argument: six jobs a venue already
+  does, each drawn as a ticket — how it is done today on the stub, torn along a
+  perforation, and what Counterfoil does on the part the venue keeps.
+- **Pricing pages win on three to four tiers with an obvious buyer each, the
+  middle one highlighted, and an annual option stated as what it saves.** So
+  four venue plans, Growth raised, and "two months free" on every yearly line.
+- **A cashier taps about twice as fast as an everyday user, from about 80cm
+  away, for years.** That is the whole of *Designed for the counter*: two taps
+  to a sale, 48px controls, the price as the biggest thing on a tile, and a
+  refusal drawn as shape, texture and a sentence — each shown as a working
+  fragment with its measurement beside it.
+- **A confirmation screen must state the sale unambiguously and hand the ticket
+  over more than one way**, which is what the rebuilt *Ticket* slide shows.
+
+### The prices are the real ones
+
+Lite ৳0 · Starter ৳2,990 (৳29,900 a year) · Growth ৳9,990 (৳99,900) · Advanced
+৳14,990 (৳149,900), and **Events at 6% of ticket revenue with nothing monthly**
+— a different model, so it is a different object on the slide rather than a
+fifth card. *What each plan includes* is the entitlement table as the operator
+wrote it: seats, locations, forms, the message meters, waivers, agents and
+kitchen display, memberships/retail/food, API and support, with the overage
+rates in a footnote.
+
+Nothing says "sample" any more, because nothing is.
+
+### The comparison names no one
+
+The events comparison is with the **model**, not with companies: one ink card
+for selling through a marketplace, one paper card for selling on Counterfoil,
+four rows apiece — what it costs, where the buyer is, what you learn, what
+happens at the door — and each side ends on the same month priced its own way:
+**৳32,500–৳60,000** against **৳9,990**. The only figures quoted are the
+category range Bangladeshi ticketing sites charge as a group (5–10% commission
+plus 1.5–2% processing), which is also what the chart's band is drawn from.
+
+### The chart
+
+Monthly cost against tickets sold, one axis. The marketplace share is a
+**band** between its two rates rather than a single invented line, and the
+Growth plan is a flat ember rule that does not move. Both crossings are marked,
+so the label names the range honestly — the plan costs less from 167–307
+tickets a month, depending where in the band a platform sits.
+
+Colour last and validated: ember and blue-600 pass every palette check on white
+(lightness, chroma, colour-blind and normal-vision separation, 3:1 against the
+card). Solid hairline grid, ringed markers, a legend and direct labels, and
+every piece of text in an ink token rather than a series colour. No hover
+layer: the deck is static and ships as a PDF, so the sums beside the chart are
+its table view.
+
+### The till's own screens, recaptured
+
+The deck was still showing the completion screen from before the September
+rework. A script drives a real sale and captures three things: the completion
+screen as it is now (print and send groups, a QR per ticket), the send dialog
+with the exact SMS and email the guest will get, and the printed **ticket
+receipt** — receipt and tickets on one strip. The ticket slide is those three,
+which is the checkout-to-ticket story end to end.
+
+### Found by rendering it
+
+- The marketplace slide's money band **overlapped both cards**: the grid had no
+  height and the cards grew past it. The figures moved into each card's foot,
+  which reads better anyway — each side ends on what it costs.
+- The pricing footnote sat on the Events band; the included table and the
+  chart's notes ran past the bottom line.
+- The printed strip ran 12px past the right margin and its caption wrapped to
+  two lines.
+- The chart labelled its two blue edges "A marketplace" and "share of sales" at
+  different heights, which read as two separate labels rather than one band.
+  They are the two rates now: 12% and 6.5%.
+- **"Most venues" came off the featured plan.** There is no ledger behind it —
+  it is a recommendation, and it says so.
+
+### Verified
+
+- Layout at 1780, 1440, 1024 and 390: **22 slides the same size**, no page
+  overflow, no text outside the margins, past the bottom line, clipped or
+  covered, no console errors.
+- Pixel contrast per slide: **0 of 449** text boxes below their floor at 1780
+  and 1440. The first run caught the two drawn "Charge" labels at 3.50:1 —
+  white on ember at 14 and 16px. They are 19px bold now, which is large text,
+  where the floor is 3:1, and is the same fix the deck made for a drawn "Take
+  balance" button in September.
+- `/deck` route audit **0 findings**; deck harness 9/9.
+- PDF rebuilt and read back: **22 pages** at 960 × 540pt, 22 intact
+  3200 × 1800 JPEGs, xref found, 7.8 MB. Pages 13, 19 and 21 extracted and
+  compared by eye with the website — identical.
+- `tsc --noEmit` and `eslint` clean on the deck.
+
+### Open
+
+- The Events plan is 6% of revenue, so the deck's flat-fee argument is about the
+  venue plans; the chart's footnote says so rather than leaving it implied.
+- Prices are the Bangladesh list; other currencies are not in the deck.
+- The screenshots are static and will drift as the product changes.

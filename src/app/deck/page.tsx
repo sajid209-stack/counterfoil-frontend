@@ -4,22 +4,10 @@ import { ArrowLeft, Download } from "lucide-react";
 import { deckStyles as s } from "./_components/Parts";
 import { DeckScale } from "./_components/DeckScale";
 import { CoverSlide, HowItWorksSlide, ProblemSlide, SystemSlide } from "./_slides/Open";
-import {
-  BookingTypesSlide,
-  BookingsSlide,
-  CalendarSlide,
-  ChapterDivider,
-  CustomersSlide,
-  DashboardSlide,
-  EventsSlide,
-  HoldsSlide,
-  OS_CONTENTS,
-  OrdersSlide,
-  ReportsSlide,
-  SettingsSlide,
-} from "./_slides/Os";
-import { GO_CONTENTS, PosChooseSlide, PosFindSlide, PosGateSlide, PosPaySlide, PosShiftSlide, PosTicketSlide } from "./_slides/Go";
-import { BangladeshSlide, CloseSlide, TodaySlide } from "./_slides/Close";
+import { BookingTypesSlide, CalendarSlide, DashboardSlide, EventsSlide, ReportsSlide } from "./_slides/Os";
+import { CounterCraftSlide, PosChooseSlide, PosFindSlide, PosGateSlide, PosPaySlide, PosTicketSlide } from "./_slides/Go";
+import { BangladeshSlide, CloseSlide } from "./_slides/Close";
+import { BetterSlide, CostSlide, IncludedSlide, MarketplaceSlide, PricingSlide } from "./_slides/Sales";
 import logoOnPaper from "./_media/logo-counterfoil.png";
 
 export const metadata = { title: "Counterfoil Deck" };
@@ -28,7 +16,9 @@ export const metadata = { title: "Counterfoil Deck" };
 const PDF = "/counterfoil-deck.pdf";
 
 /**
- * Counterfoil Deck — the company, in twenty-five slides.
+ * Counterfoil Deck — the case for Counterfoil, in twenty-two slides: the
+ * problem, why it is better, the product, the till, the market, what a
+ * marketplace costs and what Counterfoil costs.
  *
  * Not interactive: a deck to read top to bottom, or to download. Deliberately
  * outside the OS shell, the same way `/pos` and `/tills` are, so the sidebar's
@@ -38,8 +28,9 @@ const PDF = "/counterfoil-deck.pdf";
  * is the same size and the PDF is a picture of exactly these slides.
  *
  * What it shows is real: the screens are this product's own, captured from the
- * app, and the figures are the project record's. A company deck that invents a
- * statistic teaches its reader to doubt the rest.
+ * app, the figures are the project record's and the prices are the real
+ * Bangladesh price list. A company deck that invents a statistic teaches its
+ * reader to doubt the rest.
  */
 export default function DeckPage() {
   return (
@@ -77,48 +68,30 @@ export default function DeckPage() {
 
         <CoverSlide n={1} />
         <ProblemSlide n={2} />
-        <SystemSlide n={3} />
-        <HowItWorksSlide n={4} />
+        <BetterSlide n={3} />
+        <SystemSlide n={4} />
+        <HowItWorksSlide n={5} />
 
-        <ChapterDivider
-          n={5}
-          chapter="01"
-          product="Counterfoil OS"
-          marque="os"
-          title="Run the business."
-          lead="Counterfoil OS is where a venue is set up, watched and reconciled — on the web, for one location or all of them."
-          contents={OS_CONTENTS}
-        />
         <DashboardSlide n={6} />
-        <CalendarSlide n={7} />
-        <BookingsSlide n={8} />
-        <BookingTypesSlide n={9} />
-        <HoldsSlide n={10} />
-        <OrdersSlide n={11} />
-        <CustomersSlide n={12} />
-        <ReportsSlide n={13} />
-        <EventsSlide n={14} />
-        <SettingsSlide n={15} />
+        <BookingTypesSlide n={7} />
+        <CalendarSlide n={8} />
+        <ReportsSlide n={9} />
 
-        <ChapterDivider
-          n={16}
-          chapter="02"
-          product="Counterfoil Go"
-          marque="go"
-          title="Sell at the counter."
-          lead="Counterfoil Go is the till and the gate — on a tablet or a phone, in the hands of the person selling."
-          contents={GO_CONTENTS}
-        />
-        <PosFindSlide n={17} />
-        <PosChooseSlide n={18} />
-        <PosPaySlide n={19} />
-        <PosTicketSlide n={20} />
-        <PosGateSlide n={21} />
-        <PosShiftSlide n={22} />
+        <PosFindSlide n={10} />
+        <PosChooseSlide n={11} />
+        <PosPaySlide n={12} />
+        <PosTicketSlide n={13} />
+        <PosGateSlide n={14} />
+        <CounterCraftSlide n={15} />
 
-        <TodaySlide n={23} />
-        <BangladeshSlide n={24} />
-        <CloseSlide n={25} />
+        <BangladeshSlide n={16} />
+        <EventsSlide n={17} />
+        <MarketplaceSlide n={18} />
+
+        <PricingSlide n={19} />
+        <IncludedSlide n={20} />
+        <CostSlide n={21} />
+        <CloseSlide n={22} />
       </div>
     </main>
   );
