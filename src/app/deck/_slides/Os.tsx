@@ -1,42 +1,181 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 import {
+  ArrowRight,
+  Armchair,
   Bookmark,
   Briefcase,
   CalendarCheck,
+  CalendarDays,
+  ChartNoAxesColumn,
+  Clock,
   Columns2,
+  CornerDownLeft,
   Download,
+  LandPlot,
+  LayoutDashboard,
   Link2,
   ListFilter,
+  Lock,
   Moon,
   Music,
   Palette,
+  PartyPopper,
   Plane,
+  Receipt,
+  ReceiptText,
+  Search,
+  Settings,
+  Shapes,
+  Ticket as TicketIcon,
   Trophy,
+  Users,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Crop, Glow, Hotspot, Laptop, Phone, Pill, SheetCard, Slide, Step, TextBlock, deckStyles as s } from "../_components/Parts";
+import {
+  Crop,
+  Floor,
+  Glow,
+  Hotspot,
+  Laptop,
+  Phone,
+  Pill,
+  SheetCard,
+  Slide,
+  Step,
+  TextBlock,
+  Ticket,
+  Ticks,
+  deckStyles as s,
+  type ChapterPart,
+} from "../_components/Parts";
+import { GoLockup } from "../_components/GoLogo";
+import logoOnPaper from "../_media/logo-counterfoil.png";
 import dashLight from "../_media/os-dashboard-light.jpg";
 import calendar from "../_media/os-calendar-light.jpg";
+import bookings from "../_media/os-bookings.jpg";
+import holds from "../_media/os-holds.jpg";
+import orders from "../_media/os-orders.jpg";
+import order from "../_media/os-order.jpg";
+import customers from "../_media/os-customers.jpg";
+import customer from "../_media/os-customer.jpg";
 import reportsDark from "../_media/os-reports-dark.jpg";
 import eventOs from "../_media/os-event-dark.jpg";
 import turfPhone from "../_media/web-turfcup-phone.jpg";
+import settings from "../_media/os-settings.jpg";
 import sheetSeats from "../_media/sheet-seats.jpg";
 import sheetSlots from "../_media/sheet-slots.jpg";
 
 /*
- * Counterfoil OS — the parts a buyer asks about: the day at a glance, the
- * booking types, the calendar, the reports and event pages.
+ * Chapter 01 — Counterfoil OS, one slide per part of the admin app.
  *
- * Paper is OS's ground. Where a slide lists things, each is shown as a piece
- * of the product — a slot grid, a punch card, a chart — rather than an icon
- * and a line of text.
+ * Paper is the OS chapter's ground and ink is Go's. Where a slide lists
+ * things, each is shown as a piece of the product — a slot grid, a punch card,
+ * a bulk bar, a search result — rather than an icon and a line of text.
  *
  * Every crop is cut on a row boundary of its screenshot, so no screen stops
  * halfway through a line of text.
  */
 
-export const OS_SECTION = "Counterfoil OS";
+export const OS_SECTION = "01 · Counterfoil OS";
+
+/** The parts of chapter 01, each with the icon the OS sidebar gives it. */
+export const OS_CONTENTS: ChapterPart[] = [
+  { name: "Dashboard", icon: LayoutDashboard },
+  { name: "Calendar", icon: CalendarDays },
+  { name: "Bookings", icon: TicketIcon },
+  { name: "Booking types", icon: Shapes },
+  { name: "Holds", icon: Lock },
+  { name: "Orders", icon: ReceiptText },
+  { name: "Customers", icon: UsersRound },
+  { name: "Reports", icon: ChartNoAxesColumn },
+  { name: "Events", icon: PartyPopper },
+  { name: "Settings", icon: Settings },
+];
+
+/*
+ * A contents item is an icon tile over its name. The spacing follows the
+ * proximity rule: inside an item the label sits 12px under its icon; between
+ * items there is at least 32px, so each pair reads as one thing.
+ *
+ * Columns share one width, set by the longest label ("Booking types", about
+ * 120px at 16px) plus that 32px — so every icon keeps an even rhythm and no
+ * label runs up to its neighbour. Rows are 32px apart for the same reason.
+ */
+const PART_COL = 156;
+const PART_GAP_Y = 32;
+
+/**
+ * A chapter opens on ink, with the product's own marque printed on the ticket
+ * and the chapter's number on its stub. The Counterfoil logotype is OS's own
+ * mark — the app draws no OS tag beside it — and Go carries the Go artwork,
+ * streaks and all. What the chapter holds is set like an app's home screen:
+ * each part's icon over its name.
+ */
+export function ChapterDivider({
+  n,
+  chapter,
+  product,
+  marque,
+  title,
+  lead,
+  contents,
+}: {
+  n: number;
+  chapter: string;
+  product: string;
+  marque: "os" | "go";
+  title: string;
+  lead: string;
+  contents: ChapterPart[];
+}) {
+  const logo = marque === "go" ? <GoLockup /> : <Image src={logoOnPaper} alt="" sizes="360px" />;
+  // Two rows on both openers: ten parts in fives, six in threes. Both blocks are then the same height, so both titles sit on the same line.
+  const cols = Math.ceil(contents.length / 2);
+  return (
+    <Slide tone="ink" n={n} section={`${chapter} · ${product}`} label={title}>
+      <Glow className="left-[840px] top-[-260px] h-[940px] w-[940px]" />
+      <Floor />
+      <p className={cn(s.eyebrow, "absolute left-[96px] top-[92px]")}>Chapter {chapter}</p>
+      {/* Anchored by its foot, so title, lead and contents end on the same line on both openers. */}
+      <div className={s.text} style={{ left: 96, bottom: 170, width: 780 }}>
+        <h2 className={s.display}>{title}</h2>
+        <p className={cn(s.lead, "mt-8 w-[620px]")}>{lead}</p>
+        <ul className="mt-11 grid" style={{ gridTemplateColumns: `repeat(${cols}, ${PART_COL}px)`, rowGap: PART_GAP_Y }}>
+          {contents.map(({ name, icon: Icon }) => (
+            <li key={name} className="flex flex-col items-start">
+              <span className="grid h-[60px] w-[60px] place-items-center rounded-[18px] bg-white/[0.06] text-[#ffa572] ring-1 ring-inset ring-white/10">
+                <Icon size={26} strokeWidth={1.5} aria-hidden />
+              </span>
+              <span className="mt-3 whitespace-nowrap text-[16px] font-medium leading-tight text-[#f5f2eb]">{name}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <Ticket
+        variant="glass"
+        width={400}
+        tilt="perspective(1000px) rotateX(26deg) rotateY(-24deg) rotateZ(-16deg)"
+        className="absolute left-[930px] top-[470px]"
+      />
+      <Ticket
+        logo={logo}
+        kicker={`Chapter ${chapter}`}
+        stub={
+          <>
+            <small>No.</small>
+            {chapter}
+          </>
+        }
+        code={`CF-2026-CH${chapter}`}
+        width={500}
+        className="absolute left-[990px] top-[228px]"
+      />
+    </Slide>
+  );
+}
 
 export function DashboardSlide({ n }: { n: number }) {
   return (
@@ -120,6 +259,71 @@ export function CalendarSlide({ n }: { n: number }) {
           </li>
         ))}
       </ul>
+    </Slide>
+  );
+}
+
+/** A switch as the settings pages draw it, on. */
+function SwitchOn() {
+  return (
+    <span aria-hidden className="relative h-[24px] w-[42px] shrink-0 rounded-full bg-[#f94a00]">
+      <span className="absolute right-[3px] top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-[0_1px_2px_rgb(20_20_19/0.3)]" />
+    </span>
+  );
+}
+
+export function BookingsSlide({ n }: { n: number }) {
+  return (
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Everything you sell, in one catalogue">
+      <TextBlock eyebrow="Bookings" title="Everything you sell, in one catalogue." width={860} />
+      <p className={cn(s.lead, s.text)} style={{ left: 1024, top: 128, width: 480 }}>
+        Admission, tours, courts and events — each with its price, its category and where it is sold.
+      </p>
+
+      <Crop
+        src={bookings}
+        alt="The bookings catalogue, with bulk selection, prices, categories, channels and status"
+        x={0.17}
+        y={0.258}
+        w={0.825}
+        h={0.652}
+        width={896}
+        className="absolute left-[96px] top-[357px]"
+      />
+
+      {/* Three facts, each shown with the piece of the catalogue that does it. */}
+      <div className="absolute left-[1024px] top-[357px] flex h-[443px] w-[480px] flex-col gap-4">
+        <div className={cn(s.card, "relative flex h-[151px] shrink-0 items-center justify-between gap-6 bg-[#141413] px-8 text-[#f5f2eb]")}>
+          <Glow className="left-[260px] top-[-60px] h-[260px] w-[260px] opacity-60" />
+          <div className="relative">
+            <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#ffa572]">Not sellable</p>
+            <p className="mt-2 w-[280px] text-[17px] leading-[1.45] text-[rgb(245_242_235/0.8)]">A booking missing a price, a schedule or somewhere to sell says so first.</p>
+          </div>
+          <span className="relative text-[96px] font-semibold leading-none tracking-[-0.06em] text-[#ff7a3d]">0</span>
+        </div>
+        <div className={cn(s.card, s.paperCard, "flex flex-1 flex-col justify-between px-6 py-5")}>
+          <h3 className={s.heading}>On, off or archived — in bulk</h3>
+          <div aria-hidden className="flex items-center gap-1.5 rounded-[14px] bg-[#141413] py-1.5 pl-4 pr-1.5 text-[15px] text-[#f5f2eb]">
+            <span className="mr-auto font-medium">2 selected</span>
+            {["Activate", "Deactivate", "Archive"].map((a) => (
+              <span key={a} className="rounded-[10px] bg-white/10 px-3 py-1.5">
+                {a}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className={cn(s.card, s.paperCard, "flex flex-1 flex-col justify-between px-6 py-5")}>
+          <h3 className={s.heading}>Sold where you choose</h3>
+          <div className="flex gap-3">
+            {["Counter", "Online"].map((c) => (
+              <span key={c} className="flex flex-1 items-center justify-between rounded-[14px] bg-[#f5f2eb] py-2.5 pl-4 pr-3 text-[16px] font-medium">
+                {c}
+                <SwitchOn />
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
     </Slide>
   );
 }
@@ -264,6 +468,162 @@ export function BookingTypesSlide({ n }: { n: number }) {
   );
 }
 
+const HOLD_KINDS: { icon: LucideIcon; label: string }[] = [
+  { icon: Users, label: "A number of places" },
+  { icon: Clock, label: "A whole session" },
+  { icon: LandPlot, label: "A lane or court" },
+  { icon: Armchair, label: "Named seats" },
+];
+
+export function HoldsSlide({ n }: { n: number }) {
+  return (
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Hold places, on the record">
+      <TextBlock eyebrow="Holds" title="Hold places, on the record." width={900} />
+      <p className={cn(s.lead, s.text)} style={{ left: 1024, top: 128, width: 480 }}>
+        Every hold says who it is for and who placed it — and goes back on sale by hand, or when its time is up.
+      </p>
+
+      <div className={cn(s.card, s.paperCard, "absolute left-[96px] top-[260px] h-[190px] w-[692px] px-7 py-6")}>
+        <div className="flex items-baseline justify-between">
+          <h3 className={s.heading}>Planetarium Show · 1 Aug, 11:00</h3>
+          <span className={cn(s.mono, "text-[#6b675f]")}>40 places</span>
+        </div>
+        <div aria-hidden className="mt-4 grid grid-cols-[repeat(20,26px)] gap-1">
+          {Array.from({ length: 40 }, (_, i) => (
+            <span
+              key={i}
+              className={cn("h-[22px] rounded-[5px]", i < 25 ? "ring-1 ring-inset ring-[#dcc08c]" : "bg-[#f5f2eb] ring-1 ring-inset ring-[#e2ded5]")}
+              style={i < 25 ? { background: "repeating-linear-gradient(135deg, #e9c79b 0 5px, #f4e4c6 5px 10px)" } : undefined}
+            />
+          ))}
+        </div>
+        <div className="mt-4 flex justify-between">
+          <p className={s.body}>
+            <span className="font-semibold text-[#22211f]">25 held</span> for Sunbeams School — Class 6
+          </p>
+          <p className={s.body}>15 still on sale</p>
+        </div>
+      </div>
+
+      <div className={cn(s.card, s.paperCard, "absolute left-[812px] top-[260px] h-[190px] w-[692px] px-7 py-6")}>
+        <p className={cn(s.mono, "uppercase text-[#aa3000]")}>What can be held</p>
+        <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3">
+          {HOLD_KINDS.map(({ icon: Icon, label }) => (
+            <li key={label} className="flex items-center gap-3.5">
+              <span className="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-[12px] bg-[#fff1e8] text-[#aa3000]">
+                <Icon size={21} strokeWidth={1.6} aria-hidden />
+              </span>
+              <span className="text-[18px] font-semibold tracking-[-0.01em]">{label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <Crop
+        src={holds}
+        alt="Holds for maintenance on lane 3, a private event and a school group, each with who placed it"
+        x={0.17}
+        y={0.415}
+        w={0.825}
+        h={0.585}
+        width={1408}
+        className="absolute left-[96px] top-[474px]"
+      />
+    </Slide>
+  );
+}
+
+const STATUS_CHIPS = [
+  { label: "Paid", cls: "bg-[#e4f3e8] text-[#1f6f3d] ring-[#b9dfc5]" },
+  { label: "Partial", cls: "bg-[#fbe7cf] text-[#8a4a0b] ring-[#eec08a]" },
+  { label: "Pending", cls: "bg-[#e6eefb] text-[#2c55a0] ring-[#bfd0f0]" },
+  { label: "Refunded", cls: "bg-[#fbe4e2] text-[#a1302a] ring-[#f0bdb8]" },
+  { label: "Cancelled", cls: "bg-[#efebe4] text-[#57534c] ring-[#dcd6cb]" },
+];
+
+export function OrdersSlide({ n }: { n: number }) {
+  return (
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Every sale, and the money behind it">
+      <TextBlock eyebrow="Orders" title="Every sale, and the money behind it." lead="Counter and online in one list — what was collected, and what is still owed.">
+        <Ticks tone="paper" items={["Each line kept as it was sold — add-ons, discounts and VAT", "Refund a line with a reason, resend a ticket, move a date", "Internal notes a guest never sees"]} />
+      </TextBlock>
+      {/* On the slide's bottom line, level with the foot of the bento beside it. */}
+      <div className={s.text} style={{ left: 96, bottom: 100, width: 548 }}>
+        <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Where an order stands</p>
+        <ul className="mt-3.5 flex gap-2">
+          {STATUS_CHIPS.map((c) => (
+            <li key={c.label} className={cn("rounded-[8px] px-3 py-1.5 font-mono text-[14px] font-medium uppercase tracking-[0.08em] ring-1 ring-inset", c.cls)}>
+              {c.label}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* A bento, not a pile: the list, the money it adds up to, and one order opened. */}
+      <Crop src={orders} alt="The orders list: every sale with its customer, location, items, total and status" x={0.17} y={0.245} w={0.825} h={0.4646} width={840} className="absolute left-[664px] top-[92px]" />
+      <div className={cn(s.card, "absolute left-[664px] top-[412px] flex h-[388px] w-[356px] flex-col justify-between bg-[#141413] p-8 text-[#f5f2eb]")}>
+        <div>
+          <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#ffa572]">Outstanding</p>
+          <p className="mt-3 text-[46px] font-semibold leading-none tracking-[-0.04em] tabular-nums text-[#ff7a3d]">৳47,011.37</p>
+          <p className="mt-4 text-[17px] leading-[1.45] text-[rgb(245_242_235/0.78)]">Still owed — and shown on the order as a balance due.</p>
+        </div>
+        <dl className="flex flex-col gap-3 border-t border-white/12 pt-5">
+          {[
+            ["Collected", "৳605,564.78"],
+            ["Orders", "151"],
+            ["Average order", "৳5,138.39"],
+          ].map(([k, v]) => (
+            <div key={k} className="flex items-baseline justify-between text-[17px]">
+              <dt className="text-[rgb(245_242_235/0.66)]">{k}</dt>
+              <dd className="font-semibold tabular-nums">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <Crop
+        src={order}
+        alt="Order CF-2026-999001: paid in full, with its items, add-ons, discounts, VAT and total"
+        x={0.17}
+        y={0.172}
+        w={0.555}
+        h={0.6738}
+        width={460}
+        className="absolute left-[1044px] top-[412px]"
+      />
+    </Slide>
+  );
+}
+
+export function CustomersSlide({ n }: { n: number }) {
+  return (
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Know the guest in front of you">
+      <Crop src={customers} alt="The customers list, ranked by spend, with marketing consent" x={0.17} y={0.15} w={0.825} h={0.498} width={840} className="absolute left-[96px] top-[92px]">
+        {/* The row the record below opens. */}
+        <span aria-hidden className="absolute rounded-[8px] ring-[3px] ring-[#f94a00]" style={{ left: "1.2%", top: "43.2%", width: "97.6%", height: "12.4%" }} />
+      </Crop>
+      <Crop
+        src={customer}
+        alt="Sabbir Alam’s record: flagged for staff attention, with spend, orders and activity"
+        x={0.17}
+        y={0.135}
+        w={0.825}
+        h={0.505}
+        width={840}
+        className="absolute left-[96px] top-[433px]"
+      />
+
+      <TextBlock eyebrow="Customers" title="Know the guest in front of you." lead="One record per person — what they have bought, agreed to and still owe." left={984}>
+        <Ticks tone="paper" items={["Matched by phone, however the number is typed", "Email and SMS consent, kept as a record", "Merge duplicates; erase personal data on request"]} />
+        <div className={cn(s.card, "mt-9 bg-[#141413] px-7 py-6 text-[#f5f2eb]")}>
+          <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#ffa572]">Flagged for staff</p>
+          <p className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-[-0.015em]">“Repeated no-shows on booked tours. Take payment in full at booking.”</p>
+          <p className="mt-3 text-[16px] leading-[1.45] text-[rgb(245_242_235/0.72)]">Attach Sabbir to a sale and the till shows why.</p>
+        </div>
+      </TextBlock>
+    </Slide>
+  );
+}
+
 const EMBER = "#ff7a3d";
 const FAINT = "rgb(245 242 235 / 0.26)";
 
@@ -371,7 +731,7 @@ const TEMPLATES: { name: string; hint: string; icon: LucideIcon }[] = [
 
 export function EventsSlide({ n }: { n: number }) {
   return (
-    <Slide tone="ink" n={n} section="Events" label="A page for every event">
+    <Slide tone="ink" n={n} section={OS_SECTION} label="A page for every event">
       <Glow className="left-[820px] top-[-280px] h-[820px] w-[860px] opacity-80" />
       <TextBlock eyebrow="Events" title="A page for every event." lead="One template per kind of event, each built from the event’s own bill and tickets." width={500}>
         <div className="flex gap-2.5">
@@ -409,6 +769,85 @@ export function EventsSlide({ n }: { n: number }) {
         className="absolute left-[740px] top-[176px]"
       />
       <Phone src={turfPhone} bar="#09160f" ink="light" width={188} tilt="right" alt="The Chattogram Turf Cup page on a phone" className="absolute left-[1316px] top-[388px]" />
+    </Slide>
+  );
+}
+
+/** Settings that reach the counter, and where each one shows up. */
+const REACHES = [
+  ["Payment methods", "Till pay buttons"],
+  ["Tax", "Every line of a sale"],
+  ["Opening float", "Start of a shift"],
+  ["Receipt message", "Every receipt"],
+  ["Wrong PINs allowed", "PIN screen"],
+];
+
+const SEARCHES = [
+  ["bkash", "Payments"],
+  ["dark mode", "Preferences"],
+  ["quiet hours", "Notifications"],
+];
+
+export function SettingsSlide({ n }: { n: number }) {
+  return (
+    <Slide tone="paper" n={n} section={OS_SECTION} label="Set up once, and the till follows">
+      <TextBlock eyebrow="Settings" title="Set up once." lead="Change a setting and the till follows — there is no second place to update it." width={464} />
+      {/* Each setting joined to the place a cashier meets it — on the bottom line, level with the search block. */}
+      <div className={s.text} style={{ left: 96, bottom: 100, width: 464 }}>
+        <p className={cn(s.mono, "uppercase text-[#aa3000]")}>Where each one shows up</p>
+        <ul className="mt-4 flex flex-col gap-[18px]">
+          {REACHES.map(([name, where]) => (
+            <li key={name} className="flex h-[62px] items-center">
+              <span className="flex h-full shrink-0 items-center rounded-[14px] bg-white px-4 text-[17px] font-semibold shadow-[0_1px_2px_rgb(20_20_19/0.06)] ring-1 ring-[#e7e2d8]">
+                {name}
+              </span>
+              <span aria-hidden className="mx-2 flex min-w-[28px] flex-1 items-center">
+                <span className="h-[2px] flex-1 bg-[repeating-linear-gradient(90deg,#e0a27f_0_6px,transparent_6px_11px)]" />
+                <ArrowRight size={16} strokeWidth={2.2} className="-ml-1 text-[#d9814f]" />
+              </span>
+              <span className="flex h-[42px] shrink-0 items-center rounded-full bg-[#141413] px-4 text-[15px] font-medium text-[#f5f2eb]">{where}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <Crop src={settings} alt="Settings: each section with what it is set to, and search" x={0.17} y={0.128} w={0.825} h={0.617} width={896} className="absolute left-[608px] top-[92px]" />
+      <div className={s.text} style={{ left: 608, top: 551, width: 896 }}>
+        <p className={cn(s.mono, "flex items-center gap-2 uppercase text-[#aa3000]")}>
+          <Search size={15} strokeWidth={2} aria-hidden /> Search by what you’d type
+        </p>
+        <div className="mt-4 flex h-[215px] gap-5">
+          {/* The settings search, with “vat” typed and the one section it finds. */}
+          <div className={cn(s.card, s.paperCard, "flex w-[544px] flex-col")}>
+            <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-[#efe9df] px-5">
+              <Search size={18} strokeWidth={1.8} className="text-[#57534c]" aria-hidden />
+              <span className="text-[19px] font-medium">vat</span>
+              <span aria-hidden className="-ml-2 h-[22px] w-[2px] rounded-full bg-[#f94a00]" />
+            </div>
+            <p className="px-5 pt-3.5 font-mono text-[12px] uppercase tracking-[0.1em] text-[#6b675f]">Settings</p>
+            <div className="mx-2.5 mt-2 flex items-center gap-3.5 rounded-[14px] bg-[#fbeee6] px-3.5 py-3">
+              <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-[11px] bg-white text-[#aa3000] ring-1 ring-[#f1d6c6]">
+                <Receipt size={20} strokeWidth={1.7} aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[17px] font-semibold leading-tight">Tax</span>
+                <span className="mt-0.5 block text-[15px] text-[#57534c]">VAT 15% · reduced 7.5%</span>
+              </span>
+              <CornerDownLeft size={18} strokeWidth={1.8} className="ml-auto text-[#aa3000]" aria-hidden />
+            </div>
+            <p className="mt-auto px-5 pb-3.5 text-[14px] text-[#6b675f]">One result · Enter to open</p>
+          </div>
+          <ul className="flex flex-1 flex-col gap-3">
+            {SEARCHES.map(([q, a]) => (
+              <li key={q} className="flex flex-1 items-center gap-3 rounded-[14px] bg-white px-4 shadow-[0_1px_2px_rgb(20_20_19/0.05)] ring-1 ring-[#e7e2d8]">
+                <span className="font-mono text-[15px] text-[#57534c]">“{q}”</span>
+                <ArrowRight size={16} strokeWidth={2} className="text-[#aa3000]" aria-hidden />
+                <span className="text-[17px] font-semibold">{a}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </Slide>
   );
 }

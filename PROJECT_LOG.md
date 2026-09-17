@@ -7963,122 +7963,21 @@ Sources: [Square — print and send receipts](https://squareup.com/help/us/en/ar
 [USWDS — button group](https://designsystem.digital.gov/components/button-group/) ·
 [Primer — button group](https://primer.style/components/button-group/)
 
-## Counterfoil Deck, part twelve — eighteen slides that sell (2026-09-16)
+## The eighteen-slide sales deck, reverted (2026-09-17)
 
-Owner asked for a shorter deck that pushes a sales story: what makes
-Counterfoil better, pricing charts, and a comparison with the ticket
-marketplaces for events. Settled with the owner before building: pricing is a
-monthly plan plus a fee a ticket, **every price is marked sample**; the
-comparison covers Tickify, Shohoz, Eventbrite and Ticketmaster; about 18 slides.
+Owner asked for the last deployment to be undone. `904dab7` — the deck cut to
+eighteen slides with the four new sales slides (what gets better, against the
+marketplaces, pricing, what it costs) — is reverted, so `/deck` is the
+twenty-five-slide deck again and `public/counterfoil-deck.pdf` is back to its
+twenty-five pages.
 
-### The story, in order
+Nothing is lost: the work, its screenshots and its log entry are in git at
+`904dab7`, and reverting this revert puts all of it back. The
+research behind it — Eventbrite's published fees, Ticketmaster's unpublished
+ones, the Bangladesh 5–10% range — is in that commit's log entry.
 
-1 Cover · 2 The problem · 3 **What gets better** · 4 One system · 5 How it works
-· 6 Dashboard · 7 Booking types · 8 Calendar · 9 Reports · 10 Pay · 11 Admit ·
-12 Specialities · 13 Built in Bangladesh · 14 Event pages · 15 **Against the
-marketplaces** · 16 **Pricing** · 17 **What it costs** · 18 Close, with the ask.
-
-The money runs as one sequence at the end: marketplaces take a share of every
-ticket → what Counterfoil charges instead → what that difference comes to →
-the next step.
-
-**Removed (11):** both chapter openers, and Bookings, Holds, Orders, Customers,
-Settings, Find, Choose, Ticket and Shift. Their code, the twelve screenshots only
-they used, `GoLogo` and the shift-receipt CSS are deleted rather than left dead;
-all of it is in git at `68b8552`. Footers now name the part of the story —
-Counterfoil OS, Counterfoil Go, Why Counterfoil, Events, Pricing — and the Go
-eyebrows lost their "3 of 6".
-
-### The four new slides (`_slides/Sales.tsx`)
-
-- **What gets better on day one.** Six jobs, each drawn as a ticket: how it is
-  done today on the stub, torn along a perforation, and what Counterfoil does on
-  the part the venue keeps — availability, selling time, bKash, the gate,
-  events, cash-up. Every "after" is something the product already does.
-- **Against the marketplaces.** One row per platform — how it charges, the
-  published fee, and the fee on one ticket — with Counterfoil first, on ink.
-  **Every figure about another company comes from a source named on the
-  slide**, and where a company publishes no rate the row says "not published"
-  across both fee columns rather than estimating one: Tickify and Shohoz charge
-  commission on sales at an unpublished rate; Ticketmaster's fees are negotiated
-  per event; Eventbrite publishes 3.7% + US$1.79 a ticket plus 2.9% processing
-  in the US, about 11.3% of a US$40 ticket. The Bangladesh range — 5–10%
-  commission plus 1.5–2% processing — is in the lead.
-- **Pricing.** Starter ৳2,500 a month + ৳10 a ticket (1 location · 2
-  counters), Growth ৳6,500 + ৳6 (3 · 10), Pro ৳14,500 + ৳4 (unlimited).
-  "Sample" is on every card, in the eyebrow and in the footnote. Each card
-  states where it starts costing less than a 7% commission on a ৳500 ticket —
-  101, 225 and 468 tickets a month, computed rather than typed. Growth is
-  featured by its surface, **not by a "most popular" badge**: there are no
-  sales to read one off, the same rule the event templates follow. Features are
-  not tiered — every plan includes the whole product, so the cards differ only
-  in what the owner specified.
-- **What it costs.** Monthly cost against tickets sold: the Growth plan against
-  a 7% commission on a ৳500 ticket, crossing at 225 tickets. Beside it the
-  example as sums: at 1,000 tickets, ৳35,000 against ৳12,500 — ৳22,500 a month
-  kept, ৳270,000 a year.
-
-The chart follows the dataviz method. A line chart, because both costs are
-magnitudes over a continuous count; one axis. Colour last and validated:
-Counterfoil in ember and the commission in blue-600 pass every palette check on
-white — a grey "other" line failed the chroma floor and was replaced, not
-excused. Solid hairline grid, 3px lines on the canvas, ringed markers, a legend
-**and** end labels, the difference as an 8% wash, and every piece of text in an
-ink token rather than a series colour. There is no hover layer: the deck is
-static and ships as a PDF, so the sums beside the chart are its table view.
-
-- **Close.** The ask: "Start with one counter" and the live demo's address,
-  drawn as a pill, with "Built by Ternary Solutions" beside the logo.
-
-### Found by measuring, not by looking
-
-- **500 × 0.07 is 35.00000000000001 in JavaScript**, which put Starter's
-  break-even at 100 tickets instead of 101. The commission is worked in integer
-  arithmetic, and a comment says why.
-- The chart's notes ran to y 818, past the bottom line; one short paragraph now.
-- A fee split across two lines with "(US)" alone on the second, and "month"
-  orphaned under 2.5% — every fee cell is now a figure over the condition it
-  holds under, the same shape in every row.
-- **The demo pill was first a real link**, and the route audit flagged it: on a
-  phone the slide scales to 22%, so the link was 130 × 13px, which no thumb can
-  tap. It is drawn now, like every other control on a slide, and a reader on the
-  website is already on the demo.
-- The pricing footnote sat at y 805, 5px past the bottom line; the band moved up.
-
-**A checker that was wrong, not the chart.** The pixel-contrast check reported
-the chart's labels at 2.1–3.6:1. It hides text with `color: transparent` before
-sampling the background, but SVG text paints with `fill`, so it was measuring
-each label against its own glyphs, and it read the label's colour from `color`
-rather than `fill`. Both fixed in the harness; the labels are near-black on
-white.
-
-### Verified
-
-- Layout at 1780, 1440, 1024 and 390: 18 slides the same size, no page
-  overflow, no text outside the margins, past the bottom line, clipped or
-  covered, no console errors.
-- Pixel contrast per slide: **0 of 364** text boxes below their floor at 1780
-  and 1440 (closest: 4.87:1).
-- Alignment: every title on the same line, the lowest content on any slide at
-  y 800 or above.
-- `/deck` route audit **0 findings**. Deck harness 9/9 (sidebar link, outside
-  the shell, mobile More sheet).
-- PDF rebuilt and read back: 18 pages at 960 × 540pt, 18 intact 3200 × 1800
-  JPEGs, xref found, 6.4 MB. Pages 3, 15, 17 and 18 extracted and compared by
-  eye with the website — identical.
-- `tsc` and `eslint` on the deck clean.
-
-### Open
-
-- **No contact details on the close.** The repo has none to cite, so the ask
-  points at the live demo. A sales e-mail or phone number belongs there when
-  there is one.
-- Prices are sample figures until the owner sets real ones; every place a price
-  appears says so.
-- Eventbrite's figures are its US pricing, as its source publishes them.
-
-Sources: [launchlify — event ticketing platforms in Bangladesh](https://launchlify.com/event-ticketing-platforms-in-bangladesh/) ·
-[checkoutpage — Eventbrite fees (28 Apr 2026)](https://checkoutpage.com/blog/eventbrite-fees) ·
-[Ticketmaster Help — how ticket prices and fees are determined](https://help.ticketmaster.com/hc/en-us/articles/9663528775313-How-are-ticket-prices-and-fees-determined) ·
-[seatfun — how much Ticketmaster charges](https://www.seatfun.com/blog/how-much-does-ticketmaster-charge) ·
-[Tickify](https://tickify.live/)
+**Not done here, and only the owner can:** the Vercel side. This machine's
+Vercel CLI is signed in as `ishmamullhasan` (team `kishmam`), which is the
+designer's mirror project, not `sajid209-stacks-projects/counterfoil-frontend`
+that serves counterfoil-frontend.vercel.app. Rolling back or cancelling a
+deployment there is a dashboard action on the owner's account.

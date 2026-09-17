@@ -1,12 +1,16 @@
 import Image, { type StaticImageData } from "next/image";
 import type { CSSProperties, ReactNode } from "react";
+import { Check, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import s from "../deck.module.css";
 import markBlack from "../_media/mark-plain.png";
 
-export const TOTAL = 18;
+export const TOTAL = 25;
 
 export type Tone = "ink" | "paper";
+
+/** One part of a chapter, shown on its opener by the icon the product gives it. */
+export type ChapterPart = { name: string; icon: LucideIcon };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -33,7 +37,7 @@ export function Slide({
     <section aria-label={label} className={s.frame}>
       <div className={cn(s.canvas, tone === "ink" ? s.ink : s.paper)}>
         {children}
-        {/* The footer names the part of the story, never the slide — the eyebrow does that. */}
+        {/* The footer names the chapter, never the slide — the eyebrow does that. */}
         <div aria-hidden data-deck-footer className={s.footer}>
           <span>{section}</span>
           <span>
@@ -415,6 +419,27 @@ export function Step({ n, title, body }: { n: number; title: string; body: strin
         <span className={cn(s.body, "mt-1.5 block")}>{body}</span>
       </span>
     </li>
+  );
+}
+
+export function Ticks({ items, tone }: { items: string[]; tone: Tone }) {
+  return (
+    <ul className="flex flex-col gap-4">
+      {items.map((line) => (
+        <li key={line} className={cn(s.body, "flex items-start gap-3.5")}>
+          <span
+            aria-hidden
+            className={cn(
+              "mt-[3px] grid h-[24px] w-[24px] shrink-0 place-items-center rounded-full",
+              tone === "paper" ? "bg-[#141413] text-[#f5f2eb]" : "bg-white/10 text-[#ffa572]",
+            )}
+          >
+            <Check size={15} strokeWidth={2.6} />
+          </span>
+          {line}
+        </li>
+      ))}
+    </ul>
   );
 }
 
