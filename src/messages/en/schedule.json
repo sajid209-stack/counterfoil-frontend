@@ -54,5 +54,8 @@
   "sellAsHelp": "More than one booking runs here. Choose which one this sale is.",
   "seatsFree": "{count, number} seats",
   "seatsLeft": "{count, number} left",
-  "nextFree": "Next free"
+  "nextFree": "Next free",
+  "nowLabel": "Now",
+  "sellAsBooking": "Sell as {name}",
+  "rowMenu": "Options for {name} at {time}"
 }

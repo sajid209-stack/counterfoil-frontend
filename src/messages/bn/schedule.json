@@ -54,5 +54,8 @@
   "sellAsHelp": "এখানে একাধিক বুকিং চলে। এই বিক্রয়টি কোনটি, বেছে নিন।",
   "seatsFree": "{count, number}টি আসন",
   "seatsLeft": "{count, number}টি বাকি",
-  "nextFree": "পরের খালি"
+  "nextFree": "পরের খালি",
+  "nowLabel": "এখন",
+  "sellAsBooking": "{name} হিসেবে বিক্রি",
+  "rowMenu": "{time}-এ {name}-এর অপশন"
 }

@@ -8317,3 +8317,98 @@ Semantics (a chip is a button with a pressed state matching its visible
 label), Chip Collection Reflow (wrap or disclose, never clip a row of chips)
 and Essential Text Truncation (a distinguishing name gets a visible route to
 its full text).
+
+### The Schedule, second pass — a direct Sell, an options button, and the header stops saying the time twice (2026-09-20)
+
+Owner marked four things on the shipped screen: the "Now · 12:00" line sitting
+directly above a "12:00" heading, the bare mono time headings, the word "Sell"
+set as text under the price, and the absence of a real action button. Their
+words: *the texts look disgusting*, and *need direct sell and an option button*.
+
+All four were right, and two of them were my own rules broken.
+
+#### The header said the time twice
+
+`● Now · 12:00` and `12:00` sat eight pixels apart, meaning the same thing. The
+marker folds into the heading now: the first group at or after now carries the
+dot, its time in the brand text colour and the word **Now**, and everything
+else is the plain time. One line instead of two.
+
+It is also only drawn **once the day has actually started** — a guard I had and
+dropped while merging the two. Filtered to bookings that are all in the
+evening, the first visible group is 17:00, and without the guard the heading
+labelled it "Now" at twelve o'clock.
+
+#### The time headings were DM Mono, against the project's own type spec
+
+The spec has no mono row and reserves DM Mono for **identifiers** — "booking
+refs, status codes, IDs" — and the September sweep took money and clock times
+off it on the dashboard for exactly this reason. A slashed-zero `12:30` floating
+bare above a list was the result of me not following a rule this log already
+records. Times are Inter now, at 16/600, and the heading is drawn as the
+divider it is: **label · rule · count**, which is the indented-divider pattern
+list guidance recommends for grouping without hard-splitting the page.
+
+#### The row: a primary that is a button, and an overflow
+
+Carbon's rule for row actions is that the primary stays visible and the rest go
+behind an overflow — and that an overflow holding fewer than three things
+should not exist at all. So:
+
+- **Sell is a real 44px pill**, in the same place on every row. The "Sell"
+  *text* under the price is gone.
+- **An options button** appears where there is something to put in it: on a
+  shared field, *Sell as Cricket* / *Sell as Futsal* to skip the chooser, then
+  a rule, then *Mark out of service*. A session has nothing to offer, so it
+  gets no menu — and a 44px spacer instead, because a primary action that
+  slides 52px sideways on every third row is worse than a small gap.
+- **The money moved to the second line**, leading it: at 320px a name, a price
+  and two controls cannot all have room, and the name is what distinguishes one
+  row from the next. It reads `৳1,500 · Cricket · Futsal`.
+- **The price is ink, not the brand step.** It is the only number on its line,
+  so it does not need colour to be found, and leaving it brand-coloured put two
+  reds in every row and split the accent with the button that carries the
+  action.
+
+`ActionMenu` gained a `shape="go"` (round, and 44px at **every** width, because
+Go is touch on a counter tablet as well as a phone) and a `separated` flag on
+an item, which draws a rule above it. Both are opt-in, so OS is untouched; the
+order page's menu, which mixes printing with refunding, is the obvious next
+caller for the second one.
+
+#### Found by measuring
+
+**36px of overflow at 320.** The two-column grid became
+`repeat(auto-fill, minmax(340px, 1fr))` so a column only appears where a row
+has room for its name, its money and two controls — but a bare `minmax` floor
+does not shrink, so a 288px container still laid out a 340px track.
+`minmax(min(100%, 340px), 1fr)` pins it. That is the same family as the
+`min-width: auto` bug from the first pass, in its fourth costume.
+
+#### What it costs, stated plainly
+
+- The till at 1024 goes back to **one column**: with two controls on it, a row
+  needs about 340px and the rail leaves 568. The page is 3,534px there against
+  2,516px before. Two columns return at 1280.
+- `/schedule` measured on its own audits at **82, up from 4** — and every one
+  of them is the declared white-on-ember rule at 3.50:1, identical in light and
+  dark. 78 are the 26 Sell buttons, which are the app's standard primary
+  button doing what a primary button does. The screen has many now because
+  every sellable row carries one; that is the design that was asked for, and
+  the treatment is the same as every other primary button in the product. The
+  standing 32-route audit does not include `/schedule` and is unchanged at
+  its documented 70.
+
+#### Verified
+
+- Schedule harness **105 checks, all passing** (ten new: the overflow lists
+  both bookings and can close the field, its items are 44px on a till, and no
+  group is marked "now" under a filter whose slots are all still ahead).
+- Selling harness **14/14** — tapping Sell on tomorrow's 19:00 outdoor field
+  still opens the till on *Tomorrow 30 Jul*, "Outdoor Field · 19:00 · 1 hr ·
+  Group of 2", at the ৳2,000 evening rate.
+- The shared menu's other callers checked by driving them: the row-menu
+  overlap harness **12/12** across Roles, Resources, Bookings and an order, and
+  the catalogue's activate/deactivate/bulk/archive walk unchanged.
+- `tsc`, `npm run build` and `eslint` clean on both changed files; i18n parity
+  **0 missing / 0 extra** with three new keys in en and bn.

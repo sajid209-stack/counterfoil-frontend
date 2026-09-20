@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, ChevronUp, SlidersHorizontal, Wrench } from "lucide-react";
-import { Button, DateField, EmptyState, FormField, Modal, useToast } from "@/components/ui";
+import { ChevronLeft, ChevronRight, ChevronUp, SlidersHorizontal, Tag, Wrench } from "lucide-react";
+import { ActionMenu, Button, DateField, EmptyState, FormField, Modal, useToast, type ActionMenuItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay, sessionPressure } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
@@ -276,29 +276,27 @@ export default function SchedulePage() {
               )}
               {visibleGroups.map((g, i) => {
                 const open = g.slots.filter((s) => s.kind === "open").length;
-                /* The line is drawn where now actually falls — after the last
-                   thing that has been and before the next — and only when some
-                   of this day is already behind. */
+                /* The first group at or after now carries the marker, instead
+                   of a separate line above it. Two time labels eight pixels
+                   apart — "Now · 12:00" over "12:00" — said the same thing
+                   twice and read as noise. */
                 const marksNow = now !== null && pastGroups.length > 0 && g.minutes >= now && (i === 0 || visibleGroups[i - 1].minutes < now);
                 return (
                   <section key={g.time} className="flex flex-col gap-tight">
-                    {marksNow && (
-                      <p className="flex items-center gap-tight">
-                        <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-ember-solid" />
-                        <span className="shrink-0 font-mono text-[13px] font-semibold text-brand-foreground">{t("nowAt", { time: minutesToTime(now) })}</span>
-                        <span aria-hidden className="h-px flex-1 bg-ember-solid/30" />
-                      </p>
-                    )}
-                    {/* The time is stated once, at the head of everything that
-                        starts then, instead of being repeated down a column
-                        beside every row. */}
-                    <h2 className="sticky top-0 z-10 flex items-center justify-between gap-tight bg-surface py-tight">
-                      <span className="font-mono text-sm font-semibold">{g.time}</span>
-                      <span className="text-[13px] text-muted">{open > 0 ? t("nFree", { count: open }) : t("allTaken")}</span>
+                    {/* The head of everything that starts then, drawn as the
+                        divider it is: label, rule, count. The time is Inter,
+                        not DM Mono — the type spec reserves mono for
+                        identifiers, and a clock time is table text. */}
+                    <h2 className="sticky top-0 z-10 flex items-center gap-comfortable bg-surface py-tight">
+                      {marksNow && <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-ember-solid" />}
+                      <span className={cn("shrink-0 text-base font-semibold", marksNow && "text-brand-foreground")}>{g.time}</span>
+                      {marksNow && <span className="shrink-0 text-[13px] font-semibold text-brand-foreground">{t("nowLabel")}</span>}
+                      <span aria-hidden className={cn("h-px min-w-tight flex-1", marksNow ? "bg-ember-solid/30" : "bg-hairline")} />
+                      <span className="shrink-0 text-[13px] text-muted">{open > 0 ? t("nFree", { count: open }) : t("allTaken")}</span>
                     </h2>
-                    <div className="grid grid-cols-1 gap-tight sm:grid-cols-2">
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,340px),1fr))] gap-tight">
                       {g.slots.map((s) => (
-                        <SlotRow key={s.key} slot={s} onTake={() => take(s)} t={t} />
+                        <SlotRow key={s.key} slot={s} onTake={() => take(s)} onSell={sell} onOos={openOos} t={t} />
                       ))}
                     </div>
                   </section>
@@ -320,7 +318,7 @@ export default function SchedulePage() {
             <div className="flex flex-col gap-tight rounded-go p-section go-surface">
               <p className="flex items-center gap-tight">
                 <span aria-hidden className="h-2 w-2 rounded-full bg-ember-solid" />
-                <span className="font-mono text-[13px] font-semibold text-brand-foreground">{t("nowAt", { time: minutesToTime(now ?? 0) })}</span>
+                <span className="text-[13px] font-semibold text-brand-foreground">{t("nowAt", { time: minutesToTime(now ?? 0) })}</span>
               </p>
               <p className="text-lg font-semibold">{liveNow.onNow.length > 0 ? t("freeNow", { count: liveNow.onNow.length }) : t("noneFreeNow")}</p>
               {liveNow.onNow.length === 0 && liveNow.next && <p className="text-[13px] text-muted">{t("nextFree")}</p>}
@@ -331,7 +329,7 @@ export default function SchedulePage() {
                   onClick={() => take(s)}
                   className="flex min-h-11 items-center gap-tight rounded-go-sm border border-line px-comfortable py-tight text-left active:bg-ember/10"
                 >
-                  {liveNow.onNow.length === 0 && <span className="shrink-0 font-mono text-[13px] text-muted">{s.time}</span>}
+                  {liveNow.onNow.length === 0 && <span className="shrink-0 text-[13px] text-muted">{s.time}</span>}
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold">{s.lane.name}</span>
                   <span className="shrink-0 text-[13px] font-semibold text-brand-foreground">{priceLabel(s, t)}</span>
                 </button>
@@ -420,7 +418,19 @@ function priceLabel(slot: DaySlot, t: T): string {
  *  the scan result and the slot matrix already follow. The whole card is the
  *  target, which is also what takes the old 46×36 Sell button and 36×36
  *  overflow button off a screen that is touch at every width. */
-function SlotRow({ slot, onTake, t }: { slot: DaySlot; onTake: () => void; t: T }) {
+function SlotRow({
+  slot,
+  onTake,
+  onSell,
+  onOos,
+  t,
+}: {
+  slot: DaySlot;
+  onTake: () => void;
+  onSell: (p: Product, s?: DaySlot) => void;
+  onOos: (l: Lane) => void;
+  t: T;
+}) {
   const open = slot.kind === "open";
   const session = slot.lane.isSession;
   const left = slot.remaining ?? 0;
@@ -428,63 +438,89 @@ function SlotRow({ slot, onTake, t }: { slot: DaySlot; onTake: () => void; t: T 
   const pressure = sessionPressure(left, total);
   const tight = pressure === "critical" || pressure === "low";
 
-  const meta = session ? (
-    open ? (
-      <span className="flex items-center gap-tight">
-        {/* Filled with what is LEFT, so the bar and the figure beside it say
-            the same thing. Drawn the other way round, a session nobody has
-            booked yet reads as an empty grey track — which looks like a
-            control that failed to render rather than a show with every seat
-            still free. */}
-        <span aria-hidden className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-line">
-          <span
-            className={cn("block h-full rounded-full", tight ? "bg-ember-solid" : "bg-inverse/40")}
-            style={{ width: `${total ? Math.round((left / total) * 100) : 0}%` }}
-          />
-        </span>
-        <span className={cn("truncate text-[13px]", tight ? "font-semibold text-brand-foreground" : "text-muted")}>
-          {pressure === "critical" ? t("seatsLeft", { count: left }) : t("seatsFree", { count: left })}
-        </span>
-      </span>
-    ) : (
-      <span className="block text-[13px] text-muted">{t("stateFull")}</span>
-    )
-  ) : (
-    <span className="block truncate text-[13px] text-muted">{slot.lane.sub}</span>
-  );
-
-  if (!open) {
-    return (
-      <div data-row data-kind={session ? "full" : "booked"} className="flex min-h-14 items-center gap-comfortable rounded-go border border-line px-section py-tight">
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold text-muted">{slot.lane.name}</span>
-          {meta}
-        </span>
-        {slot.waitlist && slot.lane.products[0] ? (
-          <Button shape="pill" variant="secondary" onClick={onTake}>
-            {t("waitlist")}
-          </Button>
-        ) : (
-          <span className="shrink-0 text-[13px] text-muted">{session ? t("stateFull") : t("stateBooked")}</span>
-        )}
-      </div>
-    );
+  /* Carbon's rule: the primary action stays visible and the rest go behind an
+     overflow. An overflow with nothing in it is worse than none, so a row only
+     carries one where it has something to offer — a field always can be taken
+     out of service, and a shared field can be sold as either booking without
+     going through the chooser. */
+  const items: ActionMenuItem[] = [];
+  if (open && slot.options.length > 1) {
+    for (const o of slot.options) {
+      items.push({
+        key: o.product.id,
+        label: t("sellAsBooking", { name: o.product.name }),
+        icon: <Tag size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />,
+        onSelect: () => onSell(o.product, slot),
+      });
+    }
+  }
+  if (slot.lane.resource) {
+    items.push({
+      key: "oos",
+      label: t("markOutOfService"),
+      icon: <Wrench size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />,
+      separated: items.length > 0,
+      onSelect: () => onOos(slot.lane),
+    });
   }
 
   return (
-    <button data-row data-kind="open" type="button" onClick={onTake} className="flex min-h-14 w-full items-center gap-comfortable rounded-go px-section py-tight text-left go-surface active:bg-ember/10">
+    <div
+      data-row
+      data-kind={open ? "open" : "full"}
+      className={cn(
+        "flex min-h-16 items-center gap-tight rounded-go px-section py-tight",
+        open ? "go-surface" : "border border-line",
+      )}
+    >
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-semibold">{slot.lane.name}</span>
-        {meta}
-      </span>
-      <span className="shrink-0 text-right">
-        <span className="block text-[15px] font-semibold text-brand-foreground">
-          {priceLabel(slot, t)}
+        <span className={cn("block truncate text-[15px] font-semibold", !open && "text-muted")}>{slot.lane.name}</span>
+        {/* The money leads the second line rather than taking a column of its
+            own: at 320px a name, a price and two controls cannot all have
+            room, and the name is the thing that distinguishes one row from
+            the next. */}
+        <span className="flex min-w-0 items-center gap-tight text-[14px] text-muted">
+          {open && slot.price !== null && <span className="shrink-0 font-semibold text-fg">{priceLabel(slot, t)}</span>}
+          {open && slot.price !== null && !session && <span aria-hidden className="shrink-0">·</span>}
+          {session ? (
+            open ? (
+              <>
+                <span aria-hidden className="h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-line">
+                  <span
+                    className={cn("block h-full rounded-full", tight ? "bg-ember-solid" : "bg-inverse/40")}
+                    style={{ width: `${total ? Math.round((left / total) * 100) : 0}%` }}
+                  />
+                </span>
+                <span className={cn("truncate", tight && "font-semibold text-brand-foreground")}>
+                  {pressure === "critical" ? t("seatsLeft", { count: left }) : t("seatsFree", { count: left })}
+                </span>
+              </>
+            ) : (
+              <span className="truncate">{t("stateFull")}</span>
+            )
+          ) : (
+            <span className="truncate">{slot.lane.sub}</span>
+          )}
         </span>
-        <span className="block text-[13px] text-muted">{t("sell")}</span>
       </span>
-      <ChevronRight size={18} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
-    </button>
+
+      {open ? (
+        <Button shape="pill" className="shrink-0" onClick={onTake}>
+          {t("sell")}
+        </Button>
+      ) : slot.waitlist && slot.lane.products[0] ? (
+        <Button shape="pill" variant="secondary" className="shrink-0" onClick={onTake}>
+          {t("waitlist")}
+        </Button>
+      ) : (
+        <span className="shrink-0 rounded-full border border-line px-comfortable py-inline text-[13px] text-muted">{session ? t("stateFull") : t("stateBooked")}</span>
+      )}
+      {items.length > 0 ? (
+        <ActionMenu shape="go" items={items} label={t("rowMenu", { name: slot.lane.name, time: slot.time })} />
+      ) : (
+        <span aria-hidden className="h-11 w-11 shrink-0" />
+      )}
+    </div>
   );
 }
 

@@ -14,6 +14,10 @@ export interface ActionMenuItem {
   disabled?: boolean;
   /** A second line under the label — for a disabled item, why it is disabled. */
   hint?: string;
+  /** Draw a rule above this item. A menu that mixes two kinds of action —
+   *  ways to sell a slot, and taking the field itself out of service — reads
+   *  as one undifferentiated list without it. */
+  separated?: boolean;
 }
 
 /**
@@ -31,7 +35,18 @@ export interface ActionMenuItem {
  * A disabled item can say why beneath its label. A greyed-out "Suspend" on your
  * own row reads as a fault; "You can't suspend your own account" reads as a rule.
  */
-export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: string }) {
+export function ActionMenu({
+  items,
+  label,
+  shape = "default",
+}: {
+  items: ActionMenuItem[];
+  label: string;
+  /** `go` is the till: round, and 44px at EVERY width, because Go is touch on
+   *  a phone and on a counter tablet alike. The OS default keeps its denser
+   *  desktop row. */
+  shape?: "default" | "go";
+}) {
   const [open, setOpen] = useState(false);
   const [up, setUp] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -81,11 +96,12 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: s
           setOpen((v) => !v);
         }}
         className={cn(
-          "flex h-11 w-11 items-center justify-center rounded-sm text-muted md:h-8 md:w-8 transition-colors duration-quick hover:bg-subtle hover:text-fg",
+          "flex items-center justify-center text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg",
+          shape === "go" ? "h-11 w-11 rounded-full border border-line" : "h-11 w-11 rounded-sm md:h-8 md:w-8",
           open && "bg-subtle text-fg",
         )}
       >
-        <MoreHorizontal size={16} strokeWidth={1.5} />
+        <MoreHorizontal size={shape === "go" ? 18 : 16} strokeWidth={1.5} />
       </button>
 
       {open && (
@@ -93,13 +109,15 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: s
           id={id}
           role="menu"
           className={cn(
-            "absolute right-0 z-30 min-w-[11rem] max-w-[17rem] rounded-md border border-line bg-card py-inline shadow-lg",
+            "absolute right-0 z-30 min-w-[11rem] max-w-[17rem] border border-line bg-card py-inline shadow-lg",
+            shape === "go" ? "rounded-go" : "rounded-md",
             up ? "bottom-[calc(100%+4px)]" : "top-[calc(100%+4px)]",
           )}
         >
           {items.map((item) => (
             <button
               key={item.key}
+              style={item.separated ? { borderTop: "1px solid var(--color-hairline)", marginTop: "4px", paddingTop: "8px" } : undefined}
               type="button"
               role="menuitem"
               disabled={item.disabled}
@@ -116,7 +134,8 @@ export function ActionMenu({ items, label }: { items: ActionMenuItem[]; label: s
               // 44px on a phone, where these are pressed with a thumb; the
               // desktop keeps the denser row.
               className={cn(
-                "flex min-h-11 w-full items-center gap-tight px-comfortable py-tight text-left text-[13px] transition-colors duration-quick md:min-h-9",
+                "flex min-h-11 w-full items-center gap-tight px-comfortable py-tight text-left text-[13px] transition-colors duration-quick",
+                shape === "default" && "md:min-h-9",
                 item.disabled
                   ? "cursor-not-allowed text-muted"
                   : item.destructive
