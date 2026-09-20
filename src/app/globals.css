@@ -591,6 +591,57 @@
   75% { transform: translateX(6px); }
 }
 
+/* ── The gate's verdict ────────────────────────────────────────────────────
+   Two animated elements, which is the ceiling the guidance sets, and the
+   feedback itself finishes inside 300ms — past about 400ms a micro-interaction
+   stops reading as a response and starts reading as a wait.
+
+   The mark scales in and its stroke draws; a perforated ring ripples out
+   behind it, which is the counterfoil the product is named after rather than a
+   generic pulse. The reduced-motion block below collapses every one of these
+   to its end state, so the verdict itself is never withheld from anyone. */
+@keyframes verdict-mark-in {
+  from { transform: scale(0.72); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+/* The stroke animates FROM hidden TO its resting state, with no delay and no
+   backwards fill, so a drawn mark is what the element is when nothing is
+   animating. Written the other way round it left the check undrawn for anyone
+   on reduced motion — an empty ring, on the one screen whose whole principle
+   is that shape, colour and words each carry the verdict on their own. */
+@keyframes verdict-draw {
+  from { stroke-dashoffset: 44; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes verdict-ripple {
+  from { transform: scale(0.8); opacity: 0.5; }
+  to   { transform: scale(1.85); opacity: 0; }
+}
+/* The auto-dismiss, made visible: a steward mid-sentence can see how long the
+   verdict has left rather than being surprised by it. */
+@keyframes verdict-timer {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+.verdict-mark {
+  /* Short, because this glyph is one of the three things carrying the
+     verdict: at 200ms it was still half-transparent while the word beside it
+     was already solid. */
+  animation: verdict-mark-in 150ms var(--ease-counterfoil) backwards;
+}
+.verdict-draw {
+  stroke-dasharray: 44;
+  stroke-dashoffset: 0;
+  animation: verdict-draw 260ms var(--ease-counterfoil);
+}
+.verdict-ripple {
+  animation: verdict-ripple 420ms var(--ease-counterfoil) forwards;
+}
+.verdict-timer {
+  transform-origin: left;
+  animation: verdict-timer var(--verdict-hold, 2000ms) linear forwards;
+}
+
 /* Print — force a white page and let the print-adaptive ticket/receipt show.
    (App chrome isn't rendered on /print routes; this just neutralises the
    themed surface background.) */

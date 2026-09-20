@@ -1,25 +1,28 @@
 "use client";
 
 import { useEffect } from "react";
-import { Check, Wallet, X } from "lucide-react";
+import { Ban, RotateCcw, SearchX, Wallet } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { PaymentMethod } from "@/lib/api";
-import type { ScanOutcome } from "../_lib/outcome";
+import type { RefuseReason, ScanOutcome } from "../_lib/outcome";
 
 /**
- * The verdict, full-bleed.
+ * The three screens the gate can show.
  *
- * It must read in under a second at arm's length, so colour AND shape (check
- * against cross) AND the words all carry it — it survives glare and
- * colour-blindness on any one of the three. That much was already right; what
- * was not is that it lived on its own route at 70vh, which left a pale band
- * under a refusal and meant every scan was a navigation that emptied the code
- * field and dropped the focus a hardware scanner types into.
+ * Each must read in under a second at arm's length, so colour AND shape
+ * (check against cross) AND the words all carry the answer — it survives
+ * glare and colour-blindness on any one of the three.
  *
- * Now it is an overlay over the gate console: `fixed inset-0`, so it owns the
- * screen including the tab bar, and closing it puts the cursor straight back
- * in the field.
+ * How long each stays is a rule rather than a preference. Feedback guidance is
+ * consistent: a confirmation gets out of the way on its own after a moment,
+ * and an error stays until somebody has dealt with it. At a gate that is
+ * exactly right — an admitted guest is already walking, while a refusal is the
+ * middle of a conversation and the screen is the evidence in it. So ADMIT
+ * drains a visible timer and clears itself; DO NOT ADMIT and BALANCE DUE stay
+ * until dismissed, or until the next scan replaces them.
  */
+export const ADMIT_HOLD_MS = 2000;
+
 export interface VerdictLabels {
   admit: string;
   admitCount: (count: number) => string;
@@ -37,7 +40,42 @@ export interface VerdictLabels {
   groupSummary: string;
   takeAndAdmit: string;
   amount: string;
+  paidOf?: string;
   methodLabel: (m: PaymentMethod) => string;
+}
+
+/** A refusal's kind, beside the reason. The big cross is the verdict and
+ *  carries three metres; this is the distinction that matters close up —
+ *  somebody re-entering is a different conversation from a code that is not a
+ *  ticket at all. Validation guidance treats valid, invalid and duplicate as
+ *  three states, and drawing two of them identically loses one. */
+const KIND_ICON: Record<RefuseReason, typeof Ban> = {
+  alreadyRedeemed: RotateCcw,
+  voidRefunded: Ban,
+  notFound: SearchX,
+};
+
+/** The mark: a ring that scales in with its stroke drawing itself, and a
+ *  perforated ring rippling out behind it — the counterfoil the product is
+ *  named after, rather than a generic pulse. Two animated elements, which is
+ *  the ceiling the motion guidance sets. */
+function Mark({ admit }: { admit: boolean }) {
+  return (
+    <span className="relative flex h-28 w-28 shrink-0 items-center justify-center">
+      <span aria-hidden className="verdict-ripple absolute inset-0 rounded-full border-2 border-dashed border-current" />
+      <svg viewBox="0 0 48 48" className="verdict-mark h-28 w-28" aria-hidden>
+        <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" strokeWidth="3" />
+        {admit ? (
+          <path className="verdict-draw" d="M14 25 L21 32 L34 17" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        ) : (
+          <>
+            <path className="verdict-draw" d="M16 16 L32 32" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+            <path className="verdict-draw" d="M32 16 L16 32" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+          </>
+        )}
+      </svg>
+    </span>
+  );
 }
 
 export function Verdict({
@@ -63,22 +101,19 @@ export function Verdict({
   onSettle: () => void;
   onClose: () => void;
 }) {
-  const holds = outcome.verdict === "group" || outcome.verdict === "balance";
+  const clearsItself = outcome.verdict === "admit";
 
-  /* A verdict with nothing to do gets out of the way on its own, so the next
-     guest is not waiting on a tap. One that needs a decision stays until the
-     decision is made. */
   useEffect(() => {
-    if (holds) return;
-    const timer = setTimeout(onClose, 2600);
+    if (!clearsItself) return;
+    const timer = setTimeout(onClose, ADMIT_HOLD_MS);
     return () => clearTimeout(timer);
-  }, [holds, onClose]);
+  }, [clearsItself, onClose]);
 
-  /* Escape only, deliberately. Enter is the last key of every scan: a
-     verdict that closed on Enter closed on the very keystroke that opened it,
-     because a discrete event flushes React synchronously and this listener was
-     added while that same keydown was still on its way to the window. A
-     scanner's Enter belongs to the NEXT scan, which replaces this verdict. */
+  /* Escape only, deliberately. Enter is the last key of every scan: a verdict
+     that closed on Enter closed on the very keystroke that opened it, because
+     a discrete event flushes React synchronously and this listener was added
+     while that same keydown was still on its way to the window. A scanner's
+     Enter belongs to the NEXT scan, which replaces this verdict. */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -89,6 +124,7 @@ export function Verdict({
 
   const shell = "fixed inset-0 z-50 flex flex-col items-center justify-center gap-comfortable px-section text-center";
 
+  // ── Money owing ───────────────────────────────────────────────────────────
   if (outcome.verdict === "balance" && outcome.balance) {
     return (
       /* Neither an admission nor a refusal, so it wears neither treatment:
@@ -96,11 +132,15 @@ export function Verdict({
          app already uses for "needs attention" — a thing to be DONE rather
          than a verdict to be read. */
       <div className={cn(shell, "overflow-y-auto bg-warning-wash py-section")} role="dialog" aria-modal="true" aria-label={labels.balanceDue}>
-        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-current text-fg">
-          <Wallet size={44} strokeWidth={2} />
+        <span className="verdict-mark flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-4 border-current text-fg">
+          <Wallet size={32} strokeWidth={2} />
         </span>
-        <p className="type-display text-3xl">{labels.balanceDue}</p>
+        <p className="text-xl font-semibold">{labels.balanceDue}</p>
+        {/* The figure to collect leads; what has already been paid sits under
+            it, because "you paid half at the counter" is the sentence a
+            steward has to say, and the screen should hand it to them. */}
         <p className="type-display text-5xl tabular-nums">{labels.amount}</p>
+        {labels.paidOf && <p className="text-base tabular-nums text-fg/75">{labels.paidOf}</p>}
         <p className="text-lg text-fg">{outcome.title}</p>
         <p className="text-[13px] text-fg/75">{labels.code}</p>
 
@@ -132,14 +172,21 @@ export function Verdict({
     );
   }
 
+  // ── A group, counted in at the door ───────────────────────────────────────
   if (outcome.verdict === "group" && outcome.group) {
     const remaining = outcome.group.admits - admitted;
+    const through = outcome.group.admits - remaining;
     return (
       <div className={cn(shell, "overflow-y-auto bg-ink py-section text-paper")} role="dialog" aria-modal="true" aria-label={labels.admit}>
-        <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-4 border-paper">
-          <Check size={60} strokeWidth={3} />
-        </span>
+        <Mark admit />
         <p className="type-display text-5xl">{remaining > 0 ? labels.admitCount(remaining) : labels.admit}</p>
+        {/* How far through the party is, as a row of marks rather than a
+            sentence to parse: at a door the steward is counting people. */}
+        <span aria-hidden className="flex shrink-0 items-center gap-tight">
+          {Array.from({ length: outcome.group.admits }).map((_, i) => (
+            <span key={i} className={cn("h-3 w-3 rounded-full border-2 border-paper", i < through && "bg-paper")} />
+          ))}
+        </span>
         <p className="text-lg text-paper/90">{labels.groupSummary}</p>
         <p className="text-[13px] text-paper/70">{labels.code}</p>
         {remaining > 0 ? (
@@ -161,7 +208,9 @@ export function Verdict({
     );
   }
 
+  // ── Admit, and do not admit ───────────────────────────────────────────────
   const admit = outcome.verdict === "admit";
+  const Kind = outcome.reason ? KIND_ICON[outcome.reason] : null;
   return (
     <button
       type="button"
@@ -169,6 +218,7 @@ export function Verdict({
       role="status"
       aria-live="assertive"
       aria-label={admit ? labels.admit : labels.doNotAdmit}
+      style={admit ? ({ "--verdict-hold": `${ADMIT_HOLD_MS}ms` } as React.CSSProperties) : undefined}
       className={cn(
         shell,
         admit
@@ -176,20 +226,41 @@ export function Verdict({
           : "bg-danger-solid text-white bg-[repeating-linear-gradient(45deg,transparent,transparent_28px,rgba(0,0,0,0.18)_28px,rgba(0,0,0,0.18)_56px)]",
       )}
     >
-      <span className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full border-4 border-current">
-        {admit ? <Check size={68} strokeWidth={3} /> : <X size={68} strokeWidth={3} />}
+      <span className={cn("shrink-0", !admit && "animate-[shake_0.12s_ease-in-out_0s_2]")}>
+        <Mark admit={admit} />
       </span>
       <span className="type-display text-5xl">{admit ? labels.admit : labels.doNotAdmit}</span>
-      <span className="text-2xl opacity-95">{admit ? outcome.title : labels.reason}</span>
-      {/* A statement, not a warning: the gate does not decide that a past date
-          is wrong — it has no per-booking validity window to decide it with —
-          so the date is put where a steward will see it and left at that. */}
-      {admit && labels.dated && <span className="rounded-full border border-paper/40 bg-paper/10 px-comfortable py-inline text-base">{labels.dated}</span>}
-      {!admit && labels.usedAt && <span className="text-lg opacity-90">{labels.usedAt}</span>}
-      {!admit && outcome.title && <span className="text-base opacity-80">{outcome.title}</span>}
+
+      {admit ? (
+        <>
+          {/* What is being admitted, at size: it is what the steward checks
+              against the thing in the guest's hand. */}
+          <span className="text-2xl opacity-95">{outcome.title}</span>
+          {/* A statement, not a warning: the gate does not decide that a past
+              date is wrong — it has no per-booking validity window to decide
+              it with — so the date is put where a steward will see it. */}
+          {labels.dated && <span className="rounded-full border border-paper/40 bg-paper/10 px-comfortable py-inline text-base">{labels.dated}</span>}
+        </>
+      ) : (
+        <>
+          <span className="flex items-center gap-tight text-2xl">
+            {Kind && <Kind size={26} strokeWidth={2.5} aria-hidden className="shrink-0" />}
+            {labels.reason}
+          </span>
+          {labels.usedAt && <span className="text-lg opacity-90">{labels.usedAt}</span>}
+          {outcome.title && <span className="text-base opacity-80">{outcome.title}</span>}
+        </>
+      )}
+
       <span className="text-sm opacity-75">{labels.code}</span>
       {!admit && <span className="mt-tight max-w-sm text-base opacity-90">{labels.advice}</span>}
       <span className="mt-tight text-[13px] opacity-70">{labels.dismiss}</span>
+
+      {admit && (
+        <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-paper/20">
+          <span className="verdict-timer block h-full w-full bg-paper/70" />
+        </span>
+      )}
     </button>
   );
 }

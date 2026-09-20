@@ -37,15 +37,17 @@ export interface ScanOutcome {
   dated?: string | null;
   ticketId?: string;
   group?: { ticketId: string; tierName: string; admits: number; admitted: number };
-  balance?: { orderId: string; ticketId: string; amount: number };
+  /** `paid` and `total` so the screen can say what was settled at the
+   *  counter — "you paid half already" is the sentence a steward needs. */
+  balance?: { orderId: string; ticketId: string; amount: number; paid: number; total: number };
 }
 
-const outstanding = (orderId: string): { orderId: string; amount: number } | null => {
+const outstanding = (orderId: string): { orderId: string; amount: number; paid: number; total: number } | null => {
   const order = peekOrders().find((o) => o.id === orderId);
   if (!order) return null;
   const paid = order.payments.reduce((sum, p) => sum + p.amount, 0);
   const due = Math.max(0, order.total - paid);
-  return due > 0 ? { orderId: order.id, amount: due } : null;
+  return due > 0 ? { orderId: order.id, amount: due, paid, total: order.total } : null;
 };
 
 const label = (ticket: Ticket): string => {
@@ -106,7 +108,7 @@ export async function resolveScan(raw: string): Promise<ScanOutcome> {
       title: label(ticket),
       dated,
       ticketId: ticket.id,
-      balance: { orderId: owed.orderId, ticketId: ticket.id, amount: owed.amount },
+      balance: { orderId: owed.orderId, ticketId: ticket.id, amount: owed.amount, paid: owed.paid, total: owed.total },
       ...(group ? { group } : {}),
     };
   }

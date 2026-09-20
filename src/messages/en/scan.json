@@ -47,8 +47,9 @@
   "tally_balance": "Owing",
   "recentTitle": "Recent scans",
   "noScansYet": "Nothing scanned on this device yet.",
-  "demoTitle": "Demo tickets",
-  "demoValid": "A good ticket",
-  "demoUsed": "Already used",
-  "demoOwing": "Money owing"
+  "screensTitle": "See a screen",
+  "screenAdmit": "Admitted",
+  "screenRefused": "Refused",
+  "screenOwing": "Money owing",
+  "paidOf": "Paid {paid} of {total}"
 }

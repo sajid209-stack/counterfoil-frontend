@@ -153,11 +153,11 @@ export default function ScanPage() {
     return out;
   }, [log]);
 
-  /* Three codes that between them produce the three answers a gate gives, so
-     the demo can be walked without hunting for one. Read from the seed rather
-     than hard-coded: the four chips this replaces were simply the first four
-     tickets, three of which happened to be void or already used. */
-  const demo = useMemo(() => {
+  /* One button per screen the gate can show, each wired to a real ticket that
+     produces it. Codes are read from the seed rather than listed: what this
+     replaces was the first four tickets in the file, three of which happened
+     to be void or already used, so the demo's own examples mostly refused. */
+  const screens = useMemo(() => {
     const tickets = ticketsQ.data?.data ?? [];
     const orders = peekOrders();
     const due = (orderId: string) => {
@@ -168,10 +168,10 @@ export default function ScanPage() {
     const used = tickets.find((x) => x.status === "redeemed");
     const owing = tickets.find((x) => x.status === "issued" && due(x.orderId) > 0);
     return [
-      valid && { key: "valid", label: t("demoValid"), code: valid.code },
-      used && { key: "used", label: t("demoUsed"), code: used.code },
-      owing && { key: "owing", label: t("demoOwing"), code: owing.code },
-    ].filter(Boolean) as { key: string; label: string; code: string }[];
+      valid && { key: "admit", label: t("screenAdmit"), code: valid.code, Icon: Check, tone: "bg-inverse text-inverse-fg" },
+      used && { key: "refuse", label: t("screenRefused"), code: used.code, Icon: X, tone: "bg-danger-solid text-white" },
+      owing && { key: "owing", label: t("screenOwing"), code: owing.code, Icon: Wallet, tone: "bg-warning-wash text-fg" },
+    ].filter(Boolean) as { key: string; label: string; code: string; Icon: typeof Check; tone: string }[];
   }, [ticketsQ.data, t]);
 
   const verdictLabels = outcome && {
@@ -191,6 +191,9 @@ export default function ScanPage() {
     groupSummary: outcome.group ? t("groupSummary", { reason: outcome.title, size: outcome.group.admits, admitted }) : "",
     takeAndAdmit: outcome.balance ? t("takeAndAdmit", { amount: formatMoney(outcome.balance.amount, currency) }) : "",
     amount: outcome.balance ? formatMoney(outcome.balance.amount, currency) : "",
+    paidOf: outcome.balance
+      ? t("paidOf", { paid: formatMoney(outcome.balance.paid, currency), total: formatMoney(outcome.balance.total, currency) })
+      : undefined,
     methodLabel: (m: PaymentMethod) => t(`method_${m}`),
   };
 
@@ -241,19 +244,24 @@ export default function ScanPage() {
             <p className="text-[13px] text-muted">{t("armedHint")}</p>
           </section>
 
-          {demo.length > 0 && (
+          {screens.length > 0 && (
             <section className="flex flex-col gap-tight">
-              <h2 className="text-[13px] font-semibold text-muted">{t("demoTitle")}</h2>
+              <h2 className="text-[13px] font-semibold text-muted">{t("screensTitle")}</h2>
+              {/* Each button wears the treatment of the screen it opens — ink
+                  for an admission, hatched danger for a refusal, amber for
+                  money owing — so the row doubles as the key to the three. */}
               <div className="flex flex-wrap gap-tight">
-                {demo.map((d) => (
+                {screens.map((sc) => (
                   <button
-                    key={d.key}
+                    key={sc.key}
                     type="button"
-                    onClick={() => void submit(d.code)}
-                    className="flex min-h-11 flex-col items-start justify-center rounded-go-sm border border-line bg-card px-comfortable py-inline text-left active:bg-ember/10"
+                    onClick={() => void submit(sc.code)}
+                    className="flex min-h-12 items-center gap-tight rounded-full border border-line bg-card py-inline pl-inline pr-comfortable text-sm font-medium active:bg-ember/10"
                   >
-                    <span className="text-[13px] font-semibold">{d.label}</span>
-                    <span className="font-mono text-[13px] text-muted">{d.code}</span>
+                    <span aria-hidden className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", sc.tone)}>
+                      <sc.Icon size={16} strokeWidth={2.5} />
+                    </span>
+                    {sc.label}
                   </button>
                 ))}
               </div>

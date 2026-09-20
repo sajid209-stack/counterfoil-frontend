@@ -47,8 +47,9 @@
   "tally_balance": "বকেয়া",
   "recentTitle": "সাম্প্রতিক স্ক্যান",
   "noScansYet": "এই ডিভাইসে এখনও কিছু স্ক্যান হয়নি।",
-  "demoTitle": "ডেমো টিকেট",
-  "demoValid": "বৈধ টিকেট",
-  "demoUsed": "আগেই ব্যবহৃত",
-  "demoOwing": "বকেয়া আছে"
+  "screensTitle": "একটি স্ক্রিন দেখুন",
+  "screenAdmit": "প্রবেশ",
+  "screenRefused": "বাতিল",
+  "screenOwing": "বকেয়া",
+  "paidOf": "{total}-এর মধ্যে {paid} পরিশোধ"
 }

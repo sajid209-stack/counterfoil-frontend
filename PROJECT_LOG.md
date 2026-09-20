@@ -8597,3 +8597,86 @@ Sources: [Softjourn — access-control app](https://softjourn.com/access-control
 [IDAutomation — USB barcode scanner integration](https://www.idautomation.com/barcode-scanners/integration-guide/) ·
 [TALtech — which scanner interface](https://www.taltech.com/support/which_barcode_scanner_interface/) ·
 [MDN — BarcodeDetector](https://developer.mozilla.org/en-US/docs/Web/API/BarcodeDetector)
+
+### The gate's three screens, same day
+
+Owner: drop the demo ticket codes, put a button for each of the three screens
+in their place, and make the admission screen worth looking at.
+
+**Three buttons, one per screen** — Admitted, Refused, Money owing — each
+wearing the treatment of the screen it opens (ink, hatched danger, amber), so
+the row doubles as the key to the three. Each is still wired to a real ticket
+that genuinely produces that screen, so nothing here is a mock-up; what went
+was the raw codes on the face of the button.
+
+**How long a verdict stays is now a rule, not a preference.** Feedback guidance
+is consistent that a confirmation should get out of the way on its own while an
+error stays until somebody has dealt with it — and at a gate that is exactly
+right: an admitted guest is already walking, while a refusal is the middle of a
+conversation and the screen is the evidence in it. So **ADMIT clears itself in
+two seconds and drains a visible hairline** while it does, which answers "is
+this about to disappear?" for a steward mid-sentence; **DO NOT ADMIT and
+BALANCE DUE stay** until tapped, until Escape, or until the next scan replaces
+them — which needs no hands at all.
+
+**The mark is drawn, not placed.** A ring scales in while its stroke draws
+itself, and a **perforated ring ripples out behind it** — the counterfoil the
+product is named after rather than a generic pulse. Two animated elements,
+which is the ceiling the motion guidance sets, and the feedback finishes inside
+300ms, which is where a micro-interaction stops reading as a response and
+starts reading as a wait.
+
+**A refusal now says which kind it is.** Validation is three states — valid,
+invalid, duplicate — and drawing the last two identically loses one of them.
+The big cross still carries three metres; beside the reason there is now a
+glyph per kind (a repeat mark for a ticket already through, a bar for a
+refunded one, a struck search for a code that is not a ticket), which is the
+distinction that matters close up. It also shakes once, the same 120ms shake
+the PIN screen uses for a wrong code.
+
+**Money owing says what was already settled.** "Paid ৳1,537.50 of ৳3,075.00"
+under the figure to collect, because *"you paid half at the counter"* is the
+sentence a steward has to say and the screen should hand it to them.
+
+**A group is counted in marks.** Four dots, filling as people go through, above
+the wording — at a door the steward is counting people, not reading a sentence.
+
+#### Found by measuring the motion
+
+**Under reduced motion the check did not exist.** The stroke animated *to* its
+drawn state with a `backwards` fill and a 90ms delay, so with the global
+reduced-motion block collapsing the duration the element sat at
+`stroke-dashoffset: 44` — an empty ring, on the one screen whose entire
+principle is that shape, colour and words each carry the verdict on their own.
+The animation now runs *from* hidden *to* the resting state with no delay and
+no fill, so a drawn mark is simply what the element is when nothing is
+animating. Measured in both motion modes: `strokeDashoffset: 0px` either way.
+
+The first timing was wrong too: at 200ms the glyph was still half-transparent
+beside a word that was already solid. The mark settles in 150ms now.
+
+#### Verified
+
+- Gate harness **122 checks, all passing** (three more than before: a refusal
+  stays after 2.6s, the next scan replaces a lingering one, and an admission
+  clears itself). Group walk **10/10**, still proven by selling a Family ticket
+  through the till.
+- The admit animation measured at 120ms, 260ms and 900ms, and in reduced
+  motion: the ripple ends invisible, the mark ends opaque and the stroke ends
+  drawn in both modes.
+- `/scan` audits at 0. `tsc`, `eslint` and the build clean; i18n parity
+  **0 missing / 0 extra**, four demo keys removed and five screen keys added in
+  en and bn.
+
+#### Open
+
+A refusal that nobody dismisses stays on screen. That is the researched rule
+and it is dismissible three ways, but on an unattended mounted device it means
+a red screen until the next scan — worth an owner decision if these run
+unattended.
+
+Sources: [Magic Logix — 100–300ms micro-interaction rules](https://www.magiclogix.com/theories/microinteractions-in-ux/) ·
+[BugSmash — micro-interaction best practices](https://bugsmash.io/blog/10-best-practices-for-microinteractions-in-ux-design/) ·
+[UXPin — micro-interactions guide](https://www.uxpin.com/studio/blog/ultimate-guide-to-microinteractions-in-forms/) ·
+plus the project's own UX database: Reduced Motion (High), Excessive Motion
+(animate one or two key elements per view), Duration Timing.
