@@ -8412,3 +8412,188 @@ does not shrink, so a 288px container still laid out a 340px track.
   the catalogue's activate/deactivate/bulk/archive walk unchanged.
 - `tsc`, `npm run build` and `eslint` clean on both changed files; i18n parity
   **0 missing / 0 extra** with three new keys in en and bn.
+
+
+## The gate — a scanner that is actually armed (2026-09-20)
+
+Owner asked for `/scan` researched against SaaS booking systems and POS
+practice, then reworked round by round. Measured first.
+
+### What was wrong
+
+- **The field a scanner types into was not focused.** `document.activeElement`
+  was `BODY` on arrival and after every verdict. Almost every gate in the world
+  runs a keyboard-wedge scanner — a USB or Bluetooth reader that types the code
+  and presses Enter — so on this screen a scan went nowhere at all.
+- **The hero was a dashed rectangle reading "Camera scan (mock)".** An
+  announcement, at the door, that the product is unfinished.
+- **"Try a real ticket" offered four codes, three of them void or already
+  used** — they were simply the first four tickets in the seed, so the demo's
+  own examples mostly refused.
+- **The verdict was a separate route at `min-h-[70vh]`**, which left a pale
+  band under a full-screen refusal, and made every scan a navigation that
+  emptied the code field and dropped focus.
+- **The gate kept no record.** No tally, no last-scanned, nothing to answer a
+  guest who insists they have not been in.
+- **527px of content in an 844px phone**, and a 448px column on a 1,280px gate
+  screen.
+
+### What the research settled
+
+- **A wedge scanner sends keystrokes to whatever has focus**, and the classic
+  failure is focus loss. The guidance is consistent: a dedicated field,
+  autofocused, auto-submitting — *and*, for robustness, a global key listener
+  for when focus is somewhere else.
+- **Validation is three states — valid, invalid, duplicate** — and a duplicate
+  must be distinguishable, tied to the ticket's current status.
+- Staff need **immediate feedback without studying the screen**, and a
+  consistent **exception script** for "invalid", "already used" and "no
+  signal".
+- A gate wants its scans **on a live tally**, not fire-and-forget.
+
+### The gate console
+
+One route. `/scan/result` is gone; the verdict is an overlay over the console.
+
+- **Armed, and it says so.** An ember dot and "Ready for a scan" over a 64px
+  mono field that is focused on arrival and refocused the moment a verdict
+  clears. Underneath, in words: *a scanner types straight into this field.*
+- **A safety net for when focus is lost.** A window-level listener treats a
+  burst of keystrokes ending in Enter as a scan — a person cannot hold a 120ms
+  cadence for six characters. Keystrokes inside the field are left to the
+  field, so nothing is ever submitted twice. Proven by blurring the input and
+  typing a code at 8ms a character.
+- **The camera, for real, where the device has one.** `getUserMedia` for the
+  picture and `BarcodeDetector` for the decode, both feature-detected, with a
+  dimmed-surround reticle, a torch where the track supports one, and a blocked
+  state that says how to fix it. `BarcodeDetector` ships in Chrome on Android —
+  a gate tablet — and is absent in Safari and desktop Chrome on Windows, so the
+  camera is an **enhancement**: where it is missing the button is not offered
+  at all and the code field carries the gate. That is the opposite of a dashed
+  box promising a camera that was never there.
+- **A verdict that owns the screen**, `fixed inset-0`, tab bar included. An
+  admission is ink with a check, a refusal is hatched danger with a cross, a
+  balance is the amber the app already uses for "needs attention" — colour AND
+  shape AND words, so any one of the three carries it.
+- **A duplicate says when it was used.** `Ticket.redeemedAt` has been on the
+  record since the model was written and nothing had ever drawn it. *"Already
+  redeemed · Used 04 Jul, 00:51"* is the one fact a steward facing a guest who
+  says they have not been in actually needs.
+- **Every refusal ends on what to do** — the exception script the research
+  calls for: *"This ticket has already been through. Send them to the
+  counter."*
+- **The gate keeps its own record**: admitted / refused / owing for the
+  session, and the last eight scans with their verdict, code, booking and time.
+  Hidden until there is something to show, which is the rule the cart already
+  follows about a stack of zeroes.
+- **Demo tickets that mean something.** Three chips — a good ticket, one
+  already used, one with money owing — picked from the seed at runtime so they
+  produce the three answers a gate gives, instead of four arbitrary codes.
+- **A door device is a kiosk**, so from `lg` the console centres itself in the
+  viewport with the session log beside it rather than sitting at the top of a
+  mostly empty screen.
+
+### The payment methods at the gate now come from settings
+
+The balance screen kept its own hardcoded list of four methods while the tills
+had moved to `tillMethods()`. The log has carried that as an open item since
+the payments work; it is closed — the gate offers what the business has
+switched on and a live account can take.
+
+### Found by driving it, not by reading it
+
+**A ticket sold at the till thirty seconds earlier was refused at the gate.**
+
+I had added what looks like an obviously correct rule: a ticket dated in the
+future cannot be admitted today. The walk-through — sell a Family ticket, carry
+it to the door — came back **DO NOT ADMIT · Not valid yet**.
+
+The cause is a clock split this log already records from the other side:
+`checkout` stamps a ticket with the **real wall-clock date** while the demo is
+pinned to `DEMO_TODAY = 2026-07-29`. So a ticket sold today is "in the future",
+and 170 of the 173 issued seed tickets are in the past. There is no date rule
+that can be written on top of two clocks that disagree without refusing either
+the product's own sell-then-admit loop or almost the whole seed.
+
+So **the gate does not check the date at all**, and says so in the code. A past
+date is *stated* on the verdict — "Dated 16 Jul", plainly, in no semantic
+colour, because the system is not claiming it is wrong — and left to the
+steward. Enforcing it needs the seed and the clock to agree, which is the
+owner's standing re-anchoring decision.
+
+### Two bugs the browser found
+
+- **The verdict closed on the keystroke that opened it.** Enter dismissed a
+  verdict, and Enter is the last character of every scan: a discrete event
+  flushes React synchronously, so the verdict mounted and added its window
+  listener *while that same keydown was still travelling to the window*, which
+  then closed it. Escape only, now — and a scanner's Enter belongs to the next
+  scan, which replaces the verdict rather than dismissing it. That is better
+  gate behaviour anyway: a steward can keep scanning without touching the
+  screen.
+- **Every scan was logged twice.** The entry's id was minted inside a state
+  updater, and React invokes an updater more than once on purpose. A ref
+  counter mints it once.
+
+### Smaller
+
+- **The field drew two concentric orange rings.** The global `:focus-visible`
+  rule is unlayered and beats every utility, so it stacked on top of the
+  field's own 2px ember border and read as an error. `data-focus-host` is the
+  opt-out this design system already has; scoped to the field so the buttons
+  keep their ring.
+- **Muted text on the amber balance panel measured 4.45:1** — `muted` is tuned
+  against the card, not against the wash — on the one screen that is about
+  money. Raised.
+- An announcement and a decision are now different objects: admit and refuse
+  are `role="status" aria-live="assertive"` and never steal the focus a scanner
+  types into; group and balance are real dialogs, because they are waiting on
+  someone.
+
+### Verified
+
+- **Gate harness: 120 checks, all passing** — at 320, 390, 1024 and 1280,
+  light and dark, English and Bangla, across the console and all five verdicts:
+  no page x-scroll, nothing clipped, nothing below the 13px Go reading floor,
+  no target under 44px, no text below its contrast floor, no console errors and
+  no missing-message warnings. Plus the behaviour: the field is armed on
+  arrival, every verdict fills the screen, a duplicate states when it was used,
+  a refusal states what to do, a plain verdict clears itself and hands the field
+  back, **a scan still registers when focus has been lost**, and settling a
+  balance at the gate admits them and moves the tally.
+- **The group path, proven by selling: 10 checks.** A Family ticket bought
+  through the real till, carried to the door, reads **ADMIT 4** → +1 → **ADMIT
+  3** → Admit all → *"Everyone's in"* → rescanned → **DO NOT ADMIT · Used 20
+  Sept, 16:44**. (The walk has to reach the gate by *clicking* the tab, not
+  navigating: the mock store lives in the document, so a full page load
+  regenerates the seed and the ticket just sold stops existing.)
+- `/scan` audits at **0 findings**, down from 3, which takes the standing
+  32-route audit from its documented **70 to 67**. Worth stating plainly: the 3
+  were the ember Check button, and it is disabled at rest now because nothing
+  has been typed — the audit measures at rest. With a code in the field it is
+  white on ember at 3.50:1, the declared exception, as every primary button in
+  the product is. The remaining 67 are 66 of that same exception and the one
+  kitchen-sink inline link.
+- Standing harnesses hold: accessibility 8/8, review 15/15, and the schedule's
+  105 checks unchanged.
+- `tsc`, `npm run build` and `eslint` clean on every new file. i18n parity
+  **0 missing / 0 extra**, with the new keys authored in en and bn and three
+  the old screen owned (`gateLabel`, `cameraHint`, `trySample`) removed.
+
+### Open
+
+- **The camera's decode cannot be verified here.** `chrome-headless-shell` has
+  no `BarcodeDetector`, so the harness exercises the unsupported path — which
+  is the path most desktop reviewers will see — and the live decode wants a
+  real Android device.
+- **Refusals are not recorded anywhere but this device's session.** There is no
+  model for a refused scan, so the tally is honest about being "this session".
+  A gate dashboard across devices needs the backend.
+- The date rule above, blocked on the seed re-anchoring decision.
+
+Sources: [Softjourn — access-control app](https://softjourn.com/access-control-app-boilerplate) ·
+[POSzeo — choosing a ticket reader that will not fail at the gate](https://www.poszeo.com/blog-channel/ticket-reader/) ·
+[Ticket AG — reliable scans without a connection](https://ticket.ag/en/company/stories/reliable-scans-without-internet-connection) ·
+[IDAutomation — USB barcode scanner integration](https://www.idautomation.com/barcode-scanners/integration-guide/) ·
+[TALtech — which scanner interface](https://www.taltech.com/support/which_barcode_scanner_interface/) ·
+[MDN — BarcodeDetector](https://developer.mozilla.org/en-US/docs/Web/API/BarcodeDetector)
