@@ -41,6 +41,7 @@ export interface VerdictLabels {
   takeAndAdmit: string;
   amount: string;
   paidOf?: string;
+  previewNote: string;
   methodLabel: (m: PaymentMethod) => string;
 }
 
@@ -55,24 +56,65 @@ const KIND_ICON: Record<RefuseReason, typeof Ban> = {
   notFound: SearchX,
 };
 
-/** The mark: a ring that scales in with its stroke drawing itself, and a
- *  perforated ring rippling out behind it — the counterfoil the product is
- *  named after, rather than a generic pulse. Two animated elements, which is
- *  the ceiling the motion guidance sets. */
-function Mark({ admit }: { admit: boolean }) {
+/** An admission tears a ticket.
+ *
+ *  A ring with a check in it is what every app does. This is the thing the
+ *  product is named after: the ticket parts along its perforation, the guest's
+ *  half goes with them, and the **counterfoil** — the stub the venue keeps —
+ *  is what stays on screen, with the mark drawn on it. The metaphor is the
+ *  whole business, and it costs one graphic.
+ *
+ *  Two animated elements, which is the ceiling the motion guidance sets: the
+ *  tear, and the stroke drawing itself. Both are finished inside 360ms.
+ *  Everything rests in its FINAL state — the torn half at opacity 0, the mark
+ *  fully drawn — so with motion turned off the screen is simply the kept stub
+ *  with its check, never an empty outline. */
+function AdmitMark() {
+  return (
+    <span className="relative flex h-[120px] w-[96px] shrink-0 items-center justify-center">
+      {/* The box is the KEPT stub, so the resting composition sits centred
+          under the word; the half that leaves is drawn outside it and is
+          allowed to overflow while it goes. A counterfoil is the narrow end of
+          a torn ticket, so it is taller than it is wide — a square read as a
+          checkbox. */}
+      <svg viewBox="0 0 80 104" className="verdict-mark h-full w-full overflow-visible" aria-hidden>
+        {/* the guest's half, leaving */}
+        <g className="verdict-torn">
+          <rect x="80" y="10" width="78" height="84" rx="10" fill="none" stroke="currentColor" strokeWidth="3" />
+          <line x1="94" y1="40" x2="144" y2="40" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
+          <line x1="94" y1="56" x2="126" y2="56" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
+        </g>
+        {/* the counterfoil, kept */}
+        <g className="verdict-keep">
+          <rect x="4" y="10" width="58" height="84" rx="10" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path
+            className="verdict-draw"
+            style={{ "--draw": 48 } as React.CSSProperties}
+            d="M16 54 L27 65 L50 39"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="6.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+        {/* the perforation it came apart on */}
+        <line x1="71" y1="14" x2="71" y2="90" stroke="currentColor" strokeWidth="3" strokeDasharray="2 7" strokeLinecap="round" opacity="0.6" />
+      </svg>
+    </span>
+  );
+}
+
+/** A refusal keeps the ring and the cross: it has to read as the opposite of
+ *  an admission at three metres, and a torn ticket is the wrong story for a
+ *  ticket that is not going anywhere. */
+function RefuseMark() {
   return (
     <span className="relative flex h-28 w-28 shrink-0 items-center justify-center">
-      <span aria-hidden className="verdict-ripple absolute inset-0 rounded-full border-2 border-dashed border-current" />
       <svg viewBox="0 0 48 48" className="verdict-mark h-28 w-28" aria-hidden>
         <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" strokeWidth="3" />
-        {admit ? (
-          <path className="verdict-draw" d="M14 25 L21 32 L34 17" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-        ) : (
-          <>
-            <path className="verdict-draw" d="M16 16 L32 32" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-            <path className="verdict-draw" d="M32 16 L16 32" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-          </>
-        )}
+        <path className="verdict-draw" d="M16 16 L32 32" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+        <path className="verdict-draw" d="M32 16 L16 32" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
       </svg>
     </span>
   );
@@ -80,6 +122,7 @@ function Mark({ admit }: { admit: boolean }) {
 
 export function Verdict({
   outcome,
+  preview = false,
   labels,
   admitted,
   busy,
@@ -91,6 +134,9 @@ export function Verdict({
   onClose,
 }: {
   outcome: ScanOutcome;
+  /** Opened from a screen button rather than a scan: nothing was written, and
+   *  it stays up until it is dismissed, because it is there to be looked at. */
+  preview?: boolean;
   labels: VerdictLabels;
   admitted: number;
   busy: boolean;
@@ -101,7 +147,7 @@ export function Verdict({
   onSettle: () => void;
   onClose: () => void;
 }) {
-  const clearsItself = outcome.verdict === "admit";
+  const clearsItself = outcome.verdict === "admit" && !preview;
 
   useEffect(() => {
     if (!clearsItself) return;
@@ -143,6 +189,7 @@ export function Verdict({
         {labels.paidOf && <p className="text-base tabular-nums text-fg/75">{labels.paidOf}</p>}
         <p className="text-lg text-fg">{outcome.title}</p>
         <p className="text-[13px] text-fg/75">{labels.code}</p>
+        {preview && <p className="text-[13px] text-fg/75">{labels.previewNote}</p>}
 
         <div className="flex w-full max-w-md shrink-0 flex-col gap-tight">
           <div className={cn("grid gap-tight", methods.length > 2 ? "grid-cols-2" : "grid-cols-1")}>
@@ -178,7 +225,7 @@ export function Verdict({
     const through = outcome.group.admits - remaining;
     return (
       <div className={cn(shell, "overflow-y-auto bg-ink py-section text-paper")} role="dialog" aria-modal="true" aria-label={labels.admit}>
-        <Mark admit />
+        <AdmitMark />
         <p className="type-display text-5xl">{remaining > 0 ? labels.admitCount(remaining) : labels.admit}</p>
         {/* How far through the party is, as a row of marks rather than a
             sentence to parse: at a door the steward is counting people. */}
@@ -189,6 +236,7 @@ export function Verdict({
         </span>
         <p className="text-lg text-paper/90">{labels.groupSummary}</p>
         <p className="text-[13px] text-paper/70">{labels.code}</p>
+        {preview && <p className="text-[13px] text-paper/70">{labels.previewNote}</p>}
         {remaining > 0 ? (
           <div className="flex shrink-0 flex-wrap items-center justify-center gap-tight">
             <button type="button" disabled={busy} onClick={() => onAdmit(1)} className="h-14 rounded-full border-2 border-paper px-major text-lg font-medium active:bg-paper/20">
@@ -226,9 +274,7 @@ export function Verdict({
           : "bg-danger-solid text-white bg-[repeating-linear-gradient(45deg,transparent,transparent_28px,rgba(0,0,0,0.18)_28px,rgba(0,0,0,0.18)_56px)]",
       )}
     >
-      <span className={cn("shrink-0", !admit && "animate-[shake_0.12s_ease-in-out_0s_2]")}>
-        <Mark admit={admit} />
-      </span>
+      <span className={cn("shrink-0", !admit && "animate-[shake_0.12s_ease-in-out_0s_2]")}>{admit ? <AdmitMark /> : <RefuseMark />}</span>
       <span className="type-display text-5xl">{admit ? labels.admit : labels.doNotAdmit}</span>
 
       {admit ? (
@@ -254,9 +300,9 @@ export function Verdict({
 
       <span className="text-sm opacity-75">{labels.code}</span>
       {!admit && <span className="mt-tight max-w-sm text-base opacity-90">{labels.advice}</span>}
-      <span className="mt-tight text-[13px] opacity-70">{labels.dismiss}</span>
+      <span className="mt-tight text-[13px] opacity-70">{preview ? labels.previewNote : labels.dismiss}</span>
 
-      {admit && (
+      {admit && !preview && (
         <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-paper/20">
           <span className="verdict-timer block h-full w-full bg-paper/70" />
         </span>

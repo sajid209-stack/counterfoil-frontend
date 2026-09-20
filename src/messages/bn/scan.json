@@ -51,5 +51,6 @@
   "screenAdmit": "প্রবেশ",
   "screenRefused": "বাতিল",
   "screenOwing": "বকেয়া",
-  "paidOf": "{total}-এর মধ্যে {paid} পরিশোধ"
+  "paidOf": "{total}-এর মধ্যে {paid} পরিশোধ",
+  "previewNote": "প্রিভিউ — কিছু রেকর্ড হয়নি"
 }

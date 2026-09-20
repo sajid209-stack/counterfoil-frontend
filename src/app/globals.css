@@ -610,12 +610,25 @@
    on reduced motion — an empty ring, on the one screen whose whole principle
    is that shape, colour and words each carry the verdict on their own. */
 @keyframes verdict-draw {
-  from { stroke-dashoffset: 44; }
+  from { stroke-dashoffset: var(--draw, 44); }
   to   { stroke-dashoffset: 0; }
 }
 @keyframes verdict-ripple {
   from { transform: scale(0.8); opacity: 0.5; }
   to   { transform: scale(1.85); opacity: 0; }
+}
+/* An admission tears a counterfoil: the guest's half goes with them and the
+   stub — the thing the product is named after — is what the venue keeps, with
+   the mark on it. The torn half rests at opacity 0 and animates FROM visible,
+   so without motion the screen is simply the kept stub. */
+@keyframes verdict-tear {
+  from { transform: translateX(0) rotate(0deg); opacity: 0.9; }
+  60%  { opacity: 0.55; }
+  to   { transform: translateX(30px) rotate(8deg); opacity: 0; }
+}
+@keyframes verdict-keep {
+  from { transform: translateX(7px); }
+  to   { transform: translateX(0); }
 }
 /* The auto-dismiss, made visible: a steward mid-sentence can see how long the
    verdict has left rather than being surprised by it. */
@@ -630,9 +643,19 @@
   animation: verdict-mark-in 150ms var(--ease-counterfoil) backwards;
 }
 .verdict-draw {
-  stroke-dasharray: 44;
+  stroke-dasharray: var(--draw, 44);
   stroke-dashoffset: 0;
-  animation: verdict-draw 260ms var(--ease-counterfoil);
+  animation: verdict-draw 260ms var(--ease-counterfoil) 60ms;
+}
+.verdict-torn {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: verdict-tear 360ms var(--ease-counterfoil);
+}
+.verdict-keep {
+  transform-box: fill-box;
+  animation: verdict-keep 320ms var(--ease-counterfoil);
 }
 .verdict-ripple {
   animation: verdict-ripple 420ms var(--ease-counterfoil) forwards;

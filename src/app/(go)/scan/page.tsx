@@ -54,6 +54,13 @@ export default function ScanPage() {
   const [admitted, setAdmitted] = useState(0);
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [camOpen, setCamOpen] = useState(false);
+  /* A screen button SHOWS a screen; it does not put a guest through a gate.
+     Without this the first press admitted a real ticket and every press after
+     it got "already redeemed" — the one screen the button exists to show was
+     the one screen it could not show twice. A preview writes nothing, so it
+     is repeatable for ever, and it stays up until it is dismissed because it
+     is there to be looked at. */
+  const [preview, setPreview] = useState(false);
 
   const opQ = useApiQuery(() => getOperator(), []);
   const ticketsQ = useApiQuery(() => listTickets({ pageSize: 2000 }), []);
@@ -62,19 +69,22 @@ export default function ScanPage() {
   const methods = useMemo(() => tillMethods(canTakeNonCash()), []);
 
   const submit = useCallback(
-    async (raw: string) => {
+    async (raw: string, opts?: { preview?: boolean }) => {
       const value = raw.trim();
       if (!value || busy) return;
+      const showOnly = !!opts?.preview;
       setBusy(true);
       const result = await resolveScan(value);
       /* Redeemed only once the gate has decided to admit, and only for a
          ticket that admits one — a group is spent person by person on the
          verdict itself. */
-      if (result.verdict === "admit" && result.ticketId) await redeemTicket(result.ticketId);
+      if (!showOnly && result.verdict === "admit" && result.ticketId) await redeemTicket(result.ticketId);
       setBusy(false);
+      setPreview(showOnly);
       setOutcome(result);
       setAdmitted(result.group?.admitted ?? 0);
       setCode("");
+      if (showOnly) return; // a screen someone looked at is not a scan
       const id = (seq.current += 1);
       setLogId(id);
       setLog((prev) => [{ id, code: result.code, title: result.title, verdict: result.verdict, at: new Date() }, ...prev].slice(0, 8));
@@ -84,6 +94,7 @@ export default function ScanPage() {
 
   const close = useCallback(() => {
     setOutcome(null);
+    setPreview(false);
     input.current?.focus();
   }, []);
 
@@ -122,6 +133,11 @@ export default function ScanPage() {
 
   const settle = async () => {
     if (!outcome?.balance || busy) return;
+    if (preview) {
+      // Show where the button leads without taking anyone's money.
+      setOutcome({ ...outcome, verdict: outcome.group ? "group" : "admit", balance: undefined });
+      return;
+    }
     setBusy(true);
     const res = await addOrderPayment(outcome.balance.orderId, method, outcome.balance.amount, "Gate");
     if (!res.ok) {
@@ -137,6 +153,11 @@ export default function ScanPage() {
 
   const admit = async (count: number) => {
     if (!outcome?.group || busy) return;
+    if (preview) {
+      const cap = outcome.group.admits;
+      setAdmitted((n) => Math.min(cap, n + count));
+      return;
+    }
     setBusy(true);
     const res = await admitTicket(outcome.group.ticketId, count);
     setBusy(false);
@@ -195,6 +216,7 @@ export default function ScanPage() {
       ? t("paidOf", { paid: formatMoney(outcome.balance.paid, currency), total: formatMoney(outcome.balance.total, currency) })
       : undefined,
     methodLabel: (m: PaymentMethod) => t(`method_${m}`),
+    previewNote: t("previewNote"),
   };
 
   return (
@@ -255,7 +277,7 @@ export default function ScanPage() {
                   <button
                     key={sc.key}
                     type="button"
-                    onClick={() => void submit(sc.code)}
+                    onClick={() => void submit(sc.code, { preview: true })}
                     className="flex min-h-12 items-center gap-tight rounded-full border border-line bg-card py-inline pl-inline pr-comfortable text-sm font-medium active:bg-ember/10"
                   >
                     <span aria-hidden className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", sc.tone)}>
@@ -344,6 +366,7 @@ export default function ScanPage() {
       {outcome && verdictLabels && (
         <Verdict
           outcome={outcome}
+          preview={preview}
           labels={verdictLabels}
           admitted={admitted}
           busy={busy}

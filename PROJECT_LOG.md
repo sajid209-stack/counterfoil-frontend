@@ -8680,3 +8680,60 @@ Sources: [Magic Logix — 100–300ms micro-interaction rules](https://www.magic
 [UXPin — micro-interactions guide](https://www.uxpin.com/studio/blog/ultimate-guide-to-microinteractions-in-forms/) ·
 plus the project's own UX database: Reduced Motion (High), Excessive Motion
 (animate one or two key elements per view), Duration Timing.
+
+### The screen buttons had to be repeatable, and the admission had to be the product's own (2026-09-20)
+
+Owner, on the three buttons shipped an hour earlier: *"screens won't affect on
+admit and owing — I want to see any time, so many times I open. Don't show
+already redeemed on the Admit and Money owing demo screens."* And: the
+admission needs a better graphic.
+
+#### The bug, which was mine
+
+A button that SHOWS a screen was performing the thing the screen represents.
+The first press of **Admitted** admitted a real ticket, so the second press got
+**DO NOT ADMIT · Already redeemed** — the one screen the button exists to show
+was the one screen it could not show twice. **Money owing** did the same in
+reverse: settle once and the order is paid, so it turned into an admission.
+
+A press is now a **preview**: the screen is resolved from a real ticket and
+rendered exactly as the gate renders it, and nothing is written. No redeem, no
+payment, no entry in the session log — a screen somebody looked at is not a
+scan. Which makes it repeatable for ever, and it also fixes the thing the
+buttons were for: a preview **stays up until it is dismissed** rather than
+clearing itself after two seconds, because it is there to be looked at.
+
+Inside a preview the controls still work as far as the eye is concerned —
+*Take ৳1,537.50 and admit* moves to the admission screen so the whole path can
+be seen — without taking anyone's money. A quiet line says so: *"Preview —
+nothing was recorded."* Typing or scanning a code is unchanged and still real.
+
+#### The admission is now a counterfoil being torn
+
+A ring with a check in it is what every app does. This is the object the
+company is named after: the ticket parts along its perforation, **the guest's
+half tilts away and goes with them**, and the **counterfoil — the stub the
+venue keeps — stays on screen with the mark drawn on it**. The metaphor is the
+whole business and it costs one graphic.
+
+Still two animated elements, which is the ceiling the motion guidance sets, and
+both finish inside 360ms. The stub is taller than it is wide, because a
+counterfoil is the narrow end of a torn ticket — the first attempt was square
+and read as a checkbox, which the render showed immediately.
+
+Everything rests in its FINAL state: the torn half at opacity 0, the mark fully
+drawn. So with motion turned off the screen is the kept stub with its check,
+never an empty outline — the lesson from the previous pass, applied from the
+start this time. Measured in both motion modes: `strokeDashoffset: 0px` either
+way.
+
+#### Verified
+
+- New repeat harness, **8 checks**: each of the three buttons shows the same
+  screen on four consecutive presses; a preview leaves no tally and no log row
+  while a real scan still records one; the owing preview leads to the admission
+  screen and the ticket **still owes the money afterwards**.
+- Gate harness **122/122** and the group walk **10/10**, both unchanged.
+- The admit animation captured at 120ms, 260ms and 900ms and in reduced motion.
+- `/scan` audits at 0; `tsc`, `eslint` and the build clean; i18n parity
+  **0 missing / 0 extra** with `previewNote` authored in en and bn.

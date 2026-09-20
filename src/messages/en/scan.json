@@ -51,5 +51,6 @@
   "screenAdmit": "Admitted",
   "screenRefused": "Refused",
   "screenOwing": "Money owing",
-  "paidOf": "Paid {paid} of {total}"
+  "paidOf": "Paid {paid} of {total}",
+  "previewNote": "Preview — nothing was recorded"
 }
