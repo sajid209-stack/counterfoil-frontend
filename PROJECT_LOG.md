@@ -8275,6 +8275,9 @@ times now, in a third costume.
   in en and bn; seven keys the old screen owned (`fohLabel`, `rowActions`,
   `filterOut`, `leftOfTotal`, `nextFreeAt`, `sellLane`, `dayTally`) removed
   from both after checking nothing else uses them.
+- **On production, not only locally**: the same 94 checks run against
+  counterfoil-frontend.vercel.app pass there too, with the same numbers — 33
+  rows at rest, 3,628px on a phone, 936px of a 1,024 till.
 
 ### A harness correction, mine
 
@@ -8294,6 +8297,15 @@ skipped rather than measured.
   would want that stated differently.
 - The flexible-duration path (bowling) still has no rows here: it has no fixed
   slots to list. It was not on this screen before either.
+- **The two fill bars fill opposite ways, one tap apart.** A schedule row draws
+  what is LEFT and labels it "40 seats"; `SessionList` in the sell sheet draws
+  what is SOLD and labels it "0/40". Each is internally consistent — bar and
+  label agree on both screens — but they are the same visual device meaning
+  opposite things. Reconciling them means choosing one convention inside a
+  component three tills share and relabelling its count, which is a change to
+  the sell sheet rather than to this screen, so it is named here rather than
+  half-done. Availability, not consumption, is the frame a till reads in, so
+  the sheet is the one that should move.
 - The demo clock is still pinned at `DEMO_TODAY` 2026-07-29 and 12:00, so
   "now" is the demo's now.
 
