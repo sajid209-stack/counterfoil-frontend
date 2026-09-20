@@ -8737,3 +8737,117 @@ way.
 - The admit animation captured at 120ms, 260ms and 900ms and in reduced motion.
 - `/scan` audits at 0; `tsc`, `eslint` and the build clean; i18n parity
   **0 missing / 0 extra** with `previewNote` authored in en and bn.
+
+
+## Check-In — the guest's name, and the day before anyone turns up (2026-09-20)
+
+Owner asked for `/checkin` researched against SaaS booking systems and POS
+practice, then reworked round by round. Measured first.
+
+### What was wrong
+
+- **The guest's name could not be read.** A party was one muted mono line at
+  13px: `CF-2026-001029 · Imran Hossain · …` — reference first, name second,
+  party size cut off entirely by an ellipsis. The name is what a steward
+  matches against the person standing in front of them, and it was the least
+  prominent text on the row **and truncated**. The project's own guidance rates
+  that **Critical**: *distinguishing names need complete access — wrap, stack
+  or resize; do not clamp essential meaning to make cards uniform.*
+- **Everything opened shut.** Six sessions, every one collapsed, so the first
+  act on every arrival was a tap to reveal the names the screen exists for.
+- **Up to seven equal pills per party** — Take balance, Add extra, Upgrade,
+  Extend, +1, Check in all, No-show — stating no opinion about which one
+  somebody came for.
+- **Nothing about the day.** No expected, no arrived, no outstanding. Every
+  front-desk routine starts by reviewing the day's arrivals, and there was
+  nothing to review.
+- **`main` was 672px of a 1,280px screen**, and at tablet and wide the date
+  chips were 40px and the search field 38px — under the floor on a device that
+  is touch at every width.
+- Reference, name, money and counts were **all DM Mono**, against a type spec
+  that reserves mono for identifiers.
+
+### The screen now
+
+- **The name leads**, at 15px/600, and it **wraps** — never clipped. Under it,
+  quietly: the guest count, how many of the party are already in, and the
+  reference in mono, because a reference *is* an identifier. Where an order
+  carries no name the reference becomes the title, since that is what the guest
+  will quote; the old fallback rendered a stray "party 1".
+- **It opens on the session the door is standing in** — the last one at or
+  before now — and everything else stays shut. **A search opens every match**,
+  because a match hidden inside a collapsed row is a match nobody finds.
+- **One primary action per party.** Money owed shows the amount as an amber
+  chip and offers **Take balance** and nothing else — the gate does not open on
+  an unsettled order. Otherwise **Check in** (or *+1* beside it for a party
+  arriving in pieces). Add extra, Upgrade, Extend and No-show moved into the
+  row's overflow, with the no-show separated by a rule.
+- **A session states its progress** as a fill and a sentence — "3 of 3 in",
+  green when the session is complete — rather than a bare `3/3`.
+- **The day has a panel**: expected, arrived, still to come, and what is still
+  owed across all of it. On a till it sits in a rail beside the list.
+- 44px everywhere, `main` 1,024px of 1,280, and the payment-method breakdown
+  (`bKash ৳4,502.25`) is gone from the row — ledger detail at a door, competing
+  with the name. It is still in the take-balance dialog, where it is the point.
+
+### Found by looking at it
+
+**The group card clipped its own overflow menu.** `overflow-hidden` on the
+session card cut "No-show" off at the card's edge — the same family as the
+ring-clip bug this log already records: a card's own overflow eats what a child
+paints outside it. Nothing there needed clipping. The harness had checked that
+menu items were 44px tall and passed, which says nothing about whether you can
+SEE them; it now also asks `elementFromPoint` whether each item is on top and
+inside the window, which is the check the OS row-menu harness has had since
+September.
+
+**A search rewrote the day.** The figures and every session's progress were
+computed from the filtered list, so typing a guest's name turned *"at the door
+today"* into that one guest's two tickets, and a session of three read "2 of 2
+in". A lookup is not a claim about the day. Both now read the whole day
+whatever is in the box, and the harness asserts it.
+
+### Verified
+
+- Check-In harness **102 checks, all passing** — at 320, 390, 1024 and 1280,
+  light and dark, English and Bangla: no page x-scroll, no hidden overflow, no
+  clipping, **no guest name cut off**, nothing below the 13px Go floor, no
+  target under 44px, nothing below its contrast floor, no console errors and no
+  missing-message warnings. Plus the behaviour: it opens on the 12:00 session
+  and leaves the rest shut, a search opens every match and finds by name
+  without rewriting the day or a session's own progress, a party that owes
+  offers the money and **not** the gate, checking a party in moves both the
+  session and the day's arrivals, and the overflow carries no-show at 44px.
+- `/checkin` audits at **3**, up from 0, and every one is the declared
+  white-on-ember rule at 3.50:1 on the **Check in** button. Worth stating
+  plainly: the three appeared because the current session is now open at rest,
+  so its primary button is on screen where before every row was collapsed and
+  no button was visible at all. It is the same treatment as every other primary
+  button in the product.
+  The standing 32-route audit is **70**, which is 67 plus those three.
+
+  One run of it came back at 83 with `/settings/categories` reporting 13 — a
+  route this change never touched. Run on its own that route reports **0**, and
+  a re-run on a settled server gave 70 with it off the list entirely: the dev
+  server was recompiling mid-run. The same artefact is recorded once before in
+  this log, and it is why the number quoted here is the second run's.
+- Standing harnesses hold: the shared row-menu overlap 12/12 across five
+  screens, the gate's 122, accessibility 8/8.
+- `tsc`, `eslint` and the build clean; i18n parity **0 missing / 0 extra**, with
+  fourteen keys added in en and bn and seven the old row owned removed
+  (`gateLabel`, `paidOf`, `settled`, `inCount`, `checkInAll`, `settleFirst`,
+  `party`).
+
+### Open
+
+- **The no-show reason is shown but not editable after the fact.** Recording
+  one takes a reason; changing it means the order page.
+- The walk-in flow still sells at a fixed `12:00` slot and the first active
+  tier, which is fine for a counter sale and wrong for a timed session. It
+  predates this pass.
+
+Sources: [Guestara — designing a two-minute check-in](https://www.guestara.com/post/design-a-2-minute-digital-check-in-for-hotels-ux-guide) ·
+[UXmatters — mapping the hotel guest journey](https://www.uxmatters.com/mt/archives/2025/01/mapping-the-hotel-guest-journey-to-optimize-the-customer-experience.php) ·
+[AltexSoft — hotel front desk software](https://www.altexsoft.com/blog/hotel-front-desk-software/) ·
+[Mitti — front desk arrival checklist](https://mitti.com/library/hospitality/front-desk-arrival-phase-aphtrni9sqzlx1rc) ·
+plus the project's own UX database: Essential Text Truncation (Critical).

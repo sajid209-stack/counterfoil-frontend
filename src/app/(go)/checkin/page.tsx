@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ChevronDown, ChevronRight, Search, UserPlus } from "lucide-react";
-import { Button, DateField, EmptyState, FormField, Modal, useToast } from "@/components/ui";
-import { DEMO_TODAY } from "@/lib/schedule";
+import { ArrowUpCircle, Ban, ChevronDown, ChevronLeft, ChevronRight, PlusCircle, Search, Timer, UserPlus } from "lucide-react";
+import { ActionMenu, Button, DateField, EmptyState, FormField, Modal, useToast, type ActionMenuItem } from "@/components/ui";
+import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay } from "@/lib/schedule";
+import { cn } from "@/lib/cn";
 import { useEnumLabels } from "@/lib/labels";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -29,7 +30,7 @@ import { formatMoney } from "@/lib/format";
    comment warns that two components each holding their own is how a hold
    lands in a different month from the schedule it blocks. */
 const TODAY = DEMO_TODAY;
-const TOMORROW = "2026-07-30";
+const TOMORROW = demoDay(1);
 const time = (iso: string) => iso.slice(11, 16);
 const METHODS: PaymentMethod[] = ["cash", "bkash", "bangla_qr", "card_terminal"];
 
@@ -82,6 +83,55 @@ export default function CheckInPage() {
     });
     return [...map.entries()].sort((a, b) => a[0].split("|")[1].localeCompare(b[0].split("|")[1]));
   }, [bookingsQ.data, ordersQ.data, date, search]);
+
+  /* The day, and every session's progress, read from the WHOLE day rather
+     than from whatever the search box has narrowed it to. Taken off the
+     filtered list, looking one guest up rewrote "at the door today" as that
+     guest's own two tickets, and a session of three read "2 of 2 in". A search
+     is a lookup, not a claim about the day. */
+  const dayBookings = useMemo(
+    () => (bookingsQ.data?.data ?? []).filter((b) => b.status === "confirmed" && b.slotStart.slice(0, 10) === date),
+    [bookingsQ.data, date],
+  );
+
+  const sessionTotals = useMemo(() => {
+    const m = new Map<string, { expected: number; inCount: number }>();
+    for (const b of dayBookings) {
+      const k = `${b.productId}|${b.slotStart}`;
+      const cur = m.get(k) ?? { expected: 0, inCount: 0 };
+      m.set(k, { expected: cur.expected + b.partySize, inCount: cur.inCount + (b.checkedIn ?? 0) });
+    }
+    return m;
+  }, [dayBookings]);
+
+  const day = useMemo(() => {
+    const items = dayBookings;
+    const seen = new Set<string>();
+    let owed = 0;
+    for (const b of items) {
+      if (seen.has(b.orderId)) continue;
+      seen.add(b.orderId);
+      owed += outstanding(orderOf(b));
+    }
+    const expected = items.reduce((sum, b) => sum + b.partySize, 0);
+    const arrived = items.reduce((sum, b) => sum + (b.checkedIn ?? 0), 0);
+    return { expected, arrived, owed, parties: items.length };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayBookings, ordersQ.data]);
+
+  /* The session a door is standing in. Everything used to open shut, so the
+     first thing a steward did on every arrival was tap a row open — and the
+     names, which are the whole point of the screen, were behind that tap. */
+  const nowKey = useMemo(() => {
+    if (groups.length === 0) return null;
+    if (date !== TODAY) return groups[0][0];
+    const minutes = (key: string) => {
+      const hhmm = key.split("|")[1].slice(11, 16);
+      return Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+    };
+    const started = groups.filter(([k]) => minutes(k) <= DEMO_NOW_MINUTES);
+    return (started[started.length - 1] ?? groups[0])[0];
+  }, [groups, date]);
 
   const checkIn = async (b: Booking, count: number) => {
     setPending(b.id);
@@ -194,108 +244,200 @@ export default function CheckInPage() {
     else toast.error(res.error.message);
   };
 
-  const dateBtn = (v: string, label: string) => (
-    <button key={v} type="button" onClick={() => setDate(v)} className={`h-11 md:h-10 rounded-full border px-comfortable text-sm ${date === v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{label}</button>
-  );
+  const step = (n: number) => {
+    const d = new Date(`${date}T12:00:00`);
+    d.setDate(d.getDate() + n);
+    setDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+  };
+
+  const dayLabel = date === TODAY ? t("today") : date === TOMORROW ? t("tomorrow") : "";
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-section px-section py-section">
-      <div className="flex items-end justify-between gap-tight">
-        <div>
-          <p className="type-label text-[13px] text-brand-foreground">{t("gateLabel")}</p>
-          <h1 className="type-h1 mt-tight text-2xl">{t("title")}</h1>
-        </div>
-        <Button shape="pill" variant="secondary" icon={<UserPlus size={16} strokeWidth={1.5} />} onClick={() => { setWalkInProduct(productsQ.data?.data.find((p) => p.bookingType === "BT-01" && p.status === "active")?.id ?? ""); setWalkInOpen(true); }}>
-          {t("addWalkIn")}
-        </Button>
-      </div>
-      <div className="flex flex-wrap gap-tight">
-        {dateBtn(TODAY, t("today"))}{dateBtn(TOMORROW, t("tomorrow"))}
-        <DateField
-          value={date}
-          today={TODAY}
-          onChange={setDate}
-          shape="go"
-          labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
-          className="min-w-40"
-        />
-        <div className="flex h-11 min-w-40 md:h-10 flex-1 items-center gap-tight rounded-full border border-line bg-card px-comfortable focus-within:border-inverse">
-          <Search size={15} strokeWidth={1.5} className="shrink-0 text-muted" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchPlaceholder")} className="h-full w-full bg-transparent text-sm outline-none" />
-        </div>
-      </div>
+    <main className="mx-auto w-full max-w-5xl px-section py-section">
+      <div className="flex flex-col gap-section lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-section">
+          <div className="flex flex-wrap items-center justify-between gap-tight">
+            <div className="min-w-0">
+              <h1 className="type-h1 text-xl">{t("title")}</h1>
+              {dayLabel && <p className="text-[13px] text-muted">{dayLabel}</p>}
+            </div>
+            <Button shape="pill" variant="secondary" icon={<UserPlus size={16} strokeWidth={1.5} />} onClick={() => { setWalkInProduct(productsQ.data?.data.find((p) => p.bookingType === "BT-01" && p.status === "active")?.id ?? ""); setWalkInOpen(true); }}>
+              {t("addWalkIn")}
+            </Button>
+          </div>
 
-      {bookingsQ.loading ? (
-        <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-full bg-line" /><div className="h-4 w-2/3 rounded-full bg-line" /><div className="h-4 w-1/2 rounded-full bg-line" /></div>
-      ) : groups.length === 0 ? (
-        <EmptyState title={t("noBookingsTitle")} message={search ? t("noBookingsSearch") : t("noBookingsDay")} />
-      ) : (
-        <div className="flex flex-col gap-tight">
-          {groups.map(([key, items]) => {
-            const expected = items.reduce((s, b) => s + b.partySize, 0);
-            const inCount = items.reduce((s, b) => s + (b.checkedIn ?? 0), 0);
-            const [pid, iso] = key.split("|");
-            const isOpen = open[key];
-            return (
-              <div key={key} className="card-surface">
-                <button type="button" onClick={() => setOpen((o) => ({ ...o, [key]: !o[key] }))} className="flex w-full items-center gap-section p-comfortable text-left">
-                  {isOpen ? <ChevronDown size={16} strokeWidth={1.5} /> : <ChevronRight size={16} strokeWidth={1.5} />}
-                  <span className="w-14 font-mono text-sm">{time(iso)}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{productName(pid)}</span>
-                  <span className={`font-mono text-[13px] ${inCount >= expected ? "text-success" : "text-muted"}`}>{inCount}/{expected}</span>
-                </button>
-                {isOpen && (
-                  <div className="flex flex-col gap-tight border-t border-line p-comfortable">
-                    {items.map((b) => {
-                      const o = orderOf(b);
-                      const due = outstanding(o);
-                      const done = (b.checkedIn ?? 0) >= b.partySize;
-                      const p = productsQ.data?.data.find((x) => x.id === b.productId);
-                      return (
-                        <div key={b.id} className="rounded-go border border-line p-tight">
-                          <div className="flex items-center gap-tight text-sm">
-                            <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-muted">{o?.reference ?? b.orderId}{o?.customerName ? ` · ${o.customerName}` : ""} · {t("party", { size: b.partySize })}</span>
-                            {b.noShow ? (
-                              <span className="shrink-0 rounded-full bg-danger/10 px-tight py-inline font-mono text-[13px] text-danger">{b.noShowReason ? t("noShowTagReason", { reason: b.noShowReason }) : t("noShowTag")}</span>
-                            ) : (
-                              <span className="shrink-0 font-mono text-[13px]">{t("inCount", { done: b.checkedIn ?? 0, total: b.partySize })}</span>
-                            )}
-                          </div>
-                          {/* Paid vs outstanding — the gate opens only on a settled order. */}
-                          {o && (
-                            <div className="mt-inline flex flex-wrap items-center gap-tight font-mono text-[13px] tabular-nums">
-                              <span className="text-muted">{t("paidOf", { paid: formatMoney(o.payments.reduce((s, x) => s + x.amount, 0)), total: formatMoney(o.total) })}</span>
-                              {due > 0 ? <span className="rounded-full bg-ember-solid px-tight text-white">{t("owes", { amount: formatMoney(due) })}</span> : <span className="text-success">{t("settled")}</span>}
-                              <span className="min-w-0 truncate text-muted">· {o.payments.map((x) => `${enumL.method(x.method)} ${formatMoney(x.amount)}`).join(" + ")}</span>
-                            </div>
-                          )}
-                          <div className="mt-tight flex flex-wrap gap-tight">
-                            {due > 0 && !b.noShow && <Button shape="pill" size="sm" onClick={() => setPayFor(b)}>{t("takeBalanceBtn")}</Button>}
-                            {!b.noShow && (p?.addOns?.length ?? 0) > 0 && <Button shape="pill" size="sm" variant="secondary" onClick={() => setExtraFor(b)}>{t("addExtraBtn")}</Button>}
-                            {!b.noShow && (p?.tiers.filter((tier) => tier.active).length ?? 0) > 1 && <Button shape="pill" size="sm" variant="secondary" onClick={() => setUpgradeFor(b)}>{t("upgradeBtn")}</Button>}
-                            {extendOf(b) && !b.noShow && (
-                              <Button shape="pill" size="sm" variant="secondary" loading={pending === b.id} onClick={() => extend(b)}>{t("extendBtn", { minutes: extendOf(b)!.cfg.incrementMinutes })}</Button>
-                            )}
-                            {!done && !b.noShow && (
-                              <>
-                                {b.partySize > 1 && (b.checkedIn ?? 0) < b.partySize - 1 && (
-                                  <Button shape="pill" size="sm" variant="secondary" disabled={due > 0} loading={pending === b.id} onClick={() => checkIn(b, (b.checkedIn ?? 0) + 1)}>+1</Button>
+          <div className="flex flex-wrap items-center gap-tight">
+            <button type="button" onClick={() => step(-1)} aria-label={t("prevDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted active:bg-ember/10">
+              <ChevronLeft size={18} strokeWidth={1.5} />
+            </button>
+            <DateField
+              value={date}
+              today={TODAY}
+              onChange={setDate}
+              shape="go"
+              labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
+              className="w-[150px] shrink-0"
+            />
+            <button type="button" onClick={() => step(1)} aria-label={t("nextDay")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-card text-muted active:bg-ember/10">
+              <ChevronRight size={18} strokeWidth={1.5} />
+            </button>
+            {/* Touch at every width: this is a door device, so the `md:` shrink
+                that suits the admin app put a 38px field on a counter. */}
+            <div data-focus-host className="flex h-11 min-w-40 flex-1 items-center gap-tight rounded-full border border-line bg-card px-comfortable focus-within:border-ember-solid">
+              <Search size={16} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
+              <input value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("searchPlaceholder")} placeholder={t("searchPlaceholder")} className="h-full w-full bg-transparent text-sm outline-none" />
+            </div>
+          </div>
+
+          {bookingsQ.loading ? (
+            <div aria-busy="true" className="flex animate-pulse flex-col gap-tight">
+              <div className="h-4 w-1/3 rounded-full bg-line" />
+              <div className="h-16 rounded-go bg-line" />
+              <div className="h-16 rounded-go bg-line" />
+            </div>
+          ) : groups.length === 0 ? (
+            <EmptyState title={t("noBookingsTitle")} message={search ? t("noBookingsSearch") : t("noBookingsDay")} />
+          ) : (
+            <div className="flex flex-col gap-comfortable">
+              {groups.map(([key, items]) => {
+                const totals = sessionTotals.get(key) ?? { expected: 0, inCount: 0 };
+                const expected = totals.expected;
+                const inCount = totals.inCount;
+                const [pid, iso] = key.split("|");
+                /* Open where the door is standing, and open everything while a
+                   search is running — a match hidden inside a shut row is a
+                   match nobody finds. */
+                const isOpen = search ? true : (open[key] ?? key === nowKey);
+                const full = inCount >= expected;
+                return (
+                  <section key={key} data-group className="rounded-go go-surface">
+                    <button
+                      type="button"
+                      onClick={() => setOpen((o) => ({ ...o, [key]: !isOpen }))}
+                      aria-expanded={isOpen}
+                      className="flex min-h-14 w-full items-center gap-comfortable px-section py-tight text-left"
+                    >
+                      {isOpen ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-baseline gap-tight">
+                          <span className="shrink-0 text-base font-semibold">{time(iso)}</span>
+                          <span className="min-w-0 truncate text-sm">{productName(pid)}</span>
+                        </span>
+                        <span className="mt-inline flex items-center gap-tight">
+                          <span aria-hidden className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-line">
+                            <span className={cn("block h-full rounded-full", full ? "bg-success" : "bg-inverse/40")} style={{ width: `${expected ? Math.round((inCount / expected) * 100) : 0}%` }} />
+                          </span>
+                          <span className={cn("text-[13px]", full ? "font-semibold text-success" : "text-muted")}>{t("inOfTotal", { done: inCount, total: expected })}</span>
+                        </span>
+                      </span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="flex flex-col gap-tight border-t border-hairline p-section pt-comfortable">
+                        {items.map((b) => {
+                          const o = orderOf(b);
+                          const due = outstanding(o);
+                          const done = (b.checkedIn ?? 0) >= b.partySize;
+                          const prod = productsQ.data?.data.find((x) => x.id === b.productId);
+                          const extendable = extendOf(b);
+                          /* One primary action; everything else behind the
+                             overflow. Seven equal pills stated no opinion about
+                             which one a steward came for. */
+                          const menu: ActionMenuItem[] = [];
+                          if (!b.noShow && (prod?.addOns?.length ?? 0) > 0) {
+                            menu.push({ key: "extra", label: t("addExtraBtn"), icon: <PlusCircle size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, onSelect: () => setExtraFor(b) });
+                          }
+                          if (!b.noShow && (prod?.tiers.filter((tier) => tier.active).length ?? 0) > 1) {
+                            menu.push({ key: "upgrade", label: t("upgradeBtn"), icon: <ArrowUpCircle size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, onSelect: () => setUpgradeFor(b) });
+                          }
+                          if (!b.noShow && extendable) {
+                            menu.push({ key: "extend", label: t("extendBtn", { minutes: extendable.cfg.incrementMinutes }), icon: <Timer size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, onSelect: () => extend(b) });
+                          }
+                          if (!b.noShow && !done && (b.checkedIn ?? 0) === 0) {
+                            menu.push({ key: "noshow", label: t("noShowBtn"), icon: <Ban size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, separated: menu.length > 0, onSelect: () => { setNoShowFor(b); setNoShowReason(""); } });
+                          }
+                          const name = o?.customerName?.trim();
+                          return (
+                            <div key={b.id} data-party className="flex flex-col gap-tight rounded-go-sm border border-hairline px-comfortable py-comfortable sm:flex-row sm:items-center">
+                              <span className="min-w-0 flex-1">
+                                {/* The name is what a steward matches against
+                                    the person in front of them, so it leads and
+                                    it WRAPS — it used to be third in a muted
+                                    mono run-on, cut off with an ellipsis. */}
+                                <span className={cn("block break-words text-[15px] font-semibold", !name && "font-mono text-sm")}>{name || o?.reference || b.orderId}</span>
+                                <span className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-[13px] text-muted">
+                                  <span>{t("guests", { count: b.partySize })}</span>
+                                  {(b.checkedIn ?? 0) > 0 && !done && <span>· {t("inOfTotal", { done: b.checkedIn ?? 0, total: b.partySize })}</span>}
+                                  {name && <span className="font-mono">· {o?.reference ?? b.orderId}</span>}
+                                </span>
+                              </span>
+
+                              <span className="flex shrink-0 flex-wrap items-center gap-tight">
+                                {b.noShow ? (
+                                  <span className="rounded-full bg-danger-solid px-comfortable py-inline text-[13px] font-medium text-white">
+                                    {b.noShowReason ? t("noShowTagReason", { reason: b.noShowReason }) : t("noShowTag")}
+                                  </span>
+                                ) : due > 0 ? (
+                                  <>
+                                    <span className="rounded-full border border-warning/50 bg-warning-wash px-comfortable py-inline text-[13px] font-semibold text-fg">{t("owes", { amount: formatMoney(due) })}</span>
+                                    <Button shape="pill" onClick={() => setPayFor(b)}>{t("takeBalanceBtn")}</Button>
+                                  </>
+                                ) : done ? (
+                                  <span className="rounded-full bg-success/15 px-comfortable py-inline text-[13px] font-semibold text-success">{t("allIn")}</span>
+                                ) : (
+                                  <>
+                                    {b.partySize > 1 && (b.checkedIn ?? 0) < b.partySize - 1 && (
+                                      <Button shape="pill" variant="secondary" loading={pending === b.id} onClick={() => checkIn(b, (b.checkedIn ?? 0) + 1)}>{t("plusOne")}</Button>
+                                    )}
+                                    <Button shape="pill" loading={pending === b.id} onClick={() => checkIn(b, b.partySize)}>
+                                      {b.partySize > 1 ? t("checkInCount", { count: b.partySize - (b.checkedIn ?? 0) }) : t("checkIn")}
+                                    </Button>
+                                  </>
                                 )}
-                                <Button shape="pill" size="sm" disabled={due > 0} loading={pending === b.id} onClick={() => checkIn(b, b.partySize)}>{due > 0 ? t("settleFirst") : t("checkInAll")}</Button>
-                                {(b.checkedIn ?? 0) === 0 && <Button shape="pill" size="sm" variant="secondary" onClick={() => { setNoShowFor(b); setNoShowReason(""); }}>{t("noShowBtn")}</Button>}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                                {menu.length > 0 ? (
+                                  <ActionMenu shape="go" items={menu} label={t("rowMenu", { name: name || (o?.reference ?? b.orderId) })} />
+                                ) : (
+                                  <span aria-hidden className="h-11 w-11 shrink-0" />
+                                )}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </section>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* The day, before anyone turns up. */}
+        <aside className="flex flex-col gap-section">
+          <section className="flex flex-col gap-comfortable rounded-go p-section go-surface">
+            <h2 className="text-sm font-semibold">{t("summaryTitle")}</h2>
+            <div className="grid grid-cols-3 gap-tight text-center">
+              {(
+                [
+                  ["expected", day.expected],
+                  ["arrived", day.arrived],
+                  ["toCome", Math.max(0, day.expected - day.arrived)],
+                ] as const
+              ).map(([key, value]) => (
+                <div key={key} className="flex flex-col items-center gap-inline rounded-go-sm border border-hairline py-comfortable">
+                  <span className="text-xl font-semibold tabular-nums">{value}</span>
+                  <span className="text-[13px] text-muted">{t(`stat_${key}`)}</span>
+                </div>
+              ))}
+            </div>
+            {day.owed > 0 && (
+              <p className="rounded-go-sm border border-warning/50 bg-warning-wash px-comfortable py-tight text-[13px] font-semibold text-fg">
+                {t("owedAcrossDay", { amount: formatMoney(day.owed) })}
+              </p>
+            )}
+          </section>
+        </aside>
+      </div>
 
       {/* Take the outstanding balance — any configured method works. */}
       <Modal open={!!payFor} onClose={() => { setPayFor(null); setPayAmount(null); }} title={payFor ? t("takeAmount", { amount: formatMoney(payDue) }) : t("takeBalanceTitle")}>
