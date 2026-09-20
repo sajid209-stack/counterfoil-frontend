@@ -138,6 +138,7 @@ export function ProductSheet({
   product,
   currency,
   initial,
+  preset,
   seatsInCart,
   onAdd,
   onClose,
@@ -147,6 +148,11 @@ export function ProductSheet({
   product: Product;
   currency: string;
   initial: CartEntry | null;
+  /** Where to OPEN, when the sheet was reached from a slot on the Schedule.
+   *  Deliberately not an `initial` cart entry: that shape means "edit this
+   *  line", and reusing it would take the single-tier default quantity down
+   *  to zero and hand the new line the edited line's id. */
+  preset?: { date?: string; time?: string; resourceId?: string };
   seatsInCart: (productId: string, slotStart: string) => number;
   onAdd: (entry: CartEntry, pay?: boolean) => void;
   onClose: () => void;
@@ -193,9 +199,9 @@ export function ProductSheet({
     return TODAY;
   })();
 
-  const [date, setDate] = useState(initial?.slotDate ?? firstBookable);
-  const [slotTime, setSlotTime] = useState<string | undefined>(initial?.slotTime);
-  const [resourceId, setResourceId] = useState<string | undefined>(initial?.resourceId);
+  const [date, setDate] = useState(initial?.slotDate ?? preset?.date ?? firstBookable);
+  const [slotTime, setSlotTime] = useState<string | undefined>(initial?.slotTime ?? preset?.time);
+  const [resourceId, setResourceId] = useState<string | undefined>(initial?.resourceId ?? preset?.resourceId);
   const [providerId, setProviderId] = useState<string | undefined>();
   const [guideId, setGuideId] = useState<string | undefined>();
   // Flexible durations come from the duration engine when configured.

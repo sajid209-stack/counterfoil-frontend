@@ -142,7 +142,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const discountLimit = myRole?.discountLimitPct ?? Infinity;
 
   const [cart, setCart] = useState<CartEntry[]>([]);
-  const [sheet, setSheet] = useState<{ product: Product; initial: CartEntry | null } | null>(null);
+  const [sheet, setSheet] = useState<{ product: Product; initial: CartEntry | null; preset?: { date?: string; time?: string; resourceId?: string } } | null>(null);
   const [category, setCategory] = useState("all");
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [payInFull, setPayInFull] = useState(false);
@@ -322,13 +322,23 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     if (!nonCashOk && method !== "cash") setMethod("cash");
   }, [nonCashOk, method]);
 
-  // Deep-link from the Schedule tab: open a product's sheet on arrival.
+  // Deep-link from the Schedule tab: open a product's sheet on arrival, on the
+  // slot that was tapped. A schedule whose rows are a time and a field, landing
+  // on a sheet set to some other time, makes the cashier choose it twice.
   useEffect(() => {
     const id = sessionStorage.getItem("pos_open_product");
     if (id && products.length) {
+      const raw = sessionStorage.getItem("pos_open_slot");
       sessionStorage.removeItem("pos_open_product");
+      sessionStorage.removeItem("pos_open_slot");
       const p = products.find((x) => x.id === id);
-      if (p) setSheet({ product: p, initial: null });
+      let preset: { date?: string; time?: string; resourceId?: string } | undefined;
+      try {
+        preset = raw ? JSON.parse(raw) : undefined;
+      } catch {
+        preset = undefined;
+      }
+      if (p) setSheet({ product: p, initial: null, preset });
     }
   }, [products]);
 
@@ -1423,7 +1433,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
         </button>
       )}
 
-      {sheet && <ProductSheet product={sheet.product} currency={currency} initial={sheet.initial} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => setSheet(null)} team={teamQ.data?.data ?? []} resources={resources} />}
+      {sheet && <ProductSheet product={sheet.product} currency={currency} initial={sheet.initial} preset={sheet.preset} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => setSheet(null)} team={teamQ.data?.data ?? []} resources={resources} />}
 
       {/* Inline cash tender — a bottom sheet over the cart, no page navigation. */}
       {cashOpen && (() => {

@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
+import { sessionPressure } from "@/lib/schedule";
 
 export interface SessionRowData {
   time: string;
@@ -23,12 +24,7 @@ export interface SessionRowData {
  *  seats left whether the room holds 15 or 400, and it is the count a cashier
  *  decides on. Every tier states itself in words as well, so the colour is
  *  never carrying the meaning alone. */
-function pressureOf(left: number, capacity: number): "gone" | "critical" | "low" | "fine" {
-  if (left <= 0) return "gone";
-  if (left <= 4) return "critical";
-  if (left <= 10 || left <= Math.max(1, Math.floor(capacity * 0.2))) return "low";
-  return "fine";
-}
+
 
 /**
  * Fixed sessions as ROWS, not a grid of little time tiles.
@@ -79,7 +75,7 @@ export function SessionList({
         const pctSold = s.capacity > 0 ? (sold / s.capacity) * 100 : 0;
         const full = s.left <= 0 || !!s.blockedReason;
         const closed = !!s.blockedReason && s.left > 0;
-        const pressure = pressureOf(s.left, s.capacity);
+        const pressure = sessionPressure(s.left, s.capacity);
         const isSelected = selected === s.time;
 
         return (

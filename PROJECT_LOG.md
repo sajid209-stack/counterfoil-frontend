@@ -8108,3 +8108,200 @@ which is the checkout-to-ticket story end to end.
   venue plans; the chart's footnote says so rather than leaving it implied.
 - Prices are the Bangladesh list; other currencies are not in the deck.
 - The screenshots are static and will drift as the product changes.
+
+
+## The Go Schedule — a day, deduplicated and opened at now (2026-09-20)
+
+Owner asked for the till's Schedule screen researched against SaaS booking
+systems and POS practice, then reworked round by round until it holds up.
+Measured first, because a schedule's problems are quantities.
+
+### What was wrong, measured
+
+| | before |
+|---|---|
+| rows for one day | **65** |
+| page height on a phone | **6,758px** |
+| chrome before the list | **341px** (of a 390px-tall viewport) |
+| `main` at a 1024 till | **672px** |
+| the list opened at | **06:00** — six hours in the past |
+| targets under the 44px Go floor | Sell 46×36, row actions 36×36 |
+
+And the filter chips all rendered in ember at once, so three toggles that
+meant "everything is shown" read as three things selected.
+
+### The finding: 36 of the 65 rows were 18 rows written twice
+
+The screen listed one row per **product × resource × time**. Availability is
+computed per **resource** — a booking on the outdoor field blocks it for every
+product attached to it — so "Cricket — Outdoor Field 18:00" and "Futsal —
+Outdoor Field 18:00" were always the same free hour, differing only in price.
+Two products sharing two fields across eighteen hours produced 54 rows for
+what is really 36 field-hours, and counted the taken ones twice as well.
+
+So a row is now **a slot on a schedulable thing**: one field at one time, or
+one departure of one session. **65 rows → 47**, and every one of them is a
+distinct piece of reality. Which booking a free field is sold as is a question
+asked at the point of sale, and only where more than one answer exists — a
+field used by one booking goes straight to the till.
+
+`schedule/_lib/day.ts` does the derivation, pure. It also handles the case the
+merge exposed: availability can genuinely differ between two products on ONE
+field, because a product with a buffer sees the hour after a booking as taken
+while a product without one does not. The slot is open if any booking can take
+it, and lists only the ones that can.
+
+### The day now reads in the order a counter asks in
+
+- **It opens on now.** The earlier part of the day folds behind one control
+  ("Show 7 earlier"), and a rule marks where now falls — drawn between the
+  last thing that has been and the next, and only when some of the day is
+  actually behind. On any other date there is no now, and the whole day shows.
+- **The time is stated once**, at the head of everything that starts then,
+  with what is still free beside it ("18:00 · 2 free" / "All taken"). It used
+  to be repeated down a column beside all 65 rows.
+- **A row says the thing, what is left of it, and what it costs.** A field
+  carries the bookings that run on it; a session carries a fill bar and its
+  seats. The price leads in the brand text colour, because it is the number a
+  cashier says out loud.
+- **Sellable is a lifted card, taken is a flat outline** — "not this one" is
+  carried by shape and surface before colour, the rule the scan result and the
+  slot matrix already follow. The whole card is the target, which is also what
+  took the 46×36 Sell button and the 36×36 overflow button off a screen that
+  is touch at every width.
+- **Filters fold on a phone**, as the OS calendar's already do, and the three
+  chips became one segmented choice — All · Open · Booked, with counts — so
+  the default reads as one state rather than three switched on.
+- **Two lanes at one time sit side by side** from `sm`. A row is a name, a
+  price and a chevron; stacked, it left two thirds of a till empty.
+- **The till's width buys a rail**: what is free this minute, as rows you can
+  sell from, and the register of fields and courts.
+
+### Out of service, and the eighteen buttons it used to take
+
+Marking a field out of service is a property of the field, and it sat on a
+per-slot overflow button — so the same action appeared on eighteen rows of one
+field. A closed field now produces **no slot rows at all** and is named once,
+above the day, with its reason and the way back. That is the rule the dashboard
+settled in September: *Needs attention names them once, rather than once an
+hour.* Taking one out lives in the register of fields, which is in the rail on
+a till and at the foot of the list on a phone.
+
+### The row's primary action now carries the slot it is a row of
+
+Tapping 19:00 on the outdoor field used to open the till on the product's own
+default day and no time — the screen's whole subject, thrown away at the
+moment of the sale. `ProductSheet` gained a `preset`, deliberately **not** an
+`initial` cart entry: that shape means "edit this line", and reusing it would
+take a single-tier default quantity down to zero and hand the new line the
+edited line's id.
+
+Proven by selling: tomorrow's 19:00 on the outdoor field, sold as Cricket,
+opens the sheet already on **Tomorrow 30 Jul**, summarising *"Outdoor Field ·
+19:00 · 1 hr · Group of 2"* at **৳2,000** — the evening band, not the ৳1,500
+base. Today's 13:00 indoor field skips the question entirely and opens on
+*"Indoor Field · 13:00"*.
+
+### One threshold, not two
+
+`sessionPressure` moved out of `SessionList` and into `lib/schedule`, beside
+the rest of the scheduling rules, so the sell sheet and the schedule cannot
+drift apart about what "low" means.
+
+### Found by looking, not by the checks
+
+- **The fill bar drew emptiness.** It filled with what had SOLD, so a show
+  with every seat free rendered as a grey track with nothing in it — which
+  reads as a control that failed to render. It fills with what is **left** now,
+  so the bar and the figure beside it say the same thing, and the figure reads
+  "40 seats" / "3 left" rather than "40 of 40 left".
+- **"from ৳1,500" on two identical prices.** Both bookings on the outdoor
+  field cost the same at midday; "from" is earned by two ways in at two
+  different prices, and states nothing otherwise.
+- **The date was printed twice**, 40px apart: "Today · Wed 29 Jul" beside a
+  picker reading "29 Jul 2026". The line now says the part a picker cannot —
+  which day of the week, and whether it is today.
+- **An English weekday inside a Bangla sentence.** A hand-rolled `en-GB`
+  formatter put "Wednesday" directly after "আজ". The weekday is a word, so it
+  goes through next-intl's formatter and reads "বুধবার".
+- **The now marker read as a label for 17:00.** Filtered to bookings that are
+  all in the evening, a marker pinned to the top of the list looked like it was
+  naming the first group. It is drawn in its chronological place now.
+- **The register's two wide "Mark out of service" pills** were the loudest
+  thing in the rail after the primary action, for the rarest action on the
+  screen. The rows open the dialog the way the day's rows open a sale.
+
+### And one found by measuring
+
+**747px of hidden overflow at a 390px viewport.** The two-column grid was
+written `grid sm:grid-cols-2`, which leaves the base layout with a single
+**implicit** track sized to max-content — so the track grew to the widest
+booking name and `truncate` had nothing to truncate against. `grid-cols-1`
+pins it. This is the `min-width: auto` class of bug this log has recorded three
+times now, in a third costume.
+
+### Verified
+
+- **Schedule harness: 94 checks, all passing** — at 320, 390, 1024 and 1280,
+  light and dark, English and Bangla, and in each state (at rest, filters open,
+  Booked only, Open only, scoped to one booking, morning expanded, the sell
+  chooser, tomorrow): no page x-scroll, no hidden overflow inside `main`,
+  nothing clipped without an ellipsis, nothing below the 13px Go reading floor,
+  no target under 44px, no text below its contrast floor, no console errors and
+  no missing-message warnings. Plus the behaviour: it opens at 12:00 and not
+  06:00, "Show 7 earlier" brings the morning back above the now line, Booked
+  shows only taken slots and Open only sellable ones, one booking scopes the
+  day and drops the "from", a shared field asks which booking and a
+  single-booking field does not, and tomorrow has no now marker.
+- **Selling harness: 14 checks, all passing** — the slot reaches the till, as
+  above.
+- **Measured**: 65 rows → 47; the phone's whole day 6,758px → 4,888px, and
+  3,628px at rest with the morning folded; chrome before the list 341px →
+  260px (64px of which is the Go header every screen carries); `main` 672px →
+  936px at a 1024 till and 1,152px at 1280.
+- Standing harnesses hold: POS audit **10 findings at 390, every one the
+  declared white-on-ember exception**; sheet variants all on theme; the
+  45-sheet conformance clean; accessibility 8/8; review 15/15; deck 9/9.
+- The standing 32-route audit is **unchanged at its documented 70** (69 the
+  declared white-on-ember rule, 1 the kitchen-sink inline link). `/schedule`
+  is not on that list; run on its own it reports **4**, all of them the
+  selected filter chip's label and its count — white on ember at 3.50:1,
+  identical in light and dark because `--color-ember-solid` is pinned.
+- `tsc --noEmit` and `npm run build` clean. `eslint` clean on the schedule,
+  `SessionList`, `ProductSheet` and `lib/schedule`; **`PosScreen` holds at its
+  documented 6 problems** — the one error is the same pre-existing
+  `set-state-in-effect` on the deep-link effect, at a moved line.
+- i18n parity **0 missing / 0 extra** across 31 namespaces. New keys authored
+  in en and bn; seven keys the old screen owned (`fohLabel`, `rowActions`,
+  `filterOut`, `leftOfTotal`, `nextFreeAt`, `sellLane`, `dayTally`) removed
+  from both after checking nothing else uses them.
+
+### A harness correction, mine
+
+The contrast probe reported a perfectly legible line at 4.05:1 in dark. The Go
+tab bar floats above the column, so mid-scroll a row passes behind it — by
+design, and the shell reserves the bar's height so nothing is ever *parked*
+under it. The probe was reading the bar's own tint as that row's background.
+Text another element is painted over is not text anyone is reading, so it is
+skipped rather than measured.
+
+### Open
+
+- **A session's "free right now" is its next departure, not the one in
+  progress.** A show that left at 11:45 is not on sale at 12:00, so only fields
+  appear in the rail's "free right now" — the same distinction `posLiveState`
+  makes on the sell wall. A venue that sells latecomers into a running session
+  would want that stated differently.
+- The flexible-duration path (bowling) still has no rows here: it has no fixed
+  slots to list. It was not on this screen before either.
+- The demo clock is still pinned at `DEMO_TODAY` 2026-07-29 and 12:00, so
+  "now" is the demo's now.
+
+Sources: [Eleken — calendar UI examples and UX tips](https://www.eleken.co/blog-posts/calendar-ui) ·
+[DineLax — POS dashboard features, 2026](https://dinelax.in/blog/dinelax-pos-dashboard-features-guide-2026) ·
+[Simply Schedule Appointments — capacity and group bookings](https://simplyscheduleappointments.com/guides/capacity-and-group-bookings/) ·
+plus the project's own UX database (`ui-ux-pro-max`): Compact Control
+Semantics (a chip is a button with a pressed state matching its visible
+label), Chip Collection Reflow (wrap or disclose, never clip a row of chips)
+and Essential Text Truncation (a distinguishing name gets a visible route to
+its full text).

@@ -82,3 +82,18 @@ export function defaultSchedule(bt: BookingTypeCode): ProductSchedule {
     exceptions: [],
   };
 }
+
+/** How hard a session is selling. Absolute thresholds, not a percentage: four
+ *  seats left is four seats left whether the room holds fifteen or four
+ *  hundred, and it is the count a counter decides on. The 20% clause keeps a
+ *  small room warning in time.
+ *
+ *  Lived in SessionList until the Go Schedule needed the same answer. A second
+ *  copy is how two screens start disagreeing about what "low" means. */
+export type SessionPressure = "gone" | "critical" | "low" | "fine";
+export function sessionPressure(left: number, capacity: number): SessionPressure {
+  if (left <= 0) return "gone";
+  if (left <= 4) return "critical";
+  if (left <= 10 || left <= Math.max(1, Math.floor(capacity * 0.2))) return "low";
+  return "fine";
+}
