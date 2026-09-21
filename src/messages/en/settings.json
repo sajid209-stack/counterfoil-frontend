@@ -725,6 +725,11 @@
         "title": "Sign-in rules",
         "desc": "Two-step sign-in, how long a sign-in lasts, and till PINs.",
         "keywords": "2fa mfa two-step session timeout sign out auto lock idle pin attempts lockout paired device"
+      },
+      "storefront": {
+        "title": "Storefront",
+        "desc": "The public page each venue has — what is on it, what it says, and whether it is live.",
+        "keywords": "storefront public page website venue landing url slug online"
       }
     }
   },
@@ -770,7 +775,9 @@
     },
     "statusNoLock": "tills never lock",
     "noTicket": "Customers aren't sent their tickets",
-    "noTicketBody": "Booking confirmed is off for SMS and e-mail, so a ticket code only reaches a customer at the counter."
+    "noTicketBody": "Booking confirmed is off for SMS and e-mail, so a ticket code only reaches a customer at the counter.",
+    "statusStorefront": "{count, plural, one {# page live} other {# pages live}}",
+    "statusStorefrontNone": "No page is live"
   },
   "save": {
     "unsaved": "Unsaved changes",
@@ -1060,5 +1067,49 @@
     "deviceBound": "Only on paired tablets",
     "deviceBoundDesc": "Staff can open a till only on a tablet paired to one of their counters.",
     "saved": "Sign-in rules saved"
+  },
+  "storefront": {
+    "title": "Storefront",
+    "description": "One public page per venue: what is on, what it costs, and when you are open.",
+    "listLabel": "Venues and their pages",
+    "draft": "Draft",
+    "onCount": "{count, plural, one {# booking} other {# bookings}} on the page",
+    "nothingOn": "Nothing on the page yet",
+    "preparing": "Preparing…",
+    "publishSwitch": "Publish the page for {name}",
+    "published": "{name} is live",
+    "unpublished": "{name} is off",
+    "emptyTitle": "No venues yet",
+    "emptyMessage": "Add a location and it gets a page.",
+    "notFoundTitle": "We can't find that venue",
+    "back": "All storefronts",
+    "editorDescription": "What visitors see before they set out.",
+    "viewPage": "View page",
+    "addressTitle": "Address",
+    "addressDesc": "Where this page lives on the web.",
+    "slugLabel": "Page address",
+    "slugDesc": "Lowercase letters, numbers and hyphens.",
+    "slugRequired": "Give the page an address.",
+    "slugShape": "Use lowercase letters, numbers and hyphens.",
+    "wordsTitle": "What it says",
+    "wordsDesc": "The first thing a visitor reads.",
+    "headlineLabel": "Headline",
+    "headlineDesc": "Left blank, the venue's name stands in.",
+    "introLabel": "Introduction",
+    "introDesc": "A paragraph about the place. Keep it to what somebody deciding whether to come needs.",
+    "accentLabel": "Colour",
+    "accentDesc": "One accent for the page. It paints a wash and a rule, never the words.",
+    "contactTitle": "Contact",
+    "contactDesc": "Shown on the page so a visitor can reach you.",
+    "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "whatsOnTitle": "What's on the page",
+    "whatsOnAll": "Everything sold online at this venue, in catalogue order. Turn one off to choose for yourself — and after that, a new booking will not appear here until you say so.",
+    "whatsOnChosen": "Your own list, in your own order. A booking added to the catalogue will not appear until you switch it on.",
+    "nothingSellable": "Nothing at this venue is sold online yet.",
+    "showSwitch": "Show {name} on the page",
+    "moveUp": "Move {name} up",
+    "moveDown": "Move {name} down",
+    "showingCount": "{count, plural, =0 {Nothing will show} one {# booking will show} other {# bookings will show}}"
   }
 }

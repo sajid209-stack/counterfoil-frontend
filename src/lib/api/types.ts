@@ -196,6 +196,11 @@ export interface PriceTier {
   maxPerOrder?: number; // tier cap; must be ≤ Product.maxPerOrder if both set
   admits?: number; // how many people this ticket admits (default 1; Family = 4)
   ageNote?: string; // e.g. "5–12" — printed on the ticket
+  /** What this ticket includes, in the operator's words. A till row has no
+   *  space for it and does not need it — the cashier knows — but a storefront
+   *  page is read by somebody choosing between General, Regular and VIP, and
+   *  three prices with no difference stated is not a choice. */
+  note?: string;
   donation?: boolean; // pay-what-you-want: the buyer/staff enters the amount (≥ price)
   active: boolean;
 }
@@ -378,6 +383,52 @@ export interface Location {
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
+
+// ── storefront.v1 ──────────────────────────────────────────────────────────
+/**
+ * A location's public page.
+ *
+ * One per location rather than one per business, because that is how a visitor
+ * arrives: they are going to Lalbagh Fort, not to an operator. The bookings on
+ * it, the address, the hours and the words are all that venue's.
+ *
+ * It **publishes**; it does not sell. Online checkout is deferred by design in
+ * this project (see the Phase-8 note), so the page states what is on, what it
+ * costs and where it is bought. Wiring a basket to it is a money-path change,
+ * not a page change, and the contract is shaped so it can be added without
+ * moving anything here.
+ */
+export interface StorefrontLink {
+  id: ID;
+  label: string;
+  url: string;
+}
+
+export interface Storefront {
+  id: ID; // "sf_<locationId>"
+  locationId: ID;
+  /** The public path segment: /s/<slug>. Unique across the business. */
+  slug: string;
+  /** Off until somebody decides the page is ready; the route 404s while off. */
+  published: boolean;
+  headline?: string;
+  intro?: string;
+  /** Which bookings appear, in this order. Empty means every booking sold
+   *  online at this location, which is the sensible default and the one an
+   *  operator who never opens this screen gets. */
+  featured: ID[];
+  contactPhone?: string;
+  contactEmail?: string;
+  links: StorefrontLink[];
+  /** The one colour the page is painted in, from the five the calendar's
+   *  category palette already validated — so a storefront cannot be given a
+   *  hue that fails its own contrast checks. */
+  accent?: CategoryColor | null;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+export type StorefrontInput = Omit<Storefront, "id" | "createdAt" | "updatedAt">;
+export type StorefrontPatch = Partial<StorefrontInput>;
 
 // ── Counter ────────────────────────────────────────────────────────────────
 export type PaymentMethod =

@@ -9515,3 +9515,123 @@ search reopens it — `r4` is back to **31/31**.
 - The stats band is 84px of every calendar phone screen. It is four real
   figures and it stays; if it should fold, that is an owner decision rather
   than a measurement.
+
+## The storefront — a public page per venue (2026-09-21)
+
+Owner's review: *"Each location features a customizable storefront landing page
+and product pages. Product variants support general, regular, and VIP ticket
+configurations."* `/storefront` was a **404**: the surface did not exist, and
+"storefront + API keys" has sat on this log's not-started list since Milestone 2.
+
+### It publishes; it does not sell — and that is a decision, not an omission
+
+Online checkout is deferred by design in this project, and has been since
+Phase 8. A page with a basket on it would be promising a flow that is not
+built, and a dead **Buy** button is worse than a sentence. So the page answers
+the three questions somebody has *before they set out* — what is on, what it
+costs, and when you are open — and then says where it is bought.
+
+The contract is shaped so a basket can be added without moving any of this.
+**If online selling is wanted, say so and it becomes the money-path change it
+actually is** rather than a page change.
+
+### One page per venue, not per business
+
+That is how a visitor arrives: they are going to Lalbagh Fort, not to an
+operator. `/s/<slug>` is the venue; `/s/<slug>/<booking>` is one booking on it.
+
+- **The record is minted on first read**, not at seed time, so a venue created
+  this morning has a page and nothing has to remember to make one alongside it.
+- **A slug is checked for collisions** across the business and refused in words.
+- **Product addresses are derived, not stored.** `Product` has no slug on the
+  contract; minting one from a deterministic order means a booking keeps the
+  same URL without a contract change and without a backfill.
+- **An unpublished address and a made-up one look identical.** A draft must not
+  be findable by guessing, and "not published yet" tells a guesser they are
+  close.
+- **Publishing refuses a page with nothing on it.** A live address showing an
+  empty venue is worse than an address that is not live.
+
+### What appears on it, and the trap in that question
+
+An empty `featured` list is not an empty page: it means **everything sold
+online at this venue, in catalogue order**, which is what an operator who never
+opens the editor gets and is almost always right.
+
+The moment they turn one booking off it becomes **an explicit list with an
+order** — and from then on a booking added to the catalogue will *not* appear
+until somebody says so. That is a real change in behaviour hiding inside a
+switch, so the section says which mode it is in, in words, and turning the
+first one off starts from what is on the page now rather than silently dropping
+everything else.
+
+Either way the page only ever shows what the till would actually sell: active,
+online, at this venue. The seed proved the guard by accident — the fort's
+featured list named the planetarium, which is at the museum and counter-only,
+and the page correctly refused to advertise it. (The seed was corrected too; a
+fixture should not need the guard.)
+
+### The variants
+
+`PriceTier` gained **`note`** — what a ticket includes, in the operator's own
+words. A till row has no space for it and does not need it, because the cashier
+knows; a storefront is read by somebody choosing between three prices, and
+three numbers with no difference stated is not a choice.
+
+Each variant is a card: its name, its price, who it is for (`ageNote`), how
+many people it admits, and what it includes. **General, Regular and VIP is
+exactly this shape** — what they are called is the operator's to type, because
+the tier names are theirs. Nothing was renamed in the seed to demonstrate it:
+tier names are snapshotted onto every order line at sale time, and renaming one
+would move the fixture's history.
+
+### The accent, and what it is allowed to touch
+
+A venue picks one colour from **the five the calendar's categories already
+use**, so a storefront cannot be given a hue that failed the palette checks.
+
+It paints a wash and a rule and **never a letterform** — which the build
+confirmed the hard way: the accent on its own 12% wash measured **3.4:1** on
+the line stating today's hours. That is the rule this product has now paid for
+three times. Links take `brand-foreground`, which exists for exactly this, and
+the eyebrow over the headline takes a dimmed inherit rather than `muted`, which
+is tuned against the card and came to 4.34:1 on a wash — the same fault the
+check-in screen's amber panel had.
+
+### Verified
+
+- **59 checks driving it**, all passing. The venue page leads with the venue's
+  own words, says whether it is open, prices from the cheapest tier and gives
+  the week; it carries **no rail and no account menu**, because a visitor has
+  no operator furniture; and it advertises neither another venue's booking nor
+  a counter-only one. A card opens its booking, whose variants list Adult,
+  Child, Senior and Family with **what each includes**, "Admits 4" on the
+  family ticket and its age note — and there is **no Buy button**, asserted
+  rather than assumed. A made-up address and an unpublished venue are both
+  refused and **neither gives anything away**. In the editor: every venue is
+  listed, a draft is marked, publishing an empty page is refused in words, a
+  bad slug is refused and blocks the save, and turning one booking off drops
+  exactly one and flips the section to "your own list".
+- Contrast, the 12px floor, nothing clipped and no page x-scroll on both public
+  pages at 390, 1280, dark and Bangla, with no console errors or missing
+  messages.
+- The new routes audit at **0** after one real fix: the venue link and the back
+  link were 23px and 28px tall on a phone, and the inline-link exemption is for
+  links inside prose, which those are not. They are 44px targets below `sm`.
+- The standing 32-route audit is unchanged at its documented **70**. `tsc` and
+  `eslint` clean; i18n parity **0 missing / 0 extra** across **32** namespaces,
+  with a new `storefront` namespace authored in en and bn.
+
+### Open
+
+- **No online checkout**, as above — the decision worth confirming.
+- **No cover photography.** The venue page leads with words and the booking
+  cards use the catalogue's own images, which for most seeded bookings is the
+  per-type glyph. That is deliberate while the images are what they are (this
+  log records why four seed photographs were deleted), but a real storefront
+  wants a hero image per venue, and `Storefront` is the record to hang it on.
+- **`getStorefrontFor` mints on read**, so two concurrent first reads for one
+  venue could mint two records. The list page is sequential for that reason;
+  a backend would upsert and the question disappears.
+- The page is not indexed or shared anywhere — no metadata, no sitemap, no
+  open-graph. Those belong with a real domain, which is a deployment decision.

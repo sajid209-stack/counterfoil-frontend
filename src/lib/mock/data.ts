@@ -30,6 +30,7 @@ import type {
   SeatLayout,
   Staff,
   TaxConfig,
+  Storefront,
 } from "@/lib/api/types";
 import { generateSales } from "./generate";
 import { demoDay } from "@/lib/schedule";
@@ -223,10 +224,10 @@ export const products: Product[] = [
     categoryId: "cat_entry",
     bookingType: "BT-01",
     tiers: [
-      { id: "tier_adult", name: "Adult", price: 50000, admits: 1, active: true },
-      { id: "tier_child", name: "Child", price: 30000, maxPerOrder: 6, admits: 1, ageNote: "5–12", active: true },
-      { id: "tier_senior", name: "Senior", price: 40000, admits: 1, active: true },
-      { id: "tier_family", name: "Family", price: 140000, admits: 4, ageNote: "2 adults + 2 children", active: true },
+      { id: "tier_adult", name: "Adult", price: 50000, admits: 1, note: "Entry to the grounds and the museum, any time we are open.", active: true },
+      { id: "tier_child", name: "Child", price: 30000, maxPerOrder: 6, admits: 1, ageNote: "5–12", note: "Same entry, and under-fives come in free with an adult.", active: true },
+      { id: "tier_senior", name: "Senior", price: 40000, admits: 1, note: "Same entry. Bring something with your date of birth on it.", active: true },
+      { id: "tier_family", name: "Family", price: 140000, admits: 4, ageNote: "2 adults + 2 children", note: "Four people on one ticket — the cheapest way in for a family.", active: true },
     ],
     locationIds: ["loc_fort"],
     channels: ["counter", "online"],
@@ -1207,6 +1208,50 @@ const guidedBookings = [
   },
 ];
 export const bookings = [...sales.bookings, ...turfBookings, ...guidedBookings];
+
+/**
+ * Public pages, one per venue.
+ *
+ * Two are published and one is not, deliberately: Baldha Garden is an inactive
+ * location, and a venue that is not selling should not have a live address.
+ * Its record is minted on demand the first time anybody opens its editor.
+ */
+export const storefronts: Storefront[] = [
+  {
+    id: "sf_loc_fort",
+    locationId: "loc_fort",
+    slug: "lalbagh-fort",
+    published: true,
+    headline: "Four hundred years of Dhaka, open most days",
+    intro:
+      "An unfinished Mughal fort in the middle of the old city: a garden, a hammam, a mosque and the tomb of Pari Bibi. Come for an hour or spend the afternoon — the grounds, the courts and the lanes are all booked from here.",
+    featured: ["prd_admission", "prd_tour", "prd_futsal", "prd_bowling", "prd_yoga"],
+    contactPhone: "+8801711000000",
+    contactEmail: "visit@lalbagh.example",
+    links: [
+      { id: "sfl_map", label: "Find us on the map", url: "https://maps.google.com/?q=Lalbagh+Fort+Dhaka" },
+      { id: "sfl_access", label: "Getting here and access", url: "https://example.com/lalbagh/access" },
+    ],
+    accent: "orange",
+    createdAt: T,
+    updatedAt: T,
+  },
+  {
+    id: "sf_loc_museum",
+    locationId: "loc_museum",
+    slug: "ahsan-manzil",
+    published: true,
+    headline: "The Pink Palace, on the river",
+    intro:
+      "The Nawab of Dhaka's riverside residence, restored and open at weekends. Twenty-three rooms, a domed hall, and an evening film in the courtyard.",
+    featured: [],
+    contactEmail: "ahsanmanzil@lalbagh.example",
+    links: [],
+    accent: "rose",
+    createdAt: T,
+    updatedAt: T,
+  },
+];
 
 /** Event fixtures live in their own file — see the note there. */
 export { events } from "./events";

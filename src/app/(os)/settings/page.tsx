@@ -22,6 +22,7 @@ import {
   listResources,
   listRoles,
   listStaff,
+  listStorefronts,
 } from "@/lib/api";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { isDeviceQuiet } from "@/lib/devices";
@@ -86,6 +87,7 @@ export default function SettingsIndex() {
   const ctrQ = useApiQuery(() => listCounters({ pageSize: 500 }), []);
   const resQ = useApiQuery(() => listResources({ pageSize: 500 }), []);
   const catQ = useApiQuery(() => listCategories({ pageSize: 500 }), []);
+  const sfQ = useApiQuery(() => listStorefronts({ pageSize: 200 }), []);
   const payQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
   const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
   const roleQ = useApiQuery(() => listRoles({ pageSize: 500 }), []);
@@ -102,6 +104,8 @@ export default function SettingsIndex() {
   const resources = resQ.data?.data.filter((r) => r.status === "active");
   const outOfService = resources?.filter((r) => r.outOfService).length ?? 0;
   const categories = catQ.data?.data.filter((c) => c.active);
+  const sheets = sfQ.data?.data;
+  const livePages = sheets?.filter((x) => x.published).length ?? 0;
   const live = payQ.data?.data.filter((a) => a.status === "active").map((a) => tm(`provider.${a.provider}`));
   const staff = staffQ.data?.data;
   const members = staff?.filter((s) => s.status === "active").length ?? 0;
@@ -135,6 +139,12 @@ export default function SettingsIndex() {
       tone: outOfService > 0 ? "warn" : undefined,
     },
     categories: categories && { text: t("hub.statusCategories", { count: categories.length }) },
+    // How many venues have a live page, and the exception when none do — a
+    // business with every page still in draft is the case worth surfacing.
+    storefront: sheets && {
+      text: livePages > 0 ? t("hub.statusStorefront", { count: livePages }) : t("hub.statusStorefrontNone"),
+      tone: livePages > 0 ? undefined : "warn",
+    },
     payments: live && {
       text: live.length ? t("hub.statusLive", { providers: live.join(", ") }) : t("hub.statusCashOnly"),
       tone: live.length ? undefined : "warn",
