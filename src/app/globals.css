@@ -163,13 +163,29 @@
   --spacing-comfortable: 12px;
   --spacing-section: 16px;
   --spacing-major: 24px;
-  /* The gutter between dashboard regions. Measured off the Aura reference
-     (counterfoilos.lovable.app): 24px between the stat tiles, 32px between the
-     two body columns and between stacked cards. 24 is the inside of a group,
-     32 is the space between groups — the step is what makes the page read as
-     regions rather than one undifferentiated stack. */
   --spacing-wide: 32px;
   --spacing-hero: 48px;
+
+  /* ── Card rhythm ─────────────────────────────────────────────────────
+     One padding inside every card, one gap between cards, one page edge.
+     Cards had drifted to five paddings — 12, 16, 24, 16×24 and 24×16 — so
+     two cards side by side started their text at different insets, and they
+     sat 24 or 32px apart, which the owner found too loose.
+       card     inside every card frame: 20px, 16 on a phone (below). Rows
+                in an edge-to-edge card — a settings section, a record list,
+                a table's outer cells — are inset by the same amount, so a
+                row's text lines up with the heading above it.
+       gutter   page edge to the cards: 20px, 16 on a phone.
+       between  cards: `section`, 16px, at every width. A group that carries
+                its own heading sits `major` (24) from the next group, with
+                the heading `tight` (8) above its card — closer to the card
+                it names than to the one before.
+       nested   a framed item inside a card (a notice, a choice tile, a
+                setup step): `comfortable`, 12px, less than its parent.
+     The same shape Shopify Polaris uses: a card pads 16px on a phone and
+     20px from sm up, and layout sections sit 16px apart. */
+  --spacing-card: 20px;
+  --spacing-gutter: 20px;
 
   /* ── Radii — ONLY these four exist in the entire system ────────────────
      sm/md/lg read straight off the Aura reference's own scale (measured from
@@ -223,6 +239,33 @@
   --glass-nav: 68%;          /* navigation at rest       */
   --glass-nav-scrolled: 78%; /* once content passes under */
   --glass-overlay: 82%;      /* menus, sheets, dialogs    */
+}
+
+/* Phones: the card padding and the page edge both drop to 16px. Unlayered on
+   purpose — the @theme values are emitted into the theme layer, and a rule in
+   no layer outranks it, so every p-card and px-gutter follows without a sm:
+   variant at each call site. 40rem is Tailwind's sm. */
+@media (width < 40rem) {
+  :root {
+    --spacing-card: 16px;
+    --spacing-gutter: 16px;
+  }
+}
+
+/* A table inside a card: its first and last cells are inset by the card's
+   padding, so the table's edges line up with the card heading above it. The
+   cells between keep their own tighter padding — that is what lets a
+   nine-column ledger fit. Both the physical and the logical property, so it
+   wins whichever one a cell's own px- utility set. */
+@utility table-inset {
+  & :is(th, td):first-child {
+    padding-left: var(--spacing-card);
+    padding-inline-start: var(--spacing-card);
+  }
+  & :is(th, td):last-child {
+    padding-right: var(--spacing-card);
+    padding-inline-end: var(--spacing-card);
+  }
 }
 
 @layer base {

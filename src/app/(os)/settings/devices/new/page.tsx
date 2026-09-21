@@ -55,7 +55,7 @@ export default function RegisterDevicePage() {
     return (
       <PageShell title={t("devices.pairTitle", { name: created.name })} description={t("devices.pairDesc")}>
         <div className="flex max-w-3xl flex-col gap-section pb-hero">
-          <section aria-label={t("devices.codeLabel")} className="card-surface px-major py-major">
+          <section aria-label={t("devices.codeLabel")} className="card-surface p-card">
             <p className="text-[13px] font-medium text-muted">{t("devices.codeLabel")}</p>
             <p className="mt-tight select-all font-mono text-[40px] font-medium leading-none tracking-[0.12em] text-fg">
               {created.pairingCode}

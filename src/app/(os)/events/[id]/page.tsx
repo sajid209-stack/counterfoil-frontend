@@ -60,7 +60,7 @@ export default function EventDetailPage() {
 
         {e && (
           <div className="card-surface overflow-hidden">
-            <div className="flex items-center justify-between gap-tight border-b border-line px-major py-comfortable">
+            <div className="flex items-center justify-between gap-tight border-b border-line px-card py-comfortable">
               <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("customise.preview")}</h2>
               <div className="flex shrink-0 items-center gap-inline">
                 {([["desktop", Monitor], ["mobile", Smartphone]] as const).map(([d, Icon]) => (
@@ -80,7 +80,7 @@ export default function EventDetailPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-subtle p-comfortable">
+            <div className="bg-subtle p-card">
               <div className="mx-auto overflow-hidden rounded-sm shadow-md" style={{ maxWidth: width }}>
                 <PreviewFrame width={width}>
                   <EventTemplate event={e} device={device} labels={labels} now={now} />

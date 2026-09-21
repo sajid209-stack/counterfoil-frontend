@@ -56,7 +56,7 @@ export function SettingsSection({
     <section aria-labelledby={id} className="card-surface overflow-hidden">
       {/* The aside drops under the heading on a phone: beside it, a button
           squeezed "Recent sign-ins" into a column three words wide. */}
-      <header className="flex flex-col gap-section px-major pb-section pt-major sm:flex-row sm:items-start sm:justify-between">
+      <header className="flex flex-col gap-section px-card pb-section pt-card sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 id={id} className="text-base font-semibold text-fg">
             {title}
@@ -105,7 +105,7 @@ export function SettingRow({
   return (
     <div
       className={cn(
-        "grid gap-tight px-major py-section",
+        "grid gap-tight px-card py-section",
         inline && "sm:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] sm:items-start sm:gap-major",
       )}
     >
@@ -320,7 +320,7 @@ export function RecordFacts({
   facts: { key: string; label: string; value: React.ReactNode; tone?: "warn" }[];
 }) {
   return (
-    <dl aria-label={label} className="card-surface grid grid-cols-1 gap-x-major gap-y-section p-section sm:grid-cols-2 sm:p-major">
+    <dl aria-label={label} className="card-surface grid grid-cols-1 gap-x-major gap-y-section p-card sm:grid-cols-2">
       {facts.map((f) => (
         <div key={f.key} className="min-w-0">
           <dt className="type-label text-[12px] text-muted">{f.label}</dt>
@@ -398,8 +398,10 @@ export function RecordRow({
       <Link
         href={href}
         className={cn(
-          "flex min-h-16 items-center gap-section px-section py-comfortable transition-colors duration-quick hover:bg-subtle/60 sm:px-major",
-          trailing === 2 ? "pr-[7.75rem] sm:pr-[8.25rem]" : trailing === 1 ? "pr-[4.5rem] sm:pr-[5rem]" : undefined,
+          "flex min-h-16 items-center gap-section px-card py-comfortable transition-colors duration-quick hover:bg-subtle/60",
+          // Room for the trailing controls: the card inset they sit at, plus
+          // their width — 108px for a switch and a menu, 56 for one.
+          trailing === 2 ? "pr-[calc(var(--spacing-card)_+_6.75rem)]" : trailing === 1 ? "pr-[calc(var(--spacing-card)_+_3.5rem)]" : undefined,
         )}
       >
         {leading}
@@ -420,7 +422,7 @@ export function RecordRow({
           z-index inside this box — so every later row, painted after it, drew
           its text and its own "···" straight through the menu. */}
       {trailing > 0 ? (
-        <div className="absolute inset-y-0 right-section flex items-center gap-tight sm:right-major">
+        <div className="absolute inset-y-0 right-card flex items-center gap-tight">
           {control}
           {menu}
         </div>
@@ -506,7 +508,7 @@ export function SectionSkeleton() {
   return (
     <div aria-busy="true" className="flex max-w-3xl flex-col gap-section">
       {[0, 1].map((i) => (
-        <div key={i} className="card-surface animate-pulse p-major">
+        <div key={i} className="card-surface animate-pulse p-card">
           <div className="h-4 w-40 rounded-xs bg-line" />
           <div className="mt-inline h-3 w-72 max-w-full rounded-xs bg-line/70" />
           <div className="mt-major h-11 rounded-sm bg-line/50" />

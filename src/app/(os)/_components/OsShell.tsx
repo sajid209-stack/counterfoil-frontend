@@ -199,7 +199,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             a preference nobody changes twice. The mark stays because it is
             24px and it is the only brand anchor on a phone; the name beside
             it is what the bar is for. */}
-        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-30 flex items-center gap-tight px-section py-inline md:hidden">
+        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-30 flex items-center gap-tight px-gutter py-inline md:hidden">
           <LogoMark size={24} className="shrink-0" />
           {/* A <p>, not a heading. The bar names the destination; the page's
               own <h1> renders in the content below it on a phone, and a
@@ -229,7 +229,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             the single-word breadcrumb gone the title is one line beside 44px
             controls, and top-aligning them left the title riding 5px high of
             the buttons it shares the bar with. */}
-        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-20 hidden items-center justify-between gap-major px-major py-tight md:flex">
+        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-20 hidden items-center justify-between gap-major px-gutter py-tight md:flex">
           <div id="os-page-header" className="min-w-0 flex-1" />
           {/* One right-aligned row: the page's own actions, then the account.
               It was two rows because the chrome alone needed ~846px of a

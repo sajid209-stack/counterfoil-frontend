@@ -168,7 +168,7 @@ export function RoleEditor({
                   )}
                 </SettingRow>
                 {losingOwn && (
-                  <p role="note" className="flex items-start gap-tight bg-warning-wash px-major py-tight text-[13px] text-fg">
+                  <p role="note" className="flex items-start gap-tight bg-warning-wash px-card py-tight text-[13px] text-fg">
                     <CircleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
                     {t("roles.selfWarning")}
                   </p>

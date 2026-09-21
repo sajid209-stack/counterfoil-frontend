@@ -113,7 +113,7 @@ export default function CountersPage() {
           {visible.length === 0 ? (
             <p className="py-section text-sm text-muted">{t("counters.emptyTab")}</p>
           ) : (
-            <div className="flex flex-col gap-wide">
+            <div className="flex flex-col gap-major">
               {places.map((l) => {
                 const here = visible.filter((c) => c.locationId === l.id).sort((a, b) => a.name.localeCompare(b.name));
                 if (here.length === 0) return null;

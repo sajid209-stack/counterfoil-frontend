@@ -6,7 +6,7 @@ export default function InviteAcceptPage() {
   const params = useParams<{ token: string }>();
 
   return (
-    <div className="card-surface p-major">
+    <div className="card-surface p-card">
       <p className="type-label text-[13px] text-brand-foreground">Counterfoil</p>
       <h1 className="type-h1 mt-inline text-2xl">Accept invitation</h1>
       <p className="type-body mt-tight text-[13px] text-muted">

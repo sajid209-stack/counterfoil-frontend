@@ -194,7 +194,7 @@ export function EventArchitect({
     <div className="grid gap-section xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)] xl:items-start">
       {/* ── The architect ──────────────────────────────────────────────── */}
       <div className="card-surface overflow-hidden">
-        <div className="border-b border-line px-major py-comfortable">
+        <div className="border-b border-line px-card py-comfortable">
           <p className="type-label text-[12px] text-muted">{t("architect.title")}</p>
           <p className="mt-inline text-base font-semibold tracking-[-0.4px]">{t(`category.${cat.key}`)}</p>
         </div>
@@ -591,7 +591,7 @@ export function EventArchitect({
 
       {/* ── Live preview ───────────────────────────────────────────────── */}
       <div className="card-surface overflow-hidden xl:sticky xl:top-comfortable">
-        <div className="flex items-center justify-between gap-tight border-b border-line px-major py-comfortable">
+        <div className="flex items-center justify-between gap-tight border-b border-line px-card py-comfortable">
           <h3 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("customise.preview")}</h3>
           <div className="flex shrink-0 items-center gap-inline">
             {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as const).map(([d, Icon]) => (
@@ -611,7 +611,7 @@ export function EventArchitect({
             ))}
           </div>
         </div>
-        <div className="max-h-[74vh] overflow-y-auto bg-subtle p-comfortable">
+        <div className="max-h-[74vh] overflow-y-auto bg-subtle p-card">
           <div className={cn("mx-auto overflow-hidden rounded-sm shadow-md", templateFontVars)} style={{ maxWidth: FRAME[device] }}>
             <PreviewFrame width={FRAME[device]}>
               <EventTemplate event={event} device={device === "mobile" ? "mobile" : "desktop"} labels={labels} now={now} />
@@ -644,12 +644,12 @@ function Row({
 }) {
   return (
     <div className="border-b border-line last:border-0">
-      <div className="flex items-center gap-inline pr-comfortable">
+      <div className="flex items-center gap-inline pr-card">
         <button
           type="button"
           onClick={onToggle}
           aria-expanded={open}
-          className="flex min-h-11 min-w-0 flex-1 items-center gap-comfortable px-major py-comfortable text-left transition-colors duration-quick hover:bg-subtle"
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick hover:bg-subtle"
         >
           <Icon size={16} strokeWidth={1.5} className={cn("shrink-0", muted ? "text-muted/60" : "text-brand-foreground")} />
           <span className={cn("type-label min-w-0 flex-1 truncate text-[12px]", muted ? "text-muted/60" : "text-fg")}>{label}</span>
@@ -657,7 +657,7 @@ function Row({
         </button>
         {controls && <span className="flex shrink-0 items-center">{controls}</span>}
       </div>
-      {open && <div className="flex flex-col gap-section bg-subtle/40 px-major pb-major pt-tight">{children}</div>}
+      {open && <div className="flex flex-col gap-section bg-subtle/40 px-card pb-card pt-tight">{children}</div>}
     </div>
   );
 }

@@ -145,7 +145,7 @@ interface Stat {
 
 function StatRow({ stat }: { stat: Stat }) {
   return (
-    <div className="flex items-start gap-comfortable border-b border-hairline px-section py-comfortable last:border-b-0">
+    <div className="flex items-start gap-comfortable border-b border-hairline px-card py-comfortable last:border-b-0">
       <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground">{stat.icon}</span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-tight">
@@ -182,7 +182,7 @@ function StatCard({ stat }: { stat: Stat }) {
      24. Nothing was dropped: every tile still carries its icon, label,
      figure, context and, where there is one, its delta. */
   return (
-    <div className="card-surface flex flex-col px-major py-section">
+    <div className="card-surface flex flex-col p-card">
       <div className="flex items-center gap-tight">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground [&>svg]:h-4 [&>svg]:w-4">{stat.icon}</span>
         <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-muted">{stat.label}</p>
@@ -703,13 +703,13 @@ export default function DashboardPage() {
       }
     >
       {loading ? (
-        <div className="grid grid-cols-1 gap-major min-[420px]:grid-cols-2 xl:grid-cols-4" aria-busy="true">
+        <div className="grid grid-cols-1 gap-section min-[420px]:grid-cols-2 xl:grid-cols-4" aria-busy="true">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className={`${card} animate-pulse p-section`}><div className="h-3 w-1/2 rounded-xs bg-line" /><div className="mt-tight h-8 w-2/3 rounded-xs bg-line" /></div>
+            <div key={i} className={`${card} animate-pulse p-card`}><div className="h-3 w-1/2 rounded-xs bg-line" /><div className="mt-tight h-8 w-2/3 rounded-xs bg-line" /></div>
           ))}
         </div>
       ) : !allDone ? (
-        <div className={`${card} mb-major p-major`}>
+        <div className={`${card} mb-section p-card`}>
           <div className="mb-section flex items-center justify-between">
             <h2 className="type-h2 text-base">{t("finishSetup")}</h2>
             <span className="text-[12px] text-muted">{t("stepProgress", { complete, total: steps.length })}</span>
@@ -745,7 +745,7 @@ export default function DashboardPage() {
           <div className={`${card} overflow-hidden sm:hidden`}>
             {stats.map((st) => <StatRow key={st.key} stat={st} />)}
           </div>
-          <div className="hidden gap-major sm:grid sm:grid-cols-2 xl:grid-cols-4">
+          <div className="hidden gap-section sm:grid sm:grid-cols-2 xl:grid-cols-4">
             {stats.map((st) => <StatCard key={st.key} stat={st} />)}
           </div>
         </>
@@ -753,12 +753,14 @@ export default function DashboardPage() {
 
       {!loading && (
         <>
-        <div className="mt-wide grid gap-wide lg:grid-cols-3">
+        {/* 16px between every card, down from 32 between the body cards and
+            24 between the tiles — one gap, the same as every other page. */}
+        <div className="mt-section grid gap-section lg:grid-cols-3">
           {/* Left ⅔ — the trend, then the operational strip, then the ranked
               list. The reference's left column reads big picture → today's
               state → detail, top to bottom. */}
-          <div className="flex min-w-0 flex-col gap-wide lg:col-span-2">
-            <div className={`${card} p-major`}>
+          <div className="flex min-w-0 flex-col gap-section lg:col-span-2">
+            <div className={`${card} p-card`}>
               <div className="flex flex-wrap items-start justify-between gap-tight">
                 <div className="min-w-0">
                   {/* A real heading, as every other card on the page now has —
@@ -833,7 +835,7 @@ export default function DashboardPage() {
                 Payment mix, Idle capacity — but at two-thirds width they get
                 room to be read side by side, and the rail is freed for the two
                 panels a manager dwells on. Nothing was dropped to achieve it. */}
-            <div className={`${card} p-major`}>
+            <div className={`${card} p-card`}>
               <div className="mb-section flex items-baseline justify-between gap-tight">
                 {/* No scope chip. The reference carries "Today" because all four
                     of its readings are today's; ours are not — a shift is open
@@ -886,7 +888,7 @@ export default function DashboardPage() {
                 })}
               </div>
             </div>
-            <div className={`${card} p-major`}>
+            <div className={`${card} p-card`}>
               <div className="mb-comfortable flex items-baseline justify-between gap-tight">
                 <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("topProducts")}</h2>
                 <button type="button" onClick={() => router.push("/reports/sales")} className="-my-tight flex min-h-11 shrink-0 items-center whitespace-nowrap px-tight text-[12px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-0 sm:px-0">{t("viewAll")}</button>
@@ -930,8 +932,8 @@ export default function DashboardPage() {
               needs a decision, and what just happened. Five stacked cards
               made the rail a dumping ground, and nothing in it read as
               important because everything was the same size. */}
-          <div className="flex min-w-0 flex-col gap-wide">
-            <div className={`${card} p-major`}>
+          <div className="flex min-w-0 flex-col gap-section">
+            <div className={`${card} p-card`}>
               {/* Title and count, no leading icon. Every notice already carries
                   its own glyph, so a second one on the header was a decoration
                   competing with the ones that mean something — and it left this
@@ -1007,7 +1009,7 @@ export default function DashboardPage() {
                   Notices are the two panels a manager actually reads, so they
                   get a heading rather than a small-caps field label. The filter
                   sits on the heading row, where the reference puts it. */}
-              <div className="flex items-baseline justify-between gap-tight px-major pb-tight pt-major">
+              <div className="flex items-baseline justify-between gap-tight px-card pb-tight pt-card">
                 <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("liveActivity")}</h2>
                 {/* A native select, not a bespoke popover: it is one control,
                     it names the active filter instead of hiding it behind the
@@ -1045,11 +1047,11 @@ export default function DashboardPage() {
                   from the wording, and it is never the only carrier: the glyph
                   differs per kind and the title says which event it was. */}
               {activity.length === 0 ? (
-                <p className="px-major pb-comfortable text-[13px] text-muted">{t("noActivity")}</p>
+                <p className="px-card pb-comfortable text-[13px] text-muted">{t("noActivity")}</p>
               ) : activity.map((a) => {
                 const badge = ACTIVITY_BADGE[a.kind];
                 return (
-                  <div key={a.id} className="flex items-start gap-section px-major py-comfortable">
+                  <div key={a.id} className="flex items-start gap-section px-card py-comfortable">
                     <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-sm border border-line bg-card ${badge.className}`}>
                       <badge.Icon size={15} strokeWidth={1.5} />
                     </span>
@@ -1070,7 +1072,7 @@ export default function DashboardPage() {
                   button. Where it goes follows the filter, because that is the
                   page the rows on screen actually came from — sending someone
                   looking at customer events to Orders would be a dead end. */}
-              <div className="px-major pb-major pt-tight">
+              <div className="px-card pb-card pt-tight">
                 <button
                   type="button"
                   onClick={() => router.push(activityFilter === "customers" ? "/customers" : "/orders")}
@@ -1091,9 +1093,9 @@ export default function DashboardPage() {
             rows are a keyboard tab stop with Enter/Space, the phone gets a
             purpose-built card rather than five labelled pairs, and the empty
             state says which window it is empty for. */}
-        <div className="mt-wide">
+        <div className="mt-section">
           <div className={card}>
-            <div className="flex items-baseline justify-between gap-tight border-b border-line px-major py-comfortable">
+            <div className="flex items-baseline justify-between gap-tight border-b border-line px-card py-comfortable">
               <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("recentOrders")}</h2>
               {/* The count is the scope's, not the eight rows' — otherwise the
                   header would describe the slice rather than the day. */}
@@ -1103,7 +1105,7 @@ export default function DashboardPage() {
             </div>
 
             {scopeOrders.length === 0 ? (
-              <p className="px-section py-major text-[13px] text-muted">
+              <p className="px-card py-major text-[13px] text-muted">
                 {scope === "today" ? t("noOrdersToday") : t("noOrdersThisWeek")}
               </p>
             ) : (
@@ -1119,7 +1121,7 @@ export default function DashboardPage() {
                     and the reason a wide table here gets the same
                     scroll-inside-the-card treatment the reports tables have. */}
                 <div className="scroll-x-hint hidden min-w-0 overflow-x-auto md:block">
-                <table className="w-full min-w-[640px]">
+                <table className="table-inset w-full min-w-[640px]">
                   <thead>
                     <tr className="border-b border-line text-left">
                       <th scope="col" className="type-label px-major py-tight text-[12px] font-medium text-muted">{to("colDate")}</th>
@@ -1187,7 +1189,7 @@ export default function DashboardPage() {
                         key={o.id}
                         type="button"
                         onClick={() => router.push("/orders/" + o.id)}
-                        className="flex w-full flex-col gap-inline border-b border-line px-section py-comfortable text-left last:border-0 active:bg-subtle"
+                        className="flex w-full flex-col gap-inline border-b border-line px-card py-comfortable text-left last:border-0 active:bg-subtle"
                       >
                         <span className="flex items-baseline justify-between gap-tight">
                           <span className="min-w-0 truncate font-mono text-[13px]">{o.reference}</span>
@@ -1216,7 +1218,7 @@ export default function DashboardPage() {
               type="button"
               data-type-role="button"
               onClick={() => router.push("/orders")}
-              className="flex min-h-11 w-full items-center gap-tight border-t border-line px-section text-left text-[13px] font-medium text-muted hover:text-ember"
+              className="flex min-h-11 w-full items-center gap-tight border-t border-line px-card text-left text-[13px] font-medium text-muted hover:text-ember"
             >
               <span className="min-w-0 flex-1 truncate">
                 {/* The footer states what the eight rows do NOT: how many are

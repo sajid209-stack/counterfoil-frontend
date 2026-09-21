@@ -482,7 +482,7 @@ function DuplicatesModal({
       }
     >
       {dupQ.loading && (
-        <div className="flex flex-col gap-tight">
+        <div className="flex flex-col gap-section">
           {[0, 1].map((i) => (
             <div key={i} className="h-20 animate-pulse rounded-sm bg-subtle" />
           ))}
@@ -491,9 +491,9 @@ function DuplicatesModal({
       {!dupQ.loading && pairs.length === 0 && (
         <EmptyState title={t("dupNoneTitle")} message={t("dupNoneMessage")} />
       )}
-      <div className="flex flex-col gap-tight">
+      <div className="flex flex-col gap-section">
         {pairs.map((p) => (
-          <div key={`${p.a.id}|${p.b.id}`} className="card-surface p-comfortable">
+          <div key={`${p.a.id}|${p.b.id}`} className="card-surface p-card">
             <div className="mb-tight flex items-center gap-tight">
               <StatusPill tone={p.confidence === "high" ? "warning" : "neutral"}>
                 {t(p.on === "phone" ? "dupOnPhone" : p.on === "email" ? "dupOnEmail" : "dupOnName")}

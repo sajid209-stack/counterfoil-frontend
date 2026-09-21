@@ -89,9 +89,9 @@ export default function SeatLayoutEditorPage() {
         <ArrowLeft size={14} strokeWidth={1.5} /> {t("editor.backToList")}
       </button>
 
-      <div className="flex flex-col gap-major">
+      <div className="flex flex-col gap-section">
         {/* Meta */}
-        <div className="grid gap-section card-surface p-major sm:grid-cols-4">
+        <div className="grid gap-section card-surface p-card sm:grid-cols-4">
           <FormField label={t("editor.name")} value={name} onChange={(e) => setName(e.target.value)} />
           <FormField label={t("editor.rows")} variant="number" value={String(rows)} onChange={(e) => setRows(Math.max(1, parseInt(e.target.value) || 1))} />
           <FormField label={t("editor.seatsPerRow")} variant="number" value={String(perRow)} onChange={(e) => setPerRow(Math.max(1, parseInt(e.target.value) || 1))} />
@@ -102,14 +102,14 @@ export default function SeatLayoutEditorPage() {
         </div>
 
         {/* Categories */}
-        <div className="card-surface p-major">
+        <div className="card-surface p-card">
           <div className="mb-section flex items-center justify-between">
             <h2 className="type-h2 text-base">{t("editor.categoriesTitle")}</h2>
             <Button size="sm" icon={<Plus size={14} strokeWidth={1.5} />} onClick={addCategory}>{t("editor.addCategory")}</Button>
           </div>
           <div className="flex flex-col gap-tight">
             {categories.map((c) => (
-              <div key={c.uid} className="flex flex-wrap items-end gap-tight rounded-sm border border-line p-tight">
+              <div key={c.uid} className="flex flex-wrap items-end gap-tight rounded-sm border border-line p-comfortable">
                 <input type="color" aria-label={t("editor.catColor")} value={c.color} onChange={(e) => patchCategory(c.uid, { color: e.target.value })} className="h-11 w-11 shrink-0 rounded-sm border border-line bg-card" />
                 <div className="min-w-32 flex-1"><FormField label={t("editor.catName")} value={c.name} onChange={(e) => patchCategory(c.uid, { name: e.target.value })} /></div>
                 <div className="w-28"><FormField label={t("editor.catPrice")} variant="number" value={String(c.price / 100)} onChange={(e) => patchCategory(c.uid, { price: Math.round((parseFloat(e.target.value) || 0) * 100) })} /></div>
@@ -124,7 +124,7 @@ export default function SeatLayoutEditorPage() {
         </div>
 
         {/* Seat grid */}
-        <div className="card-surface p-major">
+        <div className="card-surface p-card">
           <div className="mb-tight flex items-center justify-between">
             <h2 className="type-h2 text-base">{t("editor.gridTitle")}</h2>
             <span className="font-mono text-[12px] text-muted">{t("editor.seatsForSale", { count: forSale })}</span>

@@ -124,7 +124,7 @@ export default function LocationsPage() {
               label={t("locations.title")}
               header={
                 locations.length > SEARCH_FROM ? (
-                  <div className="border-b border-hairline px-section py-tight sm:px-major">
+                  <div className="border-b border-hairline px-card py-tight">
                     <SearchField value={search} onChange={setSearch} label={t("locations.searchLabel")} placeholder={t("locations.searchPlaceholder")} />
                   </div>
                 ) : undefined

@@ -43,7 +43,7 @@ import { OrderLinesDetail } from "@/components/OrderLinesDetail";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="card-surface p-major">
+    <div className="card-surface p-card">
       <h2 className="type-label mb-section text-[12px] text-muted">{title}</h2>
       {children}
     </div>
@@ -289,7 +289,7 @@ export default function OrderDetailPage() {
                   the band saying one thing twice. The lead figure is the one
                   that needs a decision — what is still owed — falling back to
                   what was taken once nothing is. */}
-              <div className="card-surface p-major">
+              <div className="card-surface p-card">
               <h2 className="type-label mb-section text-[12px] text-muted">{t("cardMoney")}</h2>
               <div className="flex flex-wrap items-end justify-between gap-section">
                 <div className="min-w-0">

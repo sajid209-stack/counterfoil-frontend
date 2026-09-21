@@ -271,14 +271,14 @@ export default function StorefrontEditorPage() {
           description={form.featured.length ? t("storefront.whatsOnChosen") : t("storefront.whatsOnAll")}
         >
           {sellable.length === 0 ? (
-            <p className="px-section py-section text-sm text-muted sm:px-major">{t("storefront.nothingSellable")}</p>
+            <p className="px-card py-section text-sm text-muted">{t("storefront.nothingSellable")}</p>
           ) : (
             <ol className="divide-y divide-hairline">
               {[...ordered, ...rest].map((p) => {
                 const on = ordered.includes(p);
                 const i = ordered.indexOf(p);
                 return (
-                  <li key={p.id} className="flex items-center gap-tight px-section py-tight sm:px-major">
+                  <li key={p.id} className="flex items-center gap-tight px-card py-tight">
                     <div className="flex shrink-0">
                       <button
                         type="button"
@@ -306,7 +306,7 @@ export default function StorefrontEditorPage() {
               })}
             </ol>
           )}
-          <p className="px-section py-comfortable text-[13px] text-muted sm:px-major">
+          <p className="px-card py-comfortable text-[13px] text-muted">
             {t("storefront.showingCount", { count: showing.length })}
           </p>
         </SettingsSection>

@@ -278,7 +278,7 @@ function SalesReportInner() {
     }
   };
 
-  const card = "card-surface p-section";
+  const card = "card-surface p-card";
   const chartSkeleton = <div className="h-36 animate-pulse rounded-sm bg-line/50" aria-busy="true" />;
   const emptyChart = <p className="flex h-36 items-center justify-center text-[13px] text-muted">{t("nothingInRange")}</p>;
   const hasData = (pts?: { value: number }[]) => (pts ?? []).some((p) => p.value > 0);
@@ -290,7 +290,7 @@ function SalesReportInner() {
       actions={<Button variant="secondary" icon={<Download size={16} strokeWidth={1.5} />} onClick={exportCsv}>{t("exportCsv")}</Button>}
     >
       {/* The shared filter bar — one scope across all three tabs. */}
-      <div className="mb-section card-surface p-comfortable">
+      <div className="mb-section card-surface p-card">
         <div className="flex flex-wrap items-center gap-tight">
           {PRESETS.map((p) => (
             <button key={p.value} type="button" onClick={() => setPreset(p.value)} className={`h-11 md:h-9 rounded-sm border px-tight text-[13px] ${filters.preset === p.value ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>{t(`presets.${p.value}`)}</button>
@@ -342,7 +342,7 @@ function SalesReportInner() {
 
       {tab === "transactions" && (
         <div className="min-w-0 overflow-x-auto card-surface scroll-x-hint">
-          <table className="w-full text-sm">
+          <table className="table-inset w-full text-sm">
             <thead className="sticky top-0 z-10 bg-card">
               <tr className="border-b border-line">
                 <th className="w-8" />
@@ -372,7 +372,7 @@ function SalesReportInner() {
               )}
             </tbody>
           </table>
-          <div className="flex items-center justify-between border-t border-line px-comfortable py-tight">
+          <div className="flex items-center justify-between border-t border-line px-card py-tight">
             <span className="font-mono text-[12px] text-muted">{txQ.data ? t("transactions.pageRange", { from: cursor + 1, to: cursor + txQ.data.rows.length, total: txQ.data.total }) : t("transactions.loadingRange")}</span>
             <div className="flex gap-tight">
               <Button size="sm" variant="secondary" disabled={cursor === 0} onClick={() => setCursor(Math.max(0, cursor - 25))}>{t("transactions.previous")}</Button>
@@ -384,18 +384,18 @@ function SalesReportInner() {
 
       {tab === "outstanding" && (
         <div className="flex flex-col gap-section">
-          <div className="grid gap-tight sm:grid-cols-2">
-            <div className="card-surface p-section">
+          <div className="grid gap-section sm:grid-cols-2">
+            <div className="card-surface p-card">
               <p className="type-label text-[12px] text-muted">{t("outstanding.totalOwed")}</p>
               <p className="mt-tight font-mono text-3xl tabular-nums text-warning">{formatMoney(totalOwed)}</p>
             </div>
-            <div className="card-surface p-section">
+            <div className="card-surface p-card">
               <p className="type-label text-[12px] text-muted">{t("outstanding.count")}</p>
               <p className="mt-tight font-mono text-3xl tabular-nums">{outstanding.length}</p>
             </div>
           </div>
           <div className="min-w-0 overflow-x-auto card-surface scroll-x-hint">
-            <table className="w-full text-sm">
+            <table className="table-inset w-full text-sm">
               <thead>
                 <tr className="border-b border-line">
                   {([["reference", "left"], ["customer", "left"], ["time", "left"], ["total", "right"], ["paid", "right"], ["owed", "right"]] as const).map(([key, align]) => (
@@ -437,7 +437,7 @@ function SalesReportInner() {
                 DIFFERENT number, shown with nothing to say anything was
                 missing. Same defect the dashboard hero was fixed for; these
                 tiles never got the treatment. */}
-            <div className="mb-section grid grid-cols-1 gap-tight min-[420px]:grid-cols-2 lg:grid-cols-4">
+            <div className="mb-section grid grid-cols-1 gap-section min-[420px]:grid-cols-2 lg:grid-cols-4">
               {([["gross", t("summary.gross"), s?.gross, s?.prevGross], ["refunds", t("summary.refunds"), s?.refunds, undefined], ["net", t("summary.net"), s?.net, s?.prevNet], ["tickets", t("summary.tickets"), s?.ticketCount, s?.prevTicketCount]] as const).map(([key, label, v, pv]) => (
                 <div key={key} className={card}>
                   <p className="type-label text-[12px] text-muted">{label}</p>
@@ -453,7 +453,7 @@ function SalesReportInner() {
               className="mb-section"
             />
             <div className="min-w-0 overflow-x-auto card-surface scroll-x-hint">
-              <table className="w-full text-sm">
+              <table className="table-inset w-full text-sm">
                 <thead><tr className="border-b border-line">{[t("columns.name"), t("columns.tickets"), t("columns.gross"), t("columns.refunds"), t("columns.net"), t("columns.shareOfTotal")].map((h, i) => <th key={h} className={`type-label px-comfortable py-tight text-[12px] uppercase tracking-wide text-muted ${i === 0 ? "text-left" : "text-right"}`}>{h}</th>)}</tr></thead>
                 <tbody>
                   {(summaryQ.data?.rows ?? []).map((r) => (
@@ -514,7 +514,7 @@ function SalesReportInner() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-tight min-[420px]:grid-cols-3">
+            <div className="grid grid-cols-1 gap-section min-[420px]:grid-cols-3">
               {([["net", t("tax.net"), d?.totals.net], ["tax", t("tax.collected", { name: d?.taxName ?? "" }), d?.totals.tax], ["gross", t("tax.gross"), d?.totals.gross]] as const).map(([key, label, v]) => (
                 <div key={key} className={card}>
                   <p className="type-label text-[12px] text-muted">{label}</p>
@@ -529,8 +529,8 @@ function SalesReportInner() {
             </div>
 
             <div className="min-w-0 overflow-x-auto card-surface scroll-x-hint">
-              <table className="w-full text-sm">
-                <caption className="px-comfortable pb-tight pt-comfortable text-left text-[13px] font-medium">{t("tax.byRate")}</caption>
+              <table className="table-inset w-full text-sm">
+                <caption className="px-card pb-tight pt-comfortable text-left text-[13px] font-medium">{t("tax.byRate")}</caption>
                 <thead>
                   <tr className="border-b border-line">
                     {[t("tax.colClass"), t("tax.colRate"), t("tax.colNet"), t("tax.colTax"), t("tax.colGross"), t("tax.colLines")].map((h, i) => (
@@ -568,8 +568,8 @@ function SalesReportInner() {
 
             {!!d?.periods.length && (
               <div className="min-w-0 overflow-x-auto card-surface scroll-x-hint">
-                <table className="w-full text-sm">
-                  <caption className="px-comfortable pb-tight pt-comfortable text-left text-[13px] font-medium">
+                <table className="table-inset w-full text-sm">
+                  <caption className="px-card pb-tight pt-comfortable text-left text-[13px] font-medium">
                     {t(d.granularity === "month" ? "tax.byMonth" : "tax.byDay")}
                   </caption>
                   <thead>
@@ -604,7 +604,7 @@ function SalesReportInner() {
       {tab === "analytics" && (() => {
         const a = anQ.data;
         return (
-          <div className="flex flex-col gap-tight">
+          <div className="flex flex-col gap-section">
             <div className={card}>
               <div className="mb-tight flex items-center justify-between">
                 <p className="type-label text-[12px] text-muted">{t("charts.revenueOverTime")} <span className="normal-case text-muted">{t("charts.revenueOverTimeNote")}</span></p>
@@ -631,7 +631,7 @@ function SalesReportInner() {
               ) : emptyChart}
             </div>
 
-            <div className="grid gap-tight lg:grid-cols-3">
+            <div className="grid gap-section lg:grid-cols-3">
               <div className={card}>
                 <p className="type-label mb-tight text-[12px] text-muted">{t("charts.salesByHour")}</p>
                 {anQ.loading ? chartSkeleton : hasData(a?.hour_of_day) ? <BarChart points={a!.hour_of_day!} fmt={money} /> : emptyChart}
@@ -647,7 +647,7 @@ function SalesReportInner() {
             </div>
 
             {/* The distinctive ones — only a system that owns the sale AND the scan can draw these. */}
-            <div className="grid gap-tight lg:grid-cols-3">
+            <div className="grid gap-section lg:grid-cols-3">
               <div className={card}>
                 <p className="type-label mb-tight text-[12px] text-muted">{t("charts.capacityUtilisation")}</p>
                 {anQ.loading ? chartSkeleton : hasData(a?.capacity_utilisation) ? <LineChart points={a!.capacity_utilisation!} fmt={(v) => `${v}%`} height={120} /> : emptyChart}

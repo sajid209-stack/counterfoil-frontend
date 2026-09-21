@@ -40,7 +40,7 @@ export default function Home() {
       <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-ember/15 blur-[120px]" />
       <div aria-hidden className="pointer-events-none absolute -left-32 top-1/2 h-96 w-96 rounded-full bg-ember/5 blur-[120px]" />
 
-      <div className="relative mx-auto max-w-5xl px-section py-hero sm:px-major">
+      <div className="relative mx-auto max-w-5xl px-gutter py-hero">
         {/* Wordmark */}
         <Logo size={30} />
 
@@ -85,7 +85,7 @@ export default function Home() {
               </div>
 
               {/* Stub */}
-              <div className="flex flex-1 flex-col p-section pt-tight">
+              <div className="flex flex-1 flex-col p-card pt-tight">
                 <span className="type-h2 text-base">{d.name}</span>
                 <span className="type-body mt-inline text-[13px] text-muted">{d.tagline}</span>
                 <span className="mt-tight font-mono text-[12px] uppercase leading-relaxed tracking-wide text-muted">{d.types}</span>

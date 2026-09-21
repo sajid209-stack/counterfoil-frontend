@@ -49,7 +49,7 @@ export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChan
         const name = t(`common.${DAY_KEY[d]}`);
         const labelId = `hours-day-${d}`;
         return (
-          <li key={d} className="flex flex-wrap items-start gap-x-section gap-y-tight px-major py-comfortable">
+          <li key={d} className="flex flex-wrap items-start gap-x-section gap-y-tight px-card py-comfortable">
             <div className="flex w-full items-center gap-comfortable sm:w-32">
               <Switch
                 checked={open}

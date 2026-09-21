@@ -79,10 +79,10 @@ export function DataTable<T>({
       {toolbar && <div>{toolbar}</div>}
 
       {/* Mobile (<768px): rows become tappable cards — primary line + labelled meta. */}
-      <div className="flex flex-col gap-tight md:hidden">
+      <div className="flex flex-col gap-section md:hidden">
         {loading &&
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={`csk-${i}`} className="flex animate-pulse flex-col gap-tight card-surface p-comfortable">
+            <div key={`csk-${i}`} className="flex animate-pulse flex-col gap-tight card-surface p-card">
               <div className="h-4 w-2/3 rounded-xs bg-line" />
               <div className="h-3 w-1/2 rounded-xs bg-line" />
             </div>
@@ -96,7 +96,7 @@ export function DataTable<T>({
               tabIndex={onRowClick ? 0 : undefined}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
-              className={cn("card-surface p-comfortable transition-transform duration-quick", onRowClick && "cursor-pointer active:bg-subtle hover:-translate-y-0.5")}
+              className={cn("card-surface p-card transition-transform duration-quick", onRowClick && "cursor-pointer active:bg-subtle hover:-translate-y-0.5")}
             >
               {renderCard ? (
                 renderCard(row)
@@ -133,7 +133,7 @@ export function DataTable<T>({
           off-white while the sticky `thead`, which sets `bg-card`, read as
           white, so the header and its own rows did not match. */}
       <div className="hidden max-h-[70vh] overflow-auto rounded-md border border-line bg-card scroll-x-hint md:block">
-        <table className="w-full border-collapse text-sm" style={minWidth ? { minWidth } : undefined}>
+        <table className="table-inset w-full border-collapse text-sm" style={minWidth ? { minWidth } : undefined}>
                   {/* `line`, not `neutral-200`: the raw primitive is a palette entry
             that is never redefined for dark, so this rule painted a light
             #e2ded5 hairline across the top of every dark table. */}

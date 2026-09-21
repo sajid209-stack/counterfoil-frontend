@@ -95,7 +95,7 @@ export default function PreferencesPage() {
         <SettingsSection title={t("preferences.shortcutsTitle")} description={t("preferences.shortcutsDesc")}>
           <dl className="divide-y divide-hairline">
             {shortcuts.map((s) => (
-              <div key={s.label} className="flex items-center justify-between gap-section px-major py-comfortable">
+              <div key={s.label} className="flex items-center justify-between gap-section px-card py-comfortable">
                 <dt className="text-sm text-fg">{s.label}</dt>
                 <dd className="flex shrink-0 gap-inline">
                   {s.keys.map((k) => (

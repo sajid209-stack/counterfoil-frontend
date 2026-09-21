@@ -112,7 +112,10 @@ export function PageShell({
   );
 
   return (
-    <div className="px-section pb-section pt-section sm:px-major sm:pb-major md:pt-0">
+    /* The page edge is the gutter token — 16 on a phone, 20 from sm — and
+       the desktop bar above uses the same token, so the title and the cards
+       share one left edge. */
+    <div className="px-gutter pb-gutter pt-section md:pt-0">
       {/* Desktop: both blocks portal into the sticky bar. Below md they render
           here instead — one copy, either way. */}
       {wide && slot && createPortal(headerText, slot)}
@@ -123,7 +126,7 @@ export function PageShell({
           {actions && <div className="flex flex-wrap items-center gap-tight">{actions}</div>}
         </div>
       )}
-      <div className="mt-section md:mt-major">{children}</div>
+      <div className="mt-section md:mt-gutter">{children}</div>
     </div>
   );
 }

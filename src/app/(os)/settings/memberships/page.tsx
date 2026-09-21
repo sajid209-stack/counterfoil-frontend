@@ -99,9 +99,9 @@ export default function MembershipTiersPage() {
         />
       )}
 
-      <div className="flex flex-col gap-tight">
+      <div className="flex flex-col gap-section">
         {tiers.map((tier) => (
-          <div key={tier.id} className="card-surface p-section">
+          <div key={tier.id} className="card-surface p-card">
             <div className="flex flex-wrap items-start justify-between gap-tight">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-tight">

@@ -173,7 +173,7 @@ export function ProductWizard({
   };
 
   return (
-    <div className="flex flex-col gap-major pb-hero">
+    <div className="flex flex-col gap-section pb-hero">
       <ol className="flex flex-wrap gap-tight">
         {STEPS.map((label, i) => (
           <li key={label} className={`flex items-center gap-inline rounded-sm px-comfortable py-tight text-[12px] ${i === step ? "bg-inverse text-inverse-fg" : i < step ? "text-fg" : "text-muted"}`}>
@@ -183,7 +183,7 @@ export function ProductWizard({
         ))}
       </ol>
 
-      <div className="card-surface p-major">
+      <div className="card-surface p-card">
         {step === 0 && (
           <div className="grid gap-section sm:grid-cols-2">
             <FormField label="Name" required placeholder="Fort General Admission" value={name} onChange={(e) => setName(e.target.value)} className="sm:col-span-2" />

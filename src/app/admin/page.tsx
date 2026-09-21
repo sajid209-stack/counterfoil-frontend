@@ -23,13 +23,13 @@ export default function AdminPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-section bg-surface px-section py-major">
+    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-section bg-surface px-gutter py-major">
       <div>
         <p className="font-mono text-[12px] uppercase tracking-wider text-brand-foreground">Internal · Admin console scaffold</p>
         <h1 className="type-h1 mt-tight text-2xl">Operators</h1>
       </div>
 
-      <div className="card-surface p-major">
+      <div className="card-surface p-card">
         <h2 className="type-h2 mb-section text-base">Create an operator</h2>
         <div className="grid gap-section sm:grid-cols-3">
           <FormField label="Business name" placeholder="Sundarban River Tours" value={name} onChange={(e) => setName(e.target.value)} />
@@ -41,7 +41,7 @@ export default function AdminPage() {
 
       <div className="overflow-hidden card-surface">
         {ops.map((o) => (
-          <div key={o.name} className="flex h-14 items-center gap-section border-b border-line px-section text-sm last:border-0">
+          <div key={o.name} className="flex h-14 items-center gap-section border-b border-line px-card text-sm last:border-0">
             <span className="min-w-0 flex-1 truncate font-medium">{o.name}</span>
             <span className="min-w-0 truncate text-muted">{o.admin} · {o.email}</span>
             <StatusPill tone={o.status === "active" ? "success" : "warning"}>{o.status}</StatusPill>

@@ -33,7 +33,7 @@ export default function LoyaltySettingsPage() {
           }}
         />
 
-        <div className="card-surface p-section">
+        <div className="card-surface p-card">
           <p className="type-label mb-comfortable text-[12px] text-muted">{t("totalsTitle")}</p>
           {totalsQ.loading || !totalsQ.data ? (
             <div className="h-16 animate-pulse rounded-sm bg-subtle" />
@@ -104,7 +104,7 @@ function ProgramForm({
   const exampleWorth = examplePoints * draft.pointValue;
 
   return (
-    <div className="card-surface flex flex-col gap-section p-section">
+    <div className="card-surface flex flex-col gap-section p-card">
       <FormField
         label={t("fieldEnabled")}
         variant="toggle"

@@ -273,7 +273,7 @@ export function ProductForm({
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-section pb-hero">
       <Tabs items={TABS} value={tab} onChange={setTab} />
 
-      <div className="card-surface p-major">
+      <div className="card-surface p-card">
         {tab === "details" && (
           <div className="grid gap-section sm:grid-cols-2">
             <FormField label="Name" required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="sm:col-span-2" />

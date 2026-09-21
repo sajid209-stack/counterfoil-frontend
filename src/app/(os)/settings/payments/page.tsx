@@ -292,7 +292,7 @@ export default function PaymentsPage() {
               const isCash = m.method === "cash";
               const hidden = !isCash && m.enabled && !nonCashOk;
               return (
-                <li key={m.method} className="flex items-center gap-tight px-section py-comfortable sm:px-major">
+                <li key={m.method} className="flex items-center gap-tight px-card py-comfortable">
                   <div className="flex shrink-0">
                     <button type="button" aria-label={t("methods.moveUp", { method: name })} disabled={i === 0} onClick={() => move(i, -1)} className={arrow}>
                       <ArrowUp size={16} strokeWidth={1.5} aria-hidden />
@@ -331,7 +331,7 @@ export default function PaymentsPage() {
           </ul>
           {/* The payment step as the till draws it, in the order above. A list
               of switches says what is allowed; this says what a cashier sees. */}
-          <div className="px-major py-section">
+          <div className="px-card py-section">
             <p className="text-sm font-medium text-fg">{t("methods.previewLabel")}</p>
             <p className="mt-inline text-[13px] text-muted">{t("methods.previewNote")}</p>
             <p className="sr-only">{offered.map((m) => t(`methods.${m.method}.name`)).join(", ")}</p>
@@ -362,7 +362,7 @@ export default function PaymentsPage() {
             const items = (acct?.requirementsDue ?? []).map((r) => t(`requirement.${r}`)).join(", ");
             const needsWork = !!acct && (acct.status === "pending_onboarding" || acct.status === "restricted");
             return (
-              <div key={provider} className="flex flex-col gap-section px-major py-section sm:flex-row sm:items-center">
+              <div key={provider} className="flex flex-col gap-section px-card py-section sm:flex-row sm:items-center">
                 <div className="flex min-w-0 flex-1 items-start gap-section">
                   <IconTile icon={icon} />
                   <div className="min-w-0 flex-1">
@@ -474,7 +474,7 @@ export default function PaymentsPage() {
               </div>
             );
           })}
-          <div className="flex flex-col gap-tight px-major py-section sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-tight px-card py-section sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[13px] leading-relaxed text-muted">{t("advance.policiesNote")}</p>
             <Link
               href="/bookings"
@@ -486,14 +486,14 @@ export default function PaymentsPage() {
         </SettingsSection>
 
         <SettingsSection title={t("payouts.title")} description={t("payouts.description")}>
-          <div role="radiogroup" aria-label={t("payouts.schedule")} className="grid gap-tight px-major py-section sm:grid-cols-3">
+          <div role="radiogroup" aria-label={t("payouts.schedule")} className="grid gap-tight px-card py-section sm:grid-cols-3">
             {SCHEDULES.map((s) => {
               const checked = form.schedule === s;
               return (
                 <label
                   key={s}
                   className={cn(
-                    "flex cursor-pointer items-start gap-comfortable rounded-md border px-section py-comfortable transition-colors duration-quick",
+                    "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
                     checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-subtle/60",
                   )}
                 >
@@ -532,7 +532,7 @@ export default function PaymentsPage() {
               )}
             </SettingRow>
           )}
-          <p className="px-major py-section text-[13px] leading-relaxed text-muted">
+          <p className="px-card py-section text-[13px] leading-relaxed text-muted">
             <span className="font-medium text-fg">{t("payouts.next", { date: formatDay(nextPayout(form.schedule, form.day), { weekday: true }) })}</span>{" "}
             {t("payouts.note")}
           </p>

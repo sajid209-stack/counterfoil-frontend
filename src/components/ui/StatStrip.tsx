@@ -38,8 +38,8 @@ export function StatStrip({
     <div
       className={cn(
         compact
-          ? "-mx-comfortable flex gap-tight overflow-x-auto px-comfortable pb-inline [scrollbar-width:none]"
-          : "grid grid-cols-2 gap-tight lg:grid-cols-4 lg:gap-comfortable",
+          ? "-mx-gutter flex gap-section overflow-x-auto px-gutter pb-inline [scrollbar-width:none]"
+          : "grid grid-cols-2 gap-section lg:grid-cols-4",
       )}
     >
       {items.map((item) => (
@@ -47,7 +47,7 @@ export function StatStrip({
           key={item.key}
           title={item.note ?? undefined}
           className={cn(
-            "card-surface flex min-h-[5.25rem] flex-col justify-center gap-tight px-comfortable py-comfortable",
+            "card-surface flex min-h-[5.25rem] flex-col justify-center gap-tight p-card",
             compact && "min-w-[10rem] shrink-0",
           )}
         >

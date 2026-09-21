@@ -56,9 +56,9 @@ export default function PromotionsPage() {
       description={t("list.description")}
       actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} loading={creating} onClick={create}>{t("list.new")}</Button>}
     >
-      <div className="flex flex-col gap-major">
+      <div className="flex flex-col gap-section">
         {/* Cashier discount policy */}
-        <section className="card-surface p-major">
+        <section className="card-surface p-card">
           <h2 className="type-h2 text-base">{t("policy.title")}</h2>
           <p className="mb-section text-[13px] text-muted">{t("policy.description")}</p>
           {policy && (

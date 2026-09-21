@@ -44,12 +44,12 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     <div className="xl:flex">
       {/* The nav stretches to the page's height so the list inside it can
           stick; a rail that scrolls away with the content is no rail.
-          top-32 is the shortest OS bar (104px) plus the page's own 24px gap,
+          top-32 is the shortest OS bar (104px) plus the page's own gap,
           so at rest the first link sits level with the first card whatever
           the bar's height, and once scrolled it still clears the tallest bar
           a settings page draws (125px). top-36 pushed it 16px low on every
           page whose header has no actions. */}
-      <nav aria-label={t("nav.label")} className="hidden w-60 shrink-0 xl:block xl:pl-major xl:pt-major">
+      <nav aria-label={t("nav.label")} className="hidden w-60 shrink-0 xl:block xl:pl-gutter xl:pt-gutter">
         <div className="sticky top-32 flex flex-col gap-section pb-major">
           <Link
             href="/settings"
@@ -92,7 +92,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
       </nav>
 
       <div className="min-w-0 flex-1">
-        <div className="px-section pt-section sm:px-major xl:hidden">
+        <div className="px-gutter pt-section xl:hidden">
           <Link
             href={back.href}
             className="-ml-comfortable inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg md:min-h-9"

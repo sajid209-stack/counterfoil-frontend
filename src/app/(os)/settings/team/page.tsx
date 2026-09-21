@@ -186,7 +186,7 @@ export default function TeamPage() {
           <RecordList
             label={t("team.title")}
             header={
-              <div className="flex flex-col gap-tight border-b border-hairline px-section py-tight sm:flex-row sm:flex-wrap sm:items-center sm:px-major">
+              <div className="flex flex-col gap-tight border-b border-hairline px-card py-tight sm:flex-row sm:flex-wrap sm:items-center">
                 <SearchField value={search} onChange={setSearch} label={t("team.searchLabel")} placeholder={t("team.searchPlaceholder")} />
                 <select aria-label={t("team.filterRole")} value={roleId} onChange={(e) => setRoleId(e.target.value)} className={select}>
                   <option value="">{t("team.anyRole")}</option>
@@ -228,7 +228,7 @@ export default function TeamPage() {
             }
           >
             {rows.length === 0 ? (
-              <li className="px-major py-wide text-center text-sm text-muted">{filtering ? t("team.noMatch") : t("team.emptyTab")}</li>
+              <li className="px-card py-wide text-center text-sm text-muted">{filtering ? t("team.noMatch") : t("team.emptyTab")}</li>
             ) : (
               rows.map((s) => {
                 const isYou = s.id === DEMO_STAFF_ID;

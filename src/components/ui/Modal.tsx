@@ -108,7 +108,7 @@ export function Modal({
         ref={panel}
         tabIndex={-1}
         className={cn(
-          "glass relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-md p-section outline-none sm:p-major",
+          "glass relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-md p-card outline-none",
           width,
         )}
       >
@@ -120,7 +120,9 @@ export function Modal({
         >
           <X size={18} strokeWidth={1.5} />
         </button>
-        {title && <h2 className="type-h2 pr-major text-lg">{title}</h2>}
+        {/* pr-11: the close button is 44px wide, 16 from the edge, so a long
+            title has to stop 60px in or it runs under the ×. */}
+        {title && <h2 className="type-h2 pr-11 text-lg">{title}</h2>}
         {description && (
           <p className="type-body mt-inline text-[13px] text-muted">
             {description}

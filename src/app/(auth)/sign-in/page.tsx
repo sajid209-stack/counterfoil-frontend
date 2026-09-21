@@ -6,7 +6,7 @@ export const metadata = { title: "Sign in · Counterfoil" };
 // Branded sign-in front door — static shell; wired to the auth flow later.
 export default function SignInPage() {
   return (
-    <div className="card-surface p-major">
+    <div className="card-surface p-card">
       <Logo size={28} />
 
       <h1 className="type-h1 mt-major text-2xl">Welcome back</h1>

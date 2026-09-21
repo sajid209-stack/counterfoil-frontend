@@ -485,9 +485,9 @@ function CompactWeek({
       </div>
 
       {agenda.length === 0 ? (
-        <p className="px-comfortable py-hero text-center text-[13px] text-muted">{emptyLabel}</p>
+        <p className="px-card py-hero text-center text-[13px] text-muted">{emptyLabel}</p>
       ) : (
-        <ul className="flex flex-col gap-tight p-comfortable">
+        <ul className="flex flex-col gap-tight p-card">
           {agenda.map((e) => (
             <li key={e.id}>
               <button

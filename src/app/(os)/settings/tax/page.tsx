@@ -150,13 +150,13 @@ export default function TaxPage() {
               saved rather than after the first receipt. */}
           <SettingsSection title={t("tax.exampleTitle", { amount: formatPriceShort(SAMPLE, currency) })} description={t("tax.exampleDesc")}>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[26rem] text-sm">
+              <table className="table-inset w-full min-w-[26rem] text-sm">
                 <thead>
                   <tr className="text-left text-[12px] text-muted">
-                    <th scope="col" className="px-major py-tight font-medium">{t("tax.colClass")}</th>
+                    <th scope="col" className="px-card py-tight font-medium">{t("tax.colClass")}</th>
                     <th scope="col" className="px-section py-tight text-right font-medium">{t("tax.colPrice")}</th>
                     <th scope="col" className="px-section py-tight text-right font-medium">{t("tax.colTax")}</th>
-                    <th scope="col" className="px-major py-tight text-right font-medium">{t("tax.colTotal")}</th>
+                    <th scope="col" className="px-card py-tight text-right font-medium">{t("tax.colTotal")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-hairline border-t border-hairline">
@@ -164,13 +164,13 @@ export default function TaxPage() {
                     const amount = row.rate === null ? null : Math.round((SAMPLE * row.rate) / 100);
                     return (
                       <tr key={row.key}>
-                        <th scope="row" className="px-major py-comfortable text-left font-medium text-fg">
+                        <th scope="row" className="px-card py-comfortable text-left font-medium text-fg">
                           {row.label}
                           <span className="ml-tight font-normal text-muted">{row.rate === null ? "—" : `${row.rate}%`}</span>
                         </th>
                         <td className="px-section py-comfortable text-right text-muted">{formatMoney(SAMPLE, currency)}</td>
                         <td className="px-section py-comfortable text-right text-muted">{amount === null ? "—" : formatMoney(amount, currency)}</td>
-                        <td className="px-major py-comfortable text-right font-semibold text-fg">
+                        <td className="px-card py-comfortable text-right font-semibold text-fg">
                           {amount === null ? "—" : formatMoney(SAMPLE + amount, currency)}
                         </td>
                       </tr>

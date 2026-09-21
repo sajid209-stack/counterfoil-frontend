@@ -9733,3 +9733,87 @@ its documented **70** (one run read 74 with four connection resets on a route
 this never touched — the recompiling-server artefact this log has recorded
 before). `tsc` clean; `OsShell` and the dashboard hold at their documented
 lint baselines.
+
+## One padding for every card (2026-09-21)
+
+Owner, on a marked-up screenshot: every card, and everything card-shaped, in
+full Counterfoil should have the same padding and spacing; the space outside the
+cards should be a bit less; the Counterfoil logo should be smaller. Every
+existing page.
+
+What it was: five different card paddings (12, 16, 24, 16×24 and 24×16) across
+~70 card frames, so two cards side by side started their text at different
+insets; rows inside edge-to-edge cards inset 24, or 16 on a phone and 24 above;
+cards 8, 12, 24 or 32px apart depending on the page.
+
+| | before | after |
+|---|---|---|
+| inside a card | 12 / 16 / 24, mixed | **20** (16 on a phone), everywhere |
+| a row inside an edge-to-edge card | 16→24 or 24 | **the same 20 / 16** |
+| a framed item inside a card | 8 / 12 / 16 / 24 | **12** |
+| between cards | 8 / 12 / 24 / 32 | **16**, every width |
+| page edge (and the bar) | 24 (16 on a phone) | **20** (16 on a phone) |
+| rail logo | 30px tall, 176 wide | **22px tall, 129 wide** |
+
+- **Two tokens, not a sweep of numbers.** `--spacing-card` and
+  `--spacing-gutter` (both 20) in `@theme`, and one unlayered rule drops both to
+  16 below `sm`. Every card says `p-card`; every row in an edge-to-edge card
+  says `px-card`; the page frame says `px-gutter`. Changing the rhythm later is
+  two numbers in `globals.css`, not seventy class strings.
+- **Inside (20) is more than between (16), on purpose.** The usual rule
+  (Cieden) is that the space inside a group should not exceed the space around
+  it. That rule is for groups drawn with whitespace alone; a card has a border
+  and a fill doing the grouping, so the gap between cards can be the smaller
+  number — the owner asked for exactly that, and Polaris makes the same trade.
+  Inside a card, where there is no border, the rule still holds: the 12 around
+  a nested item is less than the 20 around the card.
+- **Tables inside cards** get `table-inset`, a small utility that sets only the
+  first and last cell of each row to the card inset. The table's edges line up
+  with the card heading; the columns between keep their tighter padding, which
+  is what lets the nine-column transactions ledger fit.
+- **Nested frames stay smaller than the card they sit in.** The dashboard's
+  attention items and setup steps, choice tiles in settings, the booking-type
+  picker inside the product form, a category row in the seat-layout editor:
+  all 12. Padding a box-in-a-box at 20 as well would make the inner item read
+  as a second card rather than as part of the first one.
+- **A group with its own heading** (settings hub groups, the counters and
+  resources lists, the storefront's sections) sits 24 from the next group, with
+  its heading 8 above its card. At a flat 16 a heading sits as close to the
+  card before it as to the card it names.
+- **The page edge and the bar share the token**, so the page title and the
+  first card start on the same x at every width (measured: 0px apart on every
+  non-settings route).
+- **Knock-ons:** the four dashboard tiles are 135px, up from 127, because
+  their padding is 20 all round rather than 24×16 (still 59px shorter than
+  before the last pass); the first card now starts 20px under the bar rather
+  than 24, at y=81. The Modal's title stops 44px short of its
+  edge, so a long one no longer runs under the close button. A record row with
+  a switch or a menu reserves its right-hand room from the same token.
+
+Out of scope, deliberately: Go (the till has its own `.go-surface` and touch
+spacing), the deck, the event landing templates, and floating chrome — menus,
+the save bar, toasts, the command palette — which are not cards. A receipt
+preview in business settings keeps its paper margins.
+
+Verified with a new probe (`cards.mjs`) over 37 routes at 1280 and 390: every
+padded card 20/20/20/20 at 1280 and 16/16/16/16 at 390; every row inside an
+edge-to-edge card at the same inset; every pair of adjacent cards 16 apart;
+page edge and bar at the gutter; logo 22px; no route scrolls sideways.
+**0 problems.** It first caught the phone calendar's agenda list and the day
+view's header and footer rows still at 12, which are fixed.
+
+Standing harnesses: shell **75/75**, type spec **10/10**, accessibility
+**0 failures**, settings behaviour **31/31**, device facts **38/38**,
+storefront **59/59** (a first run lost six product-page checks to its fixed
+1.8s wait while the dev server recompiled that page; a quiet re-run passes),
+tax **39/39**, events actions **49/49**, calendar category **45/45**, and the
+32-route audit at its documented **70**. Record rows with a switch or a menu measured
+directly: text stops 76px from the edge at 1280 (the 20 inset plus 56 for the
+control) and 72 at 390, the control sits exactly at the card inset. `tsc`
+clean; every lint finding in the touched files is one of the standing
+set-state-in-effect or memo-dependency baselines.
+
+Sources: [Shopify Polaris — Card, documented default padding `{xs: '400', sm: '500'}` (16 / 20px)](https://github.com/Shopify/polaris/blob/main/polaris-react/src/components/Card/Card.tsx) ·
+[Shopify Polaris — Layout, sections 16px apart](https://github.com/Shopify/polaris/blob/main/polaris-react/src/components/Layout/Layout.module.css) ·
+[Cieden — spacing best practices](https://cieden.com/book/sub-atomic/spacing/spacing-best-practices) ·
+[Breakdance — the 8-point grid, a practical guide](https://breakdance.com/the-8-point-grid-system-a-practical-guide/)

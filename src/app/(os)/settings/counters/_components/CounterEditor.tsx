@@ -194,7 +194,7 @@ export function CounterEditor({
       <SettingsSection title={t("counters.paymentsTitle")} description={t("counters.paymentsDesc")}>
         <ul className="divide-y divide-hairline">
           {METHODS.map((m) => (
-            <li key={m} className="px-major py-tight">
+            <li key={m} className="px-card py-tight">
               <label className="flex min-h-12 cursor-pointer items-center gap-comfortable">
                 <input
                   type="checkbox"
@@ -210,9 +210,9 @@ export function CounterEditor({
             </li>
           ))}
         </ul>
-        {methodsErr && <p className="px-major py-tight text-[12px] text-danger">{methodsErr}</p>}
+        {methodsErr && <p className="px-card py-tight text-[12px] text-danger">{methodsErr}</p>}
         {unbacked && (
-          <div className="flex flex-col gap-tight bg-warning-wash px-major py-tight sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-tight bg-warning-wash px-card py-tight sm:flex-row sm:items-center sm:justify-between">
             <p className="flex items-start gap-tight text-[13px] text-fg">
               <CircleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
               {t("counters.needsAccount")}
@@ -233,7 +233,7 @@ export function CounterEditor({
           )}
         </SettingRow>
         {!form.allowAll && (
-          <div className="px-major py-section">
+          <div className="px-card py-section">
             <p className="text-[13px] text-muted" aria-live="polite">
               {t("counters.pickedCount", { picked: form.productIds.length, total: sellable.length })}
             </p>

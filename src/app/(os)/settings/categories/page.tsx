@@ -134,11 +134,11 @@ export default function CategoriesPage() {
       <div className="flex max-w-3xl flex-col gap-section pb-hero">
         <SettingsSection title={t("categories.listTitle")} description={t("categories.listDesc")}>
           {all.length === 0 ? (
-            <p className="px-major py-section text-sm text-muted">{t("categories.emptyMessage")}</p>
+            <p className="px-card py-section text-sm text-muted">{t("categories.emptyMessage")}</p>
           ) : (
             <ol className="divide-y divide-hairline">
               {all.map((c, i) => (
-                <li key={c.id} className="flex items-center gap-tight px-section py-tight sm:px-major">
+                <li key={c.id} className="flex items-center gap-tight px-card py-tight">
                   <div className="flex shrink-0">
                     <button
                       type="button"
@@ -193,7 +193,7 @@ export default function CategoriesPage() {
               ))}
             </ol>
           )}
-          <div className="flex flex-col gap-tight px-section py-section sm:flex-row sm:items-center sm:px-major">
+          <div className="flex flex-col gap-tight px-card py-section sm:flex-row sm:items-center">
             <input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}

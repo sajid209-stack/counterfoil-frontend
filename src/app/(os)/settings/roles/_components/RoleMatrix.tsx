@@ -62,10 +62,10 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
   return (
     <SettingsSection title={t("roles.compareTitle")} description={t("roles.compareDesc")}>
       <div className="relative overflow-x-auto">
-        <table aria-label={t("roles.compareTitle")} className="w-full min-w-[34rem] border-collapse text-sm">
+        <table aria-label={t("roles.compareTitle")} className="table-inset w-full min-w-[34rem] border-collapse text-sm">
           <thead>
             <tr className="border-b border-hairline">
-              <th scope="col" className={`px-major py-tight text-left text-[13px] font-medium text-muted ${pinned}`}>
+              <th scope="col" className={`px-card py-tight text-left text-[13px] font-medium text-muted ${pinned}`}>
                 {t("roles.compareWhat")}
               </th>
               {roles.map((r) => (
@@ -86,14 +86,14 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
                 <th
                   scope="rowgroup"
                   colSpan={roles.length + 1}
-                  className="px-major pb-inline pt-section text-left text-[12px] font-medium uppercase tracking-wide text-muted"
+                  className="px-card pb-inline pt-section text-left text-[12px] font-medium uppercase tracking-wide text-muted"
                 >
                   <span className={pinned}>{t(`permGroup.${g.key}.title`)}</span>
                 </th>
               </tr>
               {g.permissions.map((p) => (
                 <tr key={p}>
-                  <th scope="row" className={`px-major py-tight text-left font-normal text-fg ${pinned}`}>
+                  <th scope="row" className={`px-card py-tight text-left font-normal text-fg ${pinned}`}>
                     {t(`perm.${permissionKey(p)}.title`)}
                   </th>
                   {roles.map((r) => (
@@ -112,7 +112,7 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
               ))}
               {g.key === "selling" && (
                 <tr>
-                  <th scope="row" className={`px-major pb-section pt-tight text-left font-normal text-muted ${pinned}`}>
+                  <th scope="row" className={`px-card pb-section pt-tight text-left font-normal text-muted ${pinned}`}>
                     {t("roles.limitDiscount")}
                   </th>
                   {roles.map((r) => (
@@ -124,7 +124,7 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
               )}
               {g.key === "orders" && (
                 <tr>
-                  <th scope="row" className={`px-major pb-section pt-tight text-left font-normal text-muted ${pinned}`}>
+                  <th scope="row" className={`px-card pb-section pt-tight text-left font-normal text-muted ${pinned}`}>
                     {t("roles.limitRefund")}
                   </th>
                   {roles.map((r) => (

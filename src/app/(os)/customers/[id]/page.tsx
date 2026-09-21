@@ -141,9 +141,9 @@ export default function CustomerDetailPage() {
         </div>
       }
     >
-      <div className="flex flex-col gap-major">
+      <div className="flex flex-col gap-section">
         {customer.flag && (
-          <div className="flex items-start gap-tight rounded-sm border-l-2 border-warning bg-warning/10 p-comfortable">
+          <div className="flex items-start gap-tight rounded-sm border-l-2 border-warning bg-warning/10 p-card">
             <AlertTriangle size={18} strokeWidth={1.5} className="mt-px shrink-0 text-warning" />
             <div className="min-w-0">
               <p className="text-sm font-medium">{t("flaggedTitle")}</p>
@@ -156,7 +156,7 @@ export default function CustomerDetailPage() {
         )}
 
         {customer.erasedAt && (
-          <div className="rounded-sm border border-line bg-subtle p-comfortable text-[13px] text-muted">
+          <div className="rounded-sm border border-line bg-subtle p-card text-[13px] text-muted">
             {t("erasedNotice", { when: formatDate(customer.erasedAt) })}
           </div>
         )}
@@ -184,7 +184,7 @@ export default function CustomerDetailPage() {
             rather than shouting. */}
         {/* Six across at `lg` gave each card 122px against a 240px sidebar, and a
             five-figure sum needs about 134. Three until there is real room. */}
-        <div className="grid grid-cols-2 gap-tight sm:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-section sm:grid-cols-3 xl:grid-cols-6">
           <Stat label={t("statSpent")} value={formatMoney(stats.spent)} lead />
           <Stat label={t("statOrders")} value={String(stats.orders)} lead={stats.orders > 0} />
           <Stat label={t("statVisits")} value={String(stats.visits)} muted={stats.visits === 0} />
@@ -241,7 +241,7 @@ function Stat({
   muted?: boolean;
 }) {
   return (
-    <div className="card-surface px-comfortable py-tight">
+    <div className="card-surface p-card">
       <p className="type-label truncate text-[12px] text-muted">{label}</p>
       <p
         className={cn(
@@ -351,7 +351,7 @@ function DetailsTab({ customer, onSaved }: { customer: Customer; onSaved: () => 
 
   return (
     <div className="max-w-3xl">
-      <div className="card-surface flex flex-col gap-section p-section">
+      <div className="card-surface flex flex-col gap-section p-card">
         <FormField label={t("fieldName")} value={name} onChange={(e) => setName(e.target.value)} />
         <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
           <FormField
@@ -407,7 +407,7 @@ function ConsentTab({ customer, onChanged }: { customer: Customer; onChanged: ()
 
   return (
     <div className="flex max-w-3xl flex-col gap-section">
-      <div className="card-surface flex flex-col gap-comfortable p-section">
+      <div className="card-surface flex flex-col gap-comfortable p-card">
         <p className="text-[13px] text-muted">{t("consentExplain")}</p>
         {(["email", "sms"] as ConsentChannel[]).map((channel) => (
           <div
@@ -434,7 +434,7 @@ function ConsentTab({ customer, onChanged }: { customer: Customer; onChanged: ()
         ))}
       </div>
 
-      <div className="card-surface p-section">
+      <div className="card-surface p-card">
         <p className="type-label mb-comfortable text-[12px] text-muted">{t("consentHistory")}</p>
         {history.length === 0 && <p className="text-[13px] text-muted">{t("consentNoHistory")}</p>}
         <ul className="flex flex-col gap-tight">
@@ -479,7 +479,7 @@ function NotesTab({ customer, onChanged }: { customer: Customer; onChanged: () =
 
   return (
     <div className="flex max-w-3xl flex-col gap-section">
-      <div className="card-surface flex flex-col gap-comfortable p-section">
+      <div className="card-surface flex flex-col gap-comfortable p-card">
         <FormField
           label={t("addNote")}
           variant="textarea"
@@ -502,9 +502,9 @@ function NotesTab({ customer, onChanged }: { customer: Customer; onChanged: () =
           message={t("noNotesMessage")}
         />
       ) : (
-        <ul className="flex flex-col gap-tight">
+        <ul className="flex flex-col gap-section">
           {notes.map((n, i) => (
-            <li key={`${n.at}-${i}`} className="card-surface p-comfortable">
+            <li key={`${n.at}-${i}`} className="card-surface p-card">
               <p className="break-words text-[13px]">{n.text}</p>
               <p className="mt-inline font-mono text-[12px] text-muted">
                 {n.who} · {formatDateTime(n.at)}

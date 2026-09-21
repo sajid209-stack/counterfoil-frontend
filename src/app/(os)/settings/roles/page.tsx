@@ -81,7 +81,7 @@ export default function RolesPage() {
       {!rolesQ.data || !staffQ.data ? (
         <SectionSkeleton />
       ) : (
-        <div className="flex max-w-4xl flex-col gap-wide pb-hero">
+        <div className="flex max-w-4xl flex-col gap-section pb-hero">
           <RecordList label={t("roles.title")}>
             {roles.map((r) => {
               const held = counts[r.id] ?? 0;

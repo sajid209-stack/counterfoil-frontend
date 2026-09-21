@@ -86,7 +86,10 @@ export function Sidebar({
       <div className={cn("flex shrink-0 items-center py-section", collapsed ? "justify-center" : "justify-between px-comfortable")}>
         {!collapsed && (
           <Link href="/" title="Counterfoil OS">
-            <Logo size={30} />
+            {/* 22px tall, 129 wide. At 30 the lockup ran 176px across a 240px
+                rail and was the loudest thing on every screen; the rail names
+                the product, the page is what the operator came for. */}
+            <Logo size={22} />
           </Link>
         )}
         {onToggleCollapsed && (

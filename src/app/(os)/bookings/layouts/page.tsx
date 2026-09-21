@@ -31,19 +31,19 @@ export default function SeatLayoutsPage() {
       actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} loading={creating} onClick={create}>{t("list.new")}</Button>}
     >
       {q.loading ? (
-        <div aria-busy="true" className="grid gap-tight sm:grid-cols-2 lg:grid-cols-3">
+        <div aria-busy="true" className="grid gap-section sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2].map((i) => <div key={i} className="h-28 animate-pulse rounded-md bg-line" />)}
         </div>
       ) : layouts.length === 0 ? (
         <EmptyState title={t("list.empty")} action={<Button onClick={create}>{t("list.new")}</Button>} />
       ) : (
-        <div className="grid gap-tight sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-section sm:grid-cols-2 lg:grid-cols-3">
           {layouts.map((l) => (
             <button
               key={l.id}
               type="button"
               onClick={() => router.push(`/bookings/layouts/${l.id}`)}
-              className="flex flex-col gap-tight card-surface p-section text-left transition-colors duration-quick hover:border-ember/40 active:bg-ember/10"
+              className="flex flex-col gap-tight card-surface p-card text-left transition-colors duration-quick hover:border-ember/40 active:bg-ember/10"
             >
               <div className="flex items-center gap-tight">
                 <Grid3x3 size={18} strokeWidth={1.5} className="text-muted" />

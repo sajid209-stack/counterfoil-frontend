@@ -63,7 +63,7 @@ export function StorefrontChrome({
   return (
     <div className="min-h-screen bg-surface text-fg">
       <header className="border-b border-hairline bg-card/60">
-        <div className="mx-auto flex max-w-5xl items-center gap-comfortable px-section py-comfortable sm:px-major">
+        <div className="mx-auto flex max-w-5xl items-center gap-comfortable px-gutter py-comfortable">
           {/* 44px on a phone. These are the only two navigation controls a
               visitor has, and a 23px text link is not a target on a touch
               screen — the inline-link exemption is for links inside prose,
@@ -83,10 +83,10 @@ export function StorefrontChrome({
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-section pb-hero pt-section sm:px-major">{children}</main>
+      <main className="mx-auto max-w-5xl px-gutter pb-hero pt-section">{children}</main>
 
       <footer className="border-t border-hairline">
-        <div className="mx-auto flex max-w-5xl items-center gap-tight px-section py-comfortable text-[12px] text-muted sm:px-major">
+        <div className="mx-auto flex max-w-5xl items-center gap-tight px-gutter py-comfortable text-[12px] text-muted">
           <LogoMark size={16} />
           {poweredBy}
         </div>

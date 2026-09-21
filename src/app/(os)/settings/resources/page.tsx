@@ -165,7 +165,7 @@ export default function ResourcesPage() {
           {visible.length === 0 ? (
             <p className="py-section text-sm text-muted">{t("resources.emptyTab")}</p>
           ) : (
-            <div className="flex flex-col gap-wide">
+            <div className="flex flex-col gap-major">
               {kinds.map((kind) => {
                 const group = visible
                   .filter((r) => r.nounPlural === kind)

@@ -38,7 +38,7 @@ export default function StorefrontPage() {
 
   if (q.loading) {
     return (
-      <div className="min-h-screen bg-surface px-section py-hero" aria-busy="true">
+      <div className="min-h-screen bg-surface px-gutter py-hero" aria-busy="true">
         <div className="mx-auto max-w-5xl animate-pulse space-y-section">
           <div className="h-8 w-2/3 rounded-sm bg-line" />
           <div className="h-4 w-1/2 rounded-sm bg-line" />
@@ -69,7 +69,7 @@ export default function StorefrontPage() {
       {/* The venue, in its own words. The accent is a rule and a wash rather
           than a letterform: the hue is a ground here, never text, which is the
           rule ember has carried across this product since September. */}
-      <section className={cn("rounded-md px-section py-major sm:px-major", accent ? ACCENT_WASH[accent] : "bg-subtle")}>
+      <section className={cn("rounded-md p-card", accent ? ACCENT_WASH[accent] : "bg-subtle")}>
         {/* fg/75, not `muted`: muted is tuned against the card, and on the
             accent's own wash it measured 4.34:1 — the same fault the check-in
             screen's amber panel had. A dimmed inherit composites against
@@ -93,19 +93,19 @@ export default function StorefrontPage() {
       {/* What's on. A card states what a booking IS and what it costs, and
           nothing about availability — a public page that promised a specific
           slot would be promising something only the till can hold. */}
-      <section className="mt-wide">
+      <section className="mt-major">
         <h2 className="text-base font-semibold tracking-[-0.4px]">{t("whatsOn")}</h2>
         {products.length === 0 ? (
           <p className="mt-comfortable text-[14px] text-muted">{t("nothingOn")}</p>
         ) : (
-          <ul className="mt-section grid grid-cols-1 gap-tight sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-section grid grid-cols-1 gap-section sm:grid-cols-2 lg:grid-cols-3">
             {products.map((p) => {
               const from = fromPrice(p.tiers);
               return (
                 <li key={p.id}>
                   <Link
                     href={`/s/${sf.slug}/${slugs[p.id]}`}
-                    className="card-surface flex h-full flex-col gap-tight p-comfortable transition-transform duration-quick hover:-translate-y-0.5"
+                    className="card-surface flex h-full flex-col gap-tight p-card transition-transform duration-quick hover:-translate-y-0.5"
                   >
                     <div className="flex items-start gap-comfortable">
                       <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="card" />
@@ -130,8 +130,8 @@ export default function StorefrontPage() {
 
       {/* Getting here, and the week. Two columns on a desktop because they are
           read together and neither is long enough to earn a section. */}
-      <section className="mt-wide grid grid-cols-1 gap-tight lg:grid-cols-2">
-        <div className="card-surface p-section">
+      <section className="mt-major grid grid-cols-1 gap-section lg:grid-cols-2">
+        <div className="card-surface p-card">
           <h2 className="text-base font-semibold tracking-[-0.4px]">{t("gettingHere")}</h2>
           <p className="mt-comfortable flex items-start gap-tight text-[14px]">
             <MapPin size={16} strokeWidth={1.5} className="mt-0.5 shrink-0 text-muted" aria-hidden />
@@ -172,7 +172,7 @@ export default function StorefrontPage() {
           )}
         </div>
 
-        <div className="card-surface p-section">
+        <div className="card-surface p-card">
           <h2 className="text-base font-semibold tracking-[-0.4px]">{t("openingHours")}</h2>
           {location.openingHours.length === 0 ? (
             <p className="mt-comfortable text-[14px] text-muted">{t("hoursUnknown")}</p>

@@ -150,7 +150,7 @@ export default function SecurityPage() {
               />
             )}
           </SettingRow>
-          <div className="flex justify-end px-major py-section">
+          <div className="flex justify-end px-card py-section">
             <Button
               disabled={!canChange}
               onClick={() => {
@@ -165,8 +165,8 @@ export default function SecurityPage() {
 
         <SettingsSection title={t("security.twoStep")} description={t("security.twoStepHelp")}>
           {required && (
-            <div className="px-major py-section">
-              <div className="flex flex-col gap-tight rounded-sm border border-line bg-subtle/60 px-section py-comfortable text-[13px] leading-relaxed sm:flex-row sm:items-center sm:justify-between sm:gap-section">
+            <div className="px-card py-section">
+              <div className="flex flex-col gap-tight rounded-sm border border-line bg-subtle/60 p-comfortable text-[13px] leading-relaxed sm:flex-row sm:items-center sm:justify-between sm:gap-section">
                 <span className="flex min-w-0 items-start gap-tight">
                   <ShieldCheck size={16} strokeWidth={1.5} aria-hidden className="mt-[2px] shrink-0 text-muted" />
                   <span>
@@ -218,8 +218,8 @@ export default function SecurityPage() {
 
         <SettingsSection title={t("security.email")} description={t("security.emailDesc")}>
           {pendingEmail ? (
-            <div className="px-major py-section" role="status">
-              <div className="flex flex-col gap-section rounded-sm border border-warning/30 bg-warning-wash p-section text-[13px] text-fg sm:flex-row sm:items-center sm:justify-between">
+            <div className="px-card py-section" role="status">
+              <div className="flex flex-col gap-section rounded-sm border border-warning/30 bg-warning-wash p-comfortable text-[13px] text-fg sm:flex-row sm:items-center sm:justify-between">
                 <span className="flex items-start gap-tight">
                   <CircleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
                   {t("security.emailPending", { email: pendingEmail, current: email })}
@@ -307,7 +307,7 @@ export default function SecurityPage() {
         >
           <ul className="divide-y divide-hairline">
             {sessions.map((s) => (
-              <li key={s.id} className="flex items-center gap-section px-major py-comfortable">
+              <li key={s.id} className="flex items-center gap-section px-card py-comfortable">
                 <IconTile icon={KIND_ICON[s.kind]} />
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-x-tight gap-y-inline">
@@ -343,7 +343,7 @@ export default function SecurityPage() {
         <SettingsSection title={t("security.recentSignins")} description={t("security.signinsDesc")}>
           <ul className="divide-y divide-hairline">
             {MOCK_SIGNINS.map((s) => (
-              <li key={s.at} className="flex items-center gap-section px-major py-comfortable">
+              <li key={s.at} className="flex items-center gap-section px-card py-comfortable">
                 {/* The outcome is said in words on the right; the dot only
                     helps the eye find the failed one in a longer list. */}
                 <span aria-hidden className={cn("h-2 w-2 shrink-0 rounded-full", s.ok ? "bg-success" : "bg-danger")} />

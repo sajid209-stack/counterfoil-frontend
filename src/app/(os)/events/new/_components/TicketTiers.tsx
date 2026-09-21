@@ -75,7 +75,7 @@ export function TicketTiers({
   return (
     <div className="flex flex-col gap-section">
       {rows.map((r, i) => (
-        <div key={r.id} className="rounded-md border border-line bg-card p-major">
+        <div key={r.id} className="rounded-md border border-line bg-card p-card">
           <div className="mb-section flex items-center justify-between gap-tight">
             <span className="type-label text-[12px] text-muted">{t("tickets.tierN", { n: i + 1 })}</span>
             <button
@@ -158,7 +158,7 @@ export function TicketTiers({
         ))}
       </div>
 
-      <div className="flex flex-wrap items-baseline justify-between gap-tight rounded-md border border-line bg-subtle px-major py-comfortable">
+      <div className="flex flex-wrap items-baseline justify-between gap-tight rounded-md border border-line bg-subtle p-card">
         <span className="text-[13px] text-muted">{t("tickets.capacity", { count: capacity })}</span>
         <span className="text-sm font-medium tabular-nums">
           {t("tickets.potential", { amount: potential === 0 ? t("free") : formatMoney(potential) })}

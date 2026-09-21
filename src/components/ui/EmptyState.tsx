@@ -12,7 +12,7 @@ export function EmptyState({
 }) {
   return (
     <div className="relative mx-auto w-full max-w-md">
-      <div className="flex flex-col items-center justify-center gap-tight rounded-md border border-dashed border-line px-section pb-tight pt-hero text-center">
+      <div className="flex flex-col items-center justify-center gap-tight rounded-md border border-dashed border-line px-card pb-tight pt-hero text-center">
         {icon && <div className="text-muted">{icon}</div>}
         <p className="type-h2 text-base">{title}</p>
         {message && (
@@ -25,7 +25,7 @@ export function EmptyState({
         <span className="absolute -right-2 h-4 w-4 rounded-full bg-surface" />
         <span className="mx-major flex-1 border-t-2 border-dashed border-line" />
       </div>
-      <div className="flex items-center justify-center rounded-md border border-dashed border-line px-section py-section">
+      <div className="flex items-center justify-center rounded-md border border-dashed border-line p-card">
         {action ?? <span className="font-mono text-[12px] uppercase tracking-wider text-muted">Nothing here yet</span>}
       </div>
     </div>

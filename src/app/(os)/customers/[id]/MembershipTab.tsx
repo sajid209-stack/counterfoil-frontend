@@ -103,9 +103,9 @@ export function MembershipTab({
         {memberships.length === 0 ? (
           <EmptyState title={t("noMembershipTitle")} message={t("noMembershipMessage")} />
         ) : (
-          <ul className="flex flex-col gap-tight">
+          <ul className="flex flex-col gap-section">
             {memberships.map((m) => (
-              <li key={m.id} className="card-surface p-comfortable">
+              <li key={m.id} className="card-surface p-card">
                 <div className="flex flex-wrap items-start justify-between gap-tight">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-tight">

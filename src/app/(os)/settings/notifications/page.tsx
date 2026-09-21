@@ -225,7 +225,7 @@ export default function NotificationsPage() {
             const hours = ev === "followUp" ? followUp ?? Number(saved.followUpHours) : reminder ?? Number(saved.reminderHours);
             const silent = ev === "confirmation" && !row.sms && !row.email;
             return (
-              <div key={ev} className="flex flex-col gap-tight px-major py-section sm:flex-row sm:items-center sm:gap-major">
+              <div key={ev} className="flex flex-col gap-tight px-card py-section sm:flex-row sm:items-center sm:gap-major">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-fg">{title}</p>
                   <p className="mt-inline text-[13px] leading-relaxed text-muted">{t(`notifications.event.${ev}.desc`, { hours })}</p>
@@ -439,7 +439,7 @@ export default function NotificationsPage() {
             const titleId = `alert-${ev}-title`;
             const descId = `alert-${ev}-desc`;
             return (
-              <div key={ev} className="px-major py-section">
+              <div key={ev} className="px-card py-section">
                 <div className="flex items-center justify-between gap-major">
                   <div className="min-w-0">
                     <p id={titleId} className="text-sm font-medium text-fg">

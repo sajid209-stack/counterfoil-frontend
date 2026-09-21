@@ -83,14 +83,14 @@ export default function SignInRulesPage() {
     <PageShell title={t("signIn.title")} description={t("signIn.description")}>
       <div className="flex max-w-3xl flex-col gap-section pb-hero">
         <SettingsSection title={t("signIn.twoStepTitle")} description={t("signIn.twoStepDesc")}>
-          <div role="radiogroup" aria-label={t("signIn.twoStepTitle")} className="flex flex-col gap-tight px-major py-section">
+          <div role="radiogroup" aria-label={t("signIn.twoStepTitle")} className="flex flex-col gap-tight px-card py-section">
             {TWO_STEP.map((level) => {
               const checked = form.twoStep === level;
               return (
                 <label
                   key={level}
                   className={cn(
-                    "flex cursor-pointer items-start gap-comfortable rounded-md border px-section py-comfortable transition-colors duration-quick",
+                    "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
                     checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-subtle/60",
                   )}
                 >

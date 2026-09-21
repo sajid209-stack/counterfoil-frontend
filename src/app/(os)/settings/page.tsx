@@ -245,7 +245,7 @@ export default function SettingsIndex() {
 
   return (
     <PageShell title={t("hub.title")} description={t("hub.description")}>
-      <div className="flex flex-col gap-wide pb-hero">
+      <div className="flex flex-col gap-major pb-hero">
         <div className="flex max-w-3xl flex-col gap-tight sm:flex-row sm:items-center sm:gap-section">
           <SearchField value={query} onChange={setQuery} label={t("hub.searchLabel")} placeholder={t("hub.searchPlaceholder")} />
           {/* The examples sit beside the field rather than in its placeholder,
@@ -260,7 +260,7 @@ export default function SettingsIndex() {
             "password" has already said what they came for. */}
         {!searching && attention.length > 0 && (
           <section aria-labelledby="settings-attention" className="max-w-3xl rounded-md border border-warning/30 bg-warning-wash">
-            <h2 id="settings-attention" className="px-section pb-tight pt-section text-sm font-semibold text-fg">
+            <h2 id="settings-attention" className="px-card pb-tight pt-card text-sm font-semibold text-fg">
               {t("hub.attentionCount", { count: attention.length })}
             </h2>
             <ul className="divide-y divide-warning/20">
@@ -268,7 +268,7 @@ export default function SettingsIndex() {
                 <li key={key}>
                   <Link
                     href={href}
-                    className="group flex min-h-14 items-center gap-section px-section py-comfortable transition-colors duration-quick hover:bg-warning/5"
+                    className="group flex min-h-14 items-center gap-section px-card py-comfortable transition-colors duration-quick hover:bg-warning/5"
                   >
                     <Icon size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-warning" />
                     <span className="min-w-0 flex-1">
@@ -293,14 +293,14 @@ export default function SettingsIndex() {
           // single 768px column left half a 1440 display empty; a grid would
           // have stretched the two-row groups to the height of the five-row
           // one beside them.
-          <div className="xl:columns-2 xl:gap-wide">
+          <div className="xl:columns-2 xl:gap-section">
             {groups.map((group) => (
               <section
                 key={group.key}
                 aria-labelledby={`settings-group-${group.key}`}
-                className="mb-wide break-inside-avoid"
+                className="mb-major break-inside-avoid"
               >
-                <div className="mb-section flex items-end justify-between gap-section">
+                <div className="mb-tight flex items-end justify-between gap-section">
                   <div className="min-w-0">
                     <h2 id={`settings-group-${group.key}`} className="text-base font-semibold text-fg">
                       {t(`nav.groups.${group.key}.title`)}
@@ -324,7 +324,7 @@ export default function SettingsIndex() {
                       <li key={key}>
                         <Link
                           href={href}
-                          className="group flex min-h-16 items-center gap-section px-section py-comfortable transition-colors duration-quick hover:bg-subtle/60"
+                          className="group flex min-h-16 items-center gap-section px-card py-comfortable transition-colors duration-quick hover:bg-subtle/60"
                         >
                           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-subtle text-muted ring-1 ring-inset ring-hairline transition-colors duration-quick group-hover:text-fg">
                             <Icon size={18} strokeWidth={1.5} aria-hidden />

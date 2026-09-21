@@ -44,7 +44,7 @@ export function CustomerIdentity({
   const badges = [customer.flag, customer.status === "archived" ? "archived" : null, ...customer.tags].filter(Boolean);
 
   return (
-    <div className="card-surface flex flex-col gap-comfortable p-comfortable sm:flex-row sm:items-center sm:gap-section">
+    <div className="card-surface flex flex-col gap-comfortable p-card sm:flex-row sm:items-center sm:gap-section">
       <span
         aria-hidden
         className={cn(

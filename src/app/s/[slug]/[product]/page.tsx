@@ -35,7 +35,7 @@ export default function StorefrontProductPage() {
 
   if (q.loading) {
     return (
-      <div className="min-h-screen bg-surface px-section py-hero" aria-busy="true">
+      <div className="min-h-screen bg-surface px-gutter py-hero" aria-busy="true">
         <div className="mx-auto max-w-3xl animate-pulse space-y-section">
           <div className="h-8 w-2/3 rounded-sm bg-line" />
           <div className="h-32 rounded-md bg-line/60" />
@@ -85,14 +85,14 @@ export default function StorefrontProductPage() {
         {/* The variants. Cards rather than a table: each one is a decision with
             a reason attached, and a table would put four reasons in a column
             nobody reads. */}
-        <section className="mt-wide">
+        <section className="mt-major">
           <h2 className="text-base font-semibold tracking-[-0.4px]">{t("tickets")}</h2>
           {tiers.length === 0 ? (
             <p className="mt-comfortable text-[14px] text-muted">{t("askAtTheDoor")}</p>
           ) : (
-            <ul className="mt-section grid grid-cols-1 gap-tight sm:grid-cols-2">
+            <ul className="mt-section grid grid-cols-1 gap-section sm:grid-cols-2">
               {tiers.map((tier) => (
-                <li key={tier.id} className="card-surface flex flex-col gap-tight p-section">
+                <li key={tier.id} className="card-surface flex flex-col gap-tight p-card">
                   <div className="flex items-baseline justify-between gap-comfortable">
                     <p className="min-w-0 break-words text-[16px] font-semibold">{tier.name}</p>
                     <p className="shrink-0 whitespace-nowrap text-[16px] font-semibold">{priceLine(tier)}</p>
@@ -125,7 +125,7 @@ export default function StorefrontProductPage() {
         {/* Where it is bought. The page is honest about this rather than
             drawing a button that cannot do anything: online checkout is not
             built, and a dead Buy button is worse than a sentence. */}
-        <section className={cn("mt-wide rounded-md px-section py-section sm:px-major", accent ? ACCENT_WASH[accent] : "bg-subtle")}>
+        <section className={cn("mt-major rounded-md p-card", accent ? ACCENT_WASH[accent] : "bg-subtle")}>
           <div className="flex flex-wrap items-start gap-comfortable">
             {accent && <span aria-hidden className={cn("mt-1 h-6 w-1 shrink-0 rounded-full", ACCENT_BG[accent])} />}
             <div className="min-w-0">

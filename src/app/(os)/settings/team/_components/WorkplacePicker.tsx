@@ -55,7 +55,7 @@ export function WorkplacePicker({
           const here = counters.filter((c) => c.locationId === l.id && c.status !== "archived");
           const pickedHere = here.filter((c) => counterIds.includes(c.id)).length;
           return (
-            <li key={l.id} className="px-major py-tight">
+            <li key={l.id} className="px-card py-tight">
               <label className="flex min-h-12 cursor-pointer items-center gap-comfortable">
                 <input type="checkbox" checked={on} onChange={() => toggleLocation(l.id)} className="h-4 w-4 shrink-0 accent-ember" />
                 <span className="min-w-0 flex-1">
@@ -93,7 +93,7 @@ export function WorkplacePicker({
         })}
       </ul>
       {warnEmpty && locationIds.length === 0 && (
-        <p className="flex items-start gap-tight border-t border-hairline bg-warning-wash px-major py-tight text-[13px] text-fg">
+        <p className="flex items-start gap-tight border-t border-hairline bg-warning-wash px-card py-tight text-[13px] text-fg">
           <CircleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
           {t("team.noLocation")}
         </p>

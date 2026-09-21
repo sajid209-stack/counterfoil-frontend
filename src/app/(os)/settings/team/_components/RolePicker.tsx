@@ -31,14 +31,14 @@ export function RolePicker({
   const name = useId();
 
   return (
-    <div role="radiogroup" aria-label={t("common.role")} className="flex flex-col gap-tight px-major py-section">
+    <div role="radiogroup" aria-label={t("common.role")} className="flex flex-col gap-tight px-card py-section">
       {roles.map((r) => {
         const checked = r.id === value;
         return (
           <label
             key={r.id}
             className={cn(
-              "flex cursor-pointer items-start gap-comfortable rounded-md border px-section py-comfortable transition-colors duration-quick",
+              "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
               checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-subtle/60",
             )}
           >

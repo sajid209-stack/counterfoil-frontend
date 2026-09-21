@@ -196,7 +196,7 @@ function EmptyLaneToggle({
 }) {
   if (count === 0) return null;
   return (
-    <div className="border-t border-hairline px-comfortable py-tight">
+    <div className="border-t border-hairline px-card py-tight">
       <button
         type="button"
         aria-expanded={open}
@@ -310,7 +310,7 @@ function DayTrack({
               {/* Name column stays put while the hours scroll under it. */}
               <div
                 className={cn(
-                  "sticky left-0 z-10 flex w-40 shrink-0 flex-col justify-center bg-card px-comfortable transition-shadow duration-quick",
+                  "sticky left-0 z-10 flex w-40 shrink-0 flex-col justify-center bg-card px-card transition-shadow duration-quick",
                   scrolledX && "border-r border-hairline shadow-[1px_0_2px_rgb(0_0_0/0.06)]",
                 )}
               >
@@ -473,7 +473,7 @@ function CompactDay({
   return (
     <div>
       {blocked.length > 0 && (
-        <div className="flex flex-col gap-tight border-b border-hairline px-comfortable py-tight">
+        <div className="flex flex-col gap-tight border-b border-hairline px-card py-tight">
           {blocked.map((l) => (
             <span key={l.id} className="flex items-baseline gap-tight text-[12px]">
               <span className="font-medium text-fg">{l.name}</span>

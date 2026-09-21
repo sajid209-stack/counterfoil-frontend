@@ -210,14 +210,14 @@ export function ResourceEditor({
       </SettingsSection>
 
       <SettingsSection title={t("resources.priceTitle")} description={t("resources.priceDesc")}>
-        <div role="radiogroup" aria-label={t("resources.priceTitle")} className="flex flex-col gap-tight px-major py-section">
+        <div role="radiogroup" aria-label={t("resources.priceTitle")} className="flex flex-col gap-tight px-card py-section">
           {RATES.map((k) => {
             const checked = form.rateKind === k;
             return (
               <label
                 key={k}
                 className={cn(
-                  "flex cursor-pointer items-start gap-comfortable rounded-md border px-section py-comfortable transition-colors duration-quick",
+                  "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
                   checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-subtle/60",
                 )}
               >
@@ -283,11 +283,11 @@ export function ResourceEditor({
       {mode === "edit" && (
         <SettingsSection title={t("resources.todayTitle")} description={t("resources.todayDesc")}>
           {today.length === 0 ? (
-            <p className="px-major py-section text-sm text-muted">{t("resources.todayNone")}</p>
+            <p className="px-card py-section text-sm text-muted">{t("resources.todayNone")}</p>
           ) : (
             <ul className="divide-y divide-hairline">
               {today.map((s) => (
-                <li key={`${s.start}-${s.end}`} className="flex flex-wrap items-baseline gap-x-section gap-y-inline px-major py-comfortable">
+                <li key={`${s.start}-${s.end}`} className="flex flex-wrap items-baseline gap-x-section gap-y-inline px-card py-comfortable">
                   <span className="w-28 shrink-0 text-sm font-medium tabular-nums text-fg">
                     {toTime(s.start)}–{toTime(s.end)}
                   </span>

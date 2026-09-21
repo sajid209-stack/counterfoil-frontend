@@ -155,13 +155,13 @@ export function MonthGrid({
 
         {/* The chosen day, in full — the reason the grid can afford to be dots. */}
         <div className="border-t border-hairline">
-          <p className="type-label px-comfortable pt-comfortable text-[12px] text-muted">
+          <p className="type-label px-card pt-comfortable text-[12px] text-muted">
             {dayHeading ? dayHeading(selectedDate) : isoDate(selectedDate)}
           </p>
           {agenda.length === 0 ? (
-            <p className="px-comfortable py-comfortable text-[13px] text-muted">{emptyLabel}</p>
+            <p className="px-card py-comfortable text-[13px] text-muted">{emptyLabel}</p>
           ) : (
-            <ul className="flex flex-col gap-tight p-comfortable">
+            <ul className="flex flex-col gap-tight p-card">
               {agenda.map((e) => (
                 <li key={e.id}>
                   <button

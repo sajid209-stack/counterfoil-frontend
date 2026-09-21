@@ -271,7 +271,7 @@ export function EventWizard() {
                     that shows six identical grey cards asks someone to choose a
                     look they cannot see. */}
                 <span
-                  className="flex h-28 items-end p-comfortable"
+                  className="flex h-28 items-end p-card"
                   style={{ background: c.theme.bg, borderBottom: `1px solid ${c.theme.line}` }}
                 >
                   <span className={templateFontVars} style={{ display: "block" }}>
@@ -303,7 +303,7 @@ export function EventWizard() {
                     which is both the strongest presentation of it and the
                     point of the swatch. Printing it again underneath was the
                     card saying the same word twice. */}
-                <span className="block bg-card p-comfortable">
+                <span className="block bg-card p-card">
                   <span className="block text-[13px] text-muted">{t(`categoryBlurb.${c.key}`)}</span>
                 </span>
               </button>
@@ -372,11 +372,11 @@ export function EventWizard() {
         <div>
           <StepHead title={t("step.publishTitle")} help={t("step.publishHelp")} />
           <div className="card-surface overflow-hidden">
-            <div className="flex flex-wrap items-baseline justify-between gap-tight border-b border-line px-major py-comfortable">
+            <div className="flex flex-wrap items-baseline justify-between gap-tight border-b border-line px-card py-comfortable">
               <h3 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{draft.title}</h3>
               <span className="shrink-0 font-mono text-[12px] text-muted">/e/{slugify(content.title || "event")}</span>
             </div>
-            <div className="bg-subtle p-comfortable">
+            <div className="bg-subtle p-card">
               <div className={cn("mx-auto overflow-hidden rounded-sm shadow-md", templateFontVars)} style={{ maxWidth: 1180 }}>
                 <PreviewFrame width={1180}>
                   <EventTemplate event={draft} device="desktop" labels={labels} now={now} />
