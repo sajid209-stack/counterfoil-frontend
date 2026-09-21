@@ -9817,3 +9817,18 @@ Sources: [Shopify Polaris — Card, documented default padding `{xs: '400', sm: 
 [Shopify Polaris — Layout, sections 16px apart](https://github.com/Shopify/polaris/blob/main/polaris-react/src/components/Layout/Layout.module.css) ·
 [Cieden — spacing best practices](https://cieden.com/book/sub-atomic/spacing/spacing-best-practices) ·
 [Breakdance — the 8-point grid, a practical guide](https://breakdance.com/the-8-point-grid-system-a-practical-guide/)
+
+## Calendar: date controls left, view switch right (2026-09-22)
+
+Owner, on a marked-up screenshot of the week view: swap the Day / Week / Month
+switch and the Today · ‹ range › · date-picker group.
+
+The date group now leads on the left and the view switch sits on the right at
+desktop widths. The swap is in the DOM, not a CSS `order`, so keyboard focus
+runs left to right the way the eye does. On a phone the two still stack: date
+controls (with the filter button) on top, the view switch under them.
+
+Verified: calendar category **45/45**, filter panel behaviour unchanged on
+desktop and phone (35 → 7 and 14 → 7 nodes under one filter, clear offered),
+shell **75/75**, and a probe confirming Month still switches the grid, with no
+console errors and no sideways scroll at 1600 and 390.

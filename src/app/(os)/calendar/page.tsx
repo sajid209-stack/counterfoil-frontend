@@ -530,16 +530,6 @@ export default function CalendarPage() {
             the tabs — so you read where you are in one place and moved it in
             another. */}
         <div className="flex flex-wrap items-center justify-between gap-comfortable">
-          <Tabs
-            items={[
-              { value: "day", label: t("tabDay") },
-              { value: "week", label: t("tabWeek") },
-              { value: "month", label: t("tabMonth") },
-            ]}
-            value={view}
-            onChange={(v) => setView(v as View)}
-          />
-
           <div className="flex flex-wrap items-center gap-tight">
             <Button variant="secondary" size="sm" onClick={() => setCursor(openingDate())}>
               {t("today")}
@@ -594,6 +584,20 @@ export default function CalendarPage() {
                 than alone on a row of its own. */}
             {compact && filtersButton}
           </div>
+
+          {/* The view switch sits on the right, the date controls on the left —
+              the owner's call: where you are in time is read first, and the
+              grain you are looking at is the smaller decision. DOM order
+              follows, so the tab order runs the same way the eye does. */}
+          <Tabs
+            items={[
+              { value: "day", label: t("tabDay") },
+              { value: "week", label: t("tabWeek") },
+              { value: "month", label: t("tabMonth") },
+            ]}
+            value={view}
+            onChange={(v) => setView(v as View)}
+          />
         </div>
 
         {/* ── filters ─────────────────────────────────────────────────────── */}
