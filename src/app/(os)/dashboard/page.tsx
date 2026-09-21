@@ -175,15 +175,21 @@ function StatRow({ stat }: { stat: Stat }) {
    prior period, which in this seed is three tiles out of four; inventing one to
    fill the corner would be inventing the comparison. */
 function StatCard({ stat }: { stat: Stat }) {
+  /* 194px → about 120. The icon had a row of its own above the label, 36px
+     plus its gap, holding nothing but a glyph; it now sits beside the label it
+     illustrates, at 28px. The figure holds at 28px — the bottom of the type
+     spec's metric range — and the padding is 16 top and bottom rather than
+     24. Nothing was dropped: every tile still carries its icon, label,
+     figure, context and, where there is one, its delta. */
   return (
-    <div className="card-surface flex flex-col p-major">
-      <div className="flex items-start justify-between gap-tight">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground">{stat.icon}</span>
+    <div className="card-surface flex flex-col px-major py-section">
+      <div className="flex items-center gap-tight">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground [&>svg]:h-4 [&>svg]:w-4">{stat.icon}</span>
+        <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-muted">{stat.label}</p>
         {stat.delta}
       </div>
-      <p className="mt-comfortable text-[12px] font-medium text-muted">{stat.label}</p>
-      <p className="type-figure mt-inline whitespace-nowrap text-[28px] font-semibold sm:text-[32px]">{stat.figure}</p>
-      <p className={`mt-auto pt-tight text-[12px] ${stat.contextTone ?? "text-muted"}`}>{stat.context}</p>
+      <p className="type-figure mt-tight whitespace-nowrap text-[28px] font-semibold leading-tight">{stat.figure}</p>
+      <p className={`mt-inline text-[12px] ${stat.contextTone ?? "text-muted"}`}>{stat.context}</p>
     </div>
   );
 }
@@ -669,13 +675,11 @@ export default function DashboardPage() {
   const complete = steps.filter((s) => s.done || skipped[s.key]).length;
   const allDone = complete === steps.length;
 
-  const dateLabel = new Date(`${TODAY}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   const card = "card-surface";
 
   return (
     <PageShell
       title={op.data?.name || t("title")}
-      description={dateLabel}
       actions={
         <div className="flex items-center gap-tight">
           {locations.length > 1 && (

@@ -14,7 +14,6 @@ import {
   Package,
   PartyPopper,
   ReceiptText,
-  Search,
   Settings,
   Store,
   TicketPercent,
@@ -133,9 +132,9 @@ export function OsShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("cf-prefs", onPrefs);
   }, []);
 
-  // The shortcut the rail advertises. It opens the palette at every width,
-  // including the ones where the old search box was display:none and the
-  // hint was therefore a lie.
+  // Search has no button any more — the owner took it off the rail and the
+  // bar. Ctrl/⌘ K still opens the palette: a shortcut costs no pixels, and it
+  // is the only way to jump to a settings section by keyword from anywhere.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "k") return;
@@ -183,7 +182,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen shrink-0 overflow-y-auto md:block">
-        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} onSearch={() => setSearchOpen(true)} shortcutKey={shortcutKey} />
+        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
       </aside>
 
       {/* overflow-x-CLIP, not hidden. `overflow-x: hidden` forces overflow-y to
@@ -206,14 +205,6 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               own <h1> renders in the content below it on a phone, and a
               heading above that h1 puts the document's outline out of order. */}
           <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-fg">{pageName}</p>
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            aria-label={t("search")}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:text-fg active:bg-ember/10"
-          >
-            <Search size={20} strokeWidth={1.5} />
-          </button>
           <AccountMenu name={operatorQ.data?.name} compact />
         </div>
 
@@ -234,7 +225,11 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             or a context whose `actions` node changes identity on every render
             and would set state in a loop. A portal has neither problem, and
             PageShell stays the single owner of what a page header is. */}
-        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-20 hidden items-start justify-between gap-major px-major py-comfortable md:flex">
+        {/* 8px of padding, not 12, and centred rather than top-aligned: with
+            the single-word breadcrumb gone the title is one line beside 44px
+            controls, and top-aligning them left the title riding 5px high of
+            the buttons it shares the bar with. */}
+        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-20 hidden items-center justify-between gap-major px-major py-tight md:flex">
           <div id="os-page-header" className="min-w-0 flex-1" />
           {/* One right-aligned row: the page's own actions, then the account.
               It was two rows because the chrome alone needed ~846px of a

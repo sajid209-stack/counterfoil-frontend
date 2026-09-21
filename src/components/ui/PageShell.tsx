@@ -73,7 +73,11 @@ export function PageShell({
   // where in Settings you are.
   const headerText = (
     <div className="min-w-0">
-      {wide && crumbs.length > 0 && (
+      {/* Only with two or more levels. A one-word trail — DASHBOARD, ORDERS,
+          CALENDAR — restates the rail item that is lit up beside it and costs
+          the bar a whole line to do it. A deeper trail (SETTINGS / DEVICES)
+          says where in a section you are, and its crumbs link back up. */}
+      {wide && crumbs.length > 1 && (
         <p className="mb-inline font-mono text-[12px] uppercase tracking-wide text-muted">
           {crumbs.map((c, i) => (
             <span key={c.href}>

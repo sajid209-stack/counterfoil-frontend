@@ -9691,3 +9691,45 @@ The facts probe read labels with `textContent` and matched them against what
 the screen shows. The labels are uppercased **in CSS**, so the source casing
 and the rendered casing differ and the match found nothing. The rule is already
 in this log from the event templates; it is written into the probe now.
+
+## The dashboard's top, tightened (2026-09-21)
+
+Owner, on a marked-up screenshot of the dashboard: remove search, remove
+"DASHBOARD", remove "Wednesday 29 July", make the four cards shorter, make the
+top bar shorter.
+
+| | before | after |
+|---|---|---|
+| top bar | 104px | **61px** |
+| stat tile | 194px | **127px** |
+| first card starts at | 128px | **85px** |
+| top bar at 1024 | 136px | **81px** |
+
+- **Search is off the rail and off the phone's bar.** Ctrl/⌘ K still opens the
+  palette: a shortcut costs no pixels and it is the only way to jump to a
+  settings section by keyword from anywhere. If that should go too, it is one
+  handler in `OsShell`.
+- **A one-word breadcrumb is gone everywhere, not only on the dashboard.**
+  DASHBOARD, ORDERS, CALENDAR — each restated the rail item lit up beside it and
+  cost the bar a line. A trail of two or more levels stays (SETTINGS /
+  DEVICES, REPORTS / SALES), because that one says where in a section you are
+  and its crumbs link back up. Rule: `crumbs.length > 1`.
+- **The date is off the dashboard.** The scope toggle beside it already says
+  Today.
+- **The stat tile's icon no longer has a row of its own.** It sits beside the
+  label at 28px; the figure holds at 28px (the bottom of the type spec's metric
+  range) and the padding is 16 top and bottom rather than 24. Nothing was
+  dropped: icon, label, figure, context and delta are all still there.
+- **The bar is 8px top and bottom, and centred.** With the one-word crumb gone
+  the title is one line beside 44px controls, and top-aligning them left it
+  riding high of the buttons. Every OS bar is shorter: ~74px on a page with a
+  description, ~96px with a trail as well, down from ~120.
+
+Verified: shell harness **75/75** after rewriting its search checks to assert
+the opposite (no search on the rail, collapsed rail or phone bar; Ctrl K still
+opens the palette; focus goes back to whatever had it), type spec **10/10**,
+accessibility **8/8**, settings behaviour **31/31**, and the 32-route audit at
+its documented **70** (one run read 74 with four connection resets on a route
+this never touched — the recompiling-server artefact this log has recorded
+before). `tsc` clean; `OsShell` and the dashboard hold at their documented
+lint baselines.
