@@ -8989,3 +8989,119 @@ Sources: [SaaSUI — sidebar, top bar and menu patterns](https://www.saasui.desi
 [UX Patterns for Developers — command palette](https://uxpatterns.dev/patterns/advanced/command-palette) ·
 [Build MVP Fast — adding a ⌘K palette to a SaaS](https://www.buildmvpfast.com/blog/how-to-add-cmd-k-command-palette-saas-2026) ·
 [Vosidiy — SaaS layout structure](https://medium.com/design-bootcamp/designing-a-layout-structure-for-saas-products-best-practices-d370211fb0d1)
+
+## The dashboard gets its vertical space back (2026-09-21)
+
+Owner's review: *"Revenue trend charts require shortening to optimize vertical
+space"*, alongside *"mobile layouts require compact designs"* and
+*"calendar views on mobile prioritize minimizing excessive vertical
+scrolling."* Measured before and after.
+
+| | before | after |
+|---|---|---|
+| revenue chart | 300px (card 462) | **210px** (card 372) |
+| phone page | 4,434px | **3,828px** |
+| wide page | 1,867px | **1,803px** |
+| tablet page | 2,691px | **2,547px** |
+| headline metrics on a phone | 4 cards, ~800px | **1 card of 4 rows, ~350px** |
+
+### The chart
+
+210, down from 300. A previous pass had grown it *to* 300 to close a 136px gap
+between the two body columns — which is the wrong way round: a chart's height
+should be what the chart needs, and the columns should be balanced by the
+column that has slack. At 300 the card was 462px, so on a 900px screen one
+chart took half of everything above the fold, and on a phone it was 518px of a
+single scroll. At 210 it still carries five gridlines and thirty days of shape,
+and the figure it is about is stated above it in full — the line is there to
+show the direction, not to be read off.
+
+The rail gives the same back: **Live activity goes from six rows to five**, and
+the two columns finish 23px apart. What the change buys is visible rather than
+theoretical: **"Unbooked hours · 25" is now above the fold at 1440**, where it
+used to sit below it.
+
+### The four headline metrics, stated once
+
+They were four near-identical blocks of markup — which is exactly why their
+context lines had already drifted into four different shapes once before, and
+had to be brought back into line by hand. They are one list now, rendered by
+`StatCard` from `sm` and by `StatRow` on a phone, so the two shapes cannot
+disagree about what a metric is.
+
+The rows are the mobile ask. At 390 the tiles were four full-width cards about
+200px tall — **800px spent on four numbers** before the chart the page is
+about, with only the first one and a half visible on a screen. All four fit one
+screen now.
+
+**No figure shrinks to get that back.** A previous pass measured two-up on a
+phone and rejected it, correctly: "৳41,653.00" cannot fit half a 390px screen
+at 28px, and shrinking the type produced a band that clipped its own numbers —
+a clipped figure is a different number, shown with no sign anything is missing.
+A row has the whole width. Only the context line moves, from under the figure
+to beside it.
+
+### 196px of the Recent-orders table was being swallowed
+
+Found by measuring at exactly **768**, which is the width where `md:` turns the
+table on and also the width where the rail appears: `main` is 528px and the
+five columns need 724, so 196px was disappearing into `main`'s
+`overflow-x-clip`. The page never scrolled sideways, so every document-level
+check passed while a fifth of the table was gone.
+
+This is the class of bug this log has recorded three times and it was
+**pre-existing** — the card was added on 2026-09-09 and the conformance
+harness's own 23/23 baseline predates it by six days, so 768 had never been
+measured on this card. The table now scrolls inside its own card, which is the
+treatment the reports tables have had since September.
+
+### The location filter stops wrapping the page title
+
+A native `<select>` sizes itself to its **longest option**, so with "Lalbagh
+Fort — Main Gate" in the list it measured **400px** at 1024 — and the page
+actions are in the top bar now, so that 400px came straight out of the title's
+slot. Capped at 180.
+
+Worth correcting the previous entry, which named this as the whole cause of the
+tablet bar being 136px. It is not: with the select capped the actions are 368px
+and the title still gets only 267px of a 736px pane, so "Lalbagh Heritage
+Attractions" at 28px still wraps to two lines. At 1024, with a 240px rail and a
+page that carries both a location filter and a scope toggle, two lines is the
+honest outcome — the alternative is clipping the operator's own name, which
+this project's rules forbid.
+
+### Verified
+
+- **Dashboard layout conformance 23/23**, including the two checks this change
+  had to earn back: exactly one full-width closing section (the phone card is
+  `sm:hidden`, so it is not a second one), and the columns finishing within
+  80px — Δ23px, against Δ105px before the feed gave a row back.
+- **Type spec 11/11** on every role the page uses.
+- **Shell harness 81/81** unchanged; the route audit is at its documented
+  **70** (69 the declared white-on-ember rule, 1 the kitchen-sink inline link).
+- 768 re-measured: `main.scrollWidth` 749 → **528**, equal to its client width.
+- `tsc --noEmit` and `npm run build` clean; the dashboard holds at its
+  **5 pre-existing** `exhaustive-deps` warnings and 0 errors. i18n parity
+  **0 missing / 0 extra**; no keys added or orphaned.
+
+### Three harness corrections, all mine to make
+
+Each would have become a "fix" to working code if trusted:
+
+- The type harness measured **the account button's monogram** as a Button
+  label. It is `aria-hidden` decoration duplicating the button's own accessible
+  name, and a button whose only text is hidden carries no label to measure.
+- It measured a **table cell's inherited 16px** against the concatenation of
+  the two spans inside it — a reference over a customer name, neither of which
+  is 16px. A container holding several text-bearing children owns no type role.
+- It reported a **StatusPill in DM Mono** as off-spec table text. Mono is
+  declared for identifiers — "booking refs, status codes, IDs" — so a status
+  pill in mono is the rule being followed.
+
+### Open
+
+- **The tablet bar is 136px** for the reason above. Shortening it means either
+  a smaller page title at that one width, against the type spec, or fewer page
+  controls, which is a different decision.
+- The Today / This week toggle still wraps "This week" onto two lines at 390,
+  which is why it is 52px there. Pre-existing and deliberate.

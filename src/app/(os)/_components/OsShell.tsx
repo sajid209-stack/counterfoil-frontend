@@ -202,7 +202,10 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             it is what the bar is for. */}
         <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-30 flex items-center gap-tight px-section py-inline md:hidden">
           <LogoMark size={24} className="shrink-0" />
-          <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-fg">{pageName}</h2>
+          {/* A <p>, not a heading. The bar names the destination; the page's
+              own <h1> renders in the content below it on a phone, and a
+              heading above that h1 puts the document's outline out of order. */}
+          <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-fg">{pageName}</p>
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
