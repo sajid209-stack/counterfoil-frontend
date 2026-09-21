@@ -169,7 +169,6 @@
     "connectionTitle": "Connection",
     "connectionDesc": "Whether it can open its till, and what to do when a tablet is lost or replaced.",
     "statusLabel": "Status",
-    "activeDesc": "On, and allowed to open its till. {seen}.",
     "inactiveDesc": "Turned off — it can’t open a till until you turn it back on.",
     "replaceLabel": "Replacing a tablet",
     "replaceDesc": "Pairing codes are shown once. To connect a new tablet, register it as a new device, then remove this one.",
@@ -206,7 +205,16 @@
     "powerSwitch": "{name}: on",
     "offTag": "Off",
     "emptyTab": "No devices in this list.",
-    "counterDescNew": "The till this tablet will open. You can move it to another counter later."
+    "counterDescNew": "The till this tablet will open. You can move it to another counter later.",
+    "factsLabel": "About this tablet",
+    "factStatus": "Status",
+    "factOn": "On",
+    "factOff": "Turned off",
+    "factSeen": "Last seen",
+    "factCounter": "Counter",
+    "factPlace": "Where",
+    "factAdded": "Registered",
+    "activeShort": "On, and allowed to open its till."
   },
   "locations": {
     "title": "Locations",

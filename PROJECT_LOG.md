@@ -9635,3 +9635,59 @@ check-in screen's amber panel had.
   a backend would upsert and the question disappears.
 - The page is not indexed or shared anywhere — no metadata, no sitemap, no
   open-graph. Those belong with a real domain, which is a deployment decision.
+
+## The device page states what a device IS (2026-09-21)
+
+Owner's review, the last item on the list: *"settings and two-column device
+data layouts require structural improvements."* Looked at before changing
+anything, and the fault is real and specific.
+
+**The device page was a form, not a record.** A settings layout is label-left,
+control-right — the right shape for a decision and the wrong one for a fact —
+so the page could only state when the tablet was last seen by burying it in the
+description of a **Turn off** button. Which counter it was on was in the page
+subtitle, where it is chrome; when it was registered was nowhere at all. A
+manager opening a tablet's page learned almost nothing about the tablet.
+
+### Facts, then decisions
+
+`RecordFacts` is a definition list above the settings sections: **status, last
+seen, counter, where, registered**. Two columns from `sm`, one below it.
+
+- **Last seen carries both forms.** "3 hours ago" is what you read; "29 Jul,
+  09:10" is what you quote to somebody else.
+- **One fact carries a tone**, and only one: a tablet that has not checked in
+  for a week, by the same `isDeviceQuiet` the dashboard's notice uses — so the
+  two cannot disagree about what quiet means. A counter it is not paired to
+  gets the same treatment, because an unpaired tablet cannot open a till.
+- **The pairing code is still not shown.** Codes are shown once, at
+  registration; that rule was set when the list stopped printing them and it
+  holds here.
+- **The Turn off row stops restating the fact above it.** A control's
+  description should say what the control does; `devices.activeDesc` carried
+  the last-seen time and is gone from both locales.
+
+`RecordFacts` is in `SettingsKit` rather than on the page, because the same
+distinction applies to every settings record — a counter, a resource, a
+location all have facts currently living inside control descriptions. Devices
+were what the review named, so devices are what changed.
+
+### Verified
+
+- **38 checks**, all passing, across two records on purpose: a tablet that is
+  checking in and one that never has. The page leads with five facts; last seen
+  carries the relative and the exact moment; a live tablet reads in ink while
+  the silent one's last-seen carries a tone; the counter and venue are named;
+  the Turn off row no longer restates last-seen; **no pairing code appears**.
+  Plus contrast, the 12px floor, nothing clipped and no page x-scroll at 390,
+  1280, dark and Bangla, with no console errors or missing messages.
+- The 32-route audit is at its documented **70**; `tsc` and `eslint` clean;
+  i18n parity **0 missing / 0 extra** across 32 namespaces, with nine keys
+  added in en and bn and one orphan removed.
+
+### A probe correction, and it is the third of its kind today
+
+The facts probe read labels with `textContent` and matched them against what
+the screen shows. The labels are uppercased **in CSS**, so the source casing
+and the rendered casing differ and the match found nothing. The rule is already
+in this log from the event templates; it is written into the probe now.

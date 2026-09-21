@@ -6,7 +6,10 @@ import { useTranslations } from "next-intl";
 import { Button, ConfirmDialog, EmptyState, PageShell, StatusPill, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { archiveDevice, getDevice, listCounters, listLocations, updateDevice, type Device } from "@/lib/api";
-import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, controlCls } from "../../_components/SettingsKit";
+import { isDeviceQuiet } from "@/lib/devices";
+import { DEMO_TODAY } from "@/lib/schedule";
+import { formatDate, formatDateTime } from "@/lib/format";
+import { RecordFacts, SaveBar, SectionSkeleton, SettingRow, SettingsSection, controlCls } from "../../_components/SettingsKit";
 import { useSince } from "../../_lib/time";
 import { CounterSelect } from "../_components/CounterSelect";
 
@@ -70,7 +73,34 @@ export default function DevicePage() {
   const locations = locationsQ.data?.data ?? [];
   const counter = counters.find((c) => c.id === device.counterId);
   const place = locations.find((l) => l.id === counter?.locationId);
-  const seen = device.lastSeenAt ? t("devices.seen", { when: since(device.lastSeenAt) }) : t("devices.neverSeen");
+  /* A tablet that has not checked in for a week is the one fact on this page
+     somebody has to act on, so it is the one fact that carries a tone. The
+     dashboard's notice uses the same rule, from the same function. */
+  const quiet = isDeviceQuiet(device, DEMO_TODAY);
+  const facts = [
+    {
+      key: "status",
+      label: t("devices.factStatus"),
+      value: device.status === "active" ? t("devices.factOn") : t("devices.factOff"),
+      tone: device.status === "active" ? undefined : ("warn" as const),
+    },
+    {
+      key: "seen",
+      label: t("devices.factSeen"),
+      // The exact moment as well as the relative one: "3 hours ago" is what
+      // you read, and the timestamp is what you quote.
+      value: device.lastSeenAt ? `${since(device.lastSeenAt)} · ${formatDateTime(device.lastSeenAt)}` : t("devices.neverSeen"),
+      tone: quiet ? ("warn" as const) : undefined,
+    },
+    {
+      key: "counter",
+      label: t("devices.factCounter"),
+      value: counter ? counter.name : t("devices.notPaired"),
+      tone: counter ? undefined : ("warn" as const),
+    },
+    { key: "place", label: t("devices.factPlace"), value: place ? place.name : "—" },
+    { key: "added", label: t("devices.factAdded"), value: formatDate(device.createdAt.slice(0, 10)) },
+  ];
 
   const save = async () => {
     setSaving(true);
@@ -119,6 +149,12 @@ export default function DevicePage() {
       actions={device.status !== "active" ? <StatusPill status={device.status} /> : undefined}
     >
       <div className="flex max-w-3xl flex-col gap-section pb-hero">
+        {/* What this tablet IS, before anything you can change about it. The
+            page used to state none of it: the last-seen time was inside the
+            description of a Turn-off button, the counter was in the page
+            subtitle, and when it was registered was nowhere. */}
+        <RecordFacts label={t("devices.factsLabel")} facts={facts} />
+
         <SettingsSection title={t("devices.detailsTitle")} description={t("devices.detailsDesc")}>
           <SettingRow label={t("devices.deviceName")} error={nameErr}>
             {({ id, describedBy }) => (
@@ -150,7 +186,9 @@ export default function DevicePage() {
         <SettingsSection title={t("devices.connectionTitle")} description={t("devices.connectionDesc")}>
           <SettingRow
             label={t("devices.statusLabel")}
-            description={device.status === "active" ? t("devices.activeDesc", { seen }) : t("devices.inactiveDesc")}
+            /* No longer carries the last-seen time: the facts above say it,
+               and a control's description should say what the control does. */
+            description={device.status === "active" ? t("devices.activeShort") : t("devices.inactiveDesc")}
             labelFor={false}
           >
             {() => (

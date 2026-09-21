@@ -303,6 +303,37 @@ export function IconTile({ icon: Icon }: { icon: LucideIcon }) {
 }
 
 /**
+ * What a record IS, as opposed to what you can change about it.
+ *
+ * A settings page is label-left, control-right — the right shape for a
+ * decision and the wrong one for a fact. Drawn that way, a device page could
+ * only state when the tablet was last seen by burying it in the description of
+ * a Turn-off button, which is a fact hiding inside a control. Facts get their
+ * own block, above the things you can change, and read as a list of answers
+ * rather than a form somebody has half filled in.
+ */
+export function RecordFacts({
+  label,
+  facts,
+}: {
+  label: string;
+  facts: { key: string; label: string; value: React.ReactNode; tone?: "warn" }[];
+}) {
+  return (
+    <dl aria-label={label} className="card-surface grid grid-cols-1 gap-x-major gap-y-section p-section sm:grid-cols-2 sm:p-major">
+      {facts.map((f) => (
+        <div key={f.key} className="min-w-0">
+          <dt className="type-label text-[12px] text-muted">{f.label}</dt>
+          {/* break-words: a counter name and a venue name run together here,
+              and a fact clipped is a fact nobody has. */}
+          <dd className={cn("mt-inline break-words text-sm", f.tone === "warn" ? "text-warning" : "text-fg")}>{f.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/**
  * A settings collection: one card, one row per record.
  *
  * Locations, counters, roles and devices were drawn with the orders table —
