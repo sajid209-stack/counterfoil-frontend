@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, CalendarDays, PartyPopper, Lock, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
+import { ArrowUpRight, CalendarDays, PartyPopper, Lock, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Search, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -16,9 +16,15 @@ type IconType = React.ComponentType<{ size?: number | string; strokeWidth?: numb
 export function Sidebar({
   collapsed = false,
   onToggleCollapsed,
+  onSearch,
+  shortcutKey,
 }: {
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  /** Opens the command palette. The rail is the "dedicated button on the
+   *  side" the review asked for; the palette is what it opens onto. */
+  onSearch?: () => void;
+  shortcutKey?: string;
 }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
@@ -105,6 +111,32 @@ export function Sidebar({
 
       {/* Scrollable nav — overflow lives here so the header toggle stays put. */}
       <div className="flex min-h-0 flex-1 flex-col gap-major overflow-y-auto px-comfortable pb-section">
+        {/* Search sits above the destinations and below the mark, because it
+            is a way of reaching any of them rather than one more of them. It
+            is a button, not a field: the field it replaced was 256px of the
+            top bar, was `hidden lg:block` so no phone or tablet ever saw it,
+            and advertised a shortcut in the two sizes where it did not exist. */}
+        {onSearch && (
+          <button
+            type="button"
+            onClick={onSearch}
+            title={collapsed ? t("search") : undefined}
+            aria-label={t("search")}
+            className={cn(
+              "flex h-11 shrink-0 items-center rounded-sm border border-line bg-card/60 text-sm text-muted transition-colors duration-quick hover:border-ember/40 hover:bg-card hover:text-fg",
+              collapsed ? "justify-center px-0" : "gap-comfortable px-comfortable",
+            )}
+          >
+            <Search size={18} strokeWidth={1.5} className="shrink-0" aria-hidden />
+            {!collapsed && (
+              <>
+                <span className="min-w-0 flex-1 truncate text-left">{t("search")}</span>
+                {shortcutKey && <kbd className="shrink-0 rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-[12px] text-muted">{shortcutKey}</kbd>}
+              </>
+            )}
+          </button>
+        )}
+
         <nav className="flex flex-col gap-inline">
           {!collapsed && <p className="px-comfortable pb-inline font-mono text-[12px] uppercase tracking-wider text-muted">{t("overview")}</p>}
           {OPERATE.map((n) => item(n.label, n.href, isActive(n.href), n.icon))}

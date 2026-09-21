@@ -8851,3 +8851,141 @@ Sources: [Guestara — designing a two-minute check-in](https://www.guestara.com
 [AltexSoft — hotel front desk software](https://www.altexsoft.com/blog/hotel-front-desk-software/) ·
 [Mitti — front desk arrival checklist](https://mitti.com/library/hospitality/front-desk-arrival-phase-aphtrni9sqzlx1rc) ·
 plus the project's own UX database: Essential Text Truncation (Critical).
+
+## The OS shell — the top bar carries the page, not your preferences (2026-09-21)
+
+Owner's review, in their words: *"moving the mode and language switchers away
+from the top bar … placing only the current page name and basic settings on the
+top bar … positioning the search function as a dedicated button on the side."*
+Plus *"mobile layouts require compact designs."* Measured first.
+
+### What the bar was spending itself on
+
+| | phone | tablet | wide |
+|---|---|---|---|
+| bar height | 61px | 136px | 121px |
+| what it carried | the wordmark, a language chip, a mode button | search field, language, mode, avatar, page actions | the same |
+| the page's own name | **nowhere** | in the bar | in the bar |
+| first card | 264px down | 160px | 145px |
+
+So on a phone the bar held **two controls for a decision a person makes once**
+and none of the one thing a top bar exists for — where you are. On desktop the
+chrome alone needed ~450px of a 1,152px pane, which is why the bar had been
+built as two stacked rows.
+
+And the search field was `hidden lg:block`: **no phone or tablet had search at
+all**, while the rail advertised a `Ctrl K` that, below 1024, was bound to a box
+that did not exist.
+
+### Search became a button, and the button opens a palette
+
+The research is consistent — a command palette reached from the side nav, from
+a phone's top bar and from Ctrl/⌘ K, is what replaced the header search box
+across the industry, and the accessible shape is the ARIA combobox: the input
+keeps focus and `aria-activedescendant` points at the highlighted row.
+
+- **The rail carries it**, above the destinations and below the mark, because
+  it is a way of reaching any of them rather than one more of them. Collapsed,
+  it is the same icon-only row as everything else in the rail.
+- **The phone carries it** as a 44px icon button in the top bar — the width
+  where there was no search at all before.
+- **It opens with the destination list already on screen**, so a palette opened
+  by accident is a menu rather than a void. Settings sections are held back
+  until a word narrows them; thirty rows of them is a list, not a menu.
+- What it finds is unchanged: every page and every settings section, by the
+  words someone would type — "vat" finds Tax, "bkash" finds Payments, "dark
+  mode" finds Preferences.
+
+### Mode and language moved inside the account
+
+`AppearancePicker` and `LanguagePicker` already existed and are already what
+Settings → Preferences and the Go shift menu render. The account menu opens
+onto **those same two components**, so the three places agree by construction —
+and unlike the one-tap button it replaced, it can express **System**, which the
+flip never could.
+
+### The bars now
+
+- **Desktop**: page header on the left, then one right-aligned row — the page's
+  own actions, then the account. The two-row stack is gone with the 396px of
+  chrome that forced it. **121px → 104px**, first card 145px → 128px.
+- **Phone**: the mark, **the page's name**, search, account. **61px → 53px**,
+  first card 264px → 234px. The name is the destination's own word — the same
+  one the rail and the tab bar use — because the page's `h1` here is the
+  operator's business name, and on an order it is a reference. A settings
+  section names itself rather than sixteen of them all reading "Settings".
+- **The breadcrumb comes off the phone**, since the bar now says where you are
+  and the trail cost a whole line on the screen with the fewest of them.
+  Desktop keeps it: there the bar carries the title, so the path is the only
+  thing saying where in Settings you are.
+
+### Found by measuring, not by reading
+
+- **The mobile tab bar's labels were tinted by whatever scrolled under them.**
+  The bar is `bg-surface/80`, so on `/events` a dark green status pill passing
+  behind took the 11px "Dashboard" label to **3.72:1**. Pre-existing in
+  mechanism and surfaced by the content shifting up; a navigation label's
+  legibility must not depend on the page behind it, so the bar is now 95% and
+  the backdrop no longer votes.
+- **The palette's frosted panel failed in dark.** `.glass` is right over a page
+  you are meant to keep seeing; this is a dense list of 13px rows, and on it
+  `muted` measured **4.02:1**. Solid `card`, like the account menu and the row
+  menus it sits beside.
+- **The field drew a rectangle across the panel's rounded corners** — the global
+  `:focus-visible` rule is unlayered, so the opt-out has to be too.
+  `data-focus-host`, with the rule under the field turning ember instead.
+- **The More grid called the dashboard "Overview"** while the rail, the tab bar
+  and the phone's bar all called it Dashboard. The palette put the two names
+  side by side, which is how it was noticed.
+
+### Verified
+
+- **Shell harness 81 checks, all passing** — at 390 and 1440, light and dark,
+  English and Bangla: neither bar carries a language or mode switch, the
+  desktop bar carries exactly one `h1` and is one row, the account menu opens
+  with both pickers and System and applies a theme, Escape closes it and the
+  phone's copy stays on screen at 390; the rail button, the collapsed rail
+  button, the phone button and Ctrl K all open the palette, it focuses its
+  field, lists destinations when empty, "vat" finds exactly Tax, Enter
+  navigates, arrows move the pointer without moving focus, Escape closes it and
+  hands focus back; the phone bar names Orders, Customers, Reports, Settings,
+  Devices and Tax correctly; and in every state no page x-scroll, no hidden
+  overflow, nothing clipped, nothing under 12px, no target under 44px, nothing
+  below its contrast floor and no console errors or missing messages.
+- The standing **32-route audit is back at its documented 70** — 69 the declared
+  white-on-ember rule, 1 the kitchen-sink inline-link exemption. It read 74
+  before the tab-bar fix, and those four were the labels above.
+- Standing harnesses hold: accessibility **8/8**, the shared row-menu overlap
+  **12/12**, review **15/15**, deck **9/9**.
+- `tsc --noEmit`, `npm run build` and `eslint` clean; **OsShell holds at its one
+  pre-existing** `set-state-in-effect` error, and both new files lint clean.
+- i18n parity **0 missing / 0 extra** across 31 namespaces, seven keys authored
+  in en and bn.
+
+### A harness correction, and one of my own
+
+The first run reported the bar carrying no `h1`. `.glass-navbar` matched the
+**mobile** bar, which is first in document order and `display:none` above md —
+the same trap this log records twice before. The probe now takes the visible
+one. It also walked ancestors for contrast, which measures the track behind a
+segmented control's absolutely-positioned thumb and reported white on ember as
+1.25:1; it reads the real paint stack now.
+
+Mine: the palette's reset ran in an effect, which is an error in this repo. The
+shell mounts it when it opens and unmounts it when it closes, so it comes up
+empty because it is a new component rather than because something cleared it.
+
+### Open
+
+- **The tablet bar is still 136px**, because at 1024 the dashboard's own actions
+  (a 400px location select and a 350px scope toggle) leave the title ~460px and
+  it wraps. That is the dashboard's controls, not the shell's, and it is the
+  next tranche.
+- The account menu's identity line is the operator's name; there is no signed-in
+  person on it yet, because the mock has no session user beyond `DEMO_STAFF_ID`.
+
+Sources: [SaaSUI — sidebar, top bar and menu patterns](https://www.saasui.design/blog/saas-navigation-ux-patterns) ·
+[Mobbin — command palette UI](https://mobbin.com/glossary/command-palette) ·
+[UX Patterns for Developers — command palette](https://uxpatterns.dev/patterns/advanced/command-palette) ·
+[Build MVP Fast — adding a ⌘K palette to a SaaS](https://www.buildmvpfast.com/blog/how-to-add-cmd-k-command-palette-saas-2026) ·
+[Vosidiy — SaaS layout structure](https://medium.com/design-bootcamp/designing-a-layout-structure-for-saas-products-best-practices-d370211fb0d1)

@@ -66,9 +66,14 @@ export function PageShell({
   // Text only. The actions travel separately on desktop, because sharing a row
   // with the title squeezed it to 275px and wrapped the operator's name onto
   // two lines.
+  // Below md the OS bar names the page, so the trail would say it twice — and
+  // the trail is the more expensive of the two, costing a whole line on the
+  // screen with the least of them. Desktop keeps it: there the bar carries the
+  // title rather than the destination, so the path is the only thing saying
+  // where in Settings you are.
   const headerText = (
     <div className="min-w-0">
-      {crumbs.length > 0 && (
+      {wide && crumbs.length > 0 && (
         <p className="mb-inline font-mono text-[12px] uppercase tracking-wide text-muted">
           {crumbs.map((c, i) => (
             <span key={c.href}>
