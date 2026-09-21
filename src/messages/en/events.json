@@ -261,7 +261,8 @@
     "published": "Published",
     "draft": "Draft",
     "onSale": "On sale",
-    "ended": "Ended"
+    "ended": "Ended",
+    "archived": "Archived"
   },
   "emptyTitle": "No events yet",
   "emptyMessage": "Create one and it gets its own page, its own look and its own tickets.",
@@ -541,5 +542,31 @@
         "value": "21+. Photo ID checked at the door."
       }
     }
+  },
+  "copyTitle": "{title} (copy)",
+  "action": {
+    "menu": "Actions for {title}",
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "archive": "Archive",
+    "restore": "Restore",
+    "delete": "Delete",
+    "deleteBlocked": "{count, plural, one {# ticket has} other {# tickets have}} been sold — archive it instead"
+  },
+  "confirm": {
+    "archiveTitle": "Archive {title}?",
+    "archiveBody": "It comes off the list and off sale. Its orders and tickets are untouched, and you can restore it.",
+    "deleteTitle": "Delete {title}?",
+    "deleteBody": "This cannot be undone. Nothing has been sold, so nothing is left behind."
+  },
+  "toast": {
+    "published": "{title} is live",
+    "unpublished": "{title} is off sale",
+    "duplicated": "Created {title}",
+    "archived": "{title} archived",
+    "restored": "{title} restored",
+    "deleted": "{title} deleted"
   }
 }

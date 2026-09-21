@@ -9252,3 +9252,101 @@ and is fixed there too.
 
 Sources: [dataviz palette validator](bundled skill: `dataviz/scripts/validate_palette.js`) ·
 [NN/g — colour coding and secondary encoding](https://www.nngroup.com/articles/use-color-to-enhance-usability/)
+
+## Events — a list you can act on (2026-09-21)
+
+Owner's review: *"Event management features support archiving, duplicating,
+editing, and deleting."* The list had **no actions at all** — not a menu, not a
+checkbox. Every state change meant opening the event, finding the field,
+saving and coming back, and there was no way to take an event off the list or
+to build next year's from last year's.
+
+### What a row can do now
+
+A row menu, in the order somebody reaches for it: **Edit · Duplicate ·
+Publish/Unpublish**, then a rule, then **Archive**. An archived row offers
+**Restore** and, below a rule, **Delete**.
+
+Four of those carry a decision worth recording:
+
+- **Archiving unpublishes as it goes.** An archived event that kept serving its
+  public page would be on sale to the world and invisible to the operator,
+  which is the worst of both. Its orders and tickets are untouched — that is
+  the whole difference between archiving and deleting, and the confirmation
+  says so rather than asking a bare "are you sure".
+- **Restore puts it back as a draft.** Whoever archived it took it off sale;
+  putting it back on is a separate decision.
+- **Delete is permanent and only available while nothing has been sold.** A
+  ticket that has been bought points at its event, and removing the record
+  under it orphans the order and the ticket a guest is holding. `deleteEvent`
+  refuses in the api as well as in the menu, so the rule holds wherever it is
+  called from — and the disabled item **says why**, naming archive as the thing
+  to do instead. A greyed-out item that says nothing reads as a fault; this
+  reads as a rule.
+- **Duplicate lands as a draft with nothing sold, and opens the copy.** A
+  half-edited copy must not be on sale the moment it exists; last year's sold
+  counts are not this year's, and a copy that inherited them would report
+  revenue nobody took. Each tier also gets a **fresh id**, so an order can never
+  resolve to a tier on the wrong event. It opens straight into the copy,
+  because the only reason to duplicate is to change it.
+
+The fields are **written out rather than spread**, deliberately: a field added
+to `EventRecord` tomorrow must not start copying itself into duplicates
+silently. The bookings catalogue's `omit` carries the same note.
+
+### Archived stays out of the list
+
+The events resource filtered on `status` only when asked, so an archived event
+would have kept sitting in the list it was archived to leave. It now hides
+archived unless a status filter asks for it by name — the rule every other
+collection in this layer follows, and the thing that makes Archive safe rather
+than a disappearance. A new **Archived** option on the state filter is how you
+get back to them.
+
+The phone gets the same menu inside its card: below `md` the table is not drawn
+at all, so the card is the only route to any of this.
+
+### Verified
+
+- **49 checks driving it**, all passing: the menu offers Edit, Duplicate and
+  Archive and exactly one of Publish/Unpublish; Delete is **not** offered on a
+  live event; publishing says so and the menu then offers the other one;
+  archiving asks first, **Cancel keeps the row**, confirming takes it off the
+  list and the Archived filter finds it again; Restore puts it back; Duplicate
+  opens a copy named as one, which is on the list with **0 sold**; and a copy
+  with nothing sold **can** be deleted — the dialog says it cannot be undone,
+  and the row is gone afterwards. Plus contrast, the 12px floor, every menu
+  item on top and on screen, no page x-scroll and no console errors at 390,
+  1440, dark and Bangla.
+- The standing row-menu overlap harness holds at **12/12** across five screens,
+  the shell at 81/81, and the **32-route audit at its documented 70**.
+- `tsc --noEmit` and `eslint` clean on both files; i18n parity **0 missing /
+  0 extra** across 31 namespaces, with 20 keys authored in en and bn.
+
+### Two harness corrections, both mine
+
+- **The row card's accessible name contains the menu trigger's label**, because
+  a `role="button"` computes its name from its contents. An unanchored name
+  match therefore picked the *card* and clicking it navigated away instead of
+  opening anything — which looked exactly like "the menu does not work on a
+  phone". Triggers are selected by `aria-haspopup="menu"` now, which is also
+  language-independent.
+- **A raw count of the menu triggers is double the number of events**: the
+  table and the phone card list both render one per row and both are in the DOM
+  at every width. The count is deduped, and the archive check no longer reports
+  "12 → 10" for a single row leaving.
+
+And one gotcha worth restating: the walk had to return to the list by
+**clicking the rail**, not by `goto`. The mock store lives in the document, so
+a full load regenerates the seed and the copy that was just made stops
+existing. The gate walk records the same trap.
+
+### Open
+
+- **There is no bulk bar.** The bookings catalogue has one (tick rows, act on
+  the set); events are a handful rather than a catalogue of hundreds, so a
+  per-row menu is the whole of it for now. The selection mechanism is already
+  written on the other screen if that changes.
+- **Delete does not exist for an event that has sold**, by design. If an
+  operator genuinely needs one gone, that is a refund-then-archive path rather
+  than a delete.

@@ -1,4 +1,4 @@
-import { createResource, fail, validationError } from "./client";
+import { createResource, fail, notFoundError, validationError } from "./client";
 import type { ApiResult, ListParams, ListResponse, Lifecycle, Minor } from "./types";
 import type { CategoryId, SectionId } from "@/lib/events/catalog";
 
@@ -148,7 +148,10 @@ const resource = createResource<EventRecord>("events", "Event", {
   filter: (e, f) =>
     (f.categoryId === undefined || e.categoryId === f.categoryId) &&
     (f.published === undefined || e.published === f.published) &&
-    (f.status === undefined || e.status === f.status),
+    // Archived is out unless it is asked for by name. Without this an archived
+    // event would keep sitting in the list it was archived to leave, which is
+    // the rule every other collection in this layer already follows.
+    (f.status === undefined ? e.status !== "archived" : e.status === f.status),
   sort: {
     title: (a, b) => a.title.localeCompare(b.title),
     startsAt: (a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt),
@@ -181,6 +184,92 @@ export function updateEvent(id: string, patch: Partial<EventInput>): Promise<Api
   const errors = validate(patch);
   if (Object.keys(errors).length) return Promise.resolve(fail(validationError(errors)));
   return resource.update(id, patch);
+}
+
+/**
+ * Take an event off the list without losing it.
+ *
+ * Unpublishes as it goes: an archived event that kept serving its public page
+ * would be on sale to the world and invisible to the operator, which is the
+ * worst of both. Its orders are untouched — that is the whole difference
+ * between archiving and deleting.
+ */
+export function archiveEvent(id: string): Promise<ApiResult<EventRecord>> {
+  return resource.update(id, { status: "archived", published: false });
+}
+
+/** Back onto the list, as a draft. It does NOT republish itself: whoever
+ *  archived it took it off sale, and putting it back is a separate decision. */
+export function restoreEvent(id: string): Promise<ApiResult<EventRecord>> {
+  return resource.update(id, { status: "active" });
+}
+
+/** Publish or unpublish. The page is only reachable while this is true. */
+export function setEventPublished(id: string, published: boolean): Promise<ApiResult<EventRecord>> {
+  return resource.update(id, { published });
+}
+
+/**
+ * A permanent delete — and only while nothing has been sold.
+ *
+ * A ticket that has been bought points at its event, and removing the record
+ * under it would orphan the order and the ticket the guest is holding. That is
+ * exactly the case archiving exists for, so the refusal names it.
+ */
+export function deleteEvent(id: string): Promise<ApiResult<EventRecord>> {
+  const e = resource.peek().find((x) => x.id === id);
+  if (!e) return Promise.resolve(fail(notFoundError("Event")));
+  if (eventSold(e) > 0) {
+    return Promise.resolve(
+      fail(validationError({ event: "Tickets have been sold for this event. Archive it instead." })),
+    );
+  }
+  return resource.remove(id);
+}
+
+/**
+ * Copy an event to build the next one from — the commonest thing anyone does
+ * to a recurring event, and it was a full trip through the wizard.
+ *
+ * Three things deliberately do NOT come across. It lands **unpublished**,
+ * because a half-edited copy must not be on sale the moment it exists. Every
+ * tier's **sold count resets to zero**, because last year's numbers are not
+ * this year's and a copy that inherited them would report revenue nobody took.
+ * And each tier gets a **fresh id**, so an order can never resolve to a tier on
+ * the wrong event.
+ */
+export function duplicateEvent(id: string, title: string): Promise<ApiResult<EventRecord>> {
+  const e = resource.peek().find((x) => x.id === id);
+  if (!e) return Promise.resolve(fail(notFoundError("Event")));
+  const taken = resource.peek().map((x) => x.slug);
+  const c = structuredClone(e);
+  /* Written out rather than spread, and deliberately: a field added to
+     EventRecord tomorrow must not start copying itself into duplicates
+     silently. The bookings catalogue's `omit` carries the same note. */
+  return resource.create({
+    title,
+    slug: slugify(title, taken),
+    published: false,
+    status: "active",
+    subtitle: c.subtitle,
+    categoryId: c.categoryId,
+    subtype: c.subtype,
+    startsAt: c.startsAt,
+    endsAt: c.endsAt,
+    venueName: c.venueName,
+    venueAddress: c.venueAddress,
+    description: c.description,
+    lineup: c.lineup,
+    stats: c.stats,
+    highlights: c.highlights,
+    info: c.info,
+    faq: c.faq,
+    videoUrl: c.videoUrl,
+    organiser: c.organiser,
+    sponsors: c.sponsors,
+    customisation: c.customisation,
+    tiers: c.tiers.map((t, i) => ({ ...t, id: `tier_${Date.now().toString(36)}_${i}`, sold: 0 })),
+  });
 }
 
 /** Capacity and takings, derived — never stored, so they cannot drift. */

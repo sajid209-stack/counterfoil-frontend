@@ -4,11 +4,35 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus } from "lucide-react";
-import { Button, DataTable, EmptyState, PageShell, StatStrip, StatusPill, type Column } from "@/components/ui";
+import { Archive, Copy, Eye, EyeOff, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
+import {
+  ActionMenu,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  EmptyState,
+  PageShell,
+  StatStrip,
+  StatusPill,
+  useToast,
+  type ActionMenuItem,
+  type Column,
+} from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { eventCapacity, eventFromPrice, eventRevenue, eventSold, listEvents, type EventRecord } from "@/lib/api";
+import {
+  archiveEvent,
+  deleteEvent,
+  duplicateEvent,
+  eventCapacity,
+  eventFromPrice,
+  eventRevenue,
+  eventSold,
+  listEvents,
+  restoreEvent,
+  setEventPublished,
+  type EventRecord,
+} from "@/lib/api";
 import { CATEGORIES, categoryById } from "@/lib/events/catalog";
 import { templateFontVars } from "@/lib/events/fonts";
 import { formatMoney } from "@/lib/format";
@@ -30,8 +54,18 @@ export default function EventsPage() {
   const [category, setCategory] = useState("all");
   const [state, setState] = useState("all");
 
-  const q = useApiQuery(() => listEvents({ pageSize: 200 }), []);
+  const toast = useToast();
+  const [reload, setReload] = useState(0);
+  /* Archived events are filtered OUT of the list by the api layer, so seeing
+     them takes asking for them by name — which is also what makes Archive a
+     safe action rather than a disappearance. */
+  const q = useApiQuery(
+    () => listEvents({ pageSize: 200, ...(state === "archived" ? { filters: { status: "archived" } } : {}) }),
+    [reload, state],
+  );
   const all = useMemo(() => q.data?.data ?? [], [q.data]);
+  const [confirm, setConfirm] = useState<null | { kind: "archive" | "delete"; event: EventRecord }>(null);
+  const [busy, setBusy] = useState(false);
 
   const rows = useMemo(
     () =>
@@ -39,6 +73,7 @@ export default function EventsPage() {
         (e) =>
           (category === "all" || e.categoryId === category) &&
           (state === "all" ||
+            state === "archived" ||
             (state === "published" ? e.published : state === "draft" ? !e.published : lifecycle(e, now) === state)),
       ),
     [all, category, state, now],
@@ -54,6 +89,88 @@ export default function EventsPage() {
       { key: "live", label: t("stat.live"), value: String(rows.filter((e) => e.published && lifecycle(e, now) !== "ended").length) },
     ];
   }, [rows, t, now]);
+
+  const after = (msg: string) => {
+    toast.success(msg);
+    setReload((n) => n + 1);
+  };
+
+  const doPublish = async (e: EventRecord, next: boolean) => {
+    const res = await setEventPublished(e.id, next);
+    if (!res.ok) return toast.error(res.error.message);
+    after(t(next ? "toast.published" : "toast.unpublished", { title: e.title }));
+  };
+
+  const doDuplicate = async (e: EventRecord) => {
+    const res = await duplicateEvent(e.id, t("copyTitle", { title: e.title }));
+    if (!res.ok) return toast.error(res.error.message);
+    after(t("toast.duplicated", { title: res.data.title }));
+    // Straight into the copy: the only reason to duplicate is to change it.
+    router.push(`/events/${res.data.id}`);
+  };
+
+  const doArchive = async (e: EventRecord) => {
+    setBusy(true);
+    const res = await archiveEvent(e.id);
+    setBusy(false);
+    setConfirm(null);
+    if (!res.ok) return toast.error(res.error.message);
+    after(t("toast.archived", { title: e.title }));
+  };
+
+  const doRestore = async (e: EventRecord) => {
+    const res = await restoreEvent(e.id);
+    if (!res.ok) return toast.error(res.error.message);
+    after(t("toast.restored", { title: e.title }));
+  };
+
+  const doDelete = async (e: EventRecord) => {
+    setBusy(true);
+    const res = await deleteEvent(e.id);
+    setBusy(false);
+    setConfirm(null);
+    if (!res.ok) return toast.error(res.error.fieldErrors?.event ?? res.error.message);
+    after(t("toast.deleted", { title: e.title }));
+  };
+
+  /** What can be done to one event, in the order somebody reaches for it. */
+  const actionsFor = (e: EventRecord): ActionMenuItem[] => {
+    const sold = eventSold(e);
+    if (e.status === "archived") {
+      return [
+        { key: "restore", label: t("action.restore"), icon: <RotateCcw size={14} strokeWidth={1.5} />, onSelect: () => doRestore(e) },
+        {
+          key: "delete",
+          label: t("action.delete"),
+          icon: <Trash2 size={14} strokeWidth={1.5} />,
+          destructive: true,
+          separated: true,
+          disabled: sold > 0,
+          // A disabled item that says nothing reads as a fault; this reads as
+          // a rule, and names the action that IS available instead.
+          hint: sold > 0 ? t("action.deleteBlocked", { count: sold }) : undefined,
+          onSelect: () => setConfirm({ kind: "delete", event: e }),
+        },
+      ];
+    }
+    return [
+      { key: "edit", label: t("action.edit"), icon: <Pencil size={14} strokeWidth={1.5} />, onSelect: () => router.push(`/events/${e.id}`) },
+      { key: "duplicate", label: t("action.duplicate"), icon: <Copy size={14} strokeWidth={1.5} />, onSelect: () => doDuplicate(e) },
+      {
+        key: "publish",
+        label: e.published ? t("action.unpublish") : t("action.publish"),
+        icon: e.published ? <EyeOff size={14} strokeWidth={1.5} /> : <Eye size={14} strokeWidth={1.5} />,
+        onSelect: () => doPublish(e, !e.published),
+      },
+      {
+        key: "archive",
+        label: t("action.archive"),
+        icon: <Archive size={14} strokeWidth={1.5} />,
+        separated: true,
+        onSelect: () => setConfirm({ kind: "archive", event: e }),
+      },
+    ];
+  };
 
   const columns: Column<EventRecord>[] = [
     {
@@ -134,6 +251,16 @@ export default function EventsPage() {
       align: "right",
       render: (e) => <EventState event={e} now={now} />,
     },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (e) => (
+        <span className="flex justify-end">
+          <ActionMenu items={actionsFor(e)} label={t("action.menu", { title: e.title })} />
+        </span>
+      ),
+    },
   ];
 
   return (
@@ -172,6 +299,7 @@ export default function EventsPage() {
             <option value="draft">{t("state.draft")}</option>
             <option value="onSale">{t("state.onSale")}</option>
             <option value="ended">{t("state.ended")}</option>
+            <option value="archived">{t("state.archived")}</option>
           </select>
         </div>
 
@@ -190,7 +318,10 @@ export default function EventsPage() {
               <span className="flex flex-col gap-inline">
                 <span className="flex items-baseline justify-between gap-tight">
                   <span className="min-w-0 truncate font-medium">{e.title}</span>
-                  <EventState event={e} now={now} />
+                  <span className="flex shrink-0 items-center gap-tight">
+                    <EventState event={e} now={now} />
+                    <ActionMenu items={actionsFor(e)} label={t("action.menu", { title: e.title })} />
+                  </span>
                 </span>
                 <span className="truncate text-[13px] text-muted">
                   {new Date(e.startsAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · {e.venueName}
@@ -215,6 +346,16 @@ export default function EventsPage() {
           }
         />
       </div>
+
+      <ConfirmDialog
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        onConfirm={() => confirm && (confirm.kind === "delete" ? doDelete(confirm.event) : doArchive(confirm.event))}
+        title={confirm ? t(confirm.kind === "delete" ? "confirm.deleteTitle" : "confirm.archiveTitle", { title: confirm.event.title }) : ""}
+        message={confirm ? t(confirm.kind === "delete" ? "confirm.deleteBody" : "confirm.archiveBody") : undefined}
+        confirmLabel={confirm ? t(confirm.kind === "delete" ? "action.delete" : "action.archive") : ""}
+        loading={busy}
+      />
     </PageShell>
   );
 }
