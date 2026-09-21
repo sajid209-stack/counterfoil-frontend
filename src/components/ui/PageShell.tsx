@@ -91,10 +91,16 @@ export function PageShell({
           ))}
         </p>
       )}
-      {/* References and long names must wrap, never bleed out of the header. */}
-      <h1 className="type-h1 break-words text-[28px]">{title}</h1>
+      {/* References and long names must wrap, never bleed out of the header.
+          22px below sm: the bar above already names the destination, so the
+          heading here is a second statement of it at the top of a screen that
+          has the least room for one. */}
+      <h1 className="type-h1 break-words text-[22px] sm:text-[28px]">{title}</h1>
       {description && (
-        <p className="type-body mt-inline max-w-2xl text-[13px] text-muted">
+        /* Orientation prose, read once. On a phone it was costing two lines
+           above the fold on every visit, so it is kept for a screen reader and
+           shown from sm, where there is room for it. */
+        <p className="type-body mt-inline max-w-2xl text-[13px] text-muted max-sm:sr-only">
           {description}
         </p>
       )}

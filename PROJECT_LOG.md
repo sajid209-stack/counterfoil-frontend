@@ -9427,3 +9427,91 @@ before today — confirmed against `HEAD` rather than assumed.
   a tax class, so there is nothing to attribute it by. For a real return that
   distinction matters, and it is the backend's to make. The page says so out
   loud rather than leaving it to be discovered.
+
+## The phone stops scrolling past the chrome (2026-09-21)
+
+Owner's review: *"calendar views on mobile prioritize minimizing excessive
+vertical scrolling"* and *"mobile layouts require compact designs displaying
+icons instead of text labels."* Measured at 390 before touching anything.
+
+| | before | after |
+|---|---|---|
+| calendar · chrome before the grid, week | 474px (56% of the screen) | **382px** |
+| calendar · month | 474px | **330px** |
+| calendar · day | 526px (62%) | **434px** |
+| calendar page height, month | 1,320px | **1,176px** |
+| orders · first figure | ~165px | **110px** |
+
+### The calendar's toolbar was four rows before a booking
+
+Tabs, then Today with the arrows and the range, then the date field alone on a
+row, then Filters alone on another. Two of those rows were spent on controls
+that had a label they did not need:
+
+- **The date field is a glyph on a phone.** The range label two controls to its
+  left already says which week this is, so a second "29 Jul 2026" was a whole
+  row restating it. `DateField` gained a `compact` shape; the accessible name
+  still carries the date, so nothing is lost to a screen reader.
+- **Filters is a glyph, and it moves up** beside the date control it belongs
+  with rather than sitting alone. Its count becomes a dot, with the number kept
+  in the accessible name.
+- **The range label's 11rem floor is desktop-only.** It exists so the arrows do
+  not jump as the label changes width — worth it with room, and on a phone it
+  was exactly what pushed the two glyphs onto a row of their own.
+- And the filter row itself is **gone from a phone** until something is open or
+  filtering, rather than standing empty.
+
+### Every OS page said its name twice
+
+The shell pass earlier today put the page's name in the phone's top bar, which
+made the 28px heading beneath it a second statement of the same word at the top
+of the screen with the least room for one — and under that, two lines of
+orientation prose read once and then scrolled past forever.
+
+Below `sm` the heading is **22px** and the description is **kept for a screen
+reader and hidden from the page**. Above `sm` both are unchanged. It is the
+same responsive step the dashboard's metrics already take, and it applies to
+every OS screen rather than to the calendar alone: `/orders` now shows its
+first figure at 110px instead of 165.
+
+### Four harness corrections, all mine
+
+The change surfaced the same fault in five probes at once, and it is worth
+recording as a rule: **a 1×1 box is visually-hidden text, and it is meant to be
+clipped.** Every probe exempted `.sr-only` by class name, which cannot see
+Tailwind's `max-sm:sr-only` variant — so the standing route audit reported
+**twenty** new "silently clipped text" findings, one per OS page description,
+for a decision rather than a defect. All five now test the geometry instead,
+and the audit is back at its documented **70**.
+
+Two more, both the same shape as the events one earlier today: the calendar
+filter harness found its button by **visible text**, which a glyph does not
+have, and read its badge from `textContent` rather than the accessible name.
+Both now read the accessible name, which also makes them language-independent.
+
+And the settings behaviour harness still drove search as a box that lives in
+the bar. It is a palette now and closes behind a result, so every further
+search reopens it — `r4` is back to **31/31**.
+
+### Verified
+
+- Calendar: category and actions **45/45**, filters, contrast (its one declared
+  white-on-ember today badge), the empty-by-filter notice in all three views,
+  and keyboard entry to a block all unchanged.
+- Shell **81/81**, tax **39/39**, events **49/49**, settings behaviour
+  **31/31**, settings search **24/24**.
+- The 32-route audit is at its documented **70** — 69 the declared
+  white-on-ember rule, 1 the kitchen-sink inline link. One run reported 71 with
+  a single `ERR_CONNECTION_RESET` on a route this change never touched; a
+  settled re-run gave 70, which this log has recorded twice before.
+- `tsc --noEmit` and `eslint` clean on every file touched.
+
+### Open
+
+- **Week view still takes one row more than month**, because "27 Jul – 2 Aug
+  2026" plus Today plus two arrows fills a 358px row and pushes the two glyphs
+  down. Shortening the label would mean dropping the year, which is the one
+  thing a date label should not guess at.
+- The stats band is 84px of every calendar phone screen. It is four real
+  figures and it stays; if it should fold, that is an owner decision rather
+  than a measurement.

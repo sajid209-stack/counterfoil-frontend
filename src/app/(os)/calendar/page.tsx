@@ -476,6 +476,32 @@ export default function CalendarPage() {
     </div>
   );
 
+  /* One button, rendered in one of two places: beside the date controls on a
+     phone, and at the head of the key row on a desktop. Declaring it once is
+     what keeps its badge and its pressed state the same in both. */
+  const filtersButton = (
+    <button
+      type="button"
+      aria-expanded={filtersOpen}
+      aria-controls="calendar-filters"
+      onClick={() => setFiltersOpen((v) => !v)}
+      className={cn(
+        "flex h-11 items-center gap-tight rounded-sm border text-[13px] transition-colors duration-quick md:h-9",
+        compact ? "w-11 shrink-0 justify-center" : "px-comfortable",
+        selectFilters > 0
+          ? "border-ember bg-ember/10 text-brand-foreground"
+          : "border-line hover:bg-subtle",
+      )}
+      aria-label={compact ? (selectFilters > 0 ? t("filtersActive", { count: selectFilters }) : t("filters")) : undefined}
+    >
+      <SlidersHorizontal size={compact ? 18 : 14} strokeWidth={1.5} aria-hidden />
+      {!compact && (selectFilters > 0 ? t("filtersActive", { count: selectFilters }) : t("filters"))}
+      {/* A dot rather than a count when the label has gone: the accessible
+          name still says how many. */}
+      {compact && selectFilters > 0 && <span aria-hidden className="absolute -mt-5 ml-5 h-2 w-2 rounded-full bg-ember-solid" />}
+    </button>
+  );
+
   const weekdayLabels = WEEKDAYS_MON_FIRST.map((d) =>
     new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(new Date(2026, 6, 5 + d)),
   );
@@ -532,7 +558,11 @@ export default function CalendarPage() {
                   screen reader would announce. */}
               <h2
                 aria-live="polite"
-                className="min-w-[11rem] px-tight text-center text-[15px] font-medium tracking-tight"
+                /* The 11rem floor keeps the arrows from jumping as the label
+                   changes width — worth it on a desktop, and on a phone it is
+                   what pushed the date and filter glyphs onto a row of their
+                   own. Below sm the label takes the width it needs. */
+                className="whitespace-nowrap px-tight text-center text-[15px] font-medium tracking-tight sm:min-w-[11rem]"
               >
                 {rangeLabel}
               </h2>
@@ -548,39 +578,33 @@ export default function CalendarPage() {
             {/* Ours. The native control rendered 07/29/2026 beside a range
                 label reading "27 Jul – 2 Aug 2026" — two date formats, one
                 toolbar, because the browser owned one of them. */}
+            {/* A glyph on a phone. The range label two controls to the left
+                already says which week this is, so the field was spending a
+                whole row restating it — and a phone had four toolbar rows
+                before the first booking. */}
             <DateField
               value={isoDate(cursor)}
               today={isoDate(now)}
               onChange={(iso) => setCursor(startOfDay(new Date(`${iso}T12:00:00`)))}
               labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
-              className="w-44"
+              compact={compact}
+              className={compact ? undefined : "w-44"}
             />
+            {/* Up here on a phone, beside the controls it belongs with, rather
+                than alone on a row of its own. */}
+            {compact && filtersButton}
           </div>
         </div>
 
         {/* ── filters ─────────────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-tight">
+        <div className={cn("flex flex-col gap-tight", compact && !filtersOpen && !filtered && "hidden")}>
           {/* The key stays out where it can be read — it is the legend, and
               hiding it makes five colours unreadable. The three selects fold
               away: they were three full-width controls on a phone, and with
               the tabs and the key above them the grid did not start until 62%
               of the screen had gone by. */}
           <div className="flex flex-wrap items-center gap-tight">
-            <button
-              type="button"
-              aria-expanded={filtersOpen}
-              aria-controls="calendar-filters"
-              onClick={() => setFiltersOpen((v) => !v)}
-              className={cn(
-                "flex h-11 items-center gap-tight rounded-sm border px-comfortable text-[13px] transition-colors duration-quick md:h-9",
-                selectFilters > 0
-                  ? "border-ember bg-ember/10 text-brand-foreground"
-                  : "border-line hover:bg-subtle",
-              )}
-            >
-              <SlidersHorizontal size={14} strokeWidth={1.5} aria-hidden />
-              {selectFilters > 0 ? t("filtersActive", { count: selectFilters }) : t("filters")}
-            </button>
+            {!compact && filtersButton}
 
             {!compact && toneKey}
             {!compact && categoryKeyRow}

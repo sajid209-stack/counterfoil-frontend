@@ -25,6 +25,7 @@ export function DateField({
   isDisabled,
   labels,
   shape = "default",
+  compact = false,
   placeholder,
   className,
   id,
@@ -37,6 +38,11 @@ export function DateField({
   isDisabled?: (iso: string) => boolean;
   labels: DatePickerLabels & { open: string };
   shape?: "default" | "go";
+  /** Icon only. For a toolbar that already states the date beside it — the
+   *  calendar's range label does — where a second copy of "29 Jul 2026" costs
+   *  a whole row on a phone and says nothing new. The accessible name still
+   *  carries the date, so nothing is lost to a screen reader. */
+  compact?: boolean;
   placeholder?: string;
   className?: string;
   id?: string;
@@ -80,6 +86,7 @@ export function DateField({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
+        aria-label={compact ? `${labels.open}${value ? ` — ${formatDate(value)}` : ""}` : undefined}
         onClick={() => {
           const r = trigger.current?.getBoundingClientRect();
           // The panel is about 288px of grid plus its padding.
@@ -87,16 +94,19 @@ export function DateField({
           setOpen((v) => !v);
         }}
         className={cn(
-          "flex w-full items-center gap-tight border border-line bg-card text-left text-sm outline-none transition-colors duration-quick focus:border-inverse",
+          "flex items-center gap-tight border border-line bg-card text-left text-sm outline-none transition-colors duration-quick focus:border-inverse",
+          compact ? "h-11 w-11 shrink-0 justify-center" : "w-full",
           shape === "go"
             ? "min-h-12 rounded-go px-comfortable"
-            : "h-11 rounded-sm px-comfortable md:h-9",
+            : cn("rounded-sm", compact ? "" : "h-11 px-comfortable md:h-9"),
         )}
       >
-        <CalendarDays size={15} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
-        <span className={cn("min-w-0 flex-1 truncate", !value && "text-muted")}>
-          {value ? formatDate(value) : (placeholder ?? labels.open)}
-        </span>
+        <CalendarDays size={compact ? 18 : 15} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
+        {!compact && (
+          <span className={cn("min-w-0 flex-1 truncate", !value && "text-muted")}>
+            {value ? formatDate(value) : (placeholder ?? labels.open)}
+          </span>
+        )}
       </button>
 
       {open && (
