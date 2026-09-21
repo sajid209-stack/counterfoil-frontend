@@ -3,13 +3,14 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronDown, ChevronRight, Download, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, X } from "lucide-react";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { AreaChart, BarChart, Button, DateField, DonutChart, HBarChart, LineChart, Modal, PageShell, StatusPill, Tabs, useToast, FormField } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getAnalytics,
   getSalesReport,
+  getTaxReport,
   getTransactions,
   listCategories,
   listCounters,
@@ -191,6 +192,11 @@ function SalesReportInner() {
     [JSON.stringify(query), sort.field, sort.dir, cursor],
   );
 
+  /* The whole range, not a page of it: a return is a total, and a report that
+     covered only the first 25 rows would be a different number every time
+     somebody paged. */
+  const taxQ = useApiQuery(() => getTaxReport(query), [JSON.stringify(query)]);
+
   // ── Summary ──────────────────────────────────────────────────────────────
   const [groupBy, setGroupBy] = useState<SalesGroupBy>("product");
   const summaryQ = useApiQuery(
@@ -221,6 +227,23 @@ function SalesReportInner() {
       name = `summary-${groupBy}`;
       content = ["Name,Tickets,Gross,Refunds,Net",
         ...(summaryQ.data?.rows ?? []).map((r) => `"${r.label}",${r.ticketCount},${(r.gross / 100).toFixed(2)},${(r.refunds / 100).toFixed(2)},${(r.net / 100).toFixed(2)}`)].join("\n");
+    } else if (tab === "tax") {
+      /* Two blocks in one file, with a blank line between them: the rate
+         breakdown is what goes on the return, and the period breakdown is what
+         reconciles it against the ledger. An accountant wants both, and
+         downloading them separately is two files to keep together. */
+      const d = taxQ.data;
+      name = "tax";
+      content = [
+        `# ${d?.taxName ?? "Tax"} by rate`,
+        "Class,Rate,Net,Tax,Gross,Lines",
+        ...(d?.rows ?? []).map((r) => `${r.taxClass},${(r.rate * 100).toFixed(2)}%,${(r.net / 100).toFixed(2)},${(r.tax / 100).toFixed(2)},${(r.gross / 100).toFixed(2)},${r.lineCount}`),
+        `Total,,${((d?.totals.net ?? 0) / 100).toFixed(2)},${((d?.totals.tax ?? 0) / 100).toFixed(2)},${((d?.totals.gross ?? 0) / 100).toFixed(2)},`,
+        "",
+        `# By ${d?.granularity ?? "day"}`,
+        "Period,Net,Tax,Gross",
+        ...(d?.periods ?? []).map((p) => `${p.period},${(p.net / 100).toFixed(2)},${(p.tax / 100).toFixed(2)},${(p.gross / 100).toFixed(2)}`),
+      ].join("\n");
     } else {
       name = "analytics";
       const a = anQ.data ?? {};
@@ -311,7 +334,7 @@ function SalesReportInner() {
       </div>
 
       <Tabs
-        items={[{ value: "transactions", label: t("tabs.transactions") }, { value: "summary", label: t("tabs.summary") }, { value: "outstanding", label: t("tabs.outstanding") }, { value: "analytics", label: t("tabs.analytics") }]}
+        items={[{ value: "transactions", label: t("tabs.transactions") }, { value: "summary", label: t("tabs.summary") }, { value: "tax", label: t("tabs.tax") }, { value: "outstanding", label: t("tabs.outstanding") }, { value: "analytics", label: t("tabs.analytics") }]}
         value={tab}
         onChange={setTab}
         className="mb-section"
@@ -460,6 +483,121 @@ function SalesReportInner() {
               </table>
             </div>
           </>
+        );
+      })()}
+
+      {tab === "tax" && (() => {
+        const d = taxQ.data;
+        const pct = (r: number) => `${(r * 100).toFixed(r * 100 % 1 === 0 ? 0 : 1)}%`;
+        const periodLabel = (p: string) =>
+          d?.granularity === "month"
+            ? new Date(`${p}-01T12:00:00`).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+            : new Date(`${p}T12:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+        return (
+          <div className="flex flex-col gap-section">
+            {/* What a return is filed against: who is registered, for what, and
+                over which dates. A page of figures with none of that on it is
+                a page somebody has to annotate by hand. */}
+            <div className={card}>
+              <div className="flex flex-wrap items-baseline justify-between gap-comfortable">
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold tracking-[-0.4px]">{t("tax.heading", { name: d?.taxName ?? "" })}</h2>
+                  <p className="mt-inline text-[13px] text-muted">
+                    {t("tax.rangeLine", { from: filters.from, to: filters.to, orders: d?.orderCount ?? 0 })}
+                  </p>
+                </div>
+                <p className="text-[13px] text-muted">
+                  {d?.registrationNumber
+                    ? t("tax.registered", { number: d.registrationNumber })
+                    : t("tax.notRegistered")}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-tight min-[420px]:grid-cols-3">
+              {([["net", t("tax.net"), d?.totals.net], ["tax", t("tax.collected", { name: d?.taxName ?? "" }), d?.totals.tax], ["gross", t("tax.gross"), d?.totals.gross]] as const).map(([key, label, v]) => (
+                <div key={key} className={card}>
+                  <p className="type-label text-[12px] text-muted">{label}</p>
+                  <p className="mt-tight whitespace-nowrap font-mono text-xl tabular-nums sm:text-2xl">{v == null ? "—" : formatMoney(v)}</p>
+                  {/* Only where something actually went back. A line of zeroes
+                      on a return invites a second look at nothing. */}
+                  {key === "tax" && !!d?.refunded.tax && (
+                    <p className="mt-inline font-mono text-[12px] text-muted">{t("tax.afterRefunds", { amount: formatMoney(d.refunded.tax) })}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="min-w-0 overflow-x-auto card-surface scroll-x-hint">
+              <table className="w-full text-sm">
+                <caption className="px-comfortable pb-tight pt-comfortable text-left text-[13px] font-medium">{t("tax.byRate")}</caption>
+                <thead>
+                  <tr className="border-b border-line">
+                    {[t("tax.colClass"), t("tax.colRate"), t("tax.colNet"), t("tax.colTax"), t("tax.colGross"), t("tax.colLines")].map((h, i) => (
+                      <th key={h} className={`type-label px-comfortable py-tight text-[12px] uppercase tracking-wide text-muted ${i === 0 ? "text-left" : "text-right"}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(d?.rows ?? []).map((r) => (
+                    <tr key={`${r.taxClass}-${r.rate}`} className="h-12 border-b border-line last:border-0">
+                      <td className="px-comfortable font-medium">{t(`tax.class.${r.taxClass}`)}</td>
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{pct(r.rate)}</td>
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(r.net)}</td>
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(r.tax)}</td>
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(r.gross)}</td>
+                      <td className="px-comfortable text-right font-mono text-[12px] text-muted tabular-nums">{r.lineCount}</td>
+                    </tr>
+                  ))}
+                  {!!d?.rows.length && (
+                    <tr className="h-12 border-t border-strong font-medium">
+                      <td className="px-comfortable">{t("tax.total")}</td>
+                      <td />
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(d.totals.net)}</td>
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(d.totals.tax)}</td>
+                      <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(d.totals.gross)}</td>
+                      <td />
+                    </tr>
+                  )}
+                  {d && d.rows.length === 0 && (
+                    <tr><td colSpan={6} className="px-comfortable py-section text-center text-[13px] text-muted">{t("nothingInRange")}</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {!!d?.periods.length && (
+              <div className="min-w-0 overflow-x-auto card-surface scroll-x-hint">
+                <table className="w-full text-sm">
+                  <caption className="px-comfortable pb-tight pt-comfortable text-left text-[13px] font-medium">
+                    {t(d.granularity === "month" ? "tax.byMonth" : "tax.byDay")}
+                  </caption>
+                  <thead>
+                    <tr className="border-b border-line">
+                      {[t("tax.colPeriod"), t("tax.colNet"), t("tax.colTax"), t("tax.colGross")].map((h, i) => (
+                        <th key={h} className={`type-label px-comfortable py-tight text-[12px] uppercase tracking-wide text-muted ${i === 0 ? "text-left" : "text-right"}`}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {d.periods.map((p) => (
+                      <tr key={p.period} className="h-12 border-b border-line last:border-0">
+                        <td className="whitespace-nowrap px-comfortable">{periodLabel(p.period)}</td>
+                        <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(p.net)}</td>
+                        <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(p.tax)}</td>
+                        <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(p.gross)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Said out loud rather than left for somebody to discover: the
+                model records a refund on the line with no date of its own, so
+                it reduces the period the SALE falls in. */}
+            <p className="text-[13px] text-muted">{t("tax.refundNote")}</p>
+          </div>
         );
       })()}
 

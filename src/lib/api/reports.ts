@@ -1,4 +1,4 @@
-import { ok } from "./client";
+import { getTaxConfigState, ok } from "./client";
 import { peekBookings } from "./bookings";
 import { peekCategories } from "./categories";
 import { peekCounters } from "./counters";
@@ -8,7 +8,7 @@ import { peekProducts } from "./products";
 import { getResourceMatrix, getSlots } from "./slots";
 import { peekStaff } from "./staff";
 import { isResourceType, isSlotBased } from "@/lib/schedule";
-import type { ApiResult, ID, ISODate, ISODateTime, Minor, Order, OrderLine, PaymentMethod } from "./types";
+import type { ApiResult, ID, ISODate, ISODateTime, Minor, Order, OrderLine, PaymentMethod, TaxClass } from "./types";
 
 // The contract the backend builds to. Do not change shapes without updating both.
 export type SalesGroupBy =
@@ -93,6 +93,49 @@ export interface TransactionResponse {
   rows: TransactionRow[];
   total: number;
   cursor: string | null;
+}
+
+/* ── tax.v1 ─────────────────────────────────────────────────────────────────
+   What an accountant needs to file a return, and what the transactions tab
+   cannot give them: the period's takings split by the rate they were charged
+   at. It is its own query rather than a mode of the summary because a return
+   is answered per RATE — a class can appear at two rates if the operator
+   changed one mid-period, and the two have to stay apart. */
+export interface TaxReportQuery extends Omit<TransactionQuery, "sort" | "cursor" | "limit"> {
+  /** Defaults by range length: days up to nine weeks, months beyond. */
+  granularity?: "day" | "month";
+}
+
+export interface TaxClassRow {
+  taxClass: TaxClass;
+  /** The snapshot fraction the line carried, e.g. 0.15. */
+  rate: number;
+  /** What the tax was charged on — after discounts and after refunds. */
+  net: Minor;
+  tax: Minor;
+  gross: Minor;
+  lineCount: number;
+}
+
+export interface TaxPeriodRow {
+  /** "2026-07" for a month, "2026-07-29" for a day. */
+  period: string;
+  net: Minor;
+  tax: Minor;
+  gross: Minor;
+}
+
+export interface TaxReportResponse {
+  rows: TaxClassRow[];
+  periods: TaxPeriodRow[];
+  granularity: "day" | "month";
+  totals: { net: Minor; tax: Minor; gross: Minor };
+  /** Already subtracted above, and stated apart because a return has to show
+   *  what went back as well as what came in. */
+  refunded: { net: Minor; tax: Minor };
+  taxName: string;
+  registrationNumber: string | null;
+  orderCount: number;
 }
 
 export type AnalyticsSeries =
@@ -306,6 +349,86 @@ export async function getTransactions(q: TransactionQuery): Promise<ApiResult<Tr
     }),
     total,
     cursor: offset + limit < total ? String(offset + limit) : null,
+  });
+}
+
+/**
+ * The period's takings, split by the rate they were charged at.
+ *
+ * Two things are worth knowing about how it is computed.
+ *
+ * **Tax comes off the LINE, never off the order.** Every line carries the rate
+ * it was sold at (`taxRate`) and the money that rate was applied to
+ * (`taxableAmount`), so an order holding a standard-rated ticket and a
+ * reduced-rated one splits correctly — where `rate × total` would invent a
+ * blended figure that matches neither.
+ *
+ * **A refund gives back a share of the tax with it.** `refundedAmount` is the
+ * gross that went back, so the same fraction comes off the net and the tax.
+ * The caveat, stated rather than hidden: the model records a refund on the
+ * LINE with no date of its own, so it reduces the period the original sale
+ * falls in rather than the period the refund was issued in. For a real return
+ * that distinction matters, and it is the backend's to make — the negative
+ * payment carries a date, but not a tax class.
+ */
+export async function getTaxReport(q: TaxReportQuery): Promise<ApiResult<TaxReportResponse>> {
+  const cfg = getTaxConfigState();
+  const orders = peekOrders().filter((o) => matches(o, q) && settled(o));
+  const granularity = q.granularity ?? (dayCount(q.from, q.to) > 62 ? "month" : "day");
+
+  const byClass = new Map<string, TaxClassRow>();
+  const byPeriod = new Map<string, TaxPeriodRow>();
+  let refundedNet = 0;
+  let refundedTax = 0;
+
+  for (const o of orders) {
+    const period = granularity === "month" ? o.createdAt.slice(0, 7) : o.createdAt.slice(0, 10);
+    for (const l of o.lines) {
+      const grossFull = l.total ?? 0;
+      if (grossFull <= 0) continue;
+      const netFull = l.taxableAmount ?? 0;
+      const taxFull = l.taxAmount ?? 0;
+      const share = Math.min(1, Math.max(0, (l.refundedAmount ?? 0) / grossFull));
+      const backNet = Math.round(netFull * share);
+      const backTax = Math.round(taxFull * share);
+      refundedNet += backNet;
+      refundedTax += backTax;
+      const net = netFull - backNet;
+      const tax = taxFull - backTax;
+
+      const key = `${l.taxClass}|${l.taxRate}`;
+      const row = byClass.get(key) ?? { taxClass: l.taxClass, rate: l.taxRate, net: 0, tax: 0, gross: 0, lineCount: 0 };
+      row.net += net;
+      row.tax += tax;
+      row.gross += net + tax;
+      row.lineCount += 1;
+      byClass.set(key, row);
+
+      const p = byPeriod.get(period) ?? { period, net: 0, tax: 0, gross: 0 };
+      p.net += net;
+      p.tax += tax;
+      p.gross += net + tax;
+      byPeriod.set(period, p);
+    }
+  }
+
+  // Highest rate first: a return is read from the standard rate down.
+  const rows = [...byClass.values()].sort((a, b) => b.rate - a.rate || a.taxClass.localeCompare(b.taxClass));
+  const periods = [...byPeriod.values()].sort((a, b) => a.period.localeCompare(b.period));
+
+  return ok<TaxReportResponse>({
+    rows,
+    periods,
+    granularity,
+    totals: {
+      net: rows.reduce((s, r) => s + r.net, 0),
+      tax: rows.reduce((s, r) => s + r.tax, 0),
+      gross: rows.reduce((s, r) => s + r.gross, 0),
+    },
+    refunded: { net: refundedNet, tax: refundedTax },
+    taxName: cfg.taxName,
+    registrationNumber: cfg.registrationNumber || null,
+    orderCount: orders.length,
   });
 }
 

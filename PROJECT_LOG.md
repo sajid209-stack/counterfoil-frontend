@@ -9350,3 +9350,80 @@ existing. The gate walk records the same trap.
 - **Delete does not exist for an event that has sold**, by design. If an
   operator genuinely needs one gone, that is a refund-then-archive path rather
   than a delete.
+
+## The tax report (2026-09-21)
+
+Owner's review: *"Sales transaction and tax reports require data export
+capabilities."* Checked before building: transactions, summary and analytics
+all export CSV already. **The tax report did not exist at all** — so the gap
+was the report, not the export.
+
+### What it answers
+
+A return is filed per **rate**, so that is the shape: for the range and filters
+already on the page, every tax class at every rate it was charged at, with net,
+tax, gross and a line count, and a total row under them. Then the same figures
+**by day or by month**, which is what reconciles a return against the ledger.
+Above both: who is registered, for what, and over which dates — a page of
+figures with none of that on it is a page somebody annotates by hand.
+
+Two decisions inside `getTaxReport` are worth stating:
+
+- **Tax comes off the LINE, never off the order.** Every line carries the rate
+  it was sold at and the money that rate was applied to, so an order holding a
+  standard-rated ticket and an exempt one splits correctly — where `rate ×
+  order total` would invent a blended figure matching neither.
+- **A refund gives back its share of the tax.** `refundedAmount` is the gross
+  that went back, so the same fraction comes off the net and the tax, and the
+  amount returned is stated beside the collected figure rather than folded
+  away.
+
+`TaxReportQuery` / `TaxClassRow` / `TaxPeriodRow` / `TaxReportResponse` are
+**contract for the backend lane**, in the same shape as the transaction and
+analytics contracts beside them.
+
+### Its own CSV
+
+The Tax tab exports two blocks in one file with a blank line between them: the
+rate breakdown, which is what goes on the return, and the period breakdown,
+which reconciles it. An accountant wants both, and downloading them separately
+is two files to keep together.
+
+### Verified, and it adds up
+
+**39 checks, all passing** — and the arithmetic is asserted rather than
+eyeballed:
+
+- every rate row's tax equals its rate applied to its net (Standard 15% on
+  ৳501,345.00 → **৳75,201.75**, exactly), and its gross equals net plus tax;
+- the total row is the sum of the rows above it;
+- the **period breakdown reconciles to the same totals**;
+- the three headline tiles are those totals;
+- narrowing the range to one day narrows every figure and still adds up;
+- the exported file carries both blocks, has a total line, and **its numbers
+  are the numbers on the screen**.
+
+A cross-check worth recording: the report's gross over the last 30 days is
+**৳577,646.75**, which is the figure the dashboard's revenue trend states for
+the same window. Two derivations, built from different code, agreeing.
+
+Plus contrast, the 12px floor, nothing clipped, no page x-scroll and no hidden
+overflow inside `main` at 390, 1440, dark and Bangla, with no console errors or
+missing messages. The **32-route audit is at its documented 70**; `tsc` and
+`eslint` clean; i18n parity **0 missing / 0 extra** with 21 keys authored in en
+and bn. The page's own description said "three views" and now says five.
+
+Also removed: a dead `Plus` import that has been unused in this file since
+before today — confirmed against `HEAD` rather than assumed.
+
+### Open
+
+- **Money on this page is DM Mono**, against the type spec, because the whole
+  reports page is — the Inter sweep only ever reached the dashboard, and this
+  log has recorded that as outstanding since September. Matching the page was
+  the right call for one tab; sweeping the page is its own change.
+- **A refund is counted against the day of the SALE.** The model records it on
+  the line with no date of its own; the negative payment carries a date but not
+  a tax class, so there is nothing to attribute it by. For a real return that
+  distinction matters, and it is the backend's to make. The page says so out
+  loud rather than leaving it to be discovered.

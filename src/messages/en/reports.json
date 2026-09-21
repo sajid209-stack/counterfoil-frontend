@@ -1,6 +1,6 @@
 {
   "title": "Sales reports",
-  "description": "Transactions, breakdowns and analytics — one scope, three views.",
+  "description": "Transactions, breakdowns, tax and analytics — one scope, five views.",
   "exportCsv": "Export CSV",
   "csvExported": "CSV exported — filters respected.",
   "search": "Search reference, customer, booking…",
@@ -12,7 +12,8 @@
     "transactions": "Transactions",
     "summary": "Summary",
     "analytics": "Analytics",
-    "outstanding": "Outstanding"
+    "outstanding": "Outstanding",
+    "tax": "Tax"
   },
   "presets": {
     "today": "Today",
@@ -134,5 +135,32 @@
       "paid": "Paid",
       "owed": "Owed"
     }
+  },
+  "tax": {
+    "heading": "{name} on what was taken",
+    "rangeLine": "{from} to {to} · {orders, plural, one {# order} other {# orders}}",
+    "registered": "Registered: {number}",
+    "notRegistered": "No registration number on file",
+    "net": "Net of tax",
+    "collected": "{name} collected",
+    "gross": "Gross",
+    "afterRefunds": "after {amount} refunded",
+    "byRate": "By rate",
+    "byDay": "By day",
+    "byMonth": "By month",
+    "colClass": "Class",
+    "colRate": "Rate",
+    "colNet": "Net",
+    "colTax": "Tax",
+    "colGross": "Gross",
+    "colLines": "Lines",
+    "colPeriod": "Period",
+    "total": "Total",
+    "class": {
+      "standard": "Standard",
+      "reduced": "Reduced",
+      "exempt": "Exempt"
+    },
+    "refundNote": "A refund gives back its share of the tax. It is counted against the day the sale was made, because that is where the record keeps it."
   }
 }
