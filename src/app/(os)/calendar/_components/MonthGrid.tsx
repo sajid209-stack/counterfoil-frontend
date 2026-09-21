@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { toTime } from "@/lib/schedule";
 import {
   hhmm,
   isoDate,
@@ -10,6 +11,7 @@ import {
   peekHandlers,
   sameDay,
   type CalEvent,
+  type Ghost,
 } from "./model";
 
 /** How many chips fit in a cell before the rest collapse into "+N more". */
@@ -34,6 +36,11 @@ export function MonthGrid({
   dotClass,
   dayHeading,
   emptyLabel,
+  today: todayIso,
+  onCreateDay,
+  ghost = null,
+  ghostLabel = "",
+  createLabel,
 }: {
   /** Any date inside the month to render. */
   month: Date;
@@ -56,6 +63,15 @@ export function MonthGrid({
   dotClass: (e: CalEvent) => string;
   dayHeading?: (d: Date) => string;
   emptyLabel?: string;
+  /** The app's today, as an ISO date — a day before it cannot be booked. */
+  today?: string;
+  /** Empty space in a day was clicked: open the booking panel on that day,
+   *  the way a click in a Google month cell starts an event on it. */
+  onCreateDay?: (day: Date, anchor: DOMRect) => void;
+  ghost?: Ghost | null;
+  ghostLabel?: string;
+  /** The accessible name of a day's "new booking" target. */
+  createLabel?: (d: Date) => string;
 }) {
   /** Which day the agenda underneath is showing. Only consulted when compact.
    *  Held as an ISO string so that changing month drops it automatically — the
@@ -215,17 +231,41 @@ export function MonthGrid({
               const list = byDay.get(key) ?? [];
               const outside = d.getMonth() !== month.getMonth();
               const today = sameDay(d, now);
-              const shown = list.slice(0, MAX_CHIPS);
+              const draftHere = ghost?.date === key ? ghost : null;
+              // Room for the draft: it takes a chip's place rather than a fourth row.
+              const shown = list.slice(0, draftHere ? MAX_CHIPS - 1 : MAX_CHIPS);
               const rest = list.length - shown.length;
+              const bookable = !!onCreateDay && !!todayIso && key >= todayIso;
 
               return (
                 <div
                   key={key}
+                  onClick={(ev) => {
+                    // The date and the chips are buttons of their own; this is
+                    // the space around them.
+                    if (!bookable || (ev.target as HTMLElement).closest("button")) return;
+                    onCreateDay?.(d, ev.currentTarget.getBoundingClientRect());
+                  }}
+                  /* The neighbouring month's days keep a muted date and no
+                     tint: tinted, the 1st of next month — bookable — sampled
+                     almost the shade that means "cannot be booked". */
                   className={cn(
-                    "min-h-[7rem] border-r border-hairline p-1 last:border-r-0",
-                    outside && "bg-subtle/40",
+                    "group/day relative min-h-[7rem] border-r border-hairline p-1 last:border-r-0",
+                    !!todayIso && key < todayIso && "bg-offtime",
+                    bookable && "cursor-pointer transition-colors duration-quick hover:bg-ember/[0.03]",
                   )}
                 >
+                  {/* The keyboard's way in to the same thing, shown on hover. */}
+                  {bookable && (
+                    <button
+                      type="button"
+                      aria-label={createLabel?.(d)}
+                      onClick={(ev) => onCreateDay?.(d, (ev.currentTarget.parentElement ?? ev.currentTarget).getBoundingClientRect())}
+                      className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-sm text-muted opacity-0 transition-opacity duration-quick hover:bg-subtle hover:text-brand-foreground focus-visible:opacity-100 group-hover/day:opacity-100"
+                    >
+                      <Plus size={14} strokeWidth={2} aria-hidden />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={onPickDay ? () => onPickDay(d) : undefined}
@@ -265,11 +305,21 @@ export function MonthGrid({
                         <span className="truncate">{e.title}</span>
                       </button>
                     ))}
+                    {draftHere && (
+                      <span
+                        data-ghost
+                        aria-hidden
+                        className="flex w-full items-center gap-0.5 overflow-hidden rounded-sm bg-ember-solid px-1 py-0.5 text-[12px] font-semibold leading-tight text-white shadow-pop"
+                      >
+                        {!draftHere.allDay && <span className="shrink-0 font-mono font-normal text-white/90">{toTime(draftHere.start)}</span>}
+                        <span className="truncate">{draftHere.title ?? ghostLabel}</span>
+                      </span>
+                    )}
                     {rest > 0 && (
                       <button
                         type="button"
                         onClick={onPickDay ? () => onPickDay(d) : undefined}
-                        className="px-1 text-left text-[12px] text-muted transition-colors duration-quick hover:text-fg"
+                        className="self-start rounded-xs px-1 text-left text-[12px] text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg"
                       >
                         {moreLabel(rest)}
                       </button>

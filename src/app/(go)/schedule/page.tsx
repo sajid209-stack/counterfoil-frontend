@@ -10,7 +10,7 @@ import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay, sessionPressure } from "@/lib/sc
 import { useApiQuery } from "@/lib/useApi";
 import { listProducts, updateResource, type Product, type Resource } from "@/lib/api";
 import { formatPriceShort } from "@/lib/format";
-import { buildDay, groupByTime, shiftDay, type DaySlot, type Lane } from "./_lib/day";
+import { buildDay, groupByTime, shiftDay, type DaySlot, type Lane } from "@/lib/dayModel";
 
 /* The app's one date, not a private copy of it — the token's own doc
    comment warns that two components each holding their own is how a hold

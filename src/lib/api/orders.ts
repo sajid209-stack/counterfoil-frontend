@@ -183,7 +183,10 @@ export interface CheckoutInput {
   /** Wallet transaction id (bKash etc.) recorded on the payment. */
   paymentReference?: string;
   /** Amount actually collected now. Below the order total (a deposit) the
-   *  order lands as "partial" with the balance due at arrival. */
+   *  order lands as "partial" with the balance due at arrival. Zero is a
+   *  reservation taken on the phone or at the desk: the order is "pending",
+   *  records no payment, and the whole total is owed at arrival — the same
+   *  shape a seeded pending order has. */
   payNow?: Minor;
   /** Credits pass to spend against eligible lines (BT-12 redemption). */
   credits?: { ticketId: string; count: number } | null;
@@ -224,9 +227,10 @@ export async function checkout(
     ...(input.paymentReference ? { reference: input.paymentReference } : {}),
   };
 
+  const reserveOnly = payNow <= 0 && total > 0;
   const orderRes = await resource.create({
     reference,
-    status: payNow < total ? "partial" : "paid",
+    status: reserveOnly ? "pending" : payNow < total ? "partial" : "paid",
     channel: input.channel,
     locationId: input.locationId,
     counterId: input.counterId,
@@ -234,7 +238,9 @@ export async function checkout(
     customerId: input.customerId ?? null,
     customerName: input.customerName ?? null,
     lines,
-    payments: [payment],
+    // Nothing taken is nothing recorded — a ৳0 payment would read as a sale
+    // somebody settled.
+    payments: reserveOnly ? [] : [payment],
     ...totals,
   });
   if (!orderRes.ok) return orderRes;

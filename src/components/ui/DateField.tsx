@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDay } from "@/lib/format";
 import { DatePicker, type DatePickerLabels } from "./DatePicker";
 
 /**
@@ -37,7 +37,10 @@ export function DateField({
   max?: string;
   isDisabled?: (iso: string) => boolean;
   labels: DatePickerLabels & { open: string };
-  shape?: "default" | "go";
+  /** `inline` reads as text until pointed at — for a sentence of controls,
+   *  such as the calendar panel's "Wed 29 Jul · 14:00 – 15:00", where a boxed
+   *  field would make one line look like a form. */
+  shape?: "default" | "go" | "inline";
   /** Icon only. For a toolbar that already states the date beside it — the
    *  calendar's range label does — where a second copy of "29 Jul 2026" costs
    *  a whole row on a phone and says nothing new. The accessible name still
@@ -98,13 +101,17 @@ export function DateField({
           compact ? "h-11 w-11 shrink-0 justify-center" : "w-full",
           shape === "go"
             ? "min-h-12 rounded-go px-comfortable"
-            : cn("rounded-sm", compact ? "" : "h-11 px-comfortable md:h-9"),
+            : shape === "inline"
+              ? "h-9 w-auto rounded-sm border-transparent bg-transparent px-tight text-[14px] font-medium hover:bg-muted-wash focus-visible:bg-muted-wash"
+              : cn("rounded-sm", compact ? "" : "h-11 px-comfortable md:h-9"),
         )}
       >
-        <CalendarDays size={compact ? 18 : 15} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
+        {shape !== "inline" && (
+          <CalendarDays size={compact ? 18 : 15} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
+        )}
         {!compact && (
           <span className={cn("min-w-0 flex-1 truncate", !value && "text-muted")}>
-            {value ? formatDate(value) : (placeholder ?? labels.open)}
+            {value ? (shape === "inline" ? formatDay(value, { weekday: true }) : formatDate(value)) : (placeholder ?? labels.open)}
           </span>
         )}
       </button>
@@ -127,7 +134,7 @@ export function DateField({
             max={max}
             isDisabled={isDisabled}
             labels={labels}
-            shape={shape}
+            shape={shape === "go" ? "go" : "default"}
             autoFocus
             onChange={(iso) => {
               onChange(iso);

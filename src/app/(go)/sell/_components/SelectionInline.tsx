@@ -45,7 +45,7 @@ import {
   providerTimes,
   sessionRows,
   type Draft,
-} from "../_lib/selection";
+} from "@/lib/sale/selection";
 import { SessionList } from "../../_components/SessionList";
 import { getResourceMatrix } from "@/lib/api";
 

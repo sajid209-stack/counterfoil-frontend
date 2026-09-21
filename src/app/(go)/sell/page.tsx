@@ -57,8 +57,8 @@ import { useMediaQuery } from "@/lib/useMedia";
 import { Catalogue } from "./_components/Catalogue";
 import { SelectionInline } from "./_components/SelectionInline";
 import { Keypad } from "../_components/Keypad";
-import { itemBalance, itemSeats, itemSlotISO, itemTotal, priceSale, type SaleItem } from "./_lib/saleMath";
-import { draftFrom, newDraft, patternOf, resolveDraft, type Draft } from "./_lib/selection";
+import { itemBalance, itemSeats, itemSlotISO, itemTotal, priceSale, type SaleItem } from "@/lib/sale/saleMath";
+import { draftFrom, newDraft, patternOf, resolveDraft, type Draft } from "@/lib/sale/selection";
 
 /** One thing in the sale, and the questions it is still answering.
  *

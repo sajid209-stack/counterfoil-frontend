@@ -30,10 +30,41 @@ export interface CalEvent {
   /** Bookings only: what the detail panel needs to act on one without going
    *  back to the store — how many are coming, and how many are already in. */
   partySize?: number;
+  /** Who the booking is for, when the order names them. */
+  guest?: string | null;
+  /** "2 guests" — the head count, on its own. */
+  party?: string;
   checkedIn?: number;
   orderId?: string;
   tone: EventTone;
   locked: boolean;
+}
+
+/**
+ * The booking being made, as the grid draws it.
+ *
+ * Google Calendar's quick-create puts a "(No title)" block on the grid the
+ * moment you click, and the block follows the form: change the time and it
+ * moves, type a title and it gains one. That block is most of why the popover
+ * feels like part of the calendar rather than a form floating over it — you
+ * see WHERE the thing you are making will go before you make it. This is that
+ * block. The panel owns what it says; the grids only draw it.
+ */
+export interface Ghost {
+  /** ISO date. */
+  date: string;
+  /** Minutes from midnight. */
+  start: number;
+  end: number;
+  /** The day view lane it sits on — a resource id or a session lane. Absent
+   *  when nothing chosen says where yet. */
+  laneId?: string;
+  /** Day tickets and passes have no time, so they sit in the all-day strip. */
+  allDay?: boolean;
+  /** What is being booked, once chosen. Null draws the placeholder. */
+  title: string | null;
+  /** The second line: the lane, the therapist. */
+  sub?: string | null;
 }
 
 export const MINUTES_IN_DAY = 1440;
@@ -105,6 +136,9 @@ export function bookingsToEvents(
   products: Product[],
   resources: Resource[],
   staff: Staff[],
+  /** Who an order is for. The desk's question at a lane is "who is on it",
+   *  and the product name alone cannot answer it. */
+  guestOf?: (orderId: string) => string | null,
 ): CalEvent[] {
   const productOf = (id: string) => products.find((p) => p.id === id);
   const ownerName = (id?: string | null) =>
@@ -115,10 +149,9 @@ export function bookingsToEvents(
     .map((b) => {
       const product = productOf(b.productId);
       const owner = ownerName(b.resourceId);
-      const parts = [
-        `${b.partySize} ${b.partySize === 1 ? "guest" : "guests"}`,
-        owner,
-      ].filter(Boolean);
+      const guest = (b.orderId && guestOf?.(b.orderId)) || null;
+      const party = `${b.partySize} ${b.partySize === 1 ? "guest" : "guests"}`;
+      const parts = [guest, party, owner].filter(Boolean);
       return {
         id: b.id,
         kind: "booking" as const,
@@ -131,6 +164,8 @@ export function bookingsToEvents(
         productId: b.productId,
         categoryId: product?.categoryId ?? null,
         partySize: b.partySize,
+        guest,
+        party,
         checkedIn: b.checkedIn ?? 0,
         orderId: b.orderId,
         tone: toneOf(b),

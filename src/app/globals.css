@@ -539,6 +539,15 @@
      job is to guide the eye rather than to divide anything. */
   --color-hairline: #edeae4;
 
+  /* Calendar time that cannot be sold: gone, full, or not trading. The grid
+     used to write "6 open" into every hour it could sell, which put a label in
+     70 cells of a week to say what was true of nearly all of them. It is the
+     exception that deserves the mark, so bookable time is the plain card and
+     this is the one quiet step below it — the same idea as the non-working
+     hours every staff calendar greys out. Not `subtle`: in dark that IS the
+     card, and the shade vanished. */
+  --color-offtime: #f2f0ea;
+
   /* Solid ember that does NOT brighten in dark.
      `ember` lifts to #ff7a3d on ink so that ember-as-TEXT stays legible, but
      the same lift applied to ember-as-FILL drops white on it to 2.59:1. This
@@ -634,6 +643,9 @@
   /* Lighter here means LESS contrast, not a lighter colour: on ink, a stroke
      softens by moving toward the card it sits on, not toward white. */
   --color-hairline: #2e2c29;
+  /* Recessed rather than lifted: on ink, time you cannot use sits a step
+     towards the page, not towards white. */
+  --color-offtime: #1b1a18;
   --color-ember-solid: #f94a00;
   --color-danger-solid: #b91c1c;
 }

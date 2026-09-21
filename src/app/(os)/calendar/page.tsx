@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "lucide-react";
 import { Button, DateField, PageShell, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -11,6 +11,7 @@ import { MD, XL, useMediaQuery } from "@/lib/useMedia";
 import {
   bookingEditable,
   checkInBooking,
+  getOperator,
   listBookings,
   listCategories,
   listHolds,
@@ -18,18 +19,23 @@ import {
   listResources,
   listStaff,
   lockBooking,
+  peekOrders,
   unlockBooking,
 } from "@/lib/api";
-import { DEMO_TODAY, demoNow } from "@/lib/schedule";
+import { DEMO_TODAY, demoNow, isSlotBased, toMinutes as toMinutesOf } from "@/lib/schedule";
+import { formatPriceShort } from "@/lib/format";
 import { DayGrid, type DayLane } from "./_components/DayGrid";
 import { WeekGrid } from "./_components/WeekGrid";
 import { MonthGrid } from "./_components/MonthGrid";
 import { EventDetail } from "./_components/EventDetail";
 import { EventPeek } from "./_components/EventPeek";
 import { CalendarStats } from "./_components/CalendarStats";
+import { BookingPanel, type BookingRequest, type Carry } from "./_components/BookingPanel";
+import { openHours, openSlotsFor, optionsInHour, sessionLaneId, type OpenSlot } from "./_components/openSlots";
 import {
   addDays,
   bookingsToEvents,
+  minutesOf,
   holdsToEvents,
   isoDate,
   sameDay,
@@ -38,6 +44,7 @@ import {
   weekStart,
   windowStats,
   type CalEvent,
+  type Ghost,
   CATEGORY_CLASS,
   CATEGORY_DOT,
   NO_CATEGORY_CLASS,
@@ -122,21 +129,92 @@ export default function CalendarPage() {
   const staffQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
   const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
   const holdsQ = useApiQuery(() => listHolds({ pageSize: 500, filters: { effectiveStatus: "held" } }), []);
+  const operatorQ = useApiQuery(() => getOperator(), []);
+
+  /** An empty slot that was clicked, or the New booking button. */
+  const [request, setRequest] = useState<BookingRequest | null>(null);
+  /** The booking being made, as the grid draws it. The panel moves it. */
+  const [ghost, setGhost] = useState<Ghost | null>(null);
+  /* What was typed into a panel that closed without booking — the guest's
+     name, their number, how they are paying. Someone on the phone asks about
+     four, then says "actually, five": clicking five closes one panel and
+     opens another, and retyping the name is the cost of that. A popover that
+     closes on a click elsewhere must not throw work away, so the next one
+     starts from it. Cleared once a booking is made. */
+  const [carry, setCarry] = useState<Carry | null>(null);
+  /** The order just booked, so its block can say "this one" for a moment. */
+  const [justBooked, setJustBooked] = useState<string | null>(null);
+  const openRequest = (r: BookingRequest) => {
+    setDetail(null);
+    setRequest(r);
+    setGhost(
+      r.hour == null
+        ? null
+        : {
+            date: r.date,
+            start: r.lane ? toMinutesOf(r.lane.time) : r.hour * 60,
+            end: (r.lane ? toMinutesOf(r.lane.time) : r.hour * 60) + (r.minutes ?? r.lane?.span ?? 60),
+            laneId: r.lane?.laneId,
+            title: null,
+          },
+    );
+  };
+  /* Availability is read from the store at render, so a booking just made has
+     to say so: this moves on every booking and every open-slot list is keyed
+     on it. */
+  const [stamp, setStamp] = useState(0);
+  const today = DEMO_TODAY;
+  const nowMin = minutesOf(now);
 
   const products = useMemo(() => productsQ.data?.data ?? [], [productsQ.data]);
   const resources = useMemo(() => resourcesQ.data?.data ?? [], [resourcesQ.data]);
   const staff = useMemo(() => staffQ.data?.data ?? [], [staffQ.data]);
 
+  /* Who each order is for, read from the store when the bookings arrive —
+     an order and its bookings are written together, so a new booking's
+     guest is there by the time its block is. */
+  const guestOf = useMemo(() => {
+    const m = new Map<string, string | null>();
+    for (const o of bookingsQ.data ? peekOrders() : []) m.set(o.id, o.customerName);
+    return m;
+  }, [bookingsQ.data]);
+
   const events = useMemo<CalEvent[]>(
     () => [
-      ...bookingsToEvents(bookingsQ.data?.data ?? [], products, resources, staff),
+      ...bookingsToEvents(bookingsQ.data?.data ?? [], products, resources, staff, (id) => guestOf.get(id) ?? null).map((e) =>
+        /* A booking of a lane or a field that is on none of them is using
+           one the availability engine cannot see. Named on its block, so a
+           "4 free" that is really three has a visible reason. */
+        e.ownerId == null && products.find((p) => p.id === e.productId)?.resourceIds?.length
+          ? { ...e, subtitle: [e.subtitle, t("unassigned")].filter(Boolean).join(" · ") }
+          : e,
+      ),
       ...holdsToEvents(holdsQ.data?.data ?? [], products),
     ],
-    [bookingsQ.data, holdsQ.data, products, resources, staff],
+    [bookingsQ.data, holdsQ.data, products, resources, staff, guestOf, t],
   );
 
+  /* The skeleton is for the first load only. A reload after a booking, a lock
+     or a check-in keeps the grid on screen: swapping it for a grey slab
+     unmounted it, threw away its scroll position and flashed the page at the
+     very moment the new booking was meant to appear on it. */
   const loading =
-    bookingsQ.loading || productsQ.loading || resourcesQ.loading || holdsQ.loading;
+    (bookingsQ.loading && !bookingsQ.data) ||
+    (productsQ.loading && !productsQ.data) ||
+    (resourcesQ.loading && !resourcesQ.data) ||
+    (holdsQ.loading && !holdsQ.data);
+
+  /** Products that run as sessions of their own — a show, a departure — rather
+   *  than on a field. Their bookings belong on a lane of their own in the day. */
+  const sessionProductIds = useMemo(
+    () =>
+      new Set(
+        products
+          .filter((p) => isSlotBased(p.bookingType) && !(p.resourceIds?.length))
+          .map((p) => p.id),
+      ),
+    [products],
+  );
 
   /* The hours the grids draw, from the catalogue rather than from a guess.
      It lands on the same 06–23 for this venue, which is the point: it was
@@ -176,6 +254,18 @@ export default function CalendarPage() {
     (v) => v !== "all",
   ).length;
   const categories = useMemo(() => categoriesQ.data?.data ?? [], [categoriesQ.data]);
+  /* What can be sold from the calendar as it is filtered. Filtered to the
+     bowling, the grid shades the hours bowling cannot fill and the panel
+     offers bowling — what you are looking at is what you can book. */
+  const sellProducts = useMemo(
+    () =>
+      products.filter(
+        (p) =>
+          (bookingFilter === "all" || p.id === bookingFilter) &&
+          (categoryFilter === "all" || p.categoryId === categoryFilter),
+      ),
+    [products, bookingFilter, categoryFilter],
+  );
   const filtered =
     bookingFilter !== "all" || categoryFilter !== "all" || ownerFilter !== "all" || tones.length !== TONES.length;
   const resetFilters = () => {
@@ -241,6 +331,53 @@ export default function CalendarPage() {
     return out;
   }, [scoped, view, cursor, wkStart]);
 
+  // ── what is still open ────────────────────────────────────────────────────
+  /* The day's open field-hours and departures, for the tiles on the day grid.
+     Product grouping draws lanes per booking rather than per field, where a
+     field-hour offered as Cricket and as Futsal would be drawn twice, so the
+     tiles belong to the resource view only. `stamp` is in the dependencies on
+     purpose: availability is read from the store, which a booking just moved. */
+  const dayOpen = useMemo<OpenSlot[]>(
+    () => (view === "day" && groupBy === "resource" && stamp >= 0 ? openSlotsFor(sellProducts, isoDate(cursor), today, nowMin) : []),
+    [view, groupBy, sellProducts, cursor, today, nowMin, stamp],
+  );
+
+  /** For each day of the week on screen, how much is open in each hour. */
+  const weekOpen = useMemo(() => {
+    const out = new Map<string, number>();
+    if (view !== "week" || stamp < 0) return out;
+    for (let i = 0; i < 7; i++) {
+      const date = isoDate(addDays(wkStart, i));
+      if (date < today) continue;
+      const slots = openSlotsFor(sellProducts, date, today, nowMin);
+      for (let h = openHour; h < closeHour; h++) {
+        const n = optionsInHour(sellProducts, slots, date, h, today, nowMin).length;
+        if (n > 0) out.set(`${date}|${h}`, n);
+      }
+    }
+    return out;
+  }, [view, wkStart, sellProducts, today, nowMin, openHour, closeHour, stamp]);
+
+  /** New booking from the header: the day on screen (never one already gone),
+   *  at the next hour that has anything to sell. */
+  const openNewBooking = (on?: Date, anchor: DOMRect | null = null) => {
+    const iso = isoDate(on ?? cursor);
+    const date = iso < today ? today : iso;
+    const hrs = openHours(sellProducts, openSlotsFor(sellProducts, date, today, nowMin), date, today, nowMin, openHour, closeHour);
+    openRequest({ date, hour: hrs[0]?.hour ?? null, anchor });
+  };
+
+  const dayLong = (d: Date) =>
+    new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" }).format(d);
+
+  /** The phone's open-hour chips, in words. */
+  const chipText = {
+    heading: t("book.openToBook"),
+    label: (count: number) => t("book.openShort", { count }),
+    name: (hour: number, count: number) =>
+      t("book.openChipLabel", { time: `${String(hour).padStart(2, "0")}:00`, count }),
+  };
+
   // ── day lanes ─────────────────────────────────────────────────────────────
   const lanes = useMemo<DayLane[]>(() => {
     if (groupBy === "product") {
@@ -256,7 +393,23 @@ export default function CalendarPage() {
       name: r.name,
       note: r.outOfService ? (r.outOfServiceReason ?? t("outOfService")) : r.nounSingular,
       blocked: r.outOfService,
+      sellable: true,
+      buffer: Math.max(0, ...products.filter((p) => p.resourceIds?.includes(r.id)).map((p) => p.bufferMinutes ?? 0)),
+      single: products.filter((p) => p.resourceIds?.includes(r.id)).length === 1,
     }));
+    /* A session is its own lane: its bookings and its open departures read
+       along one row, the way a field's hours do. It used to sit in "Not
+       assigned", which described the database rather than the venue. */
+    const sessionIds = new Set([
+      ...dayOpen.filter((o) => o.isSession).map((o) => o.laneId.slice("session:".length)),
+      ...dayEvents
+        .filter((e) => e.ownerId == null && sessionProductIds.has(e.productId))
+        .map((e) => e.productId),
+    ]);
+    const nameOf = (id: string) => products.find((p) => p.id === id)?.name ?? id;
+    for (const id of [...sessionIds].sort((a, b) => nameOf(a).localeCompare(nameOf(b)))) {
+      rows.push({ id: sessionLaneId(id), name: nameOf(id), note: t("sessionLane"), sellable: true });
+    }
     // Guides are capacity owners too, so a departure they lead is on the day.
     const guideIds = [
       ...new Set(
@@ -268,19 +421,22 @@ export default function CalendarPage() {
     for (const id of guideIds) {
       rows.push({ id, name: staff.find((s) => s.id === id)?.name ?? id, note: t("guideLane") });
     }
-    if (dayEvents.some((e) => e.ownerId == null)) {
+    if (dayEvents.some((e) => e.ownerId == null && !sessionProductIds.has(e.productId))) {
       rows.push({ id: "__none__", name: t("noResource"), note: t("noResourceNote") });
     }
     return rows;
-  }, [groupBy, dayEvents, products, resources, staff, t]);
+  }, [groupBy, dayEvents, dayOpen, sessionProductIds, products, resources, staff, t]);
 
   // In product grouping the lane key is the product, not the capacity owner.
   const laneEvents = useMemo(
     () =>
       groupBy === "product"
         ? dayEvents.map((e) => ({ ...e, ownerId: e.productId }))
-        : dayEvents.map((e) => ({ ...e, ownerId: e.ownerId ?? "__none__" })),
-    [dayEvents, groupBy],
+        : dayEvents.map((e) => ({
+            ...e,
+            ownerId: e.ownerId ?? (sessionProductIds.has(e.productId) ? sessionLaneId(e.productId) : "__none__"),
+          })),
+    [dayEvents, groupBy, sessionProductIds],
   );
 
   // ── navigation ────────────────────────────────────────────────────────────
@@ -363,13 +519,55 @@ export default function CalendarPage() {
    */
   const blockClass = useCallback(
     (e: CalEvent) => {
-      if (colorBy === "status" || e.tone === "held" || e.tone === "locked") return TONE_CLASS[e.tone];
-      const color = catColor.get(e.categoryId ?? "") ?? null;
-      const base = color ? CATEGORY_CLASS[color] : NO_CATEGORY_CLASS;
-      return e.tone === "noshow" ? `${base} line-through` : base;
+      const paint = (() => {
+        if (colorBy === "status" || e.tone === "held" || e.tone === "locked") return TONE_CLASS[e.tone];
+        const color = catColor.get(e.categoryId ?? "") ?? null;
+        const base = color ? CATEGORY_CLASS[color] : NO_CATEGORY_CLASS;
+        return e.tone === "noshow" ? `${base} line-through` : base;
+      })();
+      /* The booking just made, ringed for a moment where the draft stood —
+         the answer to "did that work?" is on the grid, not only in a toast
+         at the other corner of the screen. */
+      return e.orderId && e.orderId === justBooked
+        ? `${paint} ring-2 ring-ember-solid ring-offset-1 ring-offset-card`
+        : paint;
     },
-    [colorBy, catColor],
+    [colorBy, catColor, justBooked],
   );
+  useEffect(() => {
+    if (!justBooked) return;
+    const id = window.setTimeout(() => setJustBooked(null), 2600);
+    return () => window.clearTimeout(id);
+  }, [justBooked]);
+
+  /* Google Calendar's keys, where they mean the same thing here: c to make
+     something, t for today, d / w / m for the grain, j / k (or n / p) to step.
+     Only when nothing is being typed and no panel is open — a shortcut that
+     fires inside a name field is a bug with a keyboard. */
+  const keys = useRef<(e: KeyboardEvent) => void>(() => {});
+  useEffect(() => {
+    keys.current = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+      if (request || detail || document.querySelector('[role="dialog"]')) return;
+      const k = e.key.toLowerCase();
+      if (k === "c") openNewBooking();
+      else if (k === "t") setCursor(openingDate());
+      else if (k === "d") setView("day");
+      else if (k === "w") setView("week");
+      else if (k === "m") setView("month");
+      else if (k === "j" || k === "n") step(1);
+      else if (k === "k" || k === "p") step(-1);
+      else return;
+      e.preventDefault();
+    };
+  });
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => keys.current(e);
+    window.addEventListener("keydown", on);
+    return () => window.removeEventListener("keydown", on);
+  }, []);
 
   const dotClass = useCallback(
     (e: CalEvent) => {
@@ -510,6 +708,16 @@ export default function CalendarPage() {
     <PageShell
       title={t("title")}
       description={t("description")}
+      actions={
+        <Button
+          icon={<Plus size={16} strokeWidth={1.5} />}
+          onClick={() => openNewBooking()}
+          title={t("book.newBookingKey")}
+          aria-keyshortcuts="C"
+        >
+          {t("book.newBooking")}
+        </Button>
+      }
     >
       <div className="flex flex-col gap-section">
         <CalendarStats
@@ -613,8 +821,11 @@ export default function CalendarPage() {
             {!compact && toneKey}
             {!compact && categoryKeyRow}
 
+            {/* How the day's rows are cut — a way of looking, like the view
+                switch, so it is drawn as one: a segmented pair. In ember it
+                read as one more filter switched on. */}
             {view === "day" && !compact && resources.length > 0 && (
-              <span className="flex items-center gap-inline">
+              <span role="group" aria-label={t("groupBy")} className="ml-auto flex items-center gap-inline rounded-sm bg-muted-wash p-inline">
                 {(["resource", "product"] as const).map((g) => (
                   <button
                     key={g}
@@ -622,10 +833,8 @@ export default function CalendarPage() {
                     aria-pressed={groupBy === g}
                     onClick={() => setGroupBy(g)}
                     className={cn(
-                      "h-11 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick md:h-9",
-                      groupBy === g
-                        ? "border-ember bg-ember/10 text-brand-foreground"
-                        : "border-line text-muted hover:bg-subtle",
+                      "h-9 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:h-7",
+                      groupBy === g ? "bg-card text-fg shadow-sm ring-1 ring-line" : "text-muted hover:text-fg",
                     )}
                   >
                     {t(g === "resource" ? "groupByResource" : "groupByProduct")}
@@ -742,6 +951,47 @@ export default function CalendarPage() {
               hideEmptyLabel={t("hideEmptyLanes")}
               compact={compact}
               blockClass={blockClass}
+              openSlots={dayOpen}
+              chipText={chipText}
+              onCreateHour={(h, anchor) => openRequest({ date: isoDate(cursor), hour: h, anchor })}
+              onCreate={(slot, anchor, minutes) =>
+                openRequest({
+                  date: slot.date,
+                  hour: Math.floor(slot.minutes / 60),
+                  lane: {
+                    laneId: slot.laneId,
+                    time: slot.time,
+                    span: slot.span,
+                    resourceId: slot.isSession ? undefined : slot.laneId,
+                    productId: slot.isSession ? slot.laneId.slice("session:".length) : undefined,
+                  },
+                  minutes,
+                  anchor,
+                })
+              }
+              ghost={ghost}
+              ghostLabel={t("book.untitled")}
+              changeoverLabel={t("book.changeover")}
+              openLabel={(slot) => {
+                const from = Math.min(...slot.options.map((o) => o.price));
+                const price = formatPriceShort(from, operatorQ.data?.currency);
+                return slot.isSession
+                  ? {
+                      short: t("book.left", { count: slot.remaining ?? 0 }),
+                      tiny: String(slot.remaining ?? 0),
+                      full: t("book.openTileLabel", {
+                        lane: slot.laneName,
+                        time: slot.time,
+                        what: t("book.seatsLeft", { count: slot.remaining ?? 0 }),
+                      }),
+                    }
+                  : {
+                      // A field shared by two bookings is "from" its cheaper.
+                      short: slot.options.length > 1 && new Set(slot.options.map((o) => o.price)).size > 1 ? t("book.fromPrice", { amount: price }) : price,
+                      tiny: "+",
+                      full: t("book.openTileLabel", { lane: slot.laneName, time: slot.time, what: price }),
+                    };
+              }}
             />
           ) : view === "week" ? (
             <WeekGrid
@@ -767,6 +1017,23 @@ export default function CalendarPage() {
               compact={compact}
               blockClass={blockClass}
               dotClass={dotClass}
+              chipText={chipText}
+              openCount={(d, h) => weekOpen.get(`${isoDate(d)}|${h}`) ?? 0}
+              isPastHour={(d, h) => isoDate(d) < today || (isoDate(d) === today && (h + 1) * 60 <= nowMin)}
+              onCreate={(d, h, anchor, minutes) => openRequest({ date: isoDate(d), hour: h, minutes, anchor })}
+              ghost={ghost}
+              ghostLabel={t("book.untitled")}
+              noneLabel={t("book.nothingOpen")}
+              stackLabel={(n, guests) => t("book.stack", { count: n, guests })}
+              bookLabel={(d, h, count) => ({
+                short: t("book.openShort", { count }),
+                // An hour with nothing to sell is still named with its day:
+                // "15:00, nothing open" read out alone does not say which.
+                full:
+                  count > 0
+                    ? t("book.openCellLabel", { day: dayLong(d), time: `${String(h).padStart(2, "0")}:00`, count })
+                    : t("book.noneCellLabel", { day: dayLong(d), time: `${String(h).padStart(2, "0")}:00` }),
+              })}
             />
           ) : (
             <MonthGrid
@@ -792,6 +1059,11 @@ export default function CalendarPage() {
                 }).format(d)
               }
               emptyLabel={t("nothingToday")}
+              today={today}
+              onCreateDay={(d, anchor) => openRequest({ date: isoDate(d) < today ? today : isoDate(d), hour: null, anchor })}
+              ghost={ghost}
+              ghostLabel={t("book.untitled")}
+              createLabel={(d) => t("book.newOn", { day: dayLong(d) })}
             />
           )}
         </div>
@@ -815,8 +1087,43 @@ export default function CalendarPage() {
           busy={acting}
         />
 
+        <BookingPanel
+          request={request}
+          products={sellProducts}
+          resources={resources}
+          staff={staff}
+          operator={operatorQ.data}
+          today={today}
+          nowMin={nowMin}
+          openHour={openHour}
+          closeHour={closeHour}
+          compact={compact}
+          carry={carry}
+          onDraft={setGhost}
+          onClose={(c) => {
+            setRequest(null);
+            setGhost(null);
+            setCarry(c);
+          }}
+          onBooked={(order, name) => {
+            setRequest(null);
+            setGhost(null);
+            setCarry(null);
+            setJustBooked(order.id);
+            setStamp((n) => n + 1);
+            bookingsQ.reload();
+            toast.success(
+              name
+                ? t("book.booked", { reference: order.reference, name })
+                : t("book.bookedNoName", { reference: order.reference }),
+              { label: t("book.viewOrder"), run: () => router.push(`/orders/${order.id}`) },
+            );
+          }}
+          t={(key, values) => t(key as never, values as never)}
+        />
+
         <EventPeek
-          event={detail ? null : peek}
+          event={detail || request ? null : peek}
           anchor={peekAt}
           t={t}
           dayLabel={(d) =>

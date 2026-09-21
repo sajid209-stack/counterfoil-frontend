@@ -9907,3 +9907,211 @@ the fixture produces. Their comment now says what they are for.
 - `tsc` clean. The till holds its 6 documented lint problems, the dashboard its
   5 warnings, and every other touched file lints clean. i18n parity **0 missing
   / 0 extra** across 32 namespaces.
+
+## The calendar books from an empty slot (2026-09-22)
+
+Owner, with a screenshot of Google Calendar's quick-create — a "(No title)
+4 – 5am" block on the grid and the panel beside it: *"fix remaining UI/UX work
+for calendar to booking in empty slots like google calendar"*, researched, and
+reviewed and reworked until it matches the inspiration.
+
+The previous session had built the engine and left it uncommitted: what is
+open at an hour (`openSlots.ts`, on the same `buildDay` the Go schedule uses),
+a booking panel priced by the till's `lib/sale`, and `checkout` taking a
+reservation with nothing paid as a `pending` order. What it drew was the
+problem. The week wrote "6 open" into **every hour that had anything**, about
+seventy labels to say what was true of nearly all of them; the day printed a
+price on every free hour of every lane, a wall of "৳1,000" that made the three
+real bookings the hardest thing on it to find; and a click drew nothing where it
+landed — the panel was a form floating over a grid that had not changed.
+
+### What was taken from Google, and from the booking tools
+
+Researched first (Google Calendar's help and shortcuts, Fresha, Mangomint,
+Boulevard, Square Appointments, Skedda, Resource Guru, Xola; NN/g on drag and
+drop and on minimalism; Apple's popover rules; Carbon). What was copied rather
+than paraphrased:
+
+- **A block appears where you click, and follows the form.** Choose Planetarium
+  and it renames itself and moves to 16:15; pick Lane 3 and it moves lanes in
+  the day view; pick 3 hrs and it grows. `Ghost` in `model.ts`; the panel owns
+  what it says, the grids only draw it.
+- **The panel stands beside the block, never over it** — right if there is
+  room, otherwise left, placed once and then left alone (re-centring on every
+  change of height made it jump under the pointer that had just clicked).
+- **The title is the thing being made**, muted "Choose what to book" until
+  there is one, and the when is one line changed in place ("Wed 29 Jul ·
+  16:15 – 17:15", a `DateField` with a new `inline` shape and a bare select).
+  Every other question sits behind an icon in one margin.
+- **Drag for length**, snapped to the hour because that is the grain this venue
+  sells in. Two hours of a field is two slots, booked as two lines.
+- **Google's keys:** c to create, t today, d / w / m, j / k (or n / p) to step,
+  never while something is being typed. Ctrl/⌘ + Enter books from anywhere in
+  the panel; Enter in the guest search takes the highlighted row.
+- **Mangomint's two grounds:** white is time you can sell, `offtime` is time
+  you cannot — gone, full, or not trading. The count is one hover away ("+
+  16:00 · 6 open"), the price likewise on the day view.
+- **Apple's rule that a popover closed by a click elsewhere must not throw work
+  away.** Someone on the phone asks about four, then says "actually, five":
+  the name typed into the four o'clock panel is already in the five o'clock
+  one. Close and Escape are "never mind" and carry nothing.
+
+### What a booking system adds
+
+The panel never asks what the thing is. It offers only what can be sold at that
+time, priced, and then asks only what the choice needs.
+
+- **Lanes and lengths are checked for the whole span.** The first build offered
+  every lane that was free for the *shortest* length — so Lane 1 was on offer
+  for three hours of bowling when a game on it started an hour in, a double
+  booking the panel would have taken. Found in design review, not in testing.
+  Every lane is now asked by the till's own rule (`flexStartBlocked`); a lane
+  that cannot take it is shown, hatched as a sold-out slot is, with the reason
+  ("Busy from 20:00", "Runs past close"), and the default is the lane
+  **cheapest for this booking** — ranked by the engine's price for the chosen
+  length, not by the one-hour list price, which put Lane 1 first for a game
+  that costs ৳400 more there.
+- **A click on a day** (the month) opens on every booking with its start times
+  as chips, not on the first hour anything was free — 06:00 for the courts.
+- **An hour with nothing to sell still answers** — "Nothing is open at 16:00"
+  and the nearest hours that have something.
+- **Prices say what they are.** The chosen row shows what this booking costs
+  (3 hrs ৳3,000, not the hour's ৳1,000); the footer adds up visibly
+  ("৳3,000.00 + ৳450.00 VAT") rather than "incl. ৳450 VAT" under rows quoted
+  before tax; lane chips show their totals, and only when they differ.
+- **The button is never disabled.** Quiet until something is chosen, then
+  "Reserve" or "Charge ৳X". Pressed with something missing, it says what,
+  beside the thing that is missing, and puts the cursor there — a greyed button
+  that will not say why is the commonest dead end in a form.
+- **The guest is a combobox** whose last row is "Add 'Sabbir' as a new
+  customer". The phone field appears once "new" is chosen, or at once when
+  nobody matches; before, a match and an invitation to duplicate it were on
+  screen together and nobody could say which one Enter would take.
+
+### The grids
+
+- **The draft takes a column of the day's layout**, as Google's does: bookings
+  at that hour step aside while the panel is open. Two other shapes were tried
+  and measured first — laid over the column, and over its right half — and both
+  hid the very booking a "Busy" chip was about.
+- **Bookings on one departure are one block** in the week ("2 · Grand
+  Heritage… / 2 bookings · 4 guests"), which opens the day. Two parties on the
+  18:00 tour were two slivers reading "Grand Heri…".
+- **Blocks say who.** The order's customer is on the block — line 2 in the
+  week, line 1 in the day, where the row already names the field. Most seeded
+  demo orders are walk-ins, so most blocks still read "1 guest".
+- **A booking of a lane or field that is on none of them reads "Unassigned"**,
+  and the panel warns when the draft overlaps one ("1 Bowling Lane booking at
+  18:00 has no lane, so fewer may be free than shown") — see Open.
+- **On a row that sells one thing** — a bowling lane — a block with no name
+  says "1 guest" rather than "Bowl…": the row already says what it is.
+- **A changeover says so.** The fields hold 15 minutes between bookings, so the
+  hour before one cannot start — correct, and exactly what the desk would
+  report as a bug. A gap against a booking on a buffered lane carries an
+  hourglass (the word where it fits; tooltip and accessible name either way).
+- **The day fits the width it has.** Hours take (card − names) ÷ hours, with a
+  52px floor under which it scrolls. A fixed 60px left the day 20px wider than a
+  1440 screen's card, so "06:00" or "23:00" was always half under an edge.
+- **Today's column is no longer tinted.** The body has two grounds now, and a
+  4% ember wash on one column was a third, the colour of a booking, on time
+  that was simply free. The header's badge and the now-line still say today.
+- **Hour labels read "13:00"**, not "13" — a bare number beside a column of
+  times reads as a count.
+- **It opens on an hour rule** one hour before now. The scroll used `offsetTop`,
+  which counted the page above the scroller, and opened with the now-line under
+  the header.
+- **A reload keeps the grid.** Every booking, lock and check-in swapped the
+  whole grid for a grey skeleton, which unmounted it, lost its scroll and
+  flashed the page at the moment the new booking was meant to appear. The
+  skeleton is for the first load only. The new booking is ringed for 2.6s where
+  the draft stood.
+- **By resource / By booking is a segmented control.** In ember it read as one
+  more filter switched on.
+- **Filters narrow what can be sold**, not only what is drawn: filtered to one
+  booking, the grid shades the hours it cannot fill and the panel offers only it.
+
+### The review loop
+
+Reviewed by an independent principal-designer pass against the screenshots each
+round (strict scale; 10 = Google/Linear polish and better at booking), with
+every claimed fix then driven by the harness rather than asserted.
+
+| Area | R3 | R5 | R6 | R8 |
+|---|---|---|---|---|
+| Quick-create flow & panel | 7.0 | 8.5 | 8.5 | 9.0 |
+| Grid clarity | 5.0 | 6.5 | 7.5 | 8.0 |
+| Interaction feedback | 7.0 | 7.5 | 8.5 | 8.5 |
+| Visual polish | 6.5 | 7.5 | 8.0 | 8.5 |
+| Mobile | 6.0 | 6.5 | 7.0 | 7.5 |
+| Accessibility & keyboard | 5.0 | 6.5 | 7.0 | 7.0 |
+| **Overall** | **6.0** | **7.5** | **8.0** | **8.5** |
+
+The final pass found no bugs. What it still asks for is in Open below.
+
+Declined on purpose: dropping ".00" from totals (`formatPriceShort` records the
+house rule that totals keep two decimals), slashed zeros (DM Mono is the house
+face for times), ±15-minute start steppers (the venue sells on the hour), and
+moving toasts (bottom-left is an earlier app-wide decision).
+
+### Verified
+
+- **Booking harness: 60 checks, all passing, no console errors.** Driven, not
+  read: the week at rest carries no "N open"; a click draws the draft and the
+  panel; the draft renames when a booking is chosen; Reserve with no name says
+  so beside the field and focuses it; Enter takes the top match; the booking
+  lands at 20:00 with the guest's name, ringed; a name typed into one panel
+  travels to the next on a click elsewhere and not after Escape; a three-hour
+  drag chooses 3 hrs, shows Lane 2 (booked at 20:00) as "Busy from 20:00",
+  uses a free lane and frees Lane 2 at 2 hrs; the draft covers no booking; the
+  default lane is the cheapest for the whole booking; an unassigned bowling
+  booking is named on its block and in the panel; c / d / w / m work and do
+  nothing inside a field; the day fits 1440 with both end labels whole; a
+  changeover says so; a two-hour field drag books two blocks; a booking filter
+  shades what it cannot fill and the panel offers only it; a month day opens on
+  start times and a chip chooses the booking and its time; next month's 1st is
+  not shaded as closed.
+- The standing category harness holds at **45/45** (contrast, 12px floor,
+  x-scroll, light and dark, Bangla); the toolbar probe is unchanged at 1600 and
+  390.
+- **The 32-route audit is 73 against the documented 70.** The three are the
+  calendar's New booking button, one per viewport and theme — the declared
+  white-on-ember rule every primary button already carries — and nothing else.
+- `tsc` clean, `eslint` clean on every file touched, `next build` passes.
+  i18n parity **0 missing / 0 extra** across 32 namespaces; **93 keys** added to
+  `calendar` in en and bn (this change and the uncommitted engine it finishes).
+
+### Open
+
+- **The availability engine ignores bookings with no lane.** `isResourceFreeFor`
+  counts only bookings on a resource, so a seeded bowling booking with no lane
+  uses one the engine offers again — in the till as well as here. The calendar
+  now says so; the rule belongs to the engine and the data.
+- **For the owner — changeover costs a sellable hour each side.** A 15-minute
+  buffer with selling on the hour loses the hour before and after every field
+  booking (Indoor Field 19:00 and 21:00 around one Futsal, about ৳3,000).
+  Options: :15 starts on fields, or 45 minutes plus changeover sold as the hour.
+- **Undo after booking** needs a cancel-order contract that releases bookings
+  and voids tickets; there is none, so the toast offers View order.
+- **Arrow-key movement across grid cells** (and Shift+arrows to extend). The
+  keyboard path today is c → the panel, whose date, time and choice are all
+  keyboard-operable.
+- **Why a time is unavailable** comes back from the engine as a yes/no; the
+  changeover label is inferred on the client. A reason from the engine would
+  let every shaded hour explain itself.
+- **The phone spends ~530px on chrome before the first booking** — the page
+  title repeats the app bar's "Calendar", the four stat cards scroll sideways
+  with the third cut, and the date and filter glyphs take a row of their own.
+  All three are the page shell and the owner's stat strip, not this change.
+- **Pin "Not assigned" to the top of the day when it has bookings**, so four
+  lanes that look free while an unassigned game runs are read next to it. Not
+  done here: the row also holds timed entry, and its order is the owner's.
+- **A peak-band breakdown** ("17–18 ৳1,000 · 18–20 ৳1,200/hr") in the panel —
+  the engine blends bands into one price.
+
+Sources: [Google Calendar — create an event](https://support.google.com/calendar/answer/72143) ·
+[Google Calendar keyboard shortcuts](https://support.google.com/calendar/answer/37034) ·
+[Mangomint — calendar colour key](https://www.mangomint.com/learn/calendar-color-key-icons/) ·
+[Skedda — booking from the grid](https://support.skedda.com/en/articles/105784) ·
+[NN/g — drag and drop](https://www.nngroup.com/articles/drag-drop/) ·
+[Apple HIG — popovers](https://developer.apple.com/design/human-interface-guidelines/popovers) ·
+[Carbon — popover](https://carbondesignsystem.com/components/popover/usage/)
