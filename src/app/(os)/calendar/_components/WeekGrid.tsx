@@ -12,8 +12,6 @@ import {
   packLanes,
   peekHandlers,
   sameDay,
-  TONE_CLASS,
-  TONE_DOT,
   type CalEvent,
 } from "./model";
 
@@ -47,6 +45,8 @@ export function WeekGrid({
   emptyLabel,
   roomy = false,
   compact = false,
+  blockClass,
+  dotClass,
 }: {
   weekStartDate: Date;
   events: CalEvent[];
@@ -71,6 +71,12 @@ export function WeekGrid({
   roomy?: boolean;
   /** Phone: the columns shrink to fit rather than the week scrolling away. */
   compact?: boolean;
+  /* What a block is painted. The page decides — status is the default and
+     what the key explains, but an operator can colour by category instead,
+     and then the same function answers for every grid. Held and closed keep
+     their hatching either way: blocked is blocked whatever colour means. */
+  blockClass: (e: CalEvent) => string;
+  dotClass: (e: CalEvent) => string;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i));
 
@@ -126,6 +132,8 @@ export function WeekGrid({
         dayLabel={dayLabel}
         allDayLabel={allDayLabel}
         emptyLabel={emptyLabel}
+        blockClass={blockClass}
+        dotClass={dotClass}
       />
     );
   }
@@ -211,7 +219,7 @@ export function WeekGrid({
                       {...peekHandlers(e, onPeek)}
                       className={cn(
                         "mb-0.5 block w-full truncate rounded-sm border px-tight py-0.5 text-left text-[12px]",
-                        TONE_CLASS[e.tone],
+                        blockClass(e),
                       )}
                     >
                       {e.title}
@@ -342,7 +350,7 @@ export function WeekGrid({
                       }`}
                       className={cn(
                         "absolute overflow-hidden rounded-sm border px-1 py-0.5 text-left",
-                        TONE_CLASS[event.tone],
+                        blockClass(event),
                       )}
                       style={{
                         top: `${((s - openMin) / span) * 100}%`,
@@ -402,6 +410,8 @@ function CompactWeek({
   dayLabel,
   allDayLabel,
   emptyLabel,
+  blockClass,
+  dotClass,
 }: {
   days: Date[];
   events: CalEvent[];
@@ -410,6 +420,8 @@ function CompactWeek({
   dayLabel: (d: Date) => { weekday: string; day: string };
   allDayLabel: string;
   emptyLabel: string;
+  blockClass: (e: CalEvent) => string;
+  dotClass: (e: CalEvent) => string;
 }) {
   const byDay = new Map<string, CalEvent[]>();
   for (const e of events) {
@@ -464,7 +476,7 @@ function CompactWeek({
               </span>
               <span className="flex h-1.5 items-center gap-0.5">
                 {list.slice(0, 4).map((e) => (
-                  <span key={e.id} className={cn("h-1.5 w-1.5 rounded-full", TONE_DOT[e.tone])} />
+                  <span key={e.id} className={cn("h-1.5 w-1.5 rounded-full", dotClass(e))} />
                 ))}
               </span>
             </button>
@@ -483,7 +495,7 @@ function CompactWeek({
                 onClick={onSelect ? () => onSelect(e) : undefined}
                 className={cn(
                   "flex w-full items-start gap-comfortable rounded-sm border px-comfortable py-tight text-left",
-                  TONE_CLASS[e.tone],
+                  blockClass(e),
                 )}
               >
                 <span className="w-12 shrink-0 font-mono text-[12px] opacity-70">

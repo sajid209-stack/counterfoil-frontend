@@ -138,11 +138,29 @@ export type PriceRuleInput = Omit<PriceRule, "id" | "createdAt" | "updatedAt">;
 export type PriceRulePatch = Partial<PriceRuleInput>;
 
 // ── Category ───────────────────────────────────────────────────────────────
+/**
+ * What an operator may paint a category.
+ *
+ * A NAME, not a hex. The two themes need different steps of the same hue —
+ * rose-700 reads on paper and disappears on ink — so storing `#be185d` would
+ * pin the dark mode to a colour that fails there. The design system owns the
+ * values; the record owns the choice.
+ *
+ * The five were chosen by running the dataviz palette validator over the
+ * app's own ramps, all-pairs rather than adjacent: orange, amber, green, blue
+ * and rose pass the lightness band, the chroma floor, the normal-vision floor
+ * and contrast in both modes. See globals.css for the measured steps and the
+ * two warnings that survive.
+ */
+export type CategoryColor = "orange" | "amber" | "green" | "blue" | "rose";
+
 export interface Category {
   id: ID;
   name: string;
   sortOrder: number;
   active: boolean;
+  /** Unset means the calendar draws it in the neutral "no colour" tone. */
+  color?: CategoryColor | null;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

@@ -100,6 +100,36 @@
   --color-ember: #f94a00;  /* brand-500 (light) → brand-400 in dark */
   --color-bt-violet: #7c3aed;
 
+  /* ── Category colours ──────────────────────────────────────────────────
+     What an operator may paint a booking category, so the calendar can colour
+     by WHAT a thing is rather than only by what state it is in.
+
+     Measured, not chosen by eye: the dataviz palette validator was run over
+     the app's own ramps with `--pairs all`, which is the right mode here
+     because a calendar shows every category at once rather than in a legend
+     strip you read pairwise. Light — orange #f94a00 · amber #f59e0b ·
+     green #16a34a · blue #2563eb · rose #be185d — passes the lightness band,
+     the chroma floor, the normal-vision floor and contrast against the card.
+
+     Two warnings survive and are accepted deliberately:
+       • green↔amber ΔE 7.0 under protanopia, inside the 6–8 band the rule
+         allows ONLY with secondary encoding. The calendar has it three times
+         over: every block carries its own title, the key names each category
+         beside its swatch, and the detail panel states it in words.
+       • amber measures 2.09:1 against paper, which the rule answers with
+         "visible labels" — again, every block and every key row is labelled.
+
+     Only rose changes in dark: rose-700 is 2.66:1 on ink, so the dark step is
+     pink-500. Amber stays #f59e0b there, one step above the dark lightness
+     band — the alternative, amber-600, sits ΔE 9.4 from orange under NORMAL
+     vision, and a pair a full-colour reader cannot separate is a worse fault
+     than a palette that is not quite one family. */
+  --color-cat-orange: #f94a00;
+  --color-cat-amber:  #f59e0b;
+  --color-cat-green:  #16a34a;
+  --color-cat-blue:   #2563eb;
+  --color-cat-rose:   #be185d;
+
   /* ── Functional / semantic status colours ──────────────────────────────
      WCAG-validated foreground values (readable as text AND as fills on the
      mode's surfaces). Mode-adaptive: light steps here, brighter in .dark. */
@@ -535,6 +565,12 @@
 
   --color-warning-wash: #4a3a1a;
   --color-danger-wash: #4a2724;
+
+  /* Only rose moves: rose-700 measures 2.66:1 against the dark card, which is
+     under the 3:1 floor for a mark. Pink-500 clears it and keeps its distance
+     from orange under normal vision (ΔE 15.7). The other four hold their
+     light steps — see the @theme block for why amber does not drop a step. */
+  --color-cat-rose: #ec4899;
 
   /* Dark keeps the same idea the other way up: a tint of the status colour
      dropped into the card, not a pastel lifted onto it. A pastel here would

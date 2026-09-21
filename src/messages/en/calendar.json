@@ -49,5 +49,19 @@
   "statHolds": "Held capacity",
   "vsDay": "vs previous day",
   "vsWeek": "vs last week",
-  "vsMonth": "vs last month"
+  "vsMonth": "vs last month",
+  "colorBy": "Colour by",
+  "colorByStatus": "Status",
+  "colorByCategory": "Category",
+  "colourKey": "Colour key",
+  "noCategory": "No category",
+  "markArrived": "Everyone's here",
+  "lockBooking": "Lock",
+  "unlockBooking": "Unlock",
+  "lockReason": "Why are you locking it?",
+  "unlockReason": "Why are you unlocking it?",
+  "lockedToast": "Reservation locked",
+  "unlockedToast": "Reservation unlocked",
+  "arrivedToast": "{name} marked arrived",
+  "cancel": "Cancel"
 }

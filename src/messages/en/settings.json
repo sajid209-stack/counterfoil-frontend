@@ -607,7 +607,18 @@
     "showSwitch": "Show {name} at the till",
     "hiddenTag": "Hidden",
     "shownToast": "{name} is shown at the till.",
-    "hiddenToast": "{name} is hidden at the till."
+    "hiddenToast": "{name} is hidden at the till.",
+    "colorNamed": "Colour for {name}: {color}",
+    "colorSet": "{name} is now {color}",
+    "colorCleared": "{name} has no colour",
+    "colors": {
+      "none": "No colour",
+      "orange": "Orange",
+      "amber": "Amber",
+      "green": "Green",
+      "blue": "Blue",
+      "rose": "Rose"
+    }
   },
   "nav": {
     "label": "Settings sections",

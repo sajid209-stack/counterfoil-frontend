@@ -9,8 +9,6 @@ import {
   monthMatrix,
   peekHandlers,
   sameDay,
-  TONE_CLASS,
-  TONE_DOT,
   type CalEvent,
 } from "./model";
 
@@ -32,6 +30,8 @@ export function MonthGrid({
   onPeek,
   onPickDay,
   compact = false,
+  blockClass,
+  dotClass,
   dayHeading,
   emptyLabel,
 }: {
@@ -48,6 +48,12 @@ export function MonthGrid({
   onPickDay?: (date: Date) => void;
   /** Phone: cells carry dots, and the chosen day opens as a list underneath. */
   compact?: boolean;
+  /* What a block is painted. The page decides — status is the default and
+     what the key explains, but an operator can colour by category instead,
+     and then the same function answers for every grid. Held and closed keep
+     their hatching either way: blocked is blocked whatever colour means. */
+  blockClass: (e: CalEvent) => string;
+  dotClass: (e: CalEvent) => string;
   dayHeading?: (d: Date) => string;
   emptyLabel?: string;
 }) {
@@ -137,7 +143,7 @@ export function MonthGrid({
                     {list.slice(0, MAX_DOTS).map((e) => (
                       <span
                         key={e.id}
-                        className={cn("h-1.5 w-1.5 rounded-full", TONE_DOT[e.tone])}
+                        className={cn("h-1.5 w-1.5 rounded-full", dotClass(e))}
                       />
                     ))}
                   </span>
@@ -164,7 +170,7 @@ export function MonthGrid({
                     {...peekHandlers(e, onPeek)}
                     className={cn(
                       "flex w-full items-start gap-comfortable rounded-sm border px-comfortable py-tight text-left",
-                      TONE_CLASS[e.tone],
+                      blockClass(e),
                     )}
                   >
                     <span className="w-12 shrink-0 font-mono text-[12px] opacity-70">
@@ -249,7 +255,7 @@ export function MonthGrid({
                         }`}
                         className={cn(
                           "flex w-full items-center gap-0.5 overflow-hidden rounded-sm border px-1 py-0.5 text-left text-[12px] leading-tight",
-                          TONE_CLASS[e.tone],
+                          blockClass(e),
                         )}
                       >
                         {e.locked && <Lock size={8} strokeWidth={2.5} className="shrink-0" />}

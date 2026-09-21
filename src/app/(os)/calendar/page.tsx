@@ -1,20 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
-import { Button, DateField, PageShell, Tabs } from "@/components/ui";
+import { Button, DateField, PageShell, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, XL, useMediaQuery } from "@/lib/useMedia";
 import {
+  bookingEditable,
+  checkInBooking,
   listBookings,
   listCategories,
   listHolds,
   listProducts,
   listResources,
   listStaff,
+  lockBooking,
+  unlockBooking,
 } from "@/lib/api";
 import { DEMO_TODAY, demoNow } from "@/lib/schedule";
 import { DayGrid, type DayLane } from "./_components/DayGrid";
@@ -34,6 +38,12 @@ import {
   weekStart,
   windowStats,
   type CalEvent,
+  CATEGORY_CLASS,
+  CATEGORY_DOT,
+  NO_CATEGORY_CLASS,
+  NO_CATEGORY_DOT,
+  TONE_CLASS,
+  TONE_DOT,
   type EventTone,
 } from "./_components/model";
 
@@ -65,8 +75,12 @@ const TONE_SWATCH: Record<EventTone, string> = {
   locked: "bg-danger-wash border-danger/40",
 };
 
+/** Whose name the lock record carries. The order page uses the same one. */
+const ACTOR = "Nadia Islam";
+
 export default function CalendarPage() {
   const t = useTranslations("calendar");
+  const toast = useToast();
   const tc = useTranslations("common");
   const router = useRouter();
 
@@ -116,7 +130,7 @@ export default function CalendarPage() {
   const events = useMemo<CalEvent[]>(
     () => [
       ...bookingsToEvents(bookingsQ.data?.data ?? [], products, resources, staff),
-      ...holdsToEvents(holdsQ.data?.data ?? []),
+      ...holdsToEvents(holdsQ.data?.data ?? [], products),
     ],
     [bookingsQ.data, holdsQ.data, products, resources, staff],
   );
@@ -143,6 +157,17 @@ export default function CalendarPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [tones, setTones] = useState<EventTone[]>(TONES);
+  /* What a block's colour MEANS. Status is the default and always has been —
+     the five-state key doubles as the filter, which is most of why this
+     calendar reads as a working tool rather than a wall of pastels. Category
+     is the owner's ask, and it answers a different question: not "what is
+     happening to this booking" but "what KIND of thing is it", which is what
+     a manager scanning a week for the tours actually wants. */
+  const [colorBy, setColorBy] = useState<"status" | "category">("status");
+  /* Who the record says did it. Same constant the order page uses — the mock
+     has no session user beyond DEMO_STAFF_ID, and inventing a second name for
+     the same actor would put two people in one audit trail. */
+  const [acting, setActing] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   /** Only the folded-away selects count towards the badge — the tone toggles
    *  are on screen saying their own state, so counting them would report a
@@ -315,7 +340,92 @@ export default function CalendarPage() {
      week, which is the one thing it must not do. When the window has nothing
      in it AND something is filtering, say so and offer the way back. */
   const inWindow = view === "day" ? dayEvents : view === "week" ? weekEvents : monthEvents;
+  const inWindowForKey = inWindow;
   const emptyByFilter = !loading && inWindow.length === 0 && filtered;
+
+  /* A category's colour, by id, resolved once per render rather than per
+     block — a month view draws hundreds of them. */
+  const catColor = useMemo(() => {
+    const m = new Map<string, (typeof categories)[number]["color"]>();
+    for (const c of categories) m.set(c.id, c.color ?? null);
+    return m;
+  }, [categories]);
+
+  /**
+   * What a block is painted.
+   *
+   * Two rules survive category mode and are not negotiable. **Held and closed
+   * keep their hatching**: those are the app's "you cannot have this" signal,
+   * carried by texture as well as colour so it never depends on hue — and a
+   * held slot painted in its category's colour would look sellable. And a
+   * **no-show keeps its strike-through**, so the category says what the
+   * booking is while the strike still says nobody came.
+   */
+  const blockClass = useCallback(
+    (e: CalEvent) => {
+      if (colorBy === "status" || e.tone === "held" || e.tone === "locked") return TONE_CLASS[e.tone];
+      const color = catColor.get(e.categoryId ?? "") ?? null;
+      const base = color ? CATEGORY_CLASS[color] : NO_CATEGORY_CLASS;
+      return e.tone === "noshow" ? `${base} line-through` : base;
+    },
+    [colorBy, catColor],
+  );
+
+  const dotClass = useCallback(
+    (e: CalEvent) => {
+      if (colorBy === "status" || e.tone === "held" || e.tone === "locked") return TONE_DOT[e.tone];
+      const color = catColor.get(e.categoryId ?? "") ?? null;
+      return color ? CATEGORY_DOT[color] : NO_CATEGORY_DOT;
+    },
+    [colorBy, catColor],
+  );
+
+  /* Lock, unlock and mark-arrived, from the block you are looking at. Each
+     goes through the SAME api the order page uses, so a booking locked here
+     is locked everywhere and the reason lands on the same record. */
+  const detailBlocked = useMemo(() => {
+    if (!detail || detail.kind !== "booking" || detail.locked) return null;
+    const check = bookingEditable(detail.id, ACTOR);
+    return check.editable ? null : check.reason;
+  }, [detail]);
+
+  const doLock = async (e: CalEvent, lock: boolean, reason: string) => {
+    setActing(true);
+    const res = lock ? await lockBooking(e.id, ACTOR, reason) : await unlockBooking(e.id, ACTOR, reason);
+    setActing(false);
+    if (!res.ok) {
+      toast.error(res.error.fieldErrors?.reason ?? res.error.message);
+      return;
+    }
+    toast.success(t(lock ? "lockedToast" : "unlockedToast"));
+    setDetail(null);
+    bookingsQ.reload();
+  };
+
+  const doComplete = async (e: CalEvent) => {
+    setActing(true);
+    const res = await checkInBooking(e.id, e.partySize ?? 1);
+    setActing(false);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    toast.success(t("arrivedToast", { name: e.title }));
+    setDetail(null);
+    bookingsQ.reload();
+  };
+
+  /** The categories actually on screen, so the key explains what is drawn
+   *  rather than listing a catalogue. */
+  const categoryKey = useMemo(() => {
+    if (colorBy !== "category") return [];
+    const ids = new Set(inWindowForKey.map((e) => e.categoryId ?? ""));
+    const rows = categories
+      .filter((c) => ids.has(c.id))
+      .map((c) => ({ id: c.id, name: c.name, dot: c.color ? CATEGORY_DOT[c.color] : NO_CATEGORY_DOT }));
+    if (ids.has("")) rows.push({ id: "", name: t("noCategory"), dot: NO_CATEGORY_DOT });
+    return rows;
+  }, [colorBy, inWindowForKey, categories, t]);
 
   /** The key IS the filter: each chip says what its colour means, how many
    *  are in view, and switches that state off when tapped. Drawing a legend
@@ -333,18 +443,38 @@ export default function CalendarPage() {
           on ? "border-line bg-card text-fg" : "border-line bg-subtle text-muted",
         )}
       >
-        <span
-          className={cn(
-            "h-3.5 w-3.5 rounded-xs border",
-            TONE_SWATCH[tone],
-            !on && "opacity-40",
-          )}
-        />
+        {/* Only while colour means status. A key chip showing an ember
+            swatch beside blocks painted by category would be a legend for a
+            picture that is not on screen. */}
+        {colorBy === "status" && (
+          <span
+            className={cn(
+              "h-3.5 w-3.5 rounded-xs border",
+              TONE_SWATCH[tone],
+              !on && "opacity-40",
+            )}
+          />
+        )}
         {t(TONE_KEY[tone])}
         <span className="font-mono text-[12px] text-muted">{toneCounts[tone]}</span>
       </button>
     );
   });
+
+  /* The category key is a KEY, not a second filter: the category select two
+     rows down already filters, and offering the same narrowing twice in one
+     toolbar is how a control ends up disagreeing with itself. */
+  const categoryKeyRow = categoryKey.length > 0 && (
+    <div className="flex flex-wrap items-center gap-comfortable rounded-sm border border-line bg-subtle px-comfortable py-tight">
+      <span className="type-label text-[12px] text-muted">{t("colourKey")}</span>
+      {categoryKey.map((c) => (
+        <span key={c.id || "none"} className="flex items-center gap-inline text-[12px] text-fg">
+          <span aria-hidden className={cn("h-3 w-3 rounded-full", c.dot)} />
+          {c.name}
+        </span>
+      ))}
+    </div>
+  );
 
   const weekdayLabels = WEEKDAYS_MON_FIRST.map((d) =>
     new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(new Date(2026, 6, 5 + d)),
@@ -453,6 +583,7 @@ export default function CalendarPage() {
             </button>
 
             {!compact && toneKey}
+            {!compact && categoryKeyRow}
 
             {view === "day" && !compact && resources.length > 0 && (
               <span className="flex items-center gap-inline">
@@ -486,6 +617,7 @@ export default function CalendarPage() {
 
           <div id="calendar-filters" hidden={!filtersOpen} className="flex flex-col gap-tight">
             {compact && <div className="flex flex-wrap items-center gap-tight">{toneKey}</div>}
+            {compact && categoryKeyRow}
             <div className="flex flex-wrap items-center gap-tight">
             <select
               value={bookingFilter}
@@ -510,6 +642,27 @@ export default function CalendarPage() {
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
+
+            {/* What colour MEANS. A segmented pair rather than a select,
+                because there are two answers and both are worth seeing —
+                and it sits with the filters because, like them, it changes
+                how the same day is read rather than which day it is. */}
+            <span role="group" aria-label={t("colorBy")} className="flex items-center gap-inline rounded-sm bg-line/60 p-inline">
+              {(["status", "category"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={colorBy === mode}
+                  onClick={() => setColorBy(mode)}
+                  className={cn(
+                    "h-9 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:h-7",
+                    colorBy === mode ? "bg-card text-fg shadow-sm" : "text-muted hover:text-fg",
+                  )}
+                >
+                  {t(mode === "status" ? "colorByStatus" : "colorByCategory")}
+                </button>
+              ))}
+            </span>
 
             {(resources.length > 0 || staff.length > 0) && (
               <select
@@ -560,6 +713,7 @@ export default function CalendarPage() {
               showEmptyLabel={(n) => t("showEmptyLanes", { count: n })}
               hideEmptyLabel={t("hideEmptyLanes")}
               compact={compact}
+              blockClass={blockClass}
             />
           ) : view === "week" ? (
             <WeekGrid
@@ -583,6 +737,8 @@ export default function CalendarPage() {
               })}
               moreLabel={(n) => t("more", { count: n })}
               compact={compact}
+              blockClass={blockClass}
+              dotClass={dotClass}
             />
           ) : (
             <MonthGrid
@@ -598,6 +754,8 @@ export default function CalendarPage() {
                 setView("day");
               }}
               compact={compact}
+              blockClass={blockClass}
+              dotClass={dotClass}
               dayHeading={(d) =>
                 new Intl.DateTimeFormat("en-GB", {
                   weekday: "long",
@@ -623,6 +781,10 @@ export default function CalendarPage() {
             }).format(d)
           }
           t={t}
+          onLock={doLock}
+          onComplete={doComplete}
+          blockedReason={detailBlocked}
+          busy={acting}
         />
 
         <EventPeek

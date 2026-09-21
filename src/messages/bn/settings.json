@@ -607,7 +607,18 @@
     "showSwitch": "টিলে {name} দেখান",
     "hiddenTag": "লুকানো",
     "shownToast": "{name} টিলে দেখানো হচ্ছে।",
-    "hiddenToast": "{name} টিলে লুকানো হয়েছে।"
+    "hiddenToast": "{name} টিলে লুকানো হয়েছে।",
+    "colorNamed": "{name}-এর রং: {color}",
+    "colorSet": "{name} এখন {color}",
+    "colorCleared": "{name}-এর কোনো রং নেই",
+    "colors": {
+      "none": "কোনো রং নেই",
+      "orange": "কমলা",
+      "amber": "অ্যাম্বার",
+      "green": "সবুজ",
+      "blue": "নীল",
+      "rose": "গোলাপি"
+    }
   },
   "nav": {
     "label": "সেটিংসের অংশ",

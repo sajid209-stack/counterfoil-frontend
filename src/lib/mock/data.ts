@@ -158,10 +158,10 @@ export const manualDiscountPolicy: ManualDiscountPolicy = {
 };
 
 export const categories: Category[] = [
-  { id: "cat_entry", name: "Admission", sortOrder: 1, active: true, createdAt: T, updatedAt: T },
-  { id: "cat_tours", name: "Guided Tours", sortOrder: 2, active: true, createdAt: T, updatedAt: T },
-  { id: "cat_events", name: "Events", sortOrder: 3, active: true, createdAt: T, updatedAt: T },
-  { id: "cat_addons", name: "Add-ons", sortOrder: 4, active: true, createdAt: T, updatedAt: T },
+  { id: "cat_entry", name: "Admission", sortOrder: 1, active: true, color: "blue", createdAt: T, updatedAt: T },
+  { id: "cat_tours", name: "Guided Tours", sortOrder: 2, active: true, color: "green", createdAt: T, updatedAt: T },
+  { id: "cat_events", name: "Events", sortOrder: 3, active: true, color: "orange", createdAt: T, updatedAt: T },
+  { id: "cat_addons", name: "Add-ons", sortOrder: 4, active: true, color: "amber", createdAt: T, updatedAt: T },
 ];
 
 export const locations: Location[] = [

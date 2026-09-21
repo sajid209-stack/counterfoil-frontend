@@ -10,7 +10,6 @@ import {
   packLanes,
   peekHandlers,
   sameDay,
-  TONE_CLASS,
   type CalEvent,
 } from "./model";
 
@@ -58,6 +57,7 @@ export function DayGrid({
   showEmptyLabel,
   hideEmptyLabel,
   compact = false,
+  blockClass,
 }: {
   date: Date;
   lanes: DayLane[];
@@ -73,6 +73,11 @@ export function DayGrid({
   hideEmptyLabel: string;
   /** Phone: the axis turns vertical and the lanes stop being columns. */
   compact?: boolean;
+  /* What a block is painted. The page decides — status is the default and
+     what the key explains, but an operator can colour by category instead,
+     and then the same function answers for every grid. Held and closed keep
+     their hatching either way: blocked is blocked whatever colour means. */
+  blockClass: (e: CalEvent) => string;
 }) {
   const openMin = openHour * 60;
   const closeMin = closeHour * 60;
@@ -124,6 +129,7 @@ export function DayGrid({
         onSelect={onSelect}
         onPeek={onPeek}
         emptyLabel={emptyLabel}
+        blockClass={blockClass}
       />
     );
   }
@@ -161,6 +167,7 @@ export function DayGrid({
         now={now}
         onSelect={onSelect}
         onPeek={onPeek}
+        blockClass={blockClass}
       />
       <EmptyLaneToggle
         count={emptyLanes.length}
@@ -217,6 +224,7 @@ function DayTrack({
   now,
   onSelect,
   onPeek,
+  blockClass,
 }: {
   hours: number[];
   lanes: DayLane[];
@@ -231,6 +239,7 @@ function DayTrack({
   now: Date;
   onSelect?: (event: CalEvent) => void;
   onPeek?: (event: CalEvent | null, anchor: DOMRect | null) => void;
+  blockClass: (e: CalEvent) => string;
 }) {
   /* Open where the day happens rather than at its left edge. */
   const scroller = useRef<HTMLDivElement>(null);
@@ -362,7 +371,7 @@ function DayTrack({
                       }`}
                       className={cn(
                         "absolute overflow-hidden rounded-sm border px-tight text-left transition-shadow duration-quick",
-                        TONE_CLASS[event.tone],
+                        blockClass(event),
                         onSelect && "hover:shadow-sm",
                       )}
                       style={{
@@ -426,6 +435,7 @@ function CompactDay({
   now,
   onSelect,
   onPeek,
+  blockClass,
   emptyLabel,
 }: {
   lanes: DayLane[];
@@ -437,6 +447,7 @@ function CompactDay({
   now: Date;
   onSelect?: (event: CalEvent) => void;
   onPeek?: (event: CalEvent | null, anchor: DOMRect | null) => void;
+  blockClass: (e: CalEvent) => string;
   emptyLabel: string;
 }) {
   const openMin = openHour * 60;
@@ -532,7 +543,7 @@ function CompactDay({
                     }`}
                     className={cn(
                       "absolute overflow-hidden rounded-sm border px-tight py-0.5 text-left",
-                      TONE_CLASS[event.tone],
+                      blockClass(event),
                     )}
                     style={{
                       top: `${pct(s)}%`,

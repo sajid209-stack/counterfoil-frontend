@@ -4,7 +4,7 @@
    already resolved to real start/end instants. The grids know nothing about
    bookings, products or holds; they position rectangles. That is what keeps
    day, week and month from drifting apart. */
-import type { Booking, HoldView, Product, Resource, Staff } from "@/lib/api";
+import type { Booking, CategoryColor, HoldView, Product, Resource, Staff } from "@/lib/api";
 
 /** The visual language a slot can be in. These reuse patterns the app already
  *  established — hatching means "blocked", never a new colour to learn. */
@@ -24,6 +24,13 @@ export interface CalEvent {
    *  null for "not assigned to anything". */
   ownerId: string | null;
   productId: string;
+  /** Which group the booking belongs to, so the grid can colour by WHAT a
+   *  thing is rather than only by the state it is in. */
+  categoryId: string | null;
+  /** Bookings only: what the detail panel needs to act on one without going
+   *  back to the store — how many are coming, and how many are already in. */
+  partySize?: number;
+  checkedIn?: number;
   orderId?: string;
   tone: EventTone;
   locked: boolean;
@@ -122,6 +129,9 @@ export function bookingsToEvents(
         allDay: false,
         ownerId: b.resourceId ?? null,
         productId: b.productId,
+        categoryId: product?.categoryId ?? null,
+        partySize: b.partySize,
+        checkedIn: b.checkedIn ?? 0,
         orderId: b.orderId,
         tone: toneOf(b),
         locked: !!b.lockedAt,
@@ -131,7 +141,7 @@ export function bookingsToEvents(
 
 /** Holds belong on the calendar — a manager looking at a day needs to see the
  *  capacity that is spoken for as well as the capacity that is sold. */
-export function holdsToEvents(holds: HoldView[]): CalEvent[] {
+export function holdsToEvents(holds: HoldView[], products: Product[] = []): CalEvent[] {
   return holds
     .filter((h) => h.active)
     .map((h) => {
@@ -159,6 +169,7 @@ export function holdsToEvents(holds: HoldView[]): CalEvent[] {
         allDay: !h.slotStart,
         ownerId: h.resourceId ?? null,
         productId: h.productId,
+        categoryId: products.find((p) => p.id === h.productId)?.categoryId ?? null,
         tone: h.kind === "session" ? ("locked" as const) : ("held" as const),
         locked: true,
       };
@@ -298,6 +309,39 @@ export const TONE_CLASS: Record<EventTone, string> = {
   held: "border-warning/35 text-fg bg-warning-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
   locked: "border-danger/35 text-fg bg-danger-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
 };
+
+/**
+ * Category → the same wash-and-border a tone gets, in the operator's colour.
+ *
+ * Alpha rather than a bespoke wash token per hue, and that is not laziness:
+ * the project's dark rule is that a tint belongs dropped INTO the card rather
+ * than lifted onto it as a pastel, and compositing 14% of a mid-toned hue over
+ * #22211f is exactly that, while the same 14% over white is exactly the pastel
+ * light wants. One declaration, right in both modes.
+ *
+ * Text stays on the theme's ink tokens — the hue is a ground and a border,
+ * never a letterform, which is the rule `ember` has carried since September.
+ */
+export const CATEGORY_CLASS: Record<CategoryColor, string> = {
+  orange: "bg-cat-orange/14 border-cat-orange/45 text-fg",
+  amber: "bg-cat-amber/16 border-cat-amber/50 text-fg",
+  green: "bg-cat-green/14 border-cat-green/45 text-fg",
+  blue: "bg-cat-blue/14 border-cat-blue/45 text-fg",
+  rose: "bg-cat-rose/14 border-cat-rose/45 text-fg",
+};
+
+export const CATEGORY_DOT: Record<CategoryColor, string> = {
+  orange: "bg-cat-orange",
+  amber: "bg-cat-amber",
+  green: "bg-cat-green",
+  blue: "bg-cat-blue",
+  rose: "bg-cat-rose",
+};
+
+/** A category with no colour, and anything whose category has been deleted.
+ *  Neutral rather than a sixth hue: "not painted" is a real answer. */
+export const NO_CATEGORY_CLASS = "bg-muted-wash border-line text-fg";
+export const NO_CATEGORY_DOT = "bg-muted";
 
 /** Tone → a single dot. The month view on a phone has no room for chips, so a
  *  day states how much is on and in what state with dots, the way every phone

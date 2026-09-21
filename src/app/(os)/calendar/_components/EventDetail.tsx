@@ -1,6 +1,7 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { useState } from "react";
+import { Lock, LockOpen, UserCheck } from "lucide-react";
 import { Button, Modal, StatusPill, type PillTone } from "@/components/ui";
 import { hhmm, type CalEvent, type EventTone } from "./model";
 
@@ -43,6 +44,10 @@ export function EventDetail({
   canOpen,
   dayLabel,
   t,
+  onLock,
+  onComplete,
+  blockedReason,
+  busy = false,
 }: {
   event: CalEvent | null;
   onClose: () => void;
@@ -53,20 +58,42 @@ export function EventDetail({
   /** The page owns date formatting, as it does for the grids. */
   dayLabel: (d: Date) => string;
   t: (key: string) => string;
+  /** Lock and unlock are one call: which one it is follows from the booking.
+   *  A reason is required either way — an unexplained lock is indistinguishable
+   *  from a bug six weeks later, which is the rule holds already follow. */
+  onLock?: (event: CalEvent, lock: boolean, reason: string) => void;
+  /** Everyone in the party is here. */
+  onComplete?: (event: CalEvent) => void;
+  /** Why this booking cannot be changed, when it cannot — from the one
+   *  `bookingEditable` every edit path in the app asks. */
+  blockedReason?: string | null;
+  busy?: boolean;
 }) {
+  const [asking, setAsking] = useState<null | "lock" | "unlock">(null);
+  const [reason, setReason] = useState("");
+
   if (!event) return null;
 
   const when = event.allDay ? t("allDayLong") : `${hhmm(event.start)} – ${hhmm(event.end)}`;
+  /* Only a booking can be locked or completed. A hold is released from the
+     holds register, which is where its own mechanism lives. */
+  const isBooking = event.kind === "booking";
+  const canComplete = isBooking && event.tone === "booked" && !blockedReason;
+  const close = () => {
+    setAsking(null);
+    setReason("");
+    onClose();
+  };
 
   return (
     <Modal
       open
-      onClose={onClose}
+      onClose={close}
       size="sm"
       title={event.title}
       footer={
         <>
-          <Button variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="secondary" size="sm" onClick={close}>
             {t("close")}
           </Button>
           {canOpen && (
@@ -105,6 +132,64 @@ export function EventDetail({
             </div>
           )}
         </dl>
+        {/* The three things a manager does to a booking they have just found
+            on the grid. They were only ever on the order page, which meant
+            finding the order first — a page load in answer to "stop selling
+            this one". */}
+        {isBooking && (onLock || onComplete) && (
+          <div className="flex flex-col gap-tight border-t border-hairline pt-comfortable">
+            {blockedReason && !event.locked && (
+              <p role="status" className="text-[13px] text-muted">{blockedReason}</p>
+            )}
+            {asking === null ? (
+              <div className="flex flex-wrap gap-tight">
+                {canComplete && onComplete && (
+                  <Button variant="secondary" size="sm" loading={busy} onClick={() => onComplete(event)}>
+                    <UserCheck size={14} strokeWidth={1.5} aria-hidden />
+                    {t("markArrived")}
+                  </Button>
+                )}
+                {onLock && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => { setReason(""); setAsking(event.locked ? "unlock" : "lock"); }}
+                  >
+                    {event.locked
+                      ? <><LockOpen size={14} strokeWidth={1.5} aria-hidden />{t("unlockBooking")}</>
+                      : <><Lock size={14} strokeWidth={1.5} aria-hidden />{t("lockBooking")}</>}
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-tight">
+                <label className="type-label text-[12px] text-muted" htmlFor="cal-lock-reason">
+                  {t(asking === "lock" ? "lockReason" : "unlockReason")}
+                </label>
+                <input
+                  id="cal-lock-reason"
+                  value={reason}
+                  autoFocus
+                  onChange={(e) => setReason(e.target.value)}
+                  className="h-11 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9"
+                />
+                <div className="flex flex-wrap gap-tight">
+                  <Button
+                    size="sm"
+                    loading={busy}
+                    disabled={!reason.trim()}
+                    onClick={() => { onLock?.(event, asking === "lock", reason.trim()); setAsking(null); setReason(""); }}
+                  >
+                    {t(asking === "lock" ? "lockBooking" : "unlockBooking")}
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => { setAsking(null); setReason(""); }}>
+                    {t("cancel")}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Modal>
   );

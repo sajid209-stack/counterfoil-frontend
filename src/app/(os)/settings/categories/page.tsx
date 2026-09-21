@@ -6,8 +6,9 @@ import { ArrowDown, ArrowUp, Plus } from "lucide-react";
 import { Button, PageShell, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { createCategory, listCategories, listProducts, updateCategory, type Category } from "@/lib/api";
+import { createCategory, listCategories, listProducts, updateCategory, type Category, type CategoryColor } from "@/lib/api";
 import { SectionSkeleton, SettingsSection, Switch, controlCls } from "../_components/SettingsKit";
+import { ColorPicker } from "./_components/ColorPicker";
 
 const iconBtn =
   "inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9";
@@ -71,6 +72,23 @@ export default function CategoriesPage() {
     }
     setLatest((m) => ({ ...m, [c.id]: res.data }));
     toast.success(t("categories.renamed", { name }));
+  };
+
+  /* The colour is what the calendar paints this category, so the control
+     belongs where the category is named rather than on the calendar, which
+     would be a setting hiding inside a view. */
+  const setColor = async (c: Category, color: CategoryColor | null) => {
+    const res = await updateCategory(c.id, { color });
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    setLatest((m) => ({ ...m, [c.id]: res.data }));
+    toast.success(
+      color
+        ? t("categories.colorSet", { name: c.name, color: t(`categories.colors.${color}`) })
+        : t("categories.colorCleared", { name: c.name }),
+    );
   };
 
   const setShown = async (c: Category, shown: boolean, undoable = true) => {
@@ -160,6 +178,16 @@ export default function CategoriesPage() {
                   <span className="hidden shrink-0 whitespace-nowrap text-[13px] text-muted sm:inline">
                     {c.active ? t("categories.count", { count: countIn(c.id) }) : t("categories.hiddenTag")}
                   </span>
+                  <ColorPicker
+                    value={c.color}
+                    onChange={(next) => setColor(c, next)}
+                    label={t("categories.colorNamed", {
+                      name: c.name,
+                      color: c.color ? t(`categories.colors.${c.color}`) : t("categories.colors.none"),
+                    })}
+                    optionLabel={(color) => t(`categories.colors.${color}`)}
+                    noneLabel={t("categories.colors.none")}
+                  />
                   <Switch checked={c.active} onChange={(on) => setShown(c, on)} label={t("categories.showSwitch", { name: c.name })} />
                 </li>
               ))}

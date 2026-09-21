@@ -9105,3 +9105,150 @@ Each would have become a "fix" to working code if trusted:
   controls, which is a different decision.
 - The Today / This week toggle still wraps "This week" onto two lines at 390,
   which is why it is 52px there. Pre-existing and deliberate.
+
+## The calendar can colour by category, and act on a booking (2026-09-21)
+
+Owner's review, two items: *"Explored calendar integration using
+category-specific color coding for events"* and *"Users can lock, unlock, or
+complete bookings directly from available slots."*
+
+The first one has a history in this log. The September calendar pass wrote:
+*"Colour still means status, not service. In the references it means service
+(Yoga pink, Zumba yellow) with status as a separate dropdown — but here the
+five-state key IS the filter, so a fill that disagreed with the legend would
+break the one control that explains the colours. Flagged for the owner as the
+alternative it is."* They have now asked for it, so it is built — as a choice
+rather than a replacement, because both readings are worth having.
+
+### The palette was measured, not chosen
+
+Category colour is a **token name on the record**, not a hex. The two themes
+need different steps of the same hue — rose-700 reads on paper and disappears
+on ink — so a stored hex would pin dark mode to a colour that fails there.
+
+Which five hues the app offers was settled by running the dataviz palette
+validator over the app's own ramps, with **`--pairs all` rather than adjacent
+pairs**, because a calendar shows every category at once rather than in a
+legend strip you read pairwise. That is a stricter test and it threw several
+plausible sets out:
+
+| Candidate | Why it failed |
+|---|---|
+| …blue + violet | ΔE **0.4** under deuteranopia, **12.4 with normal vision** — a pair nobody can separate |
+| brand-600 + amber-700 | ΔE 6.9 normal-vision — below the 15 floor |
+| brand-600 + green-600 | ΔE 5.5 deutan — below the 6 floor |
+
+What passes, all-pairs, in both modes: **orange #f94a00 · amber #f59e0b ·
+green #16a34a · blue #2563eb · rose #be185d**, with rose stepping to pink-500
+in dark (rose-700 measures 2.66:1 on ink).
+
+Two warnings survive and are accepted with their reasons written into
+`globals.css`:
+
+- **green↔amber ΔE 7.0 under protanopia**, inside the 6–8 band the rule allows
+  *only with secondary encoding*. The calendar has it three times over: every
+  block carries its own title, the key names each category beside its swatch,
+  and the detail panel states it in words.
+- **amber at 2.09:1 against paper**, which the rule answers with "visible
+  labels" — again, every block and every key row is labelled.
+- And one deliberate deviation: **amber stays one step above the dark lightness
+  band**. The band-conformant alternative, amber-600, sits ΔE 9.4 from orange
+  under *normal* vision, and a pair a full-colour reader cannot separate is a
+  worse fault than a palette that is not quite one family.
+
+### Where the colour is chosen, and how it is drawn
+
+The picker is in **Settings → Categories**, beside the name — a colour is a
+property of the category, and putting the control on the calendar would be a
+setting hiding inside a view. One 44px swatch opens onto six choices (five
+colours and "no colour"), each **named as well as coloured**, because a picker
+whose options differ only by colour is unusable to exactly the people colour
+coding is hardest for.
+
+On the grid it is a wash and a border in the category's hue, written as an
+alpha rather than a bespoke token per hue — and that is not laziness. This
+project's dark rule is that a tint belongs *dropped into* the card rather than
+lifted onto it as a pastel, and compositing 14% of a mid-toned hue over
+`#22211f` is exactly that, while the same 14% over white is exactly the pastel
+light wants. One declaration, right in both modes. Text stays on the theme's
+ink tokens: the hue is a ground, never a letterform.
+
+**Two rules survive category mode and are not negotiable.** Held and closed
+keep their hatching — that is the app's "you cannot have this" signal, carried
+by texture as well as colour, and a held slot painted in its category's colour
+would look sellable. And a no-show keeps its strike-through, so the category
+says what the booking is while the strike still says nobody came.
+
+The state chips keep their words and counts and **drop their swatches** in
+category mode: a key chip showing an ember square beside blocks painted by
+category is a legend for a picture that is not on screen. A category key takes
+its place, listing only the categories actually in the window.
+
+### Lock, unlock and "everyone's here", from the block
+
+All three were only ever on the order page, which meant finding the order
+first — a page load in answer to *"stop selling this one"*. They are now in
+the detail panel that opens when a block is clicked, going through the **same
+API the order page uses**, so a booking locked here is locked everywhere and
+the reason lands on the same record.
+
+- **A reason is required both ways.** The API already demands one to unlock;
+  locking now demands one too, on the rule holds have followed since §61: an
+  unexplained block is indistinguishable from a bug six weeks later.
+- **The panel asks `bookingEditable` before offering anything**, which is the
+  one function every edit path in this app asks, so a booking that is
+  untouchable is untouchable here as well — and it says *why* rather than
+  greying a button out.
+- Only a booking gets these. A hold is released from the holds register, where
+  its own mechanism lives.
+
+### Verified
+
+- **Category and actions harness: 45 checks, all passing** — at 390 and 1440,
+  light and dark, English and Bangla. The toggle exists and opens on status;
+  the chips carry their swatch there and drop it in category mode; a tour and a
+  turf booking **share a colour under status and differ under category**
+  (measured off their computed backgrounds, not asserted); held and closed keep
+  their hatching; the colour key names what is drawn. Then driven end to end:
+  Lock asks why and refuses an empty reason, the booking then **reads as locked
+  and offers to unlock**, unlocking asks why too, and *Everyone's here* moves
+  the day's Arrived count from 3 to 4. Plus contrast, the 12px floor, no page
+  x-scroll and no console errors or missing messages in every state.
+- The standing calendar harnesses hold: contrast reports its **one** declared
+  white-on-ember today badge in both themes, the detail panel still resolves a
+  clipped title, the empty-by-filter notice still fires in all three views, and
+  filters still narrow 35 nodes to 7 with the badge and the way back.
+- The **32-route audit is at its documented 70** — 69 the declared
+  white-on-ember rule, 1 the kitchen-sink inline link. One run came back at 75
+  with five `ERR_CONNECTION_RESET` on a route this change never touched; the
+  dev server was recompiling mid-run, which this log has recorded twice before,
+  and a settled re-run gave 70.
+- Shell harness 81/81 unchanged. `tsc --noEmit` clean, `eslint` clean on every
+  file touched (three `TONE_CLASS` imports the change orphaned were removed).
+  i18n parity **0 missing / 0 extra** across 31 namespaces, 19 keys authored in
+  en and bn.
+
+### A probe correction worth keeping
+
+The contrast probe reported the week's hour labels at **3.13:1 in dark** on a
+page the standing harness called clean. `elementsFromPoint` returns nothing
+useful for an element that is covered or off-screen, and the fallback assumed a
+**white** backdrop — so every muted label in dark measured as light-on-white.
+It walks the ancestors in that case now, and backstops on the page's own colour
+rather than on an assumption. The same fault was in this session's shell probe
+and is fixed there too.
+
+### Open
+
+- **The colour is on the contract but not yet anywhere else.** `Category.color`
+  is handed to the backend lane alongside the rest of `types.ts`; the till's
+  category chips, the reports and the bookings catalogue still draw categories
+  without it. The calendar is where the owner asked for it, and spreading it is
+  additive.
+- **"Complete" is read as "everyone in the party is here."** That is what the
+  model can say — `checkInBooking(id, partySize)` — and it is what a manager
+  looking at today's grid means. A separate "finished" state does not exist in
+  `Booking` and inventing one would be a state nothing else could back up.
+
+Sources: [dataviz palette validator](bundled skill: `dataviz/scripts/validate_palette.js`) ·
+[NN/g — colour coding and secondary encoding](https://www.nngroup.com/articles/use-color-to-enhance-usability/)
