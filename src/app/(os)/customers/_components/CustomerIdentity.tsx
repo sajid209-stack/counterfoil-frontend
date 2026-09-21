@@ -1,8 +1,7 @@
 "use client";
 
-import { AlertTriangle, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { StatusPill } from "@/components/ui";
-import { cn } from "@/lib/cn";
 import type { Customer } from "@/lib/api";
 
 /** Initials from a name, at most two — "Mohammad Abdur Rahman Chowdhury"
@@ -36,23 +35,18 @@ export function CustomerIdentity({
   /** "Customer since March 2024" — tenure, which the record knows and the
    *  page never said. */
   since: string;
-  labels: { noContact: string; flagged: string; archived: string };
+  labels: { noContact: string; archived: string };
 }) {
   const hasContact = !!(customer.phone || customer.email);
   /* Whether the badge row has anything to say at all — an empty flex row
      still spends a gap. */
-  const badges = [customer.flag, customer.status === "archived" ? "archived" : null, ...customer.tags].filter(Boolean);
+  const badges = [customer.status === "archived" ? "archived" : null, ...customer.tags].filter(Boolean);
 
   return (
     <div className="card-surface flex flex-col gap-comfortable p-card sm:flex-row sm:items-center sm:gap-section">
       <span
         aria-hidden
-        className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-semibold",
-          // A flagged customer is the one case where the face itself should
-          // carry the warning — it is the first thing on the page.
-          customer.flag ? "bg-warning/15 text-warning" : "bg-ember/10 text-brand-foreground",
-        )}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ember/10 text-base font-semibold text-brand-foreground"
       >
         {initialsOf(customer.name)}
       </span>
@@ -60,15 +54,9 @@ export function CustomerIdentity({
       <div className="flex min-w-0 flex-1 flex-col gap-tight">
         {/* No name here: the page heading directly above already is the name,
             and printing it twice forty pixels apart is not emphasis. What the
-            heading cannot carry is the flag, the lifecycle and the tags. */}
+            heading cannot carry is the lifecycle and the tags. */}
         {badges.length > 0 && (
         <div className="flex flex-wrap items-center gap-tight">
-          {customer.flag && (
-            <StatusPill tone="warning">
-              <AlertTriangle size={11} strokeWidth={2.5} aria-hidden className="mr-0.5 inline" />
-              {labels.flagged}
-            </StatusPill>
-          )}
           {customer.status === "archived" && (
             <StatusPill tone="neutral">{labels.archived}</StatusPill>
           )}

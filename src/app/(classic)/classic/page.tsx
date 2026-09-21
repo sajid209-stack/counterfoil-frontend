@@ -938,12 +938,6 @@ export default function PosPage() {
               </span>
               <ChevronRight size={15} strokeWidth={1.5} className="shrink-0 text-muted" />
             </button>
-            {attached?.flagReason && (
-              <p className="min-w-0 break-words pb-tight text-[12px] text-warning">
-                <span className="font-medium">{t("customerModal.flagged")}: </span>
-                {attached.flagReason}
-              </p>
-            )}
           </div>
 
           <CartRow icon={Percent} label={t("summary.discount")} value={manualDiscount > 0 ? (discountMode === "percent" ? `${discountPct}%` : formatMoney(manualDiscount, currency)) : t("summary.none")} open={cartRow === "discount"} onToggle={() => toggleRow("discount")}>

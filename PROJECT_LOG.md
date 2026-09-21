@@ -9832,3 +9832,78 @@ Verified: calendar category **45/45**, filter panel behaviour unchanged on
 desktop and phone (35 → 7 and 14 → 7 nodes under one filter, clear offered),
 shell **75/75**, and a probe confirming Month still switches the grid, with no
 console errors and no sideways scroll at 1600 and 390.
+
+## Customers — flag, merge and erase removed (2026-09-22)
+
+Owner, on a marked-up screenshot of a customer record: remove Remove flag,
+Merge into… and Erase personal data, and fix the whole customers feature,
+because those options are not needed.
+
+Hiding three buttons would have left their code behind: data only they could
+write, and screens still reading it. So the three features come out of the
+product entirely.
+
+### What went
+
+- **The three actions and their dialogs** on the customer record, the flag
+  banner above it, the "personal data erased" notice, and the flag badge and
+  warning-coloured initials on the identity card.
+- **The list's Flagged segment, the flag icon on a row, and the Find
+  duplicates tool.** The list now segments Everyone / Email consent / SMS
+  consent.
+- **The API:** `flagCustomer`, `unflagCustomer`, `mergeCustomers`,
+  `eraseCustomerData` and `findDuplicateCustomers`. `resolveCustomer` no longer
+  follows merge chains; it is a plain lookup, and loyalty and memberships still
+  call it.
+- **The contract**, for the backend lane: `Customer.flag`,
+  `Customer.mergedIntoId`, `Customer.erasedAt`, the `CustomerFlag` type and
+  `DuplicateMatch`. The list filter no longer takes `flagged`.
+- **Both tills' flag warnings.** A flagged customer's reason was shown when they
+  were attached to a sale (`/pos` and `/classic`), and the picker drew a warning
+  glyph beside their name. `AttachedCustomer.flagReason` is gone.
+- **The seed's flag on Sabbir Alam**, and the dashboard and membership filters
+  that skipped merged or erased records. There are none now.
+- **40 message keys** in both locales: 39 in `customers`, 1 in `pos`. Each was
+  checked to be used before this change and unused after it.
+
+**Kept on purpose:** the seeded near-miss customers, Farhana Haque/Hoque (one
+phone number in two formats) and the two Imran Hossains. The walk-up matcher
+still uses them. Removing them would shift the seeded generator and every figure
+the fixture produces. Their comment now says what they are for.
+
+### Fixed along the way
+
+- **The till's customer card never showed the name.** Attaching Sabbir Alam
+  read "Customer / 01818-223344". It now reads the name, which wraps rather
+  than truncating, with the phone under it. The phone is what tells two people
+  with one name apart. This predates today's change.
+- **Consent chips on the list were 11px**, under the 12px floor. Now 12px.
+- **"This record may have been merged into another one."** was the message for
+  an unknown customer address, a reason that can no longer happen. It now says
+  there is no customer at that address.
+- **The deck's customer slide** advertised "Merge duplicates; erase personal
+  data" and quoted Sabbir's flag. Its tick and callout now state things that are
+  true (spend, visits and anything owed on one record; the list ranked by
+  spend), and both screenshots are re-captured from the product as it is. That
+  slide is not in the current 22-slide deck, so the live deck and its PDF do not
+  change.
+
+### Verified
+
+- **Customers probe, 44 checks:** no flag, merge, duplicate or erase wording on
+  the list or the record. The segments are Everyone / Email / SMS. The list is
+  sorted by spend with Sabbir first. The email-consent segment narrows the list.
+  A phone search in another format finds Farhana Haque. The record's only header
+  action is All customers; its tag and six figures are there. A note can be
+  added, and the consent and details tabs render. An unknown customer address
+  says so without mentioning merging. At 390, 1440 dark and 390 Bangla, both
+  pages pass contrast, the 12px floor, clipping, x-scroll and console checks.
+- **Both tills, 12 checks:** a customer is found by phone in another format,
+  the picker shows no warning glyph or flag wording, the attached card names
+  them, and there are no console errors.
+- Standing harnesses hold: shell **75/75**, accessibility **8/8**, settings
+  behaviour **31/31**, card rhythm **0 problems**, type spec **10/10**, and the
+  32-route audit at its documented **70**.
+- `tsc` clean. The till holds its 6 documented lint problems, the dashboard its
+  5 warnings, and every other touched file lints clean. i18n parity **0 missing
+  / 0 extra** across 32 namespaces.

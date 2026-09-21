@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Download, Mail, Merge, Plus, Search, Smartphone } from "lucide-react";
+import { Download, Mail, Plus, Search, Smartphone } from "lucide-react";
 import {
   Button,
   DataTable,
@@ -19,18 +19,15 @@ import {
 import { useApiQuery } from "@/lib/useApi";
 import {
   createCustomer,
-  findDuplicateCustomers,
   hasConsent,
   listCustomerRows,
-  mergeCustomers,
   type CustomerWithStats,
-  type DuplicateMatch,
 } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { formatDate, formatMoney } from "@/lib/format";
 
-type Segment = "all" | "flagged" | "email" | "sms";
+type Segment = "all" | "email" | "sms";
 
 /** Enough to fill a desktop viewport without rendering a whole tenant.
  *  The page previously asked for 500 rows and drew every one of them. */
@@ -52,10 +49,8 @@ export default function CustomersPage() {
   });
   const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
-  const [dupOpen, setDupOpen] = useState(false);
 
   const filters = useMemo(() => {
-    if (segment === "flagged") return { flagged: true };
     if (segment === "email") return { consent: "email" };
     if (segment === "sms") return { consent: "sms" };
     return {};
@@ -126,14 +121,6 @@ export default function CustomersPage() {
       render: (c) => (
         <div className="flex min-w-0 items-center gap-tight">
           <span className="min-w-0 break-words font-medium">{c.name}</span>
-          {c.flag && (
-            <AlertTriangle
-              size={14}
-              strokeWidth={1.5}
-              className="shrink-0 text-warning"
-              aria-label={t("flaggedLabel")}
-            />
-          )}
           {c.tags.map((tag) => (
             <StatusPill key={tag} tone="neutral">
               {tag}
@@ -170,7 +157,7 @@ export default function CustomersPage() {
             {email && (
               <span
                 title={t("consentEmailYes")}
-                className="flex items-center gap-0.5 rounded-xs bg-success/10 px-1 py-0.5 text-[11px] font-medium text-success"
+                className="flex items-center gap-0.5 rounded-xs bg-success/10 px-1 py-0.5 text-[12px] font-medium text-success"
               >
                 <Mail size={11} strokeWidth={2} aria-hidden />
                 {t("consentEmailShort")}
@@ -179,7 +166,7 @@ export default function CustomersPage() {
             {sms && (
               <span
                 title={t("consentSmsYes")}
-                className="flex items-center gap-0.5 rounded-xs bg-success/10 px-1 py-0.5 text-[11px] font-medium text-success"
+                className="flex items-center gap-0.5 rounded-xs bg-success/10 px-1 py-0.5 text-[12px] font-medium text-success"
               >
                 <Smartphone size={11} strokeWidth={2} aria-hidden />
                 {t("consentSmsShort")}
@@ -224,7 +211,6 @@ export default function CustomersPage() {
 
   const segments: { value: Segment; label: string }[] = [
     { value: "all", label: t("segAll") },
-    { value: "flagged", label: t("segFlagged") },
     { value: "email", label: t("segEmail") },
     { value: "sms", label: t("segSms") },
   ];
@@ -235,13 +221,6 @@ export default function CustomersPage() {
       description={t("description")}
       actions={
         <div className="flex flex-wrap items-center gap-tight">
-          <Button
-            variant="secondary"
-            icon={<Merge size={16} strokeWidth={1.5} />}
-            onClick={() => setDupOpen(true)}
-          >
-            {t("findDuplicates")}
-          </Button>
           <Button
             variant="secondary"
             icon={<Download size={16} strokeWidth={1.5} />}
@@ -349,13 +328,6 @@ export default function CustomersPage() {
           router.push(`/customers/${id}`);
         }}
       />
-      <DuplicatesModal
-        open={dupOpen}
-        onClose={() => setDupOpen(false)}
-        onMerged={() => {
-          rowsQ.reload();
-        }}
-      />
     </PageShell>
   );
 }
@@ -432,102 +404,6 @@ function AddCustomerModal({
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
-      </div>
-    </Modal>
-  );
-}
-
-// ── duplicates + merge ──────────────────────────────────────────────────────
-function DuplicatesModal({
-  open,
-  onClose,
-  onMerged,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onMerged: () => void;
-}) {
-  const t = useTranslations("customers");
-  const toast = useToast();
-  const [nonce, setNonce] = useState(0);
-  const dupQ = useApiQuery(() => findDuplicateCustomers(), [open, nonce]);
-  const [busy, setBusy] = useState<string | null>(null);
-
-  const merge = async (loser: DuplicateMatch["a"], survivor: DuplicateMatch["b"]) => {
-    setBusy(loser.id);
-    const res = await mergeCustomers(loser.id, survivor.id);
-    setBusy(null);
-    if (!res.ok) {
-      toast.error(res.error.message);
-      return;
-    }
-    toast.success(t("merged", { name: res.data.name }));
-    setNonce((n) => n + 1);
-    onMerged();
-  };
-
-  const pairs = dupQ.data ?? [];
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={t("dupTitle")}
-      description={t("dupDescription")}
-      size="lg"
-      footer={
-        <Button variant="secondary" onClick={onClose}>
-          {t("done")}
-        </Button>
-      }
-    >
-      {dupQ.loading && (
-        <div className="flex flex-col gap-section">
-          {[0, 1].map((i) => (
-            <div key={i} className="h-20 animate-pulse rounded-sm bg-subtle" />
-          ))}
-        </div>
-      )}
-      {!dupQ.loading && pairs.length === 0 && (
-        <EmptyState title={t("dupNoneTitle")} message={t("dupNoneMessage")} />
-      )}
-      <div className="flex flex-col gap-section">
-        {pairs.map((p) => (
-          <div key={`${p.a.id}|${p.b.id}`} className="card-surface p-card">
-            <div className="mb-tight flex items-center gap-tight">
-              <StatusPill tone={p.confidence === "high" ? "warning" : "neutral"}>
-                {t(p.on === "phone" ? "dupOnPhone" : p.on === "email" ? "dupOnEmail" : "dupOnName")}
-              </StatusPill>
-              <span className="text-[12px] text-muted">
-                {t(p.confidence === "high" ? "dupHigh" : "dupMedium")}
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-tight sm:grid-cols-2">
-              {[p.a, p.b].map((c, idx) => {
-                const other = idx === 0 ? p.b : p.a;
-                return (
-                  <div key={c.id} className="rounded-sm border border-line p-comfortable">
-                    <div className="break-words text-sm font-medium">{c.name}</div>
-                    <div className="mt-inline text-[12px] text-muted">
-                      {c.phone && <div className="font-mono">{c.phone}</div>}
-                      {c.email && <div className="break-words">{c.email}</div>}
-                    </div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="mt-tight w-full"
-                      loading={busy === other.id}
-                      onClick={() => merge(other, c)}
-                    >
-                      {t("keepThisOne")}
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="mt-tight text-[12px] text-muted">{t("mergeExplain")}</p>
-          </div>
-        ))}
       </div>
     </Modal>
   );

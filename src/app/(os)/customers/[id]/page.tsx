@@ -3,21 +3,12 @@
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Flag,
-  Merge,
-  ShieldOff,
-  StickyNote,
-} from "lucide-react";
+import { ArrowLeft, StickyNote } from "lucide-react";
 import {
   Button,
-  ConfirmDialog,
   DataTable,
   EmptyState,
   FormField,
-  Modal,
   PageShell,
   StatusPill,
   Tabs,
@@ -29,18 +20,13 @@ import { useApiQuery } from "@/lib/useApi";
 import { CustomerIdentity } from "../_components/CustomerIdentity";
 import {
   addCustomerNote,
-  eraseCustomerData,
-  flagCustomer,
   getCustomer,
   getCustomerStats,
   hasConsent,
-  listCustomerRows,
   loyaltyAccount,
   membershipsFor,
   listOrders,
-  mergeCustomers,
   setCustomerConsent,
-  unflagCustomer,
   updateCustomer,
   type ConsentChannel,
   type Customer,
@@ -129,38 +115,16 @@ export default function CustomerDetailPage() {
          it as a subtitle string was the page's only statement of who this is. */
       description={t("description")}
       actions={
-        <div className="flex flex-wrap items-center gap-tight">
-          <Button
-            variant="tertiary"
-            icon={<ArrowLeft size={16} strokeWidth={1.5} />}
-            onClick={() => router.push("/customers")}
-          >
-            {t("backToList")}
-          </Button>
-          <CustomerActions customer={customer} onChanged={reloadAll} />
-        </div>
+        <Button
+          variant="tertiary"
+          icon={<ArrowLeft size={16} strokeWidth={1.5} />}
+          onClick={() => router.push("/customers")}
+        >
+          {t("backToList")}
+        </Button>
       }
     >
       <div className="flex flex-col gap-section">
-        {customer.flag && (
-          <div className="flex items-start gap-tight rounded-sm border-l-2 border-warning bg-warning/10 p-card">
-            <AlertTriangle size={18} strokeWidth={1.5} className="mt-px shrink-0 text-warning" />
-            <div className="min-w-0">
-              <p className="text-sm font-medium">{t("flaggedTitle")}</p>
-              <p className="break-words text-[13px] text-muted">{customer.flag.reason}</p>
-              <p className="mt-inline font-mono text-[12px] text-muted">
-                {t("byOn", { who: customer.flag.who, when: formatDate(customer.flag.at) })}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {customer.erasedAt && (
-          <div className="rounded-sm border border-line bg-subtle p-card text-[13px] text-muted">
-            {t("erasedNotice", { when: formatDate(customer.erasedAt) })}
-          </div>
-        )}
-
         <CustomerIdentity
           customer={customer}
           since={
@@ -173,7 +137,6 @@ export default function CustomerDetailPage() {
           }
           labels={{
             noContact: t("noContact"),
-            flagged: t("flaggedLabel"),
             archived: t("archivedLabel"),
           }}
         />
@@ -514,227 +477,5 @@ function NotesTab({ customer, onChanged }: { customer: Customer; onChanged: () =
         </ul>
       )}
     </div>
-  );
-}
-
-// ── record actions: flag, merge, erase ──────────────────────────────────────
-function CustomerActions({
-  customer,
-  onChanged,
-}: {
-  customer: Customer;
-  onChanged: () => void;
-}) {
-  const t = useTranslations("customers");
-  const toast = useToast();
-  const router = useRouter();
-
-  const [flagOpen, setFlagOpen] = useState(false);
-  const [flagReason, setFlagReason] = useState("");
-  const [mergeOpen, setMergeOpen] = useState(false);
-  const [eraseOpen, setEraseOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  const doFlag = async () => {
-    setBusy(true);
-    const res = await flagCustomer(customer.id, flagReason, ACTOR);
-    setBusy(false);
-    if (!res.ok) {
-      toast.error(res.error.fieldErrors?.reason ?? res.error.message);
-      return;
-    }
-    setFlagOpen(false);
-    setFlagReason("");
-    toast.success(t("flagged"));
-    onChanged();
-  };
-
-  const doUnflag = async () => {
-    const res = await unflagCustomer(customer.id);
-    if (!res.ok) {
-      toast.error(res.error.message);
-      return;
-    }
-    toast.success(t("unflagged"));
-    onChanged();
-  };
-
-  const doErase = async () => {
-    setBusy(true);
-    const res = await eraseCustomerData(customer.id, ACTOR);
-    setBusy(false);
-    setEraseOpen(false);
-    if (!res.ok) {
-      toast.error(res.error.message);
-      return;
-    }
-    toast.success(t("erased"));
-    onChanged();
-  };
-
-  return (
-    <>
-      {customer.flag ? (
-        <Button variant="secondary" icon={<Flag size={16} strokeWidth={1.5} />} onClick={doUnflag}>
-          {t("removeFlag")}
-        </Button>
-      ) : (
-        <Button
-          variant="secondary"
-          icon={<Flag size={16} strokeWidth={1.5} />}
-          onClick={() => setFlagOpen(true)}
-        >
-          {t("flagCustomer")}
-        </Button>
-      )}
-      <Button
-        variant="secondary"
-        icon={<Merge size={16} strokeWidth={1.5} />}
-        onClick={() => setMergeOpen(true)}
-      >
-        {t("mergeInto")}
-      </Button>
-      <Button
-        variant="tertiary"
-        icon={<ShieldOff size={16} strokeWidth={1.5} />}
-        onClick={() => setEraseOpen(true)}
-        disabled={!!customer.erasedAt}
-      >
-        {t("eraseData")}
-      </Button>
-
-      <Modal
-        open={flagOpen}
-        onClose={() => setFlagOpen(false)}
-        title={t("flagTitle")}
-        description={t("flagDescription")}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setFlagOpen(false)}>
-              {t("cancel")}
-            </Button>
-            <Button onClick={doFlag} loading={busy}>
-              {t("flagCustomer")}
-            </Button>
-          </>
-        }
-      >
-        <FormField
-          label={t("flagReason")}
-          variant="textarea"
-          rows={3}
-          value={flagReason}
-          onChange={(e) => setFlagReason(e.target.value)}
-          help={t("flagReasonHelp")}
-        />
-      </Modal>
-
-      <MergeIntoModal
-        open={mergeOpen}
-        onClose={() => setMergeOpen(false)}
-        customer={customer}
-        onMerged={(survivorId) => {
-          setMergeOpen(false);
-          router.push(`/customers/${survivorId}`);
-        }}
-      />
-
-      <ConfirmDialog
-        open={eraseOpen}
-        onClose={() => setEraseOpen(false)}
-        onConfirm={doErase}
-        loading={busy}
-        destructive
-        title={t("eraseTitle")}
-        message={t("eraseMessage")}
-        confirmLabel={t("eraseConfirm")}
-      />
-    </>
-  );
-}
-
-function MergeIntoModal({
-  open,
-  onClose,
-  customer,
-  onMerged,
-}: {
-  open: boolean;
-  onClose: () => void;
-  customer: Customer;
-  onMerged: (survivorId: string) => void;
-}) {
-  const t = useTranslations("customers");
-  const toast = useToast();
-  const [search, setSearch] = useState("");
-  const [busy, setBusy] = useState<string | null>(null);
-  const candidatesQ = useApiQuery(
-    () => listCustomerRows({ pageSize: 20, search }),
-    [search, open],
-  );
-  const candidates = (candidatesQ.data?.data ?? []).filter((c) => c.id !== customer.id);
-
-  const doMerge = async (survivorId: string) => {
-    setBusy(survivorId);
-    const res = await mergeCustomers(customer.id, survivorId);
-    setBusy(null);
-    if (!res.ok) {
-      toast.error(res.error.message);
-      return;
-    }
-    toast.success(t("merged", { name: res.data.name }));
-    onMerged(survivorId);
-  };
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={t("mergeTitle", { name: customer.name })}
-      description={t("mergeDescription")}
-      footer={
-        <Button variant="secondary" onClick={onClose}>
-          {t("cancel")}
-        </Button>
-      }
-    >
-      <div className="flex flex-col gap-section">
-        <FormField
-          label={t("mergeSearch")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t("searchPlaceholder")}
-        />
-        {candidatesQ.loading && <div className="h-24 animate-pulse rounded-sm bg-subtle" />}
-        {!candidatesQ.loading && candidates.length === 0 && (
-          <p className="text-[13px] text-muted">{t("mergeNoCandidates")}</p>
-        )}
-        <ul className="flex flex-col gap-tight">
-          {candidates.map((c) => (
-            <li
-              key={c.id}
-              className="flex flex-wrap items-center justify-between gap-tight rounded-sm border border-line p-comfortable"
-            >
-              <div className="min-w-0">
-                <p className="break-words text-sm font-medium">{c.name}</p>
-                <p className="text-[12px] text-muted">
-                  {[c.phone, c.email].filter(Boolean).join(" · ") || t("noContact")}
-                </p>
-                <p className="font-mono text-[12px] text-muted">
-                  {t("ordersAndSpend", {
-                    orders: c.stats.orders,
-                    spent: formatMoney(c.stats.spent),
-                  })}
-                </p>
-              </div>
-              <Button size="sm" loading={busy === c.id} onClick={() => doMerge(c.id)}>
-                {t("mergeIntoThis")}
-              </Button>
-            </li>
-          ))}
-        </ul>
-        <p className="text-[12px] text-muted">{t("mergeExplain")}</p>
-      </div>
-    </Modal>
   );
 }

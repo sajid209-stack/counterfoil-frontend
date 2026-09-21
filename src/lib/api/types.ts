@@ -949,13 +949,6 @@ export interface CustomerNote {
   text: string;
 }
 
-/** Staff-attention flag (§63.12) — shown wherever the customer appears. */
-export interface CustomerFlag {
-  reason: string;
-  at: ISODateTime;
-  who: string;
-}
-
 export interface Customer {
   id: ID;
   name: string;
@@ -967,14 +960,7 @@ export interface Customer {
   emailKey: string | null;
   consents: MarketingConsent[];
   notes: CustomerNote[];
-  flag: CustomerFlag | null;
   tags: string[];
-  /** Set when this record was merged INTO another. The row survives as a
-   *  tombstone so historical orders still resolve to the surviving customer. */
-  mergedIntoId: ID | null;
-  /** Personal data erased on request (§63.11). The row stays — financial
-   *  history must not lose its rows — but the identity is gone. */
-  erasedAt: ISODateTime | null;
   status: Lifecycle;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
@@ -1002,14 +988,6 @@ export interface CustomerStats {
  *  backend computes alongside. */
 export interface CustomerWithStats extends Customer {
   stats: CustomerStats;
-}
-
-/** A possible duplicate pair, ranked by how sure the match is. */
-export interface DuplicateMatch {
-  a: Customer;
-  b: Customer;
-  on: "phone" | "email" | "name";
-  confidence: "high" | "medium";
 }
 
 // ── membership.v1 · membership tiers and the memberships people hold ─────────

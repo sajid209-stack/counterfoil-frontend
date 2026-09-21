@@ -1154,9 +1154,16 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
             >
               <UserRound size={22} strokeWidth={1.6} className="shrink-0 text-muted" aria-hidden />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-medium">{t("cart.customer")}</span>
+                {/* Attached, the record's name leads and wraps rather than
+                    truncating — it is the thing the cashier checks against the
+                    person in front of them — with the phone under it, which is
+                    what tells two people with one name apart. The card used to
+                    read "Customer" over the phone and never state the name. */}
+                <span className={attached ? "block break-words text-[15px] font-medium" : "block truncate text-[15px] font-medium"}>
+                  {attached ? attached.name : t("cart.customer")}
+                </span>
                 <span className="block truncate text-[13px] text-muted">
-                  {attached ? (attached.phone || attached.email || attached.name) : t("cart.walkIn")}
+                  {attached ? (attached.phone || attached.email || t("cart.customer")) : t("cart.walkIn")}
                 </span>
               </span>
               <span className="shrink-0 whitespace-nowrap text-[13px] text-muted">
@@ -1164,12 +1171,6 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
               </span>
               <ChevronRight size={18} strokeWidth={1.6} className="shrink-0 text-muted" />
             </button>
-            {attached?.flagReason && (
-              <p className="min-w-0 break-words pb-tight text-[13px] text-warning">
-                <span className="font-medium">{t("customerModal.flagged")}: </span>
-                {attached.flagReason}
-              </p>
-            )}
           </div>
           {cart.length > 0 && (<>
           <CartRow icon={Percent} label={t("summary.discount")} hint={manualDiscount > 0 ? undefined : t("summary.noDiscount")} value={manualDiscount > 0 ? (discountMode === "percent" ? `${discountPct}%` : formatMoney(manualDiscount, currency)) : t("summary.none")} open={cartRow === "discount"} onToggle={() => toggleRow("discount")}>

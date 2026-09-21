@@ -49,9 +49,11 @@ function slotTimes(s: ProductSchedule): string[] {
 
 /* The customer roster. Two thirds of counter sales stay anonymous walk-ups —
    that is honest, and it keeps the "match a walk-up to an existing customer"
-   flow meaningful. Deliberate duplicates are seeded so the merge tool has real
-   work to do: Farhana Haque/Hoque share a phone (high confidence), and there
-   are two unrelated Imran Hossains (name only — medium, must not auto-merge). */
+   flow meaningful. The last two rows are deliberate near-misses for the
+   walk-up matcher: Farhana Hoque types Farhana Haque's number in another
+   format (a phone match), and there are two unrelated Imran Hossains (a name
+   alone is only ever a suggestion). They stay in the roster because removing
+   them would shift the seeded generator and every figure the fixture makes. */
 const ROSTER: { name: string; phone: string | null; email: string | null }[] = [
   { name: "Ayesha Siddika", phone: "01711-204488", email: "ayesha.siddika@gmail.com" },
   { name: "Tanvir Ahmed", phone: "01812-556677", email: "tanvir.ahmed@outlook.com" },
@@ -71,7 +73,7 @@ const ROSTER: { name: string; phone: string | null; email: string | null }[] = [
   { name: "Arif Mahmud", phone: "01716-338822", email: "arif.mahmud@gmail.com" },
   { name: "Sumaiya Islam", phone: "01521-119933", email: "sumaiya.islam@gmail.com" },
   { name: "Habibur Rahman", phone: "01811-664422", email: null },
-  // ── the duplicates ──────────────────────────────────────────────────────
+  // ── the near-misses ──────────────────────────────────────────────────────
   { name: "Farhana Hoque", phone: "+8801711000111", email: null },
   { name: "Imran Hossain", phone: "01977-221100", email: "i.hossain84@yahoo.com" },
 ];
@@ -156,10 +158,7 @@ export function generateSales({
       emailKey: r.email ? r.email.toLowerCase() : null,
       consents: [],
       notes: [],
-      flag: null,
       tags: [],
-      mergedIntoId: null,
-      erasedAt: null,
       status: "active" as const,
       createdAt,
       updatedAt: createdAt,

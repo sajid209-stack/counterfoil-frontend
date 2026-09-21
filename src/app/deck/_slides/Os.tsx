@@ -599,13 +599,13 @@ export function CustomersSlide({ n }: { n: number }) {
     <Slide tone="paper" n={n} section={OS_SECTION} label="Know the guest in front of you">
       <Crop src={customers} alt="The customers list, ranked by spend, with marketing consent" x={0.17} y={0.15} w={0.825} h={0.498} width={840} className="absolute left-[96px] top-[92px]">
         {/* The row the record below opens. */}
-        <span aria-hidden className="absolute rounded-[8px] ring-[3px] ring-[#f94a00]" style={{ left: "1.2%", top: "43.2%", width: "97.6%", height: "12.4%" }} />
+        <span aria-hidden className="absolute rounded-[8px] ring-[3px] ring-[#f94a00]" style={{ left: "1.2%", top: "35.8%", width: "97.6%", height: "11.4%" }} />
       </Crop>
       <Crop
         src={customer}
-        alt="Sabbir Alam’s record: flagged for staff attention, with spend, orders and activity"
+        alt="Sabbir Alam’s record: contact, spend, orders and every sale he has made"
         x={0.17}
-        y={0.135}
+        y={0.085}
         w={0.825}
         h={0.505}
         width={840}
@@ -613,11 +613,11 @@ export function CustomersSlide({ n }: { n: number }) {
       />
 
       <TextBlock eyebrow="Customers" title="Know the guest in front of you." lead="One record per person — what they have bought, agreed to and still owe." left={984}>
-        <Ticks tone="paper" items={["Matched by phone, however the number is typed", "Email and SMS consent, kept as a record", "Merge duplicates; erase personal data on request"]} />
+        <Ticks tone="paper" items={["Matched by phone, however the number is typed", "Email and SMS consent, kept as a record", "Spend, visits and anything owed, on one record"]} />
         <div className={cn(s.card, "mt-9 bg-[#141413] px-7 py-6 text-[#f5f2eb]")}>
-          <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#ffa572]">Flagged for staff</p>
-          <p className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-[-0.015em]">“Repeated no-shows on booked tours. Take payment in full at booking.”</p>
-          <p className="mt-3 text-[16px] leading-[1.45] text-[rgb(245_242_235/0.72)]">Attach Sabbir to a sale and the till shows why.</p>
+          <p className="font-mono text-[14px] uppercase tracking-[0.12em] text-[#ffa572]">Top customer</p>
+          <p className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-[-0.015em]">Sabbir Alam · ৳70,426 across 6 orders</p>
+          <p className="mt-3 text-[16px] leading-[1.45] text-[rgb(245_242_235/0.72)]">The list ranks by spend, so the people who matter most are at the top.</p>
         </div>
       </TextBlock>
     </Slide>

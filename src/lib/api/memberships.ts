@@ -396,6 +396,6 @@ export const customersWithoutMembership = (): ID[] => {
       .map((m) => m.customerId),
   );
   return peekCustomers()
-    .filter((c) => !c.mergedIntoId && !held.has(c.id))
+    .filter((c) => !held.has(c.id))
     .map((c) => c.id);
 };

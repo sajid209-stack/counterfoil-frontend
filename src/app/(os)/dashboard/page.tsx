@@ -421,10 +421,6 @@ export default function DashboardPage() {
     }
 
     for (const c of customers) {
-      // A merge tombstone and an erased record are not people who joined —
-      // one is a pointer at the survivor, the other has no identity left to
-      // name. Both stay in the ledger; neither is an event.
-      if (c.mergedIntoId || c.erasedAt) continue;
       events.push({
         id: `c:${c.id}`, kind: "customer", title: t("customerAdded"), at: c.createdAt,
         subject: t("customerJoined", { name: c.name }), amount: null,

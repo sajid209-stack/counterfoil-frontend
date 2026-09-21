@@ -780,7 +780,7 @@ const stressOrder: Order = {
 
 /* Customers: the deterministic roster the generator attached to orders, plus
    the hand-authored detail a screen needs to be real — a marketing consent
-   trail, an internal note, and one flagged guest. The stress order's customer
+   trail and an internal note. The stress order's customer
    is added here so the long-name overflow case has a record too. */
 const cus = structuredClone(sales.customers);
 const findCustomer = (name: string) => cus.find((c) => c.name === name);
@@ -813,15 +813,6 @@ if (zahid) {
   });
 }
 
-const sabbir = findCustomer("Sabbir Alam");
-if (sabbir) {
-  sabbir.flag = {
-    reason: "Repeated no-shows on booked tours. Take payment in full at booking.",
-    at: "2026-06-18T14:10:00+06:00",
-    who: "Nadia Islam",
-  };
-}
-
 const rumana = findCustomer("Rumana Begum");
 if (rumana) {
   rumana.tags = ["member"];
@@ -837,10 +828,7 @@ cus.push({
   emailKey: "mohammad.abdur.rahman.chowdhury@averylongdomainname.com.bd",
   consents: [{ channel: "sms", granted: true, capturedAt: "2026-07-29T11:05:00+06:00", source: "counter" }],
   notes: [],
-  flag: null,
   tags: [],
-  mergedIntoId: null,
-  erasedAt: null,
   status: "active",
   createdAt: "2026-07-29T11:05:00+06:00",
   updatedAt: "2026-07-29T11:05:00+06:00",

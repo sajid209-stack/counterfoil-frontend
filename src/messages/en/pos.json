@@ -124,8 +124,7 @@
     "attach": "Attach to this sale",
     "attached": "Attached {name}.",
     "remove": "Remove",
-    "close": "Close",
-    "flagged": "Staff note"
+    "close": "Close"
   },
   "parked": {
     "title": "Parked carts",

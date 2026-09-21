@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Search, UserPlus } from "lucide-react";
+import { Search, UserPlus } from "lucide-react";
 import { Button, FormField, Modal, useToast } from "@/components/ui";
 import {
   listCustomerRows,
@@ -15,7 +15,6 @@ export interface AttachedCustomer {
   id: string | null;
   name: string;
   /** Carried onto the till so the flag reason can be shown while serving. */
-  flagReason?: string | null;
   /** Shown under the name in the cart. Two customers share a name far more
    *  often than they share a phone, so this is what tells a cashier they
    *  attached the right person. */
@@ -121,7 +120,7 @@ function PickerBody({
   }, [query]);
 
   const attach = (c: CustomerWithStats) => {
-    onAttach({ id: c.id, name: c.name, flagReason: c.flag?.reason ?? null, phone: c.phone, email: c.email });
+    onAttach({ id: c.id, name: c.name, phone: c.phone, email: c.email });
     onClose();
   };
 
@@ -133,7 +132,7 @@ function PickerBody({
       toast.error(res.error.fieldErrors?.name ?? res.error.message);
       return;
     }
-    onAttach({ id: res.data.id, name: res.data.name, flagReason: res.data.flag?.reason ?? null, phone: res.data.phone, email: res.data.email });
+    onAttach({ id: res.data.id, name: res.data.name, phone: res.data.phone, email: res.data.email });
     toast.success(t("customerModal.attached", { name: res.data.name }));
     onClose();
   };
@@ -202,9 +201,6 @@ function PickerBody({
               <span className="min-w-0">
                 <span className="flex items-center gap-inline">
                   <span className="min-w-0 break-words text-sm font-medium">{c.name}</span>
-                  {c.flag && (
-                    <AlertTriangle size={14} strokeWidth={1.5} className="shrink-0 text-warning" />
-                  )}
                 </span>
                 {c.phone && (
                   <span className="block font-mono text-[13px] text-muted">{c.phone}</span>
