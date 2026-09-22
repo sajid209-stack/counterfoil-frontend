@@ -145,7 +145,7 @@ export function Sidebar({
 
         <nav className="flex flex-col gap-inline">
           {!collapsed && <p className="px-comfortable pb-inline font-mono text-[12px] uppercase tracking-wider text-muted">{t("settings")}</p>}
-          {item(t("settings"), "/settings", pathname.startsWith("/settings"), Settings)}
+          {item(t("settings"), "/settings/business", pathname.startsWith("/settings"), Settings)}
         </nav>
       </div>
     </div>

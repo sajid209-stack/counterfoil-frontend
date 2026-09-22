@@ -10444,3 +10444,109 @@ box ticks the page and reads as partly ticked when some are.
 - **Saved views live in this browser** (localStorage), as they always have.
 - On a phone the ledger still scrolls sideways inside its card, as the reports
   tables always have; a card-per-transaction phone layout is its own change.
+
+## Settings opens on its first section — the index page is gone (2026-09-22)
+
+Owner, with a screenshot of Business profile: *"we dont need all settings page
+in Settings it will be direct https://counterfoil-frontend.vercel.app/settings/business
+— so properly research and fix the UI and UX, and urls."*
+
+### The addresses
+
+- **`/settings` redirects to `/settings/business`** (307, in `next.config.ts`).
+  Not permanent on purpose: which section comes first is a product decision, and
+  a 308 would stay cached in browsers long after it changed.
+- **Every door into settings goes straight there**: the sidebar's Settings, the
+  phone's More sheet, the account menu (whose "All settings" is now "Settings")
+  and the command palette. Settings stays lit in the sidebar and the More sheet
+  on every section, not only the one its door opens on.
+- **`settings/page.tsx` is deleted.** The build lists 69 pages, down from 70.
+
+### Moving between sections
+
+The index was a page to pass through: below 1280px every section linked back to
+it ("‹ All settings"), so going from Tax to Payments was two page loads and a
+scroll. It is one step at every width now.
+
+- **Wide (xl):** the grouped rail, unchanged except that it no longer opens with
+  a way back to an index that does not exist.
+- **Narrower:** a **Settings** button where the back link was. It opens the same
+  grouped list in place — a panel under the button, a sheet from the bottom on a
+  phone — lands focus on the section you are on, ticks it, and closes when you
+  pick another. Escape and a tap outside close it and hand focus back. The
+  button says "Settings" rather than the section's name, because the heading
+  directly beneath it already says that (and on a phone, so does the bar).
+- **A record page** (a team member, a device, a role) keeps its link back to its
+  list — now at every width, not only below xl — because it is the only link up
+  once the breadcrumb is gone.
+
+This follows the settings-navigation guidance to keep one hierarchy across
+widths — a persistent list where there is room, the same list on demand where
+there is not — rather than a separate phone index.
+
+### The breadcrumb comes off settings
+
+`SETTINGS / BUSINESS` would have had a first crumb with no page of its own:
+leading to a redirect, and from Tax to somewhere other than it says. Breadcrumb
+guidance is to leave out a level that exists only to organise. The rail (or the
+Settings menu) already says where you are, and records have their back link.
+Settings pages' bars drop from 96px to 74px as a result. Elsewhere the trail
+stays, now as words only — it was only ever linked inside settings.
+
+### What the index said, and where it went
+
+- **The four "needs a decision" warnings** — only cash can be taken, a 0%
+  reduced rate on bookings that use it, a tablet not seen for a week, and
+  tickets reaching nobody — now mark their own section wherever sections are
+  listed (`settings/_lib/attention.ts`). In the rail, a dot with the reason as its
+  tooltip and accessible name. In the Settings menu, the reason in words under
+  the section, and the button carries a dot and "1 needs attention". They are
+  re-read on every move between sections, so fixing something on its page
+  clears the dot as soon as you go anywhere else; the previous answer stays on
+  screen while the next loads, so nothing flickers.
+- **Search** still exists: the command palette (Ctrl/⌘ K) finds a section by what
+  someone would type — "vat", "bkash", "dark mode" — as it has since the shell
+  pass. It keys its results by group and address now, because "Settings" and
+  "Business profile" share one.
+- **The current-value summaries** ("BDT · Asia/Dhaka", "6 counters · 2 closed")
+  are gone with the page. Each section shows its own values.
+
+### Verified
+
+- **Settings navigation, 55 checks, all passing** — driven: `/settings` lands on
+  Business profile by a 307; the sidebar's and account menu's Settings go
+  straight to it; nothing says "All settings". Wide: the rail, no menu button,
+  no breadcrumb, the current section marked, no dot when nothing needs a
+  decision; switching off both Booking confirmed messages and moving on puts a
+  dot on Notifications with its reason as tooltip and name; the rail sits level
+  with the first card and clear of the bar when scrolled; Settings stays lit on
+  another section; a record has its back link and the rail marks its list. At
+  1024: no rail, the Settings button opens the list in place, focus lands on the
+  current section, it is ticked, the panel is on screen, Escape closes and
+  refocuses, picking Tax goes there and closes the list, and after tickets are
+  silenced the button says "1 needs attention" and the list says which in
+  words. On a phone, light and dark: a full-width sheet from the bottom, every
+  row and the close button 44px, contrast and the 12px floor clean, a tap on the
+  page behind closes it, a section is one tap, the bar names it, a record shows
+  its way back instead of the menu, and the More sheet's Settings goes straight
+  to a section. The palette's "settings" + Enter opens Business profile with no
+  duplicate-key warning. Bangla has no missing messages. No console errors.
+- Standing harnesses hold: shell **75/75** (its account-menu check now expects
+  Settings → `/settings/business`, and `/settings` is named Business profile on
+  a phone), settings behaviour **31/31**, device facts **38/38**, storefront
+  **59/59**, card rhythm **0 problems**; the 32-route audit at its documented
+  **73**.
+- `tsc` clean, `npm run build` passes, `eslint` identical to the `HEAD` copies of
+  every touched shared file (`OsShell` holds its one pre-existing error), and the
+  three new files lint clean. i18n parity **0 missing / 0 extra** across 33
+  namespaces; the index's 49 keys (`settings.hub.*`, `settings.nav.back`, the
+  group descriptions, `nav.allSettings`) are gone from both locales, and the four
+  warnings moved to `settings.attention`.
+
+### Open
+
+- **A dot clears when you move on, not the moment you save.** The mock layer has
+  no change signal for the frame to listen to; the real backend's cache
+  invalidation would give it one.
+- The current-value summaries the index carried have no home; if they are
+  missed, the rail is too narrow for them and they would want a different place.

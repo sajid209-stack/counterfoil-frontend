@@ -90,12 +90,12 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
           </div>
 
           <Link
-            href="/settings"
+            href="/settings/business"
             onClick={() => setOpen(false)}
             className="mt-section flex h-11 items-center gap-comfortable rounded-sm border border-line px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:border-ember/40 hover:bg-subtle/60"
           >
             <SettingsIcon size={16} strokeWidth={1.5} className="text-muted" aria-hidden />
-            {t("allSettings")}
+            {t("settings")}
           </Link>
         </div>
       )}

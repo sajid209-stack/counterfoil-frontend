@@ -630,27 +630,21 @@
   },
   "nav": {
     "label": "সেটিংসের অংশ",
-    "back": "সব সেটিংস",
     "groups": {
       "business": {
-        "title": "আপনার ব্যবসা",
-        "desc": "আপনি কে, কোথায় বিক্রি করেন, আর কী দিয়ে বিক্রি করেন।"
+        "title": "আপনার ব্যবসা"
       },
       "money": {
-        "title": "টাকা-পয়সা",
-        "desc": "কীভাবে পেমেন্ট পান, আর বিক্রিতে কী যোগ হয়।"
+        "title": "টাকা-পয়সা"
       },
       "people": {
-        "title": "টিম ও অ্যাক্সেস",
-        "desc": "কে সাইন ইন করতে পারবেন, কী করতে পারবেন, আর কোন ডিভাইসে।"
+        "title": "টিম ও অ্যাক্সেস"
       },
       "messages": {
-        "title": "বার্তা",
-        "desc": "গ্রাহক আর আপনার টিম কী পায়, কখন পায়।"
+        "title": "বার্তা"
       },
       "account": {
-        "title": "আপনার অ্যাকাউন্ট",
-        "desc": "শুধু আপনার জন্য, টিমের বাকিদের উপর প্রভাব ফেলে না।"
+        "title": "আপনার অ্যাকাউন্ট"
       }
     },
     "items": {
@@ -739,53 +733,10 @@
         "desc": "প্রতিটি ভেন্যুর পাবলিক পাতা — কী দেখাবে, কী লেখা থাকবে, এবং সেটি লাইভ কি না।",
         "keywords": "স্টোরফ্রন্ট পাবলিক পাতা ওয়েবসাইট ভেন্যু ঠিকানা storefront public page website"
       }
-    }
-  },
-  "hub": {
-    "title": "সেটিংস",
-    "description": "আপনি কীভাবে বিক্রি, বুকিং আর পেমেন্ট নেন — সব এখানে ঠিক করুন।",
-    "attentionCount": "{count, plural, other {#টি বিষয়ে}} আপনার মনোযোগ দরকার",
-    "fix": "খুলুন",
-    "cashOnly": "শুধু নগদ নেওয়া যাচ্ছে",
-    "cashOnlyBody": "কোনো কার্ড বা ওয়ালেট অ্যাকাউন্ট চালু নেই, তাই কাউন্টারে শুধু নগদের অপশন আছে।",
-    "devicesQuiet": "{count, plural, other {#টি ডিভাইস}} সাড়া দিচ্ছে না",
-    "devicesQuietBody": "গত সাত দিনে দেখা যায়নি। বন্ধ থাকতে পারে, বা আর যুক্ত নেই।",
-    "reducedUnset": "হ্রাসকৃত করের হার ০%",
-    "reducedUnsetBody": "{count, plural, other {#টি বুকিং}} হ্রাসকৃত হারে রাখা, তাই কর ছাড়াই বিক্রি হচ্ছে।",
-    "statusProfile": "{currency} · {timezone}",
-    "statusLocations": "{count, plural, =0 {এখনো নেই} other {#টি লোকেশন}}",
-    "statusCounters": "{count, plural, =0 {এখনো নেই} other {#টি কাউন্টার}}",
-    "statusActive": "{count, plural, =0 {এখনো নেই} other {#টি চালু}}",
-    "statusCategories": "{count, plural, =0 {এখনো নেই} other {#টি ক্যাটাগরি}}",
-    "statusLive": "{providers} · নগদ",
-    "statusCashOnly": "শুধু নগদ",
-    "statusTax": "{name} {standard}% · হ্রাসকৃত {reduced}%",
-    "statusTeam": "{count, plural, =0 {শুধু আপনি} other {#জন সদস্য}}",
-    "statusInvited": "{count}জন আমন্ত্রিত",
-    "statusRoles": "{count, plural, =0 {এখনো নেই} other {#টি রোল}}",
-    "statusDevices": "{count, plural, =0 {কোনোটি যুক্ত নেই} other {#টি ডিভাইস}}",
-    "statusQuiet": "{count}টি নিষ্ক্রিয়",
-    "statusPrefs": "{theme} · {language}",
-    "statusNotSelling": "{count}টিতে বিক্রি বন্ধ",
-    "statusClosed": "{count}টি বন্ধ",
-    "statusOut": "{count}টি সেবার বাইরে",
-    "statusOff": "{count}টি বন্ধ",
-    "searchLabel": "সেটিংস খুঁজুন",
-    "searchPlaceholder": "সেটিংস খুঁজুন",
-    "searchEmpty": "“{query}”-এর সঙ্গে মেলে এমন কোনো সেটিং নেই।",
-    "searchCount": "{count, plural, =0 {কোনো সেটিং নেই} other {#টি সেটিং}}",
-    "searchHint": "যেমন “VAT”, “বিকাশ” বা “ডার্ক মোড”।",
-    "statusMessagesOn": "{total, number}টির মধ্যে {on, number}টি বার্তা চালু",
-    "statusTwoStep": {
-      "off": "দুই-ধাপ ঐচ্ছিক",
-      "managers": "ম্যানেজারদের দুই-ধাপ",
-      "everyone": "সবার দুই-ধাপ"
     },
-    "statusNoLock": "টিল কখনো লক হয় না",
-    "noTicket": "গ্রাহকরা টিকিট পাচ্ছেন না",
-    "noTicketBody": "বুকিং নিশ্চিতের এসএমএস আর ইমেইল দুটোই বন্ধ, তাই টিকিট কোড শুধু কাউন্টারেই গ্রাহকের কাছে পৌঁছায়।",
-    "statusStorefront": "{count, plural, one {# পাতা লাইভ} other {# পাতা লাইভ}}",
-    "statusStorefrontNone": "কোনো পাতা লাইভ নয়"
+    "menu": "সেটিংস",
+    "close": "বন্ধ করুন",
+    "needsAttention": "{count, plural, one {#টি বিষয়ে মনোযোগ দরকার} other {#টি বিষয়ে মনোযোগ দরকার}}"
   },
   "save": {
     "unsaved": "পরিবর্তন সংরক্ষণ হয়নি",
@@ -1119,5 +1070,11 @@
     "moveUp": "{name} উপরে নিন",
     "moveDown": "{name} নিচে নিন",
     "showingCount": "{count, plural, =0 {কিছুই দেখাবে না} one {# বুকিং দেখাবে} other {# বুকিং দেখাবে}}"
+  },
+  "attention": {
+    "cashOnly": "শুধু নগদ নেওয়া যাচ্ছে",
+    "reducedUnset": "হ্রাসকৃত করের হার ০%",
+    "devicesQuiet": "{count, plural, other {#টি ডিভাইস}} সাড়া দিচ্ছে না",
+    "noTicket": "গ্রাহকরা টিকিট পাচ্ছেন না"
   }
 }

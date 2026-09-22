@@ -630,27 +630,21 @@
   },
   "nav": {
     "label": "Settings sections",
-    "back": "All settings",
     "groups": {
       "business": {
-        "title": "Your business",
-        "desc": "Who you are, where you sell, and what you sell from."
+        "title": "Your business"
       },
       "money": {
-        "title": "Money",
-        "desc": "How you get paid, and what the till adds to a sale."
+        "title": "Money"
       },
       "people": {
-        "title": "Team and access",
-        "desc": "Who can sign in, what they can do, and on which devices."
+        "title": "Team and access"
       },
       "messages": {
-        "title": "Messages",
-        "desc": "What customers and your team are sent, and when."
+        "title": "Messages"
       },
       "account": {
-        "title": "Your account",
-        "desc": "Only affects you, not the rest of your team."
+        "title": "Your account"
       }
     },
     "items": {
@@ -739,53 +733,10 @@
         "desc": "The public page each venue has — what is on it, what it says, and whether it is live.",
         "keywords": "storefront public page website venue landing url slug online"
       }
-    }
-  },
-  "hub": {
-    "title": "Settings",
-    "description": "Everything that shapes how you sell, book and get paid.",
-    "attentionCount": "{count, plural, one {# thing needs} other {# things need}} your attention",
-    "fix": "Open",
-    "cashOnly": "Only cash can be taken",
-    "cashOnlyBody": "No card or wallet account is live, so the till offers cash alone.",
-    "devicesQuiet": "{count, plural, one {# device has} other {# devices have}} gone quiet",
-    "devicesQuietBody": "Not seen in the last seven days. It may be switched off or no longer paired.",
-    "reducedUnset": "The reduced tax rate is 0%",
-    "reducedUnsetBody": "{count, plural, one {# booking is} other {# bookings are}} filed under the reduced rate, so they are being sold without tax.",
-    "statusProfile": "{currency} · {timezone}",
-    "statusLocations": "{count, plural, =0 {None yet} one {# location} other {# locations}}",
-    "statusCounters": "{count, plural, =0 {None yet} one {# counter} other {# counters}}",
-    "statusActive": "{count, plural, =0 {None yet} other {# active}}",
-    "statusCategories": "{count, plural, =0 {None yet} one {# category} other {# categories}}",
-    "statusLive": "{providers} · cash",
-    "statusCashOnly": "Cash only",
-    "statusTax": "{name} {standard}% · reduced {reduced}%",
-    "statusTeam": "{count, plural, =0 {Just you} one {# member} other {# members}}",
-    "statusInvited": "{count} invited",
-    "statusRoles": "{count, plural, =0 {None yet} one {# role} other {# roles}}",
-    "statusDevices": "{count, plural, =0 {None paired} one {# device} other {# devices}}",
-    "statusQuiet": "{count} quiet",
-    "statusPrefs": "{theme} · {language}",
-    "statusNotSelling": "{count} not selling",
-    "statusClosed": "{count} closed",
-    "statusOut": "{count} out of service",
-    "statusOff": "{count} off",
-    "searchLabel": "Search settings",
-    "searchPlaceholder": "Search settings",
-    "searchEmpty": "No setting matches “{query}”.",
-    "searchCount": "{count, plural, =0 {No settings} one {# setting} other {# settings}}",
-    "searchHint": "Try “VAT”, “bKash” or “dark mode”.",
-    "statusMessagesOn": "{on, number} of {total, number} messages on",
-    "statusTwoStep": {
-      "off": "Two-step optional",
-      "managers": "Two-step for managers",
-      "everyone": "Two-step for everyone"
     },
-    "statusNoLock": "tills never lock",
-    "noTicket": "Customers aren't sent their tickets",
-    "noTicketBody": "Booking confirmed is off for SMS and e-mail, so a ticket code only reaches a customer at the counter.",
-    "statusStorefront": "{count, plural, one {# page live} other {# pages live}}",
-    "statusStorefrontNone": "No page is live"
+    "menu": "Settings",
+    "close": "Close",
+    "needsAttention": "{count, plural, one {# needs attention} other {# need attention}}"
   },
   "save": {
     "unsaved": "Unsaved changes",
@@ -1119,5 +1070,11 @@
     "moveUp": "Move {name} up",
     "moveDown": "Move {name} down",
     "showingCount": "{count, plural, =0 {Nothing will show} one {# booking will show} other {# bookings will show}}"
+  },
+  "attention": {
+    "cashOnly": "Only cash can be taken",
+    "reducedUnset": "The reduced tax rate is 0%",
+    "devicesQuiet": "{count, plural, one {# device has} other {# devices have}} gone quiet",
+    "noTicket": "Customers aren't sent their tickets"
   }
 }

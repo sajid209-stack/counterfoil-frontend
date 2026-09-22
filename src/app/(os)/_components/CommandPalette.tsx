@@ -196,7 +196,7 @@ export function CommandPalette({
           ) : (
             results.map((r, i) => (
               <li
-                key={r.href}
+                key={`${r.hint}|${r.href}`}
                 id={`${listId}-${i}`}
                 role="option"
                 aria-selected={i === current}

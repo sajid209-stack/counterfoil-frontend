@@ -52,12 +52,9 @@ const DESTINATIONS = [
   { href: "/promotions", key: "promotions", icon: TicketPercent },
   { href: "/pos", key: "pos", icon: Store },
   { href: "/deck", key: "deck", icon: SquareStack },
-  // One Settings entry, to the index. The grid used to list eight settings
-  // pages as separate destinations — nearly half of it — and send "Settings"
-  // itself to Business, so the one door labelled Settings opened onto a single
-  // page of it. The index shows every section with its current value, which a
-  // grid of icons never could.
-  { href: "/settings", key: "settings", icon: Settings },
+  // One Settings entry, opening on the first section. Settings has no index
+  // page; every section lists the rest in its own Settings menu.
+  { href: "/settings/business", key: "settings", icon: Settings },
 ] as const;
 
 /**
@@ -168,7 +165,8 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   };
 
   const isActive = (href: string) => {
-    const path = href.split("?")[0];
+    // Settings is lit on every section, not only the one its door opens on.
+    const path = href.startsWith("/settings/") ? "/settings" : href.split("?")[0];
     return pathname === path || pathname.startsWith(`${path}/`);
   };
   const tabActive = (href: string) => isActive(href) && !moreOpen;

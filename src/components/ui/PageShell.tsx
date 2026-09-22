@@ -3,7 +3,6 @@
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 
 // Standard page frame for OS screens: breadcrumb (derived from the path),
@@ -37,7 +36,14 @@ export function PageShell({
   // Words only — ids stay out. Each crumb carries the path up to it, so the
   // trail can lead back up: a settings record's crumb returns to its list,
   // which is where someone who opened the record came from.
-  const crumbs = pathname
+  /* Settings carries no trail. Its first level has no page of its own —
+     /settings opens on Business profile — so a SETTINGS crumb would either
+     lead nowhere or somewhere other than it says, and the rail beside every
+     settings page (or its Settings menu, narrower) already says where you are.
+     A record there has its own link back to its list. */
+  const crumbs = pathname.startsWith("/settings")
+    ? []
+    : pathname
     .split("/")
     .flatMap((s, i, parts) => (s && /^[a-z-]+$/.test(s) ? [{ label: s.replace(/-/g, " "), href: parts.slice(0, i + 1).join("/") }] : []));
 
@@ -82,15 +88,9 @@ export function PageShell({
           {crumbs.map((c, i) => (
             <span key={c.href}>
               {i > 0 && " / "}
-              {/* Linked only inside Settings, where every level of the path is a
-                  real page; elsewhere a word in a path (/reports) need not be. */}
-              {c.href !== pathname && (c.href === "/settings" || c.href.startsWith("/settings/")) ? (
-                <Link href={c.href} className="transition-colors duration-quick hover:text-fg hover:underline">
-                  {c.label}
-                </Link>
-              ) : (
-                c.label
-              )}
+              {/* Words, not links: a word in a path (/reports) need not be a
+                  page, and a crumb that leads nowhere breaks the trail's promise. */}
+              {c.label}
             </span>
           ))}
         </p>
