@@ -10,6 +10,14 @@ export interface StatItem {
   tone?: "warning";
   /** A qualifier on the figure — shown as the card's tooltip, not as a line. */
   note?: string | null;
+  /** A line under the figure, where the figure alone does not say enough —
+   *  a date says when, not which event. */
+  sub?: string | null;
+  /** A figure that is also a filter: pressing it shows the rows it counts.
+   *  Opt-in; a card without one stays a plain figure. */
+  onClick?: () => void;
+  /** Whether that filter is the one applied. */
+  pressed?: boolean;
 }
 
 /**
@@ -39,16 +47,24 @@ export function StatStrip({
       className={cn(
         compact
           ? "-mx-gutter flex gap-section overflow-x-auto px-gutter pb-inline [scrollbar-width:none]"
-          : "grid grid-cols-2 gap-section lg:grid-cols-4",
+          : "grid grid-cols-2 gap-section lg:[grid-template-columns:repeat(var(--stat-n),minmax(0,1fr))]",
       )}
+      /* As many columns as there are figures, from lg — three figures in a
+         four-column grid left a hole where the fourth would be. */
+      style={{ "--stat-n": Math.min(items.length, 4) } as React.CSSProperties}
     >
-      {items.map((item) => (
-        <div
+      {items.map((item) => {
+        const Tag = item.onClick ? "button" : "div";
+        return (
+        <Tag
           key={item.key}
           title={item.note ?? undefined}
+          {...(item.onClick ? { type: "button" as const, onClick: item.onClick, "aria-pressed": !!item.pressed } : {})}
           className={cn(
-            "card-surface flex min-h-[5.25rem] flex-col justify-center gap-tight p-card",
+            "card-surface flex min-h-[5.25rem] flex-col justify-start gap-tight p-card text-left",
             compact && "min-w-[10rem] shrink-0",
+            item.onClick && "transition-colors duration-quick hover:border-strong",
+            item.pressed && "border-inverse",
           )}
         >
           <span className="type-label truncate text-[12px] text-muted">{item.label}</span>
@@ -64,8 +80,10 @@ export function StatStrip({
               {item.value}
             </span>
           )}
-        </div>
-      ))}
+          {item.sub && !loading && <span className="-mt-inline truncate text-[12px] text-muted">{item.sub}</span>}
+        </Tag>
+        );
+      })}
     </div>
   );
 }

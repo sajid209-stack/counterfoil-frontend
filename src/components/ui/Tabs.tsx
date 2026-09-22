@@ -55,7 +55,7 @@ export function Tabs({
           >
             {it.label}
             {it.count != null && (
-              <span className="ml-inline font-mono text-[12px] text-muted">
+              <span className="ml-inline text-[12px] tabular-nums text-muted">
                 {it.count}
               </span>
             )}

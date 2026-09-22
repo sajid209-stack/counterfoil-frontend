@@ -26,7 +26,8 @@ import {
 } from "@/lib/api";
 import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
 import { isDeviceQuiet } from "@/lib/devices";
-import { formatDateTime, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
+import { formatDateTime, formatDay, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
+import { sellingWarnings } from "@/lib/sellable";
 import { useEnumLabels } from "@/lib/labels";
 import { cn } from "@/lib/cn";
 
@@ -474,23 +475,26 @@ export default function DashboardPage() {
       action: { label: t("noticeManage"), href: "/settings/resources" },
     }));
     // The silent failure: nothing bookable beyond a date.
+    // One rule for it, shared with the catalog (`sellingWarnings`), so the two
+    // screens cannot disagree about the same course.
     for (const p of products) {
-      if (p.courseDates?.length) {
-        const last = [...p.courseDates].sort().at(-1)!;
-        if (last <= dayShift(TODAY, 30)) items.push({
-          tone: "warning", Icon: CalendarOff,
-          title: t("noticeNoSessionsTitle"),
-          body: t("noSessionsAfter", { name: p.name, date: last }),
-          action: { label: t("noticeAddDates"), href: `/bookings/${p.id}` },
-        });
-      }
-      if (p.windowMode === "fixed" && p.windowEnd && p.windowEnd <= dayShift(TODAY, 30)) {
-        items.push({
-          tone: "warning", Icon: Clock,
-          title: t("noticeStopsSellingTitle"),
-          body: t("stopsSelling", { name: p.name, date: p.windowEnd }),
-          action: { label: t("noticeOpenProduct"), href: `/bookings/${p.id}` },
-        });
+      if (p.status !== "active") continue;
+      for (const w of sellingWarnings(p, TODAY)) {
+        items.push(
+          w.kind === "datesRunOut"
+            ? {
+                tone: "warning", Icon: CalendarOff,
+                title: t("noticeNoSessionsTitle"),
+                body: t("noSessionsAfter", { name: p.name, date: formatDay(w.date) }),
+                action: { label: t("noticeAddDates"), href: `/catalog/bookings/${p.id}` },
+              }
+            : {
+                tone: "warning", Icon: Clock,
+                title: t("noticeStopsSellingTitle"),
+                body: t("stopsSelling", { name: p.name, date: formatDay(w.date) }),
+                action: { label: t("noticeOpenProduct"), href: `/catalog/bookings/${p.id}` },
+              },
+        );
       }
     }
     const wl = peekWaitlist().length;
@@ -540,7 +544,7 @@ export default function DashboardPage() {
           if (d === TODAY && toMinutes(s.time) < NOW_MIN) continue;
           if (s.capacity > 1 && s.sold / s.capacity < 0.3) {
             const price = Math.min(...p.tiers.filter((t) => t.active).map((t) => t.price));
-            out.push({ text: `${d === TODAY ? "" : t("tomorrow")}${s.time} ${p.name} · ${s.sold}/${s.capacity}`, value: s.remaining * price, href: `/bookings/${p.id}` });
+            out.push({ text: `${d === TODAY ? "" : t("tomorrow")}${s.time} ${p.name} · ${s.sold}/${s.capacity}`, value: s.remaining * price, href: `/catalog/bookings/${p.id}` });
           }
         }
       }
@@ -665,7 +669,7 @@ export default function DashboardPage() {
     { key: "location", label: t("stepLocation"), done: locations.length > 0, href: "/settings/locations/new" },
     { key: "counter", label: t("stepCounter"), done: has(counters), href: "/settings/counters/new" },
     { key: "team", label: t("stepTeam"), done: has(staffQ), href: "/settings/team/new" },
-    { key: "product", label: t("stepProduct"), done: products.length > 0, href: "/bookings/new" },
+    { key: "product", label: t("stepProduct"), done: products.length > 0, href: "/catalog/new" },
     { key: "device", label: t("stepDevice"), done: (devicesQ.data?.page.total ?? 0) > 0, href: "/settings/devices/new" },
   ];
   const complete = steps.filter((s) => s.done || skipped[s.key]).length;

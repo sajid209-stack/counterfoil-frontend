@@ -29,6 +29,7 @@ export function DateField({
   placeholder,
   className,
   id,
+  size = "toolbar",
 }: {
   value: string | null;
   onChange: (iso: string) => void;
@@ -49,6 +50,11 @@ export function DateField({
   placeholder?: string;
   className?: string;
   id?: string;
+  /** `form` keeps the 44px height of the text and time fields it sits beside
+   *  in a form; `toolbar` (the default) steps down to 36px from `md`, beside
+   *  the toolbar selects and buttons it was first built for. A date and a
+   *  start time side by side at two different heights read as two forms. */
+  size?: "toolbar" | "form";
 }) {
   const [open, setOpen] = useState(false);
   /* Which edge the panel hangs from. A field near the right of the window
@@ -103,7 +109,7 @@ export function DateField({
             ? "min-h-12 rounded-go px-comfortable"
             : shape === "inline"
               ? "h-9 w-auto rounded-sm border-transparent bg-transparent px-tight text-[14px] font-medium hover:bg-muted-wash focus-visible:bg-muted-wash"
-              : cn("rounded-sm", compact ? "" : "h-11 px-comfortable md:h-9"),
+              : cn("rounded-sm", compact ? "" : size === "form" ? "h-11 px-comfortable" : "h-11 px-comfortable md:h-9"),
         )}
       >
         {shape !== "inline" && (

@@ -7,7 +7,7 @@ import type { EventRecord } from "@/lib/api/events";
 import { eventFromPrice } from "@/lib/api/events";
 import { categoryById, type EventTheme, type SectionId } from "@/lib/events/catalog";
 import { parseEventVideo } from "@/lib/events/video";
-import { formatMoney } from "@/lib/format";
+import { formatPriceShort } from "@/lib/format";
 
 /**
  * The published event page — one renderer, six themes.
@@ -41,7 +41,7 @@ interface Labels {
   from: string;
   getTickets: string;
   addToCalendar: string;
-  doorsOpen: string;
+  starts: string;
   countdownDays: string;
   countdownHours: string;
   countdownMins: string;
@@ -113,8 +113,12 @@ export function EventTemplate({
     "--e-badge-bg": mix(c.accent, t.panel, 0.16),
     "--e-badge-ink": accentInk(c.accent, mix(c.accent, t.panel, 0.16), t.fg),
     "--e-badge-muted-bg": mix(t.muted, t.panel, 0.16),
-    "--e-display": c.displayFont,
-    "--e-body": c.bodyFont,
+    /* None of the display faces carries Bengali, so a Bangla title fell to
+       whatever serif the browser had. Hind Siliguri behind each face picks up
+       Bengali glyphs one by one, as the app's own stack does, and leaves the
+       Latin in the face that was chosen. */
+    "--e-display": `${c.displayFont}, var(--font-hind-siliguri), sans-serif`,
+    "--e-body": `${c.bodyFont}, var(--font-hind-siliguri), sans-serif`,
     "--e-radius": t.radius,
   } as CSSProperties;
 
@@ -1118,7 +1122,7 @@ export function EventTemplate({
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
               <p style={{ font: `600 ${narrow ? "17px" : "20px"}/1.2 var(--e-display)`, color: "var(--e-fg)", margin: 0 }}>
-                {fromPrice === null ? labels.soldOut : fromPrice === 0 ? labels.free : formatMoney(fromPrice)}
+                {fromPrice === null ? labels.soldOut : fromPrice === 0 ? labels.free : formatPriceShort(fromPrice)}
               </p>
               {/* Only where the ledger says so. A permanent "selling fast" is a
                   claim the page cannot back up, and buyers learn to ignore it. */}
@@ -1200,7 +1204,7 @@ function Hero({
         {
           icon: CalendarDays,
           head: longDate(start),
-          sub: event.endsAt ? `${time(start)} \u2013 ${time(new Date(event.endsAt))}` : `${time(start)} \u00b7 ${labels.doorsOpen}`,
+          sub: event.endsAt ? `${time(start)} \u2013 ${time(new Date(event.endsAt))}` : `${labels.starts} ${time(start)}`,
         },
         { icon: MapPin, head: event.venueName, sub: event.venueAddress },
       ].map(({ icon: Icon, head, sub }) => (
@@ -1232,7 +1236,7 @@ function Hero({
     <div style={{ display: "flex", flexWrap: "wrap", gap: narrow ? "10px 18px" : "12px 28px", marginTop: narrow ? 18 : 26 }}>
       {[
         { icon: CalendarDays, text: longDate(start) },
-        { icon: Clock, text: `${time(start)} \u00b7 ${labels.doorsOpen}` },
+        { icon: Clock, text: event.endsAt ? `${time(start)} \u2013 ${time(new Date(event.endsAt))}` : `${labels.starts} ${time(start)}` },
         { icon: MapPin, text: event.venueName },
       ].map(({ icon: Icon, text }) => (
         <span key={text} style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
@@ -2542,7 +2546,7 @@ function TicketPanel({
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {t.price === 0 ? labels.free : formatMoney(t.price)}
+                    {t.price === 0 ? labels.free : formatPriceShort(t.price)}
                   </span>
                   <span style={{ font: "400 13px/1.3 var(--e-body)", color: "var(--e-muted)" }}>{labels.perPerson}</span>
                 </p>
@@ -2628,7 +2632,7 @@ function TicketPanel({
                     fontVariantNumeric: "tabular-nums",
                   }}
                 >
-                  {t.price === 0 ? labels.free : formatMoney(t.price)}
+                  {t.price === 0 ? labels.free : formatPriceShort(t.price)}
                 </span>
                 <Badge tone="muted">{labels.soldOutBadge}</Badge>
               </span>
@@ -2657,7 +2661,7 @@ function TicketPanel({
             fontVariantNumeric: "tabular-nums",
           }}
         >
-          {formatMoney(0)}
+          {formatPriceShort(0)}
         </span>
       </div>
 
@@ -2896,7 +2900,7 @@ function TicketTable({
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {t.price === 0 ? labels.free : formatMoney(t.price)}
+                    {t.price === 0 ? labels.free : formatPriceShort(t.price)}
                   </p>
                   {!out && (
                     <p style={{ font: "400 12px/1.4 var(--e-body)", color: "var(--e-muted)", margin: "5px 0 0" }}>
@@ -2979,7 +2983,7 @@ function TicketTable({
                     fontVariantNumeric: "tabular-nums",
                   }}
                 >
-                  {t.price === 0 ? labels.free : formatMoney(t.price)}
+                  {t.price === 0 ? labels.free : formatPriceShort(t.price)}
                 </span>
                 <Badge tone="muted">{labels.soldOutBadge}</Badge>
               </span>
@@ -3035,7 +3039,7 @@ function TicketTable({
                 letterSpacing: theme.displayTracking,
               }}
             >
-              {formatMoney(0)}
+              {formatPriceShort(0)}
             </p>
           </div>
         </div>
@@ -3541,7 +3545,7 @@ function plateArt(accent: string, i: number, strong = false): string {
 }
 
 /** 21000 -> "21,000". The template is a published page rather than a till, so
- *  it groups digits for reading; money still goes through `formatMoney`. */
+ *  it groups digits for reading; money goes through `formatPriceShort`. */
 function formatCount(n: number): string {
   return n.toLocaleString("en-US");
 }

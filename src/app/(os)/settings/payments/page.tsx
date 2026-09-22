@@ -477,7 +477,7 @@ export default function PaymentsPage() {
           <div className="flex flex-col gap-tight px-card py-section sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[13px] leading-relaxed text-muted">{t("advance.policiesNote")}</p>
             <Link
-              href="/bookings"
+              href="/catalog?kind=bookings"
               className="inline-flex min-h-11 shrink-0 items-center self-start rounded-sm text-[13px] font-medium text-fg underline-offset-2 hover:underline sm:self-center md:min-h-9"
             >
               {t("advance.policiesLink")}

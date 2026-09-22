@@ -2,12 +2,10 @@
   "dashboard": "ড্যাশবোর্ড",
   "overview": "সারসংক্ষেপ",
   "calendar": "ক্যালেন্ডার",
-  "events": "ইভেন্ট",
   "orders": "অর্ডার",
   "customers": "গ্রাহক",
   "memberships": "সদস্যপদ",
   "holds": "সংরক্ষণ",
-  "products": "বুকিং",
   "reports": "রিপোর্ট",
   "analytics": "বিশ্লেষণ",
   "promotions": "প্রোমোশন",
@@ -43,5 +41,9 @@
   "searchPlaceholder": "পাতা ও সেটিংস খুঁজুন…",
   "searchGoTo": "যেখানে যাবেন",
   "bookingRules": "বুকিং নিয়ম",
-  "pricing": "মূল্য নির্ধারণ"
+  "pricing": "মূল্য নির্ধারণ",
+  "catalog": "ক্যাটালগ",
+  "aliases": {
+    "catalog": "বুকিং ইভেন্ট পণ্য টিকিট bookings events products"
+  }
 }

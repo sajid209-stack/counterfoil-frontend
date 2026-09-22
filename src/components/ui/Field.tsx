@@ -67,10 +67,13 @@ export function Field({
         </label>
       )}
       {children}
+      {/* The id lets the control name this line as its description, so a
+          screen reader reads the help — or the error — with the field rather
+          than leaving it to be found by wandering. */}
       {error ? (
-        <p className="text-[12px] text-danger">{error}</p>
+        <p id={htmlFor ? `${htmlFor}-msg` : undefined} className="text-[12px] text-danger">{error}</p>
       ) : help ? (
-        <p className="text-[12px] text-muted">{help}</p>
+        <p id={htmlFor ? `${htmlFor}-msg` : undefined} className="text-[12px] text-muted">{help}</p>
       ) : null}
     </div>
   );
@@ -92,6 +95,10 @@ export function FormField({
   ...control
 }: FormFieldProps) {
   const id = useId();
+  const described = {
+    "aria-invalid": error ? true : undefined,
+    "aria-describedby": error || help ? `${id}-msg` : undefined,
+  } as const;
   const border = error ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20";
 
   // Toggle is laid out inline (control beside label), not stacked.
@@ -106,15 +113,16 @@ export function FormField({
             onChange={onChange}
             disabled={control.disabled}
             name={control.name}
+            {...described}
             className="peer sr-only"
           />
           <span className="relative h-6 w-11 shrink-0 rounded-lg bg-line transition-colors duration-quick peer-checked:bg-ember peer-focus-visible:ring-2 peer-focus-visible:ring-ink peer-focus-visible:ring-offset-2 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-card after:transition-transform after:duration-quick peer-checked:after:translate-x-5" />
           {label && <span className="text-sm">{label}</span>}
         </label>
         {error ? (
-          <p className="text-[12px] text-danger">{error}</p>
+          <p id={`${id}-msg`} className="text-[12px] text-danger">{error}</p>
         ) : help ? (
-          <p className="text-[12px] text-muted">{help}</p>
+          <p id={`${id}-msg`} className="text-[12px] text-muted">{help}</p>
         ) : null}
       </div>
     );
@@ -126,6 +134,7 @@ export function FormField({
       <select
         id={id}
         onChange={onChange}
+        {...described}
         {...control}
         className={cn(controlBase, border, "h-11 pr-section")}
       >
@@ -142,6 +151,7 @@ export function FormField({
         id={id}
         rows={rows}
         onChange={onChange}
+        {...described}
         {...control}
         className={cn(controlBase, border, "resize-y py-tight")}
       />
@@ -153,6 +163,7 @@ export function FormField({
         id={id}
         type={type}
         onChange={onChange}
+        {...described}
         {...control}
         className={cn(controlBase, border, "h-11")}
       />

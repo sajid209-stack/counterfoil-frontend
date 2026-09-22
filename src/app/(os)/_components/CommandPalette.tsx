@@ -61,7 +61,15 @@ export function CommandPalette({
   const all = useMemo<Result[]>(() => {
     const pages = destinations
       .filter((d) => d.key !== "promotions" || FEATURES.promotions)
-      .map((d) => ({ href: d.href, title: tn(d.key), hint: tn("searchPage"), words: split(tn(d.key)) }));
+      /* A page answers to its old names too: Catalog is where "bookings" and
+         "events" went, and a hand that types the word it used for months
+         should still land. */
+      .map((d) => ({
+        href: d.href,
+        title: tn(d.key),
+        hint: tn("searchPage"),
+        words: split(`${tn(d.key)} ${tn.has(`aliases.${d.key}`) ? tn(`aliases.${d.key}`) : ""}`),
+      }));
     const settings = SETTINGS_GROUPS.flatMap((g) =>
       g.items.map((item) => {
         const title = ts(`nav.items.${item.key}.title`);

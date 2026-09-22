@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, CalendarDays, PartyPopper, Lock, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Lock, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -28,11 +28,13 @@ export function Sidebar({
   const OPERATE: { label: string; href: string; icon: IconType }[] = [
     { label: t("dashboard"), href: "/dashboard", icon: LayoutDashboard },
     { label: t("calendar"), href: "/calendar", icon: CalendarDays },
-    { label: t("events"), href: "/events", icon: PartyPopper },
     { label: t("orders"), href: "/orders", icon: ReceiptText },
     { label: t("customers"), href: "/customers", icon: UsersRound },
     { label: t("holds"), href: "/holds", icon: Lock },
-    { label: t("products"), href: "/bookings", icon: Ticket },
+    /* One door for everything sold. Bookings and Events were two rows that
+       each held half the answer to "what do we sell?" — and an operator
+       adding a sunset tour had to know first which half it belonged in. */
+    { label: t("catalog"), href: "/catalog", icon: Ticket },
     { label: t("reports"), href: "/reports/sales", icon: ChartNoAxesColumn },
   ];
 

@@ -107,7 +107,7 @@ export const events: EventRecord[] = [
       "Two days of seven-a-side across four pitches, group stage on Saturday and knockouts under lights on Sunday.",
     stats: [
       { id: "s1", value: "16", label: "Teams" },
-      { id: "s2", value: "\u09f32,00,000", label: "Prize pool" },
+      { id: "s2", value: "\u09f3200,000", label: "Prize pool" },
       { id: "s3", value: "24", label: "Matches" },
       { id: "s4", value: "2", label: "Days" },
     ],

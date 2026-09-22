@@ -34,7 +34,7 @@ export function useTemplateLabels(categoryId: CategoryId | null) {
       from: t("from"),
       getTickets: t("getTickets"),
       addToCalendar: t("addToCalendar"),
-      doorsOpen: t("doorsOpen"),
+      starts: t("starts"),
       countdownDays: t("countdown.days"),
       countdownHours: t("countdown.hours"),
       countdownMins: t("countdown.mins"),

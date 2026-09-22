@@ -1,38 +1,23 @@
 {
   "title": "Events",
   "description": "One-off occasions with their own page — concerts, tours, summits, exhibitions.",
-  "newTitle": "Create an event",
-  "newDescription": "Pick a look, add the details, price the tickets. Publish when you're ready.",
+  "newTitle": "Add an event",
+  "newDescription": "Say what it is, when and where — then design its page and price the tickets. Put it on sale when you're ready.",
   "create": "Create event",
   "back": "Back",
   "continue": "Continue",
-  "publish": "Publish",
-  "saveDraft": "Save as draft",
-  "published": "{title} is live.",
-  "savedDraft": "Saved as a draft.",
   "free": "Free",
   "soldOut": "Sold out",
   "from": "From",
   "left": "left",
   "getTickets": "Get tickets",
   "addToCalendar": "Add to calendar",
-  "doorsOpen": "doors open",
   "step": {
-    "category": "Category",
-    "type": "Type",
-    "tickets": "Tickets",
-    "publish": "Publish",
     "categoryTitle": "What kind of event is it?",
     "categoryHelp": "This picks the template, the palette and the typefaces. You can change all of them next.",
-    "typeTitle": "Narrow it down",
-    "typeHelp": "Used on the page as the label above the title, and to group the event in reports.",
     "ticketsTitle": "Tickets and pricing",
     "ticketsHelp": "Most events sell better with two or three tiers than with one.",
-    "publishTitle": "Ready to go",
-    "publishHelp": "This is exactly what people will see. Publish now, or keep it as a draft.",
-    "design": "Design",
-    "designTitle": "Build the page",
-    "designHelp": "Look and content together. Every change lands in the preview as you make it."
+    "designTitle": "Build the page"
   },
   "category": {
     "entertainment": "Entertainment & Social",
@@ -153,28 +138,20 @@
   },
   "field": {
     "title": "Event name",
-    "titlePlaceholder": "Nogor Baul: The Return",
     "subtitle": "One line underneath",
     "subtitlePlaceholder": "One night, one stage, three decades of sound",
-    "date": "Date",
-    "time": "Start time",
     "venue": "Venue",
     "venuePlaceholder": "Army Stadium",
     "address": "Address",
     "addressPlaceholder": "Banani, Dhaka 1213",
     "description": "About this event",
-    "descriptionPlaceholder": "What happens, who it's for, and anything someone should know before buying.",
-    "cover": "Cover image URL",
-    "coverPlaceholder": "https://…",
-    "coverHelp": "Leave empty for generated artwork in your accent colour."
+    "descriptionPlaceholder": "What happens, who it's for, and anything someone should know before buying."
   },
   "tickets": {
-    "tierN": "Ticket {n}",
     "remove": "Remove this ticket",
     "name": "Ticket name",
     "namePlaceholder": "General admission",
     "price": "Price (৳)",
-    "priceHelp": "Leave at 0 for a free ticket.",
     "quantity": "How many",
     "salesEnd": "Stop selling on",
     "salesEndHelp": "Optional — this is what makes a tier an early bird.",
@@ -187,7 +164,9 @@
       "earlyBird": "Early bird",
       "vip": "VIP",
       "free": "Free entry"
-    }
+    },
+    "summaryEnds": "Stops selling {date}",
+    "keepOne": "An event needs at least one ticket type"
   },
   "error": {
     "title": "Give the event a name.",
@@ -312,7 +291,13 @@
     "benefitsNote": "Three reasons to come, each with one line saying what it means. These sit beside the ticket panel.",
     "benefit": "Benefit",
     "benefitLine": "What it means",
-    "pairedWith": "On this template this is drawn beside {section} rather than on its own row. Switch it off here to remove it."
+    "pairedWith": "On this template this is drawn beside {section} rather than on its own row. Switch it off here to remove it.",
+    "heroFromDetails": "The name, tagline, date and cover come from Details.",
+    "venueFromDetails": "The venue and address come from Details.",
+    "editDetails": "Edit details",
+    "sample": "Sample",
+    "sampleNote": "This is sample content for this kind of event. Edit it, hide the section, or keep it as written.",
+    "keepSample": "Keep as written"
   },
   "tpl": {
     "orderSummary": "Order summary",
@@ -382,7 +367,7 @@
         "label": "Teams"
       },
       "stat1": {
-        "value": "৳2,00,000",
+        "value": "৳200,000",
         "label": "Prize pool"
       },
       "stat2": {
@@ -568,5 +553,6 @@
     "archived": "{title} archived",
     "restored": "{title} restored",
     "deleted": "{title} deleted"
-  }
+  },
+  "starts": "Starts"
 }

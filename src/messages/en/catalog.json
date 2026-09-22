@@ -1,0 +1,753 @@
+{
+  "title": "Catalog",
+  "description": "Everything you sell — the bookings people make, and the events on a date.",
+  "add": "Add to catalog",
+  "kind": {
+    "all": "All",
+    "bookings": "Bookings",
+    "events": "Events"
+  },
+  "type": {
+    "entry": "Entry ticket",
+    "timed": "Timed session",
+    "tour": "Guided tour",
+    "space": "Space for hire",
+    "appointment": "Appointment",
+    "course": "Course",
+    "pass": "Pass or credit pack",
+    "bundle": "Bundle",
+    "event": "Event · {category}"
+  },
+  "whenKind": {
+    "entry": "Any open day",
+    "timed": "Set start times",
+    "tour": "Set departures",
+    "space": "By the slot or hour",
+    "appointment": "When someone is free",
+    "course": "A run of sessions",
+    "pass": "Used any time",
+    "bundle": "When its parts run"
+  },
+  "everyDay": "Every day",
+  "sessions": "{count, plural, one {# session} other {# sessions}}",
+  "col": {
+    "item": "Item",
+    "type": "Type",
+    "when": "When",
+    "from": "From",
+    "selling": "Selling",
+    "state": "State",
+    "actions": "Actions"
+  },
+  "noPrice": "No price",
+  "soldOut": "Sold out",
+  "free": "Free",
+  "soldOf": "{sold} / {cap}",
+  "recent": "{count, plural, one {# booked ahead} other {# booked ahead}}",
+  "noneRecent": "Nothing booked ahead",
+  "state": {
+    "onSale": "On sale",
+    "needsSetup": "Needs setup",
+    "soldOut": "Sold out",
+    "offSale": "Off sale",
+    "ended": "Ended",
+    "archived": "Archived"
+  },
+  "selectOne": "Select {name}",
+  "selectPage": "Select page",
+  "selectedCount": "{count} selected",
+  "clearSelection": "Clear",
+  "rowActions": "Actions for {name}",
+  "action": {
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "onSale": "Put on sale",
+    "offSale": "Take off sale",
+    "archive": "Archive",
+    "restore": "Restore"
+  },
+  "toast": {
+    "onSaleOne": "{name} is on sale.",
+    "offSaleOne": "{name} is off sale.",
+    "onSaleMany": "{count} items are on sale.",
+    "offSaleMany": "{count} items are off sale.",
+    "archivedOne": "{name} archived.",
+    "archivedMany": "{count} items archived.",
+    "duplicated": "Copied — {name} stays off sale until you put it on.",
+    "restored": "{name} is back in the catalog, off sale."
+  },
+  "undo": "Undo",
+  "confirm": {
+    "archiveOne": "Archive {name}?",
+    "archiveMany": "Archive {count} items?",
+    "archiveBody": "It comes off sale and out of the catalog. Orders and tickets already sold are kept, and you can restore it later.",
+    "archiveSoldOne": "{count} tickets are sold for {date}. Archiving takes it off sale — those tickets stay valid and still scan at the gate.",
+    "archiveSoldMany": "{count, plural, one {# of these has} other {# of these have}} tickets sold for dates still to come. Archiving takes them off sale — those tickets stay valid and still scan at the gate."
+  },
+  "stat": {
+    "attention": "Needs attention",
+    "bookedAhead": "Upcoming bookings",
+    "bookedAheadNote": "bookings from today on",
+    "ticketsSold": "Event tickets sold",
+    "ticketsSoldNote": "for events still to come",
+    "attentionNote": "Can't sell yet, or about to stop selling — dates running out, a sales window closing",
+    "ticketRevenue": "Event ticket revenue",
+    "ticketRevenueNote": "for events still to come",
+    "attentionLine": "{count, plural, =0 {Nothing needs you} one {# needs attention} other {# need attention}}",
+    "bookedAheadLine": "{count, number} upcoming bookings",
+    "ticketsSoldLine": "{count, number} tickets sold",
+    "weekUse": "Used, next 7 days",
+    "weekUseNote": "{used} of {cap} slots and places across your bookings",
+    "onSale": "On sale",
+    "onSaleNote": "On sale now, of everything in this view",
+    "nextEvent": "Next event"
+  },
+  "searchPlaceholder": "Search the catalog",
+  "allCategories": "All categories",
+  "sortBy": "Sort",
+  "sort": {
+    "smart": "What needs you first",
+    "name": "Name",
+    "price": "Price",
+    "updated": "Recently changed"
+  },
+  "stateFilter": "Filter by state",
+  "clearFilters": "Clear filters",
+  "emptyTitle": "Nothing here yet",
+  "emptyFiltered": "Nothing matches these filters.",
+  "emptyKind": {
+    "all": "Nothing is on sale yet.",
+    "bookings": "No bookings yet — a lane, a tour, an appointment, an entry ticket.",
+    "events": "No events yet — a concert, a match, a conference, an exhibition."
+  },
+  "moved": {
+    "title": "Bookings and Events are one Catalog now.",
+    "body": "Everything you sell is on this page, and the Bookings and Events tabs keep your old lists one click away.",
+    "dismiss": "Dismiss",
+    "gotIt": "Got it"
+  },
+  "firstRun": {
+    "eyebrow": "Your catalog",
+    "title": "Add the first thing you sell",
+    "body": "A lane, a tour, a massage, a concert — say what it is and the questions after follow from it.",
+    "step": {
+      "pick": "Choose what it is",
+      "shape": "Set when it runs and what it costs",
+      "sell": "Put it on sale — at the till and online"
+    }
+  },
+  "copyName": "{name} (copy)",
+  "chooser": {
+    "title": "Add to your catalog",
+    "description": "Pick what you're adding — we'll only ask what that needs.",
+    "searchPlaceholder": "Search: bowling, massage, concert…",
+    "searchLabel": "Search the kinds of thing you can sell",
+    "bookingsTitle": "Something people book",
+    "eventsTitle": "An event on a date",
+    "have": "{count} in your catalog",
+    "eg": "e.g.",
+    "noMatch": "Nothing called “{query}” yet",
+    "noMatchHint": "Try another word, or answer three questions below and we'll work out the kind.",
+    "guidedTitle": "Not sure which it is?",
+    "guidedBody": "Answer three questions about how people book it.",
+    "copyTitle": "Copy something you already sell",
+    "copyBody": "Start from a booking or event that's close, and change what's different.",
+    "copySearch": "Search your catalog",
+    "copyAction": "Copy",
+    "copying": "Copying…",
+    "booking": {
+      "entry": {
+        "title": "Entry tickets",
+        "body": "Visitors come in on the day — no time slot to pick.",
+        "examples": "museum entry, park day pass",
+        "keywords": "admission entry gate ticket museum park zoo garden day pass walk-in"
+      },
+      "timed": {
+        "title": "Timed sessions",
+        "body": "Set start times with a set number of places.",
+        "examples": "planetarium show, timed museum entry",
+        "keywords": "session slot screening show timed cinema planetarium theatre class"
+      },
+      "tour": {
+        "title": "Guided tours",
+        "body": "Departures run by a guide — capacity follows who leads.",
+        "examples": "heritage walk, boat tour",
+        "keywords": "tour guide guided walking departure excursion boat trip heritage"
+      },
+      "space": {
+        "title": "Spaces for hire",
+        "body": "Hire a field, court, lane or room — by the slot or by the hour.",
+        "examples": "futsal pitch, bowling lane",
+        "keywords": "field turf court lane bowling badminton futsal cricket tennis room table studio bay hire rental pitch"
+      },
+      "appointment": {
+        "title": "Appointments",
+        "body": "Time with a person — booked by name or first available.",
+        "examples": "massage, coaching session",
+        "keywords": "appointment massage spa therapist salon stylist coach trainer lesson instructor treatment"
+      },
+      "course": {
+        "title": "Courses",
+        "body": "One sign-up for a run of dated sessions.",
+        "examples": "swimming course, art workshop series",
+        "keywords": "course class series workshop programme program lessons term"
+      },
+      "pass": {
+        "title": "Passes & credit packs",
+        "body": "Buy now, use later — a pack of visits or credits.",
+        "examples": "10-visit pass, class credits",
+        "keywords": "pass credits credit pack punch card multi-visit bundle of visits membership prepaid"
+      },
+      "bundle": {
+        "title": "Bundles",
+        "body": "Several of your bookings sold as one ticket.",
+        "examples": "fort + museum combo",
+        "keywords": "bundle combo package combined together attractions"
+      }
+    },
+    "event": {
+      "entertainment": {
+        "title": "Entertainment",
+        "body": "A show, a concert, a comedy night.",
+        "examples": "live concert, stand-up night",
+        "keywords": "concert gig music comedy theatre show festival live band"
+      },
+      "sports": {
+        "title": "Sports",
+        "body": "A match, a race, a tournament.",
+        "examples": "cricket final, fun run",
+        "keywords": "sport match game tournament race run league final"
+      },
+      "business": {
+        "title": "Business",
+        "body": "A conference, a summit, a meetup.",
+        "examples": "tech summit, trade fair",
+        "keywords": "conference summit meetup seminar workshop business expo fair networking"
+      },
+      "arts": {
+        "title": "Arts",
+        "body": "An exhibition, an opening, a festival of work.",
+        "examples": "gallery opening, art fair",
+        "keywords": "art exhibition gallery opening museum culture craft photography"
+      },
+      "travel": {
+        "title": "Travel",
+        "body": "A trip, an expedition, a retreat on set dates.",
+        "examples": "Sundarbans trip, hill retreat",
+        "keywords": "travel trip expedition retreat journey excursion holiday adventure"
+      },
+      "nightlife": {
+        "title": "Nightlife",
+        "body": "A club night, a party, a DJ set.",
+        "examples": "rooftop party, DJ night",
+        "keywords": "club party dj rave night nightlife dance"
+      }
+    },
+    "bookingsRule": "Repeats on many dates — the same setup each time",
+    "eventsRule": "One date, or a few — with its own page",
+    "tieBreak": "Found in both. Choose a booking if it repeats on many dates with the same setup, or an event if it happens once and needs its own page."
+  },
+  "setup": {
+    "change": "Edit answer",
+    "back": "Back",
+    "allQuestions": "See every question",
+    "done": "Done",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "today": "Today",
+    "chooseDate": "Choose a date",
+    "q1": {
+      "title": "How do visitors book this?",
+      "showUp": {
+        "title": "They just show up — no date needed",
+        "helper": "Come whenever they like."
+      },
+      "pickDate": {
+        "title": "They pick a date",
+        "helper": "A day, maybe with a daily limit."
+      },
+      "pickTime": {
+        "title": "They pick a date and time",
+        "helper": "A specific time slot."
+      },
+      "space": {
+        "title": "They book a space or equipment",
+        "helper": "A field, court, lane, room…"
+      },
+      "person": {
+        "title": "They book a person",
+        "helper": "A therapist, instructor, coach…"
+      },
+      "course": {
+        "title": "They enrol in a course",
+        "helper": "One sign-up, many dates."
+      },
+      "bundle": {
+        "title": "It combines other bookings",
+        "helper": "A bundle sold as one ticket."
+      },
+      "credits": {
+        "title": "It's a pack of credits",
+        "helper": "Buy now, book later."
+      }
+    },
+    "entry": {
+      "title": "Do visitors pick a date?",
+      "none": {
+        "title": "No — they just come in",
+        "helper": "Valid any day you're open."
+      },
+      "date": {
+        "title": "Yes — no daily limit",
+        "helper": "They choose the day they'll visit."
+      },
+      "capped": {
+        "title": "Yes — capped per day",
+        "helper": "Once a date is full it stops selling."
+      }
+    },
+    "q2": {
+      "title": "Do you limit how many visitors per day?",
+      "noLimit": {
+        "title": "No limit",
+        "helper": "Sell as many as you like."
+      },
+      "cap": {
+        "title": "Yes, cap it per day",
+        "helper": "Once full, that date stops selling."
+      }
+    },
+    "q3": {
+      "title": "Is it led by a guide or host?",
+      "fixed": {
+        "title": "No — visitors arrive at a set time",
+        "helper": "A screening or a session."
+      },
+      "guided": {
+        "title": "Yes — a guide runs each departure",
+        "helper": "Capacity follows who leads."
+      }
+    },
+    "resource": {
+      "which": "Which of these can they book?",
+      "addOne": "Add one",
+      "addPlaceholder": "e.g. {noun} 5",
+      "type": "Type",
+      "add": "Add",
+      "timeTitle": "How is time booked?",
+      "fixed": {
+        "title": "Fixed slots",
+        "helper": "Set start times."
+      },
+      "flex": {
+        "title": "Flexible",
+        "helper": "A start time and a length."
+      },
+      "shortest": "Shortest booking",
+      "longest": "Longest booking",
+      "steps": "In steps of",
+      "stepsHelp": "Prices for each length are set in the editor afterwards.",
+      "exclusiveTitle": "One booking at a time on each?",
+      "exclusive": {
+        "title": "Yes — exclusive",
+        "helper": "One group at a time."
+      },
+      "shared": {
+        "title": "No — shared",
+        "helper": "Several groups at once."
+      },
+      "basisTitle": "How is it priced?",
+      "perBooking": {
+        "title": "Per booking",
+        "helper": "One price for the whole group."
+      },
+      "perPerson": {
+        "title": "Per person",
+        "helper": "Tiers × how many people."
+      },
+      "gap": "Gap between bookings"
+    },
+    "provider": {
+      "callThem": "What do you call them?",
+      "who": "Who?",
+      "noTeam": "Add team members first, then pick them here.",
+      "howLong": "How long does it take?",
+      "pickable": "Can visitors pick the person?",
+      "pickableHelp": "Off means first available."
+    },
+    "course": {
+      "dates": "Session dates",
+      "remove": "Remove date",
+      "addDate": "Add date",
+      "places": "Places across the whole course"
+    },
+    "bundle": {
+      "title": "Which bookings does it combine?",
+      "help": "Pick at least two. They are sold together as one ticket."
+    },
+    "credits": {
+      "count": "Number of credits",
+      "expiry": "Expiry (days)",
+      "spendable": "Spendable on"
+    },
+    "summary": {
+      "showUp": "Visitors can come any time — no date needed.",
+      "dateNoLimit": "Visitors pick a date. No daily limit.",
+      "dateCapped": "Visitors pick a date, capped per day.",
+      "timed": "Visitors pick a date and time. Runs at set start times.",
+      "guided": "Visitors pick a date and time. A guide runs each departure.",
+      "fixedSlot": "a fixed slot",
+      "flexRange": "{min}–{max}, in {step} steps",
+      "resource": "Visitors book {count, plural, one {the {noun}} other {one of # {noun}s}} for {timing}.",
+      "exclusive": "One group at a time.",
+      "shared": "Shared by several groups.",
+      "gap": "{gap} between bookings.",
+      "provider": "Visitors book a {noun} for {duration}, {pick, select, name {chosen by name} other {first available}} — {count, plural, one {# person} other {# people}} to choose from.",
+      "course": "A course of {count} sessions, {places} places across the course.",
+      "bundle": "One ticket combining {count} bookings.",
+      "credits": "A pack of {count} credits, valid {days} days, spendable on {products, plural, one {# booking} other {# bookings}}."
+    },
+    "missing": {
+      "resource": "Tick at least one field, court or lane.",
+      "provider": "Tick at least one person who does it.",
+      "course": "Add at least one date.",
+      "bundle": "Tick at least two bookings to bundle.",
+      "credits": "Tick at least one booking the credits can be spent on."
+    }
+  },
+  "wizard": {
+    "pageTitle": "Add a booking",
+    "pageDescription": "Say what it is and how people book it — the rest follows.",
+    "adding": "Adding",
+    "changeKind": "Change",
+    "progress": "Progress",
+    "step": {
+      "how": "How it's booked",
+      "details": "Details",
+      "when": "When",
+      "price": "Price",
+      "where": "Where it's sold",
+      "review": "Review"
+    },
+    "title": {
+      "how": "How do people book it?",
+      "details": "What is it called?",
+      "when": "When does it run?",
+      "price": "What does it cost?",
+      "where": "Where is it sold?",
+      "review": "Check it over"
+    },
+    "help": {
+      "how": "Answer in your own words — the setup underneath is handled for you.",
+      "details": "The name guests see on tickets, receipts and the booking page.",
+      "when": "Set the days and times it runs. The preview shows what that adds up to.",
+      "price": "Set what each ticket costs. Add a time band if evenings or weekends cost more.",
+      "where": "At the till, online, or both — and at which of your locations.",
+      "review": "This is what goes on sale."
+    },
+    "name": "Name",
+    "namePlaceholder": "Sunset boat tour",
+    "description": "Description",
+    "descriptionPlaceholder": "What the guest is buying…",
+    "category": "Category",
+    "uncategorised": "Uncategorised",
+    "waitlist": "Let people join a waitlist when it's full",
+    "soldWhere": "Where it's sold",
+    "atCounter": "At the counter",
+    "online": "Online",
+    "nowhere": "Choose at least one — otherwise nobody can buy it.",
+    "locations": "Locations",
+    "noLocation": "You haven't added a location yet.",
+    "addLocationNow": "Add one now",
+    "soldAt": "Sold at <b>{name}</b>.",
+    "addLocation": "Add a location",
+    "locationAdded": "Location added.",
+    "locationName": "Name",
+    "locationNamePlaceholder": "Main gate",
+    "city": "City",
+    "cityPlaceholder": "Dhaka",
+    "cancel": "Cancel",
+    "untitled": "Untitled booking",
+    "row": {
+      "price": "Price",
+      "where": "Where",
+      "how": "How it's booked",
+      "details": "Details",
+      "when": "When",
+      "window": "Booking window"
+    },
+    "sessionsPerDay": "{count, plural, one {# session} other {# sessions}} a day",
+    "perDay": "{count} a day",
+    "reviewReady": "Everything it needs is set. Put it on sale now, or save it off sale and come back to it.",
+    "reviewNotReady": "A few things are still missing — see the list beside this. You can save it off sale in the meantime.",
+    "back": "Back",
+    "continue": "Continue",
+    "saveOffSale": "Save off sale",
+    "putOnSale": "Put on sale",
+    "toastOnSale": "{name} is on sale.",
+    "toastDraft": "{name} is saved, off sale.",
+    "summaryTitle": "Your booking",
+    "readyTitle": "Ready to sell",
+    "check": {
+      "how": "How it's booked",
+      "name": "A name",
+      "when": "Days and times",
+      "price": "A price",
+      "channel": "Somewhere to sell it"
+    },
+    "checkDone": "done",
+    "checkTodo": "still to do",
+    "readyYes": "Ready to put on sale.",
+    "readyNo": "{count, plural, one {# thing} other {# things}} left before it can go on sale.",
+    "stepOf": "Step {n} of {total}",
+    "missing": {
+      "how": "Choose how people book it — pick one of the answers below.",
+      "name": "Give it a name — it's what guests see on tickets and receipts.",
+      "when": "Choose at least one open day and the hours it runs.",
+      "tiers": "Add at least one price.",
+      "tierName": "Name this ticket.",
+      "tierPrice": "Set a price — 0 for free.",
+      "channelConfirm": "Check where it's sold before it goes on sale.",
+      "location": "Choose at least one location — it's where this is sold."
+    },
+    "namePlaceholderEg": "e.g. {example}",
+    "atCounterHelp": "Your team sells it at the till.",
+    "onlineHelp": "Guests can book it on your booking page.",
+    "notOnline": "Not on your website — it will only be sold at the counter.",
+    "notOnlineShort": "Not on your website",
+    "editStep": "Edit {step}",
+    "edit": "Edit",
+    "photos": "{count, plural, one {# photo} other {# photos}}",
+    "noPhoto": "No photo",
+    "waitlistOn": "Waitlist when full",
+    "bandsCount": "+ {count, plural, one {# time band} other {# time bands}}",
+    "placesEach": "{count} places each",
+    "everyDay": "Every day",
+    "hint": {
+      "needsPrice": "{name} needs a price",
+      "needsName": "Every price needs a name",
+      "needsLocation": "Choose at least one location"
+    },
+    "readyShort": "Ready to sell",
+    "leftShort": "{count, plural, one {# thing left} other {# things left}}",
+    "channelOff": "{name} — off",
+    "window": "Bookable up to {days} days ahead · {cutoff}",
+    "cutoffAtStart": "sales close at the start",
+    "cutoffBefore": "sales close {time} before the start",
+    "windowLater": "Change it in Policies once it's saved.",
+    "everyEach": "every {every} · {each} each",
+    "everyEachOverlap": "every {every} · {each} each (overlapping)",
+    "windowWithLater": "{window} — change it in Policies once it's saved."
+  },
+  "fields": {
+    "tiers": "Prices",
+    "addTier": "Add tier",
+    "noTiers": "No tiers yet. Add at least one (e.g. Adult, Child).",
+    "tierName": "Name",
+    "tierNamePlaceholder": "e.g. Child",
+    "price": "Price ({currency})",
+    "admits": "Admits",
+    "ageNote": "Age note",
+    "donationHelp": "Pay what you want — the price becomes the minimum",
+    "donation": "Donation",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "removeTier": "Remove tier",
+    "every": "Sessions every",
+    "everyHelp": "Type anything — “45”, “1:30”, “1h15” all work.",
+    "lasts": "Each session lasts",
+    "first": "First session",
+    "firstHelp": "Type “930”, “1830” or “6:30p”.",
+    "last": "Last session",
+    "holds": "Each session holds",
+    "perDay": "Visitors per day",
+    "perDayHelp": "Once full, that date stops selling.",
+    "openDays": "Open days",
+    "overrides": "Different hours on some days",
+    "removeOverride": "Remove",
+    "addOverride": "Add day override",
+    "whoLeads": "Who can lead this?",
+    "noGuides": "No team members yet — add your first guide from the Team screen.",
+    "preview": "Preview",
+    "capacityWeek": "{perDay} sessions a day · {perWeek} a week · up to <b>{visitors}</b> visitors a week",
+    "except": "Except {days}",
+    "capacityDay": "Up to <b>{visitors}</b> visitors a day, {days} days a week.",
+    "closedDates": "Closed & special dates",
+    "closed": "Closed",
+    "remove": "Remove",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "today": "Today",
+    "chooseDate": "Choose a date",
+    "addClosed": "Add closed date",
+    "bands": "Prices by time of day",
+    "addBand": "Add band",
+    "bandsHelp": "The base price applies all day. Add a band to charge differently at certain times — the first band that matches wins.",
+    "base": "Base · {price}",
+    "anyDay": "any day",
+    "from": "From",
+    "to": "To",
+    "earlier": "Earlier in order",
+    "later": "Later in order",
+    "removeBand": "Remove band",
+    "images": "Images",
+    "removeImage": "Remove image",
+    "addImage": "Add",
+    "tiersHelp": "One row for each kind of ticket — adult, child, family.",
+    "tierDetails": "Details",
+    "summaryAge": "Ages {note}",
+    "summaryMax": "Up to {count} per order",
+    "ageNotePlaceholder": "e.g. 5–12",
+    "ageNoteHelp": "Printed on the ticket.",
+    "maxPerOrder": "Most per order",
+    "maxPerOrderHelp": "Leave empty for no limit.",
+    "tierAdult": "Adult",
+    "tierStandard": "Standard",
+    "allDay": "Same price all day · {price} — add a band for evenings or weekends",
+    "overlap": "Sessions overlap: each lasts {lasts} but a new one starts every {every}. Fine for groups that rotate — in one room, start them at least {lasts} apart."
+  },
+  "editEvent": {
+    "title": "Edit {title}",
+    "description": "Change the facts, the page and the tickets. Nothing already sold is lost.",
+    "cancel": "Cancel",
+    "save": "Save changes",
+    "saved": "{title} saved.",
+    "tabPage": "Page",
+    "tabTickets": "Ticket types",
+    "soldNote": "Tiers that have sold keep their sales. You can raise a tier's quantity, or lower it to what has sold — not below.",
+    "removedSold": "{name} has {count} sold, so it can't be removed. Lower its quantity to {count} to stop selling it instead.",
+    "belowSold": "{name} has already sold {count} — its quantity can't go below that.",
+    "cantRemove": "Can't remove — {count} sold",
+    "tabDetails": "Details",
+    "soldCol": "Sold",
+    "soldOf": "{sold} / {cap} sold",
+    "tabSales": "Tickets & sales"
+  },
+  "warning": {
+    "datesRunOut": "No sessions after {date}",
+    "salesWindowEnds": "Stops selling on {date}"
+  },
+  "facet": {
+    "attention": "Needs attention"
+  },
+  "allStates": "All",
+  "useSlots": "{used} of {cap} slots",
+  "usePlaces": "{used} of {cap} places",
+  "next7": "next 7 days",
+  "selectAllMatching": "Select all {count} matching",
+  "bulk": {
+    "putOn": "Put {count} on sale",
+    "takeOff": "Take {count} off sale",
+    "noneToPutOn": "Everything selected is already on sale.",
+    "noneToTakeOff": "Nothing selected is on sale.",
+    "noneToChange": "Nothing selected can go on or off sale — it has ended or is archived.",
+    "region": "Bulk actions"
+  },
+  "moreFilters": "More filters",
+  "eventDetails": {
+    "what": "What it is",
+    "subtitleHelp": "One line under the name, on the page and in listings.",
+    "kind": "Kind of event",
+    "kindHelp": "A label for listings — it doesn't change the page.",
+    "kindNone": "Not set",
+    "when": "When it is",
+    "date": "Date",
+    "pickDate": "Choose a date",
+    "starts": "Starts",
+    "endDate": "Ends on",
+    "ends": "Ends at",
+    "addEnd": "Add an end time",
+    "where": "Where it is",
+    "cover": "Cover image",
+    "coverHelp": "Shown at the top of the page and in your catalog. A wide photo works best.",
+    "coverPreview": "Cover image preview",
+    "replace": "Replace",
+    "remove": "Remove",
+    "upload": "Upload a cover image",
+    "uploadHint": "Click, or drop a photo here",
+    "eg": "e.g. {example}",
+    "example": {
+      "entertainment": "Nogor Baul Live",
+      "sports": "Dhaka Futsal Night",
+      "business": "Sylhet Tech Summit",
+      "arts": "Rivers in Ink",
+      "travel": "Three Days in the Sundarbans",
+      "nightlife": "Underground Vol. 8"
+    },
+    "removeEnd": "Remove end time",
+    "subtitleExample": "One night, one stage"
+  },
+  "eventWizard": {
+    "step": {
+      "category": "Category",
+      "details": "Details",
+      "design": "Page",
+      "tickets": "Tickets & sales",
+      "publish": "Put on sale"
+    },
+    "title": {
+      "details": "The facts",
+      "publish": "Check it over",
+      "tickets": "Tickets & sales"
+    },
+    "help": {
+      "details": "Name, date and venue — what the page and every ticket will say.",
+      "design": "Choose how the page looks and fill its sections. The preview changes as you type.",
+      "publish": "This is what goes on sale — the facts, the page and the tickets."
+    },
+    "row": {
+      "details": "Details",
+      "page": "Page",
+      "tickets": "Tickets",
+      "where": "Where"
+    },
+    "missing": {
+      "date": "Choose the date.",
+      "ends": "The end has to be after the start.",
+      "counterLocation": "Choose which venues' counters will sell it."
+    },
+    "check": {
+      "name": "A name",
+      "date": "A date",
+      "venue": "A venue",
+      "page": "The page, without sample content",
+      "tickets": "Tickets",
+      "channel": "Somewhere to sell it"
+    },
+    "sections": "{count, plural, one {# section} other {# sections}}",
+    "qty": "{count, plural, one {# ticket} other {# tickets}}",
+    "ready": "Everything it needs is set. Put it on sale now, or save it off sale and come back to it.",
+    "notReady": "A few things are still missing — see the list beside this. You can save it off sale in the meantime.",
+    "summaryTitle": "Your event",
+    "untitled": "Untitled event",
+    "fromAndCap": "From {price} · {count} tickets",
+    "hint": {
+      "samples": "{count, plural, one {# section still shows sample content — edit or hide it} other {# sections still show sample content — edit or hide them}}"
+    },
+    "onlineHelp": "On the event's own page — goes live when public event pages launch.",
+    "onlinePage": "Online, on its page",
+    "notLiveYet": "Public event pages and event sales at the till are still to come. Putting this on sale publishes it here, ready for when they arrive.",
+    "counterHelp": "At the till — arrives with event sales at the counter."
+  },
+  "select": "Select",
+  "selectDone": "Done",
+  "eventRecord": {
+    "sold": "Tickets sold",
+    "soldNote": "{pct}% of capacity",
+    "starts": "Starts",
+    "ended": "Ended",
+    "today": "Today",
+    "inDays": "{count, plural, one {in # day} other {in # days}}",
+    "colTicket": "Ticket",
+    "colPrice": "Price",
+    "colSold": "Sold",
+    "colRevenue": "Revenue",
+    "salesEnd": "Stops selling {date}",
+    "where": "When, where and how it's sold",
+    "when": "When",
+    "venue": "Venue",
+    "soldAt": "Sold",
+    "page": "Page address",
+    "notLive": "not live yet"
+  }
+}

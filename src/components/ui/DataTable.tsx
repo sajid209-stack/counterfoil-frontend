@@ -5,10 +5,14 @@ import { cn } from "@/lib/cn";
 
 export interface Column<T> {
   key: string;
-  header: string;
+  /** Usually a word. A node where the header IS a control — a select-all box. */
+  header: React.ReactNode;
   render?: (row: T) => React.ReactNode;
   sortable?: boolean;
   align?: "left" | "right" | "center";
+  /** Right-aligned columns set their figures in DM Mono by default. A table
+   *  following the Inter type spec for money and counts turns it off. */
+  mono?: boolean;
   width?: string;
   className?: string;
 }
@@ -45,6 +49,19 @@ export interface DataTableProps<T> {
     onPageChange: (page: number) => void;
   };
   skeletonRows?: number;
+  /** Rows ticked for a bulk action. A selected row that looks exactly like
+   *  the rest leaves the checkbox as the only record of what is about to be
+   *  acted on — which is fine until the list is longer than a screen. */
+  isSelected?: (row: T) => boolean;
+  /** `fixed` sizes columns from their declared widths and lets the rest take
+   *  what is left, so one long name cannot push the last column off the edge.
+   *  Opt-in: tables that never declared widths keep sizing to their content. */
+  layout?: "auto" | "fixed";
+  /** `page` lets the table run the full length of the page, which then does
+   *  the only vertical scrolling; the default keeps it in a 70vh box with its
+   *  own scroll and a pinned header. A long list in a box inside a scrolling
+   *  page is two scrollbars and a trapped mouse wheel. */
+  height?: "box" | "page";
 }
 
 /** Deterministic block width for a loading cell — see the note at the call site. */
@@ -71,6 +88,9 @@ export function DataTable<T>({
   minWidth,
   pagination,
   skeletonRows = 6,
+  isSelected,
+  layout = "auto",
+  height = "box",
 }: DataTableProps<T>) {
   const showEmpty = !loading && rows.length === 0;
 
@@ -96,7 +116,11 @@ export function DataTable<T>({
               tabIndex={onRowClick ? 0 : undefined}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
-              className={cn("card-surface p-card transition-transform duration-quick", onRowClick && "cursor-pointer active:bg-subtle hover:-translate-y-0.5")}
+              className={cn(
+                "card-surface p-card transition-transform duration-quick",
+                onRowClick && "cursor-pointer active:bg-subtle hover:-translate-y-0.5",
+                isSelected?.(row) && "border-ember bg-ember/5",
+              )}
             >
               {renderCard ? (
                 renderCard(row)
@@ -115,7 +139,7 @@ export function DataTable<T>({
                   // nothing says so.
                   <div key={col.key} className="flex min-w-0 max-w-full items-baseline gap-inline">
                     <dt className="type-label shrink-0 text-[12px] uppercase text-muted">{col.header}</dt>
-                    <dd className={cn("min-w-0 break-words text-[13px]", col.align === "right" && "font-mono tabular-nums")}>
+                    <dd className={cn("min-w-0 break-words text-[13px]", col.align === "right" && col.mono !== false && "font-mono", col.align === "right" && "tabular-nums")}>
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "")}
                     </dd>
                   </div>
@@ -132,8 +156,17 @@ export function DataTable<T>({
           the ground and wrong for a dense grid of text: the body read as warm
           off-white while the sticky `thead`, which sets `bg-card`, read as
           white, so the header and its own rows did not match. */}
-      <div className="hidden max-h-[70vh] overflow-auto rounded-md border border-line bg-card scroll-x-hint md:block">
-        <table className="table-inset w-full border-collapse text-sm" style={minWidth ? { minWidth } : undefined}>
+      {/* `relative` makes this box the containing block for anything
+          absolutely positioned in a cell — screen-reader-only text above all.
+          Without it that text is placed against the page instead, escapes this
+          box's clip, and quietly makes the whole document taller than its
+          content: on the catalog, 850px taller, enough to scroll the sticky
+          sidebar away. */}
+      <div className={cn("relative hidden overflow-auto rounded-md border border-line bg-card scroll-x-hint md:block", height === "box" && "max-h-[70vh]")}>
+        <table
+          className={cn("table-inset w-full border-collapse text-sm", layout === "fixed" && "table-fixed")}
+          style={minWidth ? { minWidth } : undefined}
+        >
                   {/* `line`, not `neutral-200`: the raw primitive is a palette entry
             that is never redefined for dark, so this rule painted a light
             #e2ded5 hairline across the top of every dark table. */}
@@ -238,8 +271,10 @@ export function DataTable<T>({
                         }
                       : undefined
                   }
+                  aria-selected={isSelected ? isSelected(row) : undefined}
                   className={cn(
                     "h-12 border-b border-line last:border-0",
+                    isSelected?.(row) && "bg-ember/5",
                     onRowClick &&
                       // The ring itself comes from the app's one unlayered :focus-visible
                       // rule, which already paints ember at 2px. Utilities here only
@@ -247,7 +282,11 @@ export function DataTable<T>({
                       // Tailwind, which cannot tell a colour from a width, so it
                       // emitted the wrong property and the row fell back to the
                       // browser default.
-                      "cursor-pointer transition-colors duration-quick hover:bg-subtle focus-visible:bg-subtle",
+                      /* A selected row keeps its tint under the pointer —
+                         deepened, not swapped for the plain hover grey. */
+                      (isSelected?.(row)
+                        ? "cursor-pointer transition-colors duration-quick hover:bg-ember/10 focus-visible:bg-ember/10"
+                        : "cursor-pointer transition-colors duration-quick hover:bg-subtle focus-visible:bg-subtle"),
                   )}
                 >
                   {columns.map((col) => (
@@ -256,7 +295,8 @@ export function DataTable<T>({
                       className={cn(
                         "px-comfortable py-tight align-middle",
                         alignClass(col.align),
-                        col.align === "right" && "font-mono tabular-nums",
+                        col.align === "right" && col.mono !== false && "font-mono",
+                        col.align === "right" && "tabular-nums",
                         col.className,
                       )}
                     >
@@ -295,7 +335,7 @@ function Pagination({
 
   return (
     <div className="flex items-center justify-between">
-      <p className="font-mono text-[12px] text-muted">
+      <p className="text-[12px] tabular-nums text-muted">
         {loading ? "…" : `${from}–${to} of ${total}`}
       </p>
       <div className="flex items-center gap-tight">
@@ -308,7 +348,7 @@ function Pagination({
         >
           <ChevronLeft size={16} strokeWidth={1.5} />
         </button>
-        <span className="font-mono text-[12px] text-muted">
+        <span className="text-[12px] tabular-nums text-muted">
           {page} / {totalPages}
         </span>
         <button

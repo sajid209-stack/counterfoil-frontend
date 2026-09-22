@@ -11,11 +11,10 @@ import {
   Ellipsis,
   LayoutDashboard,
   SquareStack,
-  Package,
-  PartyPopper,
   ReceiptText,
   Settings,
   Store,
+  Ticket,
   TicketPercent,
   X,
 } from "lucide-react";
@@ -36,7 +35,7 @@ const MOBILE_TABS = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
   { href: "/orders", key: "orders", icon: ReceiptText },
-  { href: "/bookings", key: "products", icon: Package },
+  { href: "/catalog", key: "catalog", icon: Ticket },
 ] as const;
 
 // Same grid, same order, every time — muscle memory is the point.
@@ -46,9 +45,8 @@ const DESTINATIONS = [
   // something else. The palette put the two names side by side.
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
-  { href: "/events", key: "events", icon: PartyPopper },
   { href: "/orders", key: "orders", icon: ReceiptText },
-  { href: "/bookings", key: "products", icon: Package },
+  { href: "/catalog", key: "catalog", icon: Ticket },
   { href: "/reports/sales", key: "reports", icon: BarChart3 },
   { href: "/reports/sales?tab=analytics", key: "analytics", icon: ChartLine },
   { href: "/promotions", key: "promotions", icon: TicketPercent },
@@ -78,11 +76,10 @@ const DESTINATIONS = [
 const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
   { prefix: "/dashboard", key: "dashboard" },
   { prefix: "/calendar", key: "calendar" },
-  { prefix: "/events", key: "events" },
   { prefix: "/orders", key: "orders" },
   { prefix: "/customers", key: "customers" },
   { prefix: "/holds", key: "holds" },
-  { prefix: "/bookings", key: "products" },
+  { prefix: "/catalog", key: "catalog" },
   { prefix: "/booking-rules", key: "bookingRules" },
   { prefix: "/pricing", key: "pricing" },
   { prefix: "/memberships", key: "memberships" },
@@ -113,6 +110,10 @@ function useShortcutKey(): string {
 export function OsShell({ children }: { children: React.ReactNode }) {
   const shortcutKey = useShortcutKey();
   const pathname = usePathname();
+  /* Making something — a new booking or event, or editing an event — is a
+     task with its own way out; the phone's tab bar would only compete with the
+     form's pinned Back and Continue for the bottom of the screen. */
+  const focused = /^\/catalog\/(new(\/|$)|events\/[^/]+\/edit$)/.test(pathname);
   const t = useTranslations("nav");
   const tSettings = useTranslations("settings");
   const operatorQ = useApiQuery(() => getOperator(), []);
@@ -246,13 +247,15 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <div className="min-w-0 flex-1 pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
+        <div className={cn("min-w-0 flex-1 md:pb-0", focused ? "pb-0" : "pb-[calc(56px+env(safe-area-inset-bottom))]")}>{children}</div>
       </main>
 
       {/* Mounted only while open, so it comes up empty by construction. */}
       {searchOpen && <CommandPalette onClose={() => setSearchOpen(false)} destinations={DESTINATIONS} shortcutKey={shortcutKey} />}
 
-      {/* Mobile bottom tab bar */}
+      {/* Mobile bottom tab bar — stood down while something is being made, so
+          the form's own Back and Continue can have the bottom of the screen. */}
+      {!focused && (
       <nav
         aria-label="OS navigation"
         /* 95%, not 80%. At 80 the bar is tinted by whatever happens to be
@@ -296,6 +299,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           <span className="max-w-full truncate px-inline text-[11px] font-medium">{t("more")}</span>
         </button>
       </nav>
+      )}
 
       {/* More — full-height destination grid */}
       {moreOpen && (

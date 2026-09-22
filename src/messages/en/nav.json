@@ -2,12 +2,10 @@
   "dashboard": "Dashboard",
   "overview": "Overview",
   "calendar": "Calendar",
-  "events": "Events",
   "orders": "Orders",
   "customers": "Customers",
   "memberships": "Memberships",
   "holds": "Holds",
-  "products": "Bookings",
   "reports": "Reports",
   "analytics": "Analytics",
   "promotions": "Promotions",
@@ -43,5 +41,9 @@
   "searchPlaceholder": "Search pages and settings…",
   "searchGoTo": "Go to",
   "bookingRules": "Booking rules",
-  "pricing": "Pricing"
+  "pricing": "Pricing",
+  "catalog": "Catalog",
+  "aliases": {
+    "catalog": "bookings events products tickets experiences what we sell"
+  }
 }

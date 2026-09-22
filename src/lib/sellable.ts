@@ -38,3 +38,42 @@ export function sellingBlockers(product: Product, resources: Resource[] = []): B
 
   return out;
 }
+
+/**
+ * Sellable today, and about to stop being — the failure nobody notices.
+ *
+ * A blocker means the till has nothing to charge for now. A warning means it
+ * does, until a date: a course whose last session is in three weeks, a pass
+ * whose sales window closes on Friday. Nothing looks wrong on the day it is
+ * set up, so nothing is fixed, and the booking quietly stops selling.
+ *
+ * This is the one rule for it. The dashboard's Needs attention panel and the
+ * catalog both read it, so the catalog cannot say "on sale, nothing to do"
+ * about the same course the dashboard is warning about.
+ */
+export type SellingWarning =
+  | { kind: "datesRunOut"; date: string }
+  | { kind: "salesWindowEnds"; date: string };
+
+/** How far ahead a date running out counts as needing attention now. */
+export const WARNING_HORIZON_DAYS = 30;
+
+/** Calendar arithmetic in UTC, so no local offset can move the day. */
+const addDays = (iso: string, days: number) => {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
+export function sellingWarnings(product: Product, today: string): SellingWarning[] {
+  const horizon = addDays(today, WARNING_HORIZON_DAYS);
+  const out: SellingWarning[] = [];
+  if (product.courseDates?.length) {
+    const last = [...product.courseDates].sort().at(-1)!;
+    if (last <= horizon) out.push({ kind: "datesRunOut", date: last });
+  }
+  if (product.windowMode === "fixed" && product.windowEnd && product.windowEnd <= horizon) {
+    out.push({ kind: "salesWindowEnds", date: product.windowEnd });
+  }
+  return out;
+}

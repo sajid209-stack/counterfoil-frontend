@@ -64,11 +64,13 @@ export function DurationInput({
     setText(formatDuration(next));
   };
 
-  const border = error || parseError ? "border-danger focus-within:border-danger" : "border-line focus-within:border-inverse";
+  /* An inset ring, not a border: a border takes two pixels out of the
+     44px box, and the steppers inside it were left 42px tall on a phone. */
+  const border = error || parseError ? "ring-danger focus-within:ring-danger" : "ring-line focus-within:ring-inverse";
 
   return (
     <Field label={label} help={help} error={error ?? parseError ?? undefined} required={required} htmlFor={id} className={className}>
-      <div className={cn("flex h-11 items-stretch overflow-hidden rounded-sm border bg-card transition-colors duration-quick", border, disabled && "bg-subtle")}>
+      <div className={cn("flex h-11 items-stretch overflow-hidden rounded-sm bg-card ring-1 ring-inset transition-colors duration-quick", border, disabled && "bg-subtle")}>
         <input
           id={id}
           type="text"
@@ -84,17 +86,19 @@ export function DurationInput({
             if (e.key === "ArrowDown") { e.preventDefault(); nudge(-1); }
           }}
           onWheel={(e) => { if (focused) { e.preventDefault(); nudge(e.deltaY < 0 ? 1 : -1); } }}
-          className="w-full bg-transparent px-comfortable font-mono text-sm outline-none placeholder:text-faint disabled:cursor-not-allowed"
+          className="w-full bg-transparent px-comfortable text-sm tabular-nums outline-none placeholder:text-faint disabled:cursor-not-allowed"
         />
-        <div className="flex flex-col border-l border-line">
-          <button type="button" tabIndex={-1} aria-label="More" disabled={disabled} onClick={() => nudge(1)} className="flex h-1/2 w-8 items-center justify-center text-muted hover:text-fg active:bg-line"><ChevronUp size={13} strokeWidth={1.5} /></button>
-          <button type="button" tabIndex={-1} aria-label="Less" disabled={disabled} onClick={() => nudge(-1)} className="flex h-1/2 w-8 items-center justify-center border-t border-line text-muted hover:text-fg active:bg-line"><ChevronDown size={13} strokeWidth={1.5} /></button>
+        {/* Side by side and full height below md, where a thumb needs 44px;
+            stacked for a pointer. Same as TimeInput. */}
+        <div className="flex flex-row-reverse border-l border-line md:flex-col">
+          <button type="button" tabIndex={-1} aria-label="More" disabled={disabled} onClick={() => nudge(1)} className="flex h-full w-11 items-center justify-center text-muted hover:text-fg active:bg-line md:h-1/2 md:w-8"><ChevronUp size={13} strokeWidth={1.5} /></button>
+          <button type="button" tabIndex={-1} aria-label="Less" disabled={disabled} onClick={() => nudge(-1)} className="flex h-full w-11 items-center justify-center border-r border-line text-muted hover:text-fg active:bg-line md:h-1/2 md:w-8 md:border-r-0 md:border-t"><ChevronDown size={13} strokeWidth={1.5} /></button>
         </div>
       </div>
       {chips && chips.length > 0 && (
         <div className="flex flex-wrap gap-inline">
           {chips.map((c) => (
-            <button key={c} type="button" disabled={disabled} onClick={() => { setParseError(null); onChange(c); setText(formatDuration(c)); }} className={cn("h-7 rounded-xs border px-tight font-mono text-[12px] transition-colors duration-quick", value === c ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted hover:border-inverse")}>
+            <button key={c} type="button" disabled={disabled} onClick={() => { setParseError(null); onChange(c); setText(formatDuration(c)); }} className={cn("h-11 min-w-11 rounded-xs border px-tight text-[12px] tabular-nums transition-colors duration-quick md:h-7 md:min-w-0", value === c ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted hover:border-inverse")}>
               {formatDuration(c)}
             </button>
           ))}

@@ -1,5 +1,5 @@
 import { createResource, fail, notFoundError, validationError } from "./client";
-import type { ApiResult, ListParams, ListResponse, Lifecycle, Minor } from "./types";
+import type { ApiResult, Channel, ListParams, ListResponse, Lifecycle, Minor } from "./types";
 import type { CategoryId, SectionId } from "@/lib/events/catalog";
 
 /**
@@ -133,6 +133,12 @@ export interface EventRecord {
   organiser?: EventOrganiser;
   sponsors: EventSponsor[];
   tiers: EventTier[];
+  /** Where tickets are sold: on the event's own page, at the counter, or
+   *  both — the same two channels a booking has. Optional so records written
+   *  before it read as they always did: online only (`eventChannels`). */
+  channels?: Channel[];
+  /** The venues whose counters sell it, when the counter is one of them. */
+  locationIds?: string[];
   customisation: EventCustomisation;
   createdAt: string;
   updatedAt: string;
@@ -268,9 +274,15 @@ export function duplicateEvent(id: string, title: string): Promise<ApiResult<Eve
     organiser: c.organiser,
     sponsors: c.sponsors,
     customisation: c.customisation,
+    channels: c.channels,
+    locationIds: c.locationIds,
     tiers: c.tiers.map((t, i) => ({ ...t, id: `tier_${Date.now().toString(36)}_${i}`, sold: 0 })),
   });
 }
+
+/** Where an event is sold, read the same way for old and new records: one
+ *  written before events had channels is sold on its page and nowhere else. */
+export const eventChannels = (e: Pick<EventRecord, "channels">): Channel[] => e.channels ?? ["online"];
 
 /** Capacity and takings, derived — never stored, so they cannot drift. */
 export const eventCapacity = (e: EventRecord) => e.tiers.reduce((s, t) => s + t.quantity, 0);

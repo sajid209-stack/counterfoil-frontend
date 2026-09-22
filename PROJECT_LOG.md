@@ -10115,3 +10115,203 @@ Sources: [Google Calendar — create an event](https://support.google.com/calend
 [NN/g — drag and drop](https://www.nngroup.com/articles/drag-drop/) ·
 [Apple HIG — popovers](https://developer.apple.com/design/human-interface-guidelines/popovers) ·
 [Carbon — popover](https://carbondesignsystem.com/components/popover/usage/)
+
+## Catalog — Bookings and Events become one feature (2026-09-22)
+
+Owner: *"i want Events and Bookings in one feature, and that will be named
+Catalog … properly merge them, with proper set up merge UI and UX"* — researched
+against SaaS catalogs, booking systems and event onboarding, then reviewed and
+reworked round by round.
+
+### Why one feature
+
+"What do we sell?" had half its answer on each of two screens, with two ideas
+of "on sale", two "new" buttons, two price editors and two kinds of record
+page. An operator adding a sunset boat trip had to decide which half of the
+product it belonged to before they could start. Shopify Products and the
+Square item library settled this long ago: one list of what is sold, the kind
+of each thing a property of it rather than a place in the menu.
+
+The records stay what they are — a `Product` is configured by how it is
+booked, an `EventRecord` by its date, tickets and page. `lib/catalog.ts` is only
+the one vocabulary both are read in: a state (`onSale · needsSetup · soldOut ·
+offSale · ended · archived`), a type in the operator's words, a from-price and
+what stands between it and the till.
+
+### What exists now
+
+- **Routes.** `/catalog` (the list, with `?kind=bookings|events` views),
+  `/catalog/new` (the chooser), `/catalog/new/booking?kind=…`,
+  `/catalog/new/event?category=…`, `/catalog/bookings/[id]`,
+  `/catalog/events/[id]` and `/catalog/events/[id]/edit`. Every old address —
+  `/bookings`, `/events`, `/products`, `/bookings/new`, `/events/new` and the
+  record pages — redirects (307, query kept). The rail and the phone tab bar say
+  Catalog; the command palette still finds it by "events", "bookings" and
+  "products".
+- **The list.** All · Bookings · Events views with counts; search across both;
+  state as chips with a "Needs attention" facet (pressed "All" by default,
+  empty chips hidden); a category select that keeps the two taxonomies apart;
+  "What needs you first" ordering. Rows keep their places through an action,
+  so taking one off sale does not move it off the page under the pointer. A
+  Selling column that compares the two kinds: an event's sold/capacity bar and
+  revenue, a booking's next seven days of slots or places ("9 of 118 slots ·
+  8%"). One row menu and one bulk bar for both, the bulk bar floating at the
+  bottom of the screen while anything is ticked, its buttons counting what they
+  would change or saying why they cannot. Archiving an event with tickets sold
+  names how many and for when. 50 rows a page.
+- **One attention rule.** `sellingWarnings` in `lib/sellable` — dates running
+  out, a sales window closing — is read by the dashboard's Needs attention panel
+  and the catalog alike. The course the dashboard warned about had read "On sale,
+  nothing booked ahead" in the list.
+- **The chooser.** Eight kinds of booking and six kinds of event, each with what
+  it is for and examples, searchable by the operator's word ("bowling",
+  "massage", "tour"). Each family states the rule that separates it — *repeats on
+  many dates* against *one date, or a few, with its own page* — and a search
+  that lands in both says it again. "Not sure?" (the original question tree) and
+  "Copy something you already sell" come first on a phone.
+- **The booking wizard.** Opens on the question the card left unanswered — or on
+  Details, with the first step done, when the card was the whole answer. Steps
+  exist only where they mean something (no When for an entry ticket). Continue,
+  Done and Put on sale are never greyed out: pressed early they say what is
+  missing beside it and put the cursor there. Real first rows ("Adult",
+  "Standard"), "e.g." placeholders, one route back. Where it's sold lists the
+  counter and online explicitly and says *Not on your website* when online is
+  off; a location is required. The review is the whole booking, a row per step
+  with Edit, including the booking window it will get. Beside it, a
+  ready-to-sell list that ticks an item only once its step has been seen and
+  what it holds is valid, with the reason when not ("Child needs a price").
+- **The event wizard.** Details first — name, date, times, venue, a cover
+  upload — because a date is what a box office changes most and it is not a
+  design decision. Then the page designer (whose Hero and Venue rows now point
+  back to Details), then Tickets & sales, then a review. Seeded sample content
+  ("16 teams · ৳200,000 prize pool") is marked Sample and must be edited, hidden
+  or explicitly kept before the event can go on sale. Events gained optional
+  `channels` / `locationIds` on the contract; a location is asked for only when
+  a counter sells it.
+- **The event editor** is new: an event could not be edited at all — Edit opened
+  a read-only page. Details · Page · Tickets & sales. A tier that has sold keeps
+  its sales, cannot be removed and cannot be cut below what has gone, each
+  refused in words.
+- **The event record** is a working page: state, sell/unsell, Edit, Duplicate,
+  Archive; sold of capacity, revenue and days to go; a ticket-type table (price,
+  sold bar, revenue); when, where and how it is sold; the page preview folded
+  and remembered.
+- **One price table** (`TierTable`) for both kinds — name, whole-taka price
+  grouped on blur, admits or quantity, sold where anything has, details folded
+  with a one-line summary.
+
+### Found and fixed along the way
+
+- **Every table in the app made its page taller than its content.**
+  Screen-reader-only text inside a cell is absolutely positioned; with no
+  positioned ancestor inside the scrolling table it was placed against the page,
+  escaped the table's clip, and stretched the document — on the catalog by 850px,
+  enough to scroll the sticky sidebar away. The table's scroll box is now the
+  containing block.
+- The shared form field never linked its help or error text to its control;
+  it now sets `aria-describedby` and `aria-invalid`, which is also what lets a
+  wizard put the cursor on the first problem.
+- The price-band ruler ticked at 10:00, 11:45, 13:30; it now ticks on the hour,
+  and says "Same price all day" once instead of two empty messages.
+- The public event page said "19:00 · doors open" about a start time, and priced
+  tickets with ".00"; it now says "Starts 19:00" and drops the zeros, like every
+  other guest-facing price.
+- Time and duration steppers were 32×21 on a phone; they sit side by side at
+  touch size below md. Shared controls (time, duration, tab counts, pagination)
+  now set figures in Inter with tabular numerals, per the owner's type spec —
+  DM Mono stays for identifiers.
+- Template display faces had no Bengali; Hind Siliguri now sits behind each.
+- A long list scrolled inside a 70vh box inside a scrolling page — two
+  scrollbars and a trapped wheel. `DataTable` gained `height="page"`, which the
+  catalog uses; the default is unchanged for the other tables.
+- Time and duration fields draw their edge as an inset ring rather than a
+  border, so the steppers inside get the full 44px on a phone.
+
+### The review loop
+
+An independent principal-designer review after each round, strict scale:
+
+| Area | R1 | R2 | R3 | R4 | R5 |
+|---|---|---|---|---|---|
+| How the merge is organised | 6.5 | 8 | 8.5 | 9 | 9 |
+| List | 6 | 7.5 | 8 | 8.5 | 9 |
+| Chooser / onboarding | 7.5 | 8 | 8.5 | 9 | 9 |
+| Wizards | 5.5 | 7.5 | 8.5 | 9 | 9 |
+| Polish | 6.5 | 7.5 | 8 | 8.5 | 8.5 |
+| Mobile | 5 | 7.5 | 8 | 8.5 | 9 |
+| Accessibility | 6 | 7 | 7.5 | 8 | 8.5 |
+| **Overall** | **6.2** | **7.6** | **8.2** | **8.7** | **8.9** |
+
+Round 4 called bookings shippable and events shippable once online event
+sales exist; the four bugs it found were fixed after it (a booking-window
+sentence joined in code rather than one message, an Edit button on a row that
+cannot be edited, a truncated When cell, and the long list scrolling inside
+the page instead of with it).
+
+Round 5, a confirmation pass, called it shippable as the internal demo. Its
+last two notes were fixed after it: the event counter's help now says event
+sales at the till are still to come (and a counter's location is asked for as
+"which venues' counters will sell it"), and stat cards align to the top when
+one of them carries a second line.
+
+Declined on purpose: DM Mono for money (the owner's spec is Inter with tabular
+figures; mono is for identifiers), dropping ".00" from dashboard totals (the
+recorded rule keeps two decimals on totals and reports), and editing the booking
+window inside the wizard (it lives in Policies; the wizard now states it).
+
+### Verified
+
+- **Catalog end-to-end, 92 checks, all passing** — driven, not read: the rail
+  says Catalog; All = Bookings + Events; search crosses both; Needs attention
+  narrows to the Beginner Swim Course with its reason; no empty chips; bulk off
+  sale and Undo across an event and a booking with the rows holding their
+  places; Put on sale unavailable with a sentence when everything is already on
+  sale; the header box partly checked; archiving a sold event names what sold;
+  duplicate, archive, restore; chooser search ("bowling", "concert", "tour" with
+  the tie-breaker) and its counts adding up to the Bookings tab; a lane hire from
+  card to on sale — Done and Continue refusing in words and focusing the field,
+  the hour-ticked band ruler, "Not on your website", a location required, a
+  review row per step, and the Selling column drawing its week of slots; an
+  event from card to on sale — no category step, the facts first, sample
+  sections kept explicitly, a blank price not read as free, where it's sold,
+  four review rows, and the record's ticket breakdown; every old address
+  redirecting; the palette finding Catalog by "events"; the event editor's tabs,
+  sold tiers refused below what sold, and a title edit saving; copying an
+  existing booking; the one-time note; on a phone, no tab bar while making
+  something, a pinned Continue, "Step 2 of 6", the first item on the first
+  screen; Bangla with no missing messages; no console errors.
+- The standing **32-route audit is at its documented 73** — 72 the declared
+  white-on-ember rule, 1 the kitchen-sink inline link. Catalog routes on their
+  own report only the declared rule; the time and duration steppers now measure
+  44×44 on a phone.
+- Standing harnesses hold: shell 75/75, calendar 45/45, accessibility clean,
+  settings 31/31, type spec 10/10, card rhythm 0 problems.
+- Measured, not assumed: the catalog document is its content's height (1,122px,
+  was 1,975px) and the sidebar stays pinned while the list scrolls.
+- `tsc` clean and `npm run build` passes. `eslint` on every touched file is
+  identical to its `HEAD` copy (the errors in `OsShell`, `TimeInput`,
+  `DurationInput`, `catalog/layouts/[id]` and the dashboard's five warnings are
+  pre-existing); every new file lints clean.
+- i18n parity **0 missing / 0 extra** across 33 namespaces, with the new
+  `catalog` namespace authored in en and bn and the keys the old wizards and
+  editors used removed from both.
+
+### Open
+
+- **There is no public event route.** Event pages are designed, previewed and
+  have an address (`/e/…`), but nothing serves them; the "Online" toggle says it
+  goes live when event pages launch, the review says that putting an event on
+  sale publishes it ready for then, and the record marks its address "not
+  live yet". Events also do not reach the till yet (recorded since 2026-09-10).
+  No "View page" or copy-link until the route exists.
+- **No per-event orders in the mock,** so the event record has no sales-over-time
+  line or recent orders.
+- The long list's header is not pinned when the page scrolls: pinning it to the
+  page and letting the table scroll sideways at narrow widths are the two
+  things one scroll box cannot do at once.
+- **Contract, for the backend lane:** `EventRecord.channels` and
+  `EventRecord.locationIds` (optional; absent reads as online only). BT-07 seated
+  shows are shown as timed sessions in the catalog's type column.
+- **Before real customers, events need a way to be bought:** a public event page
+  or event sales at the till. Until one exists, an event's ON SALE means
+  "published, ready" rather than "buyable" — fine for the demo, not for launch.
