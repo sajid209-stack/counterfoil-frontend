@@ -3,9 +3,8 @@
   "description": "Transactions, breakdowns, tax and analytics — one scope, five views.",
   "exportCsv": "Export CSV",
   "csvExported": "CSV exported — filters respected.",
-  "search": "Search reference, customer, booking…",
+  "search": "Search reference or customer",
   "custom": "Custom",
-  "addFilter": "＋ Add filter",
   "clearAll": "Clear all",
   "nothingInRange": "Nothing in this range.",
   "tabs": {
@@ -18,8 +17,8 @@
   "presets": {
     "today": "Today",
     "yesterday": "Yesterday",
-    "7d": "Last 7",
-    "30d": "Last 30",
+    "7d": "Last 7 days",
+    "30d": "Last 30 days",
     "month": "This month",
     "lastmonth": "Last month"
   },
@@ -53,12 +52,10 @@
     "online": "Online"
   },
   "savedViews": {
-    "dropdown": "Saved views…",
-    "save": "Save view",
     "modalTitle": "Save this view",
     "nameLabel": "Name",
     "namePlaceholder": "Weekend turf",
-    "help": "Saved views restore the whole filter set from the dropdown.",
+    "help": "A saved view brings back the dates and every filter, from Views.",
     "cancel": "Cancel",
     "saveButton": "Save",
     "defaultName": "View {n}",
@@ -162,5 +159,32 @@
       "exempt": "Exempt"
     },
     "refundNote": "A refund gives back its share of the tax. It is counted against the day the sale was made, because that is where the record keeps it."
+  },
+  "range": {
+    "choose": "Choose dates",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "pickEnd": "Pick the last day"
+  },
+  "filterMenu": "Filter",
+  "views": {
+    "button": "Views",
+    "buttonCount": "Views · {count}",
+    "empty": "No saved views yet. Set the filters you use often, then save them here.",
+    "delete": "Delete {name}",
+    "saveCurrent": "Save current view…"
+  },
+  "select": {
+    "page": "Select all on this page",
+    "row": "Select {ref}",
+    "count": "{count} selected",
+    "allMatching": "Select all {count} matching",
+    "export": "Export {count} (CSV)",
+    "clear": "Clear",
+    "exported": "{count, plural, one {# row exported} other {# rows exported}}.",
+    "region": "Selected rows"
   }
 }

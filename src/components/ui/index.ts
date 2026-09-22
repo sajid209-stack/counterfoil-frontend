@@ -18,6 +18,8 @@ export type { StatItem } from "./StatStrip";
 export { Tabs } from "./Tabs";
 export type { TabItem } from "./Tabs";
 export { DatePicker } from "./DatePicker";
+export { DateRangePicker, formatRange } from "./DateRangePicker";
+export type { DateRangeLabels, DateRangeValue, RangePreset } from "./DateRangePicker";
 export type { DatePickerLabels } from "./DatePicker";
 export { DateField } from "./DateField";
 export { DataTable } from "./DataTable";

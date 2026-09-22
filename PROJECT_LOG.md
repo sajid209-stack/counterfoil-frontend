@@ -10315,3 +10315,132 @@ window inside the wizard (it lives in Policies; the wizard now states it).
 - **Before real customers, events need a way to be bought:** a public event page
   or event sales at the till. Until one exists, an event's ON SALE means
   "published, ready" rather than "buyable" — fine for the demo, not for launch.
+
+## Reports — one filter line, a range calendar, and exporting what you tick (2026-09-22)
+
+Owner, with a screenshot of the Reports filter card: *"need the filter to be in
+one line, and dont keep more buttons in filter, and need selection options for
+selected manual multiple selection of data and export them … and add from and
+to best UI and UX calendar filter in Reports filter."*
+
+### What the card was
+
+Three rows before a single transaction: six preset buttons ("Today · Yesterday
+· Last 7 · Last 30 · This month · Last month") and a seventh called Custom,
+which only then showed two separate date fields; a saved-views select and a
+Save view button; an "Add filter" select; and each filter as a bare select
+beside a label. Every question a filter bar answers had its own button, and the
+range — the one thing on it set every visit — took seven of them.
+
+### One line
+
+The date range, a search field, one chip per filter in use, and **Filter** to
+add another. Measured at 36px tall at 1440 with two filters in use.
+
+- **Each filter is a chip that is also its own control** — "Category:
+  Admission ×". Adding one puts the cursor straight into it; adding a filter and
+  then having to find it to set it is two jobs.
+- **Views and Export CSV moved to the page header.** They act on the page, not
+  on what it is filtered by, so they had no business in the filter bar. Views is
+  one menu — apply, delete, "Save current view…" — and counts what it holds
+  ("Views · 1").
+- **On a phone** the range takes its own row and search shares the next with
+  Filter; the filter menu opens toward whichever side has room, so it cannot run
+  off the right edge. Chips, their × and Clear all are 44px there.
+
+### The range calendar (`components/ui/DateRangePicker`)
+
+One button stating the range ("Last 30 days · 30 Jun – 29 Jul 2026"), opening
+one panel: named ranges down the side, From and To boxes, two months.
+
+- **A named range applies at once and closes.** It is one decision.
+- **Drawing a range is two clicks**, with the band following the pointer after
+  the first; drawn backwards it flips rather than refusing. The To box is ember
+  while it waits, the footer says "Pick the last day" and then "16 days", and
+  **Apply is only live once there is a whole range** — a half-drawn range is not
+  a range.
+- **The list follows the drawing.** Draw 6–21 July and it reads Custom; draw
+  exactly the last seven days and "Last 7 days" lights. A list still claiming
+  "Last 30 days" over a hand-drawn range was two answers at once — found in the
+  final screenshot review, not by a check.
+- Escape or a click outside closes **without applying**, and focus returns to
+  the button. Arrow keys move by day and week, PageUp/PageDown by month. Days
+  after today cannot be picked. Fixed day tracks, so a cell can never overlap
+  its neighbour's click target.
+- **A phone gets a sheet from the bottom** showing the month the range ends in,
+  over a backdrop.
+- The address carries it (`preset=custom&from=2026-07-06&to=2026-07-21`), so a
+  drawn range is a link like everything else on this page.
+
+### Ticking rows and exporting them
+
+Transactions, Summary and Outstanding each gain a checkbox column; the header
+box ticks the page and reads as partly ticked when some are.
+
+- **A bar floats at the foot of the screen while anything is ticked**: "2
+  selected · Select all 84 matching · Export 2 (CSV) · Clear". Select all
+  matching reaches past the page, because the page is 25 rows and the question
+  was never "these 25".
+- **The file is named for what it is**: `transactions-selected-2026-06-30_2026-07-29.csv`,
+  `summary-product-selected-…`, `outstanding-selected-…`.
+- **A selection belongs to its question.** Change the dates, a filter, the tab or
+  the grouping and it lapses — a tick made under one set of filters, silently
+  exported under another, would be the wrong file with the right name.
+
+### Export CSV, fixed while it was open
+
+- **It wrote the 25 rows on screen**, not the filtered list. It now fetches every
+  matching transaction.
+- **Its time column had no date**, so a 30-day export could not say which day a
+  sale was. The column and the table both read "26 Jul, 23:04" now.
+- **A quote or comma inside a name broke its row** — values were wrapped in
+  quotes without escaping any. Cells are escaped properly now.
+- **Outstanding exported the analytics data**, because it fell through to the
+  last branch. It exports its own table.
+
+### Found by the audit and the screenshots
+
+- The header checkbox was 16×16 on a phone; it sits in a 44px label now, like
+  every row's. Sortable headers and the expand button in each row were 17px and
+  32px tall there, and are 44px — **30 findings on the Reports routes to 0**.
+- **The status column was cut at 1440** once the checkbox column and the dated
+  time arrived — 37px too wide. Items gives the width back; it is the column
+  that can already be expanded to every line. Names kept theirs, because a name
+  is what tells two rows apart.
+
+### Verified
+
+- **Reports end-to-end, 48 checks, all passing** — driven: one line at 1440 with
+  two filters; adding a filter focuses its chip; Clear all; a preset applies and
+  closes; the list stops claiming a preset while drawing, reads Custom for a
+  range that is no preset, lights "Last 7 days" when that is what was drawn;
+  Apply waits for the last day; a backwards range flips; Apply writes the range
+  to the address; Escape cancels and hands focus back; arrow keys move; future
+  days are disabled; the ledger fits a 1440 card; the header box goes partly
+  ticked; exporting two ticked rows writes exactly those two, named for them;
+  select all matching takes every page and exports every row; Export CSV writes
+  the whole list and keeps a quoted cell whole; changing the dates clears the
+  ticks; Summary rows export; Outstanding exports its own table; a view saves,
+  is counted and deletes; on a phone the range is a sheet showing July, search
+  and Filter share a row, the filter menu opens on screen, a chip and its × are
+  44px, nothing scrolls sideways; Bangla with no missing messages; no console
+  errors.
+- `tax.mjs` drove the removed "Today" and "Last 30" buttons; it now opens the
+  range and picks them, and passes **39/39**.
+- Catalog **92/92**, shell **75/75**, breadcrumbs, and card rhythm **0 problems**.
+- The 32-route audit is at its documented **73** — 72 the declared
+  white-on-ember rule, 1 the kitchen-sink inline link — with `/reports/sales`
+  contributing none.
+- `tsc` clean, `npm run build` passes, `eslint` clean on every touched file (the
+  page's `HEAD` copy was clean too). i18n parity **0 missing / 0 extra** across
+  33 namespaces; the keys the old bar used (`addFilter`, `savedViews.dropdown`,
+  `savedViews.save`) are gone from both locales.
+
+### Open
+
+- **Ticked Summary rows export the summary rows**, not the transactions under
+  them. Clicking a Summary row still opens those transactions, and they can be
+  ticked there.
+- **Saved views live in this browser** (localStorage), as they always have.
+- On a phone the ledger still scrolls sideways inside its card, as the reports
+  tables always have; a card-per-transaction phone layout is its own change.
