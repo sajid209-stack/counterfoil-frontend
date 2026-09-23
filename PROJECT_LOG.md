@@ -10550,3 +10550,108 @@ stays, now as words only — it was only ever linked inside settings.
   invalidation would give it one.
 - The current-value summaries the index carried have no home; if they are
   missed, the rail is too narrow for them and they would want a different place.
+
+## The bar, the logo and one stat card (2026-09-23)
+
+Owner, on three screenshots: *"1. no need to keep breadcrumbs and short details
+in any top bar, 2. counterfoil logo will be menu options text alinged, 3. all
+top cards of feature pages UI, size, text size, all needs to be same as
+dashboard top cards — so properly research and properly fix those issues."*
+
+### 1. The bar carries the page's name, and nothing else
+
+`CATALOG / NEW` over **Add to your catalog** was the trail restating the heading
+directly under it, and below that a line of orientation prose read once and then
+scrolled past forever. Both are gone from every OS page.
+
+- **The trail is not derived any more.** A one-word trail restated the rail item
+  lit beside it; a two-word one restated the heading. Where a page is somewhere
+  you can go back to it carries its own link back, which a crumb could only
+  duplicate — settings records already work that way, and that is where the
+  trail was last useful.
+- **The description stays for a screen reader** (`sr-only`), because it is what
+  tells someone arriving by keyboard what the page is for. It is not drawn.
+- Measured: **every OS bar is 61px**, down from 74 with a description and 96
+  with a trail as well.
+
+### 2. The logo starts where the menu starts
+
+The lockup sat at x=12 while every nav glyph and group label began at x=24 —
+the rail's 12px padding plus the 12px each row carries. It is on that line now,
+so the logo, the glyphs and OVERVIEW / SETTINGS all begin together.
+
+### 3. One stat card, and it is the dashboard's
+
+There were **three** implementations: the dashboard's tile, the shared
+`StatStrip` (orders, customers, catalog, an event) and the calendar's own copy.
+They disagreed about every measurement that shows.
+
+| | dashboard | the other two |
+|---|---|---|
+| label | 12px/500, sentence case, tinted icon beside it | 12px, UPPERCASE, tracked, no icon |
+| figure | 28px/600 | 24px/600 |
+| card | 20px padding, 157px tall | 20px padding, 100–122px |
+
+The dashboard's is the one that was measured against the reference and the
+owner's type spec, so it is the one that survives. `components/ui/StatStrip` is
+now that card, and the dashboard, calendar, orders, customers, catalog and an
+event's record all render through it — a fourth page cannot invent a fifth.
+
+- **Every figure has a tinted glyph beside its label**, chosen per page
+  (Customers → people, Total spent → wallet, Outstanding → clock, No-shows →
+  a crossed-out person). It is part of the anatomy the owner asked to match.
+- **The phone gets one card of rows**, which is what the dashboard's tiles have
+  done since the mobile pass: four full-width tiles cost about 800px before the
+  page's own content, and no figure may shrink to win that back — "৳462,206.03"
+  does not fit half a 390px screen at 28px.
+- `DeltaPill` moved into the shared file with a `goodWhen` flag, because more
+  bookings is good and more no-shows is not: the arrow follows the number while
+  the colour follows whether that direction is welcome.
+
+Two details that decide whether a row of cards reads as one system:
+
+- **The line under the figure is always drawn, empty where there is nothing to
+  say.** Otherwise a page whose figures carry context has taller cards than one
+  whose figures do not.
+- **The label row keeps the delta pill's height whether or not there is a
+  delta** — without it a card with a comparison was 4px taller than the three
+  beside it, which reads as a mistake rather than as data.
+
+Measured after, on all five pages: **157px, 20px padding, 12px/500 sentence-case
+label, 28px/600 figure, 28px icon** — identical.
+
+Also changed while the file was open: the calendar stops printing "vs last
+week" under all four figures when three of them have no comparison to qualify,
+and `DeltaPill` draws nothing at 0% rather than an arrow claiming a direction.
+
+### Verified
+
+- **New standing harness, 59 checks, all passing** (`topcards.mjs`): the five
+  pages' cards exist, are all one height, and match the dashboard's height,
+  padding, label type, figure type and icon; the figure is the spec's 28/600 and
+  the label is sentence case; no bar on `/dashboard`, `/orders`,
+  `/reports/sales`, `/settings/devices` or `/catalog/new` carries a trail or any
+  prose, at 1440 or 390, while the bar still names the page and the description
+  is still there for a screen reader; the logo's left edge equals the nav
+  glyphs' and the group labels'; and on a phone each page draws one card of rows
+  with no sideways scroll and no console errors.
+- Standing harnesses hold: shell **75/75**, type spec **10/10**, card rhythm
+  **0 problems**, calendar category **45/45**, customers **44/44**, storefront
+  **59/59**, device facts **38/38**, catalog **92/92**, reports **48/48**,
+  settings navigation **55/55**. The 32-route audit is at its documented **73**
+  — 72 the declared white-on-ember rule, 1 the kitchen-sink inline link.
+- `tsc` clean, `npm run build` passes, i18n parity **0 missing / 0 extra** across
+  33 namespaces (no keys added or orphaned — this is shape, not copy). `eslint`
+  on every touched file is identical to its `HEAD` copy (the dashboard holds its
+  five pre-existing warnings), and the shared card lints clean.
+
+### Open
+
+- **`events-actions.mjs` is stale, and not because of this change.** It drives
+  `/events`, which the Catalog merge redirected to `/catalog?kind=events`, whose
+  row menu speaks the catalog's vocabulary ("Put on sale") rather than
+  "Publish". The merged screen is covered by the catalog's own 92 checks; the
+  older harness should be retired rather than repaired.
+- On a phone the bar names the page and the heading says it again directly
+  beneath. That is pre-existing and was left alone here; removing one of the two
+  is a separate decision about which.

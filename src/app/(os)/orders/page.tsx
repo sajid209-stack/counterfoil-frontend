@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Search } from "lucide-react";
+import { Clock, Receipt, Search, TrendingUp, Wallet } from "lucide-react";
 import {
   DataTable,
   EmptyState,
@@ -24,7 +24,6 @@ import {
 import { cn } from "@/lib/cn";
 import { formatDateTime, formatMoney, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
-import { MD, useMediaQuery } from "@/lib/useMedia";
 import { demoNow } from "@/lib/schedule";
 
 export default function OrdersPage() {
@@ -43,7 +42,6 @@ function OrdersPageInner() {
   const params = useSearchParams();
   const t = useTranslations("orders");
   const enumL = useEnumLabels();
-  const compact = !useMediaQuery(MD, true);
   /* One clock, the app's own — the same pinned demo instant the till and the
      calendar use, so "2h ago" here and "today" in the calendar agree. */
   const now = useMemo(() => demoNow(), []);
@@ -201,24 +199,26 @@ function OrdersPageInner() {
     <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
         <StatStrip
-          compact={compact}
           loading={summaryQ.loading}
           items={[
             {
               key: "collected",
+              icon: <Wallet size={18} strokeWidth={1.5} />,
               label: t("statCollected"),
               value: formatMoney(summary.collected),
               // Cancelled and refunded orders are excluded from the money.
               note: summary.voided > 0 ? t("statExcluded", { count: summary.voided }) : null,
             },
-            { key: "orders", label: t("statOrders"), value: String(summary.orders) },
+            { key: "orders", icon: <Receipt size={18} strokeWidth={1.5} />, label: t("statOrders"), value: String(summary.orders) },
             {
               key: "average",
+              icon: <TrendingUp size={18} strokeWidth={1.5} />,
               label: t("statAverage"),
               value: summary.orders === 0 ? "—" : formatMoney(summary.average),
             },
             {
               key: "outstanding",
+              icon: <Clock size={18} strokeWidth={1.5} />,
               label: t("statOutstanding"),
               value: formatMoney(summary.outstanding),
               tone: summary.outstanding > 0 ? "warning" : undefined,

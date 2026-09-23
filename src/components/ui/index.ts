@@ -13,7 +13,7 @@ export { Modal, ConfirmDialog } from "./Modal";
 export { ToastProvider, useToast } from "./Toast";
 export { ActionMenu } from "./ActionMenu";
 export type { ActionMenuItem } from "./ActionMenu";
-export { StatStrip } from "./StatStrip";
+export { StatStrip, DeltaPill } from "./StatStrip";
 export type { StatItem } from "./StatStrip";
 export { Tabs } from "./Tabs";
 export type { TabItem } from "./Tabs";

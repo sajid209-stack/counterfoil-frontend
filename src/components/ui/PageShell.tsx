@@ -2,7 +2,6 @@
 
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { usePathname } from "next/navigation";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 
 // Standard page frame for OS screens: breadcrumb (derived from the path),
@@ -32,21 +31,6 @@ export function PageShell({
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  // Words only — ids stay out. Each crumb carries the path up to it, so the
-  // trail can lead back up: a settings record's crumb returns to its list,
-  // which is where someone who opened the record came from.
-  /* Settings carries no trail. Its first level has no page of its own —
-     /settings opens on Business profile — so a SETTINGS crumb would either
-     lead nowhere or somewhere other than it says, and the rail beside every
-     settings page (or its Settings menu, narrower) already says where you are.
-     A record there has its own link back to its list. */
-  const crumbs = pathname.startsWith("/settings")
-    ? []
-    : pathname
-    .split("/")
-    .flatMap((s, i, parts) => (s && /^[a-z-]+$/.test(s) ? [{ label: s.replace(/-/g, " "), href: parts.slice(0, i + 1).join("/") }] : []));
-
   // Resolved after mount: the slot lives in OsShell, above this in the tree,
   // so it exists by the time effects run. Null on the first paint and on any
   // page that renders a PageShell outside the OS shell — which is why the
@@ -72,42 +56,21 @@ export function PageShell({
   // Text only. The actions travel separately on desktop, because sharing a row
   // with the title squeezed it to 275px and wrapped the operator's name onto
   // two lines.
-  // Below md the OS bar names the page, so the trail would say it twice — and
-  // the trail is the more expensive of the two, costing a whole line on the
-  // screen with the least of them. Desktop keeps it: there the bar carries the
-  // title rather than the destination, so the path is the only thing saying
-  // where in Settings you are.
   const headerText = (
     <div className="min-w-0">
-      {/* Only with two or more levels. A one-word trail — DASHBOARD, ORDERS,
-          CALENDAR — restates the rail item that is lit up beside it and costs
-          the bar a whole line to do it. A deeper trail (SETTINGS / DEVICES)
-          says where in a section you are, and its crumbs link back up. */}
-      {wide && crumbs.length > 1 && (
-        <p className="mb-inline font-mono text-[12px] uppercase tracking-wide text-muted">
-          {crumbs.map((c, i) => (
-            <span key={c.href}>
-              {i > 0 && " / "}
-              {/* Words, not links: a word in a path (/reports) need not be a
-                  page, and a crumb that leads nowhere breaks the trail's promise. */}
-              {c.label}
-            </span>
-          ))}
-        </p>
-      )}
-      {/* References and long names must wrap, never bleed out of the header.
-          22px below sm: the bar above already names the destination, so the
-          heading here is a second statement of it at the top of a screen that
-          has the least room for one. */}
+      {/* The page's name, and nothing else in the bar.
+
+          The trail went with the owner's review: a one-word trail restated the
+          rail item lit beside it, and a two-word one (CATALOG / NEW) restated
+          the heading directly under it — for a whole line of the bar, on every
+          page. Where a page is somewhere you can go back to, it carries its own
+          link back, which a crumb could only duplicate.
+
+          The description went the same way, and stays for a screen reader:
+          orientation prose is read once and then scrolls past forever, but it
+          is what tells someone arriving by keyboard what this page is for. */}
       <h1 className="type-h1 break-words text-[22px] sm:text-[28px]">{title}</h1>
-      {description && (
-        /* Orientation prose, read once. On a phone it was costing two lines
-           above the fold on every visit, so it is kept for a screen reader and
-           shown from sm, where there is room for it. */
-        <p className="type-body mt-inline max-w-2xl text-[13px] text-muted max-sm:sr-only">
-          {description}
-        </p>
-      )}
+      {description && <p className="sr-only">{description}</p>}
     </div>
   );
 

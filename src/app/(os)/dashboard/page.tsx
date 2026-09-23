@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, CalendarClock, Check, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, Banknote, CalendarOff, Clock, WifiOff, Wrench, type LucideIcon } from "lucide-react";
-import { AreaChart, Button, PageShell, StatusPill } from "@/components/ui";
+import { AreaChart, Button, DeltaPill, PageShell, StatStrip, StatusPill, type StatItem } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getOperator,
@@ -105,19 +105,6 @@ type Notice = {
   action?: { label: string; href: string };
 };
 
-function DeltaPill({ now, then }: { now: number; then: number }) {
-  if (then <= 0) return null;
-  const pct = Math.round(((now - then) / then) * 100);
-  const up = pct >= 0;
-  return (
-    // Fully-rounded with a diagonal arrow, as the reference draws it — the
-    // triangle read as a status marker, the arrow reads as direction.
-    <span className={`inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-[12px] ${up ? "bg-success/10 text-success" : "bg-danger/10 text-danger"}`}>
-      {up ? "↗" : "↘"} {Math.abs(pct)}%
-    </span>
-  );
-}
-
 /**
  * The four headline metrics, stated once and drawn in two shapes.
  *
@@ -134,67 +121,6 @@ function DeltaPill({ now, then }: { now: number; then: number }) {
  * produced a band that clipped its own numbers. A row has the whole width;
  * only the context line moves, from under the figure to beside it.
  */
-interface Stat {
-  key: string;
-  icon: React.ReactNode;
-  label: string;
-  figure: React.ReactNode;
-  context: string;
-  contextTone?: string;
-  delta?: React.ReactNode;
-}
-
-function StatRow({ stat }: { stat: Stat }) {
-  return (
-    <div className="flex items-start gap-comfortable border-b border-hairline px-card py-comfortable last:border-b-0">
-      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground">{stat.icon}</span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-tight">
-          <p className="min-w-0 truncate text-[12px] font-medium text-muted">{stat.label}</p>
-          {stat.delta}
-        </div>
-        <div className="mt-inline flex flex-wrap items-baseline gap-x-comfortable gap-y-inline">
-          <p className="type-figure whitespace-nowrap text-[26px] font-semibold">{stat.figure}</p>
-          <p className={`text-[12px] ${stat.contextTone ?? "text-muted"}`}>{stat.context}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* Aura stat-tile anatomy, measured off the reference at 262x170: the tinted
-   icon square and the delta pill share the top row (pill hard right), then the
-   label, the figure, and ONE line of context, bottom-aligned so the tiles
-   share a base. Ours once had four different things in that slot — a
-   sparkline, a progress bar, a sentence, and on Booked ahead nothing at all.
-
-   Labels are sentence case, not small-caps: the reference sets them at 12px/500
-   unstyled, and uppercase with tracking was the single most visible difference
-   between the two sets of tiles.
-
-   The delta pill stays CONDITIONAL. DeltaPill returns null where there is no
-   prior period, which in this seed is three tiles out of four; inventing one to
-   fill the corner would be inventing the comparison. */
-function StatCard({ stat }: { stat: Stat }) {
-  /* 194px → about 120. The icon had a row of its own above the label, 36px
-     plus its gap, holding nothing but a glyph; it now sits beside the label it
-     illustrates, at 28px. The figure holds at 28px — the bottom of the type
-     spec's metric range — and the padding is 16 top and bottom rather than
-     24. Nothing was dropped: every tile still carries its icon, label,
-     figure, context and, where there is one, its delta. */
-  return (
-    <div className="card-surface flex flex-col p-card">
-      <div className="flex items-center gap-tight">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ember/10 text-brand-foreground [&>svg]:h-4 [&>svg]:w-4">{stat.icon}</span>
-        <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-muted">{stat.label}</p>
-        {stat.delta}
-      </div>
-      <p className="type-figure mt-tight whitespace-nowrap text-[28px] font-semibold leading-tight">{stat.figure}</p>
-      <p className={`mt-inline text-[12px] ${stat.contextTone ?? "text-muted"}`}>{stat.context}</p>
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   const router = useRouter();
   const t = useTranslations("dashboard");
@@ -569,13 +495,14 @@ export default function DashboardPage() {
    *  Architect…" four times over. The reference's version is one shape —
    *  label, figure, sub-line — repeated four times, with the sub-lines
    *  bottom-aligned so the base is straight whatever the figures do. */
-  /** The four headline metrics, stated once. See StatRow / StatCard. */
-  const stats: Stat[] = [
+  /** The four headline metrics, stated once. Drawn by the shared StatStrip,
+   *  which every other page's figures now use as well. */
+  const stats: StatItem[] = [
     {
       key: "revenue",
       icon: <TrendingUp size={18} strokeWidth={1.5} />,
       label: scope === "today" ? t("revenueToday") : t("revenueThisWeek"),
-      figure: formatMoney(revenueAnimated),
+      value: formatMoney(revenueAnimated),
       // The sparkline went: it drew the same seven days the revenue trend
       // chart draws in full immediately below it, and it was the reason this
       // tile's context slot held a picture where the other three held words.
@@ -586,7 +513,7 @@ export default function DashboardPage() {
       key: "sold",
       icon: <Users size={18} strokeWidth={1.5} />,
       label: t("capacitySold"),
-      figure: <>{sold} <span className="text-lg text-muted">/ {capacity}</span></>,
+      value: <>{sold} <span className="text-lg text-muted">/ {capacity}</span></>,
       // The fill bar restated the figure directly above it — "5 / 772" already
       // IS the ratio — and it was the only bar in the row.
       context: t("pctSold", { pct: soldPct }),
@@ -596,7 +523,7 @@ export default function DashboardPage() {
       key: "arrived",
       icon: <UserCheck size={18} strokeWidth={1.5} />,
       label: t("arrived"),
-      figure: <>{arrived} <span className="text-lg text-muted">{t("arrivedOf", { total: sold })}</span></>,
+      value: <>{arrived} <span className="text-lg text-muted">{t("arrivedOf", { total: sold })}</span></>,
       context: t("noShow", { pct: noShowPct }),
       contextTone: noShowPct >= 30 ? "text-danger" : undefined,
     },
@@ -604,7 +531,7 @@ export default function DashboardPage() {
       key: "ahead",
       icon: <CalendarClock size={18} strokeWidth={1.5} />,
       label: t("bookedAhead"),
-      figure: formatMoney(ahead),
+      value: formatMoney(ahead),
       // "Booked ahead · next 7 days" was a label carrying its own window
       // because there was no context line to put it on. Now there is.
       context: t("next7Days"),
@@ -703,11 +630,9 @@ export default function DashboardPage() {
       }
     >
       {loading ? (
-        <div className="grid grid-cols-1 gap-section min-[420px]:grid-cols-2 xl:grid-cols-4" aria-busy="true">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className={`${card} animate-pulse p-card`}><div className="h-3 w-1/2 rounded-xs bg-line" /><div className="mt-tight h-8 w-2/3 rounded-xs bg-line" /></div>
-          ))}
-        </div>
+        /* The labels are known before the figures are, so the strip states
+           what it is about to say and pulses only the numbers. */
+        <div aria-busy="true"><StatStrip items={stats} loading /></div>
       ) : !allDone ? (
         <div className={`${card} mb-section p-card`}>
           <div className="mb-section flex items-center justify-between">
@@ -740,15 +665,7 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <>
-          {/* One card of rows on a phone, four tiles from `sm`. */}
-          <div className={`${card} overflow-hidden sm:hidden`}>
-            {stats.map((st) => <StatRow key={st.key} stat={st} />)}
-          </div>
-          <div className="hidden gap-section sm:grid sm:grid-cols-2 xl:grid-cols-4">
-            {stats.map((st) => <StatCard key={st.key} stat={st} />)}
-          </div>
-        </>
+        <StatStrip items={stats} />
       )}
 
       {!loading && (

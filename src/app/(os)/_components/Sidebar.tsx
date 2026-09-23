@@ -87,7 +87,11 @@ export function Sidebar({
           toggle. This is the reliable expand affordance in both states. */}
       <div className={cn("flex shrink-0 items-center py-section", collapsed ? "justify-center" : "justify-between px-comfortable")}>
         {!collapsed && (
-          <Link href="/" title="Counterfoil OS">
+          /* The lockup starts on the menu's own left edge — 12px of rail
+             padding plus the 12px each row carries — so the logo, every glyph
+             below it and the group labels all begin on one line. It sat 12px
+             to the left of all of them. */
+          <Link href="/" title="Counterfoil OS" className="pl-comfortable">
             {/* 22px tall, 129 wide. At 30 the lockup ran 176px across a 240px
                 rail and was the loudest thing on every screen; the rail names
                 the product, the page is what the operator came for. */}

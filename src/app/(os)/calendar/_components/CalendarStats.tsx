@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
-import { cn } from "@/lib/cn";
-import { delta, type WindowStats } from "./model";
+import { CalendarDays, Lock, UserCheck, UserX } from "lucide-react";
+import { DeltaPill, StatStrip } from "@/components/ui";
+import type { WindowStats } from "./model";
 
 /**
  * What the period on screen contains, before you read the grid.
@@ -13,112 +13,67 @@ import { delta, type WindowStats } from "./model";
  * when you step to the next week, so they describe what is actually on screen
  * rather than a fixed "last 7 days" unrelated to where you navigated.
  *
- * Two lines, not four. The first build gave each card a heading, a period, a
- * value and a comparison, and cost 144px of desktop and 280px of phone before
- * the grid began — 81% of a phone screen was chrome. The period line went
- * because the toolbar states the range directly underneath it, and the
- * comparison moved up beside the delta it qualifies.
+ * Drawn by the shared StatStrip, which is the dashboard's tile: this had its
+ * own copy of the card — same idea, an uppercase label and a 24px figure in a
+ * box 35px shorter — and three sets of top cards that disagree about their own
+ * measurements is what the owner asked to end. What is particular to a
+ * calendar stays here: which four figures, and that more bookings is good
+ * while more no-shows is not.
  */
 export function CalendarStats({
   now,
   previous,
   comparisonLabel,
   labels,
-  compact = false,
 }: {
   now: WindowStats;
   previous: WindowStats;
-  /** "vs last week" — the baseline, beside the number it qualifies. */
+  /** "vs last week" — the baseline, under the number it qualifies. */
   comparisonLabel: string;
   labels: { bookings: string; arrived: string; noshow: string; holds: string };
-  /** Phone: one scrolling row rather than two rows of cards. */
-  compact?: boolean;
 }) {
   const rate = (n: number, of: number) => (of === 0 ? null : Math.round((n / of) * 100));
-
-  const cards = [
-    {
-      key: "bookings",
-      label: labels.bookings,
-      value: String(now.bookings),
-      change: delta(now.bookings, previous.bookings),
-      /* More bookings is good; more no-shows is not. The arrow follows the
-         number, the colour follows whether that direction is welcome. */
-      goodWhen: "up" as const,
-    },
-    {
-      key: "arrived",
-      label: labels.arrived,
-      value: rate(now.arrived, now.bookings) === null ? "—" : `${rate(now.arrived, now.bookings)}%`,
-      change: delta(now.arrived, previous.arrived),
-      goodWhen: "up" as const,
-    },
-    {
-      key: "noshow",
-      label: labels.noshow,
-      value: rate(now.noshow, now.bookings) === null ? "—" : `${rate(now.noshow, now.bookings)}%`,
-      change: delta(now.noshow, previous.noshow),
-      goodWhen: "down" as const,
-    },
-    {
-      key: "holds",
-      label: labels.holds,
-      value: String(now.holds),
-      change: delta(now.holds, previous.holds),
-      goodWhen: "down" as const,
-    },
-  ];
+  const pct = (n: number, of: number) => (rate(n, of) === null ? "—" : `${rate(n, of)}%`);
 
   return (
-    <div
-      className={cn(
-        compact
-          ? // Scrolls rather than clips: every card stays reachable, and the
-            // row costs 68px instead of the 280px two rows of them did.
-            "-mx-gutter flex gap-section overflow-x-auto px-gutter pb-inline [scrollbar-width:none]"
-          : "grid grid-cols-2 gap-section lg:grid-cols-4",
-      )}
-    >
-      {cards.map((c) => {
-        const up = (c.change ?? 0) > 0;
-        const flat = c.change === 0 || c.change === null;
-        const good = c.goodWhen === "up" ? up : !up;
-        return (
-          <div
-            key={c.key}
-            className={cn(
-              "card-surface flex flex-col justify-center gap-tight p-card",
-              // Squat cards read as a toolbar rather than as figures worth
-              // reading. This is the height the numbers earn.
-              "min-h-[5.25rem]",
-              compact && "min-w-[9.5rem] shrink-0",
-            )}
-          >
-            <span className="type-label truncate text-[12px] text-muted">{c.label}</span>
-            <span className="flex flex-wrap items-baseline gap-tight">
-              <span className="text-2xl font-semibold tracking-tight tabular-nums">{c.value}</span>
-              {!flat && (
-                <span
-                  className={cn(
-                    "flex items-center gap-0.5 rounded-full px-tight text-[12px] font-medium",
-                    good ? "bg-success/10 text-success" : "bg-danger/10 text-danger",
-                  )}
-                >
-                  {up ? (
-                    <ArrowUpRight size={12} strokeWidth={2.5} aria-hidden />
-                  ) : (
-                    <ArrowDownRight size={12} strokeWidth={2.5} aria-hidden />
-                  )}
-                  {Math.abs(c.change as number)}%
-                </span>
-              )}
-              {!flat && !compact && (
-                <span className="text-[12px] text-muted">{comparisonLabel}</span>
-              )}
-            </span>
-          </div>
-        );
-      })}
-    </div>
+    <StatStrip
+      items={[
+        {
+          key: "bookings",
+          icon: <CalendarDays size={18} strokeWidth={1.5} />,
+          label: labels.bookings,
+          value: String(now.bookings),
+          context: comparisonLabel,
+          delta: <DeltaPill now={now.bookings} then={previous.bookings} />,
+        },
+        {
+          key: "arrived",
+          icon: <UserCheck size={18} strokeWidth={1.5} />,
+          label: labels.arrived,
+          value: pct(now.arrived, now.bookings),
+          context: comparisonLabel,
+          delta: <DeltaPill now={now.arrived} then={previous.arrived} />,
+        },
+        {
+          key: "noshow",
+          icon: <UserX size={18} strokeWidth={1.5} />,
+          label: labels.noshow,
+          value: pct(now.noshow, now.bookings),
+          context: comparisonLabel,
+          /* The arrow follows the number, the colour follows whether that
+             direction is welcome: a week with more no-shows than the last is
+             not an improvement, however the figure moved. */
+          delta: <DeltaPill now={now.noshow} then={previous.noshow} goodWhen="down" />,
+        },
+        {
+          key: "holds",
+          icon: <Lock size={18} strokeWidth={1.5} />,
+          label: labels.holds,
+          value: String(now.holds),
+          context: comparisonLabel,
+          delta: <DeltaPill now={now.holds} then={previous.holds} goodWhen="down" />,
+        },
+      ]}
+    />
   );
 }

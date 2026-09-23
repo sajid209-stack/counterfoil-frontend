@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Archive, ArrowLeft, Check, ChevronDown, Circle, Copy, Eye, EyeOff, Monitor, Pencil, Smartphone } from "lucide-react";
+import { Archive, ArrowLeft, CalendarDays, Check, ChevronDown, Circle, Copy, Eye, EyeOff, Monitor, Pencil, Smartphone, Ticket, Wallet } from "lucide-react";
 import { ActionMenu, Button, ConfirmDialog, EmptyState, PageShell, StatStrip, StatusPill, useToast, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -164,10 +164,11 @@ export default function EventDetailPage() {
         {e && (
           <StatStrip
             items={[
-              { key: "sold", label: tr("sold"), value: `${sold.toLocaleString()} / ${cap.toLocaleString()}`, note: tr("soldNote", { pct }) },
-              { key: "revenue", label: t("stat.revenue"), value: formatPriceShort(eventRevenue(e)) },
+              { key: "sold", icon: <Ticket size={18} strokeWidth={1.5} />, label: tr("sold"), value: `${sold.toLocaleString()} / ${cap.toLocaleString()}`, note: tr("soldNote", { pct }) },
+              { key: "revenue", icon: <Wallet size={18} strokeWidth={1.5} />, label: t("stat.revenue"), value: formatPriceShort(eventRevenue(e)) },
               {
                 key: "starts",
+                icon: <CalendarDays size={18} strokeWidth={1.5} />,
                 label: tr("starts"),
                 value: state === "ended" ? tr("ended") : days <= 0 ? tr("today") : tr("inDays", { count: days }),
                 note: when,

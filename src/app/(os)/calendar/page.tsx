@@ -724,7 +724,6 @@ export default function CalendarPage() {
           now={statsNow}
           previous={statsPrev}
           comparisonLabel={t(view === "day" ? "vsDay" : view === "week" ? "vsWeek" : "vsMonth")}
-          compact={compact}
           labels={{
             bookings: t("statBookings"),
             arrived: t("statArrived"),
@@ -1088,6 +1087,7 @@ export default function CalendarPage() {
         />
 
         <BookingPanel
+          compact={compact}
           request={request}
           products={sellProducts}
           resources={resources}
@@ -1097,7 +1097,6 @@ export default function CalendarPage() {
           nowMin={nowMin}
           openHour={openHour}
           closeHour={closeHour}
-          compact={compact}
           carry={carry}
           onDraft={setGhost}
           onClose={(c) => {
