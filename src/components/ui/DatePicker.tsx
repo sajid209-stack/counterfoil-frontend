@@ -103,7 +103,12 @@ export function DatePicker({
   autoFocus?: boolean;
   className?: string;
 }) {
-  const selected = value ?? null;
+  /* `|| null`, not `?? null`: a caller holding its date as an empty string
+     rather than null left `focusIso` empty, so no square carried the roving
+     tabindex — the grid had no tab stop at all, arrow keys did nothing, and
+     opening the panel left focus on the trigger. Clicking still worked, which
+     is what hid it. */
+  const selected = value || null;
   const [cursor, setCursor] = useState<Date>(
     () => parseIso(selected) ?? parseIso(today) ?? new Date(),
   );
@@ -122,7 +127,13 @@ export function DatePicker({
   useEffect(() => {
     if (!shouldFocus.current) return;
     shouldFocus.current = false;
-    gridRef.current?.querySelector<HTMLButtonElement>('[data-focus="true"]')?.focus();
+    /* On the next paint, not this one: the click that opened the panel has not
+       finished, and the browser focuses the trigger it was pressed on after
+       this effect runs — so focusing here is undone a moment later. */
+    const square = () => gridRef.current?.querySelector<HTMLButtonElement>('[data-focus="true"]');
+    square()?.focus();
+    const id = requestAnimationFrame(() => square()?.focus());
+    return () => cancelAnimationFrame(id);
   }, []);
 
   const move = (next: Date) => {

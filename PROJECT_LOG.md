@@ -10751,3 +10751,198 @@ needs it, as its tooltip and its accessible name.
 - The band is not sortable or clickable except where a page already made a
   figure a filter (the catalog's "Needs attention"). If other figures should
   filter their table, that is a per-page decision.
+
+## Making an event — the form becomes the invitation (2026-09-23)
+
+Owner, with eight Partiful screenshots: work on `/catalog/new`, research events
+management, onboarding and event creation, improve the UI and UX, *"get
+feedbacks, work on feedback, and again and again, until UI design and UX
+satisfaction matches 10/10"*, and *"dont exact follow and copy Partiful, try to
+research and find world-wide best UI of events page."*
+
+### What it was
+
+Four steps — Details, Page, Tickets, Review — with a summary rail. Making an
+event meant filling a column of labelled inputs (EVENT NAME *, ONE LINE
+UNDERNEATH, KIND OF EVENT) and finding out on step two what any of it looked
+like. Partiful's one genuinely good idea is that **the form IS the invitation**:
+you type on the thing you are making, and the typeface, the colour and the
+title are all changed on the object rather than in a settings panel three
+screens away. Luma's is that a good-looking page comes out of about two minutes
+of input. Neither is copied; both are the argument for the shape.
+
+### The screen
+
+Two panes on one page, not five steps: **The event** and **Page design**.
+Neither is a gate — an event can go on sale from either, and the ready list in
+the rail says what is still missing.
+
+- **`EventCanvas` is the invitation, typed on.** The cover strip at the page's
+  own proportion (generated art, in the category's theme, until a photograph is
+  uploaded); the title set at 30/38px in the event's own display face; the
+  subtitle under it; When and where as a named group; a **Colour** row; the
+  details a venue is asked for over and over — doors, dress code, parking, age,
+  accessibility, food — as one-tap chips that add a labelled row the public
+  page draws; and the six **Look** chips, each label set in its own display
+  face, which repaint the whole page on one press.
+- **The typeface is changed on the title**, where its effect is. Each tile in
+  the popover sets the operator's own title with the family named beside it —
+  eight tiles reading "Aa" is a guessing game about a decision that changes the
+  whole page.
+- **The rail is a ready list, not a stepper**: six rows, each a button that
+  scrolls to the control it is about and focuses it, with the reason under a row
+  that is not done ("General admission needs a price"). Under it, Put on sale,
+  Save off sale, the standing caveat that public event pages are not live yet,
+  and a capped phone preview with a **Full page** modal.
+- **A phone gets the whole screen**: a sticky bar with the count of what is
+  left, a Preview button and both actions.
+- **Add to calendar**, beside the ticket button on the public page. A guest who
+  has decided still has to remember to turn up. `lib/events/calendar.ts` builds
+  a Google template URL rather than an `.ics` data URI, because a data-URI
+  download is blocked inside the preview iframe — which is exactly where the
+  page is drawn while it is being made. It is a quiet text link, never a second
+  filled button: a page with two equally loud actions has none.
+
+### Six review rounds, and what they changed
+
+Each round was an independent principal-designer pass over rendered
+screenshots, then measured rather than asserted. What the rounds actually
+found, beyond the build:
+
+- **The seeded first detail row repeated the venue.** "Where is it?" is the
+  only venue, so `defaults.*.info0` was rewritten for four categories (Age /
+  What to bring / Access / Included).
+- **The accent swatches sat ON the cover**, where they vanished under a light
+  photograph and did not fit a phone's cover strip at all. They are a labelled
+  Colour row now.
+- **Two live previews on one screen.** The architect drew its own beside the
+  rail's. `EventArchitect` gained `preview`, default on — the editor still uses
+  it — and the wizard passes `preview={false}`, which also gives the section
+  list the full column.
+- **"Somewhere to sell it" ticked green** beside a caveat saying the pages are
+  not live. It reads **"Where it's sold"**, which is the choice it is actually
+  checking.
+- **"Free if it all sells"** was printed over a table nobody had priced. An
+  unpriced row is not a free row: it says *"Add prices to see what it's worth"*
+  until there is a price, and *"Free — nothing to collect"* when everything
+  really is free.
+- **Orange stopped being decoration.** Eleven section glyphs, "Edit details",
+  "+ End time" and "Full page" were all in the brand colour beside the one
+  button that puts the event on sale. On this screen orange is that button.
+- **"Adding Entertainment & Social · Change"** was a sentence with a link in
+  it. It is a control: a pill carrying the accent dot, the kind, and a chevron.
+
+### Three defects found by measuring, two of them in shared controls
+
+1. **The date picker had no keyboard path at all, app-wide.** Opening it left
+   focus on the trigger and arrow keys did nothing. Two causes, both real:
+   `selected = value ?? null` let a caller holding its date as an **empty
+   string** through, so `focusIso` was empty, **no square carried the roving
+   tabindex**, and the grid had no tab stop; and the mount effect focused the
+   square before the click that opened the panel had finished, so the browser
+   put focus back on the trigger a moment later. `|| null`, and focus again on
+   the next paint. Clicking a day always worked, which is what hid it.
+2. **The time control rendered empty on a phone.** Below `md` its two nudges
+   are 44px squares each, so a caller asking for `w-28` (112px) left about
+   24px for the field and the time simply vanished. The floor is the control's
+   own now — `min-w-[9.5rem]` on its outer box, where min-width beats width, so
+   a narrow caller reserves the room instead of overflowing it. Putting it on
+   the inner box was the first fix and it was wrong: "+ End time" then drew
+   straight over the nudges.
+3. **The cover strip pushed its own buttons off the card.** With only a
+   min-height beside `aspect-[21/6]` the box takes its **width** from that
+   height — 8rem at 21/6 is 448px — so on a 390px phone "Add a cover" sat 63px
+   off the card and was silently clipped. `w-full`.
+
+### Verified
+
+- **Catalog end to end: 95 checks, all passing.** Its event section was
+  rewritten for the new screen rather than repaired: two panes and no step
+  list, the kind as a control, the invitation as the thing you type on, the
+  ready list ticking off what has been answered, the preview following the
+  title, an unpriced table refusing to claim it is free and then stating what
+  it is worth, one preview on the design pane, Sample marks clearing, and Put
+  on sale landing on the record with the tickets broken down by type.
+- Standing harnesses hold: top cards **84/84**, settings navigation **55/55**,
+  reports **48/48**.
+- Measured on a phone: the time reads 19:00 with 63px of field, "+ End time"
+  starts after the box rather than over it, the cover button is inside the
+  card, and nothing scrolls sideways.
+- Bangla renders whole with **0 missing-message warnings** and no raw keys.
+- `tsc --noEmit` and `npm run build` clean. `eslint` clean on every touched
+  file except `TimeInput`, whose one `set-state-in-effect` error is
+  pre-existing — confirmed by linting `HEAD`'s own copy of the file, which
+  reports exactly the same one.
+- i18n parity **0 missing / 0 extra** across 33 namespaces.
+
+### A seventh round, and the two findings that were liabilities
+
+The review scored it 6.0 and led with the same principle twice: **nothing the
+operator did not type may be drawn as though they had.**
+
+- **The preview stated a date the field did not hold.** The page drew "12 Aug
+  2026" with a countdown running to it while the field beside it read "Pick a
+  date" and the ready list said the date was still to do — the screen
+  contradicting itself about the one fact a guest acts on. The preview has to
+  draw some day (a page with no date and a countdown to nothing looks broken),
+  so **the field is prefilled with the day the page draws**, from the first
+  render, where it can be seen and changed. The time field has always worked
+  this way. Teaching the template a "date not set" state was the other
+  candidate and was rejected: `startsAt` is read at five render sites across
+  six variants, and this is a wizard's problem rather than the public page's.
+- **A blank draft shipped three guest-facing promises, unmarked.** The seeded
+  detail rows read "18+. Photo ID checked at the gate.", "Doors open 16:00" and
+  "8,000 standing. No seats, no barriers." in the same black as typed text —
+  and the last of them sat a screen above a strip reading "No capacity yet".
+  An operator who filled in the name and pressed Put on sale published an age
+  policy and a standing capacity they never agreed to. They now carry the same
+  treatment the page sections already had: a **Sample** pill, a dashed row, the
+  value dimmed, a sentence saying they are published as written, and **Clear 3
+  samples**. Editing a row clears the mark, because the wizard already tracks
+  which seeded fields have been touched.
+- **The title clipped mid-word on the card.** "Light & Line: Twenty Years of
+  Dhaka Printmaking" rendered as "…Dhaka Print" — the invitation showing the
+  operator a title that is not theirs, silently, on the one object the screen
+  exists to design. It is a textarea that grows with its text now, with Enter
+  blocked so it still behaves like the single field it looks like.
+- **The rail led with an eyebrow.** "READY TO SELL" in 12px caps over the list,
+  with the one decision-relevant sentence — "3 things left before it can go on
+  sale" — in 13px grey underneath it. The count leads at 17/600; the eyebrow is
+  gone.
+- **"Look" read as a second taxonomy** beside a pill saying Entertainment &
+  Social. It changes the category — the typeface, the palette and the page's
+  sections — so it says so in a line under its own label.
+- **A colour was chosen by a ring alone.** Two dark swatches in the arts
+  palette are exactly what a colour-blind operator cannot separate; the chosen
+  one now carries a check, in ink or paper against its own lightness.
+- **Every control under the 44px touch floor was raised** — the two panes, the
+  cover button, the typeface button, the inline date trigger, the detail chips,
+  the Look chips, "+ End time", Clear samples and the swatches. Measured after:
+  at 390 in dark the screen reports **one** finding, and it is the declared
+  white-on-ember rule on Put on sale.
+
+**Declined, with reasons.** A single tier still prints its name publicly:
+"General admission ৳500" is what every event page shows, and hiding the name
+when there is one tier leaves a bare price. Put on sale stays a live primary
+rather than going secondary until the list is clear — this product's rule is
+that a primary is never greyed out and says what is missing when it is pressed,
+which it does. And `৳120,000 if it all sells` keeps its shortened form: the
+house rule on two decimals is for totals on receipts and reports, not for a
+projection.
+
+**One finding was a measurement artifact, and it is the same one this log has
+recorded twice.** The review reported the sticky page header bleeding over the
+rail and the cover. Measured in the viewport rather than in a full-page
+screenshot: at rest `barBottom 61, asideTop 81, cardTop 141`, and after 700px
+of scroll the bar is still at 0 with nothing over it. A full-page capture
+cannot draw `position: sticky` honestly.
+
+### Open
+
+- **A single tier still prints its name publicly**, as above.
+- Cover art is an upload with no library behind it, and events still do not
+  reach the till or the reports — both carried forward.
+- **The page-design tab still names its sections without describing them.**
+  SNEAK PEEKS and AT A GLANCE are unguessable until expanded, and a one-line
+  description under each name is the cheapest remaining improvement on that
+  tab.

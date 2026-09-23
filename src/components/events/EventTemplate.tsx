@@ -2,10 +2,11 @@
 
 import type { CSSProperties } from "react";
 import { useState } from "react";
-import { ArrowRight, Building2, CalendarDays, ChevronDown, Clock, Flame, Lightbulb, MapPin, Play, Rocket, Ticket, Users } from "lucide-react";
+import { ArrowRight, Building2, CalendarDays, CalendarPlus, ChevronDown, Clock, Flame, Lightbulb, MapPin, Play, Rocket, Ticket, Users } from "lucide-react";
 import type { EventRecord } from "@/lib/api/events";
 import { eventFromPrice } from "@/lib/api/events";
 import { categoryById, type EventTheme, type SectionId } from "@/lib/events/catalog";
+import { calendarUrl } from "@/lib/events/calendar";
 import { parseEventVideo } from "@/lib/events/video";
 import { formatPriceShort } from "@/lib/format";
 
@@ -1336,6 +1337,7 @@ function Hero({
         {fromPrice === null ? labels.soldOut : labels.getTickets}
         <ArrowRight size={16} strokeWidth={2} aria-hidden />
       </a>
+      <CalendarLink event={event} narrow={narrow} labels={labels} />
       {event.lineup.length > 0 && (
         <a
           href="#lineup"
@@ -1553,6 +1555,7 @@ function Hero({
               {fromPrice === null ? labels.soldOut : labels.getTickets}
               <ArrowRight size={16} strokeWidth={1.75} aria-hidden />
             </a>
+            <CalendarLink event={event} narrow={narrow} labels={labels} />
           </div>
           {stops.length >= 2 && <RouteChart stops={stops} narrow={narrow} theme={theme} labels={labels} />}
         </div>
@@ -1677,6 +1680,7 @@ function Hero({
         {fromPrice === null ? labels.soldOut : labels.getTickets}
         <ArrowRight size={16} strokeWidth={2} aria-hidden />
       </a>
+      <CalendarLink event={event} narrow={narrow} labels={labels} />
       {agendaOn && (
         <a
           href="#schedule"
@@ -1741,6 +1745,34 @@ function Hero({
 }
 
 /* ── Repeating pieces ────────────────────────────────────────────────────── */
+
+/** "Add to calendar", beside the ticket button.
+ *
+ *  Deliberately not a second filled button: a page with two equally loud
+ *  actions has none. It is the quiet one a guest who has already decided
+ *  reaches for, and its label has existed in this file's label set since the
+ *  templates were written — with nothing rendering it. */
+function CalendarLink({ event, narrow, labels }: { event: EventRecord; narrow: boolean; labels: Labels }) {
+  return (
+    <a
+      href={calendarUrl(event)}
+      target="_blank"
+      rel="noreferrer"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: narrow ? "14px 18px" : "15px 20px",
+        color: "var(--e-muted)",
+        font: `500 ${narrow ? "13px" : "14px"}/1 var(--e-body)`,
+        textDecoration: "none",
+      }}
+    >
+      <CalendarPlus size={15} strokeWidth={1.75} aria-hidden />
+      {labels.addToCalendar}
+    </a>
+  );
+}
 
 function Countdown({
   to,

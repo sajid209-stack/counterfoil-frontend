@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import { Button, DateField, FormField } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { formatDay, formatPriceShort } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import type { EventTier } from "@/lib/api/events";
@@ -81,6 +82,10 @@ export function TicketTiers({
     (s, r) => s + (parseInt(r.quantity, 10) || 0) * Math.round((parseFloat(r.price) || 0) * 100),
     0,
   );
+  /* A row with no price yet is not a free row. Reading "Free if it all sells"
+     over a table nobody has priced states the one thing an operator is most
+     likely to be wrong about. */
+  const unpriced = rows.some((r) => r.name.trim() !== "" && r.price.trim() === "");
 
   return (
     <div className="flex flex-col gap-section">
@@ -171,8 +176,12 @@ export function TicketTiers({
 
       <div className="flex flex-wrap items-baseline justify-between gap-tight rounded-sm border border-line bg-subtle px-card py-comfortable">
         <span className="text-[13px] text-muted">{t("tickets.capacity", { count: capacity })}</span>
-        <span className="text-sm font-medium tabular-nums">
-          {t("tickets.potential", { amount: potential === 0 ? t("free") : formatPriceShort(potential) })}
+        <span className={cn("text-sm font-medium", !unpriced && "tabular-nums")}>
+          {unpriced
+            ? t("tickets.potentialUnpriced")
+            : potential === 0
+              ? t("tickets.potentialFree")
+              : t("tickets.potential", { amount: formatPriceShort(potential) })}
         </span>
       </div>
     </div>

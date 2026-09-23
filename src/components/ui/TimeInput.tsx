@@ -63,8 +63,13 @@ export function TimeInput({
      44px box, and the steppers inside it were left 42px tall on a phone. */
   const border = error || parseError ? "ring-danger focus-within:ring-danger" : "ring-line focus-within:ring-inverse";
 
+  /* The floor is on the OUTER box, and it is the control's own rather than the
+     caller's to get wrong: below md the two nudges are 44px squares each, so a
+     caller asking for 7rem left about 24px for the field and the time simply
+     vanished. min-width beats width, so a narrow caller reserves the room in
+     the layout instead of overflowing it. */
   return (
-    <Field label={label} help={help} error={error ?? parseError ?? undefined} required={required} htmlFor={id} className={className}>
+    <Field label={label} help={help} error={error ?? parseError ?? undefined} required={required} htmlFor={id} className={cn("min-w-[9.5rem] md:min-w-0", className)}>
       <div className={cn("flex h-11 items-stretch overflow-hidden rounded-sm bg-card ring-1 ring-inset transition-colors duration-quick", border, disabled && "bg-subtle")}>
         <input
           id={id}

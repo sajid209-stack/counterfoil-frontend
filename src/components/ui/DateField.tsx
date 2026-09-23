@@ -108,7 +108,7 @@ export function DateField({
           shape === "go"
             ? "min-h-12 rounded-go px-comfortable"
             : shape === "inline"
-              ? "h-9 w-auto rounded-sm border-transparent bg-transparent px-tight text-[14px] font-medium hover:bg-muted-wash focus-visible:bg-muted-wash"
+              ? "min-h-11 w-auto rounded-sm border-transparent bg-transparent px-tight text-[14px] font-medium hover:bg-muted-wash focus-visible:bg-muted-wash sm:h-9 sm:min-h-0"
               : cn("rounded-sm", compact ? "" : size === "form" ? "h-11 px-comfortable" : "h-11 px-comfortable md:h-9"),
         )}
       >

@@ -166,7 +166,9 @@
       "free": "Free entry"
     },
     "summaryEnds": "Stops selling {date}",
-    "keepOne": "An event needs at least one ticket type"
+    "keepOne": "An event needs at least one ticket type",
+    "potentialUnpriced": "Add prices to see what it's worth",
+    "potentialFree": "Free — nothing to collect"
   },
   "error": {
     "title": "Give the event a name.",
@@ -349,8 +351,8 @@
       "highlight2": "Merch drop",
       "highlight3": "The venue",
       "info0": {
-        "label": "Venue",
-        "value": "Army Stadium, Dhaka — open-air, standing only"
+        "label": "Age",
+        "value": "18+. Photo ID checked at the gate."
       },
       "info1": {
         "label": "Doors open",
@@ -379,8 +381,8 @@
       "highlight2": "Teams",
       "highlight3": "The ground",
       "info0": {
-        "label": "Ground",
-        "value": "Chattogram Turf — floodlit, 7-a-side"
+        "label": "What to bring",
+        "value": "Boots, shin pads, a light and a dark shirt."
       },
       "info1": {
         "label": "First whistle",
@@ -451,8 +453,8 @@
       "highlight2": "Catalogue",
       "highlight3": "The space",
       "info0": {
-        "label": "Gallery",
-        "value": "Bengal Arts Centre, ground floor"
+        "label": "Access",
+        "value": "Step-free throughout. Lift to the upper floor."
       },
       "info1": {
         "label": "Open",
@@ -481,8 +483,8 @@
       "highlight2": "Meals",
       "highlight3": "What to pack",
       "info0": {
-        "label": "Departs",
-        "value": "Khulna launch ghat, 07:00"
+        "label": "Included",
+        "value": "All meals aboard, guides and the landing fees."
       },
       "info1": {
         "label": "Duration",

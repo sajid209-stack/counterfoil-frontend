@@ -120,6 +120,7 @@ export function EventArchitect({
   labels,
   onEditDetails,
   samples = [],
+  preview = true,
 }: {
   categoryId: CategoryId;
   event: EventRecord;
@@ -136,6 +137,10 @@ export function EventArchitect({
   /** Sections still showing the content their category seeded — marked
    *  Sample on their row until edited or switched off. */
   samples?: SectionId[];
+  /** Whether this draws its own preview. The wizard keeps a preview of its
+   *  own in the rail and behind a Full page button, and two live previews of
+   *  one page on one screen is one of them nobody is reading. */
+  preview?: boolean;
 }) {
   const t = useTranslations("events");
   const cat = categoryById(categoryId);
@@ -199,7 +204,7 @@ export function EventArchitect({
   const dropFaq = (id: string) => onContent({ faq: content.faq.filter((f) => f.id !== id) });
 
   return (
-    <div className="grid gap-section xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)] xl:items-start">
+    <div className={cn("grid gap-section", preview && "xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)] xl:items-start")}>
       {/* ── The architect ──────────────────────────────────────────────── */}
       <div className="card-surface overflow-hidden">
         <div className="border-b border-line px-card py-comfortable">
@@ -553,6 +558,7 @@ export function EventArchitect({
       </div>
 
       {/* ── Live preview ───────────────────────────────────────────────── */}
+      {preview && (
       <div className="card-surface overflow-hidden xl:sticky xl:top-comfortable">
         <div className="flex items-center justify-between gap-tight border-b border-line px-card py-comfortable">
           <h3 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("customise.preview")}</h3>
@@ -582,6 +588,7 @@ export function EventArchitect({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -617,7 +624,7 @@ function Row({
           aria-expanded={open}
           className="flex min-h-11 min-w-0 flex-1 items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick hover:bg-subtle"
         >
-          <Icon size={16} strokeWidth={1.5} className={cn("shrink-0", muted ? "text-muted/60" : "text-brand-foreground")} />
+          <Icon size={16} strokeWidth={1.5} className={cn("shrink-0", muted ? "text-muted/60" : "text-muted")} />
           <span className={cn("type-label min-w-0 flex-1 truncate text-[12px]", muted ? "text-muted/60" : "text-fg")}>{label}</span>
           {sample && <span className="shrink-0 rounded-full bg-warning-wash px-tight py-0.5 text-[12px] font-medium text-warning">{sample}</span>}
           <ChevronDown size={16} strokeWidth={1.5} className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-180")} />
@@ -683,7 +690,7 @@ function DetailsNote({ onEdit, children }: { onEdit?: () => void; children: Reac
         <button
           type="button"
           onClick={onEdit}
-          className="flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-brand-foreground hover:bg-muted-wash md:min-h-9"
+          className="flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium underline underline-offset-2 hover:bg-muted-wash md:min-h-9"
         >
           {t("architect.editDetails")}
         </button>

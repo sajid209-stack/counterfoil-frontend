@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, ChevronRight, Circle, Pencil } from "lucide-react";
+import { AlertTriangle, Check, ChevronRight, Circle, Maximize2 } from "lucide-react";
 import { Button, Modal, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { createEvent, listLocations, slugify, type Channel, type EventCustomisation, type EventRecord } from "@/lib/api";
@@ -16,13 +16,15 @@ import { PreviewFrame } from "@/components/events/PreviewFrame";
 import { formatDay, formatPriceShort } from "@/lib/format";
 import { DEMO_TODAY, demoNow } from "@/lib/schedule";
 import { emptyTier, TicketTiers, toTiers, type FormTier } from "./TicketTiers";
+import { EventCanvas } from "./EventCanvas";
 import { EventArchitect, type EventContent } from "./EventArchitect";
-import { EventDetails } from "./EventDetails";
 import { useTemplateLabels } from "@/lib/events/useTemplateLabels";
 import { WhereSold } from "../WhereSold";
 import type { SectionId } from "@/lib/events/catalog";
 
-type StepKey = "category" | "details" | "design" | "tickets" | "publish";
+/** Where a check sends you: the making pane, or the page designer. */
+type Pane = "make" | "design";
+type StepKey = "details" | "design" | "tickets";
 
 const shiftDay = (iso: string, days: number) => {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -65,16 +67,11 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
   /* Arriving from the chooser the category — and with it the whole look — is
      already picked, so there is no category step at all; the "Change" beside
      what is being added goes back to the chooser for a change of mind. */
-  const steps: StepKey[] = initialCategory ? ["details", "design", "tickets", "publish"] : ["category", "details", "design", "tickets", "publish"];
-  const [stepKey, setStepKey] = useState<StepKey>(steps[0]);
-  const stepIndex = Math.max(0, steps.indexOf(stepKey));
+  const [pane, setPane] = useState<Pane>("make");
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  /* The one checklist rule, as in the booking wizard: nothing is ticked on
-     the operator's behalf — an item is done once its step has been seen and
-     what it holds is valid. */
-  const [seen, setSeen] = useState<Set<StepKey>>(() => new Set([steps[0]]));
   const [checklistOpen, setChecklistOpen] = useState(false);
+  const [bigPreview, setBigPreview] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
 
   // Where it is sold: its own page by default, the counter when asked for.
@@ -99,7 +96,13 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
   const [content, setContent] = useState<EventContent>({
     title: "",
     subtitle: "",
-    date: "",
+    /* The date is prefilled, not blank. The preview has to draw SOME day —
+       a page with no date and a countdown to nothing looks broken — and a
+       preview stating a date while the field beside it reads "Pick a date" is
+       the screen contradicting itself about the one fact a guest acts on.
+       So the field holds the day the page draws, from the first render, where
+       it can be seen and changed. The time has always worked this way. */
+    date: shiftDay(DEMO_TODAY, 14),
     startTime: "19:00",
     endDate: "",
     endTime: "",
@@ -128,11 +131,18 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
   const patchDraft = (patch: Partial<EventRecord>) => setSeedEdits((e) => ({ ...e, ...patch }));
   const [tiers, setTiers] = useState<FormTier[]>(() => [emptyTier(t("tickets.namePlaceholder"))]);
 
+  /* A check is a place, not a step: name, date and venue are on the card,
+     tickets are under it, and the page's sample content is in the designer.
+     Pressing one goes there and puts the cursor on it rather than walking a
+     wizard forward one screen at a time. */
   const goTo = (key: StepKey) => {
-    setSeen((cur) => (cur.has(key) ? cur : new Set(cur).add(key)));
     setStepError(null);
-    setStepKey(key);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setPane(key === "design" ? "design" : "make");
+    requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLElement>(`[data-goto="${key}"]`);
+      el?.scrollIntoView({ block: "center", behavior: "smooth" });
+      el?.querySelector<HTMLElement>("input, button, select")?.focus?.();
+    });
   };
 
   /** Choosing a category is also choosing its whole visual default. */
@@ -149,12 +159,11 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
       variant: cat.variants[0],
       sections: cat.sections,
     });
-    goTo("details");
+    setPane("make");
   };
 
   const labels = useTemplateLabels(categoryId);
-  /* The preview needs a date before the operator has chosen one; a fortnight
-     out reads as an event and the countdown has something to count. */
+  /* The field is prefilled, so this is only a guard against it being cleared. */
   const shownDate = content.date || shiftDay(DEMO_TODAY, 14);
 
   /** The record the preview draws — the real shape, so the preview cannot
@@ -258,26 +267,26 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
   const ticketsValid = Object.keys(ticketErrors()).length === 0;
   const unpriced = tiers.find((r) => r.name.trim() && r.price.trim() === "");
   const checks: { key: string; done: boolean; step: StepKey; hint?: string }[] = [
-    { key: "name", done: seen.has("details") && !!content.title.trim(), step: "details" },
-    { key: "date", done: seen.has("details") && !!content.date, step: "details" },
-    { key: "venue", done: seen.has("details") && !!content.venueName.trim(), step: "details" },
+    { key: "name", done: !!content.title.trim(), step: "details" },
+    { key: "date", done: !!content.date, step: "details" },
+    { key: "venue", done: !!content.venueName.trim(), step: "details" },
     {
       key: "page",
-      done: seen.has("design") && samples.length === 0,
+      done: samples.length === 0,
       step: "design",
-      hint: seen.has("design") && samples.length > 0 ? tw("hint.samples", { count: samples.length }) : undefined,
+      hint: samples.length > 0 ? tw("hint.samples", { count: samples.length }) : undefined,
     },
     {
       key: "tickets",
-      done: seen.has("tickets") && ticketsValid,
+      done: ticketsValid,
       step: "tickets",
-      hint: seen.has("tickets") && unpriced ? tb("hint.needsPrice", { name: unpriced.name.trim() }) : undefined,
+      hint: unpriced ? tb("hint.needsPrice", { name: unpriced.name.trim() }) : undefined,
     },
     {
       key: "channel",
-      done: seen.has("tickets") && channelDone,
+      done: channelDone,
       step: "tickets",
-      hint: seen.has("tickets") && !channelDone ? (counter || online ? tb("hint.needsLocation") : tb("nowhere")) : undefined,
+      hint: !channelDone ? (counter || online ? tb("hint.needsLocation") : tb("nowhere")) : undefined,
     },
   ];
   const ready = checks.every((c) => c.done);
@@ -310,12 +319,6 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
     return true;
   };
 
-  const next = () => {
-    if (stepKey === "category" && !categoryId) return;
-    if (!validate(stepKey)) return;
-    setErrors({});
-    goTo(steps[Math.min(steps.length - 1, stepIndex + 1)]);
-  };
 
   const publish = async (publishNow: boolean) => {
     if (!draft || !categoryId || !custom) return;
@@ -326,7 +329,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
       goTo(need.step);
       if (need.step === "details") flag(detailsErrors());
       if (need.step === "tickets") validate("tickets");
-      if (need.step === "design" && seen.has("design")) setStepError(tw("hint.samples", { count: samples.length }));
+      if (need.step === "design") setStepError(tw("hint.samples", { count: samples.length }));
       return;
     }
     setSaving(true);
@@ -377,59 +380,22 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
   const priced = toTiers(tiers.filter((r) => r.name.trim() && r.price.trim() !== ""));
   const fromPrice = priced.length ? Math.min(...priced.map((x) => x.price)) : null;
   const catName = categoryId ? t(`category.${categoryById(categoryId).key}`) : null;
-  const wide = stepKey === "design" || stepKey === "category";
-
   return (
-    <div className={cn("grid gap-major pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-hero", !wide && "lg:grid-cols-[minmax(0,1fr)_20rem]")}>
+    <div className="grid gap-section pb-[calc(7.5rem+env(safe-area-inset-bottom))] md:pb-hero lg:grid-cols-[minmax(0,1fr)_23rem]">
       <Modal open={checklistOpen} onClose={() => setChecklistOpen(false)} title={tb("readyTitle")}>
-        <EventChecklist checks={checks} reachable={(step) => seen.has(step)} onGo={(step) => { setChecklistOpen(false); goTo(step); }} ready={ready} />
+        <EventChecklist checks={checks} reachable={() => true} onGo={(step) => { setChecklistOpen(false); goTo(step); }} ready={ready} />
       </Modal>
-      <div className="flex min-w-0 flex-col gap-section">
-        {/* What this is, and the one way back to choosing something else. */}
-        {categoryId && (
-          <div className="flex flex-wrap items-center gap-tight text-[13px]">
-            <span className="text-muted">{tb("adding")}</span>
-            <span className="rounded-full border border-line bg-card px-comfortable py-0.5 font-medium text-fg">{catName}</span>
-            <Link href="/catalog/new?kind=events" className="inline-flex min-h-11 items-center font-medium text-brand-foreground underline-offset-2 hover:underline md:min-h-0">{tb("changeKind")}</Link>
+      <Modal open={bigPreview} onClose={() => setBigPreview(false)} title={t("customise.preview")}>
+        {draft && (
+          <div className={cn("overflow-hidden rounded-sm", templateFontVars)}>
+            <PreviewFrame width={1180}>
+              <EventTemplate event={draft} device="desktop" labels={labels} now={now} />
+            </PreviewFrame>
           </div>
         )}
+      </Modal>
 
-        <div className="flex flex-col gap-inline sm:hidden">
-          <p className="text-[13px] text-muted">
-            {tb("stepOf", { n: stepIndex + 1, total: steps.length })} · <span className="font-medium text-fg">{tw(`step.${stepKey}`)}</span>
-          </p>
-          <span className="h-1 w-full overflow-hidden rounded-full bg-line" aria-hidden>
-            <span className="block h-full rounded-full bg-ember-solid transition-[width] duration-quick" style={{ width: `${((stepIndex + 1) / steps.length) * 100}%` }} />
-          </span>
-        </div>
-
-        {/* Stepper — completed steps are reachable, ones ahead are not. */}
-        <ol className="hidden flex-wrap gap-inline sm:flex" aria-label={tb("progress")}>
-          {steps.map((key, i) => {
-            const done = i < stepIndex;
-            const current = i === stepIndex;
-            return (
-              <li key={key}>
-                <button
-                  type="button"
-                  disabled={i > stepIndex}
-                  aria-current={current ? "step" : undefined}
-                  onClick={() => goTo(key)}
-                  className={cn(
-                    "flex min-h-9 items-center gap-inline rounded-sm px-comfortable py-tight text-[12px] transition-colors duration-quick",
-                    current ? "bg-inverse text-inverse-fg" : done ? "text-fg hover:bg-subtle" : "text-muted",
-                  )}
-                >
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full border border-current text-[12px] tabular-nums">
-                    {done ? <Check size={12} strokeWidth={2} /> : i + 1}
-                  </span>
-                  {tw(`step.${key}`)}
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-
+      <div className="flex min-w-0 flex-col gap-section">
         {stepError && (
           <p role="alert" tabIndex={-1} data-step-error className="flex items-start gap-tight rounded-sm border border-danger/40 bg-danger-wash px-comfortable py-tight text-[13px] font-medium text-danger outline-none">
             <AlertTriangle size={15} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0" />
@@ -437,8 +403,8 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
           </p>
         )}
 
-        {/* ── Category (only when the chooser did not already pick one) ──── */}
-        {stepKey === "category" && (
+        {/* ── Which kind, when the chooser did not already say ───────────── */}
+        {!categoryId && (
           <div>
             <StepHead title={t("step.categoryTitle")} help={t("step.categoryHelp")} />
             <div className="grid gap-section sm:grid-cols-2 xl:grid-cols-3">
@@ -448,13 +414,8 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
                   type="button"
                   onClick={() => pickCategory(c.id)}
                   aria-pressed={categoryId === c.id}
-                  className={cn(
-                    "group overflow-hidden rounded-md border text-left transition-all duration-quick hover:-translate-y-0.5 hover:shadow-md",
-                    categoryId === c.id ? "border-ember ring-2 ring-ember/20" : "border-line hover:border-strong",
-                  )}
+                  className="group overflow-hidden rounded-md border border-line text-left transition-all duration-quick hover:-translate-y-0.5 hover:border-strong hover:shadow-md"
                 >
-                  {/* The swatch IS the theme — ground, accent and display face,
-                      drawn in the theme's own literal colours. */}
                   <span className="flex h-28 items-end p-card" style={{ background: c.theme.bg, borderBottom: `1px solid ${c.theme.line}` }}>
                     <span className={templateFontVars} style={{ display: "block" }}>
                       <span
@@ -480,177 +441,140 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
           </div>
         )}
 
-        {/* ── Details — the facts, before anything is designed ─────────── */}
-        {stepKey === "details" && categoryId && (
-          <div className="card-surface p-card">
-            <StepHead title={tw("title.details")} help={tw("help.details")} />
-            <EventDetails categoryId={categoryId} content={content} onContent={patchContent} errors={errors} subtype={subtype} onSubtype={setSubtype} />
-          </div>
-        )}
-
-        {/* ── Page — look and content, one screen ─────────────────────────── */}
-        {stepKey === "design" && categoryId && custom && draft && (
-          <div>
-            <StepHead title={t("step.designTitle")} help={tw("help.design")} />
-            <EventArchitect
-              categoryId={categoryId}
-              event={draft}
-              custom={custom}
-              onCustom={setCustom}
-              content={content}
-              onContent={patchContent}
-              onEvent={patchDraft}
-              now={now}
-              labels={labels}
-              onEditDetails={() => goTo("details")}
-              samples={samples}
-            />
-          </div>
-        )}
-
-        {/* ── Tickets ─────────────────────────────────────────────────────── */}
-        {stepKey === "tickets" && (
-          <div className="card-surface p-card">
-            <StepHead title={tw("title.tickets")} help={t("step.ticketsHelp")} />
-            <TicketTiers rows={tiers} onChange={setTiers} errors={errors} />
-            <div className="mt-major border-t border-hairline pt-section">
-              <WhereSold
-                counter={counter}
-                online={online}
-                onCounter={(v) => { setCounter(v); setStepError(null); }}
-                onOnline={(v) => { setOnline(v); setStepError(null); }}
-                onlineHelp={tw("onlineHelp")}
-                counterHelp={tw("counterHelp")}
-                locations={locations}
-                locationIds={locationIds}
-                onToggleLocation={(id) => { toggleLocation(id); setStepError(null); setErrors((x) => ({ ...x, locations: "" })); }}
-                locationsOnlyForCounter
-                error={errors.locations || null}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ── Put on sale — everything, one row a step, then the page ───── */}
-        {stepKey === "publish" && draft && (
-          <div className="flex flex-col gap-section">
-            <div className="card-surface p-card">
-              <StepHead title={tw("title.publish")} help={tw("help.publish")} />
-              <Review label={tw("row.details")} onEdit={() => goTo("details")} editText={tb("edit")} editLabel={tb("editStep", { step: tw("step.details") })}>
-                <span className="block font-medium">{content.title.trim() || <Missing>{tw("check.name")}</Missing>}</span>
-                <span className="block text-muted">{whenText ?? <Missing>{tw("check.date")}</Missing>}</span>
-                <span className="block text-muted">
-                  {content.venueName.trim() ? [content.venueName.trim(), content.venueAddress.trim()].filter(Boolean).join(" · ") : <Missing>{tw("check.venue")}</Missing>}
-                </span>
-              </Review>
-              <Review label={tw("row.page")} onEdit={() => goTo("design")} editText={tb("edit")} editLabel={tb("editStep", { step: tw("step.design") })}>
-                <span className="flex items-center gap-tight">
-                  <span aria-hidden className="h-3 w-3 shrink-0 rounded-full ring-1 ring-fg/25" style={{ background: custom?.accent }} />
-                  {[catName, t(`variant.${custom?.variant}`), tw("sections", { count: custom?.sections.length ?? 0 })].join(" · ")}
-                </span>
-                <span className="block font-mono text-[12px] text-muted">/e/{slugify(content.title || "event")}</span>
-              </Review>
-              <Review label={tw("row.tickets")} onEdit={() => goTo("tickets")} editText={tb("edit")} editLabel={tb("editStep", { step: tw("step.tickets") })}>
-                {liveTiers.length ? (
-                  <span className="flex flex-col gap-0.5">
-                    {liveTiers.map((x) => (
-                      <span key={x.id} className="flex items-baseline justify-between gap-section">
-                        <span>
-                          {x.name}
-                          <span className="text-muted"> · {tw("qty", { count: x.quantity })}</span>
-                        </span>
-                        <span className="tabular-nums">{x.price === 0 ? t("free") : formatPriceShort(x.price)}</span>
-                      </span>
-                    ))}
-                  </span>
-                ) : (
-                  <Missing>{tw("check.tickets")}</Missing>
-                )}
-              </Review>
-              <Review label={tw("row.where")} onEdit={() => goTo("tickets")} editText={tb("edit")} editLabel={tb("editStep", { step: tw("step.tickets") })}>
-                <span className="flex flex-col gap-0.5">
-                  <ChannelLine on={online} label={tw("onlinePage")} />
-                  <ChannelLine on={counter} label={tb("atCounter")} />
-                  {!online && <span className="text-[13px] text-warning">{tb("notOnlineShort")}</span>}
-                  {counter && (locationIds.length > 0 ? (
-                    <span className="text-muted">{locations.filter((l) => locationIds.includes(l.id)).map((l) => l.name).join(" · ")}</span>
-                  ) : (
-                    <Missing>{tb("hint.needsLocation")}</Missing>
-                  ))}
-                </span>
-              </Review>
-              <p className={cn("mt-section rounded-sm px-comfortable py-tight text-[13px]", ready ? "bg-success-wash text-fg" : "bg-muted-wash text-muted")}>
-                {ready ? tw("ready") : tw("notReady")}
-              </p>
-              {/* Honest about the one thing the screen cannot promise yet. */}
-              <p className="mt-tight flex items-start gap-tight text-[13px] text-muted">
-                <AlertTriangle size={14} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-warning" />
-                {tw("notLiveYet")}
-              </p>
-            </div>
-            <div className="card-surface overflow-hidden">
-              <div className="flex flex-wrap items-baseline justify-between gap-tight border-b border-line px-card py-comfortable">
-                <h3 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("customise.preview")}</h3>
+        {categoryId && custom && (
+          <>
+            {/* Two panes, not five steps: what the event IS, and what its page
+                is made of. Neither is a gate — an event can go on sale from
+                either, and the ready list says what is still missing. */}
+            <div className="flex flex-wrap items-center justify-between gap-tight">
+              <div role="tablist" aria-label={tb("progress")} className="flex gap-inline rounded-sm bg-line/60 p-inline">
+                {(["make", "design"] as Pane[]).map((p) => (
+                  <button
+                    key={p}
+                    role="tab"
+                    type="button"
+                    aria-selected={pane === p}
+                    onClick={() => setPane(p)}
+                    className={cn(
+                      "flex min-h-11 items-center rounded-sm px-comfortable text-[13px] font-medium transition-colors duration-quick sm:min-h-9",
+                      pane === p ? "bg-card text-fg shadow-sm" : "text-muted hover:text-fg",
+                    )}
+                  >
+                    {tb(`pane.${p}`)}
+                  </button>
+                ))}
               </div>
-              <div className="bg-subtle p-card">
-                <div className={cn("mx-auto overflow-hidden rounded-sm shadow-md", templateFontVars)} style={{ maxWidth: 1180 }}>
-                  <PreviewFrame width={1180}>
-                    <EventTemplate event={draft} device="desktop" labels={labels} now={now} />
-                  </PreviewFrame>
+              {/* The kind, as a control rather than a sentence with a link in
+                  it — and in ink, not the brand colour: on this screen orange
+                  belongs to the one action that puts the event on sale. */}
+              <Link
+                href="/catalog/new?kind=events"
+                title={tb("changeKind")}
+                className="inline-flex min-h-11 items-center gap-tight rounded-full border border-line px-comfortable text-[13px] transition-colors duration-quick hover:border-strong md:min-h-9"
+              >
+                <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: custom.accent }} />
+                <span className="sr-only">{tb("adding")} </span>
+                <span className="font-medium">{catName}</span>
+                <ChevronRight size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
+                <span className="sr-only">{tb("changeKind")}</span>
+              </Link>
+            </div>
+
+            {pane === "make" ? (
+              <>
+                <div data-goto="details">
+                  <EventCanvas
+                    categoryId={categoryId}
+                    content={content}
+                    onContent={patchContent}
+                    errors={errors}
+                    accent={custom.accent}
+                    displayFont={custom.displayFont}
+                    onFont={(css) => setCustom({ ...custom, displayFont: css })}
+                    onAccent={(hex) => setCustom({ ...custom, accent: hex })}
+                    onCategory={pickCategory}
+                    details={draft?.info ?? []}
+                    onDetails={(info) => patchDraft({ info })}
+                    detailsAreSample={seedEdits.info === undefined}
+                  />
                 </div>
-              </div>
-            </div>
-          </div>
+
+                <section data-goto="tickets" className="card-surface p-card">
+                  <h2 className="text-base font-semibold tracking-[-0.4px]">{tw("title.tickets")}</h2>
+                  <p className="mb-section mt-inline text-[13px] text-muted">{t("step.ticketsHelp")}</p>
+                  <TicketTiers rows={tiers} onChange={setTiers} errors={errors} />
+                  <div className="mt-major border-t border-hairline pt-section">
+                    <WhereSold
+                      counter={counter}
+                      online={online}
+                      onCounter={(v) => { setCounter(v); setStepError(null); }}
+                      onOnline={(v) => { setOnline(v); setStepError(null); }}
+                      onlineHelp={tw("onlineHelp")}
+                      counterHelp={tw("counterHelp")}
+                      locations={locations}
+                      locationIds={locationIds}
+                      onToggleLocation={(id) => { toggleLocation(id); setStepError(null); setErrors((x) => ({ ...x, locations: "" })); }}
+                      locationsOnlyForCounter
+                      error={errors.locations || null}
+                    />
+                  </div>
+                </section>
+              </>
+            ) : (
+              draft && (
+                <div data-goto="design">
+                  <EventArchitect
+                    categoryId={categoryId}
+                    event={draft}
+                    custom={custom}
+                    onCustom={setCustom}
+                    content={content}
+                    onContent={patchContent}
+                    onEvent={patchDraft}
+                    now={now}
+                    labels={labels}
+                    onEditDetails={() => setPane("make")}
+                    samples={samples}
+                    preview={false}
+                  />
+                </div>
+              )
+            )}
+          </>
         )}
 
-        {/* ── Footer — pinned to the bottom on a phone ────────────────────── */}
-        {stepKey !== "category" && (
-          <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-tight border-t border-line bg-surface/95 px-gutter pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-tight backdrop-blur-xl md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+        {/* ── The one action, pinned on a phone ───────────────────────────── */}
+        {categoryId && (
+          <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-tight border-t border-line bg-surface/95 px-gutter pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-tight backdrop-blur-xl md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none lg:hidden">
             <button
               type="button"
               onClick={() => setChecklistOpen(true)}
-              className={cn("flex min-h-11 items-center gap-inline text-[13px] font-medium lg:hidden", ready ? "text-success" : "text-muted")}
+              className={cn("flex min-h-11 items-center gap-inline text-[13px] font-medium", ready ? "text-success" : "text-muted")}
             >
               {ready ? <Check size={15} strokeWidth={2} aria-hidden /> : null}
               {ready ? tb("readyShort") : tb("leftShort", { count: checks.filter((c) => !c.done).length })}
               <ChevronRight size={14} strokeWidth={1.5} aria-hidden />
             </button>
-            {stepIndex > 0 && (
-              <Button variant="secondary" icon={<ArrowLeft size={16} strokeWidth={1.5} />} onClick={() => goTo(steps[stepIndex - 1])}>
-                {t("back")}
-              </Button>
-            )}
             <span className="flex-1" />
-            {stepKey === "publish" ? (
-              <>
-                <Button variant="secondary" loading={saving} onClick={() => publish(false)}>
-                  {tb("saveOffSale")}
-                </Button>
-                <Button loading={saving} onClick={() => publish(true)}>
-                  {tb("putOnSale")}
-                </Button>
-              </>
-            ) : (
-              <Button onClick={next}>
-                {t("continue")}
-                <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
-              </Button>
-            )}
+            <Button variant="secondary" onClick={() => setBigPreview(true)}>{t("customise.preview")}</Button>
+            <Button loading={saving} onClick={() => publish(true)}>{tb("putOnSale")}</Button>
           </div>
         )}
       </div>
 
-      {/* The event as it stands, and what stands between it and the box
-          office — beside every step but the page designer, whose preview is
-          already the summary. */}
-      {!wide && categoryId && (
-        <aside className="hidden h-fit lg:sticky lg:top-section lg:block" aria-label={tw("summaryTitle")}>
+      {/* ── The page as it stands, and what stands between it and the box
+             office. The preview is a phone because that is what a guest opens,
+             and because at this width a desktop page is a thumbnail nobody can
+             read. ─────────────────────────────────────────────────────────── */}
+      {categoryId && draft && (
+        <aside className="hidden h-fit flex-col gap-section lg:sticky lg:top-section lg:flex" aria-label={tw("summaryTitle")}>
+          {/* What stands between this and the box office comes FIRST: the
+              action has to be on screen, and a full page preview under it is
+              1,400px tall. */}
           <div className="card-surface overflow-hidden">
             <div className="border-b border-hairline p-card">
-              <p className="type-label text-[12px] text-muted">{tw("summaryTitle")}</p>
-              <p className={cn("mt-inline break-words text-[16px] font-semibold leading-snug", !content.title.trim() && "text-muted")}>{content.title.trim() || tw("untitled")}</p>
-              <p className="mt-0.5 text-[12px] text-muted">{[catName, subtype ? t(`subtype.${subtype}`) : null].filter(Boolean).join(" · ")}</p>
-              {whenText && <p className="mt-tight text-[13px]">{whenText}</p>}
+              <p className={cn("break-words text-[16px] font-semibold leading-snug", !content.title.trim() && "text-muted")}>{content.title.trim() || tw("untitled")}</p>
+              {whenText && <p className="mt-inline text-[13px]">{whenText}</p>}
               {content.venueName.trim() && <p className="text-[13px] text-muted">{content.venueName.trim()}</p>}
               {capacity > 0 && fromPrice !== null && (
                 <p className="mt-tight text-[13px] tabular-nums">
@@ -659,7 +583,43 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
               )}
             </div>
             <div className="p-card">
-              <EventChecklist checks={checks} reachable={(step) => seen.has(step)} onGo={goTo} ready={ready} />
+              <EventChecklist checks={checks} reachable={() => true} onGo={goTo} ready={ready} />
+              <div className="mt-section flex flex-col gap-tight">
+                <Button loading={saving} onClick={() => publish(true)} className="w-full justify-center">{tb("putOnSale")}</Button>
+                <Button variant="secondary" loading={saving} onClick={() => publish(false)} className="w-full justify-center">{tb("saveOffSale")}</Button>
+              </div>
+              {/* Honest about the one thing the screen cannot promise yet. */}
+              <p className="mt-section flex items-start gap-tight text-[12px] text-muted">
+                <AlertTriangle size={13} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-warning" />
+                {tw("notLiveYet")}
+              </p>
+            </div>
+          </div>
+
+          {/* The page as a guest first meets it — the top of it, at phone
+              width, because that is what a link opens on. The rest is one
+              press away rather than a column of scroll in a rail. */}
+          <div className="card-surface overflow-hidden">
+            <div className="flex items-center justify-between gap-tight border-b border-hairline px-card py-comfortable">
+              <p className="text-[12px] font-medium text-muted">{t("customise.preview")}</p>
+              <button
+                type="button"
+                onClick={() => setBigPreview(true)}
+                className="flex min-h-9 items-center gap-inline rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-subtle hover:text-fg"
+              >
+                <Maximize2 size={14} strokeWidth={1.5} aria-hidden />
+                {tb("fullPreview")}
+              </button>
+            </div>
+            <div className="relative flex justify-center bg-subtle p-card">
+              <div className={cn("relative h-[26rem] w-[300px] overflow-hidden rounded-md shadow-md", templateFontVars)}>
+                <PreviewFrame width={390}>
+                  <EventTemplate event={draft} device="mobile" labels={labels} now={now} />
+                </PreviewFrame>
+                {/* The cut edge says "there is more", rather than pretending
+                    the page ends here. */}
+                <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-subtle to-transparent" />
+              </div>
             </div>
           </div>
         </aside>
@@ -677,32 +637,7 @@ function StepHead({ title, help }: { title: string; help: string }) {
   );
 }
 
-function Review({ label, onEdit, editText, editLabel, children }: { label: string; onEdit: () => void; editText: string; editLabel: string; children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-section gap-y-inline border-t border-hairline py-comfortable text-[14px] sm:grid-cols-[8rem_minmax(0,1fr)_auto]">
-      <span className="col-span-2 text-[13px] font-medium text-muted sm:col-span-1">{label}</span>
-      <span className="min-w-0">{children}</span>
-      <button
-        type="button"
-        onClick={onEdit}
-        aria-label={editLabel}
-        className="-my-tight flex h-11 items-center gap-inline self-start rounded-sm px-tight text-[13px] font-medium text-brand-foreground hover:bg-muted-wash sm:h-9"
-      >
-        <Pencil size={13} strokeWidth={1.5} aria-hidden />
-        <span className="max-sm:sr-only">{editText}</span>
-      </button>
-    </div>
-  );
-}
 
-function Missing({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-inline text-warning">
-      <AlertTriangle size={13} strokeWidth={2} aria-hidden />
-      {children}
-    </span>
-  );
-}
 
 /** Placeholder bill so the preview is never an empty page mid-wizard.
  *  Names come from i18n per category, so the sample reads like the thing being
@@ -728,7 +663,12 @@ function EventChecklist({
   const tb = useTranslations("catalog.wizard");
   return (
     <div>
-      <p className="type-label mb-tight text-[12px] text-muted">{tb("readyTitle")}</p>
+      {/* The count is the decision-relevant line, so it leads. It used to sit
+          under the list in 13px grey beneath a 12px eyebrow that said nothing
+          the list did not. */}
+      <p className={cn("mb-tight text-[17px] font-semibold tracking-[-0.3px]", ready ? "text-success" : "text-fg")}>
+        {ready ? tb("readyYes") : tb("readyNo", { count: checks.filter((c) => !c.done).length })}
+      </p>
       <ul className="flex flex-col gap-0.5">
         {checks.map((c) => (
           <li key={c.key}>
@@ -752,19 +692,7 @@ function EventChecklist({
           </li>
         ))}
       </ul>
-      <p className={cn("mt-tight text-[13px] font-medium", ready ? "text-success" : "text-muted")}>
-        {ready ? tb("readyYes") : tb("readyNo", { count: checks.filter((c) => !c.done).length })}
-      </p>
     </div>
   );
 }
 
-function ChannelLine({ on, label }: { on: boolean; label: string }) {
-  const tb = useTranslations("catalog.wizard");
-  return (
-    <span className={cn("inline-flex items-center gap-inline", !on && "text-muted")}>
-      {on ? <Check size={14} strokeWidth={2} aria-hidden className="text-success" /> : <Circle size={14} strokeWidth={1.5} aria-hidden />}
-      {on ? label : tb("channelOff", { name: label })}
-    </span>
-  );
-}

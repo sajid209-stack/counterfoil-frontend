@@ -537,7 +537,12 @@
     "windowLater": "সেভ করার পর পলিসিতে বদলাতে পারবেন।",
     "everyEach": "প্রতি {every} · প্রতিটি {each}",
     "everyEachOverlap": "প্রতি {every} · প্রতিটি {each} (একটির উপর আরেকটি)",
-    "windowWithLater": "{window} — সেভ করার পর পলিসিতে বদলাতে পারবেন।"
+    "windowWithLater": "{window} — সেভ করার পর পলিসিতে বদলাতে পারবেন।",
+    "fullPreview": "পুরো পেজ",
+    "pane": {
+      "make": "ইভেন্ট",
+      "design": "পেজ ডিজাইন"
+    }
   },
   "fields": {
     "tiers": "মূল্য",
@@ -712,7 +717,7 @@
       "venue": "একটি ভেন্যু",
       "page": "নমুনা লেখা ছাড়া পেজ",
       "tickets": "টিকিট",
-      "channel": "বিক্রির জায়গা"
+      "channel": "কোথায় বিক্রি হবে"
     },
     "sections": "{count}টি অংশ",
     "qty": "{count}টি টিকিট",
@@ -749,5 +754,53 @@
     "soldAt": "বিক্রি হয়",
     "page": "পেজের ঠিকানা",
     "notLive": "এখনো চালু নয়"
+  },
+  "eventCanvas": {
+    "namePlaceholder": "আপনার ইভেন্টের নাম",
+    "taglinePlaceholder": "নিচে এক লাইন (ঐচ্ছিক)",
+    "datePlaceholder": "তারিখ বাছুন",
+    "venuePlaceholder": "কোথায় হচ্ছে?",
+    "addEnd": "+ শেষের সময়",
+    "addCover": "কভার যোগ করুন",
+    "replaceCover": "বদলান",
+    "removeCover": "কভার সরান",
+    "look": {
+      "title": "লুক",
+      "entertainment": "কনসার্ট",
+      "sports": "খেলা",
+      "business": "কনফারেন্স",
+      "arts": "প্রদর্শনী",
+      "travel": "ট্রিপ",
+      "nightlife": "নাইট",
+      "help": "টাইপফেস, রং আর পেজে কী কী থাকবে — সবই বদলায়।"
+    },
+    "font": "টাইপফেস বদলান",
+    "accentOption": "{hex} ব্যবহার করুন",
+    "details": {
+      "title": "অতিথিরা যা জানতে চান",
+      "placeholder": "কী সেটা লিখুন",
+      "remove": "{label} সরান",
+      "doors": "দরজা খোলে",
+      "dress": "ড্রেস কোড",
+      "parking": "পার্কিং",
+      "age": "বয়স",
+      "accessibility": "প্রবেশগম্যতা",
+      "food": "খাবার",
+      "sample": "নমুনা",
+      "sampleHelp": "এগুলো এই ধরনের ইভেন্টের উদাহরণ। এডিট করুন বা মুছে দিন — যেমন লেখা আছে তেমনই প্রকাশ হবে।",
+      "clearSamples": "{count, plural, one {# নমুনা} other {# নমুনা}} মুছুন"
+    },
+    "accent": "রঙ",
+    "whenWhere": "কখন ও কোথায়",
+    "face": {
+      "bebas": "Bebas Neue",
+      "syne": "Syne",
+      "space": "Space Grotesk",
+      "playfair": "Playfair",
+      "outfit": "Outfit",
+      "fraunces": "Fraunces",
+      "inter": "Inter",
+      "mono": "DM Mono"
+    }
   }
 }

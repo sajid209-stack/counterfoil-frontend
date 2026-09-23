@@ -537,7 +537,12 @@
     "windowLater": "Change it in Policies once it's saved.",
     "everyEach": "every {every} · {each} each",
     "everyEachOverlap": "every {every} · {each} each (overlapping)",
-    "windowWithLater": "{window} — change it in Policies once it's saved."
+    "windowWithLater": "{window} — change it in Policies once it's saved.",
+    "fullPreview": "Full page",
+    "pane": {
+      "make": "The event",
+      "design": "Page design"
+    }
   },
   "fields": {
     "tiers": "Prices",
@@ -712,7 +717,7 @@
       "venue": "A venue",
       "page": "The page, without sample content",
       "tickets": "Tickets",
-      "channel": "Somewhere to sell it"
+      "channel": "Where it's sold"
     },
     "sections": "{count, plural, one {# section} other {# sections}}",
     "qty": "{count, plural, one {# ticket} other {# tickets}}",
@@ -749,5 +754,53 @@
     "soldAt": "Sold",
     "page": "Page address",
     "notLive": "not live yet"
+  },
+  "eventCanvas": {
+    "namePlaceholder": "Name your event",
+    "taglinePlaceholder": "One line under it (optional)",
+    "datePlaceholder": "Pick a date",
+    "venuePlaceholder": "Where is it?",
+    "addEnd": "+ End time",
+    "addCover": "Add a cover",
+    "replaceCover": "Replace",
+    "removeCover": "Remove the cover",
+    "look": {
+      "title": "Look",
+      "entertainment": "Concert",
+      "sports": "Sport",
+      "business": "Conference",
+      "arts": "Exhibition",
+      "travel": "Trip",
+      "nightlife": "Night",
+      "help": "Changes the typeface, the colours and what the page is made of."
+    },
+    "font": "Change the typeface",
+    "accentOption": "Use {hex}",
+    "details": {
+      "title": "Details guests ask for",
+      "placeholder": "Say what it is",
+      "remove": "Remove {label}",
+      "doors": "Doors open",
+      "dress": "Dress code",
+      "parking": "Parking",
+      "age": "Age",
+      "accessibility": "Accessibility",
+      "food": "Food",
+      "sample": "Sample",
+      "sampleHelp": "These are examples for this kind of event. Edit them or clear them — they are published as written.",
+      "clearSamples": "Clear {count, plural, one {# sample} other {# samples}}"
+    },
+    "accent": "Colour",
+    "whenWhere": "When and where",
+    "face": {
+      "bebas": "Bebas Neue",
+      "syne": "Syne",
+      "space": "Space Grotesk",
+      "playfair": "Playfair",
+      "outfit": "Outfit",
+      "fraunces": "Fraunces",
+      "inter": "Inter",
+      "mono": "DM Mono"
+    }
   }
 }
