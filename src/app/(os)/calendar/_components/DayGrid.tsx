@@ -12,6 +12,7 @@ import {
   packLanes,
   peekHandlers,
   sameDay,
+  TONE_CLASS,
   type CalEvent,
   type Ghost,
 } from "./model";
@@ -774,7 +775,13 @@ function DayTrack({
                   <div
                     data-ghost
                     aria-hidden
-                    className="pointer-events-none absolute z-30 overflow-hidden rounded-sm bg-ember-solid px-tight py-0.5 text-white shadow-pop ring-2 ring-card"
+                    className={cn(
+                        "pointer-events-none absolute z-30 overflow-hidden rounded-sm px-tight py-0.5 shadow-pop ring-2 ring-card",
+                        /* A held draft is hatched warning, the same as every hold
+                           already on this grid: an ember block would say the slot
+                           is being sold. */
+                        draftHere.hold ? TONE_CLASS.held : "bg-ember-solid text-white",
+                      )}
                     style={{
                       left: `${pct(Math.max(openMin, draftHere.start))}%`,
                       width: `calc(${((Math.min(closeMin, draftHere.end) - Math.max(openMin, draftHere.start)) / span) * 100}% - 2px)`,

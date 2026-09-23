@@ -74,7 +74,11 @@ export function SessionList({
         const sold = Math.max(0, s.capacity - s.left);
         const pctSold = s.capacity > 0 ? (sold / s.capacity) * 100 : 0;
         const full = s.left <= 0 || !!s.blockedReason;
-        const closed = !!s.blockedReason && s.left > 0;
+        /* A stated reason wins over the count. `&& s.left > 0` meant a session
+           closed for a private event, or one with no guide free, still read
+           "Sold out" in danger red — about places nobody had bought. The
+           reason is the truth; sold out is what is true when there is none. */
+        const closed = !!s.blockedReason;
         const pressure = sessionPressure(s.left, s.capacity);
         const isSelected = selected === s.time;
 
@@ -148,19 +152,24 @@ export function SessionList({
                     className={cn(
                       "h-full rounded-full",
                       closed
-                        ? "bg-strong"
+                        ? "bg-strong bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.18),rgb(0_0_0/0.18)_2px,transparent_2px,transparent_5px)]"
                         : pressure === "gone" || pressure === "critical"
                           ? "bg-ember"
                           : pressure === "low"
                             ? "bg-warning"
                             : "bg-success",
                     )}
-                    style={{ width: `${Math.min(100, pctSold)}%` }}
+                    style={{ width: closed ? "100%" : `${Math.min(100, pctSold)}%` }}
                   />
                 </span>
-                <span className="shrink-0 whitespace-nowrap text-[13px] text-muted">
-                  {sold}/{s.capacity}
-                </span>
+                {/* A blocked row says nothing about how many sold, because
+                    nothing did: "15/15" beside a held session is the sold-out
+                    row's own figure, in the sold-out row's own place. */}
+                {!closed && (
+                  <span className="shrink-0 whitespace-nowrap text-[13px] text-muted">
+                    {sold}/{s.capacity}
+                  </span>
+                )}
                 <span
                   className={cn(
                     "ml-auto shrink-0 whitespace-nowrap text-[13px]",

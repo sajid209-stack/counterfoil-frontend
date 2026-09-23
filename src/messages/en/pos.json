@@ -358,7 +358,14 @@
     "courseRuns": "{count} sessions · {days} · {range}",
     "courseShowAll": "Show all dates",
     "courseHideAll": "Hide dates",
-    "courseStarts": "Starts {date}"
+    "courseStarts": "Starts {date}",
+    "releaseAndSell": "Release and sell",
+    "holdInstead": "Hold these places instead",
+    "holdFor": "Who is it for?",
+    "holdPlace": "Hold it",
+    "holdPlaced": "Holding {count, plural, one {# place} other {# places}} for {heldFor}.",
+    "counterActor": "Counter",
+    "rowHeld": "Held · {name}"
   },
   "settle": {
     "title": "Settle a reservation",

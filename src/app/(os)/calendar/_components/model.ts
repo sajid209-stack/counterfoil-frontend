@@ -36,6 +36,10 @@ export interface CalEvent {
   party?: string;
   checkedIn?: number;
   orderId?: string;
+  /** Holds only: what the detail panel needs to answer "is this court still
+   *  ours next Tuesday, and who blocked it?" without going back to the store.
+   *  All three are on the record already; nothing was drawing them. */
+  hold?: { what: string; product: string; releases: string | null; placedBy: string };
   tone: EventTone;
   locked: boolean;
 }
@@ -65,6 +69,9 @@ export interface Ghost {
   title: string | null;
   /** The second line: the lane, the therapist. */
   sub?: string | null;
+  /** A draft hold rather than a draft booking. Drawn hatched, like the holds
+   *  already on the grid — an ember block would promise a sale. */
+  hold?: boolean;
 }
 
 export const MINUTES_IN_DAY = 1440;
@@ -207,6 +214,17 @@ export function holdsToEvents(holds: HoldView[], products: Product[] = []): CalE
         categoryId: products.find((p) => p.id === h.productId)?.categoryId ?? null,
         tone: h.kind === "session" ? ("locked" as const) : ("held" as const),
         locked: true,
+        hold: {
+          what,
+          product: h.productName,
+          /* Null means it sits until somebody releases it — which is a fact a
+             manager needs, and the commonest kind of stale hold. */
+          releases:
+            h.expiresAt == null
+              ? null
+              : new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(new Date(h.expiresAt)),
+          placedBy: h.placedBy,
+        },
       };
     });
 }

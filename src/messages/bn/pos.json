@@ -358,7 +358,14 @@
     "courseRuns": "{count}টি সেশন · {days} · {range}",
     "courseShowAll": "সব তারিখ দেখুন",
     "courseHideAll": "তারিখ লুকান",
-    "courseStarts": "শুরু {date}"
+    "courseStarts": "শুরু {date}",
+    "releaseAndSell": "ছেড়ে দিয়ে বিক্রি করুন",
+    "holdInstead": "বরং জায়গাগুলো হোল্ড করুন",
+    "holdFor": "কার জন্য?",
+    "holdPlace": "হোল্ড করুন",
+    "holdPlaced": "{heldFor}-এর জন্য {count}টি জায়গা রাখা হলো।",
+    "counterActor": "কাউন্টার",
+    "rowHeld": "হোল্ড · {name}"
   },
   "settle": {
     "title": "রিজার্ভেশন নিষ্পত্তি",

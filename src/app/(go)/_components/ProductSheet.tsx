@@ -11,6 +11,7 @@ import { RepeatPicker } from "./RepeatPicker";
 import { useApiQuery } from "@/lib/useApi";
 import {
   applyResourceRate,
+  blockingHold,
   CHECKOUT_HELD_FOR,
   explainUnavailable,
   firstFreeResource,
@@ -20,15 +21,19 @@ import {
   getSlots,
   isOpenOn,
   isOwnerFree,
+  isSessionLocked,
   isResourceFreeFor,
   joinWaitlist,
   peekHolds,
   ownerBusyDetailed,
+  placeHold,
+  releaseHold,
   type Product,
   type ProductSchedule,
   type Resource,
   type Staff,
 } from "@/lib/api";
+import { DEMO_STAFF_ID } from "@/lib/session";
 import { DEMO_TODAY, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
 import { durationOptions, formatDuration, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
@@ -91,6 +96,7 @@ function SheetFooter({
   onAdd,
   label,
   buyLabel,
+  hold,
 }: {
   summary?: React.ReactNode;
   note?: React.ReactNode;
@@ -100,6 +106,10 @@ function SheetFooter({
   label: string;
   /** Omitted where an express sale makes no sense (nothing chosen yet). */
   buyLabel?: string;
+  /** The third thing a counter does with a slot: take it off sale for a party
+   *  that has asked but not paid. A text button under the sale's two buttons,
+   *  because it is the rarer of the three and must not compete with them. */
+  hold?: React.ReactNode;
 }) {
   return (
     <div className="sticky bottom-0 z-10 -mx-section mt-section border-t border-line bg-surface px-section pb-inline pt-comfortable">
@@ -130,6 +140,7 @@ function SheetFooter({
           </button>
         )}
       </div>
+      {hold}
     </div>
   );
 }
@@ -228,7 +239,37 @@ export function ProductSheet({
   });
   const [group, setGroup] = useState<number>(initial?.partySize ?? 2); // flat-per-booking group size
   const [waived, setWaived] = useState(false);
-  const [blocked, setBlocked] = useState<string | null>(null); // BlockedNotice message
+  /* The refusal, with the mechanism behind it — a held slot carries the id of
+     the hold that is holding it, so the till can offer the way past instead of
+     naming a screen the cashier would have to go and find. */
+  const [blocked, setBlocked] = useState<{ message: string; holdId?: string } | null>(null);
+  const [releasing, setReleasing] = useState(false);
+  /* Availability is derived in render from the store, so a release has to
+     re-derive it. The counter is what says "ask again" — there is nothing to
+     refetch, and the slot grid would otherwise keep drawing the old answer. */
+  const [stamp, setStamp] = useState(0);
+  /* ── holding, from the till ────────────────────────────────────────────
+     The counter takes the call: "hold twenty-five for the school, they will
+     pay on Thursday." It used to mean leaving the till for a register on the
+     admin side, so in practice it meant a sticky note. */
+  const [holdOpen, setHoldOpen] = useState(false);
+  const [holdFor, setHoldFor] = useState("");
+  const [holding, setHolding] = useState(false);
+
+  /** Release the hold standing in the way, so the party it was held for can
+   *  be sold to at the counter they are standing at. */
+  const releaseAndSell = async (id: string) => {
+    if (releasing) return;
+    setReleasing(true);
+    const res = await releaseHold(id);
+    setReleasing(false);
+    if (!res.ok) {
+      setBlocked({ message: res.error.message });
+      return;
+    }
+    setBlocked(null);
+    setStamp((n) => n + 1);
+  };
   const [courseDatesOpen, setCourseDatesOpen] = useState(false);
   /** BT-02 sells a pass in lengths. The first is the default because it is the
    *  cheapest and the commonest, not because it is first in the array. */
@@ -332,8 +373,10 @@ export function ProductSheet({
   const [wlName, setWlName] = useState("");
   const [wlPhone, setWlPhone] = useState("");
 
-  const matrix = useMemo(() => (resourceMode && !flexible ? getResourceMatrix(product, date) : []), [product, date, resourceMode, flexible]);
-  const slots = useMemo(() => (needsSchedule(bt) && !resourceMode ? getSlots(product, date) : []), [product, date, bt, resourceMode]);
+  const matrix = useMemo(() => (resourceMode && !flexible ? getResourceMatrix(product, date) : []), // eslint-disable-next-line react-hooks/exhaustive-deps -- `stamp` is the ask-again signal: availability is derived from the store, which a release changes without changing any of these.
+    [product, date, resourceMode, flexible, stamp]);
+  const slots = useMemo(() => (needsSchedule(bt) && !resourceMode ? getSlots(product, date) : []), // eslint-disable-next-line react-hooks/exhaustive-deps -- as above: a released hold changes what getSlots answers, not its arguments.
+    [product, date, bt, resourceMode, stamp]);
   const dailyLeft = bt === "BT-06" ? getDailyRemaining(product, date) : Infinity;
   const openToday = isOpenOn(product, date);
   const basePrice = activeTiers.length ? Math.min(...activeTiers.map((t) => t.price)) : 0;
@@ -387,6 +430,39 @@ export function ProductSheet({
       return { left: ss.reduce((s, x) => s + x.remaining, 0), total: ss.reduce((s, x) => s + x.capacity, 0) };
     }
     return null;
+  };
+
+  /** Take the chosen places off sale for a named party, from the till. */
+  const doHold = async () => {
+    const who = holdFor.trim();
+    if (!who || holding) return;
+    setHolding(true);
+    const res = await placeHold({
+      productId: product.id,
+      locationId: product.locationIds[0] ?? null,
+      kind: "capacity",
+      date,
+      slotStart: slotTime ? slotISO(date, slotTime) : null,
+      slotEnd: null,
+      quantity: Math.max(1, partySize),
+      resourceId: null,
+      resourceName: null,
+      heldFor: who,
+      /* The person, not the till: a hold placed at the counter is somebody's
+         promise, and the name is what the next shift asks about. */
+      placedBy: team.find((x) => x.id === DEMO_STAFF_ID)?.name ?? t("sheet.counterActor"),
+      expiresAt: null,
+    });
+    setHolding(false);
+    if (!res.ok) {
+      setBlocked({ message: res.error.message });
+      return;
+    }
+    setHoldOpen(false);
+    setHoldFor("");
+    setStamp((n) => n + 1);
+    toast.success(t("sheet.holdPlaced", { count: Math.max(1, partySize), heldFor: who }));
+    onClose();
   };
 
   const submitTiered = (onDate?: string, pay = false) => {
@@ -658,7 +734,7 @@ export function ProductSheet({
               selectedResourceId={resourceId}
               selectedTime={slotTime}
               onSelect={(rid, time) => { setResourceId(rid); setSlotTime(time); setBlocked(null); }}
-              onBlocked={setBlocked}
+              onBlocked={(m) => setBlocked({ message: m })}
               rows={matrix.map((row) => ({
                 id: row.resource.id,
                 name: row.resource.name,
@@ -862,11 +938,11 @@ export function ProductSheet({
                   closeMin={closeMin}
                   sel={slotTime ? { start: toMinutes(slotTime), end: toMinutes(slotTime) + duration } : null}
                   hatched={laneOf(resourceId)?.outOfService}
-                  onBlockTap={(s) => setBlocked(t("sheet.blockedBooked", { start: toTime(s.start), end: toTime(s.end), label: s.label, noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))}
+                  onBlockTap={(s) => setBlocked({ message: t("sheet.blockedBooked", { start: toTime(s.start), end: toTime(s.end), label: s.label, noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })}
                 />
               )}
 
-              {blocked && <BlockedNotice message={blocked} onDismiss={() => setBlocked(null)} />}
+              {blocked && <BlockedNotice message={blocked.message} onDismiss={() => setBlocked(null)} />}
 
               <div className="flex items-center justify-between">
                 <span className="text-[14px] font-semibold text-fg">{t("sheet.startTime")}</span>
@@ -883,7 +959,7 @@ export function ProductSheet({
                 {flexTimes.map((tt) => {
                   const st = startState(tt, duration, resourceId);
                   if (!st.ok) {
-                    return <button key={tt} type="button" onClick={() => setBlocked(t("sheet.unavailableStart", { time: tt, reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))} className="h-12 rounded-full border border-line bg-subtle px-comfortable text-[13px] text-muted line-through" title={st.reason}>{tt}</button>;
+                    return <button key={tt} type="button" onClick={() => setBlocked({ message: t("sheet.unavailableStart", { time: tt, reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })} className="h-12 rounded-full border border-line bg-subtle px-comfortable text-[13px] text-muted line-through" title={st.reason}>{tt}</button>;
                   }
                   return <button key={tt} type="button" onClick={() => { setSlotTime(tt); setBlocked(null); }} className={`h-12 rounded-full border px-comfortable text-[13px] ${slotTime === tt ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{tt}</button>;
                 })}
@@ -1045,7 +1121,20 @@ export function ProductSheet({
             beside the lane timeline. */}
         {blocked && !resourceMode && !flexible && (
           <div className="mb-section">
-            <BlockedNotice message={blocked} onDismiss={() => setBlocked(null)} />
+            <BlockedNotice
+              message={blocked.message}
+              /* The party it was held for is standing at the counter. Telling
+                 a cashier to go and release it somewhere else, mid-queue, is
+                 how a hold turns into a lost sale — so the refusal carries the
+                 release. The hold is named in the message above it, and the
+                 release is recorded against whoever placed it. */
+              action={
+                blocked.holdId
+                  ? { label: t("sheet.releaseAndSell"), busy: releasing, onPress: () => void releaseAndSell(blocked.holdId!) }
+                  : undefined
+              }
+              onDismiss={() => setBlocked(null)}
+            />
           </div>
         )}
 
@@ -1067,12 +1156,25 @@ export function ProductSheet({
               // A departure needs a free guide as well as seats.
               const guideless = guided && guides.length > 0 && freeGuides(product, date, s.time).length === 0;
               const free = guided ? freeGuides(product, date, s.time) : [];
+              /* A session closed by a hold is not a session that sold out.
+                 The row used to read "Sold out · 15/15" about fifteen places
+                 nobody had bought — the refusal on tap was the only place the
+                 truth appeared. Now the row says who it is held for and the
+                 bar goes neutral, which is what the calendar's hatching says
+                 in the same situation. */
+              const lock = isSessionLocked(product.id, date, slotISO(date, s.time))
+                ? blockingHold(product.id, date, slotISO(date, s.time))
+                : undefined;
               return {
                 time: s.time,
                 price: resolveProductPrice(product, date, s.time, basePrice),
                 capacity: s.capacity,
                 left: guideless ? 0 : left,
-                blockedReason: guideless ? t("sheet.noGuideFree") : null,
+                blockedReason: guideless
+                  ? t("sheet.noGuideFree")
+                  : lock
+                    ? t("sheet.rowHeld", { name: lock.heldFor })
+                    : null,
                 meta: guided && free.length
                   ? t("sheet.ledByName", { name: team.find((x) => x.id === free[0])?.name ?? "" })
                   : null,
@@ -1094,7 +1196,7 @@ export function ProductSheet({
                 remaining: 0,
                 wanted: 1,
               });
-              setBlocked(why?.message ?? reason);
+              setBlocked({ message: why?.message ?? reason, holdId: why?.holdId });
             }}
           />
         )}
@@ -1294,6 +1396,41 @@ export function ProductSheet({
                 const total = base + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0) + prem;
                 return t("sheet.buyNow", { amount: formatMoney(total, currency) });
               })()}
+              /* Offered only where there is something to hold: a number of
+                 places on a dated slot. A seat map holds named seats and a
+                 lane holds a span — both are the calendar's job, where the
+                 whole day is on screen. */
+              hold={
+                needsSchedule(bt) && !hasLayout && !resourceMode && partySize > 0 ? (
+                  holdOpen ? (
+                    <div className="mt-tight flex items-center gap-tight">
+                      <input
+                        value={holdFor}
+                        autoFocus
+                        onChange={(e) => setHoldFor(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") void doHold(); }}
+                        placeholder={t("sheet.holdFor")}
+                        aria-label={t("sheet.holdFor")}
+                        className="h-12 min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
+                      />
+                      {/* Secondary: the sale is what this screen is for, and
+                          an ember Hold beside a grey Add says the exception is
+                          the point. */}
+                      <Button variant="secondary" size="sm" shape="pill" disabled={!holdFor.trim() || holding} onClick={() => void doHold()}>
+                        {t("sheet.holdPlace")}
+                      </Button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setHoldOpen(true)}
+                      className="mt-tight flex min-h-11 w-full items-center justify-center rounded-go-sm text-[13px] font-medium text-muted active:bg-subtle"
+                    >
+                      {t("sheet.holdInstead")}
+                    </button>
+                  )
+                ) : undefined
+              }
               onAdd={(pay) => {
                 if (hasLayout) return submitSeats(pay);
                 const repeatable =

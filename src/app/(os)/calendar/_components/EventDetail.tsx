@@ -46,12 +46,13 @@ export function EventDetail({
   t,
   onLock,
   onComplete,
+  onRelease,
   blockedReason,
   busy = false,
 }: {
   event: CalEvent | null;
   onClose: () => void;
-  /** Where the primary action goes — the order, or the holds register. */
+  /** Where the primary action goes: the order behind a booking. */
   onOpen: (event: CalEvent) => void;
   /** A booking with no order behind it has nowhere to go; don't offer it. */
   canOpen: boolean;
@@ -64,19 +65,25 @@ export function EventDetail({
   onLock?: (event: CalEvent, lock: boolean, reason: string) => void;
   /** Everyone in the party is here. */
   onComplete?: (event: CalEvent) => void;
+  /** Put a hold's capacity back on public sale. The hold already says who it
+   *  was for, so this needs no reason — but it does need asking, because the
+   *  places go back on sale the moment it lands. */
+  onRelease?: (event: CalEvent) => void;
   /** Why this booking cannot be changed, when it cannot — from the one
    *  `bookingEditable` every edit path in the app asks. */
   blockedReason?: string | null;
   busy?: boolean;
 }) {
-  const [asking, setAsking] = useState<null | "lock" | "unlock">(null);
+  const [asking, setAsking] = useState<null | "lock" | "unlock" | "release">(null);
   const [reason, setReason] = useState("");
 
   if (!event) return null;
 
   const when = event.allDay ? t("allDayLong") : `${hhmm(event.start)} – ${hhmm(event.end)}`;
-  /* Only a booking can be locked or completed. A hold is released from the
-     holds register, which is where its own mechanism lives. */
+  /* Only a booking can be locked or completed. A hold has one action of its
+     own — release — and it is here rather than in a register of its own,
+     because this is where a manager meets the hold: on the day it is blocking,
+     next to the capacity it is holding back. */
   const isBooking = event.kind === "booking";
   const canComplete = isBooking && event.tone === "booked" && !blockedReason;
   const close = () => {
@@ -98,7 +105,16 @@ export function EventDetail({
           </Button>
           {canOpen && (
             <Button size="sm" onClick={() => onOpen(event)}>
-              {t(event.kind === "hold" ? "openHold" : "openOrder")}
+              {t("openOrder")}
+            </Button>
+          )}
+          {/* A hold's one action goes where a booking's does — the footer,
+              where the eye lands. It was a secondary button in the body,
+              quieter than Close, in the panel that exists to release it. */}
+          {!isBooking && onRelease && asking !== "release" && (
+            <Button size="sm" onClick={() => setAsking("release")}>
+              <LockOpen size={14} strokeWidth={1.5} aria-hidden />
+              {t("releaseHold")}
             </Button>
           )}
         </>
@@ -107,7 +123,7 @@ export function EventDetail({
       <div className="flex flex-col gap-comfortable">
         <div className="flex flex-wrap items-center gap-tight">
           <StatusPill tone={TONE_PILL[event.tone]}>{t(TONE_KEY[event.tone])}</StatusPill>
-          {event.locked && (
+          {event.locked && !event.hold && (
             <span className="flex items-center gap-inline text-[12px] text-muted">
               <Lock size={12} strokeWidth={2} aria-hidden />
               {t("lockedNote")}
@@ -123,7 +139,29 @@ export function EventDetail({
               <span className="text-muted"> · {dayLabel(event.start)}</span>
             </dd>
           </div>
-          {event.subtitle && (
+          {event.hold && (
+            <>
+              <div className="flex flex-wrap items-baseline gap-tight">
+                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailHolds")}</dt>
+                <dd className="min-w-0 text-[13px]">{event.hold.what}</dd>
+              </div>
+              <div className="flex flex-wrap items-baseline gap-tight">
+                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailReleases")}</dt>
+                <dd className="min-w-0 text-[13px]">{event.hold.releases ?? t("detailUntilReleased")}</dd>
+              </div>
+              <div className="flex flex-wrap items-baseline gap-tight">
+                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailPlacedBy")}</dt>
+                <dd className="min-w-0 text-[13px]">{event.hold.placedBy}</dd>
+              </div>
+              <div className="flex flex-wrap items-baseline gap-tight">
+                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailWhat")}</dt>
+                <dd className="min-w-0 break-words text-[13px]">{event.hold.product}</dd>
+              </div>
+            </>
+          )}
+          {/* A hold's subtitle is "<what> · <product>", and both of those now
+              have rows of their own — printing it again said Lane 3 twice. */}
+          {event.subtitle && !event.hold && (
             <div className="flex flex-wrap items-baseline gap-tight">
               <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailWhat")}</dt>
               {/* break-words, not truncate: this panel is the one place the
@@ -136,6 +174,20 @@ export function EventDetail({
             on the grid. They were only ever on the order page, which meant
             finding the order first — a page load in answer to "stop selling
             this one". */}
+        {!isBooking && onRelease && asking === "release" && (
+          <div className="flex flex-col gap-tight border-t border-hairline pt-comfortable">
+            <p className="text-[13px]">{t("releaseAsk")}</p>
+            <div className="flex flex-wrap gap-tight">
+              <Button size="sm" loading={busy} onClick={() => { onRelease(event); setAsking(null); }}>
+                {t("releaseConfirm")}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setAsking(null)}>
+                {t("cancel")}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {isBooking && (onLock || onComplete) && (
           <div className="flex flex-col gap-tight border-t border-hairline pt-comfortable">
             {blockedReason && !event.locked && (

@@ -14,6 +14,7 @@ import {
   packLanes,
   peekHandlers,
   sameDay,
+  TONE_CLASS,
   type CalEvent,
   type Ghost,
 } from "./model";
@@ -695,7 +696,13 @@ export function WeekGrid({
                         key={GHOST_ID}
                         data-ghost
                         aria-hidden
-                        className="pointer-events-none absolute z-30 overflow-hidden rounded-sm bg-ember-solid px-1 py-0.5 text-white shadow-pop ring-2 ring-card"
+                        className={cn(
+                        "pointer-events-none absolute z-30 overflow-hidden rounded-sm px-1 py-0.5 shadow-pop ring-2 ring-card",
+                        /* A held draft is hatched warning, the same as every hold
+                           already on this grid: an ember block would say the slot
+                           is being sold. */
+                        draft.hold ? TONE_CLASS.held : "bg-ember-solid text-white",
+                      )}
                         style={place}
                       >
                         {/* Squeezed beside other bookings, the time leads — the

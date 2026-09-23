@@ -75,7 +75,6 @@ const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
   { prefix: "/calendar", key: "calendar" },
   { prefix: "/orders", key: "orders" },
   { prefix: "/customers", key: "customers" },
-  { prefix: "/holds", key: "holds" },
   { prefix: "/catalog", key: "catalog" },
   { prefix: "/booking-rules", key: "bookingRules" },
   { prefix: "/pricing", key: "pricing" },

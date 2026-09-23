@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Check, Clock3, Minus, Plus, Search, Ticket, TriangleAlert, UserRound, Wallet, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { DateField } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -14,7 +15,10 @@ import {
   peekBookings,
   listCustomerRows,
   matchOrCreateCustomer,
+  placeHold,
   tillMethods,
+  type Hold,
+  type HoldKind,
   type Operator,
   type Order,
   type Product,
@@ -33,7 +37,7 @@ import {
 } from "@/lib/sale/selection";
 import { itemBalance, itemSeats, itemSlotISO, priceSale, type SaleItem } from "@/lib/sale/saleMath";
 import { DEMO_STAFF_ID } from "@/lib/session";
-import { toMinutes, toTime } from "@/lib/schedule";
+import { slotISO, toMinutes, toTime } from "@/lib/schedule";
 import {
   anytimeOptions,
   openHours,
@@ -44,6 +48,16 @@ import {
   type OpenSlot,
 } from "./openSlots";
 import type { Ghost } from "./model";
+
+/**
+ * When a hold with a self-release date gives its places back.
+ *
+ * The REAL clock, deliberately, not the demo one: `holdView` resolves expiry
+ * against `Date.now()`, so a date anchored to DEMO_TODAY would read as already
+ * expired the moment it was placed and the hold would release itself on sight.
+ * At module scope because the compiler rules out impure calls in render.
+ */
+const expiryIn = (days: number) => new Date(Date.now() + days * 86400000).toISOString();
 
 /** What opened the panel: a day, maybe an hour, maybe a specific slot. */
 export interface BookingRequest {
@@ -116,6 +130,8 @@ export function BookingPanel({
    *  "never mind" is not something to bring back. */
   onClose: (carry: Carry | null) => void;
   onBooked: (order: Order, guestName: string | null) => void;
+  /** A hold was placed from here. The page reloads and offers the way back. */
+  onHeld: (hold: Hold) => void;
   t: T;
 }) {
   if (!request) return null;
@@ -140,6 +156,7 @@ function Panel({
   onDraft,
   onClose,
   onBooked,
+  onHeld,
   t,
 }: {
   request: BookingRequest;
@@ -156,15 +173,28 @@ function Panel({
   onDraft: (ghost: Ghost | null) => void;
   onClose: (carry: Carry | null) => void;
   onBooked: (order: Order, guestName: string | null) => void;
+  onHeld: (hold: Hold) => void;
   t: T;
 }) {
   const enumL = useEnumLabels();
+  /* The hold vocabulary is shared with the till — what moved was the page,
+     not the mechanism — so it keeps its own namespace. */
+  const th = useTranslations("holds");
   const titleId = useId();
   const panel = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
   const guestRef = useRef<HTMLInputElement>(null);
+
+  /* ── booking, or holding ──────────────────────────────────────────────
+     Two things you can do with an open slot, and they ask nearly the same
+     questions: what, when, where, how many. A hold differs in what it wants
+     at the end — a name to explain it rather than a guest to bill — so it is
+     a mode of this panel rather than a screen of its own. Declared here,
+     above the draft, because the draft drawn on the grid has to say which
+     one it is. */
+  const [mode, setMode] = useState<"book" | "hold">("book");
 
   const [date, setDate] = useState(request.date);
   const [hour, setHour] = useState<number | null>(request.hour);
@@ -452,7 +482,7 @@ function Panel({
   /* What the grid draws for this booking, recomputed from the same choices
      that price it — so the block and the total can never disagree about which
      lane, or for how long. */
-  const ghost: Ghost | null = (() => {
+  const rawGhost: Ghost | null = (() => {
     if (chosen) {
       if (chosen.kind === "anytime" || !chosen.time) {
         return { date, start: 0, end: 0, allDay: true, title: chosen.product.name };
@@ -502,6 +532,9 @@ function Panel({
       title: null,
     };
   })();
+  /* Marked as a hold before it leaves the panel, so the block on the grid is
+     hatched the moment the mode changes rather than at the moment it lands. */
+  const ghost: Ghost | null = rawGhost && mode === "hold" ? { ...rawGhost, hold: true } : rawGhost;
   const ghostKey = ghost ? JSON.stringify(ghost) : "";
 
   /* A booking of this product with no lane is using one — the availability
@@ -537,6 +570,24 @@ function Panel({
   const [error, setError] = useState<string | null>(null);
   /** Book was pressed with something missing: say what, where it is. */
   const [tried, setTried] = useState(false);
+
+  const [heldFor, setHeldFor] = useState("");
+  const [holdQty, setHoldQty] = useState(1);
+  /** Everything left on the session, rather than a number of places. */
+  const [holdAll, setHoldAll] = useState(false);
+  /** Days until it releases itself. Empty holds until someone releases it. */
+  const [holdDays, setHoldDays] = useState("");
+  const heldForRef = useRef<HTMLInputElement>(null);
+
+  /* A hold's kind is DERIVED from what was chosen, never asked. An operator
+     who has clicked 18:00 on Lane 3 has already said it is a resource hold;
+     making them pick "Resource" from a list of four is asking a question the
+     click answered. */
+  const holdResourceId = ghost?.laneId && !ghost.laneId.startsWith("session:") ? ghost.laneId : null;
+  const holdKind: HoldKind = holdResourceId ? "resource" : holdAll ? "session" : "capacity";
+  /** Places a session has left — the ceiling on a capacity hold. */
+  const holdMax = chosen?.remaining ?? chosen?.capacity ?? 99;
+  const holdQtyNow = Math.min(Math.max(1, holdQty), Math.max(1, holdMax));
 
   const guestName = guest?.name ?? query.trim();
   const payNow = pay === "later" ? 0 : pay === "deposit" ? depositNow : totals.total;
@@ -613,6 +664,50 @@ function Panel({
     }
     onBooked(res.data.order, name);
   };
+
+  /* Holding, as the other thing you can do with an open slot. It goes through
+     the same `placeHold` the register used to, so a hold placed here is the
+     same record the till and the availability engine already read. */
+  const hold = async () => {
+    if (busy) return;
+    if (!chosen) {
+      setTried(true);
+      setListOpen(true);
+      requestAnimationFrame(() => listRef.current?.querySelector<HTMLElement>('[role="radio"]')?.focus());
+      return;
+    }
+    if (!heldFor.trim()) {
+      setTried(true);
+      heldForRef.current?.focus();
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const allDay = !ghost || ghost.allDay;
+    const days = parseInt(holdDays, 10);
+    const res = await placeHold({
+      productId: chosen.product.id,
+      locationId: chosen.product.locationIds[0] ?? null,
+      kind: holdKind,
+      date,
+      slotStart: allDay ? null : slotISO(date, toTime(ghost!.start)),
+      slotEnd: allDay ? null : slotISO(date, toTime(ghost!.end)),
+      quantity: holdKind === "capacity" ? holdQtyNow : 1,
+      resourceId: holdResourceId,
+      resourceName: holdResourceId ? (resources.find((r) => r.id === holdResourceId)?.name ?? null) : null,
+      heldFor: heldFor.trim(),
+      placedBy: staff.find((x) => x.id === DEMO_STAFF_ID)?.name ?? "Counter",
+      expiresAt: Number.isFinite(days) && days > 0 ? expiryIn(days) : null,
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setError(res.error.message);
+      return;
+    }
+    onHeld(res.data);
+  };
+
+  const submit = () => void (mode === "hold" ? hold() : book());
 
   // ── placement ────────────────────────────────────────────────────────────
   /* Beside the draft, the way Google's quick-create stands beside the block it
@@ -741,7 +836,7 @@ function Panel({
           // Ctrl/⌘+Enter books from anywhere in the panel, as it saves in Google's.
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
-            void book();
+            submit();
           }
         }}
         className={cn(
@@ -755,7 +850,7 @@ function Panel({
         {/* ── the title is the booking ────────────────────────────────── */}
         <div className="flex items-start gap-tight px-card pt-section">
           <div className="min-w-0 flex-1 min-[480px]:pl-[32px]">
-            <p className="type-label text-[12px] text-muted">{t("book.title")}</p>
+            <p className="type-label text-[12px] text-muted">{mode === "hold" ? th("eyebrow") : t("book.title")}</p>
             <h2
               id={titleId}
               ref={heading}
@@ -765,7 +860,7 @@ function Panel({
                 !chosen && "text-muted",
               )}
             >
-              {chosen ? chosen.product.name : t("book.chooseWhat")}
+              {chosen ? chosen.product.name : mode === "hold" ? th("chooseWhat") : t("book.chooseWhat")}
             </h2>
           </div>
           <button
@@ -776,6 +871,30 @@ function Panel({
           >
             <X size={18} strokeWidth={1.5} />
           </button>
+        </div>
+        {/* ── book it, or hold it ────────────────────────────────────────
+            The same slot answers two questions: sell it, or take it off sale
+            for somebody. Holding used to be a page of its own, which meant
+            leaving the day you were looking at to describe it again from a
+            form. */}
+        <div className="px-card pt-comfortable">
+          <div role="tablist" aria-label={t("book.modeLabel")} className="flex gap-inline rounded-sm bg-muted-wash p-inline">
+            {(["book", "hold"] as const).map((m) => (
+              <button
+                key={m}
+                role="tab"
+                type="button"
+                aria-selected={mode === m}
+                onClick={() => { setMode(m); setTried(false); setError(null); }}
+                className={cn(
+                  "flex min-h-11 flex-1 items-center justify-center rounded-xs text-[13px] font-medium transition-colors duration-quick md:min-h-9",
+                  mode === m ? "bg-card text-fg shadow-sm ring-1 ring-strong" : "text-muted hover:text-fg",
+                )}
+              >
+                {t(m === "book" ? "book.modeBook" : "book.modeHold")}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="px-card pt-comfortable">
         {/* ── when: outside the scroll, so it stays in view and its date
@@ -830,7 +949,11 @@ function Panel({
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-section overflow-y-auto px-card pb-section pt-section">
-          {/* ── what ──────────────────────────────────────────────────── */}
+          {/* ── what ───────────────────────────────────────────────────
+              In both modes: you cannot hold a slot without saying what is
+              being held on it. What a sale asks and a hold does not — how
+              many of each ticket, which guest, which therapist — is gated
+              inside. */}
           <Row icon={<Ticket size={18} strokeWidth={1.5} />}>
             <section aria-labelledby={`${titleId}-what`}>
               {chosen && !listOpen ? (
@@ -1028,7 +1151,7 @@ function Panel({
                     <Hint tone="warning">{t("book.noLaneForLength")}</Hint>
                   )}
 
-                  {(chosen.kind === "slot" || chosen.kind === "flexible") && (
+                  {mode === "book" && (chosen.kind === "slot" || chosen.kind === "flexible") && (
                     <Stepper
                       label={t("book.guests")}
                       value={party ?? partyMin}
@@ -1039,7 +1162,7 @@ function Panel({
                     />
                   )}
 
-                  {chosen.kind === "provider" && (
+                  {mode === "book" && chosen.kind === "provider" && (
                     <label className="block">
                       <span className="type-label mb-tight block text-[12px] text-muted">{t("book.with")}</span>
                       <select
@@ -1057,7 +1180,7 @@ function Panel({
                     </label>
                   )}
 
-                  {(chosen.kind === "session" || chosen.kind === "provider" || chosen.kind === "anytime") && (
+                  {mode === "book" && (chosen.kind === "session" || chosen.kind === "provider" || chosen.kind === "anytime") && (
                     <div className="flex flex-col gap-tight">
                       {activeTiersOf(chosen.product).map((tier) => (
                         <Stepper
@@ -1073,7 +1196,7 @@ function Panel({
                       ))}
                     </div>
                   )}
-                  {tried && (missing === "tickets" || missing === "more") && (
+                  {mode === "book" && tried && (missing === "tickets" || missing === "more") && (
                     <Hint>{t(missing === "tickets" ? "book.needHowMany" : "book.needMore")}</Hint>
                   )}
                 </div>
@@ -1081,7 +1204,12 @@ function Panel({
             </section>
           </Row>
 
-          {/* ── who ───────────────────────────────────────────────────── */}
+          {/* ── who ─────────────────────────────────────────────────────
+              A sale asks for a guest to bill. A hold asks for the reason it
+              exists: in six weeks the name is the only thing that tells a
+              block apart from a bug, which is why the API will not take a
+              hold without one. */}
+          {mode === "book" ? (
           <Row icon={<UserRound size={18} strokeWidth={1.5} />}>
             <GuestField
               inputRef={guestRef}
@@ -1104,8 +1232,94 @@ function Panel({
               t={t}
             />
           </Row>
+          ) : (
+            <>
+              <Row icon={<UserRound size={18} strokeWidth={1.5} />}>
+                <label className="flex flex-col gap-inline">
+                  <span className="type-label text-[12px] text-muted">{th("fieldHeldFor")}</span>
+                  <input
+                    ref={heldForRef}
+                    value={heldFor}
+                    onChange={(e) => setHeldFor(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); submit(); } }}
+                    placeholder={th("heldForPlaceholder")}
+                    aria-invalid={tried && !heldFor.trim() ? true : undefined}
+                    className={cn(
+                      "h-11 w-full rounded-sm border bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9",
+                      tried && !heldFor.trim() ? "border-danger" : "border-line",
+                    )}
+                  />
+                  {tried && !heldFor.trim() ? <Hint>{th("needHeldFor")}</Hint> : <span className="text-[12px] text-muted">{th("heldForHelp")}</span>}
+                </label>
+              </Row>
+
+              {/* How much of it — a number of places, or everything left.
+                  Not offered on a resource: a lane is held whole or not at
+                  all, and the click already said which lane. */}
+              {!holdResourceId && (
+                <Row icon={<Ticket size={18} strokeWidth={1.5} />}>
+                  <div className="flex flex-col gap-tight">
+                    <div className="flex flex-wrap items-center gap-tight">
+                      <span className="type-label text-[12px] text-muted">{th("fieldQuantity")}</span>
+                      <Stepper
+                        value={holdAll ? holdMax : holdQtyNow}
+                        min={1}
+                        max={holdMax}
+                        onChange={(n) => { setHoldQty(n); setHoldAll(false); }}
+                        label={th("fieldQuantity")}
+                        t={t}
+                      />
+                      {chosen?.remaining != null && (
+                        <span className="text-[12px] text-muted">{t("book.leftOf", { count: chosen.remaining })}</span>
+                      )}
+                    </div>
+                    <label className="flex items-center gap-tight text-[13px]">
+                      <input
+                        type="checkbox"
+                        checked={holdAll}
+                        onChange={(e) => setHoldAll(e.target.checked)}
+                        className="h-5 w-5 accent-[var(--color-ember-solid)]"
+                      />
+                      {th("wholeSession")}
+                    </label>
+                    <p className="text-[12px] text-muted">{th(holdAll ? "kindHelp_session" : "kindHelp_capacity")}</p>
+                  </div>
+                </Row>
+              )}
+
+              {/* When it gives the capacity back. Empty is the honest default:
+                  most holds end when somebody decides they have. */}
+              <Row icon={<Wallet size={18} strokeWidth={1.5} />}>
+                <label className="flex flex-col gap-inline">
+                  <span className="type-label text-[12px] text-muted">{th("fieldExpiry")}</span>
+                  <span className="flex items-center gap-tight">
+                    <input
+                      value={holdDays}
+                      inputMode="numeric"
+                      onChange={(e) => setHoldDays(e.target.value.replace(/[^0-9]/g, ""))}
+                      placeholder="—"
+                      className="h-11 w-20 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9"
+                    />
+                    <span className="text-[13px] text-muted">{th("days")}</span>
+                  </span>
+                  {/* The resolved date, live: "14" is arithmetic somebody has
+                      to do, and an empty field reading "—" looks like a value
+                      rather than the default it is. */}
+                  <span className="text-[12px] text-muted">
+                    {(() => {
+                      const n = parseInt(holdDays, 10);
+                      return Number.isFinite(n) && n > 0
+                        ? th("expiryOn", { date: new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" }).format(new Date(Date.parse(`${date}T12:00:00`) + n * 86400000)) })
+                        : th("expiryHelp");
+                    })()}
+                  </span>
+                </label>
+              </Row>
+            </>
+          )}
 
           {/* ── how they pay ──────────────────────────────────────────── */}
+          {mode === "book" && (
           <Row icon={<Wallet size={18} strokeWidth={1.5} />}>
             <section aria-labelledby={`${titleId}-pay`}>
               <h3 id={`${titleId}-pay`} className="sr-only">
@@ -1155,6 +1369,7 @@ function Panel({
               </p>
             </section>
           </Row>
+          )}
 
           {error && (
             <p role="alert" className="rounded-sm bg-danger-wash px-comfortable py-tight text-[13px] text-danger">
@@ -1167,7 +1382,21 @@ function Panel({
         <div className="flex items-center gap-comfortable border-t border-hairline px-card py-comfortable">
           {/* Nothing chosen, nothing to total: a ৳0.00 there reads as a price. */}
           <div className="min-w-0 flex-1">
-            {chosen && items.length > 0 ? (
+            {/* A hold has no price. What it has instead is a consequence, and
+                the old register said it in plain words before you pressed —
+                which is the one thing from that page worth keeping. */}
+            {mode === "hold" ? (
+              <p className="text-[12px] leading-snug text-muted">
+                {chosen
+                  ? th(holdKind === "session" ? "preview_session" : holdKind === "resource" ? "preview_resource" : "preview_capacity", {
+                      what: holdKind === "resource" ? (ghost?.sub ?? th("somethingChosen")) : String(holdQtyNow),
+                      product: chosen.product.name,
+                      when: whenText ? `${whenText}` : th("allDay"),
+                      heldFor: heldFor.trim() || th("someoneShort"),
+                    })
+                  : th("chooseWhat")}
+              </p>
+            ) : chosen && items.length > 0 ? (
               <>
                 <p className="text-[18px] font-semibold leading-tight tabular-nums">{formatMoney(totals.total, cur)}</p>
                 {/* "৳600 + ৳90 VAT", not "incl. ৳90 VAT": the rows above quote
@@ -1190,7 +1419,7 @@ function Panel({
           </div>
           <button
             type="button"
-            onClick={() => void book()}
+            onClick={submit}
             aria-busy={busy}
             className={cn(
               "flex min-h-11 shrink-0 items-center justify-center rounded-sm px-section text-[14px] font-semibold transition-colors duration-quick",
@@ -1204,7 +1433,13 @@ function Panel({
               busy && "cursor-progress opacity-80",
             )}
           >
-            {busy ? t("book.booking") : pay === "later" ? t("book.reserve") : t("book.bookAndPay", { amount: formatMoney(payNow, cur) })}
+            {busy
+              ? t("book.booking")
+              : mode === "hold"
+                ? th("placeHold")
+                : pay === "later"
+                  ? t("book.reserve")
+                  : t("book.bookAndPay", { amount: formatMoney(payNow, cur) })}
           </button>
         </div>
       </div>

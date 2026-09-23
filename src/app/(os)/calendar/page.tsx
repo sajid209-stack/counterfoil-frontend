@@ -20,6 +20,8 @@ import {
   listStaff,
   lockBooking,
   peekOrders,
+  placeHold,
+  releaseHold,
   unlockBooking,
 } from "@/lib/api";
 import { DEMO_TODAY, demoNow, isSlotBased, toMinutes as toMinutesOf } from "@/lib/schedule";
@@ -28,6 +30,7 @@ import { DayGrid, type DayLane } from "./_components/DayGrid";
 import { WeekGrid } from "./_components/WeekGrid";
 import { MonthGrid } from "./_components/MonthGrid";
 import { EventDetail } from "./_components/EventDetail";
+import { HoldList } from "./_components/HoldList";
 import { EventPeek } from "./_components/EventPeek";
 import { CalendarStats } from "./_components/CalendarStats";
 import { BookingPanel, type BookingRequest, type Carry } from "./_components/BookingPanel";
@@ -89,6 +92,9 @@ export default function CalendarPage() {
   const t = useTranslations("calendar");
   const toast = useToast();
   const tc = useTranslations("common");
+  /* The hold vocabulary is shared with the till, so it keeps its own
+     namespace — what moved was the page, not the mechanism. */
+  const th = useTranslations("holds");
   const router = useRouter();
 
   // Server snapshot true: the desktop grids are the heavier markup, so
@@ -463,11 +469,11 @@ export default function CalendarPage() {
     return fmt(cursor, { month: "long", year: "numeric" });
   }, [view, cursor, wkStart]);
 
-  /** Where a booking leads once you have decided it is the one you wanted. */
-  const canOpen = (e: CalEvent) => e.kind === "hold" || !!e.orderId;
+  /** Where a booking leads once you have decided it is the one you wanted.
+   *  A hold leads nowhere: everything it can do, it does in the panel. */
+  const canOpen = (e: CalEvent) => e.kind === "booking" && !!e.orderId;
   const openEvent = (e: CalEvent) => {
-    if (e.kind === "hold") router.push("/holds");
-    else if (e.orderId) router.push(`/orders/${e.orderId}`);
+    if (e.orderId) router.push(`/orders/${e.orderId}`);
   };
 
   /* What the period on screen holds, and how it compares with the one before
@@ -491,6 +497,37 @@ export default function CalendarPage() {
     const [pa, pb] = bounds(-1);
     return [windowStats(scoped, a, b), windowStats(scoped, pa, pb)];
   }, [scoped, view, cursor, wkStart]);
+
+  /** The register's one surviving job: everything held, wherever it is. */
+  const [holdList, setHoldList] = useState(false);
+  const activeHolds = useMemo(
+    () => (holdsQ.data?.data ?? []).filter((h) => h.active).sort((a, b) => `${a.date}${a.slotStart ?? ""}`.localeCompare(`${b.date}${b.slotStart ?? ""}`)),
+    [holdsQ.data],
+  );
+
+  /* Holds outside the window on screen.
+     The register that listed every hold is gone, and a grid only shows the
+     days somebody has navigated to — so a hold placed three months out would
+     sit there unseen until it was too late to matter. The held figure says
+     how many are elsewhere, and pressing it goes to the nearest one. */
+  const heldElsewhere = useMemo(() => {
+    const all = (holdsQ.data?.data ?? []).filter((h) => h.active);
+    if (!all.length) return null;
+    const from = view === "day" ? startOfDay(cursor) : view === "week" ? wkStart : new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const to = view === "day" ? addDays(from, 1) : view === "week" ? addDays(from, 7) : new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+    const out = all.filter((h) => {
+      const d = new Date(`${h.date}T12:00:00`);
+      return d < from || d >= to;
+    });
+    if (!out.length) return null;
+    /* The next one forward if there is one, otherwise the most recent behind:
+       a manager stepping through the year should land on the one they have
+       not dealt with yet. */
+    const ahead = out.filter((h) => new Date(`${h.date}T12:00:00`) >= to).sort((a, b) => a.date.localeCompare(b.date));
+    const behind = out.filter((h) => new Date(`${h.date}T12:00:00`) < from).sort((a, b) => b.date.localeCompare(a.date));
+    const next = ahead[0] ?? behind[0];
+    return { count: out.length, date: next.date };
+  }, [holdsQ.data, view, cursor, wkStart]);
 
   /* An empty grid caused by a filter looks exactly like a genuinely empty
      week, which is the one thing it must not do. When the window has nothing
@@ -598,6 +635,46 @@ export default function CalendarPage() {
     toast.success(t(lock ? "lockedToast" : "unlockedToast"));
     setDetail(null);
     bookingsQ.reload();
+  };
+
+  /* Releasing puts the places back on public sale at once, so it is offered
+     with a way back: Undo places the same hold again. It is a new record with
+     a new id — which is honest, because the first one really was released. */
+  const doRelease = async (e: CalEvent) => {
+    const before = (holdsQ.data?.data ?? []).find((h) => h.id === e.id);
+    setActing(true);
+    const res = await releaseHold(e.id);
+    setActing(false);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    setDetail(null);
+    holdsQ.reload();
+    toast.success(th("released", { heldFor: e.title }), {
+      label: t("undo"),
+      run: async () => {
+        if (!before) return;
+        const back = await placeHold({
+          productId: before.productId,
+          locationId: before.locationId,
+          kind: before.kind,
+          date: before.date,
+          slotStart: before.slotStart ?? null,
+          slotEnd: before.slotEnd ?? null,
+          quantity: before.quantity,
+          seatLabels: before.seatLabels,
+          resourceId: before.resourceId ?? null,
+          resourceName: before.resourceName ?? null,
+          heldFor: before.heldFor,
+          reason: before.reason,
+          placedBy: before.placedBy,
+          expiresAt: before.expiresAt ?? null,
+        });
+        if (back.ok) holdsQ.reload();
+        else toast.error(back.error.message);
+      },
+    });
   };
 
   const doComplete = async (e: CalEvent) => {
@@ -730,6 +807,18 @@ export default function CalendarPage() {
             noshow: t("statNoShow"),
             holds: t("statHolds"),
           }}
+          /* The figure opens the list. Jumping straight to the nearest hold
+             was one target out of N: with four scattered across the year you
+             could reach one and had to guess the rest. */
+          elsewhere={
+            activeHolds.length > 0
+              ? {
+                  count: activeHolds.length,
+                  label: heldElsewhere ? t("heldElsewhere", { count: heldElsewhere.count }) : t("heldSeeAll"),
+                  onGo: () => setHoldList(true),
+                }
+              : undefined
+          }
         />
 
         {/* The range and the control that changes it, together. They were 60px
@@ -1082,9 +1171,29 @@ export default function CalendarPage() {
           t={t}
           onLock={doLock}
           onComplete={doComplete}
+          onRelease={doRelease}
           blockedReason={detailBlocked}
           busy={acting}
         />
+
+        {holdList && (
+          <HoldList
+            holds={activeHolds}
+            onClose={() => setHoldList(false)}
+            t={(key, values) => t(key as never, values as never)}
+            dayLabel={(iso) =>
+              new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" }).format(new Date(`${iso}T12:00:00`))
+            }
+            onGo={(h) => {
+              setHoldList(false);
+              setCursor(new Date(`${h.date}T12:00:00`));
+              /* Straight into the panel that can release it — the list says
+                 which one, the panel says everything about it. */
+              const ev = events.find((e) => e.id === h.id);
+              if (ev) setDetail(ev);
+            }}
+          />
+        )}
 
         <BookingPanel
           compact={compact}
@@ -1103,6 +1212,19 @@ export default function CalendarPage() {
             setRequest(null);
             setGhost(null);
             setCarry(c);
+          }}
+          onHeld={(h) => {
+            setRequest(null);
+            setGhost(null);
+            holdsQ.reload();
+            toast.success(t("heldToast", { heldFor: h.heldFor }), {
+              label: t("holdAgain"),
+              run: async () => {
+                const res = await releaseHold(h.id);
+                if (res.ok) holdsQ.reload();
+                else toast.error(res.error.message);
+              },
+            });
           }}
           onBooked={(order, name) => {
             setRequest(null);

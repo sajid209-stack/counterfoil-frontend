@@ -318,6 +318,13 @@ export async function releaseBookingEdit(bookingId: ID, who: string): Promise<Ap
   return ok(true);
 }
 
+/** The id a surface may offer to release. A checkout hold is the till's own
+ *  ten-minute reservation on an open cart: it is in `activeHolds` because it
+ *  really does take capacity off sale, and it must never be released by hand
+ *  from another till, which would let both sell the same places. */
+const releasable = (h: HoldView | undefined): ID | undefined =>
+  h && h.heldFor !== CHECKOUT_HELD_FOR ? h.id : undefined;
+
 // ── one answer for "why can I not sell this?" (§61.14) ──────────────────────
 /**
  * The single explanation every surface reads from. A slot that looks free but
@@ -338,8 +345,8 @@ export function explainUnavailable(args: {
     const h = blockingHold(product.id, date, slotStart);
     return {
       reason: "session_locked",
-      message: `This session is closed for sales${h ? ` — ${h.heldFor}` : ""}. Release it from Holds to sell again.`,
-      holdId: h?.id,
+      message: `This session is closed for sales${h ? ` — ${h.heldFor}` : ""}. Release the hold to sell it again.`,
+      holdId: releasable(h),
     };
   }
 
@@ -355,12 +362,22 @@ export function explainUnavailable(args: {
   const held = heldPlaces(product.id, date, slotStart);
   if (held > 0 && remaining + held >= wanted) {
     const h = blockingHold(product.id, date, slotStart);
+    /* A till mid-sale is not a hold anybody may release. It says so in the
+       counter's own words — "Checkout in progress" is an internal label, not
+       a party's name — and carries no id, so no surface can offer to cancel
+       another till's live cart. It releases itself in ten minutes. */
+    if (h && h.heldFor === CHECKOUT_HELD_FOR) {
+      return {
+        reason: "held_back",
+        message: `Another till is checking these out. They come back on sale in a few minutes if that sale is not completed.`,
+      };
+    }
     return {
       reason: "held_back",
       message: h
         ? `${held} ${held === 1 ? "place is" : "places are"} held for ${h.heldFor}. Release the hold to sell them.`
         : `${held} places are held back. Release the hold to sell them.`,
-      holdId: h?.id,
+      holdId: releasable(h),
     };
   }
 

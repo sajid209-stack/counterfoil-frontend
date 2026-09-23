@@ -6,6 +6,12 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   async redirects() {
     return [
+      // Holds are not a destination any more. A hold is capacity taken off
+      // sale, so it belongs where capacity is SHOWN — on the calendar, where a
+      // manager places and releases it, and at the till, where a cashier holds
+      // places for the party in front of them. The register it used to have
+      // was a fourth place to look.
+      { source: "/holds", destination: "/calendar", permanent: false },
       // The catalogue is called Bookings now, and the breadcrumb is derived
       // from the path — so the route had to move with the word. Anything
       // already linked or bookmarked at /products still lands.

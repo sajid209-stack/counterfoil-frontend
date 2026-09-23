@@ -24,6 +24,7 @@ export function CalendarStats({
   previous,
   comparisonLabel,
   labels,
+  elsewhere,
 }: {
   now: WindowStats;
   previous: WindowStats;
@@ -32,6 +33,12 @@ export function CalendarStats({
    *  being printed under all four numbers. */
   comparisonLabel: string;
   labels: { bookings: string; arrived: string; noshow: string; holds: string };
+  /* Capacity held OUTSIDE the week on screen. With the holds register gone,
+     the grid is where a hold is found — and a grid only shows the days you
+     have navigated to, so a hold placed three months out would be invisible
+     until somebody happened to look. The figure says how many, and pressing
+     it goes to the next one. */
+  elsewhere?: { count: number; label: string; onGo: () => void };
 }) {
   const rate = (n: number, of: number) => (of === 0 ? null : Math.round((n / of) * 100));
   const pct = (n: number, of: number) => (rate(n, of) === null ? "—" : `${rate(n, of)}%`);
@@ -64,6 +71,8 @@ export function CalendarStats({
           key: "holds",
           label: labels.holds,
           value: String(now.holds),
+          context: elsewhere && elsewhere.count > 0 ? elsewhere.label : undefined,
+          onClick: elsewhere && elsewhere.count > 0 ? elsewhere.onGo : undefined,
           delta: <DeltaPill now={now.holds} then={previous.holds} goodWhen="down" since={comparisonLabel} />,
         },
       ]}

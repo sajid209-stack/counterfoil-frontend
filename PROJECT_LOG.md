@@ -10946,3 +10946,219 @@ cannot draw `position: sticky` honestly.
   SNEAK PEEKS and AT A GLANCE are unguessable until expanded, and a one-line
   description under each name is the cheapest remaining improvement on that
   tab.
+
+## Holds move to where capacity is shown (2026-09-23)
+
+Owner: *"these holds don't need an individual page and menu option, it should
+be available from POS and calendar"* — researched, planned and built.
+
+### Why this is the right shape
+
+A hold is capacity taken off public sale for a named party: a school group that
+has asked but not paid, a private event, a lane out for maintenance. It had its
+own page in the sidebar with a table, four status tabs and a place-a-hold
+modal — a fourth place to look, describing a day you had just been looking at
+from a form.
+
+Box-office systems settled this a long time ago. AudienceView manages hold types
+against the event's own inventory; Spektrix's house seats are held back and
+released at the box office's discretion, on the screen where the seats are.
+Venue and restaurant systems place blocks directly on the floor plan or the
+calendar grid. Nobody keeps a register of holds, because a hold is only ever
+meaningful against the capacity it is holding — and that is drawn on two
+screens this product already has.
+
+### What went
+
+`/holds` and its 473-line page, the sidebar row, the phone bar's name for it,
+and 50 of the 74 message keys in its namespace (the table's columns, its four
+tabs, its empty states). `/holds` now redirects to the calendar — not
+permanently, because which screen owns holds is a product decision and a 308
+would outlive it in browser caches.
+
+**Nothing in the mechanism moved.** `lib/api/holds.ts` is untouched apart from
+one sentence: `explainUnavailable` said *"Release it from Holds to sell again"*
+and now says *"Release the hold to sell it again"*, because the page it named
+no longer exists. Availability still subtracts holds in `getSlots`,
+`getDailyRemaining` and `isResourceFreeFor`; expiry is still a clock crossing;
+the till's own 10-minute checkout holds still place and release themselves, and
+are still hidden from the manager's view, which is what they were always for.
+
+### The calendar: where a manager places and releases them
+
+- **The quick-create panel gained a Book / Hold pair.** The same click on the
+  same empty slot, and the same questions — what, when, where, how long — with
+  only the ending different: a sale asks for a guest to bill, a hold asks who
+  it is for. The API will not take a hold without that name, and the field says
+  why: *"In six weeks this is the only thing that explains the block."*
+- **The kind is derived, never asked.** The old modal opened with four kinds
+  to choose between (places, whole session, a resource, seats). An operator who
+  has clicked 18:00 on Lane 3 has already said it is a resource hold; the panel
+  reads it off the draft — a lane gives a `resource` hold, a session gives
+  `capacity` places or, with "Everything left" ticked, the whole `session`.
+- **The draft on the grid is hatched**, the same as every hold already drawn
+  there. An ember block would say the slot is being sold.
+- **The footer states the consequence instead of a price.** A hold has no
+  total; what it has is what comes off sale, in the plain words the old
+  register's preview panel used — the one thing from that page worth keeping.
+- **Release is on the block.** Clicking a hold used to navigate to the
+  register; the detail panel now offers Release, asks first ("These places go
+  back on public sale straight away"), and both placing and releasing offer
+  **Undo** — releasing re-places the same hold, with a new id, because the
+  first one really was released.
+
+### The till: where a counter holds places, and sells against them
+
+- **"Hold these places instead"** sits under Add and Buy now, as a text button
+  rather than a third loud one: it is the rarer of the three and must not
+  compete with the sale. It appears only once places are chosen on a dated
+  session — a seat map holds named seats and a lane holds a span, and both of
+  those are the calendar's job, where the whole day is on screen. The hold is
+  recorded against the person who placed it, not the till: it is somebody's
+  promise, and the name is what the next shift asks about.
+- **A refusal now carries the way past it.** `BlockedNotice` gained an action.
+  A session closed by a hold says so, names the party — *"This session is
+  closed for sales — Private event"* — and offers **Release and sell**, because
+  the party it was held for is standing at the counter and sending a cashier to
+  another screen mid-queue is how a hold becomes a lost sale. `Unavailability`
+  has carried the responsible `holdId` since §61; nothing had ever read it.
+- A notice that offers an action no longer dismisses itself after three
+  seconds. One that only states a fact still does.
+
+### Three things found by rendering it
+
+1. **A held session read "Sold out · 15/15"** about fifteen places nobody had
+   bought. `SessionList` computed `closed = !!blockedReason && left > 0`, and a
+   session hold takes `left` to zero — so the reason was only ever visible on
+   tap. A stated reason now wins over the count: the row reads *"Held · Private
+   event"* in muted with a neutral bar. The same bug was hiding "No guide free"
+   behind "Sold out" on guided departures, which is how long it had been there.
+2. **The what-chooser had gone with the sale's questions.** Gating the whole
+   ticket row to book mode also gated the list of what can be held — and you
+   cannot hold a slot without saying what is being held on it. Only the tiers,
+   the guest count and the therapist are a sale's questions.
+3. **A hold placed on a week nobody navigates to was invisible.** With the
+   register gone, the grid is the only place a hold appears, and a grid only
+   shows the days you have gone to. The Held-capacity figure now carries
+   *"3 more elsewhere"* and pressing it goes to the nearest one — forward if
+   there is one, otherwise back. That was the one case where removing the page
+   genuinely lost something, and it is closed.
+
+### The review round, and the money bug it found
+
+An independent design pass scored the first build 5/10 and named two blockers.
+Both were right.
+
+1. **The till could cancel another till's live cart.** `blockingHold` reads
+   `activeHolds()`, which includes the ten-minute checkout hold a till places
+   while a cart is open — so a second cashier tapping the same slot was told
+   *"3 places are held for **Checkout in progress**"* and handed a Release
+   button. Pressing it would have cancelled the first till's reservation and
+   sold the same places twice. It also put an internal constant in front of a
+   customer as if it were a party's name. `explainUnavailable` now recognises
+   its own till's holds: it says *"Another till is checking these out. They
+   come back on sale in a few minutes if that sale is not completed"* and
+   **returns no id at all**, so no surface can offer to release one. The
+   refusal is the right place for the rule — it is the one answer every screen
+   reads.
+2. **There was no list of holds.** The register was traded for a figure on a
+   stat card, and a figure cannot be audited or handed to the next shift. The
+   first build let the figure jump to the *nearest* hold outside the window,
+   which is one target out of however many there are. The figure now opens
+   **Capacity on hold** — every active hold, wherever it is: the day, the
+   party, what it takes off sale, and when it gives it back, each row going to
+   that day and opening the hold itself. It is fed by the fetch the page
+   already made. No route, no backend, no tabs, no history, no form: the one
+   job of the old page that the grid genuinely could not do.
+
+Five more from the same review, all fixed: the detail panel now says what a
+hold **holds**, when it **releases** and who **placed** it (all three were on
+the record and nothing drew them); Release moved into the footer where a
+booking's primary action goes, rather than being quieter than Close; the till's
+held row stopped printing "15/15" about places nobody bought — the bar hatches
+and the numerals go; the till's Hold button became secondary, because an ember
+Hold beside a grey Add says the exception is the point; and the expiry field
+resolves live to *"Releases itself on Thu 13 Aug"* rather than leaving somebody
+to do the arithmetic.
+
+### Verified
+
+- **A new standing harness, 37 checks, all passing**, driven rather than
+  rendered: the rail has no Holds row and `/holds` lands on the calendar; the
+  panel offers both modes and says which it is; the draft is hatched, not
+  ember; the sale's questions are gone but the chooser stays; holding with no
+  name is refused in words; the footer states what comes off sale before you
+  press; the toast names the party and offers Undo; the day's held figure
+  moves; the hold is drawn on the grid, opens, offers Release, asks first, and
+  the capacity comes back. Then the off-window affordance, then the till: it
+  offers to hold only once places are chosen, says what it did, reads a
+  hold-closed session as held rather than sold out, names the mechanism on tap,
+  offers Release and sell, and the session is sellable afterwards.
+- **A 12-check unit pass on the rule a screenshot cannot show** (jiti over the
+  api layer): a party's hold is refused, named and releasable; the till's own
+  checkout hold is refused, anonymous and **carries no id**; a closed session
+  explains itself and can be released.
+- Standing harnesses hold: catalog **95/95**, top cards **84/84**, settings
+  **55/55**, reports **48/48**.
+- Measured: every new control at the till clears the 44px thumb floor (44, 48,
+  44), the name field is at the till's 13px floor, no sideways scroll at 390.
+  `/calendar` and `/pos` audited in dark at 1440 and 390 report only the
+  declared white-on-ember exceptions (New booking, the today badge) and zero
+  respectively.
+- **Bangla, checked properly this time**: the panel reads জায়গা হোল্ড /
+  কী হোল্ড করবেন বেছে নিন with বুকিং | হোল্ড as its two modes, no raw keys and
+  no missing-message warnings.
+
+  Worth recording, because it invalidates a check this log has relied on: the
+  harness set `NEXT_LOCALE` from an init script, which runs after the document
+  request — so **the server had already chosen English and every "Bangla" load
+  was actually an English one**. A reload is what makes it Bangla. The earlier
+  runs proved only that an English render logged no missing messages.
+- `tsc --noEmit` and `npm run build` clean; `eslint` clean on every touched
+  file. i18n parity **0 missing / 0 extra** across 33 namespaces, and the
+  `holds` namespace is down to the 24 keys something actually renders.
+
+### Open — including what the review raised and I did not take
+
+- **Session holds are still filed under "Session closed" rather than "Held
+  back".** The review is right that filtering by "Held back" therefore misses
+  them. The two chips are the grid's legend and they describe genuinely
+  different things — some places held, versus a session that sells nothing at
+  all — so merging them would cost more than it fixed. Capacity on hold is now
+  the authoritative answer to "what have we got held", and it lists both.
+- **One concept still has several names** — Hold capacity, Held back, Session
+  closed, Held · {name}. Settling on one noun across the chips, the stat, the
+  pill and the till is worth doing and is a vocabulary sweep rather than part
+  of this change.
+- **Day view has no all-day strip**, so a hold with no slot time is drawn in
+  Week and Month but not in Day. It cannot be sold — the availability engine
+  subtracts it regardless — and it is now listable, so this is a visibility
+  gap rather than a safety one. Porting Week's strip into `DayGrid` is the fix.
+- **A hold placed at the till never expires.** There is no room in the sheet's
+  footer for a date field without crowding the sale, and defaulting to a
+  release date nobody asked for would quietly hand capacity back. The list is
+  the cleanup surface; if till holds turn out to accumulate, a default belongs
+  in Settings rather than in the sheet.
+- **`/sell` and `/classic` still refuse without offering the release.** Both
+  are design variants of `/pos`, which is the till the brief named; passing the
+  same action through is about a dozen lines when they are next touched.
+- **A cashier can release any hold from the till.** That is deliberate — the
+  party is at the counter and the refusal is otherwise a dead end — but it
+  means a manager's hold can be released by anyone who can sell. If that should
+  need a role, `ManualDiscountPolicy` is the pattern to copy.
+- **"Release and sell" releases rather than converts.** `convertHold` exists
+  and stays unused: marking a hold converted needs the order id, and the order
+  does not exist until the cart is charged. Threading the hold through checkout
+  is the honest version and is its own change.
+- **Expired and released holds have no history screen.** They were never
+  actionable; the calendar draws active holds only. If the owner wants the
+  audit trail back, it belongs in reports rather than in the nav.
+- The scrolling till `/sell` and `/classic` still show a refusal without the
+  release action; both are design variants of `/pos`, which is the one the
+  brief named. Seat holds remain modelled but unenforced (`heldSeats` has no
+  caller in `availableSeats`), which predates this change.
+
+Sources: [AudienceView — hold types](https://audienceview.com/faq/) ·
+[Spektrix — seat status and availability](https://integrate.spektrix.com/docs/Availability) ·
+[Skedda — booking and blocking from the grid](https://support.skedda.com/en/articles/105784) ·
+[techinterview — venue booking: availability calendar and hold/confirm flow](https://www.techinterview.org/post/3233470563/lld-venue-booking/)
