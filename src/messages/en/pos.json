@@ -365,7 +365,10 @@
     "holdPlace": "Hold it",
     "holdPlaced": "Holding {count, plural, one {# place} other {# places}} for {heldFor}.",
     "counterActor": "Counter",
-    "rowHeld": "Held · {name}"
+    "rowHeld": "Held · {name}",
+    "stockLeft": "{count} {unit} left",
+    "stockOut": "None left",
+    "stockRefused": "{name} was charged but could not come off the shelf — it is not kept at this counter's venue."
   },
   "settle": {
     "title": "Settle a reservation",

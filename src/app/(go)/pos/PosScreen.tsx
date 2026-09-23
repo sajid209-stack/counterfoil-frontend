@@ -7,8 +7,9 @@ import { useEnumLabels } from "@/lib/labels";
 import { AlertTriangle, ArrowRight, Archive, Banknote, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { peekCounters, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
+import { DEMO_COUNTER_ID } from "@/lib/session";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
 import { behaviourSubtitle } from "@/lib/behaviour";
@@ -381,6 +382,12 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   // The till identifies itself so its own holds can be found and released
   // again. A real device id lands with the backend; the counter is enough here.
   const TILL_ID = "till_fort_main";
+  /* The venue this counter stands in — not the first location by name, which
+     is what the till used and which filed every sale at the wrong museum. It
+     decides where the money is recorded AND which shelf the stock comes off,
+     and those two must be the same place. */
+  const tillLocationId =
+    peekCounters().find((c) => c.id === DEMO_COUNTER_ID)?.locationId ?? locationsQ.data?.data[0]?.id ?? "loc_fort";
 
   /** `pay` comes from the sheet's Buy now: this sale is done, so land on the
    *  cart instead of going back to the grid for another item. */
@@ -694,7 +701,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
       lines: sale.lines.map((l) => ({ name: l.tierId && l.tierName !== l.productName ? `${l.productName} · ${l.tierName}` : l.productName, qty: l.quantity, amount: l.subtotal, child: !!l.parentLineId })),
       subtotal, lineDiscountTotal, orderDiscount, tax, total,
     };
-    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, orderDiscount, bookings, method, credits, customerName: customer || null, customerId: attached?.id ?? null, receipt };
+    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: tillLocationId, lines, orderDiscount, bookings, method, credits, customerName: customer || null, customerId: attached?.id ?? null, receipt };
     return { lines, bookings, credits, payload, receipt };
   };
 
@@ -761,10 +768,18 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow, credits });
     if (res.ok) {
       if (txnNote) await logOrderAction(res.data.order.id, txnNote);
+      sayIfStockRefused(res.data.stockRefused);
       await settleMemberEffects(res.data.order.id, dueNow);
       sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, reference: res.data.order.reference, code: res.data.firstTicketCode, tickets: ticketSnapshot(res.data.order, res.data.tickets), change: 0, balance, receipt, payments: [{ method, amount: dueNow }], customer: completedCustomer() }));
       router.push("/pos/complete");
     } else toast.error(res.error.message);
+  };
+
+  /* A line that was charged for but could not leave a shelf is not a silent
+     event: the guest is still at the counter and somebody has to hand them
+     something. Said once, from both completion paths. */
+  const sayIfStockRefused = (refused: { name: string; reason: string }[] | undefined) => {
+    for (const r of refused ?? []) toast.error(t("sheet.stockRefused", { name: r.name }));
   };
 
   // Inline cash: collect tender, run checkout, go to the completion screen.
@@ -774,6 +789,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow, credits });
     setCashSaving(false);
     if (res.ok) {
+      sayIfStockRefused(res.data.stockRefused);
       await settleMemberEffects(res.data.order.id, dueNow);
       sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, reference: res.data.order.reference, code: res.data.firstTicketCode, tickets: ticketSnapshot(res.data.order, res.data.tickets), change: changeMinor, balance, receipt, payments: [{ method: "cash", amount: dueNow, tendered: tenderedMinor, change: changeMinor }], customer: completedCustomer() }));
       setCashOpen(false);

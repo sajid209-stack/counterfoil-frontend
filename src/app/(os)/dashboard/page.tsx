@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, CalendarClock, Check, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, Banknote, CalendarOff, Clock, WifiOff, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, Banknote, CalendarOff, Clock, Boxes,
+  WifiOff, Wrench, type LucideIcon } from "lucide-react";
 import { AreaChart, Button, DeltaPill, PageShell, StatStrip, StatusPill, type StatItem } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getOperator,
   getResourceMatrix,
   getSlots,
+  inventoryAttention,
   listBookings,
   listCounters,
   listCustomers,
@@ -454,8 +456,28 @@ export default function DashboardPage() {
         action: { label: t("noticeManage"), href: "/settings/devices" },
       });
     });
-    return items;
-  }, [resources, products, bookings, orders, devicesQ.data, t]);
+    /* Stock that has run out or is about to. It belongs here rather than only
+       on its own screen for the same reason an out-of-service lane does: the
+       manager's morning is this panel, and a programme nobody reprinted is a
+       sale nobody makes. Out first, and only the worst few — this panel is a
+       list of decisions, not a second inventory. */
+    inventoryAttention(locationId === "all" ? undefined : locationId)
+      .slice(0, 3)
+      .forEach((i) => {
+        items.push({
+          tone: i.outOfStock ? "warning" : "info",
+          Icon: Boxes,
+          title: t(i.outOfStock ? "noticeStockOutTitle" : "noticeStockLowTitle", { name: i.name }),
+          body: i.outOfStock
+            ? t("stockOutBody", { name: i.name })
+            : t("stockLowBody", { count: i.onHand, unit: i.unit, low: i.lowAt }),
+          action: { label: t("noticeStockAction"), href: `/inventory/${i.id}` },
+        });
+      });
+    /* Worst first. A stock rule pushed last put "the counter cannot sell it"
+       below "a tablet has gone quiet", and this panel is read top down. */
+    return items.sort((a, b) => Number(b.tone === "warning") - Number(a.tone === "warning"));
+  }, [resources, products, bookings, orders, devicesQ.data, locationId, t]);
 
   // Idle capacity — unsold places in the next 48h, priced.
   const idle = useMemo(() => {

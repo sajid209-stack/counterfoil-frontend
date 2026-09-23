@@ -1,5 +1,5 @@
 import { createResource, fail, notFoundError, validationError } from "./client";
-import type { ApiResult, Channel, ListParams, ListResponse, Lifecycle, Minor } from "./types";
+import type { AddOn, ApiResult, Channel, ListParams, ListResponse, Lifecycle, Minor } from "./types";
 import type { CategoryId, SectionId } from "@/lib/events/catalog";
 
 /**
@@ -139,6 +139,11 @@ export interface EventRecord {
   channels?: Channel[];
   /** The venues whose counters sell it, when the counter is one of them. */
   locationIds?: string[];
+  /** Countable things that go with a ticket: a programme, a glow band, a
+   *  T-shirt. The same shape a booking's extras use, so one editor and one
+   *  reverse index serve both — an event is a thing you sell, and the stock
+   *  question is the same question. */
+  extras?: AddOn[];
   customisation: EventCustomisation;
   createdAt: string;
   updatedAt: string;

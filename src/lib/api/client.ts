@@ -74,6 +74,8 @@ const store: Record<string, Row[]> = {
   holds: structuredClone(seed.holds),
   events: structuredClone(seed.events),
   storefronts: structuredClone(seed.storefronts),
+  inventoryItems: structuredClone(seed.inventoryItems),
+  stockMovements: structuredClone(seed.stockMovements),
 };
 
 // ── Operator + demo-business switching ──────────────────────────────────────
@@ -145,7 +147,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
 /** Empty the operator's data for the golden path ("Start fresh"). */
 export function startFresh(): void {
   operatorState = { ...structuredClone(seed.operator), name: "" };
-  for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds"]) {
+  for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds", "inventoryItems", "stockMovements"]) {
     (store as Record<string, unknown[]>)[k] = [];
   }
 }

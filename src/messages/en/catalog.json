@@ -802,5 +802,22 @@
       "inter": "Inter",
       "mono": "DM Mono"
     }
+  },
+  "extras": {
+    "title": "Extras",
+    "help": "Offered at the counter alongside this booking. Anything countable should come from inventory — then the till can only sell what is on the shelf, and the sale moves the count.",
+    "fromInventory": "From inventory",
+    "addCharge": "Add a charge",
+    "colName": "Name",
+    "colPrice": "Price ({currency})",
+    "perPerson": "per person",
+    "namePlaceholder": "Gift wrapping",
+    "remove": "Remove {name}",
+    "left": "{count, plural, =0 {none left} other {# {unit} left}}",
+    "notCounted": "Not counted",
+    "elsewhere": "Kept at another venue",
+    "pickTitle": "Which item",
+    "pickHelp": "Items kept where this booking is sold come first.",
+    "pickEmpty": "Every item is already offered here. Add one in Inventory first."
   }
 }

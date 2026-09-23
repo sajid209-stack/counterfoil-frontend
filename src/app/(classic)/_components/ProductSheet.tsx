@@ -18,10 +18,12 @@ import {
   getDailyRemaining,
   getResourceMatrix,
   getSlots,
+  inventoryItem,
   isOpenOn,
   isOwnerFree,
   isResourceFreeFor,
   joinWaitlist,
+  levelOf,
   peekHolds,
   ownerBusyDetailed,
   type Product,
@@ -288,25 +290,41 @@ export function ProductSheet({
   // stepper once added. Per-person add-ons start at the group/party size and
   // multiply live.
   const headsFor = () => (flatBasis ? group : Math.max(1, Object.values(qty).reduce((s, n) => s + n, 0)));
+  /** What the shelf says at this booking's venue. */
+  const stockFor = (itemId: string) => {
+    const item = inventoryItem(itemId);
+    if (!item || !item.tracked) return null;
+    const where = product.locationIds[0];
+    return { ...levelOf(itemId, where && item.locationIds.includes(where) ? where : undefined), unit: item.unit };
+  };
   const renderAddOns = () =>
     (product.addOns?.length ?? 0) > 0 ? (
       <div className="mt-section flex flex-col gap-tight">
         <span className="type-label text-[12px] text-muted">{t("sheet.addOns")}</span>
         {(product.addOns ?? []).map((a) => {
           const n = addOnQty[a.id] ?? 0;
+          /* The same shelf the v1 till reads. This variant is deliberately
+             the pre-redesign LOOK, but selling stock the venue does not have
+             is a correctness bug rather than a style, so the cap is here too. */
+          const stock = a.itemId ? stockFor(a.itemId) : null;
+          const cap = stock ? stock.onHand : Infinity;
+          const out = cap <= 0;
           return (
             <div key={a.id} className="flex min-h-14 items-center gap-tight rounded-sm border border-line bg-card p-comfortable">
               <div className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{a.name}</span>
-                <span className="text-[12px] text-muted">{formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}</span>
+                <span className="text-[12px] text-muted">
+                  {formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}
+                  {stock && (out ? ` · ${t("sheet.stockOut")}` : ` · ${t("sheet.stockLeft", { count: cap, unit: stock.unit })}`)}
+                </span>
               </div>
               {n === 0 ? (
-                <button type="button" aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: a.perPerson ? headsFor() : 1 }))} className="h-12 w-12 shrink-0 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
+                <button type="button" disabled={out} aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, a.perPerson ? headsFor() : 1) }))} className="h-12 w-12 shrink-0 rounded-sm border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">+</button>
               ) : (
                 <div className="flex shrink-0 items-center gap-tight">
                   <button type="button" aria-label={t("sheet.less")} disabled={(addOnQty[a.id] ?? 0) === 0} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">−</button>
                   <span className="w-6 text-center">{n}</span>
-                  <button type="button" aria-label={t("sheet.more")} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: (q[a.id] ?? 0) + 1 }))} className="h-12 w-12 rounded-sm border border-line text-lg active:bg-ember/10">+</button>
+                  <button type="button" aria-label={t("sheet.more")} disabled={n >= cap} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, (q[a.id] ?? 0) + 1) }))} className="h-12 w-12 rounded-sm border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">+</button>
                 </div>
               )}
             </div>

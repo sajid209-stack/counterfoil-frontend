@@ -27,6 +27,7 @@ export * from "./customers";
 export * from "./memberships";
 export * from "./loyalty";
 export * from "./holds";
+export * from "./inventory";
 export * from "./events";
 export * from "./notifications";
 export * from "./accessPolicy";

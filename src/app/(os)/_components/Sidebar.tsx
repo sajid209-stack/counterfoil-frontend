@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
+import { ArrowUpRight, Boxes, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -34,6 +34,11 @@ export function Sidebar({
        each held half the answer to "what do we sell?" — and an operator
        adding a sunset tour had to know first which half it belonged in. */
     { label: t("catalog"), href: "/catalog", icon: Ticket },
+    /* Beside the catalogue on purpose: one answers "what can somebody buy",
+       the other "what is on the shelf", and an operator moves between the two
+       constantly — a programme is in the catalogue as an extra and in
+       inventory as a hundred and twenty copies. */
+    { label: t("inventory"), href: "/inventory", icon: Boxes },
     { label: t("reports"), href: "/reports/sales", icon: ChartNoAxesColumn },
   ];
 

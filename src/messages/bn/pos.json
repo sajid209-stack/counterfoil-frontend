@@ -365,7 +365,10 @@
     "holdPlace": "হোল্ড করুন",
     "holdPlaced": "{heldFor}-এর জন্য {count}টি জায়গা রাখা হলো।",
     "counterActor": "কাউন্টার",
-    "rowHeld": "হোল্ড · {name}"
+    "rowHeld": "হোল্ড · {name}",
+    "stockLeft": "{count}টি {unit} আছে",
+    "stockOut": "শেষ",
+    "stockRefused": "{name}-এর দাম নেওয়া হলো, কিন্তু তাক থেকে কমানো গেল না — এই কাউন্টারের ভেন্যুতে এটি রাখা নেই।"
   },
   "settle": {
     "title": "রিজার্ভেশন নিষ্পত্তি",

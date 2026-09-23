@@ -19,11 +19,13 @@ import {
   getDailyRemaining,
   getResourceMatrix,
   getSlots,
+  inventoryItem,
   isOpenOn,
   isOwnerFree,
   isSessionLocked,
   isResourceFreeFor,
   joinWaitlist,
+  levelOf,
   peekHolds,
   ownerBusyDetailed,
   placeHold,
@@ -33,6 +35,7 @@ import {
   type Resource,
   type Staff,
 } from "@/lib/api";
+import { cn } from "@/lib/cn";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { DEMO_TODAY, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
@@ -341,25 +344,43 @@ export function ProductSheet({
   // stepper once added. Per-person add-ons start at the group/party size and
   // multiply live.
   const headsFor = () => (flatBasis ? group : Math.max(1, Object.values(qty).reduce((s, n) => s + n, 0)));
+  /** What the shelf says here. Keyed on the counter's own venue: stock at the
+   *  museum is no use to a desk at the fort. */
+  const stockFor = (itemId: string) => {
+    const item = inventoryItem(itemId);
+    if (!item || !item.tracked) return null;
+    const where = product.locationIds[0];
+    return { ...levelOf(itemId, where && item.locationIds.includes(where) ? where : undefined), unit: item.unit };
+  };
   const renderAddOns = () =>
     (product.addOns?.length ?? 0) > 0 ? (
       <div className="mt-section flex flex-col gap-tight">
         <span className="text-[14px] font-semibold text-fg">{t("sheet.addOns")}</span>
         {(product.addOns ?? []).map((a) => {
           const n = addOnQty[a.id] ?? 0;
+          /* An extra that hands over a counted thing can only sell what is on
+             the shelf at THIS counter's venue. The till used to offer every
+             extra without limit, so a desk could promise four tote bags it
+             did not have and find out at the cupboard. */
+          const stock = a.itemId ? stockFor(a.itemId) : null;
+          const cap = stock ? stock.onHand : Infinity;
+          const out = cap <= 0;
           return (
-            <div key={a.id} className="flex min-h-14 items-center gap-tight rounded-go border border-line bg-card p-comfortable">
+            <div key={a.id} className={cn("flex min-h-14 items-center gap-tight rounded-go border p-comfortable", out ? "border-line bg-subtle" : "border-line bg-card")}>
               <div className="min-w-0 flex-1">
-                <span className="block truncate text-sm">{a.name}</span>
-                <span className="text-[13px] text-muted">{formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}</span>
+                <span className={cn("block truncate text-sm", out && "text-muted")}>{a.name}</span>
+                <span className="text-[13px] text-muted">
+                  {formatMoney(a.price, currency)}{a.perPerson ? t("sheet.perHead") : ""}{n > 0 ? ` × ${n} = ${formatMoney(a.price * n, currency)}` : ""}
+                  {stock && (out ? ` · ${t("sheet.stockOut")}` : ` · ${t("sheet.stockLeft", { count: cap, unit: stock.unit })}`)}
+                </span>
               </div>
               {n === 0 ? (
-                <button type="button" aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: a.perPerson ? headsFor() : 1 }))} className="h-12 w-12 shrink-0 rounded-full border border-line text-lg active:bg-ember/10">+</button>
+                <button type="button" disabled={out} aria-label={t("sheet.addName", { name: a.name })} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, a.perPerson ? headsFor() : 1) }))} className="h-12 w-12 shrink-0 rounded-full border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">+</button>
               ) : (
                 <div className="flex shrink-0 items-center gap-tight">
                   <button type="button" aria-label={t("sheet.less")} disabled={(addOnQty[a.id] ?? 0) === 0} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.max(0, (q[a.id] ?? 0) - 1) }))} className="h-12 w-12 rounded-full border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">−</button>
                   <span className="w-6 text-center">{n}</span>
-                  <button type="button" aria-label={t("sheet.more")} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: (q[a.id] ?? 0) + 1 }))} className="h-12 w-12 rounded-full border border-line text-lg active:bg-ember/10">+</button>
+                  <button type="button" aria-label={t("sheet.more")} disabled={n >= cap} onClick={() => setAddOnQty((q) => ({ ...q, [a.id]: Math.min(cap, (q[a.id] ?? 0) + 1) }))} className="h-12 w-12 rounded-full border border-line text-lg disabled:border-line/60 disabled:text-faint active:bg-ember/10">+</button>
                 </div>
               )}
             </div>

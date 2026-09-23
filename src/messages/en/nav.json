@@ -42,6 +42,8 @@
   "pricing": "Pricing",
   "catalog": "Catalog",
   "aliases": {
-    "catalog": "bookings events products tickets experiences what we sell"
-  }
+    "catalog": "bookings events products tickets experiences what we sell",
+    "inventory": "stock merch items shop goods supplies"
+  },
+  "inventory": "Inventory"
 }

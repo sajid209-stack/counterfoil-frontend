@@ -108,7 +108,7 @@ function fromProduct(p: Product): FormState {
     waitlist: !!p.waitlistEnabled,
     taxClass: p.taxClass ?? "standard",
     policies: p.policies ?? defaultPolicies(),
-    addOns: (p.addOns ?? []).map((a) => ({ id: a.id, name: a.name, price: minorToMajor(a.price), perPerson: a.perPerson })),
+    addOns: (p.addOns ?? []).map((a) => ({ id: a.id, name: a.name, price: minorToMajor(a.price), perPerson: a.perPerson, itemId: a.itemId })),
     images: p.images.map((img) => ({ id: img.id, url: img.url, alt: img.alt })),
     durationConfig: p.durationConfig ?? (isFlexibleResource(p.bookingType)
       ? {
@@ -253,7 +253,7 @@ export function ProductForm({
       waitlistEnabled: state.waitlist,
       taxClass: state.taxClass,
       policies: state.policies,
-      addOns: state.addOns.filter((a) => a.name.trim()).map((a) => ({ id: a.id ?? `add_${globalThis.crypto.randomUUID().slice(0, 8)}`, name: a.name, price: majorToMinor(a.price), perPerson: a.perPerson })),
+      addOns: state.addOns.filter((a) => a.name.trim()).map((a) => ({ id: a.id ?? `add_${globalThis.crypto.randomUUID().slice(0, 8)}`, name: a.name, price: majorToMinor(a.price), perPerson: a.perPerson, itemId: a.itemId })),
     };
     const res = await updateProduct(product.id, input);
     setSaving(false);
@@ -434,6 +434,12 @@ export function ProductForm({
               {needsSchedule(state.booking.bookingType) && (
                 <PricingRulesField rules={state.pricingRules} onChange={(r) => set("pricingRules", r)} currency={currency} basePriceMajor={state.tiers[0]?.price ?? ""} dayStart={state.schedule?.startTime} dayEnd={state.schedule?.endTime} />
               )}
+              {/* Extras sit with the prices, not with the policies. They were
+                  under Policies when an add-on was a typed name and a number;
+                  now that one can hand over a counted thing from the shelf it
+                  is plainly a selling decision — what else the counter offers,
+                  and for how much. */}
+              <AddOnsField addOns={state.addOns} onChange={(a) => set("addOns", a)} currency={currency} locationIds={state.locationIds} />
             </div>
           );
         })()}
@@ -442,7 +448,6 @@ export function ProductForm({
           <div className="flex flex-col gap-major">
             <FormField label="Tax class" variant="select" value={state.taxClass} onChange={(e) => set("taxClass", e.target.value as TaxClass)} options={[{ value: "standard", label: "Standard (VAT)" }, { value: "reduced", label: "Reduced" }, { value: "exempt", label: "Exempt" }]} className="max-w-xs" help="Rates come from Business settings." />
             <PoliciesField value={state.policies} onChange={(p) => set("policies", p)} />
-            <AddOnsField addOns={state.addOns} onChange={(a) => set("addOns", a)} currency={currency} />
           </div>
         )}
 

@@ -11162,3 +11162,183 @@ Sources: [AudienceView — hold types](https://audienceview.com/faq/) ·
 [Spektrix — seat status and availability](https://integrate.spektrix.com/docs/Availability) ·
 [Skedda — booking and blocking from the grid](https://support.skedda.com/en/articles/105784) ·
 [techinterview — venue booking: availability calendar and hold/confirm flow](https://www.techinterview.org/post/3233470563/lld-venue-booking/)
+
+## Inventory — the countable things a venue hands over (2026-09-24)
+
+Owner asked for a new feature and menu entry called Inventory, researched
+against SaaS and RevOps catalogue practice, where every catalogue item, every
+experience and every event can have its own inventory, and where an inventory
+item can be a product or an option on a booking.
+
+### What an inventory item is, and what it deliberately is not
+
+A countable thing a venue hands over: a programme, a tote bag, a bottle of
+water, a set of bibs, hire shoes, an audio guide. **Not a booking** — that is
+the catalogue, which sells time and entry. **Not a resource** — a lane is a
+capacity owner, and you cannot receive forty more of it. The distinction
+decides what the app may promise: a session's capacity resets tomorrow, a tote
+bag does not come back.
+
+Inventory sits beside Catalog in the rail because an operator moves between
+them constantly: a programme is a line in the catalogue (an extra on the
+exhibition pass) and a hundred and twenty copies on a shelf.
+
+### The count is a ledger, and there is exactly one of it
+
+`InventoryItem`, `StockMovement`, `StockLevel` and `InventoryItemView` are new
+on the contract for the backend lane, with `AddOn.itemId` and
+`EventRecord.extras` linking the two halves.
+
+- **On hand is replayed, never stored** — the rule loyalty already follows in
+  this codebase. Movements are `received · sold · returned · damaged · lost ·
+  stocktake · adjusted`, signed, and **every correction carries a typed
+  reason**: a stock change with no explanation is indistinguishable from a bug
+  six weeks later, which is the rule holds and booking locks already follow. A
+  sale carries its order instead, which is a better reason than a sentence.
+- **One figure, not Shopify's three.** On hand / committed / available is right
+  for a warehouse that ships days after it sells. It cannot be computed
+  honestly here: a sale takes the stock the moment it is rung up, so counting a
+  future booking's extras as "committed" subtracts them twice — and *not*
+  taking them at sale time leaves on hand over-reporting for ever, because
+  there is no hand-over event to settle against. A figure that is sometimes
+  wrong is worse than a figure that is missing. What the count is scoped to is
+  the thing that matters instead: **a venue**, because a counter can only sell
+  what is kept at its own.
+- **A stocktake asks what is there, not what changed.** "I counted nine" is
+  what an operator knows; `stocktakeTo` works out the −3 the ledger needs.
+- **A hire has a second axis.** `outOnLoan` is what has gone less what has come
+  back, shown on returnable items — "19 pair, 5 out on loan" is the true
+  sentence about a bin that one number cannot tell.
+
+### The screens
+
+- **`/inventory`** — a band (needs attention · value on hand · counted items ·
+  nothing sells them, the last of which filters), tabs, search, kind and venue
+  filters, and a table whose row menu carries Receive stock · Came back (only
+  on a returnable) · Count the shelf · Damaged or lost · Edit · Archive. A
+  phone gets purpose-built cards and a summary line.
+- **`/inventory/[id]`** — the facts first (on hand, out on loan, price, value),
+  then Stock (per-venue counts and the whole ledger), Details (the form) and
+  What sells it. Every movement states its sign, its kind, its reason, its
+  venue, its time and who did it.
+- **`/inventory/new`** — and **no opening count on it, on purpose**: a number
+  typed on a creation form has no reason behind it, and the ledger is the only
+  record there is. The new item's first offered action is Receive stock, which
+  asks how many arrived and why.
+- **One dialog for every verb**, because a delivery, a return, a stocktake and
+  a write-off are the four things that happen to a cupboard and each asks for a
+  different number. It states what the shelf will say afterwards before
+  anything is written.
+
+### Attached to anything the venue sells
+
+The catalogue's extras editor — which was 42 lines of hardcoded English and a
+free-text name — now offers **From inventory** or **Add a charge**. A linked
+extra takes its name and its stock from the item and keeps its own price (the
+same tote bag is ৳450 at the desk and ৳0 with a membership). A charge stays
+exactly what every add-on was before: a name and a number, for gift wrapping
+and fees, where there is nothing to count.
+
+**The link lives on the thing that sells it**, never on the item, so "What
+sells it" is derived and a booking that stops offering something cannot leave a
+stale link behind. Events use the same editor and the same shelf. Extras also
+moved from the Policies tab to **Pricing**, where they belong now that one can
+hand over a counted thing.
+
+At the till, an extra from inventory states what is left, caps its stepper, and
+cannot be added when there is none. **A completed sale writes the movement
+inside `checkout()`**, so all three tills and the calendar's quick-create are
+covered by existing rather than by remembering. The dashboard's Needs attention
+panel names up to three items that have run out or are running low.
+
+### The review found two failures that broke the central promise
+
+An independent pass scored the first build 6.5 and **ran the code** rather than
+reading it. Both blockers were real and neither was visible in a screenshot.
+
+1. **The till wrote to the wrong shelf, and said nothing when it could not
+   write at all.** `PosScreen` filed every sale at `locations[0]` — which
+   `listLocations` sorts by name, so a device standing at Lalbagh Fort recorded
+   its sales at Ahsan Manzil Museum. Harmless-looking until stock arrived: a
+   fort-only item could not be taken off the museum's shelf, so the movement
+   was refused and dropped on the floor. Three of the eight seeded items
+   behaved that way — charged for, never counted, no error anywhere. The till
+   now reads its counter's venue from `lib/session` (where the demo's session
+   facts belong), `recordSale` returns what it could not take, `checkout`
+   hands that back as `stockRefused`, and the till says so while the guest is
+   still at the counter.
+2. **Picking a venue made the page contradict itself.** The table filtered by
+   venue; the figures above it did not. At Baldha Garden the band said seven
+   items needed attention — the six it does not stock, counted as out — while
+   the table under it read "Nothing needs attention". The venue now scopes the
+   whole page, and the column says **On hand here** when it is scoped.
+
+Also from the same review, all fixed: a return had no verb anywhere in the UI
+while the form promised one (the highest-value gap — three of eight seeded
+items are hires); an extra added at Check-In was charged and never counted; a
+refunded extra never went back on the shelf; the classic till had no stock cap
+at all and would have driven the ledger negative; a write-off bigger than the
+shelf was accepted (−96 of 3 premium oils); **a stocktake to zero was refused**
+— the single most important count there is; every quantity-level refusal
+rendered nothing because the dialog read `qty` while the api wrote `quantity`;
+the ledger was stamped on the wall clock and sorted with `localeCompare`, so a
+sale made "today" landed two months ahead of the seed and same-day rows
+ordered wrongly; the actor was a hardcoded `"Nadia Islam"` in two files; rows
+showed a date with no time; the dashboard's stock rule ignored the location
+filter and ranked below a quiet tablet; and Enter on a row menu opened the menu
+**and** navigated away from under it (shared, so the catalogue had it too).
+
+### Verified
+
+- **Inventory end to end, 39 checks**, driven: the menu, the list and its
+  badges, the facets, receiving with a refused empty quantity and a refused
+  missing reason, the stated result before writing, the count moving, the
+  ledger naming who and why, a stocktake writing the difference, the venue
+  scoping the whole page, a hire coming back with no reason asked, the till
+  stating stock on an extra, and the dashboard naming what has run out.
+- **The ledger itself, 45 unit checks** through `jiti` against the api layer
+  (25 on the model, 20 on the sale path): replay, per-venue counts, returns,
+  stocktake arithmetic, validation, the reverse index in both spellings, a sale
+  moving the count, a fort-only item selling at the fort and being refused
+  **out loud** at the museum, a refund putting stock back, an extra added after
+  the sale leaving the shelf, a write-off bigger than the shelf refused, a
+  count to zero allowed, and a movement stamped on the demo clock.
+- Standing harnesses hold: catalog **95/95**, holds **37/37**, top cards
+  **84/84**, settings **55/55**, reports **48/48**.
+- `/inventory` and `/inventory/[id]` audited in dark at 1440 and 390 report
+  **one** finding each, and it is the declared white-on-ember rule on the
+  primary button. On a phone: no sideways scroll, no hidden overflow, nothing
+  under 12px, no target under 44px.
+- Bangla renders whole with **0 missing-message warnings** and no raw keys.
+- `tsc --noEmit` and `npm run build` clean; `eslint` clean on every new file.
+  `PosScreen` holds at its documented 2 errors and 4 warnings, confirmed by
+  linting `HEAD`'s own copy. i18n parity **0 missing / 0 extra** across 34
+  namespaces, with a new `inventory` namespace authored in en and bn.
+
+### A note for whoever runs this next: the disk filled up mid-session
+
+`npm run build` failed with `ENOSPC` on a 250 GB drive with **zero** bytes
+free. The cause was `.next` at **45.7 GB** — a dev-server cache grown over a
+very long session of rebuilds. Deleting it (with the dev server stopped) freed
+44.8 GB and cost nothing but the next compile. Worth knowing before anybody
+goes looking for a disk fault: it is the build cache, not the repo.
+
+### Open
+
+- **Nothing re-checks stock at charge.** The cap is on the sheet, so two tills
+  with the same slow cart can still oversell between them. The check belongs
+  inside `checkout()` beside the credits spend, and it needs a decision about
+  whether it refuses the sale or warns and proceeds.
+- **The ledger has no filter, date range or export.** Fine at a seeded item's
+  three rows; a live one is a page of `−1 sold` with the two corrections that
+  matter on page nine. A kind filter and a CSV are the shape, and reports
+  already has the pattern.
+- **The Details tab has no save bar** and switching tabs discards unsaved
+  edits. `SettingsKit`'s `SaveBar` is the component; the tab state should move
+  into the URL at the same time.
+- **A typed charge cannot be converted into an item.** Adoption means deleting
+  it and re-adding, which changes the product identity on past order lines.
+- **`/sell` still has no extras at all**, so the scrolling till sells no
+  inventory — a gap that predates this and is recorded with the other three.
+- The list does not sort by column and has no bulk receive; a twelve-line
+  delivery is twelve dialogs.

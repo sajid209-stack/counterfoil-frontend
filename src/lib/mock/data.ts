@@ -12,6 +12,8 @@ import type {
   Customer,
   Device,
   Hold,
+  InventoryItem,
+  StockMovement,
   LoyaltyEntry,
   LoyaltyProgram,
   Membership,
@@ -236,6 +238,13 @@ export const products: Product[] = [
     schedule: null,
     maxPerOrder: 20,
     validityMode: "same_day",
+    /* What the desk offers with a ticket — and every one of them is a
+       counted thing in inventory, which is the point: the till can only sell
+       what is on the shelf, and the sale moves the count. */
+    addOns: [
+      { id: "add_ga_tote", name: "Souvenir tote bag", price: 45000, perPerson: false, itemId: "inv_tote" },
+      { id: "add_ga_water", name: "Bottled water", price: 3000, perPerson: true, itemId: "inv_water" },
+    ],
     createdAt: T,
     updatedAt: T,
   },
@@ -268,6 +277,10 @@ export const products: Product[] = [
     windowMode: "fixed",
     windowStart: "2026-12-01",
     windowEnd: "2027-02-28",
+    /* The programme is the museum's own: printed for the exhibition, sold at
+       the desk with the pass, and the seeded ledger has it already sold out —
+       which is what the list has to say before anybody reprints it. */
+    addOns: [{ id: "add_w_prog", name: "Exhibition programme", price: 15000, perPerson: false, itemId: "inv_programme" }],
     createdAt: T,
     updatedAt: T,
   },
@@ -356,6 +369,10 @@ export const products: Product[] = [
     },
     minPartyToRun: 4,
     meetingPoint: "Fort main gate",
+    /* An audio guide is handed over and comes back — a returnable item, so
+       its ledger has returns in it and its count is the one the desk has to
+       trust at the end of the day. */
+    addOns: [{ id: "add_tour_audio", name: "Audio guide", price: 20000, perPerson: true, itemId: "inv_audio" }],
     createdAt: T,
     updatedAt: T,
   },
@@ -406,7 +423,7 @@ export const products: Product[] = [
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], dayOverrides: { 5: { startTime: "14:00", endTime: "23:00" } }, guideIds: [], exceptions: [] },
     resourceIds: ["res_field_1", "res_field_2"], resourceExclusive: true, bufferMinutes: 15,
     pricingRules: [{ id: "pr_fb_wknd", days: [5, 6], fromTime: "18:00", toTime: "23:00", price: 250000 }, { id: "pr_fb_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 200000 }],
-    addOns: [{ id: "add_fb_bibs", name: "Bib set", price: 20000, perPerson: false }],
+    addOns: [{ id: "add_fb_bibs", name: "Bib set", price: 20000, perPerson: false, itemId: "inv_bibs" }],
     createdAt: T, updatedAt: T,
   },
   {
@@ -452,7 +469,7 @@ export const products: Product[] = [
       mustEndByClose: true, walkInRoundMinutes: 15, leadTimeMinutes: 0,
     },
     pricingRules: [{ id: "pr_bw_eve", days: [], fromTime: "18:00", toTime: "23:00", price: 120000 }],
-    addOns: [{ id: "add_bw_shoes", name: "Shoe hire", price: 10000, perPerson: true }],
+    addOns: [{ id: "add_bw_shoes", name: "Shoe hire", price: 10000, perPerson: true, itemId: "inv_shoes" }],
     createdAt: T, updatedAt: T,
   },
   {
@@ -462,7 +479,7 @@ export const products: Product[] = [
     providerIds: ["stf_nadia", "stf_karim"], providerNoun: "Therapist", providerPickable: true, flexibleDurations: [60, 90],
     providerPremiums: { stf_karim: 50000 },
     providerDurations: { stf_nadia: [60, 90], stf_karim: [60, 90] },
-    addOns: [{ id: "add_ms_oils", name: "Premium oils", price: 30000, perPerson: false }],
+    addOns: [{ id: "add_ms_oils", name: "Premium oils", price: 30000, perPerson: false, itemId: "inv_oils" }],
     policies: { salesWindowDays: 60, cutoffMinutes: 60, cancellation: "fee", cancelHours: 12, cancelFeePct: 50, reschedule: "until", rescheduleHours: 12, reentry: "single", deposit: "percent", depositPct: 50, partyMin: 1, partyMax: 2, waiver: true },
     createdAt: T, updatedAt: T,
   },
@@ -1239,6 +1256,110 @@ export const storefronts: Storefront[] = [
     createdAt: T,
     updatedAt: T,
   },
+];
+
+/* Inventory (inventory.v1).
+
+   Written so every branch of the module has real data behind it: an item sold
+   on its own and nothing else (tote bags), an item that is only ever an extra
+   on a booking (bibs, shoe hire, oils — which were free-text add-ons before
+   inventory existed and are now counted), a returnable one (audio guides), a
+   consumable that is low (water), one that has run out (the exhibition
+   programme), and one that nothing sells yet.
+
+   The ledger is the truth, so there is no "stock" field anywhere here: the
+   opening counts are `received` movements, dated before the demo's today, and
+   on hand is their sum. */
+export const inventoryItems: InventoryItem[] = [
+  {
+    id: "inv_programme", name: "Exhibition programme", sku: "PRG-WIN", kind: "merch", unit: "each",
+    price: 15000, cost: 6000, taxClass: "standard", tracked: true, returnable: false, lowAt: 20,
+    locationIds: ["loc_museum"], status: "active", createdAt: T, updatedAt: T,
+  },
+  {
+    id: "inv_tote", name: "Souvenir tote bag", sku: "TOTE-01", kind: "merch", unit: "each",
+    price: 45000, cost: 18000, taxClass: "standard", tracked: true, returnable: false, lowAt: 10,
+    locationIds: ["loc_fort", "loc_museum"], status: "active", createdAt: T, updatedAt: T,
+  },
+  {
+    id: "inv_water", name: "Bottled water", kind: "food", unit: "bottle",
+    price: 3000, cost: 1200, taxClass: "reduced", tracked: true, returnable: false, lowAt: 48,
+    locationIds: ["loc_fort", "loc_museum", "loc_garden"], status: "active", createdAt: T, updatedAt: T,
+  },
+  {
+    id: "inv_audio", name: "Audio guide", sku: "AUD-EN", kind: "equipment", unit: "each",
+    price: 20000, cost: 0, taxClass: "standard", tracked: true, returnable: true, lowAt: 5,
+    /* Kept at both: the tour leaves from the fort and the museum lends them
+       inside, and stock that cannot be at the counter selling it is stock the
+       till will refuse. */
+    locationIds: ["loc_fort", "loc_museum"], status: "active", createdAt: T, updatedAt: T,
+  },
+  {
+    id: "inv_bibs", name: "Bib set", kind: "equipment", unit: "set",
+    price: 20000, cost: 0, taxClass: "standard", tracked: true, returnable: true, lowAt: 2,
+    locationIds: ["loc_fort"], status: "active", createdAt: T, updatedAt: T,
+  },
+  {
+    id: "inv_shoes", name: "Shoe hire", kind: "equipment", unit: "pair",
+    price: 10000, cost: 0, taxClass: "standard", tracked: true, returnable: true, lowAt: 6,
+    locationIds: ["loc_fort"], status: "active", createdAt: T, updatedAt: T,
+  },
+  {
+    id: "inv_oils", name: "Premium oils", kind: "food", unit: "treatment",
+    price: 30000, cost: 9000, taxClass: "standard", tracked: true, returnable: false, lowAt: 4,
+    locationIds: ["loc_fort"], status: "active", createdAt: T, updatedAt: T,
+  },
+  {
+    /* Not counted, on purpose: gift wrapping is somebody's minute, not a
+       thing on a shelf, and a count of it would be a number nobody can ever
+       correct. It proves the untracked branch. */
+    id: "inv_wrap", name: "Gift wrapping", kind: "service", unit: "each",
+    price: 5000, taxClass: "standard", tracked: false, returnable: false, lowAt: 0,
+    locationIds: ["loc_museum"], status: "active", createdAt: T, updatedAt: T,
+  },
+  {
+    /* Nothing sells this yet — the state an operator lands in a minute after
+       adding their first item, and the one the list has to say out loud. */
+    id: "inv_poster", name: "Fort poster (A2)", kind: "merch", unit: "each",
+    price: 25000, cost: 8000, taxClass: "standard", tracked: true, returnable: false, lowAt: 5,
+    locationIds: ["loc_fort"], status: "active", createdAt: T, updatedAt: T,
+  },
+];
+
+const stockAt = (days: number) => `${demoDay(days)}T09:00:00+06:00`;
+let mvId = 0;
+const received = (itemId: string, locationId: string, quantity: number, days = -30, reason = "Opening stock") => ({
+  id: `mv_${String(++mvId).padStart(3, "0")}`,
+  itemId, locationId, kind: "received" as const, quantity, reason, by: "Nadia Islam", at: stockAt(days),
+});
+
+export const stockMovements: StockMovement[] = [
+  // opening counts
+  received("inv_programme", "loc_museum", 120),
+  received("inv_tote", "loc_fort", 40),
+  received("inv_tote", "loc_museum", 25),
+  received("inv_water", "loc_fort", 240),
+  received("inv_water", "loc_museum", 120),
+  received("inv_water", "loc_garden", 60),
+  received("inv_audio", "loc_museum", 18),
+  received("inv_bibs", "loc_fort", 6),
+  received("inv_shoes", "loc_fort", 24),
+  received("inv_oils", "loc_fort", 12),
+  received("inv_poster", "loc_fort", 30),
+  // and what has happened since, so the ledger reads like a month of trading
+  { id: "mv_101", itemId: "inv_programme", locationId: "loc_museum", kind: "sold", quantity: -118, reason: undefined, by: "Counter", at: stockAt(-9) },
+  { id: "mv_102", itemId: "inv_programme", locationId: "loc_museum", kind: "damaged", quantity: -2, reason: "Water damage in the store room", by: "Rahim Uddin", at: stockAt(-8) },
+  { id: "mv_103", itemId: "inv_water", locationId: "loc_fort", kind: "sold", quantity: -198, reason: undefined, by: "Counter", at: stockAt(-5) },
+  { id: "mv_104", itemId: "inv_shoes", locationId: "loc_fort", kind: "sold", quantity: -19, reason: undefined, by: "Counter", at: stockAt(-4) },
+  { id: "mv_105", itemId: "inv_shoes", locationId: "loc_fort", kind: "returned", quantity: 14, reason: "Returned at the desk", by: "Counter", at: stockAt(-4) },
+  { id: "mv_106", itemId: "inv_audio", locationId: "loc_museum", kind: "sold", quantity: -11, reason: undefined, by: "Counter", at: stockAt(-3) },
+  { id: "mv_107", itemId: "inv_audio", locationId: "loc_museum", kind: "returned", quantity: 9, reason: "Returned at the desk", by: "Counter", at: stockAt(-3) },
+  { id: "mv_108", itemId: "inv_audio", locationId: "loc_museum", kind: "lost", quantity: -1, reason: "Not returned by a visitor", by: "Rahim Uddin", at: stockAt(-3) },
+  { id: "mv_109", itemId: "inv_tote", locationId: "loc_fort", kind: "sold", quantity: -33, reason: undefined, by: "Counter", at: stockAt(-2) },
+  { id: "mv_110", itemId: "inv_oils", locationId: "loc_fort", kind: "sold", quantity: -9, reason: undefined, by: "Counter", at: stockAt(-2) },
+  /* A stocktake that found one fewer than the ledger said — the movement
+     every real cupboard produces, and the reason the figure is a ledger. */
+  { id: "mv_111", itemId: "inv_bibs", locationId: "loc_fort", kind: "stocktake", quantity: -1, reason: "Counted 5, one set missing", by: "Rahim Uddin", at: stockAt(-1) },
 ];
 
 /** Event fixtures live in their own file — see the note there. */

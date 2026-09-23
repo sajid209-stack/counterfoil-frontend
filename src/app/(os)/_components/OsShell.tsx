@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  Boxes,
   CalendarDays,
   Check,
   ChartLine,
@@ -47,6 +48,7 @@ const DESTINATIONS = [
   { href: "/calendar", key: "calendar", icon: CalendarDays },
   { href: "/orders", key: "orders", icon: ReceiptText },
   { href: "/catalog", key: "catalog", icon: Ticket },
+  { href: "/inventory", key: "inventory", icon: Boxes },
   { href: "/reports/sales", key: "reports", icon: BarChart3 },
   { href: "/reports/sales?tab=analytics", key: "analytics", icon: ChartLine },
   { href: "/promotions", key: "promotions", icon: TicketPercent },
@@ -76,6 +78,7 @@ const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
   { prefix: "/orders", key: "orders" },
   { prefix: "/customers", key: "customers" },
   { prefix: "/catalog", key: "catalog" },
+  { prefix: "/inventory", key: "inventory" },
   { prefix: "/booking-rules", key: "bookingRules" },
   { prefix: "/pricing", key: "pricing" },
   { prefix: "/memberships", key: "memberships" },

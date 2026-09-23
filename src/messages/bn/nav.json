@@ -42,6 +42,8 @@
   "pricing": "মূল্য নির্ধারণ",
   "catalog": "ক্যাটালগ",
   "aliases": {
-    "catalog": "বুকিং ইভেন্ট পণ্য টিকিট bookings events products"
-  }
+    "catalog": "বুকিং ইভেন্ট পণ্য টিকিট bookings events products",
+    "inventory": "স্টক মজুত পণ্য মার্চেন্ডাইজ সরবরাহ"
+  },
+  "inventory": "ইনভেন্টরি"
 }

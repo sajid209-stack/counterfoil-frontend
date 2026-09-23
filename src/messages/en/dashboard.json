@@ -105,5 +105,10 @@
   "ordersMore": "{count, plural, one {# more order} other {# more orders}}",
   "ordersAwaitingPayment": "{amount} owed on {count, plural, one {# order} other {# orders}}",
   "viewAllOrders": "View all orders",
-  "orderCount": "{count, plural, =0 {No orders} one {# order} other {# orders}}"
+  "orderCount": "{count, plural, =0 {No orders} one {# order} other {# orders}}",
+  "noticeStockOutTitle": "{name} has run out",
+  "noticeStockLowTitle": "{name} is running low",
+  "stockOutBody": "Nothing left to hand over. The counter cannot sell it until some arrives.",
+  "stockLowBody": "{count} {unit} left, and you asked to be told at {low}.",
+  "noticeStockAction": "Receive stock"
 }

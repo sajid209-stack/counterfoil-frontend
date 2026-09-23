@@ -1,4 +1,5 @@
 import { createBooking } from "./bookings";
+import { itemForAddOn, recordMovement, recordSale } from "./inventory";
 import { createResource } from "./client";
 import { issueTicket, redeemCredits, voidOrderTickets } from "./tickets";
 import { buildOrderLines, type LineInput } from "@/lib/orderMath";
@@ -96,6 +97,9 @@ export async function addOrderLines(orderId: string, inputs: LineInput[], who = 
   const o = resource.peek().find((x) => x.id === orderId);
   if (!o) return resource.get(orderId);
   const { lines: added, totals } = buildOrderLines(inputs, 0, `${o.reference}-X${o.lines.length}`);
+  /* An extra handed over after the sale leaves the shelf like any other — a
+     programme added at Check-In was charged for and never counted. */
+  await recordSale(orderId, o.locationId, added.map((l) => ({ productId: l.productId, quantity: l.quantity })), who);
   return resource.update(orderId, {
     lines: [...o.lines, ...added],
     subtotal: o.subtotal + totals.subtotal,
@@ -107,8 +111,9 @@ export async function addOrderLines(orderId: string, inputs: LineInput[], who = 
 }
 
 /** Refund specific lines with a reason — marks the lines (refundedQuantity /
- *  refundedAmount), voids their unredeemed tickets, and reverses the money as
- *  a negative payment. Capacity release is a backend TODO. */
+ *  refundedAmount), voids their unredeemed tickets, reverses the money as a
+ *  negative payment, and puts refunded stock back on the shelf. Capacity
+ *  release is a backend TODO. */
 export async function refundOrderLines(orderId: string, lineIds: string[], reason: string, who = "Counter"): Promise<ApiResult<Order>> {
   const o = resource.peek().find((x) => x.id === orderId);
   if (!o) return resource.get(orderId);
@@ -120,6 +125,22 @@ export async function refundOrderLines(orderId: string, lineIds: string[], reaso
   const all = lines.filter((l) => l.subtotal > 0).every((l) => l.refundedQuantity >= l.quantity);
   // Void the unredeemed tickets for the refunded lines.
   for (const l of hit) await voidOrderTickets(orderId, l.productId);
+  /* And put the stock back. A refunded tote bag is a tote bag on the shelf;
+     without this the count only ever falls, which is the same class of lie as
+     a count that only ever rises. */
+  for (const l of hit) {
+    const item = itemForAddOn(l.productId);
+    if (!item || !item.tracked) continue;
+    await recordMovement({
+      itemId: item.id,
+      locationId: o.locationId,
+      kind: "returned",
+      quantity: Math.abs(l.quantity),
+      reason: `Refunded on ${o.reference}`,
+      orderId,
+      by: who,
+    });
+  }
   return resource.update(orderId, {
     lines,
     payments: [...o.payments, { id: `${o.reference}-R${o.payments.length}`, method: o.payments[0]?.method ?? "cash", amount: -amount, status: "confirmed", createdAt: new Date().toISOString() }],
@@ -196,7 +217,7 @@ export interface CheckoutInput {
  *  issued code is real and scannable. Returns the order + first ticket code. */
 export async function checkout(
   input: CheckoutInput,
-): Promise<ApiResult<{ order: Order; firstTicketCode: string; tickets: Ticket[] }>> {
+): Promise<ApiResult<{ order: Order; firstTicketCode: string; tickets: Ticket[]; stockRefused: { name: string; reason: string }[] }>> {
   const now = new Date().toISOString();
   const reference = `CF-2026-${String(Math.floor(Date.parse(now) % 900000) + 100000)}`;
 
@@ -265,10 +286,26 @@ export async function checkout(
     }
   }
 
+  /* What the sale takes off the shelf.
+     After the order exists, never before: stock moved for a sale that then
+     failed is stock nobody sold — the same order of operations the credits
+     pass follows. Here rather than in each till, so all three tills, the
+     calendar's quick-create and Check-In's "Add extra" all move the count by
+     existing rather than by remembering to. */
+  const stock = await recordSale(
+    order.id,
+    input.locationId,
+    order.lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
+    input.staffId ?? "Counter",
+  );
+
   // Hold slot / daily capacity for scheduled products.
   for (const b of input.bookings ?? []) {
     await createBooking({ orderId: order.id, productId: b.productId, locationId: input.locationId, resourceId: b.resourceId ?? null, slotStart: b.slotStart, slotEnd: b.slotEnd, partySize: b.partySize });
   }
 
-  return { ok: true, data: { order, firstTicketCode, tickets } };
+  /* `stockRefused` travels with the sale rather than being logged and lost:
+     a line that was charged for but could not leave a shelf is something the
+     counter has to be told while the guest is still standing there. */
+  return { ok: true, data: { order, firstTicketCode, tickets, stockRefused: stock.refused } };
 }

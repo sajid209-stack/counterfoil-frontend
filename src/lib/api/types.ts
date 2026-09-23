@@ -237,6 +237,12 @@ export interface AddOn {
   name: string;
   price: Minor;
   perPerson: boolean;
+  /** The inventory item this extra hands over, when it is a countable thing.
+   *  An extra with no item is a charge and nothing else — which is what every
+   *  add-on was before inventory existed, and still the right shape for a
+   *  service. With one, the till can only sell what is on the shelf and the
+   *  sale moves the count. */
+  itemId?: ID;
 }
 
 /** Operational policies around a booking. Sensible defaults; edited post-create. */
@@ -1238,4 +1244,122 @@ export interface PaymentSettings {
   defaultFloat: Minor;
   /** A closing count within this of expected is square; beyond it needs a reason. */
   countTolerance: Minor;
+}
+
+// ── inventory.v1 — the countable things a venue hands over ───────────────────
+/*
+   What this is, and what it deliberately is not.
+
+   An inventory item is a countable thing a venue hands over: a programme, a
+   tote bag, a bottle of water, a set of bibs, a pair of hire shoes. It is NOT
+   a booking (that is the catalogue — what you sell time and entry to) and it is
+   NOT a resource (a lane is a capacity owner, not stock: you cannot receive
+   forty more of it). The distinction matters because it decides what the app
+   can promise. A booking's capacity resets every session; a tote bag does not
+   come back.
+
+   The count is NEVER stored. On hand is the replay of an append-only ledger of
+   movements, the way the loyalty balance already works in this codebase — a
+   stored total and a ledger disagree exactly once, and then nobody can tell
+   which is right.
+
+   **One figure, deliberately.** Shopify splits stock into on hand, committed
+   and available, and that split is right for a warehouse that ships days after
+   it sells. It cannot be computed honestly here: a sale takes the stock the
+   moment it is rung up, so counting a future booking's extras as "committed"
+   as well would subtract them twice — and NOT taking them at sale time would
+   leave on hand over-reporting for ever, because there is no hand-over event
+   in this product to settle it against. A figure that is sometimes wrong is
+   worse than a figure that is missing, so there is one: on hand, net of
+   everything sold, which is what the till may sell and what the cupboard
+   should contain. When hand-over exists, the other two follow from it.
+*/
+export type InventoryKind = "merch" | "food" | "equipment" | "service";
+
+/** Why the count moved. Every movement carries one — an unexplained stock
+ *  correction is indistinguishable from a bug, which is the same rule holds
+ *  and locks already follow. */
+export type StockMoveKind =
+  | "received"
+  | "sold"
+  | "returned"
+  | "damaged"
+  | "lost"
+  | "stocktake"
+  | "adjusted";
+
+export interface InventoryItem {
+  id: ID;
+  name: string;
+  /** The operator's own code for it. Optional: most venues have none. */
+  sku?: string;
+  kind: InventoryKind;
+  /** What one of it is called — "each", "pair", "bottle". Shown beside counts
+   *  so "3" is never ambiguous. */
+  unit: string;
+  /** What it sells for. Zero is legitimate: something included with a ticket
+   *  still needs counting. */
+  price: Minor;
+  /** What it cost to buy. Values the stock on hand, and nothing else. */
+  cost?: Minor;
+  taxClass: TaxClass;
+  /** Whether the count is kept at all. A service (a guide's time, a gift
+   *  wrap) is sold without being counted; everything physical is counted. */
+  tracked: boolean;
+  /** Equipment comes back: hire shoes, audio guides, bibs. A returnable item
+   *  is handed over rather than sold away, so its ledger has returns in it. */
+  returnable: boolean;
+  /** Below this, the item reports itself as low — per item, because ten tote
+   *  bags is plenty and ten hire shoes is a Saturday. */
+  lowAt: number;
+  /** Where it is kept. An item at no location cannot be sold anywhere. */
+  locationIds: ID[];
+  status: Lifecycle;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+
+export type InventoryItemInput = Omit<InventoryItem, "id" | "createdAt" | "updatedAt">;
+
+/** One entry in an item's ledger. Signed: received is positive, sold is
+ *  negative, and a stocktake is the difference it corrects. */
+export interface StockMovement {
+  id: ID;
+  itemId: ID;
+  locationId: ID;
+  kind: StockMoveKind;
+  /** Signed, in units of the item. */
+  quantity: number;
+  /** What the operator typed. Required for a correction, optional for a sale
+   *  — the order is the reason there. */
+  reason?: string;
+  /** The sale that caused it, where one did. */
+  orderId?: ID;
+  by: string;
+  at: ISODateTime;
+}
+
+export type StockMovementInput = Omit<StockMovement, "id" | "at">;
+
+/** An item's count at one location, derived on read. */
+export interface StockLevel {
+  itemId: ID;
+  locationId: ID;
+  onHand: number;
+}
+
+/** Everything a screen needs about an item without asking twice: the record,
+ *  its figures summed across the locations asked for, and what sells it. */
+export interface InventoryItemView extends InventoryItem {
+  onHand: number;
+  /** on hand × cost — what the cupboard is worth. */
+  value: Minor;
+  /** tracked && onHand <= 0 */
+  outOfStock: boolean;
+  /** tracked && onHand > 0 && onHand <= lowAt */
+  low: boolean;
+  /** What offers it: a booking's extras, an event's extras. Derived from the
+   *  catalogue rather than stored on the item, so a booking that stops
+   *  offering it cannot leave a stale link behind. */
+  soldWith: { kind: "booking" | "event"; id: ID; name: string }[];
 }

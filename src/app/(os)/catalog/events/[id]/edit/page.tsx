@@ -18,6 +18,7 @@ import { EventArchitect, type EventContent } from "../../../_components/event/Ev
 import { EventDetails } from "../../../_components/event/EventDetails";
 import { endsAtOf } from "../../../_components/event/EventWizard";
 import { TicketTiers, toTiers, type FormTier } from "../../../_components/event/TicketTiers";
+import { AddOnsField, type FormAddOn } from "../../../_components/booking/AddOnsField";
 
 /**
  * Edit an event.
@@ -102,6 +103,12 @@ function Editor({ event }: { event: EventRecord }) {
     })),
   );
 
+  /* Extras, in the same form a booking's take — including the inventory link,
+     so a programme sold with a ticket is the same programme on the shelf. */
+  const [extras, setExtras] = useState<FormAddOn[]>(() =>
+    (event.extras ?? []).map((a) => ({ id: a.id, name: a.name, price: String(a.price / 100), perPerson: a.perPerson, itemId: a.itemId })),
+  );
+
   const existing = useMemo(() => new Map(event.tiers.map((x) => [x.id, x])), [event.tiers]);
   /** The form's tiers, with what the form does not edit carried over from the
    *  record — above all what has been sold. */
@@ -169,6 +176,15 @@ function Editor({ event }: { event: EventRecord }) {
       lineup: draft.lineup,
       faq: draft.faq,
       tiers,
+      extras: extras
+        .filter((a) => a.name.trim())
+        .map((a) => ({
+          id: a.id ?? `add_${globalThis.crypto.randomUUID().slice(0, 8)}`,
+          name: a.name.trim(),
+          price: Math.round((parseFloat(a.price) || 0) * 100),
+          perPerson: a.perPerson,
+          itemId: a.itemId,
+        })),
       customisation: draft.customisation,
     });
     setSaving(false);
@@ -230,6 +246,12 @@ function Editor({ event }: { event: EventRecord }) {
               <p className="text-[13px] text-muted">{tc("soldNote")}</p>
             )}
             <TicketTiers rows={rows} onChange={setRows} errors={errors} sold={Object.fromEntries(event.tiers.map((x) => [x.id, x.sold]))} />
+            {/* An event hands things over too — a programme, a glow band, a
+                T-shirt — and they are the same countable things a booking
+                offers, so they use the same editor and the same shelf. */}
+            <div className="card-surface mt-section p-card">
+              <AddOnsField addOns={extras} onChange={setExtras} locationIds={locationIds} />
+            </div>
             <div className="card-surface mt-section p-card">
               <WhereSold
                 counter={counter}

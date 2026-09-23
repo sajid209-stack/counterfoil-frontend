@@ -264,6 +264,13 @@ export function DataTable<T>({
                   onKeyDown={
                     onRowClick
                       ? (e) => {
+                          /* Only when the ROW itself has focus. A key press
+                             inside the row — opening its own menu, say —
+                             bubbles here, so Enter on the row menu used to
+                             open the menu AND navigate away from under it.
+                             The mouse path already stopped propagation; the
+                             keyboard path never did. */
+                          if (e.target !== e.currentTarget) return;
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
                             onRowClick(row);

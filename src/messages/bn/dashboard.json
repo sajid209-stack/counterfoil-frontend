@@ -105,5 +105,10 @@
   "ordersMore": "{count, plural, other {আরও # অর্ডার}}",
   "ordersAwaitingPayment": "{count, plural, other {# টি অর্ডারে}} {amount} বাকি",
   "viewAllOrders": "সব অর্ডার দেখুন",
-  "orderCount": "{count, plural, =0 {কোনো অর্ডার নেই} other {# অর্ডার}}"
+  "orderCount": "{count, plural, =0 {কোনো অর্ডার নেই} other {# অর্ডার}}",
+  "noticeStockOutTitle": "{name} শেষ হয়ে গেছে",
+  "noticeStockLowTitle": "{name} কমে আসছে",
+  "stockOutBody": "হাতে দেওয়ার মতো কিছু নেই। নতুন না এলে কাউন্টার এটি বিক্রি করতে পারবে না।",
+  "stockLowBody": "{count}টি {unit} বাকি, আপনি {low}-তে জানাতে বলেছিলেন।",
+  "noticeStockAction": "স্টক গ্রহণ"
 }
