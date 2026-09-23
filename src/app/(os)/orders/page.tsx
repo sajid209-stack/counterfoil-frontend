@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Clock, Receipt, Search, TrendingUp, Wallet } from "lucide-react";
+import { Search } from "lucide-react";
 import {
   DataTable,
   EmptyState,
@@ -203,22 +203,19 @@ function OrdersPageInner() {
           items={[
             {
               key: "collected",
-              icon: <Wallet size={18} strokeWidth={1.5} />,
               label: t("statCollected"),
               value: formatMoney(summary.collected),
               // Cancelled and refunded orders are excluded from the money.
               note: summary.voided > 0 ? t("statExcluded", { count: summary.voided }) : null,
             },
-            { key: "orders", icon: <Receipt size={18} strokeWidth={1.5} />, label: t("statOrders"), value: String(summary.orders) },
+            { key: "orders", label: t("statOrders"), value: String(summary.orders) },
             {
               key: "average",
-              icon: <TrendingUp size={18} strokeWidth={1.5} />,
               label: t("statAverage"),
               value: summary.orders === 0 ? "—" : formatMoney(summary.average),
             },
             {
               key: "outstanding",
-              icon: <Clock size={18} strokeWidth={1.5} />,
               label: t("statOutstanding"),
               value: formatMoney(summary.outstanding),
               tone: summary.outstanding > 0 ? "warning" : undefined,

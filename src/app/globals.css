@@ -485,6 +485,15 @@
 [data-focus-host] :focus-visible {
   outline: none;
 }
+
+/* ...and where a control sits flush inside a clipping card — a cell of the
+   stat band. The ring is painted 2px OUTSIDE the cell, so on the first and
+   last cell it lands outside the card and is clipped away. Drawn inside
+   instead, it keeps the same 2px ember and is never eaten. Unlayered for the
+   same reason as the rule above. */
+[data-focus-inset]:focus-visible {
+  outline-offset: -2px;
+}
 @theme {
   /* ── Light mode surfaces & content (color-system §Semantic Tokens) ────── */
   --color-surface: #f5f2eb;    /* background   ← neutral-50  */

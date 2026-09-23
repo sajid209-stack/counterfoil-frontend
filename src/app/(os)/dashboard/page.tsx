@@ -632,7 +632,7 @@ export default function DashboardPage() {
       {loading ? (
         /* The labels are known before the figures are, so the strip states
            what it is about to say and pulses only the numbers. */
-        <div aria-busy="true"><StatStrip items={stats} loading /></div>
+        <div aria-busy="true"><StatStrip items={stats} loading variant="tiles" /></div>
       ) : !allDone ? (
         <div className={`${card} mb-section p-card`}>
           <div className="mb-section flex items-center justify-between">
@@ -665,7 +665,7 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <StatStrip items={stats} />
+        <StatStrip items={stats} variant="tiles" />
       )}
 
       {!loading && (

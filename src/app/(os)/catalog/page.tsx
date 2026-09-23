@@ -8,8 +8,6 @@ import {
   AlertTriangle,
   Archive,
   Briefcase,
-  CalendarCheck,
-  CalendarDays,
   CalendarOff,
   Clock,
   Copy,
@@ -21,7 +19,6 @@ import {
   Music,
   Palette,
   Pencil,
-  Percent,
   Plus,
   Power,
   PowerOff,
@@ -29,11 +26,8 @@ import {
   Search,
   Ship,
   SlidersHorizontal,
-  Ticket,
   Trash2,
-  TriangleAlert,
   Trophy,
-  Wallet,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -847,7 +841,6 @@ function Catalog() {
                   ? [
                       {
                         key: "attention",
-                        icon: <TriangleAlert size={18} strokeWidth={1.5} />,
                         label: t("stat.attention"),
                         value: String(summary.attention),
                         tone: summary.attention > 0 ? ("warning" as const) : undefined,
@@ -855,14 +848,13 @@ function Catalog() {
                         onClick: () => toggleFacet("attention"),
                         pressed: states.includes("attention"),
                       },
-                      { key: "bookedAhead", icon: <CalendarCheck size={18} strokeWidth={1.5} />, label: t("stat.bookedAhead"), value: summary.bookedAhead.toLocaleString(), note: t("stat.bookedAheadNote") },
+                      { key: "bookedAhead", label: t("stat.bookedAhead"), value: summary.bookedAhead.toLocaleString(), note: t("stat.bookedAheadNote") },
                     ]
                   : []),
                 ...(kind === "bookings"
                   ? [
                       {
                         key: "weekUse",
-                        icon: <Percent size={18} strokeWidth={1.5} />,
                         label: t("stat.weekUse"),
                         value: summary.weekUse === null ? "—" : `${summary.weekUse}%`,
                         note: t("stat.weekUseNote", { used: summary.weekUsed.toLocaleString(), cap: summary.weekCap.toLocaleString() }),
@@ -870,14 +862,13 @@ function Catalog() {
                       { key: "onSale", label: t("stat.onSale"), value: `${summary.bookingsOnSale} / ${summary.bookingsTotal}`, note: t("stat.onSaleNote") },
                     ]
                   : [
-                      { key: "ticketsSold", icon: <Ticket size={18} strokeWidth={1.5} />, label: t("stat.ticketsSold"), value: summary.ticketsSold.toLocaleString(), note: t("stat.ticketsSoldNote") },
-                      { key: "ticketRevenue", icon: <Wallet size={18} strokeWidth={1.5} />, label: t("stat.ticketRevenue"), value: formatPriceShort(summary.ticketRevenue), note: t("stat.ticketRevenueNote") },
+                      { key: "ticketsSold", label: t("stat.ticketsSold"), value: summary.ticketsSold.toLocaleString(), note: t("stat.ticketsSoldNote") },
+                      { key: "ticketRevenue", label: t("stat.ticketRevenue"), value: formatPriceShort(summary.ticketRevenue), note: t("stat.ticketRevenueNote") },
                     ]),
                 ...(kind === "events"
                   ? [
                       {
                         key: "next",
-                        icon: <CalendarDays size={18} strokeWidth={1.5} />,
                         label: t("stat.nextEvent"),
                         value: summary.next?.startsAt ? formatDay(summary.next.startsAt.slice(0, 10), { weekday: true }) : "—",
                         context: summary.next?.name ?? null,

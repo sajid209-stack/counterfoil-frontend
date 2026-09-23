@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 
 export interface StatItem {
   key: string;
-  /** The tinted glyph beside the label. Every figure on every page has one. */
+  /** The tinted glyph beside the label. Drawn by the dashboard's tiles only. */
   icon?: React.ReactNode;
   label: string;
   value: React.ReactNode;
@@ -12,71 +12,135 @@ export interface StatItem {
   context?: React.ReactNode;
   /** A class for that line where it is a problem rather than a fact. */
   contextTone?: string;
-  /** A change against the period before, hard right of the label. */
+  /** A change against the period before. */
   delta?: React.ReactNode;
   /** Draws the figure as a problem rather than a fact. */
   tone?: "warning";
   /** A qualifier on the figure — shown as the card's tooltip, not as a line. */
   note?: string | null;
   /** A figure that is also a filter: pressing it shows the rows it counts.
-   *  Opt-in; a card without one stays a plain figure. */
+   *  Opt-in; a figure without one stays a plain figure. */
   onClick?: () => void;
   /** Whether that filter is the one applied. */
   pressed?: boolean;
 }
 
 /**
- * The row of figures at the top of a page — one card, everywhere.
+ * The figures at the top of a page.
  *
- * There were three of these: the dashboard's tile, this strip (orders,
- * customers, catalog, an event) and the calendar's own copy. They disagreed
- * about every measurement that shows: the dashboard drew a tinted icon beside
- * a sentence-case label and a 28px figure over a line of context; the other
- * two drew an uppercase tracked label over a 24px figure and no icon, in a
- * card 35px shorter. The owner asked for one. The dashboard's is it, because
- * it is the one that was measured against the reference and the type spec —
- * 12px/500 label, 28px/600 figure, 20px padding.
+ * Two layouts, one component, because they answer different questions.
  *
- * Two shapes, one list, as the dashboard's tiles have had since the mobile
- * pass: a card per figure from `sm`, and on a phone one card of rows, because
- * four full-width tiles cost about 800px before the page's actual content and
- * no figure may shrink to win that back — "৳462,206.03" does not fit half a
- * 390px screen at 28px.
+ * **`band`** — every page but the dashboard. One full-width card divided by
+ * hairlines, a figure per cell: label, number, and a line under it only where
+ * there is something to say. It replaced four separate tiles that cost 157px
+ * and left a band of empty card under three of the four figures: the tile
+ * anatomy belongs to a dashboard where every metric carries a glyph, a delta
+ * and a sentence, and a list page's figures carry none of those. A summary bar
+ * is what a mature SaaS list puts over its table — one object, read across,
+ * and the table starts 70px sooner.
  *
- * Two rules the older copies agreed on and this keeps: the figures describe
- * the whole filtered set rather than the page on screen, and a figure that is
- * also a filter says so by being a button.
+ * **`tiles`** — the dashboard, unchanged: a card per metric with its tinted
+ * glyph, its delta and its context, and one card of rows on a phone. It is the
+ * cockpit's hero band, measured against the reference and the type spec, and
+ * the owner asked for it to stay exactly as it is.
+ *
+ * Both live in this file so that a page cannot invent a third.
  */
 export function StatStrip({
   items,
   loading = false,
+  variant = "band",
 }: {
   items: StatItem[];
   loading?: boolean;
+  variant?: "band" | "tiles";
 }) {
+  if (variant === "tiles") {
+    return (
+      <>
+        {/* A phone: one card, a row per figure. */}
+        <div className="card-surface overflow-hidden sm:hidden">
+          {items.map((item) => (
+            <Tile key={item.key} item={item} loading={loading} row />
+          ))}
+        </div>
+        <div
+          className="hidden gap-section sm:grid sm:grid-cols-2 xl:[grid-template-columns:repeat(var(--stat-n),minmax(0,1fr))]"
+          style={{ "--stat-n": Math.min(items.length, 4) } as React.CSSProperties}
+        >
+          {items.map((item) => (
+            <Tile key={item.key} item={item} loading={loading} />
+          ))}
+        </div>
+      </>
+    );
+  }
+
   return (
-    <>
-      {/* A phone: one card, a row per figure. */}
-      <div className="card-surface overflow-hidden sm:hidden">
-        {items.map((item) => (
-          <StatBox key={item.key} item={item} loading={loading} row />
-        ))}
-      </div>
-      {/* From sm: a card each — two across, then one column per figure from xl,
-          so three figures do not leave a hole where a fourth would be. */}
+    /* The rules between figures are the grid's own 1px gaps showing the card
+       through, so they land between cells however the row wraps — a per-cell
+       border draws a stray edge the moment two figures sit on a second row. */
+    <div className="card-surface overflow-hidden">
+      {/* One figure a row on a phone, two across from sm, one column each
+          from xl. Measured, not guessed: four columns of a 768px screen leave
+          146px of cell, and "৳462,206.03" at 26px needs 150 — the card clips,
+          so the figure would be silently wrong rather than merely cramped. */}
       <div
-        className="hidden gap-section sm:grid sm:grid-cols-2 xl:[grid-template-columns:repeat(var(--stat-n),minmax(0,1fr))]"
+        className="grid gap-px bg-hairline sm:[grid-template-columns:repeat(2,minmax(0,1fr))] xl:[grid-template-columns:repeat(var(--stat-n),minmax(0,1fr))]"
         style={{ "--stat-n": Math.min(items.length, 4) } as React.CSSProperties}
       >
         {items.map((item) => (
-          <StatBox key={item.key} item={item} loading={loading} />
+          <Cell key={item.key} item={item} loading={loading} />
         ))}
       </div>
-    </>
+    </div>
   );
 }
 
-function StatBox({ item, loading, row = false }: { item: StatItem; loading: boolean; row?: boolean }) {
+function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
+  const Tag = item.onClick ? "button" : "div";
+  return (
+    <Tag
+      title={item.note ?? undefined}
+      {...(item.onClick ? { type: "button" as const, onClick: item.onClick, "aria-pressed": !!item.pressed, "data-focus-inset": "" } : {})}
+      className={cn(
+        // A phone reads a cell as a row — what it is on the left, the figure
+        // hard right — which is the tightest shape and the one that cannot
+        // crowd a long figure. From sm it stacks, label over figure.
+        "grid min-w-0 grid-cols-[1fr_auto] items-baseline gap-x-section bg-card px-card py-comfortable text-left transition-colors duration-quick sm:block",
+        // The ring is drawn INSIDE: the band clips its corners, so a 2px
+        // outline on the first or last cell is painted outside the card and
+        // thrown away — the same clip that ate the till's selected-card ring.
+        // Tailwind v4 resets a button to the default cursor, and a cell that
+        // looks like content has nothing else to say it can be pressed.
+        item.onClick && "cursor-pointer hover:bg-subtle/60",
+        item.pressed && "bg-subtle",
+      )}
+    >
+      <span className="col-start-1 min-w-0 truncate text-[12px] font-medium text-muted">{item.label}</span>
+      {/* On a phone the figure sits in the second column across both rows, so
+          a context line tucks under the label rather than under the number. */}
+      <span className="col-start-2 row-start-1 row-end-3 flex flex-wrap items-baseline justify-end gap-x-tight self-center sm:mt-inline sm:justify-start">
+        {loading ? (
+          <span className="my-1 block h-6 w-20 animate-pulse rounded-xs bg-line" />
+        ) : (
+          <span className={cn("type-figure block whitespace-nowrap text-[26px] font-semibold leading-tight", item.tone === "warning" && "text-warning")}>
+            {item.value}
+          </span>
+        )}
+        {item.delta}
+      </span>
+      {/* Only where there is something to say — an empty line under three of
+          four figures is the white space this band exists to remove. */}
+      {item.context && !loading && (
+        <span className={cn("col-start-1 mt-inline block truncate text-[12px]", item.contextTone ?? "text-muted")}>{item.context}</span>
+      )}
+    </Tag>
+  );
+}
+
+/** The dashboard's tile, and only the dashboard's. */
+function Tile({ item, loading, row = false }: { item: StatItem; loading: boolean; row?: boolean }) {
   const Tag = item.onClick ? "button" : "div";
   const figure = loading ? (
     <span className={cn("block animate-pulse rounded-xs bg-line", row ? "h-6 w-28" : "h-7 w-24")} />
@@ -124,16 +188,13 @@ function StatBox({ item, loading, row = false }: { item: StatItem; loading: bool
       ) : (
         <>
           {/* The row keeps the delta pill's height whether or not there is a
-              delta, so a card with a comparison and one without are the same
-              size — four cards in a row that differ by 4px read as a mistake. */}
+              delta, so a tile with a comparison and one without are the same
+              size — four tiles that differ by 4px read as a mistake. */}
           <span className="flex h-[22px] items-center gap-tight">
             <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-muted">{item.label}</span>
             {item.delta}
           </span>
           <span className="mt-tight block">{figure}</span>
-          {/* The line is always drawn, empty where a figure has nothing more to
-              say: it is what keeps every card on every page the same height as
-              the dashboard's, rather than each page's row finding its own. */}
           <span className={cn("mt-inline block text-[12px]", item.contextTone ?? "text-muted")}>{item.context ?? " "}</span>
         </>
       )}
@@ -151,15 +212,16 @@ function StatBox({ item, loading, row = false }: { item: StatItem; loading: bool
  * no prior period — inventing one to fill the corner would be inventing the
  * comparison.
  */
-export function DeltaPill({ now, then, goodWhen = "up" }: { now: number; then: number; goodWhen?: "up" | "down" }) {
+export function DeltaPill({ now, then, goodWhen = "up", since }: { now: number; then: number; goodWhen?: "up" | "down"; /** What it is measured against — "vs last week". Carried by the pill so a band of four figures does not print it four times. */ since?: string }) {
   if (then <= 0) return null;
   const pct = Math.round(((now - then) / then) * 100);
   if (pct === 0) return null;
   const up = pct > 0;
   const good = goodWhen === "up" ? up : !up;
   return (
-    <span className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-[12px]", good ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+    <span title={since} className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-[12px]", good ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
       {up ? "↗" : "↘"} {Math.abs(pct)}%
+      {since && <span className="sr-only">{` ${since}`}</span>}
     </span>
   );
 }

@@ -10655,3 +10655,99 @@ and `DeltaPill` draws nothing at 0% rather than an arrow claiming a direction.
 - On a phone the bar names the page and the heading says it again directly
   beneath. That is pre-existing and was left alone here; removing one of the two
   is a separate decision about which.
+
+## The figures become a band — one box, no glyphs, no empty line (2026-09-23)
+
+Owner, on a screenshot of the catalog's four tiles with the empty strip under
+them boxed in red: *"the top cards taking too much space, remove icons and
+below white space, dont build multiple boxes, try to fit all in one full width
+box properly (try these in all pages top cards except dashboard top cards, keep
+dashboard exact same)."*
+
+### What was wrong with the tiles on a list page
+
+The tile anatomy is the dashboard's: a tinted glyph, a label, a figure, a delta
+and a line of context. It was given to every page this morning, and on a list
+page three of those five slots are empty — so the pages inherited **157px of
+card, of which about 30 was a reserved blank line**, drawn four times, above a
+table that is the actual point of the screen.
+
+A dashboard tile is a hero. A list page's figures are a **summary bar**: one
+object, read across, sitting on top of the thing it summarises. That is what
+every mature SaaS list puts there, and it is what the owner drew.
+
+### The band
+
+`StatStrip` now takes a `variant`. **`band`** is the default and every page but
+the dashboard uses it; **`tiles`** is the dashboard, unchanged and passed
+explicitly.
+
+- **One card, divided by hairlines.** The rules are the grid's own 1px gaps
+  showing the card through, so they fall between cells however the row wraps —
+  a per-cell border draws a stray edge the moment two figures sit on a second
+  row.
+- **No glyphs.** The icons added this morning came out of all five pages, and
+  their imports with them.
+- **The line under a figure is drawn only where there is something to say** —
+  the catalog's next event carries its name, and nothing else carries anything.
+- **Measured: 157px → 87px** on customers, orders and the calendar (109 on the
+  catalog, which is the one page whose figures have a second line). **70px of
+  every page handed back to the table.** The dashboard is untouched at 157.
+
+### Three defects the rounds found, each by measuring rather than looking
+
+1. **Money was being silently clipped.** Four columns of a 768px screen leave
+   146px of cell and "৳462,206.03" at 26px needs 150 — and the band clips, so
+   the figure was not cramped, it was **wrong**. It was over its cell at 320,
+   390 and 768. The columns are now one figure a row below `sm`, two across to
+   `xl`, and one column each beyond — measured clean at 320, 390 and 768 on
+   every page.
+2. **A phone lost the context line.** The first fix hid it below `sm`, which
+   drops the catalog's event name. The cell is a two-column grid on a phone —
+   what it is on the left, the figure hard right, the context tucked under the
+   label — and it stacks from `sm`.
+3. **The focus ring on the first and last cell was clipped by the card**, the
+   same clip that ate the till's selected-card ring. The ring is drawn inside
+   now, through a new unlayered `[data-focus-inset]` rule — a Tailwind utility
+   cannot win against the app's unlayered `:focus-visible`, which is the lesson
+   this file already records twice.
+
+Two smaller ones, found by looking: a clickable cell had **Tailwind v4's default
+cursor**, which on a cell that looks like content is the only thing saying it
+can be pressed; and the calendar printed **"vs last week" under all four
+figures** — the baseline belongs to the band, so it travels with the pill that
+needs it, as its tooltip and its accessible name.
+
+### Verified
+
+- **The standing harness is rewritten for the band, 84 checks, all passing**:
+  on customers, orders, the calendar and the catalog the figures are one
+  full-width band of equal-height cells with **no glyph and nothing clipped**,
+  under 115px, at 26px/600 over a 12px label, and every page's band is drawn to
+  one recipe; the dashboard is still four separate 157px tiles at 20px padding
+  with a 28px figure and its 28px glyph; the bars still carry no trail and no
+  prose at 1440 or 390 while still naming the page; the logo still starts on the
+  menu's own edge; and on a phone each band is a card of rows with nothing cut
+  off and no sideways scroll at 320 and 390. The catalog's phone summary stays
+  a sentence rather than a band — an earlier decision, now asserted rather than
+  assumed.
+- Dark and Bangla measured on the band: no clipped label, the rules visible in
+  both themes, no console errors.
+- Standing harnesses hold: card rhythm **0 problems**, calendar category
+  **45/45**, customers **44/44**, type spec **10/10**, shell **75/75**. The
+  32-route audit is at its documented **73** (one run reported 82 — nine
+  connection errors on a route this never touched, the recompiling-server
+  artefact; the route audits at 3, all the declared rule, and the settled re-run
+  gave 73).
+- `tsc` clean, `npm run build` passes, `eslint` clean on every touched file (the
+  dashboard holds its five pre-existing warnings; `globals.css` is not linted).
+  No message keys added or removed.
+
+### Open
+
+- **The catalog's band is 109px** against 87 elsewhere, because its next-event
+  figure carries the event's name under it. That is information, not padding,
+  and it is consistent within the page.
+- The band is not sortable or clickable except where a page already made a
+  figure a filter (the catalog's "Needs attention"). If other figures should
+  filter their table, that is a per-page decision.

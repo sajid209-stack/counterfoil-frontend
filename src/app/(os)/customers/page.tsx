@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Download, Mail, Plus, Search, Send, Smartphone, TrendingUp, Users, Wallet } from "lucide-react";
+import { Download, Mail, Plus, Search, Smartphone } from "lucide-react";
 import {
   Button,
   DataTable,
@@ -237,17 +237,15 @@ export default function CustomersPage() {
         <StatStrip
           loading={groupQ.loading}
           items={[
-            { key: "customers", icon: <Users size={18} strokeWidth={1.5} />, label: t("statCustomers"), value: String(summary.customers) },
-            { key: "spent", icon: <Wallet size={18} strokeWidth={1.5} />, label: t("statSpent"), value: formatMoney(summary.spent) },
+            { key: "customers", label: t("statCustomers"), value: String(summary.customers) },
+            { key: "spent", label: t("statSpent"), value: formatMoney(summary.spent) },
             {
               key: "average",
-              icon: <TrendingUp size={18} strokeWidth={1.5} />,
               label: t("statAverage"),
               value: summary.customers === 0 ? "—" : formatMoney(summary.average),
             },
             {
               key: "reachable",
-              icon: <Send size={18} strokeWidth={1.5} />,
               label: t("statReachable"),
               value: t("statReachableValue", { count: summary.reachable, total: summary.customers }),
             },

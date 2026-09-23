@@ -1,6 +1,5 @@
 "use client";
 
-import { CalendarDays, Lock, UserCheck, UserX } from "lucide-react";
 import { DeltaPill, StatStrip } from "@/components/ui";
 import type { WindowStats } from "./model";
 
@@ -28,7 +27,9 @@ export function CalendarStats({
 }: {
   now: WindowStats;
   previous: WindowStats;
-  /** "vs last week" — the baseline, under the number it qualifies. */
+  /** "vs last week" — the baseline. It belongs to the band rather than to
+   *  each figure in it, so it travels with the pill that needs it rather than
+   *  being printed under all four numbers. */
   comparisonLabel: string;
   labels: { bookings: string; arrived: string; noshow: string; holds: string };
 }) {
@@ -40,38 +41,30 @@ export function CalendarStats({
       items={[
         {
           key: "bookings",
-          icon: <CalendarDays size={18} strokeWidth={1.5} />,
           label: labels.bookings,
           value: String(now.bookings),
-          context: comparisonLabel,
-          delta: <DeltaPill now={now.bookings} then={previous.bookings} />,
+          delta: <DeltaPill now={now.bookings} then={previous.bookings} since={comparisonLabel} />,
         },
         {
           key: "arrived",
-          icon: <UserCheck size={18} strokeWidth={1.5} />,
           label: labels.arrived,
           value: pct(now.arrived, now.bookings),
-          context: comparisonLabel,
-          delta: <DeltaPill now={now.arrived} then={previous.arrived} />,
+          delta: <DeltaPill now={now.arrived} then={previous.arrived} since={comparisonLabel} />,
         },
         {
           key: "noshow",
-          icon: <UserX size={18} strokeWidth={1.5} />,
           label: labels.noshow,
           value: pct(now.noshow, now.bookings),
-          context: comparisonLabel,
           /* The arrow follows the number, the colour follows whether that
              direction is welcome: a week with more no-shows than the last is
              not an improvement, however the figure moved. */
-          delta: <DeltaPill now={now.noshow} then={previous.noshow} goodWhen="down" />,
+          delta: <DeltaPill now={now.noshow} then={previous.noshow} goodWhen="down" since={comparisonLabel} />,
         },
         {
           key: "holds",
-          icon: <Lock size={18} strokeWidth={1.5} />,
           label: labels.holds,
           value: String(now.holds),
-          context: comparisonLabel,
-          delta: <DeltaPill now={now.holds} then={previous.holds} goodWhen="down" />,
+          delta: <DeltaPill now={now.holds} then={previous.holds} goodWhen="down" since={comparisonLabel} />,
         },
       ]}
     />
