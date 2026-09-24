@@ -11777,3 +11777,67 @@ a single ticket spans the full width while the two-ticket "All days" group sits
 two-across, so the bundle has less visual weight than the cheapest ticket.
 Every fix for it either leaves a hole in the grid or reorders the groups against
 the research, so it is named here instead.
+
+## Needs attention removed from the dashboard (2026-09-24)
+
+Owner, on a screenshot with the panel boxed: *"remove Needs attention, there
+will be live activities."*
+
+### What went, and what it cost
+
+The panel derived eight rules — a cash variance at close, a resource out of
+service, a booking with no sessions left, a sales window closing, a waitlist,
+arrivals owing a balance, a device gone quiet, and stock run out or running
+low — and drew each as a glyph, a title, a description and an action.
+
+**Nothing became unreachable.** Unlike Today's sessions, which was removed in
+September and took Adjust capacity and Cancel session with it because they
+existed nowhere else, every notice here was a **signpost to a page that can fix
+the thing**: a cash variance is on the shift, a quiet tablet on Devices, stock
+on its own item, a closing sales window on the booking, a waitlist on the
+session. What went is the one place they were gathered.
+
+Two rules the panel shared with other screens are untouched and still fire
+there: `isDeviceQuiet` still marks a tablet on Settings, and `sellingWarnings`
+still drives the catalog's own Needs-attention facet — which is a different
+feature that happens to share the words.
+
+### The rail is the feed now
+
+The activity feed's row count has never been a preference; it exists to close
+the two columns level, which is most of why the page reads as settled rather
+than ragged. It was eight while a notice was one line, six once each notice
+gained a title and an action, and five when the revenue trend gave 90px back.
+
+With the panel gone, five rows left a **489px hole beside a 949px column**.
+**Twelve is what measures level** — 925 against 949, a 25px difference, inside
+the standing 80px tolerance. The count carries the same note it always has:
+re-measure if this card's anatomy changes.
+
+### Removed with it
+
+The `Notice` type, the eight-rule derivation, the resources query that fed
+nothing else, six icon imports, `inventoryAttention`, `peekWaitlist`,
+`isDeviceQuiet`, `sellingWarnings`, `formatDay` and `cn` from this file — and
+**29 message keys in both locales**, attributed by scanning `HEAD`'s own copy
+of `src` for every `dashboard.*` key and removing only those this change
+orphaned. Five keys that were already dead at `HEAD` (`bookings`, `full`,
+`adjust`, `nothingUnderFill`, `unsold`) were left alone: they belong to a
+different change. `eslint` on the dashboard goes from its documented **5
+warnings to 2** — three of the five went with the panel.
+
+### Verified
+
+- **50 checks** at 1440, 1280, 768 and 390, in light and dark and in Bangla:
+  the panel is gone and the feed is there in every state; at desktop widths the
+  rail holds exactly one card and the columns finish within 80px; no sideways
+  scroll, nothing hidden inside `main`, nothing under 12px, no missing-message
+  warnings and no console errors.
+- The inventory harness's two checks that asserted the dashboard panel were
+  **repointed rather than deleted** — they now assert that the dashboard no
+  longer gathers notices AND that the shelf still names what has run out, which
+  is the thing that actually mattered. Inventory **40/40**.
+- Standing harnesses hold: top cards **84/84**, catalog **95/95**, holds
+  **37/37**, reports **48/48**, multi-day **19/19** and **6/6**.
+- `tsc --noEmit` and `npm run build` clean; i18n parity **0 missing / 0 extra**
+  across 34 namespaces.

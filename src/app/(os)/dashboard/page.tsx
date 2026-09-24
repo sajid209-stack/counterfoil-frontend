@@ -3,15 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, CalendarClock, Check, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, Banknote, CalendarOff, Clock, Boxes,
-  WifiOff, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, type LucideIcon } from "lucide-react";
 import { AreaChart, Button, DeltaPill, PageShell, StatStrip, StatusPill, type StatItem } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getOperator,
   getResourceMatrix,
   getSlots,
-  inventoryAttention,
   listBookings,
   listCounters,
   listCustomers,
@@ -19,19 +17,14 @@ import {
   listLocations,
   listOrders,
   listProducts,
-  listResources,
   listStaff,
   orderOutstanding,
   isVoidedOrder,
-  peekWaitlist,
   type Order,
 } from "@/lib/api";
 import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
-import { isDeviceQuiet } from "@/lib/devices";
-import { formatDateTime, formatDay, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
-import { sellingWarnings } from "@/lib/sellable";
+import { formatDateTime, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
-import { cn } from "@/lib/cn";
 
 // The demo clock is shared, never copied: DEMO_TODAY's own comment warns
 // that two components each holding their own date is the bug.
@@ -92,20 +85,6 @@ const ACTIVITY_BADGE: Record<ActivityKind, { Icon: LucideIcon; className: string
   customer: { Icon: UserRoundPlus, className: "text-brand-foreground" },
 };
 
-/** A rail notice, with the anatomy the reference draws: a glyph, a bold title,
- *  a description, an optional timestamp and an optional action. `at` is set
- *  ONLY where the underlying record carries a real moment — a device's last
- *  contact, a resource's last edit. A waitlist depth and an unpaid balance are
- *  live derivations, not events, so they get no timestamp rather than a
- *  fabricated one. */
-type Notice = {
-  tone: "warning" | "info";
-  Icon: LucideIcon;
-  title: string;
-  body: string;
-  at?: string;
-  action?: { label: string; href: string };
-};
 
 /**
  * The four headline metrics, stated once and drawn in two shapes.
@@ -139,7 +118,6 @@ export default function DashboardPage() {
   const devicesQ = useApiQuery(() => listDevices({ pageSize: 100 }), []);
   const ordersQ = useApiQuery(() => listOrders({ pageSize: 1000 }), []);
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
-  const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
   // Sorted newest-first at the source: the feed only ever shows a handful of
   // rows, so there is no reason to pull the whole roster to find them.
   const customersQ = useApiQuery(() => listCustomers({ pageSize: 50, sort: "createdAt", order: "desc" }), []);
@@ -158,7 +136,6 @@ export default function DashboardPage() {
   const orders = locationId === "all" ? allOrders : allOrders.filter((o) => o.locationId === locationId);
   const bookings = bookingsQ.data?.data ?? [];
   const products = productsQ.data?.data ?? [];
-  const resources = resourcesQ.data?.data ?? [];
   // Memoised, unlike its neighbours above: the activity feed depends on it,
   // and a fresh array each render would rebuild and re-sort the whole feed
   // on every keystroke elsewhere on the page.
@@ -365,119 +342,17 @@ export default function DashboardPage() {
       // 12-minute-old event below a 55-minute-old one. Ordering orders among
       // themselves hid this; merging two sources exposes it.
       .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
-      // Five. This count exists to balance the rail against the column beside
-      // it — the reference's two columns finish level, which is most of why
-      // its page reads as settled rather than ragged. It was eight while
-      // Notices was one line per item, then six once each notice gained a
-      // title, a description and an action. It is five now because the revenue
-      // trend gave 90px back to the page at the owner's request, and the rail
-      // has to give the same. Re-measure if either card's anatomy changes.
-      .slice(0, 5)
+      // This count exists to balance the rail against the column beside it —
+      // the reference's two columns finish level, which is most of why its
+      // page reads as settled rather than ragged. It was eight, then six once
+      // each notice gained a title and an action, then five when the revenue
+      // trend gave 90px back. With Notices gone the feed IS the rail, and five
+      // rows left a 489px hole beside a 949px column. Twelve is what measures
+      // level. Re-measure if this card's anatomy changes.
+      .slice(0, 12)
       .map((e) => ({ ...e, rel: relTime(e.at) }));
   }, [orders, customers, activityFilter, relTime, t]);
 
-  // ── Right rail ───────────────────────────────────────────────────────────
-  // Tone is read off WHICH RULE FIRED, never guessed from the wording: money
-  // discrepancies and things about to stop selling are warnings; a waitlist or
-  // a quiet device is information. The reference tints its notices by severity
-  // and this is the only honest way to supply one — the items carry no
-  // severity field of their own.
-  const attention = useMemo(() => {
-    const items: Notice[] = [];
-    // Cash variance on a closed shift — derived from the mock shift record.
-    // Its moment is real: a shift closes at a time, and that is yesterday.
-    items.push({
-      tone: "warning", Icon: Banknote,
-      title: t("noticeCashTitle"),
-      body: t("cashShort", { location: "Fort Main Gate", amount: "৳2,000" }),
-      at: `${dayShift(TODAY, -1)}T22:00:00+06:00`,
-      action: { label: t("noticeReviewTakings"), href: "/reports/sales" },
-    });
-    resources.filter((r) => r.outOfService).forEach((r) => items.push({
-      tone: "warning", Icon: Wrench,
-      title: t("noticeOutOfServiceTitle", { name: r.name }),
-      // The reason IS the description. Where none was recorded, say so — an
-      // empty line would read as a rendering fault.
-      body: r.outOfServiceReason ?? t("noticeNoReason"),
-      at: r.updatedAt,
-      action: { label: t("noticeManage"), href: "/settings/resources" },
-    }));
-    // The silent failure: nothing bookable beyond a date.
-    // One rule for it, shared with the catalog (`sellingWarnings`), so the two
-    // screens cannot disagree about the same course.
-    for (const p of products) {
-      if (p.status !== "active") continue;
-      for (const w of sellingWarnings(p, TODAY)) {
-        items.push(
-          w.kind === "datesRunOut"
-            ? {
-                tone: "warning", Icon: CalendarOff,
-                title: t("noticeNoSessionsTitle"),
-                body: t("noSessionsAfter", { name: p.name, date: formatDay(w.date) }),
-                action: { label: t("noticeAddDates"), href: `/catalog/bookings/${p.id}` },
-              }
-            : {
-                tone: "warning", Icon: Clock,
-                title: t("noticeStopsSellingTitle"),
-                body: t("stopsSelling", { name: p.name, date: formatDay(w.date) }),
-                action: { label: t("noticeOpenProduct"), href: `/catalog/bookings/${p.id}` },
-              },
-        );
-      }
-    }
-    const wl = peekWaitlist().length;
-    if (wl > 0) items.push({
-      tone: "info", Icon: Users,
-      title: t("noticeWaitlistTitle"),
-      body: wl === 1 ? t("waitlistWaiting", { count: wl }) : t("waitlistWaitingPlural", { count: wl }),
-      action: { label: t("noticeMakeOffer"), href: "/schedule" },
-    });
-    // Arrivals today still owing a balance.
-    const owing = bookings
-      .filter((b) => b.status === "confirmed" && b.slotStart.slice(0, 10) === TODAY)
-      .map((b) => orders.find((o) => o.id === b.orderId))
-      .filter((o): o is Order => !!o && o.status === "partial");
-    if (owing.length) {
-      const due = owing.reduce((s, o) => s + (o.total - o.payments.reduce((x, p) => x + p.amount, 0)), 0);
-      items.push({
-        tone: "warning", Icon: Receipt,
-        title: t("noticeOwingTitle"),
-        body: owing.length === 1 ? t("arrivalsOwe", { count: owing.length, amount: formatMoney(due) }) : t("arrivalsOwePlural", { count: owing.length, amount: formatMoney(due) }),
-        action: { label: t("noticeTakePayment"), href: "/checkin" },
-      });
-    }
-    (devicesQ.data?.data ?? []).forEach((d) => {
-      if (isDeviceQuiet(d, TODAY)) items.push({
-        tone: "info", Icon: WifiOff,
-        title: t("noticeDeviceTitle"),
-        body: t("deviceNotSeen", { name: d.name }),
-        // Only if the device has ever checked in. "Never seen" has no moment.
-        at: d.lastSeenAt ?? undefined,
-        action: { label: t("noticeManage"), href: "/settings/devices" },
-      });
-    });
-    /* Stock that has run out or is about to. It belongs here rather than only
-       on its own screen for the same reason an out-of-service lane does: the
-       manager's morning is this panel, and a programme nobody reprinted is a
-       sale nobody makes. Out first, and only the worst few — this panel is a
-       list of decisions, not a second inventory. */
-    inventoryAttention(locationId === "all" ? undefined : locationId)
-      .slice(0, 3)
-      .forEach((i) => {
-        items.push({
-          tone: i.outOfStock ? "warning" : "info",
-          Icon: Boxes,
-          title: t(i.outOfStock ? "noticeStockOutTitle" : "noticeStockLowTitle", { name: i.name }),
-          body: i.outOfStock
-            ? t("stockOutBody", { name: i.name })
-            : t("stockLowBody", { count: i.onHand, unit: i.unit, low: i.lowAt }),
-          action: { label: t("noticeStockAction"), href: `/inventory/${i.id}` },
-        });
-      });
-    /* Worst first. A stock rule pushed last put "the counter cannot sell it"
-       below "a tablet has gone quiet", and this panel is read top down. */
-    return items.sort((a, b) => Number(b.tone === "warning") - Number(a.tone === "warning"));
-  }, [resources, products, bookings, orders, devicesQ.data, locationId, t]);
 
   // Idle capacity — unsold places in the next 48h, priced.
   const idle = useMemo(() => {
@@ -867,82 +742,13 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Right ⅓ — exactly two panels, as the reference has it: what
-              needs a decision, and what just happened. Five stacked cards
-              made the rail a dumping ground, and nothing in it read as
-              important because everything was the same size. */}
+          {/* Right ⅓ — what just happened, and nothing else.
+              Needs attention went at the owner's request. Every notice it
+              drew was a signpost to a page that can fix the thing, so nothing
+              became unreachable: a cash variance is on the shift, a quiet
+              tablet on Devices, stock on its own item, a closing sales window
+              on the booking. What went is the one place they were gathered. */}
           <div className="flex min-w-0 flex-col gap-section">
-            <div className={`${card} p-card`}>
-              {/* Title and count, no leading icon. Every notice already carries
-                  its own glyph, so a second one on the header was a decoration
-                  competing with the ones that mean something — and it left this
-                  card the only one on the page whose title did not start at the
-                  same x as its neighbours'. */}
-              <div className="mb-comfortable flex items-center gap-tight">
-                <h2 className="min-w-0 flex-1 truncate text-base font-semibold tracking-[-0.4px]">{t("needsAttention")}</h2>
-                {attention.length > 0 && (
-                  <span className="shrink-0 rounded-full bg-subtle px-tight py-0.5 text-[12px] text-muted">
-                    {attention.length}
-                  </span>
-                )}
-              </div>
-              {/* The reference's notice anatomy, now that the items can carry
-                  it: a glyph, a bold title with the moment beside it, the
-                  description under, and the action as a link at the bottom.
-                  The glyph is picked per RULE, not per tone — a cash variance,
-                  a dead device and a closing sales window are different kinds
-                  of problem and the icon is the cheapest way to say which
-                  before anyone reads a word. Tone still comes off severity.
-                  The timestamp appears only where the record has one; a
-                  waitlist depth is a live count, not an event. */}
-              {attention.length === 0 ? (
-                <p className="text-sm text-success">{t("allClear")}</p>
-              ) : (
-                <div className="flex flex-col gap-tight">
-                  {attention.map((a, i) => {
-                    const warn = a.tone === "warning";
-                    return (
-                      <div
-                        key={i}
-                        className={cn(
-                          "rounded-md border p-comfortable transition-colors duration-quick",
-                          warn ? "border-warning/25 bg-warning/5" : "border-line bg-subtle/40",
-                        )}
-                      >
-                        <div className="flex items-start gap-tight">
-                          <a.Icon size={16} strokeWidth={1.5} className={cn("mt-0.5 shrink-0", warn ? "text-warning" : "text-muted")} />
-                          <div className="min-w-0 flex-1">
-                            {/* Title and moment share a baseline and wrap
-                                together — at 363px a long resource name has to
-                                be able to take the line without shoving the
-                                timestamp out of the card. */}
-                            <p className="flex flex-wrap items-baseline gap-x-tight gap-y-0">
-                              <span className="min-w-0 text-sm font-semibold">{a.title}</span>
-                              {a.at && <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{relTime(a.at)}</span>}
-                            </p>
-                            <p className="mt-inline text-sm text-muted">{a.body}</p>
-                            {a.action && (
-                              <button
-                                type="button"
-                                onClick={() => router.push(a.action!.href)}
-                                // Neutral, as the reference draws it: the tint
-                                // and the border already carry the severity, and
-                                // amber-on-amber is both a second shout and the
-                                // weaker contrast of the two.
-                                className="mt-tight inline-flex min-h-11 items-center gap-inline text-sm font-medium text-fg transition-colors duration-quick hover:text-ember sm:min-h-0"
-                              >
-                                {a.action.label}
-                                <ArrowRight size={13} strokeWidth={1.75} className="shrink-0" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
             <div className={card}>
               {/* Header at reading size, as the reference sets it — this and
                   Notices are the two panels a manager actually reads, so they
