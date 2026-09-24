@@ -59,6 +59,10 @@ export interface CartEntry {
   seatLabels?: string[]; // BT-07 seated: chosen seat labels ("A5", "A6")
   partySize?: number; // group size for flat-per-booking entries ("Group of 6")
   taxRatePct?: number; // custom-amount entries carry their own rate
+  /** …and their own class, so a reduced-rate bottle of water is recorded as
+   *  reduced rather than as "standard at 7.5%", which is what a rate with no
+   *  class reads as on a tax return. */
+  taxClass?: "standard" | "reduced" | "exempt";
   lineDiscountPct?: number; // F11 line-level discount, as a percentage
   /** …or money off this line. Whichever the cashier typed; the cart resolves
    *  one into the other so only one of the two is ever set. */
@@ -150,6 +154,7 @@ function SheetFooter({
 
 export function ProductSheet({
   product,
+  locationId,
   currency,
   initial,
   preset,
@@ -160,6 +165,8 @@ export function ProductSheet({
   resources = [],
 }: {
   product: Product;
+  /** The venue this till stands in, so a stock cap matches where the sale writes. */
+  locationId?: string;
   currency: string;
   initial: CartEntry | null;
   /** Where to OPEN, when the sheet was reached from a slot on the Schedule.
@@ -344,12 +351,17 @@ export function ProductSheet({
   // stepper once added. Per-person add-ons start at the group/party size and
   // multiply live.
   const headsFor = () => (flatBasis ? group : Math.max(1, Object.values(qty).reduce((s, n) => s + n, 0)));
-  /** What the shelf says here. Keyed on the counter's own venue: stock at the
-   *  museum is no use to a desk at the fort. */
+  /** What the shelf says here.
+   *
+   *  Keyed on the TILL's venue, not the booking's. `recordSale` writes the
+   *  movement at the till's venue, so a cap read off `product.locationIds[0]`
+   *  could promise stock from a shelf the sale will never touch — the sheet
+   *  and the ledger would disagree about the same tote bag. The booking's own
+   *  venue is the fallback for a caller that has no till. */
   const stockFor = (itemId: string) => {
     const item = inventoryItem(itemId);
     if (!item || !item.tracked) return null;
-    const where = product.locationIds[0];
+    const where = locationId ?? product.locationIds[0];
     return { ...levelOf(itemId, where && item.locationIds.includes(where) ? where : undefined), unit: item.unit };
   };
   const renderAddOns = () =>

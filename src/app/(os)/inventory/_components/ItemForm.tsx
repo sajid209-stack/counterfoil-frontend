@@ -43,6 +43,10 @@ export function ItemForm({
   const [taxClass, setTaxClass] = useState(item?.taxClass ?? "standard");
   const [tracked, setTracked] = useState(item?.tracked ?? true);
   const [returnable, setReturnable] = useState(item?.returnable ?? false);
+  /* Defaults follow the kind rather than asking a question the operator
+     usually has no opinion about: merch and drinks are walked up to and
+     bought, equipment goes out with a booking. */
+  const [atCounter, setAtCounter] = useState(item?.atCounter ?? true);
   const [lowAt, setLowAt] = useState(String(item?.lowAt ?? 5));
   const [where, setWhere] = useState<string[]>(item?.locationIds ?? locations.slice(0, 1).map((l) => l.id));
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -66,6 +70,7 @@ export function ItemForm({
       taxClass,
       tracked,
       returnable,
+      atCounter,
       lowAt: parseInt(lowAt, 10) || 0,
       locationIds: where,
       status: item?.status ?? ("active" as const),
@@ -92,7 +97,11 @@ export function ItemForm({
             <span className="type-label text-[12px] text-muted">{t("form.kind")}</span>
             <select
               value={kind}
-              onChange={(e) => setKind(e.target.value as typeof kind)}
+              onChange={(e) => {
+                const next = e.target.value as typeof kind;
+                setKind(next);
+                if (!item) setAtCounter(next === "merch" || next === "food");
+              }}
               className="h-11 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9"
             >
               {(["merch", "food", "equipment", "service"] as const).map((k) => (
@@ -152,6 +161,13 @@ export function ItemForm({
           <span className="min-w-0">
             <span className="block text-[13px] font-medium">{t("form.tracked")}</span>
             <span className="block text-[12px] text-muted">{t("form.trackedHelp")}</span>
+          </span>
+        </label>
+        <label className="flex items-start gap-tight">
+          <input type="checkbox" checked={atCounter} onChange={(e) => setAtCounter(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--color-ember-solid)]" />
+          <span className="min-w-0">
+            <span className="block text-[13px] font-medium">{t("form.atCounter")}</span>
+            <span className="block text-[12px] text-muted">{t("form.atCounterHelp")}</span>
           </span>
         </label>
         <label className="flex items-start gap-tight">

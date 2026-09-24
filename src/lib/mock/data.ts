@@ -1274,17 +1274,17 @@ export const inventoryItems: InventoryItem[] = [
   {
     id: "inv_programme", name: "Exhibition programme", sku: "PRG-WIN", kind: "merch", unit: "each",
     price: 15000, cost: 6000, taxClass: "standard", tracked: true, returnable: false, lowAt: 20,
-    locationIds: ["loc_museum"], status: "active", createdAt: T, updatedAt: T,
+    locationIds: ["loc_museum"], atCounter: true, status: "active", createdAt: T, updatedAt: T,
   },
   {
     id: "inv_tote", name: "Souvenir tote bag", sku: "TOTE-01", kind: "merch", unit: "each",
     price: 45000, cost: 18000, taxClass: "standard", tracked: true, returnable: false, lowAt: 10,
-    locationIds: ["loc_fort", "loc_museum"], status: "active", createdAt: T, updatedAt: T,
+    locationIds: ["loc_fort", "loc_museum"], atCounter: true, status: "active", createdAt: T, updatedAt: T,
   },
   {
     id: "inv_water", name: "Bottled water", kind: "food", unit: "bottle",
     price: 3000, cost: 1200, taxClass: "reduced", tracked: true, returnable: false, lowAt: 48,
-    locationIds: ["loc_fort", "loc_museum", "loc_garden"], status: "active", createdAt: T, updatedAt: T,
+    locationIds: ["loc_fort", "loc_museum", "loc_garden"], atCounter: true, status: "active", createdAt: T, updatedAt: T,
   },
   {
     id: "inv_audio", name: "Audio guide", sku: "AUD-EN", kind: "equipment", unit: "each",
@@ -1292,22 +1292,22 @@ export const inventoryItems: InventoryItem[] = [
     /* Kept at both: the tour leaves from the fort and the museum lends them
        inside, and stock that cannot be at the counter selling it is stock the
        till will refuse. */
-    locationIds: ["loc_fort", "loc_museum"], status: "active", createdAt: T, updatedAt: T,
+    locationIds: ["loc_fort", "loc_museum"], atCounter: false, status: "active", createdAt: T, updatedAt: T,
   },
   {
     id: "inv_bibs", name: "Bib set", kind: "equipment", unit: "set",
     price: 20000, cost: 0, taxClass: "standard", tracked: true, returnable: true, lowAt: 2,
-    locationIds: ["loc_fort"], status: "active", createdAt: T, updatedAt: T,
+    locationIds: ["loc_fort"], atCounter: false, status: "active", createdAt: T, updatedAt: T,
   },
   {
     id: "inv_shoes", name: "Shoe hire", kind: "equipment", unit: "pair",
     price: 10000, cost: 0, taxClass: "standard", tracked: true, returnable: true, lowAt: 6,
-    locationIds: ["loc_fort"], status: "active", createdAt: T, updatedAt: T,
+    locationIds: ["loc_fort"], atCounter: false, status: "active", createdAt: T, updatedAt: T,
   },
   {
     id: "inv_oils", name: "Premium oils", kind: "food", unit: "treatment",
     price: 30000, cost: 9000, taxClass: "standard", tracked: true, returnable: false, lowAt: 4,
-    locationIds: ["loc_fort"], status: "active", createdAt: T, updatedAt: T,
+    locationIds: ["loc_fort"], atCounter: false, status: "active", createdAt: T, updatedAt: T,
   },
   {
     /* Not counted, on purpose: gift wrapping is somebody's minute, not a
@@ -1315,14 +1315,14 @@ export const inventoryItems: InventoryItem[] = [
        correct. It proves the untracked branch. */
     id: "inv_wrap", name: "Gift wrapping", kind: "service", unit: "each",
     price: 5000, taxClass: "standard", tracked: false, returnable: false, lowAt: 0,
-    locationIds: ["loc_museum"], status: "active", createdAt: T, updatedAt: T,
+    locationIds: ["loc_museum"], atCounter: true, status: "active", createdAt: T, updatedAt: T,
   },
   {
     /* Nothing sells this yet — the state an operator lands in a minute after
        adding their first item, and the one the list has to say out loud. */
     id: "inv_poster", name: "Fort poster (A2)", kind: "merch", unit: "each",
     price: 25000, cost: 8000, taxClass: "standard", tracked: true, returnable: false, lowAt: 5,
-    locationIds: ["loc_fort"], status: "active", createdAt: T, updatedAt: T,
+    locationIds: ["loc_fort"], atCounter: true, status: "active", createdAt: T, updatedAt: T,
   },
 ];
 

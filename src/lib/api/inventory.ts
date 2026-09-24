@@ -132,6 +132,12 @@ export function linksTo(itemId: ID): { kind: "booking" | "event"; id: ID; name: 
  *  carries, because both callers exist and neither should have to know how
  *  the other spells it. */
 export const itemForAddOn = (ref: ID): InventoryItem | undefined => {
+  /* Sold on its own: the line IS the item, so there is no add-on to look up.
+     Checked first because it is the cheap answer. */
+  if (ref.startsWith(INVENTORY_LINE_PREFIX)) {
+    const direct = inventoryItem(ref.slice(INVENTORY_LINE_PREFIX.length));
+    if (direct) return direct;
+  }
   const addOnId = ref.startsWith("addon_") ? ref.slice("addon_".length) : ref;
   for (const p of productsStore.peek()) {
     const a = (p.addOns ?? []).find((x: { id: ID }) => x.id === addOnId);
@@ -329,6 +335,31 @@ export async function recordSale(
   }
   return { moved, refused };
 }
+
+/**
+ * What the till may put on its wall, at one venue.
+ *
+ * Kept here rather than filtered in the till, so all three tills ask one
+ * question and get one answer — the same reason `tillMethods` decides the
+ * payment buttons.
+ */
+export function counterItems(locationId?: ID): InventoryItemView[] {
+  return items
+    .peek()
+    .filter(
+      (i) =>
+        i.status === "active" &&
+        i.atCounter &&
+        (!locationId || i.locationIds.includes(locationId)),
+    )
+    .map((i) => inventoryView(i, locationId))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The prefix an inventory line carries on an order, so every surface that
+ *  reads a line spells it the same way. */
+export const INVENTORY_LINE_PREFIX = "inv_";
+export const inventoryLineId = (itemId: ID) => `${INVENTORY_LINE_PREFIX}${itemId}`;
 
 /** Items that need somebody to do something, newest problem first. */
 export function inventoryAttention(locationId?: ID): InventoryItemView[] {

@@ -34,7 +34,8 @@
     "attachCustomer": "গ্রাহক যুক্ত করুন",
     "back": "ফিরে",
     "walkIn": "ওয়াক-ইন গ্রাহক",
-    "extend": "বাড়ান"
+    "extend": "বাড়ান",
+    "edit": "এই লাইনটি সম্পাদনা করুন"
   },
   "added": "{name} যোগ হয়েছে",
   "cartParked": "কার্ট পার্ক করা হয়েছে।",
@@ -448,5 +449,18 @@
     "belowMin": "এই ব্যবসা সর্বনিম্ন {amount} নেয়।",
     "explain": "এখন {now} নেওয়া হচ্ছে। ভেন্যুতে {later} বাকি থাকবে।"
   },
-  "chargeOnly": "{amount} চার্জ করুন"
+  "chargeOnly": "{amount} চার্জ করুন",
+  "shop": {
+    "chip": "শপ",
+    "left": "{count}টি {unit} আছে",
+    "none": "{name} শেষ — ইনভেন্টরিতে স্টক গ্রহণ করুন।",
+    "allOfIt": "{name} যা আছে এটুকুই: {count}টি {unit}।",
+    "kind": {
+      "merch": "শপ থেকে",
+      "food": "খাবার ও পানীয়",
+      "equipment": "সরঞ্জাম",
+      "service": "সেবা"
+    },
+    "per": "{unit} হিসেবে"
+  }
 }

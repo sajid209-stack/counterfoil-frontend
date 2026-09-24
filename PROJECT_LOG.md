@@ -11342,3 +11342,162 @@ goes looking for a disk fault: it is the build cache, not the repo.
   inventory — a gap that predates this and is recorded with the other three.
 - The list does not sort by column and has no bulk receive; a twelve-line
   delivery is twelve dialogs.
+
+## The shelf comes to the till (2026-09-24)
+
+Owner: *"show the inventory in POS, research properly … review them and change
+them until you design world's best and standard UI and UX of proper inventory
+in POS."*
+
+Inventory shipped this morning could be **attached** to a booking — a tote bag
+as an extra on the exhibition pass — and could not be **sold on its own**. A
+guest who walks up wanting only the tote had no path through the till.
+
+### One field was already waiting, and nothing read it
+
+`InventoryItem.atCounter` was on the contract, edited in the item form and
+seeded on five of nine items, and `grep` found no reader anywhere. It is the
+whole distinction this needed: **a tote bag and a bottle of water are things
+somebody walks up and buys; a set of bibs and a pair of hire shoes only ever go
+out WITH a booking** and would be clutter on the sell wall. So the shelf is the
+operator's answer to that question rather than a guess from the kind.
+
+### The wall
+
+`counterItems(locationId)` — active, sold at the counter, kept at **this**
+venue. A **Shop** chip joins the category row, and the tiles sit in the same
+grid as the bookings, in the same card, with one deliberate difference: **a tap
+sells it rather than opening anything**, because there is nothing to choose. No
+date, no tier, no guide — one thing at one price. That is `tapProduct`'s own
+fast path for a single-tier booking, applied where it is always true.
+
+Three decisions the render settled, each after looking at it:
+
+- **The shelf is grouped, not interleaved.** Sorted in with the bookings, a
+  bottle of water sat between the Planetarium and the Sculpture Garden and a
+  cashier scanning for a show had to read past it. A quiet **Shop** heading
+  across the grid separates them, drawn only when both kinds are on screen —
+  with one of them it would name the only thing there.
+- **Custom amount sits above that heading**, not under it. It is a catch-all
+  for the whole wall, and a typed charge filed under Shop would say the till
+  had counted stock it never touched.
+- **The line under the price says what one tap buys.** The unit wins where it
+  names a thing — one BOTTLE, one PAIR — because that is the fact a cashier
+  needs and the glyph cannot give; where the unit is a quantity word the kind
+  takes its place, and a tote bag under a shop glyph needs neither. The first
+  build read **"sold by the each"**, which is not a sentence, and wrapped to two
+  lines, which made the tile taller than the bookings beside it.
+
+A tile states what is left only when the shelf is low or gone — the rule the
+booking tiles already follow — and a sold-out item stays tappable so the
+refusal can say why rather than being a dead square.
+
+### The line it makes, and the four things that had to be taught
+
+An order line is `inv_<itemId>`, beside the existing `custom`, `addon_*` and
+`membership_*`. What that touches:
+
+- **`itemForAddOn` learned the prefix**, which is the single function
+  `recordSale`, `addOrderLines` and `refundOrderLines` all resolve through — so
+  a sale, an extra added at Check-In and a refund putting stock back all work
+  with no further change.
+- **`admits: 0`**, explicitly. `tier?.admits ?? 1` is the default for a line
+  with no tier, and a shelf line that inherited it would **mint a scannable
+  ticket for a tote bag** and count as one in every report. (The custom-amount
+  line still does exactly that; recorded below rather than changed under a
+  different brief.)
+- **`CartEntry` gained `taxClass`.** The till derived a synthetic line's class
+  as `rate === 0 ? "exempt" : "standard"`, so **`reduced` was unreachable** —
+  and bottled water is reduced-rate. The tax total was right and the return's
+  rate breakdown was wrong. The entry carries its own class from the item now.
+  That retroactively fixes the custom-amount modal's "reduced" option, which
+  has been filing reduced-rate charges as standard since it was written.
+- **Reports** bucket `inv_` lines under **Shop**, beside the existing Add-ons
+  branch. Without it every counter-sold item landed in "Uncategorised", because
+  an inventory item has no `categoryId`.
+
+The stepper caps at what is on the shelf, and the cart line's tap is now
+guarded on `productById` rather than on `!== "custom"` — a line with no
+`Product` behind it handed `undefined` to a sheet that dereferences
+`product.layoutId` on its first line.
+
+### Two money-class faults, both found by running the code rather than reading it
+
+1. **The classic till filed every sale at `locations[0]`** — the same bug
+   `/pos` was fixed for this morning, in the variant that was not touched.
+   `listLocations` sorts by name, so a device at Lalbagh Fort recorded its sales
+   at Ahsan Manzil Museum, and a fort-only item's stock movement was refused and
+   dropped on the floor. It reads its counter's venue from `lib/session` now.
+2. **The sheet capped against the booking's venue and the sale wrote to the
+   till's.** `stockFor` keyed on `product.locationIds[0]`; `recordSale` uses the
+   till's. On any booking sold at more than one venue the two disagreed about
+   the same tote bag — the sheet promising stock off a shelf the sale would
+   never touch. Both sheets take the till's venue now, with the booking's as the
+   fallback for a caller that has no till.
+
+And two smaller ones the walk surfaced in `/classic`, both pre-existing and
+confirmed against production: its cart pencil rendered **`pos.cart.edit` as its
+accessible name** — that key was removed on 7 September when `/pos` replaced its
+pencil with a chevron, and classic still draws one — and its cart-line tap was
+guarded only against `"custom"`, the same crash hazard fixed above.
+
+### Verified
+
+- **The sale, driven end to end at the till: 23 checks.** The Shop chip shows
+  the shelf and no bookings; equipment stays off the wall; a low item says what
+  is left; a tap opens no sheet and lands the line at its shelf price in its own
+  unit; **a standard-rate tote and a reduced-rate water in one cart are summed,
+  not blended** — ৳67.50 + ৳2.25 = ৳69.75 on ৳480; the stepper stops at the
+  seven on the shelf and will not pass it; the sale charges and completes as
+  **"No tickets issued"** with the receipt-only hand-over; and **the shelf has
+  moved** when the wall comes back — the tote sold out, the water down to 41.
+- **The model behind it: 23 unit checks** through `jiti`. What the wall may
+  offer and what it may not, a line id resolving back to its item in both
+  spellings, a sale writing one `sold` movement against its order at the till's
+  own venue, the same line **refused out loud** at a venue that does not stock
+  it, a sale bigger than the shelf refused with the count unchanged, and an
+  uncounted item selling with nothing to record.
+- **The classic till still sells, and now reads the right shelf: 20 checks**,
+  including its sheet stating the fort's seven totes rather than the museum's,
+  and a sale completing at `/classic/complete` with no missing message.
+- Standing harnesses hold: inventory **39/39**, holds **37/37**, catalog
+  **95/95**, top cards **84/84**, reports **48/48**.
+- At 390 and 1280, light and dark: no sideways scroll, nothing hidden inside
+  `main`, nothing under the 13px Go floor, no target under 44px, no console
+  errors. The one sub-13px string on the till is the shared `EmptyState`'s
+  "Nothing here yet" at 12px, **measured at 12px on production too**.
+- Bangla renders the wall whole — শপ, কাস্টম পরিমাণ — with **0
+  missing-message warnings** and no raw keys.
+- `tsc --noEmit` and `npm run build` clean. `eslint` clean on every file except
+  `PosScreen`, which is **one better than `HEAD`** at 2 errors and 3 warnings
+  against its documented 2 and 4: a dead `AlertTriangle` import went with the
+  change. Attributed by linting `HEAD`'s own copy of the file. i18n parity
+  **0 missing / 0 extra** across 34 namespaces.
+
+### A harness trap worth keeping
+
+Three separate walks stalled on `getByRole("button", { name: /more/i })`, which
+matches the **Go tab bar's More tab** before any quantity stepper — so the probe
+opened a sheet over the whole till and every later click timed out silently
+behind it. It looked exactly like a broken cart. Locate a stepper by
+`button[aria-label="More"]`, and never by a loose name match on a surface whose
+navigation shares the word. `/^Add/` has the same problem: it matches "Add
+Bottled water" before the sheet's own CTA.
+
+### Open
+
+- **A custom-amount line still mints a ticket.** `tier?.admits ?? 1` gives it
+  `admits: 1`, so every "Custom amount" sale produces a scannable ticket and is
+  counted as one in reports. Real, pre-existing, and a different brief — the fix
+  is one word, but it changes what those sales issue.
+- **`/sell` sells no inventory at all**, neither extras nor the shelf. It has
+  never had add-ons; carried forward with the other three.
+- **Nothing re-checks stock at charge**, so two slow carts on two tills can
+  still oversell between them and the cashier is told after the money. Carried
+  forward — the check belongs inside `checkout()`.
+- **The classic till has no shelf tiles.** It reaches the shelf through a
+  booking's extras only. Its wall is the pre-6-September design, and adding
+  tiles to it would be redrawing that design rather than restoring it.
+- **A barcode has nowhere to go.** The wall's search matches an item's name and
+  SKU, but there is no scan-to-sell at the counter — the gate's scanner is
+  wired to tickets. That is the obvious next piece for a venue with a real shop.

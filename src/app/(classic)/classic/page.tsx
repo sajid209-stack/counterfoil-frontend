@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { DEMO_COUNTER_ID } from "@/lib/session";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
 import { Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "../_ui";
 import { useApiQuery } from "@/lib/useApi";
-import { tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { peekCounters, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
@@ -265,6 +266,11 @@ export default function PosPage() {
   const activeSheet = sheet ?? (deepLinked ? { product: deepLinked, initial: null } : null);
   const categories = catsQ.data?.data ?? [];
   const resources = resourcesQ.data?.data ?? [];
+  /* Where this till stands. listLocations sorts by name, so locations[0] is
+     whichever venue is alphabetically first — which filed a fort sale at the
+     museum and had its stock movements refused in silence. */
+  const tillLocationId =
+    peekCounters().find((c) => c.id === DEMO_COUNTER_ID)?.locationId ?? locationsQ.data?.data[0]?.id ?? "loc_fort";
   const productById = (id: string) => products.find((p) => p.id === id);
 
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "";
@@ -340,7 +346,7 @@ export default function PosPage() {
         void placeCheckoutHold({
           productId: entry.productId,
           productName: entry.productName,
-          locationId: locationsQ.data?.data[0]?.id ?? null,
+          locationId: tillLocationId,
           date: entry.slotDate,
           slotStart: entrySlotISO(entry) ?? null,
           quantity: seats,
@@ -637,7 +643,7 @@ export default function PosPage() {
       lines: sale.lines.map((l) => ({ name: l.tierId && l.tierName !== l.productName ? `${l.productName} · ${l.tierName}` : l.productName, qty: l.quantity, amount: l.subtotal, child: !!l.parentLineId })),
       subtotal, lineDiscountTotal, orderDiscount, tax, total,
     };
-    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: locationsQ.data?.data[0]?.id ?? "loc_fort", lines, orderDiscount, bookings, method, credits, customerName: customer || null, customerId: attached?.id ?? null, receipt };
+    const payload = { total, dueNow, balance, taxPct: operator?.taxRatePct ?? 0, locationId: tillLocationId, lines, orderDiscount, bookings, method, credits, customerName: customer || null, customerId: attached?.id ?? null, receipt };
     return { lines, bookings, credits, payload, receipt };
   };
 
@@ -852,7 +858,7 @@ export default function PosPage() {
               {cart.map((e) => (
                 <div key={e.id} className="border-b border-line pb-tight last:border-0">
                 <div className="flex items-start gap-tight">
-                  <div className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
+                  <div className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center" role="button" tabIndex={0} onClick={() => { if (productById(e.productId)) setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && productById(e.productId)) setSheet({ product: productById(e.productId)!, initial: e }); }}>
                     <div className="flex justify-between gap-tight text-sm font-medium"><span className="min-w-0 truncate">{e.productName}</span><span className="shrink-0 whitespace-nowrap">{formatMoney(entryTotal(e), currency)}</span></div>
                     <div className="text-[12px] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="text-[12px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
@@ -876,7 +882,7 @@ export default function PosPage() {
                       +{productById(e.productId)!.durationConfig!.incrementMinutes}m
                     </button>
                   )}
-                  {e.productId !== "custom" && <button type="button" aria-label={t("cart.edit")} onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line active:bg-ember/10"><Pencil size={15} strokeWidth={1.5} /></button>}
+                  {productById(e.productId) && <button type="button" aria-label={t("cart.edit")} onClick={() => setSheet({ product: productById(e.productId)!, initial: e })} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line active:bg-ember/10"><Pencil size={15} strokeWidth={1.5} /></button>}
                   <button type="button" aria-label={t("cart.remove")} onClick={() => setCart((c) => c.filter((x) => x.id !== e.id))} className="flex h-12 w-12 items-center justify-center rounded-sm border border-line text-danger active:bg-ember/10"><Trash2 size={15} strokeWidth={1.5} /></button>
                 </div>
                 {lineDiscEdit === e.id && (
@@ -1165,7 +1171,7 @@ export default function PosPage() {
         </button>
       )}
 
-      {activeSheet && <ProductSheet product={activeSheet.product} currency={currency} initial={activeSheet.initial} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => { setSheet(null); setDeepLinkDone(true); }} team={teamQ.data?.data ?? []} resources={resources} />}
+      {activeSheet && <ProductSheet product={activeSheet.product} locationId={tillLocationId} currency={currency} initial={activeSheet.initial} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => { setSheet(null); setDeepLinkDone(true); }} team={teamQ.data?.data ?? []} resources={resources} />}
 
       {/* Inline cash tender — a bottom sheet over the cart, no page navigation. */}
       {cashOpen && (() => {

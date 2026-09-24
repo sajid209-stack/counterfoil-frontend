@@ -34,7 +34,8 @@
     "attachCustomer": "Attach customer",
     "back": "Back",
     "walkIn": "Walk-in customer",
-    "extend": "Extend"
+    "extend": "Extend",
+    "edit": "Edit this line"
   },
   "added": "Added {name}",
   "cartParked": "Cart parked.",
@@ -448,5 +449,18 @@
     "belowMin": "The least this business accepts is {amount}.",
     "explain": "Taking {now} now. {later} is due at the venue."
   },
-  "chargeOnly": "Charge {amount}"
+  "chargeOnly": "Charge {amount}",
+  "shop": {
+    "chip": "Shop",
+    "left": "{count} {unit} left",
+    "none": "No {name} left — receive stock in Inventory.",
+    "allOfIt": "That is all the {name} there is: {count} {unit}.",
+    "kind": {
+      "merch": "From the shop",
+      "food": "Food & drink",
+      "equipment": "Equipment",
+      "service": "Service"
+    },
+    "per": "sold by the {unit}"
+  }
 }

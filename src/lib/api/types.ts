@@ -1314,6 +1314,16 @@ export interface InventoryItem {
   lowAt: number;
   /** Where it is kept. An item at no location cannot be sold anywhere. */
   locationIds: ID[];
+  /**
+   * Sold on its own at the counter, as well as offered with a booking.
+   *
+   * A tote bag and a bottle of water are things somebody walks up and buys; a
+   * set of bibs and a pair of hire shoes only ever go out WITH a booking and
+   * would be clutter on the sell wall. The operator decides, because only they
+   * know which — but the default follows the kind, so a venue that never opens
+   * this screen still gets the right wall.
+   */
+  atCounter: boolean;
   status: Lifecycle;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;

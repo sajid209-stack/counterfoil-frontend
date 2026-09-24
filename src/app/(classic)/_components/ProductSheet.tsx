@@ -138,6 +138,7 @@ function SheetFooter({
 
 export function ProductSheet({
   product,
+  locationId,
   currency,
   initial,
   seatsInCart,
@@ -147,6 +148,8 @@ export function ProductSheet({
   resources = [],
 }: {
   product: Product;
+  /** The venue this till stands in, so a stock cap matches where the sale writes. */
+  locationId?: string;
   currency: string;
   initial: CartEntry | null;
   seatsInCart: (productId: string, slotStart: string) => number;
@@ -294,7 +297,7 @@ export function ProductSheet({
   const stockFor = (itemId: string) => {
     const item = inventoryItem(itemId);
     if (!item || !item.tracked) return null;
-    const where = product.locationIds[0];
+    const where = locationId ?? product.locationIds[0];
     return { ...levelOf(itemId, where && item.locationIds.includes(where) ? where : undefined), unit: item.unit };
   };
   const renderAddOns = () =>

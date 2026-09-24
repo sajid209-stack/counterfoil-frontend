@@ -178,7 +178,9 @@
     "whereHelp": "A counter can only sell what is kept at its own venue.",
     "save": "Save the item",
     "create": "Add the item",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "atCounter": "Sell it on its own at the counter",
+    "atCounterHelp": "It appears on the till's Shop, for somebody who walks up and buys one. Extras on a booking work either way."
   },
   "returnedAtDesk": "Returned at the desk"
 }

@@ -233,8 +233,22 @@ export async function getSalesReport(query: SalesReportQuery): Promise<ApiResult
           const label = key === "custom" ? "Custom" : line.productName;
           add(key, label, isSettled ? amt : 0, isRefund ? amt : isSettled ? lineRefund : 0, isSettled && line.admits > 0 && !line.parentLineId ? line.quantity : 0);
         } else {
-          const cid = line.productId.startsWith("addon_") ? "addons" : (productCat.get(line.productId) ?? "none");
-          add(cid, cid === "addons" ? "Add-ons" : cid === "none" ? "Uncategorised" : (catName.get(cid) ?? "—"), isSettled ? amt : 0, isRefund ? amt : 0, isSettled ? line.quantity : 0);
+          /* Three lines are not catalogue items and would otherwise all land
+             in "Uncategorised": an extra on a booking, something sold on its
+             own from the shelf, and a custom amount. Each gets its own row,
+             because "the shop took ৳12,000" is a question an operator asks. */
+          const cid = line.productId.startsWith("addon_")
+            ? "addons"
+            : line.productId.startsWith("inv_")
+              ? "shop"
+              : (productCat.get(line.productId) ?? "none");
+          add(
+            cid,
+            cid === "addons" ? "Add-ons" : cid === "shop" ? "Shop" : cid === "none" ? "Uncategorised" : (catName.get(cid) ?? "—"),
+            isSettled ? amt : 0,
+            isRefund ? amt : 0,
+            isSettled ? line.quantity : 0,
+          );
         }
       }
       continue;

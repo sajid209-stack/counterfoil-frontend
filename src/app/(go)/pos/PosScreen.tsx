@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { AlertTriangle, ArrowRight, Archive, Banknote, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, Archive, Banknote, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { peekCounters, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { counterItems, inventoryItem, inventoryLineId, levelOf, peekCounters, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_COUNTER_ID } from "@/lib/session";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
@@ -117,6 +117,13 @@ function CartRow({
  *  of that into a provider is a refactor of the money path, not a routing
  *  change. Mounting once at the layout buys the real URLs today and leaves
  *  that refactor free to happen later without moving them again. */
+/** What kind of thing it is, at a glance. An item has no photograph — and a
+ *  wall of identical boxes is harder to scan than four shapes. */
+function ShopGlyph({ kind }: { kind: "merch" | "food" | "equipment" | "service" }) {
+  const Icon = kind === "food" ? CupSoda : kind === "equipment" ? Wrench : kind === "service" ? Sparkles : ShoppingBag;
+  return <Icon size={20} strokeWidth={1.5} aria-hidden />;
+}
+
 export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const router = useRouter();
   const toast = useToast();
@@ -302,7 +309,31 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   /** Everything this till can actually sell, before the cashier narrows it.
    *  The chip row is built from THIS rather than from the filtered grid, so
    *  chips do not disappear from under the finger as someone types. */
+  /* The venue this counter stands in — not the first location by name, which
+     is what the till used and which filed every sale at the wrong museum. It
+     decides where the money is recorded AND which shelf the stock comes off,
+     and those two must be the same place. */
+  const tillLocationId =
+    peekCounters().find((c) => c.id === DEMO_COUNTER_ID)?.locationId ?? locationsQ.data?.data[0]?.id ?? "loc_fort";
+
   const sellable = products.filter((p) => p.bookingType !== "BT-14");
+
+  /* The shelf, as tiles.
+     A booking opens a sheet because there is something to decide — a date, a
+     lane, how many of which ticket. A tote bag has none of that, so it goes
+     straight into the sale on one tap, which is what every retail till does
+     with an item that has no variations. Kept out of the catalogue's chips
+     because these are not bookings: one chip of their own, and only when this
+     counter's venue actually keeps something. */
+  const shopItems = useMemo(
+    () => counterItems(tillLocationId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from the store; the cart changing is when it can have moved
+    [tillLocationId, cart],
+  );
+  const SHOP = "shop";
+/** Units that count rather than name. A tile says "sold by the bottle" and
+ *  stays quiet about "each", which tells a cashier nothing they cannot see. */
+const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "pcs", "piece", "pieces"]);
   /** Only groups that are switched on AND have something in them. An empty
    *  chip is a control that filters the grid to nothing and tells the cashier
    *  they have made a mistake — the seeded "Add-ons" group did exactly that. */
@@ -312,11 +343,30 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     .sort((a, b) => a.sortOrder - b.sortOrder);
   const shown = products
     .filter((p) => p.bookingType !== "BT-14") // field passes issue from Quick pass, not the grid
+    /* The shelf's chip id is not a category id, so picking it empties the
+       wall of bookings on its own and the shelf below takes over. */
     .filter((p) => category === "all" || p.categoryId === category)
     .filter((p) => {
       const q = query.trim().toLowerCase();
       return !q || p.name.toLowerCase().includes(q) || catName(p.categoryId).toLowerCase().includes(q);
     });
+  /* The shelf answers the same search box — a cashier typing "water" means
+     the bottle, and having to know which chip it lives under first is the
+     kind of thing that makes a queue. */
+  /* A heading is worth drawing only when both kinds are on screen; with one
+     of them it would name the only thing there. */
+  const shownItems = shopItems.filter((i) => {
+    if (category !== "all" && category !== SHOP) return false;
+    const q = query.trim().toLowerCase();
+    return !q || i.name.toLowerCase().includes(q) || (i.sku ?? "").toLowerCase().includes(q);
+  });
+  const shelfHeading = shownItems.length > 0 && shown.length > 0;
+  const customTile = (
+    <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
+      <Plus size={20} strokeWidth={1.5} />
+      <span className="text-[13px]">{t("customAmount")}</span>
+    </button>
+  );
 
   // If non-cash becomes unavailable (no live PSP account), fall back to cash.
   useEffect(() => {
@@ -367,6 +417,41 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const seatsInCart = (productId: string, slotStart: string) =>
     cart.filter((e) => e.id !== sheet?.initial?.id && e.productId === productId && entrySlotISO(e) === slotStart).reduce((s, e) => s + entrySeats(e), 0);
 
+  /**
+   * Selling something off the shelf: one tap, and a second tap is one more.
+   *
+   * No sheet, because there is nothing in an item to configure — the same rule
+   * `tapProduct` already applies to a single-tier booking. An item with none
+   * left stays tappable and says why rather than being a dead square: this
+   * app's own rule, from the slot grid, is that a refusal names its mechanism.
+   */
+  const tapItem = (i: InventoryItemView) => {
+    const lineId = inventoryLineId(i.id);
+    const have = cart.find((e) => e.productId === lineId)?.items[0]?.qty ?? 0;
+    if (i.tracked && have >= i.onHand) {
+      toast.error(i.onHand <= 0 ? t("shop.none", { name: i.name }) : t("shop.allOfIt", { count: i.onHand, unit: i.unit, name: i.name }));
+      return;
+    }
+    if (have > 0) {
+      setCart((c) => c.map((e) => (e.productId === lineId ? { ...e, items: [{ ...e.items[0], qty: e.items[0].qty + 1 }] } : e)));
+      return;
+    }
+    setCart((c) => [
+      ...c,
+      {
+        id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`,
+        productId: lineId,
+        productName: i.name,
+        /* Its own rate AND its own class: an item carries the tax it is sold
+           at, rather than inheriting a booking's. */
+        taxRatePct: i.taxClass === "exempt" ? 0 : i.taxClass === "reduced" ? (operator?.reducedRatePct ?? 0) : (operator?.taxRatePct ?? 0),
+        taxClass: i.taxClass,
+        items: [{ tierId: i.id, tierName: i.unit, unitPrice: i.price, qty: 1 }],
+      },
+    ]);
+    toast.success(t("added", { name: i.name }));
+  };
+
   const tapProduct = (p: Product) => {
     const activeTiers = p.tiers.filter((t) => t.active);
     const needsSheet = needsSchedule(p.bookingType) || isResourceType(p.bookingType) || p.bookingType === "BT-10" || p.bookingType === "BT-13" || (p.sections?.length ?? 0) > 0 || !!p.layoutId || activeTiers.some((t) => t.donation) || activeTiers.length > 1;
@@ -382,12 +467,6 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   // The till identifies itself so its own holds can be found and released
   // again. A real device id lands with the backend; the counter is enough here.
   const TILL_ID = "till_fort_main";
-  /* The venue this counter stands in — not the first location by name, which
-     is what the till used and which filed every sale at the wrong museum. It
-     decides where the money is recorded AND which shelf the stock comes off,
-     and those two must be the same place. */
-  const tillLocationId =
-    peekCounters().find((c) => c.id === DEMO_COUNTER_ID)?.locationId ?? locationsQ.data?.data[0]?.id ?? "loc_fort";
 
   /** `pay` comes from the sheet's Buy now: this sale is done, so land on the
    *  cart instead of going back to the grid for another item. */
@@ -496,7 +575,13 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     for (const e of cart) {
       const p = productById(e.productId);
       const rate = entryTaxRate(e) / 100;
-      const taxClass = e.taxRatePct != null ? (e.taxRatePct === 0 ? "exempt" : "standard") : (p?.taxClass ?? "standard");
+      /* The entry's own class wins where it has one: a reduced-rate bottle of
+         water recorded as "standard at 7.5%" is a wrong line on a tax return,
+         and the rate alone cannot say which it is. */
+      const taxClass = e.taxClass ?? (e.taxRatePct != null ? (e.taxRatePct === 0 ? "exempt" : "standard") : (p?.taxClass ?? "standard"));
+      /* Something off the shelf admits nobody. Without this a tote bag minted
+         a ticket, because a line with no tier falls back to admitting one. */
+      const fromShelf = e.productId.startsWith("inv_");
       // A flat amount is resolved against the entry's own total, so it lands
       // pro rata across the entry's sub-lines (a booking and its add-ons) the
       // same way a percentage does.
@@ -542,7 +627,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
           inputs.push({
             productId: e.productId, productName: e.productName,
             tierId: tier?.id, tierName: covered ? t("passLineSuffix", { tier: i.tierName }) : i.tierName,
-            admits: isPremium ? 0 : (tier?.admits ?? 1),
+            admits: isPremium || fromShelf ? 0 : (tier?.admits ?? 1),
             quantity: qty, unitPrice,
             lineDiscount: covered ? 0 : pctOf(unitPrice * qty),
             taxClass: covered ? "exempt" : taxClass, taxRate: covered ? 0 : rate,
@@ -812,9 +897,14 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     !e.seatLabels?.length && e.partySize == null && e.fixedPrice == null;
 
   const bumpQty = (id: string, delta: number) =>
-    setCart((c) => c.map((x) => (x.id === id
-      ? { ...x, items: [{ ...x.items[0], qty: Math.max(1, x.items[0].qty + delta) }] }
-      : x)));
+    setCart((c) => c.map((x) => {
+      if (x.id !== id) return x;
+      /* A shelf line cannot climb past the shelf. The + on the tile already
+         refuses; the + in the cart is the same promise from the other end. */
+      const item = x.productId.startsWith("inv_") ? inventoryItem(x.productId.slice(4)) : undefined;
+      const cap = item?.tracked ? levelOf(item.id, tillLocationId).onHand : Infinity;
+      return { ...x, items: [{ ...x.items[0], qty: Math.min(cap, Math.max(1, x.items[0].qty + delta)) }] };
+    }));
 
   /** The rate, but only when every taxed line shares one. The catalogue has
    *  standard, reduced and exempt classes, so a mixed sale has no single rate
@@ -889,7 +979,13 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
             view is a group nobody knows exists, and the cut edge reads as a
             clipped container at least as often as it reads as "more this way". */}
         <div className="flex flex-wrap gap-tight py-inline">
-          {[{ id: "all", name: t("categoryAll") }, ...chipCategories].map((c) => (
+          {[
+            { id: "all", name: t("categoryAll") },
+            ...chipCategories,
+            /* Last, and only when the shelf has something: it is the one chip
+               that is not one of the operator's own categories. */
+            ...(shopItems.length > 0 ? [{ id: SHOP, name: t("shop.chip") }] : []),
+          ].map((c) => (
             <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}>{c.name}</button>
           ))}
         </div>
@@ -973,9 +1069,92 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
                 </div>
                 );
               })}
-              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
-                <Plus size={20} strokeWidth={1.5} /><span className="text-[13px]">{t("customAmount")}</span>
-              </button>
+              {/* A line across the grid before the shelf starts, when both
+                  are on screen. Interleaved alphabetically, a bottle of water
+                  sat between two bookings and a cashier scanning for the
+                  Planetarium had to read past it; these are a different kind
+                  of thing and they group. */}
+              {/* Not a shelf item, so it goes ABOVE the heading rather than
+                  under it — a catch-all charge filed under Shop would say the
+                  till had counted stock it never touched. */}
+              {shelfHeading && customTile}
+              {shelfHeading && (
+                <p className="col-span-full mt-tight flex items-center gap-tight text-[13px] font-semibold text-muted">
+                  <ShoppingBag size={15} strokeWidth={1.5} aria-hidden />
+                  {t("shop.chip")}
+                </p>
+              )}
+              {/* The shelf. Same card, one deliberate difference: a tap sells
+                  it rather than opening anything, because there is nothing to
+                  decide. Stock is silent when it is fine, says the number when
+                  it is low, and dims the card when it is gone — a wall where
+                  every card shouts a count is a wall nobody reads. */}
+              {shownItems.map((i) => {
+                const gone = i.tracked && i.onHand <= 0;
+                const low = i.tracked && !gone && i.onHand <= i.lowAt;
+                const inCart = cart.find((e) => e.productId === inventoryLineId(i.id))?.items[0]?.qty ?? 0;
+                return (
+                  <div
+                    key={i.id}
+                    data-focus-host
+                    className={cn(
+                      "go-surface flex overflow-hidden transition-shadow duration-quick focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember",
+                      gone ? "opacity-60" : "hover:shadow-md active:scale-[0.99]",
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => tapItem(i)}
+                      className="flex min-w-0 flex-1 flex-col gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-ember/10"
+                    >
+                      <span className="flex w-full items-start justify-between gap-tight">
+                        <span className="flex size-11 shrink-0 items-center justify-center rounded-go-sm bg-subtle text-muted">
+                          <ShopGlyph kind={i.kind} />
+                        </span>
+                        <span className="flex shrink-0 items-center gap-inline">
+                          {/* How many are already in this sale — the one thing
+                              a second tap needs to confirm it landed. */}
+                          {inCart > 0 && (
+                            <span className="rounded-full bg-ember-solid px-tight py-inline text-[12px] font-semibold text-white">{inCart}</span>
+                          )}
+                          {gone && (
+                            <span className="whitespace-nowrap rounded-full bg-danger/10 px-tight py-inline text-[12px] font-medium text-danger">{t("sheet.soldOut")}</span>
+                          )}
+                        </span>
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="line-clamp-3 text-[15px] font-semibold leading-snug">{i.name}</span>
+                        <span className="mt-inline text-[20px] font-bold leading-none text-ember">{formatPriceShort(i.price, currency)}</span>
+                        {/* The glyph already says it is from the shop and the
+                            heading says it again, so this line carries what
+                            neither can: what one tap actually buys.
+
+                            The unit wins where it names a thing — one BOTTLE,
+                            one PAIR — because that is the fact a cashier needs
+                            and the glyph cannot give. Where the unit is a
+                            quantity word the kind takes its place, and a tote
+                            bag under a shop glyph needs neither. One line
+                            either way: two wrapped lines made the tile taller
+                            than the bookings beside it. */}
+                        <span className="mt-tight line-clamp-2 text-[13px] leading-tight text-muted">
+                          {GENERIC_UNITS.has(i.unit.trim().toLowerCase())
+                            ? i.kind === "merch"
+                              ? null
+                              : t(`shop.kind.${i.kind}`)
+                            : t("shop.per", { unit: i.unit })}
+                        </span>
+                        {low && (
+                          <span className="mt-inline flex items-center gap-inline text-[13px] font-medium leading-tight text-brand-foreground">
+                            <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
+                            <span className="min-w-0 truncate">{t("shop.left", { count: i.onHand, unit: i.unit })}</span>
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  </div>
+                );
+              })}
+              {!shelfHeading && customTile}
             </div>
           )}
         </div>
@@ -1020,7 +1199,11 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
                   {productById(e.productId) && (
                     <ProductThumb images={productById(e.productId)!.images} name={e.productName} bookingType={productById(e.productId)!.bookingType} size="thumb" />
                   )}
-                  <div className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center" role="button" tabIndex={0} onClick={() => { if (e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }} onKeyDown={(k) => { if (k.key === "Enter" && e.productId !== "custom") setSheet({ product: productById(e.productId)!, initial: e }); }}>
+                  <div className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center" role="button" tabIndex={0} /* Guarded on the PRODUCT, not on one magic id: a custom amount and
+                       something off the shelf both have no booking behind them, and
+                       `productById(...)!` on either was a crash waiting for the
+                       first tote bag. */
+                    onClick={() => { const prod = productById(e.productId); if (prod) setSheet({ product: prod, initial: e }); }} onKeyDown={(k) => { const prod = productById(e.productId); if (k.key === "Enter" && prod) setSheet({ product: prod, initial: e }); }}>
                     <div className="flex items-start justify-between gap-tight">
                       <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{e.productName}</span>
                       <span className="shrink-0 text-right">
@@ -1450,7 +1633,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
         </button>
       )}
 
-      {sheet && <ProductSheet product={sheet.product} currency={currency} initial={sheet.initial} preset={sheet.preset} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => setSheet(null)} team={teamQ.data?.data ?? []} resources={resources} />}
+      {sheet && <ProductSheet product={sheet.product} locationId={tillLocationId} currency={currency} initial={sheet.initial} preset={sheet.preset} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => setSheet(null)} team={teamQ.data?.data ?? []} resources={resources} />}
 
       {/* Inline cash tender — a bottom sheet over the cart, no page navigation. */}
       {cashOpen && (() => {
