@@ -34,6 +34,15 @@ export interface TierRowSpec {
   qtyError?: string;
   /** Events: what this tier has sold, drawn against its quantity. */
   sold?: number;
+  /**
+   * A band under the row's fields, always open.
+   *
+   * For which days of a multi-day event a ticket admits — the one thing about
+   * an event ticket that cannot fold away, because it is what separates two
+   * rows that otherwise differ only by a price. A booking passes nothing and
+   * the row is exactly as it was.
+   */
+  scope?: React.ReactNode;
   /** What the folded details hold, in a phrase — empty when nothing is set. */
   summary?: string;
   details?: React.ReactNode;
@@ -113,11 +122,12 @@ function TierRow({
     <div className="rounded-sm border border-line bg-card">
       <div className={cn("grid grid-cols-2 items-start gap-tight p-comfortable", cols)}>
         <label className="col-span-2 flex min-w-0 flex-col gap-inline sm:col-span-1">
-          <span className="text-[12px] font-medium text-muted sm:sr-only">{labels.name}</span>
+          <span aria-hidden className="text-[12px] font-medium text-muted sm:sr-only">{labels.name}</span>
           <input
             value={r.name}
             onChange={(e) => r.onName(e.target.value)}
             placeholder={r.namePlaceholder}
+            aria-label={labels.name}
             aria-invalid={!!r.nameError || undefined}
             className={cn(inputCls, err(r.nameError))}
           />
@@ -135,6 +145,7 @@ function TierRow({
               onBlur={() => setEditingPrice(false)}
               onChange={(e) => r.onPrice(e.target.value.replace(/[^\d.]/g, ""))}
               inputMode="decimal"
+              aria-label={labels.price}
               placeholder={r.pricePlaceholder}
               aria-invalid={!!r.priceError || undefined}
               className={cn(inputCls, err(r.priceError), "pl-7 text-right tabular-nums")}
@@ -148,6 +159,7 @@ function TierRow({
             value={r.qty}
             onChange={(e) => r.onQty(e.target.value.replace(/\D/g, ""))}
             inputMode="numeric"
+            aria-label={labels.qty}
             placeholder={r.qtyPlaceholder}
             aria-invalid={!!r.qtyError || undefined}
             className={cn(inputCls, err(r.qtyError), "text-right tabular-nums")}
@@ -211,6 +223,7 @@ function TierRow({
           </button>
         </span>
       </div>
+      {r.scope && <div className="border-t border-hairline px-comfortable py-tight">{r.scope}</div>}
       {/* What the folded details hold, in a line — so nothing set is out of
           sight, without a second row per tier when nothing is. */}
       {!open && r.summary && <p className="-mt-inline truncate px-comfortable pb-tight text-[12px] text-muted">{r.summary}</p>}

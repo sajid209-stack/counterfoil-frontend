@@ -103,6 +103,12 @@ export const events: EventRecord[] = [
     endsAt: iso("2026-10-25T22:00:00"),
     venueName: "Port City Turf Arena",
     venueAddress: "Agrabad, Chattogram",
+    /* The canonical multi-day case: two days with their own programme, their
+       own price, and a pass that covers both for less than the pair. */
+    days: [
+      { id: "tc_d1", date: "2026-10-24", name: "Group stage", startTime: "16:00", endTime: "22:00" },
+      { id: "tc_d2", date: "2026-10-25", name: "Knockouts", startTime: "16:00", endTime: "22:00" },
+    ],
     description:
       "Two days of seven-a-side across four pitches, group stage on Saturday and knockouts under lights on Sunday.",
     stats: [
@@ -126,14 +132,14 @@ export const events: EventRecord[] = [
        template can split the two sides either side of the VS. The rounds that
        have no draw yet are honest about it rather than inventing a tie. */
     lineup: [
-      { id: "l1", name: "Agrabad FC vs Halishahar United", role: "Group A · Pitch 1", day: "Sat 24 Oct", at: "16:00" },
-      { id: "l2", name: "Patenga Rovers vs CEPZ Athletic", role: "Group A · Pitch 2", day: "Sat 24 Oct", at: "16:00" },
-      { id: "l3", name: "Khulshi Sporting vs Bakalia Boys", role: "Group B · Pitch 1", day: "Sat 24 Oct", at: "17:30" },
-      { id: "l4", name: "Chawkbazar XI vs Pahartali Kings", role: "Group B · Pitch 2", day: "Sat 24 Oct", at: "17:30" },
-      { id: "l5", name: "Group stage continues", role: "All four pitches, 12 fixtures", day: "Sat 24 Oct", at: "19:00" },
-      { id: "l6", name: "Quarter-finals", role: "Pitches 1 and 2 · draw made Saturday night", day: "Sun 25 Oct", at: "16:00" },
-      { id: "l7", name: "Semi-finals", role: "Pitch 1", day: "Sun 25 Oct", at: "19:00" },
-      { id: "l8", name: "Final", role: "Pitch 1, under lights", day: "Sun 25 Oct", at: "21:00" },
+      { id: "l1", name: "Agrabad FC vs Halishahar United", role: "Group A · Pitch 1", dayId: "tc_d1", at: "16:00" },
+      { id: "l2", name: "Patenga Rovers vs CEPZ Athletic", role: "Group A · Pitch 2", dayId: "tc_d1", at: "16:00" },
+      { id: "l3", name: "Khulshi Sporting vs Bakalia Boys", role: "Group B · Pitch 1", dayId: "tc_d1", at: "17:30" },
+      { id: "l4", name: "Chawkbazar XI vs Pahartali Kings", role: "Group B · Pitch 2", dayId: "tc_d1", at: "17:30" },
+      { id: "l5", name: "Group stage continues", role: "All four pitches, 12 fixtures", dayId: "tc_d1", at: "19:00" },
+      { id: "l6", name: "Quarter-finals", role: "Pitches 1 and 2 · draw made Saturday night", dayId: "tc_d2", at: "16:00" },
+      { id: "l7", name: "Semi-finals", role: "Pitch 1", dayId: "tc_d2", at: "19:00" },
+      { id: "l8", name: "Final", role: "Pitch 1, under lights", dayId: "tc_d2", at: "21:00" },
     ],
     faq: [
       { id: "f1", q: "How many in a squad?", a: "Seven on the pitch, up to eleven registered. Rolling substitutions." },
@@ -142,19 +148,35 @@ export const events: EventRecord[] = [
     tiers: [
       {
         id: "t2",
-        name: "Day pass",
+        name: "Saturday pass",
         price: 30000,
         quantity: 800,
         sold: 268,
-        description: "One day of football, any pitch.",
+        dayIds: ["tc_d1"],
+        description: "The whole group stage, any pitch.",
         perks: ["Any pitch, any fixture that day", "Re-entry all day", "Food and drink stalls"],
       },
       {
+        /* Finals day costs more than group day, which is why a day is a price
+           and not a filter on one. */
+        id: "t4",
+        name: "Sunday pass",
+        price: 35000,
+        quantity: 800,
+        sold: 214,
+        dayIds: ["tc_d2"],
+        description: "Quarter-finals through to the final, under lights.",
+        perks: ["Every knockout fixture", "Re-entry all day", "Food and drink stalls"],
+      },
+      {
+        /* ৳300 + ৳350 = ৳650 bought separately, so this states a ৳150 saving
+           on the page rather than leaving a buyer to work it out. */
         id: "t3",
         name: "Weekend pass",
         price: 50000,
         quantity: 400,
         sold: 341,
+        dayIds: ["tc_d1", "tc_d2"],
         description: "Both days, group stage through the final.",
         perks: ["Both days, every fixture", "Reserved side of Pitch 1 for the final", "Re-entry all weekend"],
       },
@@ -164,6 +186,7 @@ export const events: EventRecord[] = [
         price: 1200000,
         quantity: 16,
         sold: 13,
+        dayIds: ["tc_d1", "tc_d2"],
         description: "Enter a side. Covers both days and all fixtures.",
         maxPerOrder: 1,
         perks: ["Up to 11 registered players", "Guaranteed three group fixtures", "Dressing room and warm-up slot"],
@@ -177,6 +200,13 @@ export const events: EventRecord[] = [
     startsAt: iso("2026-12-03T09:00:00"),
     endsAt: iso("2026-12-04T17:30:00"),
     venueName: "Sylhet International Convention Centre",
+    /* A conference sells the two days together far more often than apart, so
+       the bundle is the headline and a single day is the concession — the
+       opposite emphasis to the tournament, on the same mechanism. */
+    days: [
+      { id: "ts_d1", date: "2026-12-03", name: "Day 1 · Platforms", startTime: "09:00", endTime: "17:30" },
+      { id: "ts_d2", date: "2026-12-04", name: "Day 2 · Merchants", startTime: "09:00", endTime: "17:30" },
+    ],
     venueAddress: "Airport Road, Sylhet 3100",
     description:
       "Two days on payments, logistics and the infrastructure underneath both. Single track in the morning, three rooms after lunch.",
@@ -202,18 +232,18 @@ export const events: EventRecord[] = [
        them into one string, which this seed used to do, meant the agenda could
        only ever be one flat column — the tab strip needs a field to group on. */
     lineup: [
-      { id: "l1", kind: "session" as const, name: "Registration and coffee", day: "Day 1", at: "08:30" },
-      { id: "l2", name: "Farhana Rahman", role: "Keynote \u2014 CTO, bKash", day: "Day 1", at: "09:30" },
-      { id: "l3", name: "Imran Chowdhury", role: "Head of Platform, Pathao", day: "Day 1", at: "11:00" },
-      { id: "l4", kind: "session" as const, name: "Lunch", day: "Day 1", at: "12:30" },
-      { id: "l5", name: "Dr. Nusrat Jahan", role: "Bangladesh Bank \u2014 regulation track", day: "Day 1", at: "14:00" },
-      { id: "l6", kind: "session" as const, name: "Workshop: settling at scale", role: "Hall C, 40 places", day: "Day 1", at: "15:45" },
-      { id: "l7", name: "Tanvir Ahmed", role: "Founder, ShopUp", day: "Day 2", at: "10:00" },
-      { id: "l11", name: "Sadia Islam", role: "Director of Engineering, Robi", day: "Day 2", at: "14:00" },
-      { id: "l12", name: "Arif Hossain", role: "Partner, Anchorless Bangladesh", day: "Day 2", at: "15:15" },
-      { id: "l8", kind: "session" as const, name: "Panel: what merchants actually ask for", role: "Halls A and B", day: "Day 2", at: "11:30" },
-      { id: "l9", kind: "session" as const, name: "Lunch", day: "Day 2", at: "12:30" },
-      { id: "l10", kind: "session" as const, name: "Closing remarks", role: "Hall A", day: "Day 2", at: "16:30" },
+      { id: "l1", kind: "session" as const, name: "Registration and coffee", dayId: "ts_d1", at: "08:30" },
+      { id: "l2", name: "Farhana Rahman", role: "Keynote \u2014 CTO, bKash", dayId: "ts_d1", at: "09:30" },
+      { id: "l3", name: "Imran Chowdhury", role: "Head of Platform, Pathao", dayId: "ts_d1", at: "11:00" },
+      { id: "l4", kind: "session" as const, name: "Lunch", dayId: "ts_d1", at: "12:30" },
+      { id: "l5", name: "Dr. Nusrat Jahan", role: "Bangladesh Bank \u2014 regulation track", dayId: "ts_d1", at: "14:00" },
+      { id: "l6", kind: "session" as const, name: "Workshop: settling at scale", role: "Hall C, 40 places", dayId: "ts_d1", at: "15:45" },
+      { id: "l7", name: "Tanvir Ahmed", role: "Founder, ShopUp", dayId: "ts_d2", at: "10:00" },
+      { id: "l11", name: "Sadia Islam", role: "Director of Engineering, Robi", dayId: "ts_d2", at: "14:00" },
+      { id: "l12", name: "Arif Hossain", role: "Partner, Anchorless Bangladesh", dayId: "ts_d2", at: "15:15" },
+      { id: "l8", kind: "session" as const, name: "Panel: what merchants actually ask for", role: "Halls A and B", dayId: "ts_d2", at: "11:30" },
+      { id: "l9", kind: "session" as const, name: "Lunch", dayId: "ts_d2", at: "12:30" },
+      { id: "l10", kind: "session" as const, name: "Closing remarks", role: "Hall A", dayId: "ts_d2", at: "16:30" },
     ],
     /* Blender's "Big Buck Bunny": Creative Commons, permanently hosted, and
        unmistakably placeholder footage rather than something that could be
@@ -240,7 +270,8 @@ export const events: EventRecord[] = [
     tiers: [
       {
         id: "t4",
-        name: "Student pass",
+        name: "Student pass — both days",
+        dayIds: ["ts_d1", "ts_d2"],
         price: 100000,
         quantity: 150,
         sold: 88,
@@ -249,7 +280,8 @@ export const events: EventRecord[] = [
       },
       {
         id: "t2",
-        name: "Full summit",
+        name: "Full summit — both days",
+        dayIds: ["ts_d1", "ts_d2"],
         price: 650000,
         quantity: 600,
         sold: 414,
@@ -264,6 +296,7 @@ export const events: EventRecord[] = [
       {
         id: "t3",
         name: "Team of five",
+        dayIds: ["ts_d1", "ts_d2"],
         price: 2800000,
         quantity: 40,
         sold: 11,
@@ -271,7 +304,29 @@ export const events: EventRecord[] = [
         maxPerOrder: 2,
         perks: ["Five full-summit passes", "One invoice and one PO", "Reserved block seating", "A named contact on the day"],
       },
-      { id: "t1", name: "Early bird", price: 450000, quantity: 200, sold: 200, salesEnd: iso("2026-10-15T23:59:00") },
+      { id: "t1", name: "Early bird — both days", price: 450000, quantity: 200, sold: 200, dayIds: ["ts_d1", "ts_d2"], salesEnd: iso("2026-10-15T23:59:00") },
+      /* Two single days at ৳3,500 each against ৳6,500 for both: the saving is
+         ৳500, and the page says so rather than leaving it to be worked out. */
+      {
+        id: "t5",
+        name: "Day 1 only — Platforms",
+        price: 350000,
+        quantity: 150,
+        sold: 62,
+        dayIds: ["ts_d1"],
+        description: "Thursday only: the keynote and the platform track.",
+        perks: ["Every Thursday session", "Lunch and coffee", "Slides afterwards"],
+      },
+      {
+        id: "t6",
+        name: "Day 2 only — Merchants",
+        price: 350000,
+        quantity: 150,
+        sold: 47,
+        dayIds: ["ts_d2"],
+        description: "Friday only: the merchant panel and the closing talks.",
+        perks: ["Every Friday session", "Lunch and coffee", "Slides afterwards"],
+      },
     ],
   }),
 

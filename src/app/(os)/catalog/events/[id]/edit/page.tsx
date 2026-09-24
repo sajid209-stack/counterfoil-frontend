@@ -77,6 +77,7 @@ function Editor({ event }: { event: EventRecord }) {
     videoUrl: event.videoUrl ?? "",
     organiserName: event.organiser?.name ?? "",
     organiserBlurb: event.organiser?.blurb ?? "",
+    days: event.days ?? [],
     lineup: event.lineup ?? [],
     faq: event.faq ?? [],
   });
@@ -100,6 +101,7 @@ function Editor({ event }: { event: EventRecord }) {
       quantity: String(x.quantity),
       description: x.description ?? "",
       salesEnd: x.salesEnd ? x.salesEnd.slice(0, 10) : "",
+      dayIds: x.dayIds ?? [],
     })),
   );
 
@@ -124,6 +126,7 @@ function Editor({ event }: { event: EventRecord }) {
     subtitle: content.subtitle.trim() || undefined,
     startsAt: `${content.date}T${content.startTime}:00+06:00`,
     endsAt: endsAtOf(content),
+    days: content.days.length > 1 ? content.days : undefined,
     venueName: content.venueName.trim() || t("placeholder.venue"),
     venueAddress: content.venueAddress.trim() || undefined,
     description: content.description.trim() || undefined,
@@ -168,6 +171,7 @@ function Editor({ event }: { event: EventRecord }) {
       subtitle: content.subtitle.trim() || undefined,
       startsAt: `${content.date}T${content.startTime}:00+06:00`,
       endsAt: endsAtOf(content),
+      days: content.days.length > 1 ? content.days : undefined,
       venueName: content.venueName.trim(),
       venueAddress: content.venueAddress.trim() || undefined,
       description: content.description.trim() || undefined,
@@ -225,7 +229,9 @@ function Editor({ event }: { event: EventRecord }) {
         )}
         {tab === "details" ? (
           <div className="card-surface p-card">
-            <EventDetails categoryId={event.categoryId} content={content} onContent={(patch) => setContent((c) => ({ ...c, ...patch }))} errors={errors} subtype={subtype} onSubtype={setSubtype} />
+            <EventDetails
+              scopedTickets={rows.filter((r) => r.dayIds.length > 0).length}
+              onUntieTickets={() => setRows((rs) => rs.map((r) => (r.dayIds.length ? { ...r, dayIds: [] } : r)))} categoryId={event.categoryId} content={content} onContent={(patch) => setContent((c) => ({ ...c, ...patch }))} errors={errors} subtype={subtype} onSubtype={setSubtype} />
           </div>
         ) : tab === "page" ? (
           <EventArchitect
@@ -245,7 +251,7 @@ function Editor({ event }: { event: EventRecord }) {
             {event.tiers.some((x) => x.sold > 0) && (
               <p className="text-[13px] text-muted">{tc("soldNote")}</p>
             )}
-            <TicketTiers rows={rows} onChange={setRows} errors={errors} sold={Object.fromEntries(event.tiers.map((x) => [x.id, x.sold]))} />
+            <TicketTiers rows={rows} onChange={setRows} errors={errors} sold={Object.fromEntries(event.tiers.map((x) => [x.id, x.sold]))} days={content.days} />
             {/* An event hands things over too — a programme, a glow band, a
                 T-shirt — and they are the same countable things a booking
                 offers, so they use the same editor and the same shelf. */}

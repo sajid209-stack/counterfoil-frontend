@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ArrowDown,
@@ -34,6 +34,7 @@ import { cn } from "@/lib/cn";
 import { EventTemplate } from "@/components/events/EventTemplate";
 import { PreviewFrame } from "@/components/events/PreviewFrame";
 import { templateFontVars } from "@/lib/events/fonts";
+import { dayName } from "@/lib/events/days";
 import { parseEventVideo } from "@/lib/events/video";
 import {
   ACCENT_CHOICES,
@@ -43,7 +44,7 @@ import {
   type CategoryId,
   type SectionId,
 } from "@/lib/events/catalog";
-import type { EventCustomisation, EventLineupEntry, EventRecord } from "@/lib/api/events";
+import type { EventCustomisation, EventDay, EventLineupEntry, EventRecord } from "@/lib/api/events";
 
 export interface EventContent {
   title: string;
@@ -54,6 +55,10 @@ export interface EventContent {
    *  midnight, a tour runs for days). Empty `endTime` means no stated end. */
   endDate: string;
   endTime: string;
+  /** The days it runs, when it runs on more than one. Generated from the date
+   *  range and then editable, so an operator states the range once. Empty, or
+   *  one entry, is a single-day event and no day control is drawn. */
+  days: EventDay[];
   venueName: string;
   venueAddress: string;
   description: string;
@@ -177,8 +182,37 @@ export function EventArchitect({
     ...cat.sections.filter((s) => !custom.sections.includes(s)),
   ];
 
+  /* The days as tabs, and which one is open. Positional labels where the
+     operator has not named a day, because "Day 2" is what most of them are
+     called and it is right whatever the dates are. */
+  const dayTabs = content.days.length > 1 ? content.days.map((d, i) => ({ id: d.id, label: dayName(d, i, (n) => t("architect.dayNth", { n })) })) : [];
+  const [openDay, setOpenDay] = useState(0);
+  /* Arrow keys have to move FOCUS as well as selection. Setting only the
+     selected index left the reader on a tab that had just become
+     `tabIndex="-1"` while the panel swapped silently underneath — and the next
+     Tab went back INTO the tablist instead of out of it. */
+  const dayTabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const moveDay = (delta: number) =>
+    setOpenDay((v) => {
+      const next = (v + delta + dayTabs.length) % dayTabs.length;
+      requestAnimationFrame(() => dayTabRefs.current[next]?.focus());
+      return next;
+    });
+  const activeDay = dayTabs.length > 1 ? dayTabs[Math.min(openDay, dayTabs.length - 1)] : null;
+  /* An entry written before the event had days belongs to nobody, so it is
+     shown on the first tab — where somebody will see it and file it — rather
+     than disappearing from every one of them. */
+  const shownLineup = activeDay
+    ? content.lineup.filter((l) => (l.dayId ? l.dayId === activeDay.id : dayTabs[0].id === activeDay.id))
+    : content.lineup;
+  /* A counter rather than the clock: reading `Date.now()` here is a render-time
+     impurity the compiler refuses, and two entries added inside one millisecond
+     would have shared an id anyway. */
+  const nextId = useRef(0);
   const addLineup = () =>
-    onContent({ lineup: [...content.lineup, { id: `l_${Date.now()}`, name: "", role: "", at: "" }] });
+    onContent({
+      lineup: [...content.lineup, { id: `l_${content.lineup.length}_${(nextId.current += 1)}`, name: "", role: "", at: "", dayId: activeDay?.id }],
+    });
   const patchLineup = (id: string, p: Partial<EventLineupEntry>) =>
     onContent({ lineup: content.lineup.map((l) => (l.id === id ? { ...l, ...p } : l)) });
   const dropLineup = (id: string) => onContent({ lineup: content.lineup.filter((l) => l.id !== id) });
@@ -481,7 +515,45 @@ export function EventArchitect({
 
               {(id === "lineup" || id === "schedule") && (
                 <>
-                  {content.lineup.map((l) => (
+                  {/* Day tabs above the programme, each day carrying its own
+                      entries — the shape every conference tool settled on, and
+                      the reason it works is that adding an act while a day is
+                      open files it on that day. There is no day field to
+                      remember and no way to leave one blank. */}
+                  {dayTabs.length > 1 && (
+                    <div role="tablist" aria-label={t("architect.dayTabs")} className="flex flex-wrap gap-inline">
+                      {dayTabs.map((d, i) => {
+                        const on = i === openDay;
+                        const n = content.lineup.filter((l) => l.dayId === d.id).length;
+                        return (
+                          <button
+                            key={d.id}
+                            role="tab"
+                            type="button"
+                            aria-selected={on}
+                            tabIndex={on ? 0 : -1}
+                            onClick={() => setOpenDay(i)}
+                            ref={(el) => {
+                              dayTabRefs.current[i] = el;
+                            }}
+                            onKeyDown={(k) => {
+                              if (k.key === "ArrowRight" || k.key === "ArrowDown") { k.preventDefault(); moveDay(1); }
+                              if (k.key === "ArrowLeft" || k.key === "ArrowUp") { k.preventDefault(); moveDay(-1); }
+                            }}
+                            className={cn(
+                              "flex min-h-11 items-center gap-inline rounded-full border px-comfortable text-[13px] font-medium transition-colors duration-quick sm:min-h-9",
+                              on ? "border-ember bg-ember/10 text-brand-foreground" : "border-line text-muted hover:text-fg",
+                            )}
+                          >
+                            {d.label}
+                            <span className="text-[12px] tabular-nums opacity-70">{n}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {shownLineup.length === 0 && dayTabs.length > 1 && <Note>{t("architect.dayEmpty")}</Note>}
+                  {shownLineup.map((l) => (
                     <div key={l.id} className="rounded-sm border border-line bg-card p-comfortable">
                       <div className="mb-tight flex items-center justify-between gap-tight">
                         <span className="type-label text-[12px] text-muted">{t("architect.entry")}</span>
@@ -511,8 +583,14 @@ export function EventArchitect({
                             <option value="session">{t("architect.kindSession")}</option>
                           </select>
                         </label>
-                        <div className="grid gap-tight sm:grid-cols-3">
-                          <FormField label={t("architect.day")} placeholder={t("architect.dayPlaceholder")} value={l.day ?? ""} onChange={(e) => patchLineup(l.id, { day: e.target.value })} />
+                        <div className={cn("grid gap-tight", dayTabs.length > 1 ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
+                          {/* The typed day field is only for an event with no
+                              real days — where there are tabs, the tab IS the
+                              answer and a second place to say it could only
+                              disagree with the first. */}
+                          {dayTabs.length <= 1 && (
+                            <FormField label={t("architect.day")} placeholder={t("architect.dayPlaceholder")} value={l.day ?? ""} onChange={(e) => patchLineup(l.id, { day: e.target.value })} />
+                          )}
                           <FormField label={t("architect.role")} placeholder={t("architect.rolePlaceholder")} value={l.role ?? ""} onChange={(e) => patchLineup(l.id, { role: e.target.value })} />
                           <FormField label={t("architect.at")} placeholder="21:30" value={l.at ?? ""} onChange={(e) => patchLineup(l.id, { at: e.target.value })} />
                         </div>

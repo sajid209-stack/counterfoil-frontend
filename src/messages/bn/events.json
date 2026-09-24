@@ -168,7 +168,18 @@
     "summaryEnds": "{date}-এ বিক্রি বন্ধ",
     "keepOne": "একটি ইভেন্টে অন্তত একটি টিকিটের ধরন লাগবে",
     "potentialUnpriced": "দাম দিলে সম্ভাব্য আয় দেখা যাবে",
-    "potentialFree": "ফ্রি — কিছু নেওয়ার নেই"
+    "potentialFree": "ফ্রি — কিছু নেওয়ার নেই",
+    "days": {
+      "admits": "প্রবেশ",
+      "nth": "দিন {n}",
+      "dayTicket": "{day} পাস",
+      "allTicket": "সব {count} দিন",
+      "addPerDay": "প্রতিদিনের জন্য একটি পাস",
+      "addBundle": "সব {count} দিনের একটি পাস",
+      "saves": "{amount} সাশ্রয়",
+      "dayNamed": "{name} — {day}"
+    },
+    "potentialNoCapacity": "কতটি দিন, তাহলে মূল্য দেখা যাবে"
   },
   "error": {
     "title": "ইভেন্টের একটি নাম দিন।",
@@ -299,7 +310,10 @@
     "editDetails": "বিস্তারিত বদলান",
     "sample": "নমুনা",
     "sampleNote": "এটি এই ধরনের ইভেন্টের নমুনা লেখা। বদলান, অংশটি লুকান, অথবা যেমন আছে রাখুন।",
-    "keepSample": "যেমন আছে রাখুন"
+    "keepSample": "যেমন আছে রাখুন",
+    "dayTabs": "কোন দিন",
+    "dayNth": "দিন {n}",
+    "dayEmpty": "এই দিনে এখনও কিছু নেই। এখানে যা যোগ করবেন তা এই দিনেই যাবে।"
   },
   "tpl": {
     "orderSummary": "অর্ডার সারাংশ",
@@ -330,7 +344,12 @@
     "ofCapacity": "/",
     "theRoute": "যাত্রাপথ",
     "departs": "ছাড়বে",
-    "returns": "ফিরবে"
+    "returns": "ফিরবে",
+    "day": "দিন",
+    "allDays": "সব দিন",
+    "saves": "{amount} সাশ্রয়",
+    "admitsOn": "প্রবেশ",
+    "runsDays": "{count} দিন চলবে"
   },
   "defaults": {
     "entertainment": {

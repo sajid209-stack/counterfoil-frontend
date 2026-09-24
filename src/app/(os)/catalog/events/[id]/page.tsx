@@ -10,8 +10,12 @@ import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import {
   archiveEvent,
+  dayFill,
   duplicateEvent,
   eventCapacity,
+  eventDays,
+  spansDays,
+  tierDays,
   eventChannels,
   eventRevenue,
   eventSold,
@@ -20,6 +24,7 @@ import {
   setEventPublished,
 } from "@/lib/api";
 import { eventState, type CatalogState } from "@/lib/catalog";
+import { dayName } from "@/lib/events/days";
 import { categoryById } from "@/lib/events/catalog";
 import { useTemplateLabels } from "@/lib/events/useTemplateLabels";
 import { templateFontVars } from "@/lib/events/fonts";
@@ -122,9 +127,16 @@ export default function EventDetailPage() {
   const pct = cap ? Math.min(100, Math.round((sold / cap) * 100)) : 0;
   const start = e ? new Date(e.startsAt) : null;
   const days = start ? Math.ceil((start.getTime() - now.getTime()) / DAY) : 0;
-  const when = e
-    ? `${formatDay(e.startsAt.slice(0, 10), { weekday: true })} · ${e.startsAt.slice(11, 16)}${e.endsAt ? `–${e.endsAt.slice(11, 16)}` : ""}`
-    : "";
+  /* A two-day event used to read "Sat 24 Oct · 16:00–22:00" — the end time of
+     a day this line does not name. It states the range of DAYS instead, and
+     leaves the clock to the per-day list below, where it is true. */
+  const multi = e ? spansDays(e) : false;
+  const evDays = e ? eventDays(e) : [];
+  const when = !e
+    ? ""
+    : multi
+      ? `${formatDay(evDays[0].date, { weekday: true })} – ${formatDay(evDays[evDays.length - 1].date, { weekday: true })}`
+      : `${formatDay(e.startsAt.slice(0, 10), { weekday: true })} · ${e.startsAt.slice(11, 16)}${e.endsAt ? `–${e.endsAt.slice(11, 16)}` : ""}`;
   const channels = e ? eventChannels(e) : [];
   const locs = (locationsQ.data?.data ?? []).filter((l) => e?.locationIds?.includes(l.id));
 
@@ -176,6 +188,43 @@ export default function EventDetailPage() {
           />
         )}
 
+        {/* Each day, and how full it is.
+            The figure that matters here is NOT the ticket count: a weekend
+            pass is one ticket standing on two days, so Saturday's places are
+            the Saturday passes AND every pass that covers it. Summing tickets
+            instead would let a festival sell its Saturday twice. */}
+        {e && multi && (
+          <section className="card-surface p-card" aria-labelledby="ev-days">
+            <h2 id="ev-days" className="text-base font-semibold tracking-[-0.4px]">{tr("days.title")}</h2>
+            <ul className="mt-comfortable grid gap-comfortable [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
+              {evDays.map((d, i) => {
+                const f = dayFill(e, d.id);
+                /* Through `tierDays`, not a second hand-rolled copy of the
+                   same rule — two implementations of "which tickets admit this
+                   day" agree until the day one of them is changed. */
+                const admits = e.tiers.filter((t) => tierDays(e, t).some((x) => x.id === d.id));
+                return (
+                  <li key={d.id} className="flex flex-col gap-inline rounded-sm border border-line p-comfortable">
+                    <span className="flex flex-wrap items-baseline justify-between gap-tight">
+                      <span className="text-[13px] font-medium">{dayName(d, i, (n) => tr("days.nth", { n }))}</span>
+                      <span className="text-[12px] text-muted tabular-nums">{formatDay(d.date, { weekday: true })}</span>
+                    </span>
+                    <span className="text-[13px] tabular-nums">{tr("days.soldOf", { sold: f.sold.toLocaleString(), cap: f.cap.toLocaleString() })}</span>
+                    <span className="h-1.5 w-full overflow-hidden rounded-full bg-line">
+                      <span className={cn("block h-full rounded-full", f.pct >= 90 ? "bg-ember-solid" : "bg-success")} style={{ width: `${f.pct}%` }} />
+                    </span>
+                    {/* Named, not counted. "3 ticket types admit this day"
+                        left the one question this panel exists to answer —
+                        does the weekend pass get them in on Sunday? — needing
+                        a trip to the table underneath. */}
+                    <span className="text-[12px] text-muted">{tr("days.admits", { names: admits.map((t) => t.name).join(", ") })}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
         {e && (
           <div className="grid gap-section lg:grid-cols-[minmax(0,1fr)_20rem]">
             {/* Which tickets are selling — the breakdown the list's one bar
@@ -199,6 +248,21 @@ export default function EventDetailPage() {
                         <td className="px-card py-comfortable">
                           <span className="block font-medium">{x.name}</span>
                           <span className="block text-[12px] text-muted sm:hidden tabular-nums">{tc("soldOf", { sold: x.sold.toLocaleString(), cap: x.quantity.toLocaleString() })}</span>
+                          {/* Which days it admits, stated under the name.
+                              Most ticket names say their own day — that is the
+                              rule the page follows too — but an operator may
+                              name one "GA", and a box office reading this
+                              table should not have to guess. */}
+                          {multi && (
+                            <span className="block text-[12px] text-brand-foreground">
+                              {(() => {
+                                const mine = tierDays(e, x);
+                                return mine.length === evDays.length
+                                  ? tr("days.admitsAll")
+                                  : tr("days.admitsOn", { days: mine.map((d) => dayName(d, evDays.findIndex((y) => y.id === d.id), (n) => tr("days.nth", { n }))).join(" + ") });
+                              })()}
+                            </span>
+                          )}
                           {x.salesEnd && <span className="block text-[12px] text-muted">{tr("salesEnd", { date: formatDay(x.salesEnd.slice(0, 10)) })}</span>}
                         </td>
                         <td className="py-comfortable pr-section text-right tabular-nums">{x.price === 0 ? t("free") : formatPriceShort(x.price)}</td>

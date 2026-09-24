@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { categoryById, type CategoryId } from "@/lib/events/catalog";
 import { DEMO_TODAY } from "@/lib/schedule";
 import type { EventContent } from "./EventArchitect";
+import { EventDays } from "./EventDays";
 
 /**
  * An event's facts: what it is called, when it is, where it is, and its cover.
@@ -23,6 +24,8 @@ export function EventDetails({
   content,
   onContent,
   errors,
+  scopedTickets,
+  onUntieTickets,
   subtype,
   onSubtype,
 }: {
@@ -30,6 +33,8 @@ export function EventDetails({
   content: EventContent;
   onContent: (patch: Partial<EventContent>) => void;
   errors: Record<string, string>;
+  scopedTickets?: number;
+  onUntieTickets?: () => void;
   /** The kind of event within its category — a label only, so optional. */
   subtype?: string;
   onSubtype?: (s: string) => void;
@@ -37,6 +42,7 @@ export function EventDetails({
   const t = useTranslations("events");
   const td = useTranslations("catalog.eventDetails");
   const tc = useTranslations("common");
+  const tcv = useTranslations("catalog.eventCanvas");
   const cat = categoryById(categoryId);
   const dateLabels = { previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") };
   const ends = content.endTime !== "";
@@ -101,6 +107,11 @@ export function EventDetails({
             + {td("addEnd")}
           </button>
         )}
+        {/* The same control the creation flow uses, with each day's own hours
+            added — making an event is fast, refining one is here. */}
+        <div className="sm:col-span-2">
+          <EventDays content={content} onContent={onContent} t={tcv} dateLabels={dateLabels} error={errors.days} showTimes scopedTickets={scopedTickets} onUntieTickets={onUntieTickets} />
+        </div>
       </Group>
 
       <Group title={td("where")}>

@@ -113,6 +113,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
     videoUrl: "",
     organiserName: "",
     organiserBlurb: "",
+    days: [],
     lineup: [],
     faq: [],
   });
@@ -182,6 +183,10 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
       subtype: subtype ? t(`subtype.${subtype}`) : t(`category.${categoryId}`),
       startsAt: `${shownDate}T${content.startTime}:00+06:00`,
       endsAt: endsAtOf({ ...content, date: shownDate }),
+      /* One day is not a multi-day event, so it is not written as one — every
+         screen then asks the same question (`spansDays`) and gets the same
+         answer as it did before days existed. */
+      days: content.days.length > 1 ? content.days : undefined,
       venueName: content.venueName.trim() || t("placeholder.venue"),
       venueAddress: content.venueAddress.trim() || undefined,
       description: content.description.trim() || t("placeholder.description"),
@@ -484,6 +489,8 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
               <>
                 <div data-goto="details">
                   <EventCanvas
+                    scopedTickets={tiers.filter((r) => r.dayIds.length > 0).length}
+                    onUntieTickets={() => setTiers((rows) => rows.map((r) => (r.dayIds.length ? { ...r, dayIds: [] } : r)))}
                     categoryId={categoryId}
                     content={content}
                     onContent={patchContent}
@@ -502,7 +509,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
                 <section data-goto="tickets" className="card-surface p-card">
                   <h2 className="text-base font-semibold tracking-[-0.4px]">{tw("title.tickets")}</h2>
                   <p className="mb-section mt-inline text-[13px] text-muted">{t("step.ticketsHelp")}</p>
-                  <TicketTiers rows={tiers} onChange={setTiers} errors={errors} />
+                  <TicketTiers rows={tiers} onChange={setTiers} errors={errors} days={content.days} />
                   <div className="mt-major border-t border-hairline pt-section">
                     <WhereSold
                       counter={counter}

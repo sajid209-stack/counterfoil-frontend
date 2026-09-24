@@ -3,8 +3,10 @@
 import type { CSSProperties } from "react";
 import { useState } from "react";
 import { ArrowRight, Building2, CalendarDays, CalendarPlus, ChevronDown, Clock, Flame, Lightbulb, MapPin, Play, Rocket, Ticket, Users } from "lucide-react";
-import type { EventRecord } from "@/lib/api/events";
-import { eventFromPrice } from "@/lib/api/events";
+import type { EventRecord, EventTier } from "@/lib/api/events";
+import { bundleSaving, dayCountOf, eventDays, eventFromPrice, isBundleTier, runsOverDays, spansDays, tierDays } from "@/lib/api/events";
+import { dayName } from "@/lib/events/days";
+import { formatDay } from "@/lib/format";
 import { categoryById, type EventTheme, type SectionId } from "@/lib/events/catalog";
 import { calendarUrl } from "@/lib/events/calendar";
 import { parseEventVideo } from "@/lib/events/video";
@@ -32,6 +34,14 @@ type Device = "desktop" | "tablet" | "mobile";
 interface Labels {
   lineup: string;
   schedule: string;
+  day: string;
+  /** Un-interpolated, like `remaining`. */
+  runsDays: string;
+  allDays: string;
+  /** Un-interpolated: the template renders in inline styles, so the count is
+   *  substituted at the point of use. Follows `remaining`. */
+  saves: string;
+  admitsOn: string;
   about: string;
   tickets: string;
   venue: string;
@@ -219,6 +229,36 @@ export function EventTemplate({
      different filters rather than the seed keeping two copies in step. */
   const billed = event.lineup.filter((l) => l.kind !== "session");
 
+  /* The days, resolved once and labelled the way a guest reads a day: the
+     operator's own name for it where there is one, its date where there is
+     not, because "Day 2" alone tells nobody when to turn up. */
+  const multiDay = spansDays(event);
+  /* Stating when it happens and drawing a day control are different
+     questions: a tour written on the old free-text shape runs for three days
+     and has no day records to group by. */
+  const overDays = runsOverDays(event);
+  /* A time range across two different days is not a time range. "16:00 –
+     22:00" under a tournament that runs Saturday AND Sunday states the end
+     time of a day the reader is not looking at. A multi-day event says how
+     many days it runs instead, and leaves the clock to each day's own line in
+     the programme, where it is true. */
+  const timeLine = overDays
+    ? labels.runsDays.replace("{count}", String(dayCountOf(event)))
+    : event.endsAt
+      ? `${time(start)} – ${time(new Date(event.endsAt))}`
+      : `${labels.starts} ${time(start)}`;
+  /* The head line of the hero. A buyer got the first date and nothing else
+     while the operator's own record stated the range — the page a ticket is
+     bought from should not know less about when it is than the back office. */
+  const dateLine = overDays && event.endsAt ? `${longDate(start)} – ${longDate(new Date(event.endsAt))}` : longDate(start);
+  const dayList = multiDay
+    ? eventDays(event).map((d, i) => ({
+        id: d.id,
+        label: dayName(d, i, (n) => `${labels.day} ${n}`),
+        date: formatDay(d.date, { weekday: true }),
+      }))
+    : [];
+
   /* What the venue plate draws, decided by what is actually on the page: an
      event that moves gets a route, a bill of fixtures gets a pitch, everything
      else gets a street map. Derived from the content rather than the category,
@@ -312,7 +352,7 @@ export function EventTemplate({
 
   const draw: Record<SectionId, () => React.ReactNode> = {
     hero: () => (
-      <Hero event={event} variant={variant} narrow={narrow} theme={t} labels={labels} pad={pad} upper={upper} fromPrice={fromPrice} />
+      <Hero event={event} variant={variant} narrow={narrow} theme={t} labels={labels} pad={pad} upper={upper} fromPrice={fromPrice} timeLine={timeLine} dateLine={dateLine} />
     ),
     countdown: () => (
       <Countdown to={start} now={now} narrow={narrow} pad={pad} labels={labels} upper={upper} glow={t.glow} />
@@ -754,7 +794,7 @@ export function EventTemplate({
             }}
           >
             <div style={{ minWidth: 0 }}>{hasAbout ? body : null}</div>
-            <TicketPanel event={event} narrow={narrow} labels={labels} theme={t} />
+            <TicketPanel event={event} narrow={narrow} labels={labels} theme={t} dayList={dayList} />
           </div>
         </Section>
       );
@@ -800,7 +840,7 @@ export function EventTemplate({
                same day tabs the agenda has: a three-day tournament read as one
                column of twenty-four rows is the thing tabs exist to prevent.
                With one day it falls through to a plain list. */
-            <Agenda entries={billed} narrow={narrow} labels={labels} upper={upper} />
+            <Agenda entries={billed} narrow={narrow} labels={labels} upper={upper} eventDayList={dayList} />
           )}
         </Section>
       ) : null,
@@ -811,7 +851,7 @@ export function EventTemplate({
               over three of them and its agenda is unreadable as one column of
               forty rows; a single evening has one day and a tab strip with one
               tab in it is a control that decides nothing. */}
-          <Agenda entries={event.lineup} narrow={narrow} labels={labels} upper={upper} />
+          <Agenda entries={event.lineup} narrow={narrow} labels={labels} upper={upper} eventDayList={dayList} />
         </Section>
       ) : null,
     gallery: () =>
@@ -916,7 +956,7 @@ export function EventTemplate({
     tickets: () =>
       absorbed.has("tickets") ? null : (
         <Section id="tickets" index={indexOf("tickets")} eyebrow={labels.tickets} title={labels.tickets}>
-          <TicketTable event={event} narrow={narrow} labels={labels} theme={t} />
+          <TicketTable event={event} narrow={narrow} labels={labels} theme={t} dayList={dayList} />
         </Section>
       ),
     venue: () =>
@@ -929,8 +969,11 @@ export function EventTemplate({
                 {event.venueAddress}
               </p>
             )}
+            {/* "When do I turn up?" is asked here as often as in the hero,
+                and this line used to answer it with the first day's clock —
+                so a two-day tournament told a buyer "Saturday", full stop. */}
             <p style={{ font: "400 15px/1.6 var(--e-body)", color: "var(--e-muted)", margin: "10px 0 0" }}>
-              {longDate(start)} · {time(start)}
+              {dateLine} · {timeLine}
             </p>
           </div>
           {/* A map stands in as a themed plate rather than an embedded tile: a
@@ -1181,6 +1224,8 @@ function Hero({
   pad,
   upper,
   fromPrice,
+  timeLine,
+  dateLine,
 }: {
   event: EventRecord;
   variant: string;
@@ -1190,6 +1235,11 @@ function Hero({
   pad: string;
   upper: boolean;
   fromPrice: number | null;
+  /** When it runs, said once by the page — a clock for one day, a count of
+   *  days for several, never an end time borrowed from a day not named. */
+  timeLine: string;
+  /** The day, or the range of days — never less than the record states. */
+  dateLine: string;
 }) {
   const start = new Date(event.startsAt);
   const cover = event.customisation.coverUrl;
@@ -1204,8 +1254,8 @@ function Hero({
       {[
         {
           icon: CalendarDays,
-          head: longDate(start),
-          sub: event.endsAt ? `${time(start)} \u2013 ${time(new Date(event.endsAt))}` : `${labels.starts} ${time(start)}`,
+          head: dateLine,
+          sub: timeLine,
         },
         { icon: MapPin, head: event.venueName, sub: event.venueAddress },
       ].map(({ icon: Icon, head, sub }) => (
@@ -1236,8 +1286,8 @@ function Hero({
   const meta = (
     <div style={{ display: "flex", flexWrap: "wrap", gap: narrow ? "10px 18px" : "12px 28px", marginTop: narrow ? 18 : 26 }}>
       {[
-        { icon: CalendarDays, text: longDate(start) },
-        { icon: Clock, text: event.endsAt ? `${time(start)} \u2013 ${time(new Date(event.endsAt))}` : `${labels.starts} ${time(start)}` },
+        { icon: CalendarDays, text: dateLine },
+        { icon: Clock, text: timeLine },
         { icon: MapPin, text: event.venueName },
       ].map(({ icon: Icon, text }) => (
         <span key={text} style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
@@ -2297,14 +2347,28 @@ function Agenda({
   narrow,
   labels,
   upper,
+  eventDayList,
 }: {
   entries: EventRecord["lineup"];
   narrow: boolean;
   labels: Labels;
   upper: boolean;
+  /** The event's real days, when it has them. Tabs are built from these rather
+   *  than from whatever strings the entries happen to carry, so a day with
+   *  nothing on it yet still appears — an empty Sunday is information. */
+  eventDayList?: { id: string; label: string }[];
 }) {
-  const days: string[] = [];
-  for (const e of entries) if (e.day && !days.includes(e.day)) days.push(e.day);
+  /* Two shapes, because both are real. A record with days groups by `dayId`;
+     one written before days existed groups by the free text it carries, which
+     is how every such page has always read. */
+  const byId = (eventDayList?.length ?? 0) > 1;
+  const days: string[] = byId
+    ? eventDayList!.map((d) => d.label)
+    : (() => {
+        const out: string[] = [];
+        for (const e of entries) if (e.day && !out.includes(e.day)) out.push(e.day);
+        return out;
+      })();
   const [active, setActive] = useState(0);
 
   if (days.length < 2) return <ScheduleList entries={entries} narrow={narrow} />;
@@ -2355,7 +2419,20 @@ function Agenda({
         })}
       </div>
       <div role="tabpanel" id={`agenda-panel-${active}`} aria-labelledby={`agenda-tab-${active}`}>
-        <ScheduleList entries={entries.filter((e) => e.day === current)} narrow={narrow} />
+        <ScheduleList
+          entries={entries.filter((e) => {
+            if (!byId) return e.day === current;
+            const i = Math.min(active, eventDayList!.length - 1);
+            const id = eventDayList![i].id;
+            if (e.dayId) return e.dayId === id;
+            /* An entry with no day on an event that HAS days is an oversight
+               rather than a decision — the editor gives every new one the day
+               it was added under. Rather than let it vanish from every tab,
+               it sits on the first, where somebody will find and fix it. */
+            return i === 0;
+          })}
+          narrow={narrow}
+        />
       </div>
     </div>
   );
@@ -2484,11 +2561,13 @@ function TicketPanel({
   narrow,
   labels,
   theme,
+  dayList = [],
 }: {
   event: EventRecord;
   narrow: boolean;
   labels: Labels;
   theme: EventTheme;
+  dayList?: { id: string; label: string; date: string }[];
 }) {
   const all = event.tiers.filter((t) => t.quantity > 0);
   const live = all.filter((t) => t.quantity - t.sold > 0);
@@ -2582,6 +2661,7 @@ function TicketPanel({
                   </span>
                   <span style={{ font: "400 13px/1.3 var(--e-body)", color: "var(--e-muted)" }}>{labels.perPerson}</span>
                 </p>
+                <DayScope event={event} tier={t} dayList={dayList} labels={labels} />
                 {t.perks && t.perks.length > 0 && (
                   <ul style={{ listStyle: "none", padding: 0, margin: "9px 0 0", display: "grid", gap: 5 }}>
                     {/* Two, at this width. A rail is not the place for a
@@ -2743,17 +2823,78 @@ function TicketPanel({
  * What a tier BUYS is listed, because a price with nothing beside it makes a
  * buyer work out the difference between two tiers from their names alone.
  */
+/**
+ * What a ticket admits, and what covering several days saves.
+ *
+ * Extracted because there are TWO ticket renderers — the stub grid and the
+ * conference rail — and the saving was written into one of them. The owner's
+ * example is a conference, so the one template that could not state a saving
+ * was the one asked for. A shared component cannot be half-implemented.
+ */
+function DayScope({
+  event,
+  tier,
+  dayList,
+  labels,
+  hideDays = false,
+}: {
+  event: EventRecord;
+  tier: EventTier;
+  dayList: { id: string; label: string; date: string }[];
+  labels: Labels;
+  /** Under a heading that already names the day, saying it again is noise. */
+  hideDays?: boolean;
+}) {
+  if (dayList.length < 2) return null;
+  const mine = tierDays(event, tier);
+  const saving = bundleSaving(event, tier);
+  const spansMore = isBundleTier(event, tier);
+  if (!spansMore && hideDays) return null;
+  const names =
+    mine.length === dayList.length
+      ? labels.allDays
+      : mine
+          .map((d) => dayList.find((x) => x.id === d.id)?.label ?? "")
+          .filter(Boolean)
+          .join(" + ");
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, margin: "8px 0 0" }}>
+      {!hideDays && (
+        <span style={{ font: "500 12px/1.4 var(--e-body)", color: "var(--e-accent-ink)" }}>
+          {labels.admitsOn} {names}
+        </span>
+      )}
+      {saving !== null && (
+        <span
+          style={{
+            font: "600 12px/1 var(--e-body)",
+            color: "var(--e-on-accent)",
+            background: "var(--e-accent)",
+            borderRadius: 999,
+            padding: "5px 10px",
+          }}
+        >
+          {labels.saves.replace("{amount}", formatPriceShort(saving))}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function TicketTable({
   event,
   narrow,
   labels,
   theme,
+  dayList = [],
   structured = false,
 }: {
   event: EventRecord;
   narrow: boolean;
   labels: Labels;
   theme: EventTheme;
+  /** The event's days, resolved and labelled once by the page. */
+  dayList?: { id: string; label: string; date: string }[];
   /** The business layout: three passes side by side, compared rather than
    *  browsed. That is how every conference sells, and it is the one place the
    *  stub grid is the wrong shape — a delegate is choosing BETWEEN passes, not
@@ -2778,8 +2919,51 @@ function TicketTable({
     structured && ranked.length >= 3 && ranked[0].sold >= Math.max(1, ranked[1].sold * 1.25)
       ? ranked[0].id
       : null;
+  /**
+   * Tickets layer UNDER days, never beside them.
+   *
+   * A buyer's first decision on a festival page is WHICH DAY and only then
+   * which access level; a flat list of "Day 1 GA, Day 1 VIP, Day 2 GA, Day 2
+   * VIP, Weekend GA, Weekend VIP" is the same information arranged so nobody
+   * can read it. Each day gets its own group, and everything covering more
+   * than one closes the list — a pass for the lot is the last thing a buyer
+   * considers, once they know what one day costs.
+   *
+   * Grouped only where it earns the headings: one day, or nothing scoped to a
+   * day, and this is the flat grid it has always been.
+   */
+  const grouped =
+    dayList.length > 1 && live.some((t) => (t.dayIds?.length ?? 0) === 1)
+      ? [
+          ...dayList.map((d) => ({
+            key: d.id,
+            heading: d.label,
+            note: d.date,
+            tiers: live.filter((t) => t.dayIds?.length === 1 && t.dayIds[0] === d.id),
+          })),
+          { key: "all", heading: labels.allDays, note: "", tiers: live.filter((t) => (t.dayIds?.length ?? 0) !== 1) },
+        ].filter((g) => g.tiers.length > 0)
+      : [{ key: "all", heading: "", note: "", tiers: live }];
+
   return (
     <div style={{ display: "grid", gap: narrow ? 12 : 16 }}>
+      {grouped.map((group) => (
+      <div key={group.key} style={{ display: "grid", gap: narrow ? 8 : 10 }}>
+      {group.heading && (
+        <p
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            gap: 8,
+            margin: 0,
+            font: `600 ${narrow ? 14 : 15}px/1.3 var(--e-body)`,
+            color: "var(--e-fg)",
+          }}
+        >
+          {group.heading}
+          {group.note && <span style={{ font: `400 ${narrow ? 12 : 13}px/1.3 var(--e-body)`, color: "var(--e-muted)" }}>{group.note}</span>}
+        </p>
+      )}
       <div
         style={{
           display: "grid",
@@ -2787,12 +2971,12 @@ function TicketTable({
           gridTemplateColumns: narrow
             ? "1fr"
             : structured
-              ? `repeat(${Math.min(live.length, 3)}, minmax(0, 1fr))`
+              ? `repeat(${Math.min(group.tiers.length, 3)}, minmax(0, 1fr))`
               : "repeat(2, 1fr)",
           alignItems: "stretch",
         }}
       >
-        {live.map((t, i) => {
+        {group.tiers.map((t, i) => {
           const left = Math.max(0, t.quantity - t.sold);
           const out = left === 0;
           const scarce = !out && left <= Math.max(1, Math.round(t.quantity * 0.15));
@@ -2805,7 +2989,7 @@ function TicketTable({
           /* The last card fills its row rather than leaving a hole beside it.
              Three-up compares plans column by column, so a stretched last card
              there would break the comparison it exists for. */
-          const spans = !structured && !narrow && i === live.length - 1 && live.length % 2 === 1;
+          const spans = !structured && !narrow && i === group.tiers.length - 1 && group.tiers.length % 2 === 1;
           const popular = t.id === popularId;
           return (
             <div
@@ -2885,6 +3069,7 @@ function TicketTable({
                     <Badge tone="accent">{labels.sellingFast}</Badge>
                   ) : null}
                 </div>
+                <DayScope event={event} tier={t} dayList={dayList} labels={labels} hideDays={grouped.length > 1} />
                 {t.description && (
                   <p style={{ font: "400 13px/1.6 var(--e-body)", color: "var(--e-muted)", margin: "8px 0 0" }}>{t.description}</p>
                 )}
@@ -2980,6 +3165,8 @@ function TicketTable({
           );
         })}
       </div>
+      </div>
+      ))}
 
       {gone.length > 0 && (
         <div style={{ display: "grid", gap: 0 }}>

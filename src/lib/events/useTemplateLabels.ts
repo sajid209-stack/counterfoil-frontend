@@ -22,6 +22,11 @@ export function useTemplateLabels(categoryId: CategoryId | null) {
     () => ({
       lineup: categoryId ? t(`section.${categoryById(categoryId).lineupKey}`) : t("section.lineup"),
       schedule: t("section.schedule"),
+      day: t("tpl.day"),
+      runsDays: t("tpl.runsDays", { count: "{count}" }),
+      allDays: t("tpl.allDays"),
+      saves: t("tpl.saves", { amount: "{amount}" }),
+      admitsOn: t("tpl.admitsOn"),
       about: t("section.about"),
       tickets: t("section.tickets"),
       venue: t("section.venue"),

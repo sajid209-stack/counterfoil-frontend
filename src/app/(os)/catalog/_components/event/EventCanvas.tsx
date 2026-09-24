@@ -8,6 +8,7 @@ import { cn } from "@/lib/cn";
 import { ACCENT_CHOICES, CATEGORIES, categoryById, FONT_CHOICES, type CategoryId } from "@/lib/events/catalog";
 import { templateFontVars } from "@/lib/events/fonts";
 import { DEMO_TODAY } from "@/lib/schedule";
+import { EventDays } from "./EventDays";
 import type { EventContent } from "./EventArchitect";
 
 /**
@@ -35,6 +36,8 @@ export function EventCanvas({
   content,
   onContent,
   errors,
+  scopedTickets,
+  onUntieTickets,
   accent,
   displayFont,
   onFont,
@@ -48,6 +51,10 @@ export function EventCanvas({
   content: EventContent;
   onContent: (patch: Partial<EventContent>) => void;
   errors: Record<string, string>;
+  /** How many tickets are tied to a day, and how to untie them — going back
+   *  to a single day must not leave them pointing at days that are gone. */
+  scopedTickets?: number;
+  onUntieTickets?: () => void;
   accent: string;
   displayFont: string;
   /** The face the title is set in — changed on the title itself. */
@@ -252,6 +259,7 @@ export function EventCanvas({
             />
           </Fact>
           </div>
+          <EventDays content={content} onContent={onContent} t={t} dateLabels={dateLabels} error={errors.days} scopedTickets={scopedTickets} onUntieTickets={onUntieTickets} />
         </div>
 
         {/* The colour the page is drawn from. It used to sit ON the cover,

@@ -168,7 +168,18 @@
     "summaryEnds": "Stops selling {date}",
     "keepOne": "An event needs at least one ticket type",
     "potentialUnpriced": "Add prices to see what it's worth",
-    "potentialFree": "Free — nothing to collect"
+    "potentialFree": "Free — nothing to collect",
+    "days": {
+      "admits": "Admits",
+      "nth": "Day {n}",
+      "dayTicket": "{day} pass",
+      "allTicket": "All {count} days",
+      "addPerDay": "A pass for each day",
+      "addBundle": "A pass for all {count} days",
+      "saves": "Save {amount}",
+      "dayNamed": "{name} — {day}"
+    },
+    "potentialNoCapacity": "Set how many to see what it’s worth"
   },
   "error": {
     "title": "Give the event a name.",
@@ -299,7 +310,10 @@
     "editDetails": "Edit details",
     "sample": "Sample",
     "sampleNote": "This is sample content for this kind of event. Edit it, hide the section, or keep it as written.",
-    "keepSample": "Keep as written"
+    "keepSample": "Keep as written",
+    "dayTabs": "Which day",
+    "dayNth": "Day {n}",
+    "dayEmpty": "Nothing on this day yet. Anything you add here goes on it."
   },
   "tpl": {
     "orderSummary": "Order summary",
@@ -330,7 +344,12 @@
     "ofCapacity": "of",
     "theRoute": "The route",
     "departs": "Departs",
-    "returns": "Returns"
+    "returns": "Returns",
+    "day": "Day",
+    "allDays": "All days",
+    "saves": "Save {amount}",
+    "admitsOn": "Admits",
+    "runsDays": "Runs {count} days"
   },
   "defaults": {
     "entertainment": {

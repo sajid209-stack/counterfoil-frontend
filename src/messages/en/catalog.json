@@ -37,7 +37,8 @@
     "from": "From",
     "selling": "Selling",
     "state": "State",
-    "actions": "Actions"
+    "actions": "Actions",
+    "runsDays": "{count} days"
   },
   "noPrice": "No price",
   "soldOut": "Sold out",
@@ -753,7 +754,15 @@
     "venue": "Venue",
     "soldAt": "Sold",
     "page": "Page address",
-    "notLive": "not live yet"
+    "notLive": "not live yet",
+    "days": {
+      "title": "Each day",
+      "nth": "Day {n}",
+      "soldOf": "{sold} of {cap} tickets",
+      "admits": "Admits: {names}",
+      "admitsAll": "Admits every day",
+      "admitsOn": "Admits {days}"
+    }
   },
   "eventCanvas": {
     "namePlaceholder": "Name your event",
@@ -801,6 +810,18 @@
       "fraunces": "Fraunces",
       "inter": "Inter",
       "mono": "DM Mono"
+    },
+    "days": {
+      "add": "+ Runs for more than one day",
+      "runsFor": "Runs {count} days",
+      "lastDay": "Last day",
+      "remove": "Just one day",
+      "namePlaceholder": "Day {n}",
+      "nameLabel": "Name for day {n}",
+      "help": "Each day gets its own programme and can have its own ticket price. Leave a name blank and it stays “Day 1”, “Day 2”.",
+      "helpTimes": "Set each day’s own hours where they differ. Left blank, the event’s own times apply.",
+      "dropTitle": "Go back to a single day?",
+      "dropBody": "{tickets} tickets and {entries} programme entries are tied to a particular day. They will stop being tied to one, and the days themselves go. Nothing already sold is affected."
     }
   },
   "extras": {

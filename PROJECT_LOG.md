@@ -11501,3 +11501,253 @@ Bottled water" before the sheet's own CTA.
 - **A barcode has nowhere to go.** The wall's search matches an item's name and
   SKU, but there is no scan-to-sell at the counter — the gate's scanner is
   wired to tickets. That is the obvious next piece for a venue with a real shop.
+
+## Events that run more than one day (2026-09-24)
+
+Owner: *"there will be some events like two and more days, individual day have
+different different line ups or different different segment, and pricing might
+be different, like day 1- 500/-, day 2- 600 and day (1+2)- 900/-"* — researched,
+improved and iterated, and *"user friendly and hassle less"*.
+
+The seed already half-expressed the case in prose: the Chattogram Turf Cup sold
+a "Day pass" at ৳300 and a "Weekend pass" at ৳500, where nothing bound either
+to a day, nothing said *which* day, and **৳500 against two ৳300 days was a
+discount the model could not see**.
+
+### What the research settled, and why each rule is load-bearing
+
+1. **The date belongs IN the ticket, not beside it.** *"If attendees cannot
+   tell which date they bought by reading the ticket, neither can the person
+   scanning it."* So a day ticket is named for its day everywhere it appears —
+   including by the helper that mints them, which appends the day to whatever
+   the operator had already typed rather than replacing it.
+2. **Tiers layer UNDER days, not beside them.** The buyer decides *which day*
+   first and *which access level* second. A flat list of six — Day1 GA, Day1
+   VIP, Day2 GA, Day2 VIP, Both GA, Both VIP — is the same information arranged
+   so nobody can read it. The public page groups by day and closes with what
+   covers them all.
+3. **A day's capacity is drawn down by every ticket that admits it** — what
+   Humanitix calls a *grouped capacity*. A weekend pass takes a place on
+   Saturday **and** on Sunday. Any model where the bundle only decrements its
+   own pool oversells every day it covers, and that is the single correctness
+   decision this feature turns on. It is the same reasoning inventory's one
+   count follows: a figure that is sometimes wrong is worse than one missing.
+4. And the organiser pattern every conference tool has converged on:
+   **day tabs above the programme, each day carrying its own sessions.**
+
+### The model
+
+`EventDay` is new on the contract for the backend lane, with
+`EventTier.dayIds`, `EventLineupEntry.dayId` and `EventRecord.days`.
+
+**Absent means what it always meant.** A record with no `days`, a ticket with
+no `dayIds` and an entry with no `dayId` read exactly as they did before any of
+this existed — a one-day event, a ticket admitting the whole of it, a single
+track. Nothing was migrated and nothing needs to be: `eventDays()` hands a
+one-day event the single day it implies, so no caller has to branch.
+
+Derived, never stored: `spansDays` (the one question every screen asks before
+drawing a day control), `tierDays`, `isBundleTier`, **`dayFill`** (the grouped
+capacity) and **`bundleSaving`** — which compares against the cheapest ticket
+admitting **only** that day, because that is the alternative a buyer actually
+has, and returns null rather than zero when there is nothing to compare, when
+the sum is not cheaper, or when the ticket is not a bundle. A page claiming a
+saving of ৳0, or claiming one for a pass that costs more than its parts, is
+worse than one that says nothing.
+
+The free-text `lineup[].day` stays and is still read as the fallback, so the
+three-day Sundarbans tour — still on that shape, deliberately, as proof — keeps
+rendering as it always has.
+
+### Hassle-less, stated as a rule
+
+**None of the day machinery exists until it is wanted.** A one-night gig sees
+one line of text: *"+ Runs for more than one day"*. Pressed, it sets a last day
+one on and **the range generates the days**, because the range IS the day list
+and asking an operator to type an end date and then add "Day 2" by hand is
+asking for the same fact twice. Nudging the last day keeps everything already
+said about a date that survives.
+
+From a blank event to *day 1 ৳500 · day 2 ৳600 · both ৳900* is: turn days on,
+price the first row, **"+ A pass for each day"**, **"+ A pass for all 2 days"**,
+type the bundle price. The two helpers do the tedious half:
+
+- **A pass for each day** *consumes* the row already on screen rather than
+  sitting beside it. An operator who typed a price and then asked for a pass
+  per day meant that price — and leaving the original behind would quietly turn
+  it into a pass admitting everything: an accidental bundle nobody chose, which
+  then hides the button for the real one. Found by driving it, not by reading it.
+- **A pass for all N days** arrives priced at the sum, so lowering it is what
+  makes the saving appear — stated live, as a pill, by the same rule the public
+  page uses.
+
+The programme gets **day tabs**, and adding an act while a day is open files it
+on that day, so there is no day field to remember and no way to leave one
+blank. Where there are real days the old free-text day field is gone: the tab
+is the answer, and a second place to say it could only disagree with the first.
+Per-day hours exist on the record but are asked for only in the **editor** —
+making an event is fast, refining one is where the hours belong.
+
+### Four things that assumed one date, and lied about it
+
+- **The hero stated a time range across two different days.** "16:00 – 22:00"
+  under a tournament running Saturday and Sunday is the end time of a day the
+  reader is not looking at. A multi-day event now says how many days it runs
+  and leaves the clock to each day's own line in the programme, where it is true.
+- **The record page did the same** — "Sat 24 Oct · 16:00–22:00" — and now
+  states the range of days, with the per-day panel below it carrying the hours.
+- **The catalog list** printed the first day's clock under the date; it says
+  how long the event runs.
+- **`duplicateEvent` would have lost the days** (it is written out field by
+  field on purpose), and worse, a copy's tickets and fixtures would have pointed
+  at the **original's** day ids — which still resolve, so nothing would look
+  wrong until the two drifted. Days are re-idded with everything that points at
+  them. `extras`, already missing from that list before this change, went in
+  with them.
+
+### And one my own test caught
+
+The validator checked a ticket's day references only when `days` was in the
+same patch — so a save that touched only the tickets was never checked, and the
+one rule that keeps a ticket from admitting a day the event does not have was
+enforced on the one save that happened to carry both and nowhere else. It now
+checks against the record's existing days. The unit run found it by refusing to
+be refused.
+
+### Verified
+
+- **The model: 42 unit checks** through `jiti`. A one-day event still has one
+  day and no bundle can claim a saving on it; a record on the old free-text
+  shape is untouched; the tournament's two days are in order and named; finals
+  day is dearer than group day; the weekend pass saves exactly the parts less
+  its price and the team entry — dearer than both days — claims nothing;
+  **Saturday's capacity counts the weekend passes and the team entries, not
+  just the Saturday passes**; the two days differ because the day passes do; a
+  ticket admitting a day the event does not have is refused, as are days out of
+  order and a day with no date; and a duplicate gets its own days with its
+  tickets and fixtures repointed at them.
+- **Making one: 19 checks**, driven. A fresh event offers to run longer and
+  shows no day list, no "Admits" row and no helpers; turning it on generates
+  two days; every ticket row then asks what it admits and an unscoped one shows
+  every day lit; "a pass for each day" consumes the row on screen and names
+  each for its day; the bundle arrives at the sum claiming nothing, and
+  lowering it to ৳500 states **saves ৳100** live; turning days back off removes
+  every day control.
+- **The programme: 8 checks** on a real two-day conference — a tab per day with
+  its own count, each showing only its own sessions, the free-text field gone,
+  and an entry added under Day 2 staying on Day 2.
+- **The public page: 7 checks** — tickets grouped under *Group stage · Sat 24
+  Oct* and *Knockouts · Sun 25 Oct*, closing with *All days*; the weekend pass
+  carrying **Save ৳150**; the fixtures split into day tabs; and the hero saying
+  *Runs 2 days* rather than a cross-day clock.
+- **The record: 6 checks** — the day range, the per-day panel with its grouped
+  capacity (622 of 1,216 and 568 of 1,216, different because the day passes
+  are), and what draws each day down.
+- **Nothing else moved: 6 checks** across a one-night gig, an all-night club
+  night and the free-text tour — no day panel, no grouping, no console error.
+- At 390 and 1440, light, dark and Bangla: no sideways scroll, nothing hidden
+  inside `main`, nothing under 12px, no target under 44px, **0 missing-message
+  warnings**. The two sub-44px fields on the creation canvas are its own inline
+  subtitle and venue inputs, **measured the same on production**.
+- **The review's own findings, as 18 further checks**: the conference page
+  states a saving; no saving is claimed against a sold-out early bird or a
+  ticket dearer than its own claim; the calendar link is not one long block;
+  the page states the date range; a three-day tour on the old shape says how
+  long it runs and still grows no day controls; an arrow key carries focus with
+  the selection and leaves one tab stop; going back to one day asks first, says
+  what it will untie, changes nothing when cancelled, and afterwards leaves no
+  ticket pointing at a day that is gone and no stale saving on screen.
+- Standing harnesses hold: catalog **95/95**, inventory **39/39**, holds
+  **37/37**, reports **48/48**, top cards **84/84**.
+- `tsc --noEmit`, `npm run build` and `eslint` clean on every file touched.
+  i18n parity **0 missing / 0 extra** across 34 namespaces, with every new key
+  authored in en and bn.
+
+### Open
+
+- **Events still do not reach the till or the gate**, so **how a two-day pass is
+  admitted twice is not decided here.** The honest options are one ticket per
+  day admitted, or one ticket with a per-day redemption record, and neither can
+  be chosen until there is a gate to choose it for. Naming it rather than
+  half-building it.
+- **There is still no public `/e/<slug>` route** — the page is real and is
+  rendered in the record's preview, but nothing serves it. Carried forward.
+- **A ticket scoped to no day and one scoped to every day behave identically**
+  today and differ only when a day is added later: the unscoped one follows,
+  the explicit one does not. That distinction is in the model and is not
+  surfaced, because the chips already show what is admitted and a phrase
+  beside them repeating it read as a stray word.
+- **`daysForRange` caps at 30 days.** A range typed a year out instead of a day
+  should not mint three hundred rows before anyone notices; a genuinely longer
+  season would need a different control than a day list.
+- The six-week arts exhibition is deliberately left as a single-day record: it
+  is an opening time, not six weeks of programmes, and generating forty-three
+  days for it would be the cap doing damage rather than preventing it.
+
+Sources: [Eventbrite — multi-day event ticketing](https://www.eventbrite.com/event-ticketing/multi-day-events/) ·
+[Ticket Fairy — single-day vs multi-day festival formats](https://www.ticketfairy.com/blog/case-study-single-day-vs-multi-day-festival-formats) ·
+[Humanitix — grouped capacity across ticket types](https://help.humanitix.com/en/articles/8905674-limit-sales-on-a-group-of-tickets-using-a-grouped-capacity) ·
+[Hi.Events — festival ticketing](https://hi.events/festival-ticketing) ·
+[Sessionboard — multi-track agenda building](https://www.sessionboard.com/capabilities/ai-agenda) ·
+[Accelevents — event agenda builder](https://www.accelevents.com/platform/event-agenda-builder)
+
+### The review round, and the seven things it found
+
+An independent principal-designer pass **ran it** — thirty-odd probes across
+the creation flow, both seeded two-day events, the editor, the list, three
+single-day events, at 390px, in dark and in Bangla — and scored the first build
+**6.5**. It re-derived every figure by hand (17/17 reconciled) and confirmed the
+two claims that mattered: *hassle-less* is true at six interactions, three of
+which are the three irreducible prices, and the grouped capacity is right.
+
+What it found, all fixed:
+
+1. **"Just one day" silently destroyed every ticket's day scope.** It emptied
+   `days` without touching `tiers[].dayIds` or `lineup[].dayId`, which kept
+   pointing at ids that no longer existed — so a ticket admitted a day that was
+   gone, the page still computed a saving against it, and turning days back on
+   minted fresh ids nothing matched. Observed on a conference with **822
+   tickets sold**: twelve chips reading "admits nothing" beside three pills
+   still claiming "saves ৳6,000". It now asks first, names what it is about to
+   untie, and clears the references **with** the days.
+2. **The conference page never showed the saving at all.** There are two ticket
+   renderers — the stub grid and the About rail — and the pill had been written
+   into one of them. The owner's example is a conference, so the one template
+   that could not state a saving was the one asked for. It is a shared
+   `DayScope` component now, which cannot be half-implemented.
+3. **A saving was claimed against tickets nobody could buy** — an early bird
+   200/200 sold and past its sales window still counted as the baseline. The
+   comparison now only considers a ticket somebody could actually buy instead.
+4. **And against tickets nobody would buy.** A ৳1,000 student pass advertised
+   **"saves ৳6,000"** — six times its own price — because the baseline was a
+   full-price day ticket a student was never going to choose. There is no
+   concession field to read, so the signal used is the size of the claim: **a
+   saving larger than the ticket's own price means two different products are
+   being compared**, and the honest answer is to say nothing.
+5. **"Add to calendar" made one continuous 32-hour block**, sitting a
+   conference across the night between its two days. A multi-day event goes in
+   as all-day over the right dates, which is the true shape.
+6. **The public venue block still said "Saturday, 24 October · 16:00"** about a
+   two-day tournament — the same cross-day lie as the hero, one section down.
+7. **"places" counted a team of eleven as one.** `EventTier` has no headcount,
+   unlike a booking's `PriceTier.admits`, so the figure counts tickets — and
+   now says "tickets". Against a venue's fire limit the old wording was
+   dangerous. A real headcount is recorded as open.
+
+Plus: day tabs moved selection without moving focus (a screen-reader user heard
+nothing change and Tab went back *into* the tablist); the ticket table's price
+and quantity fields had **no accessible name at all**, which the new day inputs
+beside them did have; the destructive control was drawn as a caption; the
+per-day panel counted ticket types where it should name them; the helper minted
+"General admission — Day 1" beside "Day 2 pass"; the wizard said "saves" while
+the page said "Save"; the Bangla help text promised "দিন ১" while the field
+beneath rendered "দিন 1"; and a three-day tour on the old free-text shape was
+shown in the list as a one-day event. All fixed. `runsOverDays` is the result of
+that last one: **stating when an event happens and drawing a day control are
+different questions**, and only the second needs day records.
+
+One finding is recorded rather than fixed: in the public grid a day group with
+a single ticket spans the full width while the two-ticket "All days" group sits
+two-across, so the bundle has less visual weight than the cheapest ticket.
+Every fix for it either leaves a hole in the grid or reorders the groups against
+the research, so it is named here instead.

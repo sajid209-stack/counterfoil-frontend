@@ -56,7 +56,9 @@ import {
   createProduct,
   deleteEvent,
   duplicateEvent,
+  dayCountOf,
   eventRevenue,
+  runsOverDays,
   listBookings,
   listCategories,
   listEvents,
@@ -681,9 +683,14 @@ function Catalog() {
       width: "8rem",
       render: (i) =>
         i.event ? (
+          /* A multi-day event states how long it runs rather than the clock on
+             its first day — the time under a two-day tournament said nothing
+             about the second. */
           <span className="flex flex-col whitespace-nowrap text-[13px]">
             <span>{dateOf(i.event.startsAt)}</span>
-            <span className="text-[12px] text-muted">{timeOf(i.event.startsAt)}</span>
+            <span className="text-[12px] text-muted">
+              {runsOverDays(i.event) ? t("col.runsDays", { count: dayCountOf(i.event) }) : timeOf(i.event.startsAt)}
+            </span>
           </span>
         ) : (
           <span className="flex min-w-0 flex-col text-[13px]">
