@@ -11684,6 +11684,32 @@ be refused.
   is an opening time, not six weeks of programmes, and generating forty-three
   days for it would be the cap doing damage rather than preventing it.
 
+### Found while verifying, pre-existing, and bigger than it looks
+
+Production logs a **React 418 hydration mismatch on every `/catalog/new/event`
+load** — and it is not this change's. Attributing it took four builds and the
+answer is the method, not the verdict:
+
+| build | server clock | result |
+|---|---|---|
+| this commit, on Vercel | UTC | mismatch |
+| this commit, local | +06:00 | clean |
+| previous commit, local | +06:00 | clean |
+| **previous commit, local** | **UTC** | **mismatch** |
+
+So the first three readings would have convicted this change. **A local
+production build only reproduces Vercel when it runs in Vercel's timezone** —
+worth remembering, because every "cannot reproduce locally" on this project
+will have the same shape.
+
+The cause is worth more attention than the warning: event times are ISO strings
+carrying `+06:00` and are formatted in the **runtime's** zone, so the server
+renders 13:00 and a Dhaka browser renders 19:00. The hydration warning is the
+harmless half. The real half is that **an event page shows the wrong time to
+anyone not in Bangladesh** — the date formatting is pinned (`en-GB`) but the
+zone is not, so this is a whole-app decision about formatting in the operator's
+timezone rather than the reader's, and it belongs in its own change.
+
 Sources: [Eventbrite — multi-day event ticketing](https://www.eventbrite.com/event-ticketing/multi-day-events/) ·
 [Ticket Fairy — single-day vs multi-day festival formats](https://www.ticketfairy.com/blog/case-study-single-day-vs-multi-day-festival-formats) ·
 [Humanitix — grouped capacity across ticket types](https://help.humanitix.com/en/articles/8905674-limit-sales-on-a-group-of-tickets-using-a-grouped-capacity) ·
