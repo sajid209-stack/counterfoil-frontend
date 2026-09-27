@@ -355,12 +355,27 @@ export function packLanes(events: CalEvent[]): { event: CalEvent; lane: number; 
  * this" signal, used the same way on out-of-service lanes and sold-out slots,
  * and it is texture over the fill rather than instead of it.
  */
+/**
+ * Tone → a pale fill, a hairline, and a 3px stripe down the leading edge.
+ *
+ * The stripe is what survives at any size. A 30-minute booking in a shared
+ * hour is 20px of wash, which at this weight is nearly the card it sits on —
+ * the stripe is full-strength colour, always 3px, and is the thing the eye
+ * catches down a column of them. It is also what lets the fill stay this
+ * pale, which is what keeps the text on it readable.
+ *
+ * The fills stay as the `-wash` tokens rather than becoming a literal 10%
+ * alpha: these are 700/800-level colours, and 10% of a dark green over paper
+ * is a grey-green rather than a pastel, which is why those tokens were
+ * written out per theme in the first place. They ARE the 10% — measured, not
+ * computed.
+ */
 export const TONE_CLASS: Record<EventTone, string> = {
-  booked: "bg-ember-wash border-ember/25 text-fg",
-  arrived: "bg-success-wash border-success/25 text-fg",
-  noshow: "bg-muted-wash border-line text-muted line-through",
-  held: "border-warning/35 text-fg bg-warning-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
-  locked: "border-danger/35 text-fg bg-danger-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
+  booked: "bg-ember-wash border-ember/25 border-l-[3px] border-l-ember-solid text-fg",
+  arrived: "bg-success-wash border-success/25 border-l-[3px] border-l-success text-fg",
+  noshow: "bg-muted-wash border-line border-l-[3px] border-l-strong text-muted line-through",
+  held: "border-warning/35 border-l-[3px] border-l-warning text-fg bg-warning-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
+  locked: "border-danger/35 border-l-[3px] border-l-danger-solid text-fg bg-danger-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
 };
 
 /**
@@ -376,11 +391,11 @@ export const TONE_CLASS: Record<EventTone, string> = {
  * never a letterform, which is the rule `ember` has carried since September.
  */
 export const CATEGORY_CLASS: Record<CategoryColor, string> = {
-  orange: "bg-cat-orange/14 border-cat-orange/45 text-fg",
-  amber: "bg-cat-amber/16 border-cat-amber/50 text-fg",
-  green: "bg-cat-green/14 border-cat-green/45 text-fg",
-  blue: "bg-cat-blue/14 border-cat-blue/45 text-fg",
-  rose: "bg-cat-rose/14 border-cat-rose/45 text-fg",
+  orange: "bg-cat-orange/10 border-cat-orange/40 border-l-[3px] border-l-cat-orange text-fg",
+  amber: "bg-cat-amber/10 border-cat-amber/45 border-l-[3px] border-l-cat-amber text-fg",
+  green: "bg-cat-green/10 border-cat-green/40 border-l-[3px] border-l-cat-green text-fg",
+  blue: "bg-cat-blue/10 border-cat-blue/40 border-l-[3px] border-l-cat-blue text-fg",
+  rose: "bg-cat-rose/10 border-cat-rose/40 border-l-[3px] border-l-cat-rose text-fg",
 };
 
 export const CATEGORY_DOT: Record<CategoryColor, string> = {

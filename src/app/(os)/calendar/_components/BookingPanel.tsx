@@ -68,6 +68,12 @@ export interface BookingRequest {
   lane?: { laneId: string; time: string; span?: number; resourceId?: string; productId?: string };
   /** A length dragged across on the grid, when it was more than one slot. */
   minutes?: number;
+  /** Where the drag actually started, to the quarter hour. The grid snaps to
+   *  15 minutes, which is finer than anything here is sold in — so this is
+   *  what the DRAFT is drawn at, and the panel goes on offering the starts
+   *  that can really be sold. `hour` stays what it always was, because that
+   *  is the hour whose options are listed. */
+  startMinutes?: number;
   /** Where to float from. Null opens it at the head of the page. */
   anchor: DOMRect | null;
 }

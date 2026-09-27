@@ -12228,3 +12228,163 @@ diagnosing a till that is working.
 - The deck, the print pages and the event templates are deliberately excluded
   from the conversion: a slide is laid out in real pixels and a printed ticket
   is a physical object.
+
+
+## The calendar cluster — the owner's items 6 and 10 (2026-09-27)
+
+Two of the twenty points, taken together because they are the same screen.
+Measured first, at five widths, because a grid's problems are quantities.
+
+### 6 — "the calendar filter overlaps"
+
+Two faults, and neither was the filter panel itself.
+
+**Between 768 and 1279 the week scrolled sideways inside its own card.** The
+grid carried `min-w-[52rem]` — 832px of content in a **486px** card at 768 —
+so the week drew **Monday to Thursday and hid the other three days**, with no
+affordance saying they were there. The document never scrolled sideways, so
+every standing overflow check passed while three sevenths of the week was
+gone. At 1024 it was 832 in 742: Sunday missing.
+
+The min-width is gone, so seven columns share whatever the card has. Below the
+width where a day column is worth reading the **compact week** takes over —
+its own breakpoint, `lg`, measured rather than assumed: seven columns plus the
+hour gutter need about 620px of card, which is 1024 of viewport once the rail
+and the page gutters are off. The chrome around it still branches at `md`.
+Measured after: **no horizontal scroller at 768, 900, 1024, 1280 or 1440**, and
+either all seven days or the compact week at every one.
+
+**On a phone, opening the filters hid the thing being filtered.** The panel was
+inline, so it pushed the page down: the calendar card's first pixel went from
+y=590 to **y=806**, against a tab bar whose top edge is **787**. Opening a
+filter put the calendar entirely off the screen and its first row behind the
+bar.
+
+It is a **sheet** below `md` now — the pattern Settings already uses for its
+section list — over the page rather than in front of it, with the page dimmed,
+Done, Escape, and the focus handed back to the button that opened it. Measured
+after: **590 → 606**, and the calendar's top is still above the bar.
+
+### 10 — the week view, clause by clause
+
+| | was | is |
+|---|---|---|
+| an hour | 52px | **60px** |
+| the clock | a 1px `info` hairline | a **2px red** line with a red knob |
+| a block | 1px border all round | **3px stripe** down the leading edge |
+| side by side | capped at 3, the rest a "+N" | **every one**, sharing the column |
+| the all-day row | scrolled away with the grid | **pinned with the headers** |
+| drag on empty time | snapped to the hour | **snapped to 15 minutes** |
+| drag a booking | — | **moves it**, and says where it will land |
+
+- **Red, against the note that used to sit in this file.** The September pass
+  chose `info` deliberately, because the legend already spends danger on
+  "session closed" and ember on "booked". The owner asked for red and they are
+  right about the recognition: red is what every calendar anyone has used draws
+  the clock in. The line carries no label, it is the only thing on the grid
+  that moves, and the collision is with a legend chip rather than with another
+  line. The old reasoning is left in the code beside the new decision.
+- **The stripe is what survives at any size.** A 30-minute booking sharing its
+  hour is 20px of pale wash, which at this weight is nearly the card it sits
+  on. The stripe is full-strength colour and always 3px, and it is also what
+  lets the fill stay pale enough for the text on it to read.
+- **The fills stay as the `-wash` tokens rather than becoming a literal 10%.**
+  Those tokens exist because 10% of a 700-level green over paper is a
+  grey-green rather than a pastel — the reason is recorded in this file from
+  the day they were written. They **are** the 10%, tuned per theme. Where alpha
+  genuinely is the mechanism — the category colours — it went 14/16% → **10%**.
+- **No cap, and no "+N".** A "+N" answers *how many* and hides *which*, on the
+  one screen whose whole job is to say what is on. A busy hour is narrow now,
+  and narrow is legible in a way absent is not: every block keeps its whole
+  accessible name, its hover card and its own panel.
+- **The headers and the all-day row pin as one block**, which is also why the
+  second one does not have to measure the first — the fix that avoids a
+  `set-state-in-effect` for a height.
+
+### The two gestures
+
+**A drag on empty time snaps to the quarter hour**, which is finer than this
+venue sells in, and that is the point: the gesture says what was meant, and the
+panel beside it goes on offering the starts that can really be sold. Snapped to
+the hour instead, a 90-minute intention could not be expressed at all. A press
+that never moves is still "this hour", because that is what a click has always
+meant here.
+
+**A booking moves by dragging its body**, and what is drawn while it moves is
+**where it would land** rather than where the pointer is. The page supplies the
+snap: a booking sold in departures follows its own departures, so the label
+under the cursor is the time the booking will actually have. A lane keeps the
+quarter hour.
+
+What may move and whether it lands are decided where the store is:
+
+- **A hold does not move.** It is released from its own panel, which is a
+  different act with a different consequence. Nor does a stack — that is
+  several bookings wearing one block — nor a locked booking, because
+  `bookingEditable` is the one question every edit path in this app asks and it
+  is asked here too.
+- **The drop is checked, not hoped.** A resource has to be free for the whole
+  span; a departure has to have room for the party. A refusal says which
+  ("Busy at 18:00, so nothing moved"), and **Undo** is offered on every move —
+  a reschedule is reversible, so it is offered rather than confirmed.
+
+**One API change, for the backend lane**: `ownerBusy` and `isResourceFreeFor`
+take an optional booking to leave out of the reckoning. Without it, nudging a
+booking half an hour down its own lane collides with **where it already is**
+and the move is refused for no reason. The tills never pass it, so nothing
+about selling changed.
+
+### Found by rendering it
+
+**The hover card was drawn over the drop zone.** Carrying a block put a peek
+card about that very block on screen, covering the place it was going. The peek
+is cleared when a drag starts and no new one opens while a block is in the air.
+
+### Verified
+
+- **The week grid, 33 checks**: 60px hours, the red 2px clock, the 3px stripe,
+  no "+N", the pinned header and the pinned all-day strip, opening at the day
+  rather than at midnight, no sideways scroll, and every block's text clearing
+  4.5:1 **in both colour modes**. Then driven: a drag on empty time draws a
+  live range that grows with the pointer and is snapped to the quarter hour; a
+  booking is picked up, shows where it would land, follows the pointer rather
+  than the drop, dims where it came from, lands at its new time, and **Undo
+  puts it back**; and a hold cannot be picked up at all.
+- **The filter, 26 checks**: no sideways scroll and nothing swallowed by `main`
+  at 768, 900, 1024, 1280 and 1440, with either seven days or the compact week
+  at each; on a phone the filters open as a sheet that takes the focus, the
+  calendar stays on screen and above the tab bar, **a dropdown inside the sheet
+  still opens and chooses** — the case item 7's portal had to get right — and
+  Escape closes it and hands the focus back.
+- **Dark and Bangla, 15 checks** across three combinations: seven days, the
+  stripe, the same red clock in both themes, every block readable, and no
+  missing-message warnings.
+- Standing harnesses hold: **holds-e2e 37/37** (the quick-create path, whose
+  signature this change altered), **dd1 58/58**, **topcards 84/84**.
+- `tsc --noEmit`, `npm run build` and `eslint` clean on every file touched.
+  i18n parity **0 missing / 0 extra**, five keys authored in en and bn.
+
+### Three harness corrections, all mine
+
+Two probes picked a block and an empty cell that were **behind the pinned
+header** — on screen, and with something else painted on them, so a press went
+to the header instead. Both ask `elementFromPoint` what is actually under the
+point they are about to press now. The third named a dropdown by the text it
+shows rather than by its accessible name, which is the current value rather
+than the label; the app's own `pick()` helper exists for that.
+
+### Open
+
+- **Only the week moves.** Item 10 named the week view, so the day grid keeps
+  click-to-create and no move gesture. Its geometry is its own (one day, many
+  lanes), so this is a port rather than a prop.
+- **Touch has no move gesture**, deliberately: on a touch screen this is a
+  scroll, and a booking that moved because somebody scrolled the week is the
+  worst outcome available here. A long-press to pick up is the honest touch
+  equivalent and is its own change.
+- **At 1024 a day column is about 100px**, so a busy hour drawn without a cap
+  gives narrow blocks. That is the trade the owner asked for, and the day view
+  is the escape.
+- **A phone still spends 590px before the calendar** — the page title, the New
+  booking button and the four stat cards. That is the page's chrome rather than
+  the filter's, and it is item 20's.

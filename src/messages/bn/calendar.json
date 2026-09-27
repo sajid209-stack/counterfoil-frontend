@@ -184,5 +184,10 @@
   "detailHolds": "হোল্ড",
   "detailReleases": "ছেড়ে যাবে",
   "detailPlacedBy": "রেখেছেন",
-  "detailUntilReleased": "ছেড়ে না দেওয়া পর্যন্ত"
+  "detailUntilReleased": "ছেড়ে না দেওয়া পর্যন্ত",
+  "moveBusy": "{time}-এ ব্যস্ত, তাই কিছু সরানো হয়নি।",
+  "moveNoSlot": "ওই দিন {time}-এ কিছু চলে না, তাই কিছু সরানো হয়নি।",
+  "moveFull": "{time}-এ আর {count, number} জনের জায়গা আছে, তাই কিছু সরানো হয়নি।",
+  "movedToast": "{name} {time}-এ সরানো হয়েছে",
+  "filtersDone": "হয়েছে"
 }

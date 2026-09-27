@@ -20,15 +20,10 @@ import {
 } from "./model";
 
 
-const HOUR_PX = 52;
-const HOUR_PX_COMPACT = 44;
-/** Past this many side-by-side events a week column stops being readable —
- *  the extras collapse into a "+N" that drops into the day view, where lanes
- *  have room to breathe. */
-const MAX_LANES = 3;
-/** Seven columns inside 320px leaves ~40px each; a third abreast would be a
- *  sliver rather than a booking. */
-const MAX_LANES_COMPACT = 2;
+/** An hour is 60px, so the grid reads as a ruler: an hour of height is an
+ *  hour of time, and a 90-minute booking is visibly half again as tall as the
+ *  one beside it. */
+const HOUR_PX = 60;
 /** Below this a block has one line, and the name gets it. A 30-minute booking
  *  is 26px tall here, which is one line of 12px text and its padding. */
 const TWO_LINE_PX = 40;
@@ -37,6 +32,10 @@ const TWO_LINE_PX = 40;
  *  Calendar leaves the same margin for the same reason: without it, a busy
  *  hour hides the very capacity somebody is looking for. */
 const GUTTER_PX = 16;
+
+/** The grain a drag snaps to. Finer than anything is sold in on purpose —
+ *  see the drag block below. */
+const SNAP_MIN = 15;
 
 /** The id the draft wears while it is laid out with real bookings. */
 const GHOST_ID = "__ghost__";
@@ -65,7 +64,6 @@ export function WeekGrid({
   onPeek,
   onPickDay,
   dayLabel,
-  moreLabel,
   allDayLabel,
   emptyLabel,
   roomy = false,
@@ -81,6 +79,9 @@ export function WeekGrid({
   ghostLabel = "",
   noneLabel = "",
   stackLabel,
+  onMove,
+  canMove,
+  moveSnap,
 }: {
   weekStartDate: Date;
   events: CalEvent[];
@@ -94,7 +95,6 @@ export function WeekGrid({
   onPickDay?: (date: Date) => void;
   /** Renders the column header, so the page owns date formatting. */
   dayLabel: (d: Date) => { weekday: string; day: string };
-  moreLabel: (count: number) => string;
   allDayLabel: string;
   /** Shown when the chosen day has nothing on it. */
   emptyLabel: string;
@@ -114,8 +114,9 @@ export function WeekGrid({
   /** How many things can still be booked starting in this hour of this day. */
   openCount?: (day: Date, hour: number) => number;
   /** Empty time was clicked, or dragged across: open the booking panel there.
-   *  `minutes` is the length dragged, when it was more than the one hour. */
-  onCreate?: (day: Date, hour: number, anchor: DOMRect, minutes?: number) => void;
+   *  `start` is in minutes from midnight, snapped to the quarter hour, and
+   *  `minutes` is the length dragged when it was more than the default hour. */
+  onCreate?: (day: Date, start: number, anchor: DOMRect, minutes?: number) => void;
   /** "4 open" on hover, and the cell's accessible name. */
   bookLabel?: (day: Date, hour: number, count: number) => { short: string; full: string };
   /** An hour that has already gone, which cannot be sold. */
@@ -129,6 +130,15 @@ export function WeekGrid({
   noneLabel?: string;
   /** "2 bookings · 5 guests" — several bookings on one departure. */
   stackLabel?: (bookings: number, guests: number) => string;
+  /** Move a booking by dragging its body. Without it blocks only open. */
+  onMove?: (e: CalEvent, date: string, start: number) => void;
+  /** Which blocks can be dragged at all. A hold is released from its own
+   *  panel and a stack is several bookings, so neither moves. */
+  canMove?: (e: CalEvent) => boolean;
+  /** Where a drop would really land. A lane keeps the quarter hour; a session
+   *  snaps to its own departures, because 16:15 is not a departure and a
+   *  label promising one would be a lie the drop then corrects. */
+  moveSnap?: (e: CalEvent, date: string, start: number) => number;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStartDate, i));
 
@@ -136,8 +146,7 @@ export function WeekGrid({
   const closeMin = closeHour * 60;
   const span = Math.max(1, closeMin - openMin);
   const hours = Array.from({ length: closeHour - openHour }, (_, i) => openHour + i);
-  const bodyHeight = (closeHour - openHour) * (compact ? HOUR_PX_COMPACT : HOUR_PX);
-  const maxLanes = compact ? MAX_LANES_COMPACT : MAX_LANES;
+  const bodyHeight = (closeHour - openHour) * HOUR_PX;
   const gutter = compact ? "w-8" : "w-14";
   /** Blocks share the column minus the gutter — only when the page books. */
   const lanePart = (i: number, n: number) =>
@@ -156,30 +165,42 @@ export function WeekGrid({
 
   /* ── making a booking by pointing at the grid ─────────────────────────────
      Click an hour and the draft is that hour; press and drag down the column
-     and it is every hour dragged across — Google's click-and-drag, snapped to
-     the hour because that is the grain this venue sells in. Only a mouse
-     drags: on a touch screen the same gesture is a scroll, and a tap books
-     the hour it lands on. */
+     and it is what you dragged across, to the quarter hour.
+
+     A quarter is finer than this venue sells in, and that is deliberate: the
+     gesture says what was meant, and the panel beside it goes on offering
+     only the starts that can really be sold. Snapped to the hour instead, a
+     90-minute intention could not be expressed at all.
+
+     Only a mouse drags: on a touch screen the same gesture is a scroll, and a
+     tap books the hour it lands on. */
   const [drag, setDrag] = useState<{ day: string; from: number; to: number } | null>(null);
   const dragging = useRef<{ day: Date; from: number; col: HTMLElement; moved: boolean } | null>(null);
   /** A drag ends in a click on the cell it started in; that click is the drag's. */
   const swallowClick = useRef(false);
-  const hourAt = (col: HTMLElement, clientY: number, day: Date) => {
-    const r = col.getBoundingClientRect();
-    const h = Math.floor((openMin + ((clientY - r.top) / r.height) * span) / 60);
-    // Never back into hours already gone: the drag stops at the first one left.
-    let floor = openHour;
-    while (floor < closeHour - 1 && (isPastHour?.(day, floor) ?? false)) floor++;
-    return Math.min(closeHour - 1, Math.max(floor, h));
+  /** The first minute of the day that can still be sold — a drag never backs
+   *  into an hour already gone. */
+  const floorMin = (day: Date) => {
+    let h = openHour;
+    while (h < closeHour - 1 && (isPastHour?.(day, h) ?? false)) h++;
+    return h * 60;
   };
-  /** Where the draft will be drawn, for the panel to stand beside. */
+  /** The quarter hour the pointer is in, clamped into the day. */
+  const minuteAt = (col: HTMLElement, clientY: number, day: Date) => {
+    const r = col.getBoundingClientRect();
+    const raw = openMin + ((clientY - r.top) / r.height) * span;
+    const snapped = Math.floor(raw / SNAP_MIN) * SNAP_MIN;
+    return Math.min(closeMin - SNAP_MIN, Math.max(floorMin(day), snapped));
+  };
+  /** Where the draft will be drawn, for the panel to stand beside. Both ends
+   *  are minutes; the second is inclusive of the quarter it names. */
   const create = (day: Date, from: number, to: number, col: HTMLElement | null) => {
     if (!onCreate || !col) return;
     const a = Math.min(from, to);
-    const hours = Math.abs(to - from) + 1;
+    const length = Math.max(SNAP_MIN, Math.max(from, to) + SNAP_MIN - a);
     const r = col.getBoundingClientRect();
-    const top = r.top + ((a * 60 - openMin) / span) * r.height;
-    onCreate(day, a, new DOMRect(r.left, top, r.width, ((hours * 60) / span) * r.height), hours > 1 ? hours * 60 : undefined);
+    const top = r.top + ((a - openMin) / span) * r.height;
+    onCreate(day, a, new DOMRect(r.left, top, r.width, (length / span) * r.height), length);
   };
   /* One set of handlers on the track rather than five on every one of 119
      cells: each cell says which day and hour it is, and the track reads it. */
@@ -194,13 +215,13 @@ export function WeekGrid({
     if (ev.pointerType !== "mouse" || ev.button !== 0) return;
     const cell = cellOf(ev.target);
     if (!cell) return;
-    dragging.current = { day: cell.day, from: cell.hour, col: cell.col, moved: false };
+    dragging.current = { day: cell.day, from: minuteAt(cell.col, ev.clientY, cell.day), col: cell.col, moved: false };
     ev.currentTarget.setPointerCapture(ev.pointerId);
   };
   const dragMove = (ev: React.PointerEvent<HTMLElement>) => {
     const g = dragging.current;
     if (!g) return;
-    const to = hourAt(g.col, ev.clientY, g.day);
+    const to = minuteAt(g.col, ev.clientY, g.day);
     if (to === g.from && !g.moved) return;
     g.moved = true;
     setDrag({ day: isoDate(g.day), from: g.from, to });
@@ -211,7 +232,15 @@ export function WeekGrid({
     setDrag(null);
     if (!g) return;
     swallowClick.current = true;
-    create(g.day, g.from, g.moved ? hourAt(g.col, ev.clientY, g.day) : g.from, g.col);
+    /* A press that never moved is a click on that hour, not a 15-minute
+       booking: the quarter is what a DRAG expresses, and a click has always
+       meant "this hour". */
+    if (!g.moved) {
+      const h = Math.floor(g.from / 60) * 60;
+      create(g.day, h, h + 60 - SNAP_MIN, g.col);
+      return;
+    }
+    create(g.day, g.from, minuteAt(g.col, ev.clientY, g.day), g.col);
   };
   const dragCancel = () => {
     dragging.current = null;
@@ -225,7 +254,115 @@ export function WeekGrid({
       return;
     }
     const cell = cellOf(ev.target);
-    if (cell) create(cell.day, cell.hour, cell.hour, cell.col);
+    if (cell) create(cell.day, cell.hour * 60, cell.hour * 60 + 60 - SNAP_MIN, cell.col);
+  };
+
+  const scroller = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLDivElement>(null);
+
+  /* ── moving a booking by dragging its body ────────────────────────────────
+     The same gesture every calendar has: pick the block up, drop it where it
+     should be. What is drawn while it moves is where it would LAND — the page
+     supplies the snap, so a session follows its own departures rather than
+     the quarter hour the pointer is on, and the label never promises a time
+     the drop would then correct.
+
+     Mouse only, again: on a touch screen this gesture is a scroll, and a
+     booking that moved because somebody scrolled the week is the worst
+     outcome available here. */
+  const [moving, setMoving] = useState<{
+    id: string;
+    title: string;
+    date: string;
+    start: number;
+    end: number;
+  } | null>(null);
+  const mv = useRef<{
+    e: CalEvent;
+    grab: number;
+    length: number;
+    fromX: number;
+    fromY: number;
+    day: Date;
+    cols: HTMLElement[];
+    moved: boolean;
+    target: { date: string; start: number } | null;
+  } | null>(null);
+  /** A move ends in a click on the block; that click is the move's. */
+  const swallowBlockClick = useRef(false);
+
+  /** Minutes at a pointer's Y. Every column shares the track's vertical
+   *  geometry, so one rect answers for all seven. */
+  const minuteFromY = (clientY: number) => {
+    const r = track.current?.getBoundingClientRect();
+    if (!r) return openMin;
+    return openMin + ((clientY - r.top) / r.height) * span;
+  };
+
+  const moveStart = (ev: React.PointerEvent<HTMLElement>, e: CalEvent, day: Date) => {
+    if (!onMove || ev.pointerType !== "mouse" || ev.button !== 0) return;
+    if (canMove && !canMove(e)) return;
+    /* The track below is listening for a drag that makes a NEW booking. A
+       press that lands on a block is not that. */
+    ev.stopPropagation();
+    const from = minutesOf(e.start);
+    mv.current = {
+      e,
+      grab: minuteFromY(ev.clientY) - from,
+      length: Math.max(SNAP_MIN, minutesOf(e.end) - from),
+      fromX: ev.clientX,
+      fromY: ev.clientY,
+      day,
+      /* Read once, at the start: the columns cannot move mid-gesture, and
+         asking what is under the pointer would answer "the block being
+         dragged" and make a cross-day move impossible. */
+      cols: Array.from(track.current?.querySelectorAll<HTMLElement>("[data-day-col]") ?? []),
+      moved: false,
+      target: null,
+    };
+    ev.currentTarget.setPointerCapture(ev.pointerId);
+    /* Whatever the pointer was hovering, it is not hovering now: a peek card
+       about the block being carried, drawn over the place it is going, is
+       the one thing that must not be on screen during this gesture. */
+    onPeek?.(null, null);
+  };
+
+  const moveMove = (ev: React.PointerEvent<HTMLElement>) => {
+    const g = mv.current;
+    if (!g) return;
+    /* A few pixels of slop, so a click that trembles is still a click. */
+    if (!g.moved && Math.abs(ev.clientY - g.fromY) < 4 && Math.abs(ev.clientX - g.fromX) < 4) return;
+    g.moved = true;
+    const i = g.cols.findIndex((c) => {
+      const r = c.getBoundingClientRect();
+      return ev.clientX >= r.left && ev.clientX <= r.right;
+    });
+    const day = i >= 0 && days[i] ? days[i] : g.day;
+    const date = isoDate(day);
+    const raw = minuteFromY(ev.clientY) - g.grab;
+    const snappedRaw = Math.floor(raw / SNAP_MIN) * SNAP_MIN;
+    const clamped = Math.max(openMin, Math.min(closeMin - g.length, snappedRaw));
+    const start = moveSnap ? moveSnap(g.e, date, clamped) : clamped;
+    g.target = { date, start };
+    setMoving({ id: g.e.id, title: g.e.title, date, start, end: start + g.length });
+  };
+
+  const moveEnd = () => {
+    const g = mv.current;
+    mv.current = null;
+    setMoving(null);
+    if (!g || !g.moved) return;
+    swallowBlockClick.current = true;
+    const t = g.target;
+    if (!t) return;
+    // Dropped where it already was: a move that changes nothing is not a move.
+    if (t.date === isoDate(g.e.start) && t.start === minutesOf(g.e.start)) return;
+    onMove?.(g.e, t.date, t.start);
+  };
+
+  const moveCancel = () => {
+    mv.current = null;
+    setMoving(null);
   };
 
   /* Open where the day happens.
@@ -233,8 +370,6 @@ export function WeekGrid({
      the fold, so the first thing on screen was four hours of empty morning.
      Aim at now when this week contains it, otherwise at the first thing
      booked, and leave a quarter of the viewport above it for context. */
-  const scroller = useRef<HTMLDivElement>(null);
-  const track = useRef<HTMLDivElement>(null);
   /* The header divides nothing while the grid is at the top — it is the
      same surface as the row under it. It earns its rule the moment content
      starts sliding underneath. */
@@ -295,14 +430,23 @@ export function WeekGrid({
       onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 0)}
       className="max-h-[70vh] overflow-auto"
     >
-      <div className={compact ? "min-w-0" : "min-w-[52rem]"}>
-        {/* ── day headers ─────────────────────────────────────────────────── */}
+      {/* No min-width. Seven columns share whatever the card has, and below
+            `lg` the compact week takes over rather than the grid scrolling
+            sideways with three days off the end of it. */}
+      <div className="min-w-0">
+        {/* Headers and the all-day row pin as ONE block. An all-day booking
+            applies to every hour, so scrolling to the evening must not scroll
+            away the thing that is true of all of it — and pinning them
+            together means the second one does not have to measure the first.
+            The rule and shadow belong to the pair, drawn once underneath. */}
         <div
           className={cn(
-            "sticky top-0 z-40 flex bg-card transition-shadow duration-quick",
+            "sticky top-0 z-40 bg-card transition-shadow duration-quick",
             scrolled && "border-b border-hairline shadow-[0_1px_2px_rgb(0_0_0/0.06)]",
           )}
         >
+        {/* ── day headers ─────────────────────────────────────────────────── */}
+        <div className="flex">
           {/* No rule under the gutter or between the days up here: the
               dates are a label strip, not cells, and ruling them boxes in
               seven numbers that are already spaced apart. */}
@@ -345,8 +489,12 @@ export function WeekGrid({
           })}
         </div>
 
+        {/* Pinned under the day headers, not scrolled away with the grid: an
+            all-day booking applies to every hour, so it has to stay readable
+            at whatever hour you have scrolled to. `top` is the header's own
+            height, measured rather than assumed — it grows with the label. */}
         {(allDay.length > 0 || ghostAllDay) && (
-          <div className="flex border-b border-hairline bg-subtle/50">
+          <div className="flex border-t border-hairline bg-subtle/50">
             <div
               className={cn(
                 gutter,
@@ -387,6 +535,8 @@ export function WeekGrid({
             ))}
           </div>
         )}
+
+        </div>
 
         {/* ── the grid ────────────────────────────────────────────────────── */}
         <div
@@ -478,15 +628,13 @@ export function WeekGrid({
               for (let h = Math.floor(minutesOf(e.start) / 60); h * 60 < minutesOf(e.end); h++) covered.add(h);
             }
             const isToday = sameDay(d, now);
-            // The draft is never folded into "+N": it is the block being looked for.
-            const overflow = packed.filter((p) => p.event.id !== GHOST_ID && p.lane >= maxLanes - 1 && p.lanes > maxLanes);
-            const visible = packed.filter((p) => !overflow.includes(p));
-            const overflowTop = overflow.length
-              ? Math.min(...overflow.map((p) => minutesOf(p.event.start)))
-              : 0;
-            const overflowBottom = overflow.length
-              ? Math.max(...overflow.map((p) => minutesOf(p.event.end)))
-              : 0;
+            /* Everything at an hour is drawn, side by side, sharing the column
+               between them. There used to be a cap of three with the rest
+               folded into a "+N" tile — which answered "how many" and hid
+               which, on the one screen whose job is to say what is on. A busy
+               hour is narrow now, and narrow is legible in a way absent is
+               not: every block still carries its whole name in its accessible
+               name, opens its own panel, and says everything on hover. */
 
             /* What each hour is: gone, sellable, or not. Runs of hours that
                cannot be sold are shaded as one block, so the rule between two
@@ -509,6 +657,7 @@ export function WeekGrid({
               <div
                 key={key}
                 data-day-col
+                data-day-index={dayIndex}
                 /* Today's column is no longer tinted. The body of the grid now
                    has exactly two grounds — white is time you can sell, the
                    offtime shade is time you cannot — and a 4% ember wash on
@@ -615,15 +764,39 @@ export function WeekGrid({
                 {isToday && showNow && (
                   <span
                     aria-hidden
-                    /* info, not danger and not ember: the legend already spends
-                       danger on "session closed" and ember on "booked", and the
-                       clock is not either of those. */
-                    className="pointer-events-none absolute inset-x-0 z-10 h-px bg-info"
-                    style={{ top: `${((nowMin - openMin) / span) * 100}%` }}
+                    /* Red, at the owner's direction and against the note that
+                       used to sit here: this was `info` because the legend
+                       already spends danger on "session closed". Red is what
+                       every calendar anyone has used draws the clock in, and
+                       that recognition is worth more than the collision — the
+                       line is 2px and hairline-thin, it carries no label, and
+                       it is the only thing on the grid that moves. */
+                    className="pointer-events-none absolute inset-x-0 z-10 h-[2px] bg-danger-solid"
+                    style={{ top: `calc(${((nowMin - openMin) / span) * 100}% - 1px)` }}
                   >
                     {/* A line alone reads as another hour rule. The knob on the
                         leading edge is what says "this one is the clock". */}
-                    <span className="absolute -left-0.5 -top-[3px] h-[7px] w-[7px] rounded-full bg-info" />
+                    <span className="absolute -left-[3px] -top-[3px] h-[8px] w-[8px] rounded-full bg-danger-solid" />
+                  </span>
+                )}
+
+                {/* Where the booking being carried would land, with the time
+                    it would land at. Full width of the column, over everything,
+                    and not interactive — it is a preview of a drop, not a
+                    thing to press. */}
+                {moving && moving.date === key && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-[3px] z-40 overflow-hidden rounded-sm border-2 border-ember-solid bg-card px-1 py-0.5 text-left shadow-pop"
+                    style={{
+                      top: `${((moving.start - openMin) / span) * 100}%`,
+                      height: `calc(${((moving.end - moving.start) / span) * 100}% - 2px)`,
+                    }}
+                  >
+                    <span className="block truncate font-mono text-[12px] font-semibold leading-tight text-brand-foreground">
+                      {toTime(moving.start)} – {toTime(moving.end)}
+                    </span>
+                    <span className="block truncate text-[12px] leading-tight text-fg">{moving.title}</span>
                   </span>
                 )}
 
@@ -633,42 +806,24 @@ export function WeekGrid({
                     aria-hidden
                     className="pointer-events-none absolute inset-x-[3px] z-30 rounded-sm border-2 border-ember-solid bg-ember/15 px-1 py-0.5 font-mono text-[12px] font-semibold leading-tight text-brand-foreground"
                     style={{
-                      top: `${((Math.min(dragHere.from, dragHere.to) * 60 - openMin) / span) * 100}%`,
-                      height: `calc(${(((Math.abs(dragHere.to - dragHere.from) + 1) * 60) / span) * 100}% - 2px)`,
+                      top: `${((Math.min(dragHere.from, dragHere.to) - openMin) / span) * 100}%`,
+                      height: `calc(${((Math.abs(dragHere.to - dragHere.from) + SNAP_MIN) / span) * 100}% - 2px)`,
                     }}
                   >
-                    {toTime(Math.min(dragHere.from, dragHere.to) * 60)} – {toTime((Math.max(dragHere.from, dragHere.to) + 1) * 60)}
+                    {toTime(Math.min(dragHere.from, dragHere.to))} – {toTime(Math.max(dragHere.from, dragHere.to) + SNAP_MIN)}
                   </span>
                 )}
 
-                {/* Anything beyond MAX_LANES becomes one "+N" tile rather than a
-                    row of unreadable slivers. */}
-                {overflow.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={onPickDay ? () => onPickDay(d) : undefined}
-                    className="absolute z-10 overflow-hidden rounded-sm border border-strong bg-subtle px-1 text-left text-[12px] font-medium text-muted"
-                    style={{
-                      top: `${((overflowTop - openMin) / span) * 100}%`,
-                      height: `calc(${((overflowBottom - overflowTop) / span) * 100}% - 2px)`,
-                      left: lanePart(maxLanes - 1, maxLanes),
-                      width: laneWidth(maxLanes),
-                    }}
-                  >
-                    {moreLabel(overflow.length)}
-                  </button>
-                )}
-
-                {visible.map(({ event, lane, lanes }) => {
+                {packed.map(({ event, lane, lanes }) => {
                   const s = Math.max(openMin, minutesOf(event.start));
                   const e = Math.min(closeMin, event.id === GHOST_ID && draft ? draft.end : minutesOf(event.end));
                   if (e <= s) return null;
                   const tall = ((e - s) / span) * bodyHeight;
-                  const across = Math.min(lanes, maxLanes);
+                  const across = lanes;
                   const place = {
                     top: `${((s - openMin) / span) * 100}%`,
                     height: `calc(${((e - s) / span) * 100}% - 2px)`,
-                    left: lanePart(Math.min(lane, maxLanes - 1), across),
+                    left: lanePart(lane, across),
                     width: laneWidth(across),
                   };
 
@@ -753,12 +908,31 @@ export function WeekGrid({
                       </button>
                     );
                   }
+                  const movable = !!onMove && (!canMove || canMove(event));
+                  const carrying = moving?.id === event.id;
                   return (
                     <button
                       key={event.id}
                       type="button"
-                      onClick={onSelect ? () => onSelect(event) : undefined}
-                    {...peekHandlers(event, onPeek)}
+                      onClick={
+                        onSelect
+                          ? (ev) => {
+                              /* The click that ends a drag belongs to the drag,
+                                 not to opening the booking that was dragged. */
+                              if (swallowBlockClick.current) {
+                                swallowBlockClick.current = false;
+                                ev.stopPropagation();
+                                return;
+                              }
+                              onSelect(event);
+                            }
+                          : undefined
+                      }
+                      onPointerDown={movable ? (ev) => moveStart(ev, event, d) : undefined}
+                      onPointerMove={movable ? moveMove : undefined}
+                      onPointerUp={movable ? moveEnd : undefined}
+                      onPointerCancel={movable ? moveCancel : undefined}
+                    {...peekHandlers(event, moving ? undefined : onPeek)}
                       title={`${event.title} · ${hhmm(event.start)}–${hhmm(event.end)}`}
                       /* The visible text truncates at this density; the
                          accessible name never does. */
@@ -767,6 +941,9 @@ export function WeekGrid({
                       }`}
                       className={cn(
                         "absolute overflow-hidden rounded-sm border px-1 py-0.5 text-left",
+                        movable && "cursor-grab active:cursor-grabbing",
+                        // Where it was, while where it is going is drawn solid.
+                        carrying && "opacity-40",
                         blockClass(event),
                       )}
                       style={place}

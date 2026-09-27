@@ -122,9 +122,9 @@ export interface BusySpan {
 }
 
 /** All confirmed busy spans for a capacity owner on a date, across products. */
-export function ownerBusy(ownerId: string, date: string): BusySpan[] {
+export function ownerBusy(ownerId: string, date: string, exclude?: string): BusySpan[] {
   return peekBookings()
-    .filter((b) => b.status === "confirmed" && b.resourceId === ownerId && b.slotStart.slice(0, 10) === date)
+    .filter((b) => b.status === "confirmed" && b.id !== exclude && b.resourceId === ownerId && b.slotStart.slice(0, 10) === date)
     .map((b) => {
       const start = toMinutes(b.slotStart.slice(11, 16));
       const end = b.slotEnd ? toMinutes(b.slotEnd.slice(11, 16)) : start + 60;
@@ -183,6 +183,10 @@ export function isResourceFreeFor(
   time: string,
   minutes: number,
   bufferMinutes = 0,
+  /** A booking to leave out of the reckoning — the one being moved. Without
+   *  it, nudging a booking half an hour down its own lane collides with
+   *  where it already is and the move is refused for no reason. */
+  exclude?: string,
 ): boolean {
   const start = toMinutes(time);
   const end = start + minutes;
@@ -190,7 +194,7 @@ export function isResourceFreeFor(
   if (isResourceHeld(resourceId, date, slotISO(date, time), slotISO(date, toTimeOfDay(end)))) {
     return false;
   }
-  return !ownerBusy(resourceId, date).some(
+  return !ownerBusy(resourceId, date, exclude).some(
     (b) => start < b.end + bufferMinutes && b.start < end + bufferMinutes,
   );
 }

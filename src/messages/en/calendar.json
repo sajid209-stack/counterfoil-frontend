@@ -184,5 +184,10 @@
   "detailHolds": "Holds",
   "detailReleases": "Releases",
   "detailPlacedBy": "Placed by",
-  "detailUntilReleased": "Until released"
+  "detailUntilReleased": "Until released",
+  "moveBusy": "Busy at {time}, so nothing moved.",
+  "moveNoSlot": "Nothing runs at {time} that day, so nothing moved.",
+  "moveFull": "{time} has room for {count, number} more, so nothing moved.",
+  "movedToast": "{name} moved to {time}",
+  "filtersDone": "Done"
 }

@@ -7,11 +7,15 @@ import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "lucide-react
 import { Button, DateField, PageShell, Select, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { MD, XL, useMediaQuery } from "@/lib/useMedia";
+import { LG, MD, XL, useMediaQuery } from "@/lib/useMedia";
 import {
   bookingEditable,
   checkInBooking,
   getOperator,
+  getSlots,
+  isResourceFreeFor,
+  peekBookings,
+  rescheduleBooking,
   listBookings,
   listCategories,
   listHolds,
@@ -24,7 +28,7 @@ import {
   releaseHold,
   unlockBooking,
 } from "@/lib/api";
-import { DEMO_TODAY, demoNow, isSlotBased, toMinutes as toMinutesOf } from "@/lib/schedule";
+import { DEMO_TODAY, demoNow, isSlotBased, slotISO, toMinutes as toMinutesOf, toTime } from "@/lib/schedule";
 import { formatPriceShort } from "@/lib/format";
 import { DayGrid, type DayLane } from "./_components/DayGrid";
 import { WeekGrid } from "./_components/WeekGrid";
@@ -104,6 +108,12 @@ export default function CalendarPage() {
   const compact = !wide;
   /** Wide enough for a week block to carry a second line. */
   const roomy = useMediaQuery(XL, true);
+  /* The week grid gives up its columns later than the rest of the page does.
+     Seven of them need the card to be about 620px wide before a day is worth
+     reading, which is `lg` — between `md` and `lg` the full grid used to
+     scroll sideways inside the card with three days off the end and nothing
+     saying so. The chrome around it still branches at `md`. */
+  const weekCompact = !useMediaQuery(LG, true);
 
   const [view, setView] = useState<View>("week");
   const [cursor, setCursor] = useState<Date>(openingDate);
@@ -158,8 +168,12 @@ export default function CalendarPage() {
         ? null
         : {
             date: r.date,
-            start: r.lane ? toMinutesOf(r.lane.time) : r.hour * 60,
-            end: (r.lane ? toMinutesOf(r.lane.time) : r.hour * 60) + (r.minutes ?? r.lane?.span ?? 60),
+            /* The draft is drawn where the gesture put it, to the quarter
+               hour; `hour` is only which hour's options the panel lists. */
+            start: r.lane ? toMinutesOf(r.lane.time) : r.startMinutes ?? r.hour * 60,
+            end:
+              (r.lane ? toMinutesOf(r.lane.time) : r.startMinutes ?? r.hour * 60) +
+              (r.minutes ?? r.lane?.span ?? 60),
             laneId: r.lane?.laneId,
             title: null,
           },
@@ -253,6 +267,13 @@ export default function CalendarPage() {
      the same actor would put two people in one audit trail. */
   const [acting, setActing] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  /** Closing hands the focus back to the button that opened it — on a phone
+   *  the panel is a dialog, and a dialog that closes onto nothing leaves a
+   *  keyboard at the top of the page. */
+  const closeFilters = () => {
+    setFiltersOpen(false);
+    document.getElementById("calendar-filters-button")?.focus();
+  };
   /** Only the folded-away selects count towards the badge — the tone toggles
    *  are on screen saying their own state, so counting them would report a
    *  filter as hidden while the user is looking straight at it. */
@@ -677,6 +698,94 @@ export default function CalendarPage() {
     });
   };
 
+  /* ── moving a booking by dragging it ──────────────────────────────────────
+     The gesture is the grid's; what may move, where it may land and whether
+     it lands at all are decided here, where the store is.
+
+     A hold does not move: it is released from its own panel, which is a
+     different act with a different consequence. A stack is several bookings
+     wearing one block, so moving it would move some of them. And a booking
+     somebody has locked does not move at all — `bookingEditable` is the one
+     question every edit path in this app asks, so it is asked here too. */
+  const canMove = useCallback(
+    (e: CalEvent) => e.kind === "booking" && !e.id.startsWith("stack:") && !e.locked,
+    [],
+  );
+
+  /** Where a drop really lands. A booking sold in departures follows its own
+   *  departures rather than the quarter hour the pointer is on, so the label
+   *  under the cursor is the time the booking will actually have. */
+  const moveSnap = useCallback(
+    (e: CalEvent, date: string, start: number) => {
+      const product = products.find((x) => x.id === e.productId);
+      if (!product) return start;
+      const times = getSlots(product, date).map((sl) => toMinutesOf(sl.time));
+      if (!times.length) return start;
+      const near = times.reduce((a, b) => (Math.abs(b - start) < Math.abs(a - start) ? b : a));
+      /* Beyond an hour and a half it is not "that departure, nudged" any
+         more — leave it where the pointer is and let the drop refuse, which
+         says why. */
+      return Math.abs(near - start) <= 90 ? near : start;
+    },
+    [products],
+  );
+
+  const doMove = async (e: CalEvent, date: string, start: number) => {
+    const b = peekBookings().find((x) => x.id === e.id);
+    if (!b) return;
+    const edit = bookingEditable(b.id, ACTOR);
+    if (!edit.editable) {
+      toast.error(edit.reason);
+      return;
+    }
+    const from = toMinutesOf(b.slotStart.slice(11, 16));
+    const length = Math.max(15, b.slotEnd ? toMinutesOf(b.slotEnd.slice(11, 16)) - from : 60);
+    const time = toTime(start);
+    const product = products.find((x) => x.id === b.productId);
+
+    /* The same two questions the till asks before it sells anything, asked of
+       where this would land. A resource is free or it is not; a departure has
+       room for this party or it does not. */
+    if (b.resourceId) {
+      if (!isResourceFreeFor(b.resourceId, date, time, length, product?.bufferMinutes ?? 0, b.id)) {
+        toast.error(t("moveBusy", { time }));
+        return;
+      }
+    } else if (product && isSlotBased(product.bookingType)) {
+      const slot = getSlots(product, date).find((sl) => sl.time === time);
+      if (!slot) {
+        toast.error(t("moveNoSlot", { time }));
+        return;
+      }
+      if (slot.remaining < b.partySize) {
+        toast.error(t("moveFull", { time, count: slot.remaining }));
+        return;
+      }
+    }
+
+    const was = { start: b.slotStart, end: b.slotEnd };
+    const res = await rescheduleBooking(b.id, slotISO(date, time), slotISO(date, toTime(start + length)));
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    setDetail(null);
+    bookingsQ.reload();
+    setStamp((n) => n + 1);
+    toast.success(t("movedToast", { name: e.title, time }), {
+      label: t("undo"),
+      run: async () => {
+        const back = await rescheduleBooking(b.id, was.start, was.end);
+        if (!back.ok) {
+          toast.error(back.error.message);
+          return;
+        }
+        bookingsQ.reload();
+        setStamp((n) => n + 1);
+      },
+    });
+  };
+
   const doComplete = async (e: CalEvent) => {
     setActing(true);
     const res = await checkInBooking(e.id, e.partySize ?? 1);
@@ -757,6 +866,7 @@ export default function CalendarPage() {
   const filtersButton = (
     <button
       type="button"
+      id="calendar-filters-button"
       aria-expanded={filtersOpen}
       aria-controls="calendar-filters"
       onClick={() => setFiltersOpen((v) => !v)}
@@ -779,6 +889,76 @@ export default function CalendarPage() {
 
   const weekdayLabels = WEEKDAYS_MON_FIRST.map((d) =>
     new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(new Date(2026, 6, 5 + d)),
+  );
+
+  const filterBody = (
+    <>
+            {compact && <div className="flex flex-wrap items-center gap-tight">{toneKey}</div>}
+            {compact && categoryKeyRow}
+            <div className="flex flex-wrap items-center gap-tight">
+            <Select
+              value={bookingFilter}
+              onChange={setBookingFilter}
+              aria-label={t("filterBooking")}
+              size="sm"
+              className="max-w-full"
+              triggerClassName="text-[13px] md:h-9"
+              options={[
+                { value: "all", label: t("allBookings") },
+                ...[...products].sort((a, b) => a.name.localeCompare(b.name)).map((p) => ({ value: p.id, label: p.name })),
+              ]}
+            />
+
+            <Select
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+              aria-label={t("filterCategory")}
+              size="sm"
+              className="max-w-full"
+              triggerClassName="text-[13px] md:h-9"
+              options={[
+                { value: "all", label: t("allCategories") },
+                ...categories.map((c) => ({ value: c.id, label: c.name })),
+              ]}
+            />
+
+            {/* What colour MEANS. A segmented pair rather than a select,
+                because there are two answers and both are worth seeing —
+                and it sits with the filters because, like them, it changes
+                how the same day is read rather than which day it is. */}
+            <span role="group" aria-label={t("colorBy")} className="flex items-center gap-inline rounded-sm bg-line/60 p-inline">
+              {(["status", "category"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={colorBy === mode}
+                  onClick={() => setColorBy(mode)}
+                  className={cn(
+                    "h-9 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:h-7",
+                    colorBy === mode ? "bg-card text-fg shadow-sm" : "text-muted hover:text-fg",
+                  )}
+                >
+                  {t(mode === "status" ? "colorByStatus" : "colorByCategory")}
+                </button>
+              ))}
+            </span>
+
+            {(resources.length > 0 || staff.length > 0) && (
+              <Select
+                value={ownerFilter}
+                onChange={setOwnerFilter}
+                aria-label={t("filterOwner")}
+                size="sm"
+                className="max-w-full"
+                triggerClassName="text-[13px] md:h-9"
+                options={[
+                  { value: "all", label: t("allOwners") },
+                  ...resources.map((r) => ({ value: r.id, label: r.name })),
+                ]}
+              />
+            )}
+            </div>
+    </>
   );
 
   return (
@@ -940,74 +1120,52 @@ export default function CalendarPage() {
             )}
           </div>
 
-          <div id="calendar-filters" hidden={!filtersOpen} className="flex flex-col gap-tight">
-            {compact && <div className="flex flex-wrap items-center gap-tight">{toneKey}</div>}
-            {compact && categoryKeyRow}
-            <div className="flex flex-wrap items-center gap-tight">
-            <Select
-              value={bookingFilter}
-              onChange={setBookingFilter}
-              aria-label={t("filterBooking")}
-              size="sm"
-              className="max-w-full"
-              triggerClassName="text-[13px] md:h-9"
-              options={[
-                { value: "all", label: t("allBookings") },
-                ...[...products].sort((a, b) => a.name.localeCompare(b.name)).map((p) => ({ value: p.id, label: p.name })),
-              ]}
-            />
-
-            <Select
-              value={categoryFilter}
-              onChange={setCategoryFilter}
-              aria-label={t("filterCategory")}
-              size="sm"
-              className="max-w-full"
-              triggerClassName="text-[13px] md:h-9"
-              options={[
-                { value: "all", label: t("allCategories") },
-                ...categories.map((c) => ({ value: c.id, label: c.name })),
-              ]}
-            />
-
-            {/* What colour MEANS. A segmented pair rather than a select,
-                because there are two answers and both are worth seeing —
-                and it sits with the filters because, like them, it changes
-                how the same day is read rather than which day it is. */}
-            <span role="group" aria-label={t("colorBy")} className="flex items-center gap-inline rounded-sm bg-line/60 p-inline">
-              {(["status", "category"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  aria-pressed={colorBy === mode}
-                  onClick={() => setColorBy(mode)}
-                  className={cn(
-                    "h-9 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:h-7",
-                    colorBy === mode ? "bg-card text-fg shadow-sm" : "text-muted hover:text-fg",
-                  )}
-                >
-                  {t(mode === "status" ? "colorByStatus" : "colorByCategory")}
-                </button>
-              ))}
-            </span>
-
-            {(resources.length > 0 || staff.length > 0) && (
-              <Select
-                value={ownerFilter}
-                onChange={setOwnerFilter}
-                aria-label={t("filterOwner")}
-                size="sm"
-                className="max-w-full"
-                triggerClassName="text-[13px] md:h-9"
-                options={[
-                  { value: "all", label: t("allOwners") },
-                  ...resources.map((r) => ({ value: r.id, label: r.name })),
-                ]}
-              />
-            )}
+          {/* On a phone these are a sheet, not a block that pushes the
+              calendar down: opening them used to put the grid's first pixel
+              19px BELOW the tab bar, so the one thing being filtered was the
+              one thing that could not be seen. Above `md` they stay inline,
+              where there is room and a sheet would be ceremony. */}
+          {!compact && (
+            <div id="calendar-filters" hidden={!filtersOpen} className="flex flex-col gap-tight">
+              {filterBody}
             </div>
-          </div>
+          )}
         </div>
+
+        {/* The phone's filters, over the page rather than in front of it. */}
+        {compact && filtersOpen && (
+          <>
+            <div
+              aria-hidden
+              onClick={closeFilters}
+              className="fixed inset-0 z-40 bg-ink/40"
+            />
+            <div
+              id="calendar-filters"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t("filters")}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") closeFilters();
+              }}
+              className="fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] flex-col gap-comfortable overflow-y-auto rounded-t-lg border-t border-line bg-card p-gutter"
+              style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
+            >
+              <div className="flex items-center justify-between gap-tight">
+                <h2 className="text-[15px] font-semibold">{t("filters")}</h2>
+                <Button variant="secondary" size="sm" autoFocus onClick={closeFilters}>
+                  {t("filtersDone")}
+                </Button>
+              </div>
+              {filterBody}
+              {filtered && (
+                <Button variant="secondary" size="sm" onClick={resetFilters}>
+                  {t("clearFilters")}
+                </Button>
+              )}
+            </div>
+          </>
+        )}
 
         {emptyByFilter && (
           <div
@@ -1104,14 +1262,18 @@ export default function CalendarPage() {
                 weekday: new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(d),
                 day: String(d.getDate()),
               })}
-              moreLabel={(n) => t("more", { count: n })}
-              compact={compact}
+              compact={weekCompact}
+              onMove={doMove}
+              canMove={canMove}
+              moveSnap={moveSnap}
               blockClass={blockClass}
               dotClass={dotClass}
               chipText={chipText}
               openCount={(d, h) => weekOpen.get(`${isoDate(d)}|${h}`) ?? 0}
               isPastHour={(d, h) => isoDate(d) < today || (isoDate(d) === today && (h + 1) * 60 <= nowMin)}
-              onCreate={(d, h, anchor, minutes) => openRequest({ date: isoDate(d), hour: h, minutes, anchor })}
+              onCreate={(d, start, anchor, minutes) =>
+                openRequest({ date: isoDate(d), hour: Math.floor(start / 60), startMinutes: start, minutes, anchor })
+              }
               ghost={ghost}
               ghostLabel={t("book.untitled")}
               noneLabel={t("book.nothingOpen")}

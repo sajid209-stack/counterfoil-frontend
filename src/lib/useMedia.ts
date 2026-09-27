@@ -13,6 +13,19 @@ export const MD = "(min-width: 48rem)";
 export const XL = "(min-width: 80rem)";
 
 /**
+ * Tailwind's lg — and, for the week grid, the width where seven columns stop
+ * being a lie.
+ *
+ * Measured: the full grid needs its hour gutter plus seven columns wide
+ * enough to read, and below 1024 the card is under 620px, which is 82px a day
+ * before the gutter. It used to carry a 52rem min-width instead, so from 768
+ * to 1279 the week simply scrolled sideways inside its card with no
+ * affordance — at 768 you saw Monday to Thursday and nothing said the other
+ * three days were there.
+ */
+export const LG = "(min-width: 64rem)";
+
+/**
  * Subscribe to a media query.
  *
  * useSyncExternalStore rather than an effect that setStates on mount: a media
