@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Settings as SettingsIcon } from "lucide-react";
+import { ChevronDown, Settings as SettingsIcon, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AppearancePicker } from "@/components/ThemeProvider";
 import { LanguagePicker } from "@/components/LocaleProvider";
@@ -91,10 +91,20 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
             <LanguagePicker />
           </div>
 
+          {/* The person's own page first: this is an account menu, and
+              everything under it is theirs rather than the business's. */}
+          <Link
+            href="/settings/profile"
+            onClick={() => setOpen(false)}
+            className="mt-section flex h-11 items-center gap-comfortable rounded-sm border border-line px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:border-ember/40 hover:bg-muted-wash"
+          >
+            <UserRound size={16} strokeWidth={1.5} className="text-muted" aria-hidden />
+            {t("myProfile")}
+          </Link>
           <Link
             href="/settings/business"
             onClick={() => setOpen(false)}
-            className="mt-section flex h-11 items-center gap-comfortable rounded-sm border border-line px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:border-ember/40 hover:bg-muted-wash"
+            className="mt-tight flex h-11 items-center gap-comfortable rounded-sm border border-line px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:border-ember/40 hover:bg-muted-wash"
           >
             <SettingsIcon size={16} strokeWidth={1.5} className="text-muted" aria-hidden />
             {t("settings")}

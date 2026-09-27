@@ -16,6 +16,7 @@ import {
   Store,
   Tags,
   UserCog,
+  UserRound,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -41,6 +42,7 @@ export type SettingsItemKey =
   | "signIn"
   | "devices"
   | "notifications"
+  | "profile"
   | "security"
   | "preferences";
 
@@ -111,6 +113,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
   {
     key: "account",
     items: [
+      { key: "profile", href: "/settings/profile", icon: UserRound },
       { key: "security", href: "/settings/security", icon: ShieldCheck },
       { key: "preferences", href: "/settings/preferences", icon: SlidersHorizontal },
     ],

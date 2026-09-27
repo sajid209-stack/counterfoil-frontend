@@ -737,6 +737,11 @@
         "title": "Ticket codes",
         "desc": "What is printed on a ticket so it can be scanned, and what the till listens for.",
         "keywords": "barcode code 39 qr scan scanner ticket print gate sku handheld"
+      },
+      "profile": {
+        "title": "My profile",
+        "desc": "Your own details, and where you work.",
+        "keywords": "profile me my account name email phone language who am i"
       }
     },
     "menu": "Settings",
@@ -1119,5 +1124,37 @@
     "scanToSellDesc": "{count, plural, =0 {No items have a code yet — add one on an item to scan it.} one {# item has a code the till can match.} other {# items have a code the till can match.}}",
     "scanToSellNone": "None of your items has a code yet. Add one on an item and the till can find it.",
     "saved": "Ticket codes saved"
+  },
+  "profile": {
+    "title": "My profile",
+    "description": "Your own details, and where you work. Everyone else's are under Team.",
+    "factsLabel": "About you",
+    "role": "Role",
+    "noRole": "No role set",
+    "status": "Account",
+    "status_active": "Active",
+    "status_invited": "Invited",
+    "status_suspended": "Suspended",
+    "locations": "Venues",
+    "counters": "Counters",
+    "since": "With the business since",
+    "detailsTitle": "Your details",
+    "detailsDesc": "How the team and the system reach you.",
+    "name": "Name",
+    "nameRequired": "Your name cannot be empty.",
+    "email": "Email",
+    "emailDesc": "Where sign-in and recovery messages go.",
+    "phone": "Phone",
+    "phoneDesc": "Used by your team, not by customers.",
+    "languageTitle": "Language",
+    "languageDesc": "What this browser shows the app in.",
+    "language": "Language",
+    "languageHelp": "This browser only — it does not change anyone else's.",
+    "securityTitle": "Signing in",
+    "securityDesc": "Your password, two-step sign-in and the places you are signed in.",
+    "securityRow": "Password and sessions",
+    "securityRowDesc": "Kept in one place, so there is one answer to where you are signed in.",
+    "openSecurity": "Open Security",
+    "saved": "Profile saved"
   }
 }

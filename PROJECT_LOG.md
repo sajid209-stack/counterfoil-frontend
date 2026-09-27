@@ -12689,3 +12689,103 @@ parity **0 missing / 0 extra**.
   tiles either; this is `/pos`.
 - **Nothing prints a barcode for a shop item.** A shelf label is a different
   object from a ticket, and the SKU field is typed rather than generated.
+
+
+## My profile, on both surfaces — the owner's item 9 (2026-09-27)
+
+*"OS needs a User Profile in proper planned and built with UI and UX
+research."*
+
+There **was** a profile page, and looking at it first is what made this two
+pieces of work rather than one.
+
+### What was there, and the three things wrong with it
+
+- **Nothing in OS linked to it.** Not the account menu, not Settings, not the
+  sidebar. It was a page you could only reach by typing its address.
+- **The till linked straight to it.** Go's More sheet and the classic till's
+  both pointed at `/profile`, which lives in the `(os)` route group — so a
+  cashier tapping their own name at the counter landed in the **admin shell**,
+  with Dashboard, Orders, Reports and Settings in front of them, mid-shift.
+  Measured rather than inferred: at 390 the page rendered the OS rail and the
+  OS bar and no Go tab bar at all.
+- **It kept its own copies of things.** A hardcoded `MOCK_DEVICES` list beside
+  the real "where you are signed in" that Security already shows — two answers
+  to one question — and its own `const ME = "stf_nadia"`, which is exactly what
+  `lib/session` exists to stop and which this log has recorded three times as
+  the way a fact drifts.
+
+It also predated the settings anatomy: raw cards, a bare Save button, and an
+effect that setStates on load.
+
+### Two pages, because there are two surfaces
+
+**`/settings/profile`** — under **Your account**, beside Security and
+Preferences, which is the group that is already about the person rather than
+the business. Rebuilt on the settings anatomy: who you are, then the facts
+(role, account, venues, counters, since), then your details behind a save bar
+that refuses an empty name **in words**, then the language this browser
+speaks.
+
+It does **not** draw a second list of sessions. Security owns the password,
+two-step and where you are signed in, and this points at it and says why —
+*"kept in one place, so there is one answer to where you are signed in."*
+
+**`/profile`** — the till's own, in the Go shell, in the till's shapes: who is
+signed in, **which counter and which venue this device is at** (read from
+`lib/session`, not from everywhere the person may work — the counter is the
+fact a cashier is checking), the language, their details read-only, and the way
+out.
+
+**Read-only on purpose**, apart from the two things a cashier genuinely changes
+at a counter: the language this device speaks, and being the person signed into
+it. Names, roles and assignments are a manager's to set, and a till is not the
+place to discover you can rename yourself — so it says where they are set
+instead.
+
+### Found by driving it
+
+**The language picker brought 12px text onto a 13px surface.** Go has held a
+13px reading floor since the sheets pass; `LanguagePicker` draws its own label
+at the OS caption size. It was also a second label under a heading that already
+said "Language", so switching it off fixed both.
+
+### Verified
+
+**29 checks, driven.** The till's profile renders in the till — no OS rail, no
+OS bar, the Go tabs under it — names who is signed in, says which counter and
+venue, offers the way out, and **has no text field at all**, which is the
+read-only decision asserted rather than described. Nothing under the 13px
+floor, every control a thumb target, no sideways scroll.
+
+Then OS: the account menu offers **My profile**, it opens at
+`/settings/profile`, the settings rail lists it, it names the person and their
+role, says where they work and since when, **keeps no second list of
+sessions** and points at Security instead. An empty name is refused in words
+with Save disabled; a saved name **turns up on the Team list with the "You"
+badge**, which is the check that proves it is the same person the rest of the
+app knows.
+
+At 390 and in Bangla: no sideways scroll, no hidden overflow, nothing under the
+12px floor, no missing messages. `tsc`, `npm run build` and `eslint` clean;
+i18n parity **0 missing / 0 extra**, with the old page's 18 orphaned keys
+removed from both locales.
+
+### A harness correction, and it is a recorded one
+
+`type-label` uppercases in CSS and `innerText` returns what is **rendered**, so
+a case-sensitive match against "With the business since" failed on a fact that
+was plainly on the screen. Third time this project has hit it.
+
+### Not done
+
+- **The classic till links to `/profile` too**, so it now gets the Go-shaped
+  page inside the Go chrome. That is the decision classic already made for
+  Schedule, Scan and Check-In — it is a till design, not a fork of
+  front-of-house — rather than a third copy.
+- **The photo is still initials.** "Change photo" was a button that opened a
+  toast saying it was coming; there is no upload anywhere in this product yet,
+  so it went rather than staying as a promise.
+- **`/profile` does not redirect for an OS user** who has the old address
+  bookmarked: they get the till's page, which is the honest answer for that
+  address now.

@@ -84,7 +84,7 @@ const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
   { prefix: "/memberships", key: "memberships" },
   { prefix: "/promotions", key: "promotions" },
   { prefix: "/reports", key: "reports" },
-  { prefix: "/profile", key: "myProfile" },
+  { prefix: "/settings/profile", key: "myProfile" },
   { prefix: "/settings", key: "settings" },
 ] as const;
 
