@@ -493,7 +493,9 @@ export default function PaymentsPage() {
                 <label
                   key={s}
                   className={cn(
-                    "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
+                    // One step down from the card: a frame set inside another
+                    // frame takes the next radius on the scale.
+                    "flex cursor-pointer items-start gap-comfortable rounded-sm border p-comfortable transition-colors duration-quick",
                     checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
                   )}
                 >

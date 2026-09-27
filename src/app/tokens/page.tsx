@@ -124,11 +124,16 @@ const SPACING = [
   { name: "hero", value: 48 },
 ];
 
+/* The four OS radii, and they are the REAL four: this table said sm was 8px
+   and lg was 24px, which were the values before the Aura pass retuned them to
+   6 and 20 — the page that documents the system had been documenting a system
+   that no longer existed. A harness now measures each swatch against the
+   number printed under it, so it cannot drift again. */
 const RADII = [
   { name: "xs", cls: "rounded-xs", value: "3px" },
-  { name: "sm", cls: "rounded-sm", value: "8px" },
+  { name: "sm", cls: "rounded-sm", value: "6px" },
   { name: "md", cls: "rounded-md", value: "12px" },
-  { name: "lg", cls: "rounded-lg", value: "24px" },
+  { name: "lg", cls: "rounded-lg", value: "20px" },
 ];
 
 const MOTION = [

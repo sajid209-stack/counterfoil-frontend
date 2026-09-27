@@ -116,7 +116,7 @@ export function FormField({
             {...described}
             className="peer sr-only"
           />
-          <span className="relative h-6 w-11 shrink-0 rounded-lg bg-line transition-colors duration-quick peer-checked:bg-ember peer-focus-visible:ring-2 peer-focus-visible:ring-ink peer-focus-visible:ring-offset-2 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-card after:transition-transform after:duration-quick peer-checked:after:translate-x-5" />
+          <span className="relative h-6 w-11 shrink-0 rounded-full bg-line transition-colors duration-quick peer-checked:bg-ember peer-focus-visible:ring-2 peer-focus-visible:ring-ink peer-focus-visible:ring-offset-2 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-card after:transition-transform after:duration-quick peer-checked:after:translate-x-5" />
           {label && <span className="text-sm">{label}</span>}
         </label>
         {error ? (

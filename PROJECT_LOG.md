@@ -12388,3 +12388,100 @@ than the label; the app's own `pick()` helper exists for that.
 - **A phone still spends 590px before the calendar** — the page title, the New
   booking button and the four stat cards. That is the page's chrome rather than
   the filter's, and it is item 20's.
+
+
+## The radius system — the owner's item 5 (2026-09-27)
+
+*"make sure in OS all cards, and sections, frames radius ratio is standard,
+and best UI principles followed here in radius ratio."*
+
+Measured before anything was touched: every element with a corner, across 18
+OS routes, with its radius, its role, its nearest rounded ancestor and the gap
+between the two. `/deck` is excluded — it draws devices and ticket stubs, and
+its radii are pictures of objects rather than the app's frames.
+
+**The scale itself was already clean: 0 off-scale radii in 900-odd corners.**
+Everything was 3, 6, 12 or a pill. What was not clean was the *ratio* — which
+is what the owner asked about — and the one page that documents the scale.
+
+### The rule, written down
+
+> **12** a container: a card, a dialog, a menu, a dropdown panel, a sheet.
+> Anything that floats is a card.
+> **6** a control — button, field, select — and a frame inside a card.
+> **3** a frame inside that, and small media.
+> **pill** the chip language, where the design calls for it.
+>
+> And the ratio: **inner = outer − gap**. A corner set inside another corner
+> must be smaller, or the two cross. Flush — no gap — may match, which is
+> exactly what the settings rows do on purpose so that a row's hover fill
+> follows the card's own corner instead of squaring it off.
+
+The design database has **no entry on corner radius** — searched three ways,
+0 results each time — so the rule above is the standard practice (inner =
+outer − gap, one step down the scale per level of nesting) rather than a
+database match, and it is recorded here as the house rule.
+
+### What was actually wrong
+
+**41 crossings, of five distinct shapes:**
+
+| | |
+|---|---|
+| the account monogram, on **every OS page** | a 32px disc at 6 inside a 44px button at 6, five pixels apart |
+| the payment-account choice cards | 12 inside a 12 card, set in by 21px |
+| the SMS preview bubble | **20 inside a 12 card** — rounder than the thing containing it |
+| the catalogue notice's dismiss | 6 inside a 6 row |
+| and the same monogram again | counted once per route |
+
+Each went one step down the scale. **41 → 0.**
+
+**Floating surfaces disagreed with each other.** A dialog, a row menu and the
+date panel are all 12; the **dropdown popover was 6**, the **toast was 6**, and
+the calendar's booking panel was **20**. Four different answers to "what shape
+is a thing that floats". All 12 now — including the calendar's new phone filter
+sheet, which matches the sheet Settings already draws.
+
+**`--radius-lg` (20px) is now used by nothing.** It was the booking panel and
+the SMS bubble, and both moved onto the scale that everything else uses. The
+token stays declared — the Go surface has its own trio and this one may be
+wanted again — but nothing in OS draws a 20px corner any more.
+
+### And the page that documents the scale was documenting a different one
+
+`/tokens` printed **sm 8px** and **lg 24px**. Those were the values *before*
+the Aura pass retuned them to 6 and 20 — the correction is even recorded in
+`globals.css`'s own comment ("sm was 8 and lg was 24"), and the reference page
+was never updated with it. A design-token page that misstates its own tokens is
+worse than no page, which is the same finding this log recorded in September
+about the colour swatches drawing themselves in theme-adaptive tokens.
+
+Fixed — and **the harness now measures each swatch against the number printed
+under it**, so the page cannot drift from the system again. That is the only
+guard that works: a comment asking two places to stay in step is how they got
+out of step.
+
+### Verified
+
+**8 checks over 18 routes and four overlays**: every radius on the scale, no
+corner set inside a corner of its own size or larger, every card 12, the
+dropdown panel a card, the row menu a card, the toast a card, and the tokens
+page printing the radius it draws. Then the standing harnesses, because the
+dropdown and the toast are on every screen: **dd1 58/58** and **settings
+navigation 55/55**. `tsc --noEmit`, `npm run build` and `eslint` clean.
+
+### One correction to the harness, twice
+
+Its first idea of "a card" was any tall bordered box, which called the notice
+panels inside cards cards and reported five false failures. A card is a surface
+**on the page**; a bordered box inside one is a frame and takes the next radius
+down. Its second was to flag any child whose corner matched its parent's —
+which condemned the settings rows, where matching is correct because the gap is
+zero. Both are now measured as the rule states them: `inner = outer − gap`.
+
+### Not done
+
+- **Go keeps its own trio** (18 / 14 / 28) and was not swept: the owner's item
+  says OS, and the till is deliberately softer because it is held in a hand.
+- **The deck is excluded** for the reason above, and its own radii are
+  internally consistent.

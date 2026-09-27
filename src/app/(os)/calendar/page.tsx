@@ -1148,7 +1148,7 @@ export default function CalendarPage() {
               onKeyDown={(e) => {
                 if (e.key === "Escape") closeFilters();
               }}
-              className="fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] flex-col gap-comfortable overflow-y-auto rounded-t-lg border-t border-line bg-card p-gutter"
+              className="fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] flex-col gap-comfortable overflow-y-auto rounded-t-md border-t border-line bg-card p-gutter"
               style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
             >
               <div className="flex items-center justify-between gap-tight">

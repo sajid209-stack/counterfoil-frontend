@@ -420,7 +420,7 @@ export default function NotificationsPage() {
                 <p className="text-[12px] font-medium text-muted">{t("notifications.from", { sender: form.senderName.trim() || "—" })}</p>
                 {/* Drawn as the message bubble a phone shows, because that
                     is the only place a customer ever reads it. */}
-                <p className="max-w-sm whitespace-pre-wrap break-words rounded-lg rounded-bl-xs bg-subtle px-section py-comfortable text-sm leading-relaxed text-fg ring-1 ring-inset ring-hairline">
+                <p className="max-w-sm whitespace-pre-wrap break-words rounded-sm rounded-bl-xs bg-subtle px-section py-comfortable text-sm leading-relaxed text-fg ring-1 ring-inset ring-hairline">
                   {preview}
                 </p>
                 <p className="text-[12px] text-muted">

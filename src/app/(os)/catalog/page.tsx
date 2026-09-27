@@ -816,7 +816,7 @@ function Catalog() {
               <button type="button" onClick={dismissMoved} className="-my-inline min-h-11 shrink-0 rounded-sm px-tight text-[13px] font-medium text-fg hover:bg-muted-wash md:hidden">
                 {t("moved.gotIt")}
               </button>
-              <button type="button" onClick={dismissMoved} aria-label={t("moved.dismiss")} className="-my-inline hidden h-9 w-9 shrink-0 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-fg md:flex">
+              <button type="button" onClick={dismissMoved} aria-label={t("moved.dismiss")} className="-my-inline hidden h-9 w-9 shrink-0 items-center justify-center rounded-xs text-muted hover:bg-muted-wash hover:text-fg md:flex">
                 <X size={16} strokeWidth={1.5} />
               </button>
             </div>

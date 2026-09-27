@@ -343,7 +343,7 @@ export function Select({
         <div
           ref={panel}
           className={cn(
-            "fixed z-50 flex max-h-[18rem] min-w-[12rem] flex-col overflow-hidden rounded-sm border border-line bg-card shadow-lg",
+            "fixed z-50 flex max-h-[18rem] min-w-[12rem] flex-col overflow-hidden rounded-md border border-line bg-card shadow-lg",
             bare && "w-max max-w-[18rem]",
           )}
         >

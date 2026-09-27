@@ -66,7 +66,9 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
           open && "text-fg",
         )}
       >
-        <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-subtle text-[12px] font-bold text-fg ring-1 ring-line">
+        {/* One step down from the button it sits in: two corners of the same
+            radius, five pixels apart, cross each other. */}
+        <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-xs bg-subtle text-[12px] font-bold text-fg ring-1 ring-line">
           {initials}
         </span>
         {!compact && <ChevronDown size={16} strokeWidth={1.5} aria-hidden />}

@@ -79,7 +79,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              "pointer-events-auto flex items-start gap-tight rounded-sm border bg-card p-comfortable shadow-lg",
+              "pointer-events-auto flex items-start gap-tight rounded-md border bg-card p-comfortable shadow-lg",
               TONE_STYLES[t.tone],
             )}
           >

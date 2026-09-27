@@ -847,7 +847,7 @@ function Panel({
         }}
         className={cn(
           "fixed z-50 flex flex-col border border-line bg-sheet shadow-[0_24px_60px_-16px_rgb(0_0_0/0.30),0_4px_12px_-4px_rgb(0_0_0/0.10)]",
-          compact ? "go-sheet-panel inset-x-0 bottom-0 max-h-[90dvh] rounded-t-lg" : "max-h-[calc(100dvh-32px)] rounded-lg",
+          compact ? "go-sheet-panel inset-x-0 bottom-0 max-h-[90dvh] rounded-t-md" : "max-h-[calc(100dvh-32px)] rounded-md",
         )}
         style={compact ? undefined : { width: PANEL_W, left: pos?.left ?? -9999, top: pos?.top ?? 0 }}
       >
