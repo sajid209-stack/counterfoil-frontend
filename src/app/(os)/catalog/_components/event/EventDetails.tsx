@@ -84,14 +84,14 @@ export function EventDetails({
         <Labelled label={td("date")} required error={errors.date}>
           <DateField size="form" value={content.date || null} today={DEMO_TODAY} min={DEMO_TODAY} onChange={(v) => onContent({ date: v, endDate: content.endDate && content.endDate >= v ? content.endDate : v })} labels={dateLabels} placeholder={td("pickDate")} />
         </Labelled>
-        <TimeInput label={td("starts")} value={content.startTime} onChange={(v) => onContent({ startTime: v })} />
+        <TimeInput picker label={td("starts")} value={content.startTime} onChange={(v) => onContent({ startTime: v })} />
         {ends ? (
           <>
             <Labelled label={td("endDate")}>
               <DateField size="form" value={content.endDate || content.date || null} today={DEMO_TODAY} min={content.date || DEMO_TODAY} onChange={(v) => onContent({ endDate: v })} labels={dateLabels} />
             </Labelled>
             <div className="flex flex-col gap-inline">
-              <TimeInput label={td("ends")} value={content.endTime} onChange={(v) => onContent({ endTime: v })} />
+              <TimeInput picker label={td("ends")} value={content.endTime} onChange={(v) => onContent({ endTime: v })} />
               <button type="button" onClick={() => onContent({ endTime: "", endDate: "" })} className="flex min-h-11 items-center gap-inline self-start rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-muted-wash hover:text-fg md:min-h-9">
                 <X size={14} strokeWidth={1.5} aria-hidden /> {td("removeEnd")}
               </button>

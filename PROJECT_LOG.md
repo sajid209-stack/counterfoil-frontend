@@ -12789,3 +12789,85 @@ was plainly on the screen. Third time this project has hit it.
 - **`/profile` does not redirect for an OS user** who has the old address
   bookmarked: they get the till's page, which is the honest answer for that
   address now.
+
+
+## Times drop down — the last clause of item 13 (2026-09-27)
+
+Item 13 shipped on 24 September: days on an event, per-day line-ups, per-day
+pricing and the grouped capacity that stops a weekend pass overselling
+Saturday. What was left in it was the control — *"start date, end date, every
+date customize time needed, and fix the UI and UX of boxes, times need to drop
+down."*
+
+Start and end dates and per-day times were built in that pass. **The dropdown
+was not**: a time was typed, with two nudges beside it, and no way to see what
+the choices were.
+
+### Opt-in, and that is the whole design decision
+
+`TimeInput` is in schedule builders, policies, the quick pass and the event
+editors — and a control used in eighty places does not change shape on
+everyone at once. So `picker` is a prop, in the pattern `Button`,
+`ModeButton` and `DiscountInput` already use, and it is on in the three event
+editors the owner named and nowhere else. A time field in a schedule builder
+keeps its steppers, which is what a dense form wants.
+
+Where it is on, one chevron replaces the two nudges — with 96 quarter hours to
+choose from, nudging to 18:30 is nine presses and picking it is one. **Typing
+still works**, forgivingly, exactly as before: `930`, `1830`, `6:30p`.
+
+### A field that drives a list, not a button that opens one
+
+The focus never leaves the input. It is a combobox: `aria-expanded`,
+`aria-controls` and `aria-activedescendant` on the field, `role="option"` rows
+in the list, and the arrow keys, Home, End, Enter and Escape handled where the
+caret is. That is what lets somebody type "18" and then arrow into the quarter
+hours around it, rather than choosing between typing and picking.
+
+The list is **portalled and placed in viewport coordinates**, the same way the
+app's other dropdown is and for the same reason item 7 recorded: a time field
+sits inside cards and scrollers that would clip it. It flips above the field
+where there is no room below, which is what the last field in a form does.
+
+### Two defects, and the second is the interesting one
+
+**The list opened at midnight.** It is meant to open on the time it already
+holds — a list of 96 that starts at 00:00 is a list nobody can use.
+
+The cause was not what it looked like. The placement listens for scroll with
+`capture: true` so a panel follows its trigger when the page moves — and a
+capturing listener **sees the list's own scroll too**. `place()` clears the
+height cap before measuring, which un-overflows the list for an instant and
+resets it to the top. So the opening scroll was undone by the thing that was
+supposed to be keeping the list in position, and a user's wheel would have been
+fought exactly as hard.
+
+A first fix — deferring the scroll a frame — appeared to work and was wrong
+about why; removing it showed the list still opened correctly, so it came back
+out. **The comment records the real cause rather than the first theory.**
+
+And **Escape did not close it** when the list had been opened from the field,
+because the handler was on the panel and the focus was in the input. That went
+with making the field drive the list.
+
+### Verified
+
+**15 checks, driven** in a real event editor: every quarter hour from 00:00 to
+23:45, the held time marked and the list **opened on it**, the list inside the
+window, choosing one filling the field and closing the list, a time still
+typed the forgiving way, ArrowDown opening the list from the field and Escape
+closing it. Plus the one that keeps the opt-in honest: **a time field
+elsewhere still has its steppers.**
+
+`tsc`, `npm run build` and `eslint` clean — `TimeInput` holds at its one
+documented pre-existing `set-state-in-effect`. No message keys: the times are
+times.
+
+### Not done
+
+- **The other time fields keep their steppers**, by design. If the owner wants
+  the list everywhere it is one prop per call site, and the schedule builder is
+  the first place to try it.
+- **The list is every quarter hour, not the venue's own hours.** Trading hours
+  would make a shorter list, and would also hide the time somebody actually
+  wants when an event runs late.

@@ -135,9 +135,9 @@ export function EventDays({
             />
             {showTimes && (
               <span className="flex items-center gap-inline">
-                <TimeInput value={d.startTime ?? ""} onChange={(v) => patchDay(d.id, { startTime: v })} className="w-24" />
+                <TimeInput picker value={d.startTime ?? ""} onChange={(v) => patchDay(d.id, { startTime: v })} className="w-24" />
                 <span aria-hidden className="text-muted">–</span>
-                <TimeInput value={d.endTime ?? ""} onChange={(v) => patchDay(d.id, { endTime: v })} className="w-24" />
+                <TimeInput picker value={d.endTime ?? ""} onChange={(v) => patchDay(d.id, { endTime: v })} className="w-24" />
               </span>
             )}
           </li>

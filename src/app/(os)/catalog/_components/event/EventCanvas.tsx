@@ -235,11 +235,11 @@ export function EventCanvas({
           </Fact>
           <Fact icon={<Clock size={15} strokeWidth={1.5} aria-hidden />} error={errors.ends}>
             <span className="flex flex-wrap items-center gap-inline">
-              <TimeInput value={content.startTime} onChange={(v) => onContent({ startTime: v })} className="w-28" />
+              <TimeInput picker value={content.startTime} onChange={(v) => onContent({ startTime: v })} className="w-28" />
               {content.endTime !== "" ? (
                 <>
                   <span className="text-muted">–</span>
-                  <TimeInput value={content.endTime} onChange={(v) => onContent({ endTime: v })} className="w-28" />
+                  <TimeInput picker value={content.endTime} onChange={(v) => onContent({ endTime: v })} className="w-28" />
                 </>
               ) : (
                 <button type="button" onClick={() => onContent({ endTime: "22:00" })} className="min-h-11 rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-muted-wash hover:text-fg sm:min-h-9">
