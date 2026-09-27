@@ -18,8 +18,9 @@ import {
   type StaffNotificationEvent,
 } from "@/lib/api";
 import { DEFAULT_SMS_TEMPLATE, SMS_PLACEHOLDERS, renderSms } from "@/lib/sms";
+import { DEFAULT_EMAIL_BODY, DEFAULT_EMAIL_SUBJECT, EMAIL_PLACEHOLDERS, SUBJECT_VISIBLE } from "@/lib/email";
 import { DEMO_TODAY } from "@/lib/schedule";
-import { formatDay } from "@/lib/format";
+import { formatDay, formatMoney } from "@/lib/format";
 import {
   SaveBar,
   SectionSkeleton,
@@ -63,6 +64,8 @@ function smsCost(text: string): { chars: number; segments: number; unicode: bool
 
 /** A sample code, so the preview's length is the length a real message has. */
 const SAMPLE_CODE = "CF-2026-000123-01";
+/** And the order it belongs to, for the e-mail's subject line. */
+const SAMPLE_REFERENCE = "CF-2026-000123";
 
 const CUSTOMER_EVENTS: CustomerNotificationEvent[] = ["confirmation", "reminder", "rescheduled", "cancelled", "refunded", "followUp"];
 const CHANNELS: NotificationChannel[] = ["sms", "email"];
@@ -80,14 +83,18 @@ interface Form extends Omit<NotificationSettings, "reminderHours" | "followUpHou
   followUpHours: string;
   replyToEmail: string;
   template: string;
+  emailSubject: string;
+  emailBody: string;
 }
 
-const toForm = (s: NotificationSettings, template: string): Form => ({
+const toForm = (s: NotificationSettings, template: string, emailSubject: string, emailBody: string): Form => ({
   ...s,
   reminderHours: String(s.reminderHours),
   followUpHours: String(s.followUpHours),
   replyToEmail: s.replyToEmail ?? "",
   template,
+  emailSubject,
+  emailBody,
 });
 
 const fromForm = (f: Form): NotificationSettings => ({
@@ -98,6 +105,13 @@ const fromForm = (f: Form): NotificationSettings => ({
   senderName: f.senderName.trim(),
   replyToEmail: f.replyToEmail.trim() || null,
   staff: f.staff,
+});
+
+/** What the operator has written, or the default they can reset to. */
+const wording = (op: { smsTemplate?: string; emailSubject?: string; emailTemplate?: string } | null | undefined) => ({
+  template: op?.smsTemplate ?? DEFAULT_SMS_TEMPLATE,
+  emailSubject: op?.emailSubject ?? DEFAULT_EMAIL_SUBJECT,
+  emailBody: op?.emailTemplate ?? DEFAULT_EMAIL_BODY,
 });
 
 /** A whole number of hours inside the range, or null. */
@@ -129,12 +143,21 @@ export default function NotificationsPage() {
   const setQ = useApiQuery(() => getNotificationSettings(), []);
   const roleQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
   const field = useRef<HTMLTextAreaElement>(null);
+  const subjectField = useRef<HTMLInputElement>(null);
+  const bodyField = useRef<HTMLTextAreaElement>(null);
 
   const [base, setBase] = useState<Form | null>(null);
   const [draft, setDraft] = useState<Form | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const saved = base ?? (opQ.data && setQ.data ? toForm(setQ.data, opQ.data.smsTemplate ?? DEFAULT_SMS_TEMPLATE) : null);
+  const saved =
+    base ??
+    (opQ.data && setQ.data
+      ? (() => {
+          const w = wording(opQ.data);
+          return toForm(setQ.data, w.template, w.emailSubject, w.emailBody);
+        })()
+      : null);
   const form = draft ?? saved;
   const dirty = draft !== null && saved !== null && JSON.stringify(draft) !== JSON.stringify(saved);
 
@@ -156,6 +179,8 @@ export default function NotificationsPage() {
     sender: SENDER.test(form.senderName.trim()) ? undefined : t("notifications.senderInvalid"),
     replyTo: form.replyToEmail.trim() && !EMAIL.test(form.replyToEmail.trim()) ? t("notifications.replyInvalid") : undefined,
     template: form.template.trim() ? undefined : t("notifications.empty"),
+    emailSubject: form.emailSubject.trim() ? undefined : t("notifications.empty"),
+    emailBody: form.emailBody.trim() ? undefined : t("notifications.empty"),
   };
   // An alert switched on with nobody to send it to is an alert that is off
   // while claiming to be on.
@@ -172,11 +197,19 @@ export default function NotificationsPage() {
     setAlert(ev, { roleIds: ids.includes(roleId) ? ids.filter((id) => id !== roleId) : [...ids, roleId] });
   };
 
-  const insert = (token: string) => {
-    const el = field.current;
-    const start = el?.selectionStart ?? form.template.length;
-    const end = el?.selectionEnd ?? form.template.length;
-    set({ template: form.template.slice(0, start) + token + form.template.slice(end) });
+  /* One helper for the SMS body, the e-mail subject and the e-mail body:
+     three copies of this would be three places to put the caret back wrong. */
+  type Wording = "template" | "emailSubject" | "emailBody";
+  const insertInto = (
+    ref: React.RefObject<HTMLTextAreaElement | null> | React.RefObject<HTMLInputElement | null>,
+    key: Wording,
+    token: string,
+  ) => {
+    const el = ref.current;
+    const value = form[key];
+    const start = el?.selectionStart ?? value.length;
+    const end = el?.selectionEnd ?? value.length;
+    set({ [key]: value.slice(0, start) + token + value.slice(end) } as Partial<Form>);
     // The caret goes after what was inserted — where the next keystroke belongs.
     requestAnimationFrame(() => {
       if (!el) return;
@@ -184,13 +217,24 @@ export default function NotificationsPage() {
       el.setSelectionRange(start + token.length, start + token.length);
     });
   };
+  const insert = (token: string) => insertInto(field, "template", token);
 
   const save = async () => {
     if (invalid) return;
     setSaving(true);
+    const wordingChanged =
+      form.template !== saved.template ||
+      form.emailSubject !== saved.emailSubject ||
+      form.emailBody !== saved.emailBody;
     const [settingsRes, opRes] = await Promise.all([
       updateNotificationSettings(fromForm(form)),
-      form.template !== saved.template ? updateOperator({ smsTemplate: form.template }) : Promise.resolve(null),
+      wordingChanged
+        ? updateOperator({
+            smsTemplate: form.template,
+            emailSubject: form.emailSubject.trim(),
+            emailTemplate: form.emailBody,
+          })
+        : Promise.resolve(null),
     ]);
     setSaving(false);
     if (!settingsRes.ok) {
@@ -201,7 +245,8 @@ export default function NotificationsPage() {
       toast.error(opRes.error.message);
       return;
     }
-    setBase(toForm(settingsRes.data, opRes?.ok ? opRes.data.smsTemplate ?? DEFAULT_SMS_TEMPLATE : form.template));
+    const w = opRes?.ok ? wording(opRes.data) : { template: form.template, emailSubject: form.emailSubject, emailBody: form.emailBody };
+    setBase(toForm(settingsRes.data, w.template, w.emailSubject, w.emailBody));
     setDraft(null);
     toast.success(t("notifications.saved"));
   };
@@ -212,6 +257,20 @@ export default function NotificationsPage() {
     date: formatDay(DEMO_TODAY, { weekday: true }),
   });
   const cost = smsCost(preview);
+
+  /* The e-mail, rendered with the same sample a cashier would send: one
+     ticket, today, for a real-looking amount. */
+  const mailVars = {
+    business: opQ.data?.name ?? "",
+    reference: SAMPLE_REFERENCE,
+    code: SAMPLE_CODE,
+    date: formatDay(DEMO_TODAY, { weekday: true }),
+    count: "2",
+    total: formatMoney(115000, opQ.data?.currency ?? "BDT"),
+  };
+  const subjectPreview = renderSms(form.emailSubject, mailVars);
+  const bodyPreview = renderSms(form.emailBody, mailVars);
+  const emailDefault = form.emailSubject === DEFAULT_EMAIL_SUBJECT && form.emailBody === DEFAULT_EMAIL_BODY;
 
   return (
     <PageShell title={t("notifications.title")} description={t("notifications.description")}>
@@ -398,7 +457,7 @@ export default function NotificationsPage() {
                         key={p.key}
                         type="button"
                         onClick={() => insert(p.key)}
-                        aria-label={t("notifications.insert", { placeholder: p.key })}
+                        aria-label={t("notifications.insertInto", { placeholder: p.key, field: t("notifications.targetSms") })}
                         className="inline-flex min-h-11 items-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[13px] transition-colors duration-quick hover:border-ember/40 md:min-h-9"
                       >
                         <Plus size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
@@ -427,6 +486,141 @@ export default function NotificationsPage() {
                   {t("notifications.length", { count: cost.chars })} · {t("notifications.segments", { count: cost.segments })}
                 </p>
                 {cost.unicode && <p className="max-w-prose text-[12px] text-muted">{t("notifications.unicode")}</p>}
+              </div>
+            )}
+          </SettingRow>
+        </SettingsSection>
+
+        {/* ── the e-mail ──────────────────────────────────────────────────
+            The same ticket, in the other channel. It used to be the only
+            message the operator could NOT write: the SMS was theirs and the
+            e-mail was the product's own copy, so one sale arrived in two
+            voices. Subject and body are edited apart because an inbox shows
+            them apart — and the subject is the half that gets cut. */}
+        <SettingsSection
+          title={t("notifications.emailTitle")}
+          description={t("notifications.emailDesc")}
+          aside={
+            !emailDefault ? (
+              <button
+                type="button"
+                onClick={() => set({ emailSubject: DEFAULT_EMAIL_SUBJECT, emailBody: DEFAULT_EMAIL_BODY })}
+                className="inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
+              >
+                <RotateCcw size={14} strokeWidth={1.5} aria-hidden />
+                {t("notifications.reset")}
+              </button>
+            ) : undefined
+          }
+        >
+          <SettingRow
+            label={t("notifications.emailSubject")}
+            description={t("notifications.emailSubjectDesc", { visible: SUBJECT_VISIBLE })}
+            layout="stack"
+            error={errors.emailSubject}
+          >
+            {({ id, describedBy }) => (
+              <div className="flex flex-col gap-tight">
+                <input
+                  ref={subjectField}
+                  id={id}
+                  type="text"
+                  value={form.emailSubject}
+                  onChange={(e) => set({ emailSubject: e.target.value })}
+                  aria-describedby={describedBy}
+                  aria-invalid={!!errors.emailSubject || undefined}
+                  className={cn(
+                    "h-11 w-full min-w-0 rounded-sm border bg-card px-comfortable text-sm text-fg outline-none transition-colors duration-quick md:h-9",
+                    errors.emailSubject ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
+                  )}
+                />
+                <div className="flex flex-wrap gap-tight">
+                  {EMAIL_PLACEHOLDERS.map((ph) => {
+                    const name = ph.key.slice(1, -1);
+                    return (
+                      <button
+                        key={`s${ph.key}`}
+                        type="button"
+                        onClick={() => insertInto(subjectField, "emailSubject", ph.key)}
+                        aria-label={t("notifications.insertInto", { placeholder: ph.key, field: t("notifications.targetSubject") })}
+                        className="inline-flex min-h-11 items-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[13px] transition-colors duration-quick hover:border-ember/40 md:min-h-9"
+                      >
+                        <Plus size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
+                        <code className="font-mono text-[12px] text-fg">{ph.key}</code>
+                        <span className="text-muted">{t(`notifications.ph.${name}`)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </SettingRow>
+
+          <SettingRow label={t("notifications.emailBody")} description={t("notifications.emailBodyDesc")} layout="stack" error={errors.emailBody}>
+            {({ id, describedBy }) => (
+              <div className="flex flex-col gap-tight">
+                <textarea
+                  ref={bodyField}
+                  id={id}
+                  rows={8}
+                  value={form.emailBody}
+                  onChange={(e) => set({ emailBody: e.target.value })}
+                  aria-describedby={describedBy}
+                  aria-invalid={!!errors.emailBody || undefined}
+                  className={cn(
+                    "w-full min-w-0 resize-y rounded-sm border bg-card px-comfortable py-tight text-sm leading-relaxed text-fg outline-none transition-colors duration-quick",
+                    errors.emailBody ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
+                  )}
+                />
+                <div className="flex flex-wrap gap-tight">
+                  {EMAIL_PLACEHOLDERS.map((ph) => {
+                    const name = ph.key.slice(1, -1);
+                    return (
+                      <button
+                        key={`b${ph.key}`}
+                        type="button"
+                        onClick={() => insertInto(bodyField, "emailBody", ph.key)}
+                        aria-label={t("notifications.insertInto", { placeholder: ph.key, field: t("notifications.targetBody") })}
+                        className="inline-flex min-h-11 items-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[13px] transition-colors duration-quick hover:border-ember/40 md:min-h-9"
+                      >
+                        <Plus size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
+                        <code className="font-mono text-[12px] text-fg">{ph.key}</code>
+                        <span className="text-muted">{t(`notifications.ph.${name}`)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </SettingRow>
+
+          <SettingRow label={t("notifications.emailPreview")} description={t("notifications.emailPreviewDesc")} layout="stack" labelFor={false}>
+            {() => (
+              <div className="flex flex-col gap-tight">
+                {/* Drawn the way an inbox draws it: who it is from, then the
+                    subject, then the first line — which is the whole of what
+                    somebody decides on before they open anything. */}
+                <div className="max-w-prose overflow-hidden rounded-sm border border-line bg-card">
+                  <div className="flex flex-wrap items-baseline justify-between gap-tight border-b border-hairline bg-subtle px-section py-tight">
+                    <span className="text-[13px] font-medium text-fg">{form.senderName.trim() || "—"}</span>
+                    <span className="font-mono text-[12px] text-muted">{form.replyToEmail.trim() || t("notifications.noReplyTo")}</span>
+                  </div>
+                  <div className="px-section py-comfortable">
+                    <p className="break-words text-sm font-semibold text-fg">
+                      {subjectPreview.slice(0, SUBJECT_VISIBLE)}
+                      {subjectPreview.length > SUBJECT_VISIBLE && (
+                        /* What a phone stops showing. Drawn rather than
+                           described, because "about 45 characters" means
+                           nothing until you see where your own subject ends. */
+                        <span className="text-muted">{subjectPreview.slice(SUBJECT_VISIBLE)}</span>
+                      )}
+                    </p>
+                    <p className="mt-tight whitespace-pre-wrap break-words text-sm leading-relaxed text-fg">{bodyPreview}</p>
+                  </div>
+                </div>
+                <p className="text-[12px] text-muted">
+                  {t("notifications.subjectLength", { count: subjectPreview.length, visible: SUBJECT_VISIBLE })}
+                </p>
               </div>
             )}
           </SettingRow>

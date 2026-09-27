@@ -782,11 +782,13 @@
     "smsDesc": "The wording of the booking-confirmed SMS. Staff can also send it again from the order.",
     "message": "Message",
     "messageDesc": "Insert a placeholder where the cursor is, and it is filled in for each sale.",
-    "insert": "Insert {placeholder}",
     "ph": {
       "business": "your business name",
       "code": "the ticket code",
-      "date": "the visit date"
+      "date": "the visit date",
+      "reference": "the order reference",
+      "count": "how many tickets",
+      "total": "what was paid"
     },
     "preview": "Preview",
     "previewDesc": "How it reads on a customer's phone.",
@@ -880,7 +882,21 @@
         "title": "Daily summary",
         "desc": "Takings, arrivals and no-shows for each location, sent at closing time."
       }
-    }
+    },
+    "emailTitle": "Ticket e-mail",
+    "emailDesc": "The wording of the e-mail that carries the tickets and the receipt. Your words, like the SMS — written once, in your own language.",
+    "emailSubject": "Subject",
+    "emailSubjectDesc": "A phone shows about {visible} characters of it before cutting the rest.",
+    "emailBody": "Message",
+    "emailBodyDesc": "Insert a placeholder where the cursor is, and it is filled in for each sale.",
+    "emailPreview": "Preview",
+    "emailPreviewDesc": "How it arrives, with the part a phone hides shown in grey.",
+    "noReplyTo": "no reply-to address",
+    "subjectLength": "{count, plural, one {# character} other {# characters}} · about {visible} are shown on a phone",
+    "insertInto": "Insert {placeholder} into {field}",
+    "targetSms": "the ticket SMS",
+    "targetSubject": "the e-mail subject",
+    "targetBody": "the e-mail message"
   },
   "preferences": {
     "title": "Preferences",

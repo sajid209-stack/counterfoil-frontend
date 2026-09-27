@@ -12485,3 +12485,85 @@ zero. Both are now measured as the rule states them: `inner = outer − gap`.
   says OS, and the till is deliberately softer because it is held in a hand.
 - **The deck is excluded** for the reason above, and its own radii are
   internally consistent.
+
+
+## The ticket e-mail becomes the operator's — item 4 (2026-09-27)
+
+*"In OS settings need Email Template section to in Notifications."*
+
+The gap was exact, and worth stating before the fix: **the SMS wording had been
+the operator's since the messages work, and the e-mail about the same ticket
+was two message keys in the till's own files** — `pos.complete.emailSubject`
+and `emailBody`. So a venue could set the voice of its text message and not of
+its e-mail, and one sale arrived sounding like two different businesses.
+
+### The section
+
+**Ticket e-mail**, under the SMS it belongs beside: a subject, a message, the
+same placeholder chips, a preview, and "Use the default wording" once it
+differs from the default.
+
+- **Subject and body are edited apart**, because an inbox shows them apart and
+  the subject is the half that gets cut. The field says where: *"A phone shows
+  about 45 characters of it before cutting the rest."*
+- **The preview is drawn as an inbox draws it** — who it is from, the subject,
+  then the message — and the part past 45 characters is **greyed rather than
+  described**. "About 45 characters" means nothing until you see where your own
+  subject ends.
+- **Six placeholders**, three more than the SMS has, because an e-mail has room
+  for them: `{business}`, `{reference}`, `{code}`, `{date}`, `{count}`,
+  `{total}`. They render with real values in the preview, money included, so
+  the line that is read is the line that will be sent.
+- **One template, not one per locale** — written once, in the operator's own
+  language. That is the trade the SMS already made; the alternative is the
+  translated default they cannot edit, which is the thing this replaces.
+
+### One renderer, two kinds of message
+
+`renderTemplate` moved to `lib/template.ts` and `lib/sms.ts` re-exports it
+under the name its callers already use. Two substitution functions would be two
+sets of rules about what `{code}` means; an unknown placeholder still passes
+through untouched, so a typo shows up in the preview rather than in a
+customer's inbox.
+
+**Contract, for the backend lane:** `Operator.emailSubject` and
+`Operator.emailTemplate`, beside the `smsTemplate` they match.
+
+### Two defects found by driving it
+
+- **Three groups of chips carried the same accessible name.** "Insert
+  {business}" appeared three times on the page — once for the SMS, once for the
+  subject, once for the body — with nothing saying which field each one filled.
+  A harness clicking "the first one" filled the wrong field, which is exactly
+  what a screen-reader user would do. They are named by their target now — *the
+  ticket SMS*, *the e-mail subject*, *the e-mail message* — and naming them by
+  their **field label** was not enough, because two rows on this page are both
+  labelled "Message".
+- **The till's preview ran the operator's paragraphs together.** The body is
+  their wording now, with their line breaks, and a preview that collapses them
+  is showing a message that is not the one being sent.
+
+### Verified
+
+**27 checks, driven** — the section, the default subject, the preview following
+the field and greying what a phone hides, a placeholder inserting at the caret,
+every chip carrying a distinct name, an empty subject refused in words with
+Save disabled, a save that sticks and renders with real values, and Reset
+appearing only once it differs from the default. Then the one that matters:
+**a sale rung up at the till offers the operator's subject and the operator's
+message, with this sale's own reference, date and total in them, and its line
+breaks intact.**
+
+At 390 and in Bangla: no sideways scroll, no hidden overflow, nothing under the
+12px floor, every control a thumb target, no missing messages. `tsc`,
+`npm run build` and `eslint` clean; i18n parity **0 missing / 0 extra**, with
+the two keys the till no longer reads removed from both locales.
+
+### Not done
+
+- **The other two tills send no e-mail at all** — `/sell` and `/classic` offer
+  SMS only, so this reaches the guest from `/pos`. Wiring the same template
+  into them is a few lines when either is next touched.
+- **The e-mail is still a preview, not a send.** There is no mail transport
+  here, as there is no SMS gateway; what the template changes is what the till
+  says it will send, which is what an operator reviews and signs off.

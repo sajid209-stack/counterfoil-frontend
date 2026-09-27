@@ -12,6 +12,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { formatDay, formatMoney } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { DEFAULT_SMS_TEMPLATE, renderSms } from "@/lib/sms";
+import { DEFAULT_EMAIL_BODY, DEFAULT_EMAIL_SUBJECT } from "@/lib/email";
 import type { CompleteInfo, CompleteTicket } from "../_lib/handover";
 
 /*
@@ -116,8 +117,21 @@ export default function CompletePage() {
   const phoneInvalid = phoneTouched && phone.trim() !== "" && !isMobile(phone);
   const emailInvalid = emailTouched && email.trim() !== "" && !isEmail(email);
   const canSend = (!wantsSms || isMobile(phone)) && (!wantsEmail || isEmail(email));
-  const emailSubject = t("complete.emailSubject", { business, ref: info.reference ?? info.code });
-  const emailBody = t("complete.emailBody", { count: Math.max(tickets.length, 1), date: ticketDay, total: formatMoney(total) });
+  /* The operator's words, not the product's. This used to be two message
+     keys — so a venue could set the voice of its SMS and not of the e-mail
+     about the same ticket, and the two arrived sounding like different
+     businesses. Same template mechanism, same placeholders, edited in
+     Settings - Notifications. */
+  const mailVars = {
+    business,
+    reference: info.reference ?? info.code ?? "",
+    code: info.code ?? "",
+    date: ticketDay,
+    count: String(Math.max(tickets.length, 1)),
+    total: formatMoney(total),
+  };
+  const emailSubject = renderSms(operatorQ.data?.emailSubject || DEFAULT_EMAIL_SUBJECT, mailVars);
+  const emailBody = renderSms(operatorQ.data?.emailTemplate || DEFAULT_EMAIL_BODY, mailVars);
 
   const openSend = (channel: Channel) => {
     setPhone((current) => current || knownPhone || "");
@@ -452,7 +466,10 @@ export default function CompletePage() {
               {/* The message as it will arrive: its subject, then what it says. */}
               <div className="rounded-go-sm border border-line bg-subtle p-comfortable text-sm">
                 <p className="break-words font-semibold text-fg">{emailSubject}</p>
-                <p className="mt-1 break-words text-muted">{emailBody}</p>
+                {/* The operator's own line breaks, kept: the body is now
+                    their wording, and a preview that runs their paragraphs
+                    together is showing a message that is not the one sent. */}
+                <p className="mt-1 whitespace-pre-wrap break-words text-muted">{emailBody}</p>
               </div>
             </div>
           )}

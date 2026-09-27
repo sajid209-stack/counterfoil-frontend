@@ -228,8 +228,6 @@
     "emailTo": "Email address",
     "emailToHelp": "The tickets and the receipt go to this address.",
     "emailInvalid": "Enter an email address, like name@example.com.",
-    "emailSubject": "Your tickets from {business} · {ref}",
-    "emailBody": "{count, plural, one {Your ticket for {date} is attached} other {Your # tickets for {date} are attached}}, with the receipt for {total}. Show the QR code at the gate.",
     "emailSentTo": "Email sent to {email}.",
     "bothSentTo": "Sent by SMS to {phone} and by email to {email}."
   },

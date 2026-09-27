@@ -83,6 +83,11 @@ export interface Operator {
   taxRatePct: number; // STANDARD sales tax / VAT percent, e.g. 15
   reducedRatePct?: number; // reduced tax class rate, e.g. 7.5
   smsTemplate?: string; // ticket SMS body with {{placeholders}}
+  /** The ticket e-mail, the operator's own words. Subject and body are stored
+   *  apart because an inbox shows them apart, and the subject is the half that
+   *  has to survive being cut at about 45 characters on a phone. */
+  emailSubject?: string;
+  emailTemplate?: string;
   /** Bookings older than this many days cannot be edited (§61.10). Null means
    *  history stays editable. */
   pastEditLockDays?: number | null;
@@ -98,7 +103,7 @@ export interface Operator {
   updatedAt: ISODateTime;
 }
 export type OperatorPatch = Partial<
-  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct" | "smsTemplate" | "pastEditLockDays" | "contactPhone" | "contactEmail" | "website" | "receiptFooter">
+  Pick<Operator, "name" | "currency" | "defaultTimezone" | "taxRatePct" | "reducedRatePct" | "smsTemplate" | "emailSubject" | "emailTemplate" | "pastEditLockDays" | "contactPhone" | "contactEmail" | "website" | "receiptFooter">
 >;
 
 export type TaxClass = "standard" | "reduced" | "exempt";
