@@ -37,7 +37,7 @@ export function TillSwitcher() {
             href={t.href}
             aria-current={active ? "page" : undefined}
             title={t.name}
-            className={`flex h-9 items-center rounded-full px-comfortable text-[13px] transition-colors duration-quick ${
+            className={`flex h-9 items-center rounded-full px-comfortable text-[0.8125rem] transition-colors duration-quick ${
               active ? "bg-card font-medium text-fg shadow-go" : "text-muted hover:text-fg"
             }`}
           >

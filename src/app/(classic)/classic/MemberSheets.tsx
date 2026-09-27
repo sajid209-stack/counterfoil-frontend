@@ -39,7 +39,7 @@ export function MembershipSheet({
       {!hasCustomer ? (
         <div className="rounded-sm border-l-2 border-ember bg-ember/5 p-comfortable">
           <p className="text-sm font-medium">{t("membership.needCustomerTitle")}</p>
-          <p className="mt-inline text-[13px] text-muted">{t("membership.needCustomerBody")}</p>
+          <p className="mt-inline text-[0.8125rem] text-muted">{t("membership.needCustomerBody")}</p>
         </div>
       ) : (
         <>
@@ -54,7 +54,7 @@ export function MembershipSheet({
                 >
                   <span className="min-w-0">
                     <span className="block break-words text-sm font-medium">{tier.name}</span>
-                    <span className="block break-words text-[12px] text-muted">
+                    <span className="block break-words text-[0.75rem] text-muted">
                       {tier.description}
                     </span>
                   </span>
@@ -170,7 +170,7 @@ function PointsSheetBody({
     >
       <div className="flex flex-col gap-section">
         {maxPoints === 0 ? (
-          <p className="text-[13px] text-muted">
+          <p className="text-[0.8125rem] text-muted">
             {account.balance < program.minRedeemPoints
               ? t("points.belowMinimum", { min: program.minRedeemPoints })
               : t("points.nothingToSpendOn")}
@@ -211,12 +211,12 @@ function PointsSheetBody({
                 })}
               </p>
               {belowMin && (
-                <p className="mt-inline text-[12px] text-warning">
+                <p className="mt-inline text-[0.75rem] text-warning">
                   {t("points.belowMinimum", { min: program.minRedeemPoints })}
                 </p>
               )}
               {account.expiringSoon > 0 && (
-                <p className="mt-inline text-[12px] text-muted">
+                <p className="mt-inline text-[0.75rem] text-muted">
                   {t("points.expiringSoon", { count: account.expiringSoon })}
                 </p>
               )}

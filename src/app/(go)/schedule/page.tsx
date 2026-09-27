@@ -151,7 +151,7 @@ export default function SchedulePage() {
           <div className="flex flex-wrap items-center justify-between gap-tight">
             <div className="min-w-0">
               <h1 className="type-h1 text-xl">{t("title")}</h1>
-              <p className="text-[13px] text-muted">{dayLabel}</p>
+              <p className="text-[0.8125rem] text-muted">{dayLabel}</p>
             </div>
             <div className="flex shrink-0 items-center gap-tight">
               <button
@@ -178,6 +178,27 @@ export default function SchedulePage() {
               >
                 <ChevronRight size={18} strokeWidth={1.5} />
               </button>
+              {/* The filter joins the date on one line rather than taking a
+                  358px row of its own — measured, the two together need 306 of
+                  the 358 available. A glyph, with what is filtered carried in
+                  its accessible name and a dot for "something is set", which is
+                  the trade the OS calendar already made on a phone. */}
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((v) => !v)}
+                aria-expanded={filtersOpen}
+                aria-controls="go-schedule-filters"
+                aria-label={filterSummary ? `${t("filters")} — ${filterSummary}` : t("filters")}
+                className={cn(
+                  "relative ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full border bg-card active:bg-ember/10 sm:hidden",
+                  filtersOpen || filterSummary ? "border-ember text-brand-foreground" : "border-line text-muted",
+                )}
+              >
+                <SlidersHorizontal size={18} strokeWidth={1.5} aria-hidden />
+                {filterSummary && !filtersOpen && (
+                  <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-ember-solid" />
+                )}
+              </button>
             </div>
           </div>
 
@@ -185,23 +206,7 @@ export default function SchedulePage() {
               controls kept open cost more of the screen than the first four
               rows of the day they are there to narrow. */}
           <div className="flex flex-col gap-tight">
-            <button
-              type="button"
-              onClick={() => setFiltersOpen((v) => !v)}
-              aria-expanded={filtersOpen}
-              className="flex h-11 items-center gap-tight rounded-full border border-line bg-card px-comfortable text-sm sm:hidden"
-            >
-              <SlidersHorizontal size={16} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
-              <span className="min-w-0 flex-1 truncate text-left">{filterSummary || t("filters")}</span>
-              <ChevronRight
-                size={16}
-                strokeWidth={1.5}
-                aria-hidden
-                className={cn("shrink-0 text-muted transition-transform duration-quick", filtersOpen && "rotate-90")}
-              />
-            </button>
-
-            <div className={cn("flex-col gap-tight sm:flex sm:flex-row sm:items-center", filtersOpen ? "flex" : "hidden")}>
+            <div id="go-schedule-filters" className={cn("flex-col gap-tight sm:flex sm:flex-row sm:items-center", filtersOpen ? "flex" : "hidden")}>
               <div role="group" aria-label={t("filterState")} className="flex gap-inline rounded-full border border-line bg-card p-inline">
                 {STATUSES.map((s) => (
                   <button
@@ -215,7 +220,7 @@ export default function SchedulePage() {
                     )}
                   >
                     {t(s === "all" ? "filterAll" : s === "open" ? "filterOpen" : "filterFull")}
-                    <span className="font-mono text-[13px] opacity-80">{counts[s]}</span>
+                    <span className="font-mono text-[0.8125rem] opacity-80">{counts[s]}</span>
                   </button>
                 ))}
               </div>
@@ -244,7 +249,7 @@ export default function SchedulePage() {
               <Wrench size={18} strokeWidth={1.5} className="shrink-0 text-warning" aria-hidden />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">{t("outNotice", { name: l.name })}</p>
-                <p className="text-[13px] text-muted">{l.resource?.outOfServiceReason || t("noReason")}</p>
+                <p className="text-[0.8125rem] text-muted">{l.resource?.outOfServiceReason || t("noReason")}</p>
               </div>
               <Button shape="pill" variant="secondary" onClick={() => openOos(l)}>
                 {t("returnToService")}
@@ -269,7 +274,7 @@ export default function SchedulePage() {
                 <button
                   type="button"
                   onClick={() => setShowEarlier((v) => !v)}
-                  className="flex h-11 items-center gap-tight self-start rounded-full border border-line bg-card px-comfortable text-[13px] text-muted"
+                  className="flex h-11 items-center gap-tight self-start rounded-full border border-line bg-card px-comfortable text-[0.8125rem] text-muted"
                 >
                   <ChevronUp size={15} strokeWidth={1.5} aria-hidden className={cn("transition-transform duration-quick", showEarlier && "rotate-180")} />
                   {showEarlier ? t("hideEarlier") : t("showEarlier", { count: pastGroups.length })}
@@ -291,9 +296,9 @@ export default function SchedulePage() {
                     <h2 className="sticky top-0 z-10 flex items-center gap-comfortable bg-surface py-tight">
                       {marksNow && <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-ember-solid" />}
                       <span className={cn("shrink-0 text-base font-semibold", marksNow && "text-brand-foreground")}>{g.time}</span>
-                      {marksNow && <span className="shrink-0 text-[13px] font-semibold text-brand-foreground">{t("nowLabel")}</span>}
+                      {marksNow && <span className="shrink-0 text-[0.8125rem] font-semibold text-brand-foreground">{t("nowLabel")}</span>}
                       <span aria-hidden className={cn("h-px min-w-tight flex-1", marksNow ? "bg-ember-solid/30" : "bg-hairline")} />
-                      <span className="shrink-0 text-[13px] text-muted">{open > 0 ? t("nFree", { count: open }) : t("allTaken")}</span>
+                      <span className="shrink-0 text-[0.8125rem] text-muted">{open > 0 ? t("nFree", { count: open }) : t("allTaken")}</span>
                     </h2>
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,340px),1fr))] gap-tight">
                       {g.slots.map((s) => (
@@ -319,10 +324,10 @@ export default function SchedulePage() {
             <div className="flex flex-col gap-tight rounded-go p-section go-surface">
               <p className="flex items-center gap-tight">
                 <span aria-hidden className="h-2 w-2 rounded-full bg-ember-solid" />
-                <span className="text-[13px] font-semibold text-brand-foreground">{t("nowAt", { time: minutesToTime(now ?? 0) })}</span>
+                <span className="text-[0.8125rem] font-semibold text-brand-foreground">{t("nowAt", { time: minutesToTime(now ?? 0) })}</span>
               </p>
               <p className="text-lg font-semibold">{liveNow.onNow.length > 0 ? t("freeNow", { count: liveNow.onNow.length }) : t("noneFreeNow")}</p>
-              {liveNow.onNow.length === 0 && liveNow.next && <p className="text-[13px] text-muted">{t("nextFree")}</p>}
+              {liveNow.onNow.length === 0 && liveNow.next && <p className="text-[0.8125rem] text-muted">{t("nextFree")}</p>}
               {(liveNow.onNow.length > 0 ? liveNow.onNow.slice(0, 3) : liveNow.next ? [liveNow.next] : []).map((s) => (
                 <button
                   key={s.key}
@@ -330,12 +335,12 @@ export default function SchedulePage() {
                   onClick={() => take(s)}
                   className="flex min-h-11 items-center gap-tight rounded-go-sm border border-line px-comfortable py-tight text-left active:bg-ember/10"
                 >
-                  {liveNow.onNow.length === 0 && <span className="shrink-0 text-[13px] text-muted">{s.time}</span>}
+                  {liveNow.onNow.length === 0 && <span className="shrink-0 text-[0.8125rem] text-muted">{s.time}</span>}
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold">{s.lane.name}</span>
-                  <span className="shrink-0 text-[13px] font-semibold text-brand-foreground">{priceLabel(s, t)}</span>
+                  <span className="shrink-0 text-[0.8125rem] font-semibold text-brand-foreground">{priceLabel(s, t)}</span>
                 </button>
               ))}
-              {liveNow.onNow.length === 0 && !liveNow.next && <p className="text-[13px] text-muted">{t("noneLeftToday")}</p>}
+              {liveNow.onNow.length === 0 && !liveNow.next && <p className="text-[0.8125rem] text-muted">{t("noneLeftToday")}</p>}
             </div>
           )}
           <FieldsCard lanes={day.lanes} onOos={openOos} t={t} />
@@ -347,7 +352,7 @@ export default function SchedulePage() {
           listing the same hour twice, once per booking. */}
       <Modal open={!!chooser} onClose={() => setChooser(null)} title={chooser ? t("sellAs", { name: chooser.lane.name, time: chooser.time }) : ""}>
         <div className="flex flex-col gap-tight">
-          <p className="text-[13px] text-muted">{t("sellAsHelp")}</p>
+          <p className="text-[0.8125rem] text-muted">{t("sellAsHelp")}</p>
           {chooser?.options.map((o) => (
             <button
               key={o.product.id}
@@ -475,12 +480,12 @@ function SlotRow({
       )}
     >
       <span className="min-w-0 flex-1">
-        <span className={cn("block truncate text-[15px] font-semibold", !open && "text-muted")}>{slot.lane.name}</span>
+        <span className={cn("block truncate text-[0.9375rem] font-semibold", !open && "text-muted")}>{slot.lane.name}</span>
         {/* The money leads the second line rather than taking a column of its
             own: at 320px a name, a price and two controls cannot all have
             room, and the name is the thing that distinguishes one row from
             the next. */}
-        <span className="flex min-w-0 items-center gap-tight text-[14px] text-muted">
+        <span className="flex min-w-0 items-center gap-tight text-[0.875rem] text-muted">
           {open && slot.price !== null && <span className="shrink-0 font-semibold text-fg">{priceLabel(slot, t)}</span>}
           {open && slot.price !== null && !session && <span aria-hidden className="shrink-0">·</span>}
           {session ? (
@@ -514,7 +519,7 @@ function SlotRow({
           {t("waitlist")}
         </Button>
       ) : (
-        <span className="shrink-0 rounded-full border border-line px-comfortable py-inline text-[13px] text-muted">{session ? t("stateFull") : t("stateBooked")}</span>
+        <span className="shrink-0 rounded-full border border-line px-comfortable py-inline text-[0.8125rem] text-muted">{session ? t("stateFull") : t("stateBooked")}</span>
       )}
       {items.length > 0 ? (
         <ActionMenu shape="go" items={items} label={t("rowMenu", { name: slot.lane.name, time: slot.time })} />
@@ -544,7 +549,7 @@ function FieldsCard({ lanes, onOos, t }: { lanes: Lane[]; onOos: (l: Lane) => vo
           >
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm">{l.name}</span>
-              <span className={cn("block truncate text-[13px]", out ? "text-warning" : "text-muted")}>{out ? t("stateOut") : t("inService")}</span>
+              <span className={cn("block truncate text-[0.8125rem]", out ? "text-warning" : "text-muted")}>{out ? t("stateOut") : t("inService")}</span>
             </span>
             <ChevronRight size={18} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
           </button>

@@ -31,7 +31,7 @@ export default function GoBookingsPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-section px-section py-section">
       <div>
-        <p className="type-label text-[13px] text-brand-foreground">{t("arrivalsGateLabel")}</p>
+        <p className="type-label text-[0.8125rem] text-brand-foreground">{t("arrivalsGateLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("arrivalsTitle")}</h1>
       </div>
       <div className="relative">
@@ -54,11 +54,11 @@ export default function GoBookingsPage() {
             <div key={b.id} className="flex items-center gap-section rounded-go border border-line bg-card p-comfortable">
               <div className="text-center">
                 <div className="font-mono text-lg">{time(b.slotStart)}</div>
-                <div className="font-mono text-[13px] text-muted">{formatDate(b.slotStart)}</div>
+                <div className="font-mono text-[0.8125rem] text-muted">{formatDate(b.slotStart)}</div>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{productName(b.productId)}</div>
-                <div className="font-mono text-[13px] text-muted">{t("partyOf", { size: b.partySize })}</div>
+                <div className="font-mono text-[0.8125rem] text-muted">{t("partyOf", { size: b.partySize })}</div>
               </div>
               <StatusPill status="confirmed" />
             </div>

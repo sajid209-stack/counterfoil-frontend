@@ -37,7 +37,7 @@ export default function ShiftClosePage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
       <div>
-        <p className="type-label text-[13px] text-brand-foreground">{t("endLabel")}</p>
+        <p className="type-label text-[0.8125rem] text-brand-foreground">{t("endLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("closeTitle")}</h1>
         <p className="type-body mt-tight text-muted">{t("closeHint")}</p>
       </div>
@@ -50,12 +50,12 @@ export default function ShiftClosePage() {
           <span className="font-mono">{!entered ? "—" : `${variance > 0 ? "+" : ""}${formatMoney(variance)}`}</span>
         </div>
         {tier === "off" && (
-          <p className="mt-tight text-[13px] text-warning">{t("varianceOff", { amount: formatMoney(TOLERANCE) })}</p>
+          <p className="mt-tight text-[0.8125rem] text-warning">{t("varianceOff", { amount: formatMoney(TOLERANCE) })}</p>
         )}
       </div>
 
       <div className="flex flex-col gap-tight">
-        <label className="type-label text-[13px] text-muted">{t("countedCash")}</label>
+        <label className="type-label text-[0.8125rem] text-muted">{t("countedCash")}</label>
         <input
           inputMode="decimal"
           value={counted}
@@ -67,7 +67,7 @@ export default function ShiftClosePage() {
 
       {tier === "off" && (
         <div className="flex flex-col gap-tight">
-          <label className="type-label text-[13px] text-muted" htmlFor="variance-reason">{t("varianceReason")}</label>
+          <label className="type-label text-[0.8125rem] text-muted" htmlFor="variance-reason">{t("varianceReason")}</label>
           <textarea
             id="variance-reason"
             value={reason}

@@ -28,7 +28,7 @@ export function BlockedNotice({
   return (
     <div className="flex items-start gap-tight rounded-go border border-line border-l-[3px] border-l-ember bg-card p-comfortable shadow-sm" role="status">
       <div className="flex flex-1 flex-col gap-tight">
-        <p className="text-[13px] text-fg">{message}</p>
+        <p className="text-[0.8125rem] text-fg">{message}</p>
         {action && (
           <button
             type="button"
@@ -37,7 +37,7 @@ export function BlockedNotice({
             /* A bordered secondary, not a filled one: the card already has an
                ember edge carrying the alarm, and a black button appears nowhere
                else at this till. */
-            className="flex min-h-11 w-fit items-center rounded-go-sm border border-strong bg-card px-comfortable text-[13px] font-semibold text-fg active:bg-muted-wash"
+            className="flex min-h-11 w-fit items-center rounded-go-sm border border-strong bg-card px-comfortable text-[0.8125rem] font-semibold text-fg active:bg-muted-wash"
           >
             {action.label}
           </button>

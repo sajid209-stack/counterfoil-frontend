@@ -54,7 +54,7 @@ import { getResourceMatrix } from "@/lib/api";
 function Step({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mt-section first:mt-0">
-      <p className="mb-tight text-[14px] font-semibold text-fg">{label}</p>
+      <p className="mb-tight text-[0.875rem] font-semibold text-fg">{label}</p>
       {children}
     </div>
   );
@@ -98,8 +98,8 @@ export function SelectionInline({
   if (pattern === "unsupported") {
     return (
       <div className="rounded-go border border-dashed border-strong bg-subtle/40 p-section">
-        <p className="text-[14px] font-medium">{t("unsupported.title")}</p>
-        <p className="mt-inline text-[13px] text-muted">{t("unsupported.body")}</p>
+        <p className="text-[0.875rem] font-medium">{t("unsupported.title")}</p>
+        <p className="mt-inline text-[0.8125rem] text-muted">{t("unsupported.body")}</p>
       </div>
     );
   }
@@ -151,8 +151,8 @@ export function SelectionInline({
       <Step label={t("step.allowance")}>
         <div className="rounded-go border border-line bg-card p-comfortable">
           <div className="flex items-baseline justify-between gap-tight">
-            <span className="min-w-0 truncate text-[13px] text-muted">{t("allowance.remaining")}</span>
-            <span className={`shrink-0 text-[15px] font-semibold ${low ? "text-brand-foreground" : ""}`}>
+            <span className="min-w-0 truncate text-[0.8125rem] text-muted">{t("allowance.remaining")}</span>
+            <span className={`shrink-0 text-[0.9375rem] font-semibold ${low ? "text-brand-foreground" : ""}`}>
               {t("allowance.ofTotal", { left, total: cap })}
             </span>
           </div>
@@ -170,7 +170,7 @@ export function SelectionInline({
   const sessions = pattern === "sessions" && (
     <Step label={t(guided ? "step.departure" : "step.session")}>
       {rows.length === 0 ? (
-        <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[13px] text-muted">
+        <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[0.8125rem] text-muted">
           {t("session.noneToday")}
         </p>
       ) : (
@@ -232,8 +232,8 @@ export function SelectionInline({
                 onClick={() => set({ guideId: id })}
                 className="flex min-w-[140px] flex-1 flex-col gap-inline py-tight pl-comfortable pr-7"
               >
-                <span className="min-w-0 truncate text-[14px] font-medium">{person?.name ?? id}</span>
-                <span className={`text-[13px] ${free ? "text-success" : "text-muted"}`}>
+                <span className="min-w-0 truncate text-[0.875rem] font-medium">{person?.name ?? id}</span>
+                <span className={`text-[0.8125rem] ${free ? "text-success" : "text-muted"}`}>
                   {t(free ? "guide.available" : "guide.busy")}
                 </span>
               </ChoiceCard>
@@ -271,7 +271,7 @@ export function SelectionInline({
     <>
       {matrix.length === 0 ? (
         <Step label={t("step.slot")}>
-          <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[13px] text-muted">
+          <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[0.8125rem] text-muted">
             {t("session.noneToday")}
           </p>
         </Step>
@@ -285,7 +285,7 @@ export function SelectionInline({
               label={`${row.resource.name}${takenHere ? ` · ${t("slot.chosenCount", { count: takenHere })}` : ""}`}
             >
               {row.resource.outOfService ? (
-                <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[13px] text-muted">
+                <p className="rounded-go border border-line bg-subtle/40 p-comfortable text-[0.8125rem] text-muted">
                   {t("flex.outOfService")}
                 </p>
               ) : (
@@ -315,7 +315,7 @@ export function SelectionInline({
                           }
                           toggleSlot(row.resource.id, sl.time);
                         }}
-                        className={`flex min-h-[52px] flex-col items-center justify-center rounded-go border px-inline text-[13px] transition-colors duration-quick ${
+                        className={`flex min-h-[52px] flex-col items-center justify-center rounded-go border px-inline text-[0.8125rem] transition-colors duration-quick ${
                           on
                             ? "border-ember bg-ember-solid font-medium text-white"
                             : sl.available
@@ -324,7 +324,7 @@ export function SelectionInline({
                         }`}
                       >
                         <span>{sl.time}</span>
-                        <span className={on ? "text-[12px] text-white/80" : "text-[12px] text-muted"}>
+                        <span className={on ? "text-[0.75rem] text-white/80" : "text-[0.75rem] text-muted"}>
                           {formatMoney(price, currency)}
                         </span>
                       </button>
@@ -353,10 +353,10 @@ export function SelectionInline({
                     className={`flex items-center gap-tight p-comfortable ${i ? "border-t border-line" : ""}`}
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[14px] font-medium">
+                      <span className="block truncate text-[0.875rem] font-medium">
                         {res?.name ?? x.resourceId} · {x.time}
                       </span>
-                      <span className="block text-[12px] text-muted">
+                      <span className="block text-[0.75rem] text-muted">
                         {formatDay(x.date, { weekday: true })}
                       </span>
                     </span>
@@ -393,9 +393,9 @@ export function SelectionInline({
               onClick={() => set({ validityId: v.id })}
               className="flex min-h-[56px] flex-col justify-center gap-inline py-tight pl-comfortable pr-7"
             >
-              <span className="min-w-0 truncate text-[14px] font-medium">{v.label}</span>
+              <span className="min-w-0 truncate text-[0.875rem] font-medium">{v.label}</span>
               {(v.priceDelta ?? 0) > 0 && (
-                <span className="text-[13px] text-brand-foreground">+{formatMoney(v.priceDelta ?? 0, currency)}</span>
+                <span className="text-[0.8125rem] text-brand-foreground">+{formatMoney(v.priceDelta ?? 0, currency)}</span>
               )}
             </ChoiceCard>
           ))}
@@ -441,7 +441,7 @@ export function SelectionInline({
                     !flexStartBlocked(product, draft.date, draft.slotTime, d, draft.resourceId, 12 * 60);
                   set({ durationMinutes: d, slotTime: stillFits ? draft.slotTime : undefined });
                 }}
-                className={`h-12 min-w-[72px] flex-1 rounded-full border px-comfortable text-[14px] transition-colors duration-quick ${
+                className={`h-12 min-w-[72px] flex-1 rounded-full border px-comfortable text-[0.875rem] transition-colors duration-quick ${
                   minutes === d
                     ? "border-ember bg-ember/10 font-medium text-brand-foreground"
                     : "border-line bg-card active:bg-ember/10"
@@ -463,8 +463,8 @@ export function SelectionInline({
               onClick={() => set({ resourceId: undefined })}
               className="flex min-h-[56px] flex-col justify-center gap-inline px-comfortable py-tight"
             >
-              <span className="text-[14px] font-medium">{t("flex.any")}</span>
-              <span className="text-[12px] text-muted">{t("flex.anyHint")}</span>
+              <span className="text-[0.875rem] font-medium">{t("flex.any")}</span>
+              <span className="text-[0.75rem] text-muted">{t("flex.anyHint")}</span>
             </ChoiceCard>
             {lanes.map((l) => (
               <ChoiceCard
@@ -475,8 +475,8 @@ export function SelectionInline({
                 onClick={() => set({ resourceId: l.id, slotTime: undefined })}
                 className="flex min-h-[56px] flex-col justify-center gap-inline px-comfortable py-tight"
               >
-                <span className="truncate text-[14px] font-medium">{l.name}</span>
-                <span className="text-[12px] text-muted">
+                <span className="truncate text-[0.875rem] font-medium">{l.name}</span>
+                <span className="text-[0.75rem] text-muted">
                   {l.outOfService ? t("flex.outOfService") : formatMoney(price("12:00", l.id), currency)}
                 </span>
               </ChoiceCard>
@@ -494,7 +494,7 @@ export function SelectionInline({
                   key={time}
                   type="button"
                   onClick={() => (blocked ? setBlocked(blockWord(blocked)) : set({ slotTime: time }))}
-                  className={`flex min-h-12 flex-col items-center justify-center rounded-go border px-inline text-[13px] transition-colors duration-quick ${
+                  className={`flex min-h-12 flex-col items-center justify-center rounded-go border px-inline text-[0.8125rem] transition-colors duration-quick ${
                     on
                       ? "border-ember bg-ember-solid font-medium text-white"
                       : blocked
@@ -510,7 +510,7 @@ export function SelectionInline({
           {/* The end time is the thing a customer asks for, and it is never
               typed — it falls out of the start and the length. */}
           {draft.slotTime && (
-            <p className="mt-tight text-[13px] text-muted">
+            <p className="mt-tight text-[0.8125rem] text-muted">
               {t("flex.window", {
                 from: draft.slotTime,
                 to: toTime(toMinutes(draft.slotTime) + minutes),
@@ -546,7 +546,7 @@ export function SelectionInline({
                       ? set({ slotTime: time, providerId: undefined })
                       : setBlocked(t("provider.noneFree", { time }))
                   }
-                  className={`flex min-h-12 items-center justify-center rounded-go border px-inline text-[13px] transition-colors duration-quick ${
+                  className={`flex min-h-12 items-center justify-center rounded-go border px-inline text-[0.8125rem] transition-colors duration-quick ${
                     on
                       ? "border-ember bg-ember-solid font-medium text-white"
                       : anyFree
@@ -559,7 +559,7 @@ export function SelectionInline({
               );
             })}
           </div>
-          <p className="mt-tight text-[13px] text-muted">{t("provider.length", { length: formatDuration(mins) })}</p>
+          <p className="mt-tight text-[0.8125rem] text-muted">{t("provider.length", { length: formatDuration(mins) })}</p>
         </Step>
 
         {draft.slotTime && people.length > 0 && (
@@ -581,12 +581,12 @@ export function SelectionInline({
                   >
                     <Avatar name={who?.name ?? pid} size={36} />
                     <span className="min-w-0 flex-1 text-left">
-                      <span className="block truncate text-[14px] font-medium">{who?.name ?? pid}</span>
-                      <span className={`block text-[13px] ${free ? "text-success" : "text-muted"}`}>
+                      <span className="block truncate text-[0.875rem] font-medium">{who?.name ?? pid}</span>
+                      <span className={`block text-[0.8125rem] ${free ? "text-success" : "text-muted"}`}>
                         {t(free ? "guide.available" : "guide.busy")}
                       </span>
                     </span>
-                    <span className="shrink-0 whitespace-nowrap text-[13px] text-muted">
+                    <span className="shrink-0 whitespace-nowrap text-[0.8125rem] text-muted">
                       {premium > 0 ? t("provider.premium", { amount: formatMoney(premium, currency) }) : t("provider.standard")}
                     </span>
                   </ChoiceCard>
@@ -612,21 +612,21 @@ export function SelectionInline({
     return (
       <Step label={t("step.course")}>
         <div className="rounded-go border border-success/30 bg-success/10 p-comfortable">
-          <p className="text-[14px] font-medium text-success">{t("course.ready")}</p>
-          <p className="mt-inline text-[13px]">
+          <p className="text-[0.875rem] font-medium text-success">{t("course.ready")}</p>
+          <p className="mt-inline text-[0.8125rem]">
             {t("course.runs", { count: dates.length, days: weekdays.join(" & "), range })}
           </p>
           <button
             type="button"
             onClick={() => setCourseOpen((v) => !v)}
-            className="mt-tight min-h-11 text-[13px] font-medium text-brand-foreground underline-offset-2 hover:underline"
+            className="mt-tight min-h-11 text-[0.8125rem] font-medium text-brand-foreground underline-offset-2 hover:underline"
           >
             {t(courseOpen ? "course.hideDates" : "course.showDates")}
           </button>
           {courseOpen && (
             <ul className="mt-tight flex flex-col gap-inline">
               {dates.map((x) => (
-                <li key={x} className="text-[13px] tabular-nums">{formatDay(x, { weekday: true })}</li>
+                <li key={x} className="text-[0.8125rem] tabular-nums">{formatDay(x, { weekday: true })}</li>
               ))}
             </ul>
           )}
@@ -658,7 +658,7 @@ export function SelectionInline({
     const categories = [...new Map(rows.map((r) => [r.categoryUid, r])).values()];
     return (
       <Step label={t("step.seats")}>
-        <p className="mb-tight rounded-go bg-subtle py-inline text-center text-[12px] tracking-widest text-muted">
+        <p className="mb-tight rounded-go bg-subtle py-inline text-center text-[0.75rem] tracking-widest text-muted">
           {t("seats.screen")}
         </p>
         <div className="-mx-comfortable overflow-x-auto px-comfortable pb-1">
@@ -688,7 +688,7 @@ export function SelectionInline({
                                 }],
                           })
                         }
-                        className={`flex size-7 shrink-0 items-center justify-center rounded-go-sm border text-[9px] ${
+                        className={`flex size-7 shrink-0 items-center justify-center rounded-go-sm border text-[0.5625rem] ${
                           on
                             ? "border-ember bg-ember-solid font-semibold text-white"
                             : seat.available
@@ -705,7 +705,7 @@ export function SelectionInline({
             ))}
           </div>
         </div>
-        <div className="mt-tight flex flex-wrap gap-comfortable text-[12px] text-muted">
+        <div className="mt-tight flex flex-wrap gap-comfortable text-[0.75rem] text-muted">
           {categories.map((c) => (
             <span key={c.categoryUid} className="flex items-center gap-inline">
               <span
@@ -748,9 +748,9 @@ export function SelectionInline({
           return (
             <div key={tier.id} className="flex items-center gap-comfortable border-b border-line p-comfortable last:border-b-0">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-medium">{tier.name}</p>
-                {note && <p className="mt-inline truncate text-[12px] text-muted">{note}</p>}
-                <p className="mt-inline text-[13px] font-medium text-brand-foreground">{formatMoney(price, currency)}</p>
+                <p className="truncate text-[0.875rem] font-medium">{tier.name}</p>
+                {note && <p className="mt-inline truncate text-[0.75rem] text-muted">{note}</p>}
+                <p className="mt-inline text-[0.8125rem] font-medium text-brand-foreground">{formatMoney(price, currency)}</p>
               </div>
               <div className="flex shrink-0 items-center gap-tight">
                 <button
@@ -762,7 +762,7 @@ export function SelectionInline({
                 >
                   <Minus size={16} strokeWidth={2} />
                 </button>
-                <span className="w-6 text-center text-[15px] font-semibold tabular-nums">{n}</span>
+                <span className="w-6 text-center text-[0.9375rem] font-semibold tabular-nums">{n}</span>
                 <button
                   type="button"
                   aria-label={t("qty.more", { tier: tier.name })}

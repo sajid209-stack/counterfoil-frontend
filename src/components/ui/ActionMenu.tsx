@@ -134,7 +134,7 @@ export function ActionMenu({
               // 44px on a phone, where these are pressed with a thumb; the
               // desktop keeps the denser row.
               className={cn(
-                "flex min-h-11 w-full items-center gap-tight px-comfortable py-tight text-left text-[13px] transition-colors duration-quick",
+                "flex min-h-11 w-full items-center gap-tight px-comfortable py-tight text-left text-[0.8125rem] transition-colors duration-quick",
                 shape === "default" && "md:min-h-9",
                 item.disabled
                   ? "cursor-not-allowed text-muted"
@@ -147,7 +147,7 @@ export function ActionMenu({
               {item.hint ? (
                 <span className="min-w-0">
                   <span className="block">{item.label}</span>
-                  <span className="mt-[2px] block text-[12px] leading-snug text-muted">{item.hint}</span>
+                  <span className="mt-[2px] block text-[0.75rem] leading-snug text-muted">{item.hint}</span>
                 </span>
               ) : (
                 item.label

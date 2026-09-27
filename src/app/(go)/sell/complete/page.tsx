@@ -96,7 +96,7 @@ export default function SellCompletePage() {
         <>
           <div className="relative w-full">
             <div className="rounded-go bg-ink px-section pb-major pt-major text-paper">
-              <p className="type-label text-[13px] text-muted">{t("complete.bookingReference")}</p>
+              <p className="type-label text-[0.8125rem] text-muted">{t("complete.bookingReference")}</p>
               <p className="mt-tight break-all font-mono text-2xl tracking-tight sm:text-3xl">{info.code}</p>
             </div>
             <div className="relative flex items-center">
@@ -105,7 +105,7 @@ export default function SellCompletePage() {
               <span className="mx-major flex-1 border-t-2 border-dashed border-paper/40" aria-hidden />
             </div>
             <div className="rounded-go bg-ink px-section pb-major pt-tight text-paper">
-              <p className="font-mono text-[13px] text-muted">{t("complete.presentAtGate")}</p>
+              <p className="font-mono text-[0.8125rem] text-muted">{t("complete.presentAtGate")}</p>
             </div>
           </div>
 
@@ -131,11 +131,11 @@ export default function SellCompletePage() {
               only place it can still be read without going to Orders. */}
           {info.receipt && (
             <div className="w-full rounded-go border border-line bg-card p-comfortable text-left">
-              <p className="mb-tight text-[14px] font-semibold">{ts("complete.whatWasSold")}</p>
+              <p className="mb-tight text-[0.875rem] font-semibold">{ts("complete.whatWasSold")}</p>
               {info.receipt.lines.map((l, i) => (
                 <div
                   key={i}
-                  className={`flex items-baseline justify-between gap-comfortable py-inline text-[13px] ${l.child ? "pl-comfortable text-muted" : ""}`}
+                  className={`flex items-baseline justify-between gap-comfortable py-inline text-[0.8125rem] ${l.child ? "pl-comfortable text-muted" : ""}`}
                 >
                   <span className="min-w-0 break-words">
                     {l.qty > 1 ? `${l.qty} × ` : ""}
@@ -146,16 +146,16 @@ export default function SellCompletePage() {
               ))}
               <div className="mt-tight border-t border-line pt-tight">
                 {info.receipt.orderDiscount > 0 && (
-                  <div className="flex justify-between text-[13px] text-muted">
+                  <div className="flex justify-between text-[0.8125rem] text-muted">
                     <span>{t("summary.discountFlat")}</span>
                     <span className="text-danger tabular-nums">−{formatMoney(info.receipt.orderDiscount, currency)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-[13px] text-muted">
+                <div className="flex justify-between text-[0.8125rem] text-muted">
                   <span>{t("summary.vat")}</span>
                   <span className="tabular-nums">{formatMoney(info.receipt.tax, currency)}</span>
                 </div>
-                <div className="mt-inline flex items-baseline justify-between text-[15px] font-semibold">
+                <div className="mt-inline flex items-baseline justify-between text-[0.9375rem] font-semibold">
                   <span>{t("summary.total")}</span>
                   <span className="tabular-nums">{formatMoney(info.receipt.total, currency)}</span>
                 </div>
@@ -217,7 +217,7 @@ export default function SellCompletePage() {
         }
       >
         <div className="rounded-go rounded-bl-xs border border-line bg-subtle p-comfortable text-left text-sm">{smsText}</div>
-        <p className="mt-tight text-left text-[13px] text-muted">{t("complete.smsMeta", { count: smsText.length })}</p>
+        <p className="mt-tight text-left text-[0.8125rem] text-muted">{t("complete.smsMeta", { count: smsText.length })}</p>
       </Modal>
     </main>
   );

@@ -86,7 +86,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
         {/* active marker: 2px along the tab's leading edge */}
         {active && <span aria-hidden className={cn("absolute bg-ember", rail ? "left-0 top-2 bottom-2 w-[2px]" : "left-2 right-2 top-0 h-[2px]")} />}
         <Icon size={24} strokeWidth={1.5} />
-        <span className="max-w-full truncate px-inline text-[11px] font-medium">{t(tab.key)}</span>
+        <span className="max-w-full truncate px-inline text-[0.6875rem] font-medium">{t(tab.key)}</span>
       </Link>
     );
   };
@@ -101,7 +101,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
       )}
     >
       <Ellipsis size={24} strokeWidth={1.5} />
-      <span className="max-w-full truncate px-inline text-[11px] font-medium">{t("more")}</span>
+      <span className="max-w-full truncate px-inline text-[0.6875rem] font-medium">{t("more")}</span>
     </button>
   );
 
@@ -119,8 +119,8 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
           <Link href="/login" aria-label="Counterfoil Go — sign in" className="flex h-12 shrink-0 items-center">
             <Logo variant="go" size={30} />
           </Link>
-          <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[12px] text-muted sm:block">Fort Main Gate</span>
-          <span className="hidden shrink-0 font-mono text-[12px] text-muted sm:block" title="Shift open for">⏱ 3:24</span>
+          <span className="hidden shrink-0 rounded-xs border border-line px-tight py-inline text-[0.75rem] text-muted sm:block">Fort Main Gate</span>
+          <span className="hidden shrink-0 font-mono text-[0.75rem] text-muted sm:block" title="Shift open for">⏱ 3:24</span>
         </div>
         {/* Review scaffolding, not part of the restored design — without it
             there is no way out of this variant except the browser's back
@@ -128,7 +128,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
         <TillSwitcher />
         <span className="flex shrink-0 items-center gap-tight">
           <ModeButton />
-          <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse font-mono text-[13px] text-inverse-fg" title="Nadia Islam — my profile">N</Link>
+          <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse font-mono text-[0.8125rem] text-inverse-fg" title="Nadia Islam — my profile">N</Link>
         </span>
       </header>
 
@@ -161,7 +161,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
             <div className="mb-section flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
-                <p className="font-mono text-[12px] text-muted">Fort Main Gate · shift open 3:24</p>
+                <p className="font-mono text-[0.75rem] text-muted">Fort Main Gate · shift open 3:24</p>
               </div>
               <div className="flex items-center gap-tight">
                 <LocaleToggle />
@@ -176,7 +176,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
                 const inner = (
                   <>
                     <Icon size={24} strokeWidth={1.5} />
-                    <span className="text-[12px] font-medium">{t(item.key)}</span>
+                    <span className="text-[0.75rem] font-medium">{t(item.key)}</span>
                   </>
                 );
                 return "href" in item && item.href ? (
@@ -200,7 +200,7 @@ export function ClassicShell({ children }: { children: React.ReactNode }) {
           <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">Sales</span><span>9</span></div>
           <div className="flex justify-between"><span className="font-sans text-muted">Cash in drawer</span><span>{formatMoney(485000)}</span></div>
         </div>
-        <p className="mt-section text-[12px] text-muted">Full breakdown at shift close.</p>
+        <p className="mt-section text-[0.75rem] text-muted">Full breakdown at shift close.</p>
       </Modal>
 
       <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title="Help">

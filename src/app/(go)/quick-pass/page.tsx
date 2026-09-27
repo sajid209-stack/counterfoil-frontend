@@ -74,13 +74,13 @@ export default function QuickPassPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
       <div>
-        <p className="type-label text-[13px] text-brand-foreground">{t("gateLabel")}</p>
+        <p className="type-label text-[0.8125rem] text-brand-foreground">{t("gateLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("title")}</h1>
         <p className="type-body mt-tight text-muted">{t("subtitle")}</p>
       </div>
 
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[13px] text-muted">{t("duration")}</span>
+        <span className="type-label text-[0.8125rem] text-muted">{t("duration")}</span>
           {/* The till's stepper, not a row of chips — same control for the same
               decision, and it walks the increment the booking is configured
               with instead of a list this screen invented. */}
@@ -94,7 +94,7 @@ export default function QuickPassPage() {
                 <button type="button" aria-label={t("shorter")} disabled={prev == null} onClick={() => prev != null && pick(prev)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-line text-xl disabled:opacity-40 active:bg-ember/10">−</button>
                 <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-go border border-line bg-card py-tight">
                   <span className="text-base font-medium">{formatDuration(duration)}</span>
-                  <span className="font-mono text-[13px] text-muted">
+                  <span className="font-mono text-[0.8125rem] text-muted">
                     {formatMoney(enginePrice, "BDT")}
                     {cfg && isDealDuration(cfg, duration) ? ` · ${t("deal")}` : ""}
                   </span>

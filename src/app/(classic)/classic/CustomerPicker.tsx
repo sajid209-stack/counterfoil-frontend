@@ -187,7 +187,7 @@ function PickerBody({
       {searching && <div className="h-12 animate-pulse rounded-sm bg-subtle" />}
 
       {!searching && query.trim().length >= 2 && results.length === 0 && (
-        <p className="text-[13px] text-muted">{t("customerModal.noMatches")}</p>
+        <p className="text-[0.8125rem] text-muted">{t("customerModal.noMatches")}</p>
       )}
 
       <ul className="flex flex-col gap-tight">
@@ -203,10 +203,10 @@ function PickerBody({
                   <span className="min-w-0 break-words text-sm font-medium">{c.name}</span>
                 </span>
                 {c.phone && (
-                  <span className="block font-mono text-[12px] text-muted">{c.phone}</span>
+                  <span className="block font-mono text-[0.75rem] text-muted">{c.phone}</span>
                 )}
               </span>
-              <span className="shrink-0 whitespace-nowrap font-mono text-[12px] text-muted">
+              <span className="shrink-0 whitespace-nowrap font-mono text-[0.75rem] text-muted">
                 {t("customerModal.spend", {
                   orders: c.stats.orders,
                   spent: formatMoney(c.stats.spent),

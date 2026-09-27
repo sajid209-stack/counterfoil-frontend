@@ -82,7 +82,7 @@ export function PercentInput({
   return (
     <div className={cn("flex flex-col gap-tight", className)}>
       {label && (
-        <label htmlFor={id} className="type-label text-[12px] text-muted">
+        <label htmlFor={id} className="type-label text-[0.75rem] text-muted">
           {label}
         </label>
       )}
@@ -133,7 +133,7 @@ export function PercentInput({
             onClick={() => { setText(String(c)); setError(null); onChange(c); }}
             className={cn(
               compact ? "h-9" : "h-11",
-              "min-w-12 flex-1 rounded-sm border px-tight text-[13px] font-medium transition-colors duration-quick",
+              "min-w-12 flex-1 rounded-sm border px-tight text-[0.8125rem] font-medium transition-colors duration-quick",
               value === c ? "border-ember bg-ember/10 text-brand-foreground" : "border-line bg-card active:bg-ember/10",
             )}
           >
@@ -142,7 +142,7 @@ export function PercentInput({
         ))}
       </div>
 
-      {error && <p className="text-[12px] text-danger">{error}</p>}
+      {error && <p className="text-[0.75rem] text-danger">{error}</p>}
     </div>
   );
 }

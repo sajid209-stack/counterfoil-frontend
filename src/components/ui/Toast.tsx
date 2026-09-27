@@ -84,12 +84,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             )}
           >
             <span className="mt-0.5 shrink-0">{TONE_ICON[t.tone]}</span>
-            <p className="flex-1 text-[13px] text-fg">{t.message}</p>
+            <p className="flex-1 text-[0.8125rem] text-fg">{t.message}</p>
             {t.action && (
               <button
                 type="button"
                 onClick={() => { t.action!.run(); remove(t.id); }}
-                className="shrink-0 text-[13px] font-medium text-brand-foreground underline-offset-4 hover:underline"
+                className="shrink-0 text-[0.8125rem] font-medium text-brand-foreground underline-offset-4 hover:underline"
               >
                 {t.action.label}
               </button>

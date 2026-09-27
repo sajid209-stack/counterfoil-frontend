@@ -306,7 +306,7 @@ export function Select({
         className={cn(
           "flex min-w-0 items-center text-left outline-none transition-colors duration-quick",
           bare
-            ? "max-w-[14rem] gap-tight bg-transparent pl-inline pr-0 text-[13px] font-medium"
+            ? "max-w-[14rem] gap-tight bg-transparent pl-inline pr-0 text-[0.8125rem] font-medium"
             : /* The chevron sits in a reserved gutter rather than floating at
                  the end of the text: every trigger's arrow then lines up down a
                  column of controls, whatever each one says. */
@@ -390,12 +390,12 @@ export function Select({
                  under a search field reads as a rendering fault, and this
                  layer has no translator of its own — every primitive here
                  takes its strings as props. */
-              <p className="px-comfortable py-tight text-[13px] text-muted">{emptyLabel}</p>
+              <p className="px-comfortable py-tight text-[0.8125rem] text-muted">{emptyLabel}</p>
             )}
             {groups.map((g, gi) => (
               <div key={g.name ?? gi} role="group" aria-label={g.name}>
                 {g.name && (
-                  <p className="px-comfortable pb-inline pt-tight text-[12px] font-medium text-muted">{g.name}</p>
+                  <p className="px-comfortable pb-inline pt-tight text-[0.75rem] font-medium text-muted">{g.name}</p>
                 )}
                 {g.items.map(({ o, i }) => {
                   const on = o.value === value;
@@ -418,7 +418,7 @@ export function Select({
                     >
                       <span className="min-w-0 flex-1">
                         <span className="block truncate">{o.label}</span>
-                        {o.note && <span className="block truncate text-[12px] text-muted">{o.note}</span>}
+                        {o.note && <span className="block truncate text-[0.75rem] text-muted">{o.note}</span>}
                       </span>
                       {on && <Check size={15} strokeWidth={2} aria-hidden className="shrink-0 text-brand-foreground" />}
                     </div>

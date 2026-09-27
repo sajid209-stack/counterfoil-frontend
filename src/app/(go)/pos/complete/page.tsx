@@ -166,7 +166,7 @@ export default function CompletePage() {
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-success/15 text-success">
                 <Check size={16} strokeWidth={2.6} aria-hidden />
               </span>
-              <h1 id="sale-complete" className="text-[15px] font-semibold text-fg">
+              <h1 id="sale-complete" className="text-[0.9375rem] font-semibold text-fg">
                 {t("complete.saleComplete")}
               </h1>
               {ticketsKnown && (
@@ -174,7 +174,7 @@ export default function CompletePage() {
                   <span aria-hidden className="text-muted">
                     ·
                   </span>
-                  <span className="text-[15px] text-muted">{t("complete.ticketsIssuedCount", { count: tickets.length })}</span>
+                  <span className="text-[0.9375rem] text-muted">{t("complete.ticketsIssuedCount", { count: tickets.length })}</span>
                 </>
               )}
             </div>
@@ -183,7 +183,7 @@ export default function CompletePage() {
             <p className="mt-1.5 text-[clamp(40px,13vw,56px)] font-semibold leading-none tracking-[-0.03em] text-fg">{lead.amount}</p>
             {lead.note && <p className="mt-tight text-sm text-muted">{lead.note}</p>}
             {balance > 0 && (
-              <p className="mt-comfortable inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-comfortable py-1.5 text-[13px] font-medium text-warning">
+              <p className="mt-comfortable inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-comfortable py-1.5 text-[0.8125rem] font-medium text-warning">
                 <Clock size={14} strokeWidth={2.2} aria-hidden className="shrink-0" />
                 {t("complete.collectAtArrival", { amount: formatMoney(balance) })}
               </p>
@@ -251,7 +251,7 @@ export default function CompletePage() {
                 autoFocus
                 aria-describedby="sale-status"
                 icon={<Plus size={20} strokeWidth={2.2} />}
-                className="h-14 text-[17px] shadow-go-pop rail:shadow-none"
+                className="h-14 text-[1.0625rem] shadow-go-pop rail:shadow-none"
                 onClick={() => router.push("/pos")}
               >
                 {t("complete.newSale")}
@@ -281,9 +281,9 @@ export default function CompletePage() {
                         <Qr value={ticket.code} size={44} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block break-words text-[15px] font-semibold leading-snug text-fg">{ticket.name}</span>
-                        <span className="mt-0.5 block truncate text-[13px] text-muted">{ticketMeta(ticket)}</span>
-                        <span className="mt-0.5 block truncate font-mono text-[13px] text-muted">{ticket.code}</span>
+                        <span className="block break-words text-[0.9375rem] font-semibold leading-snug text-fg">{ticket.name}</span>
+                        <span className="mt-0.5 block truncate text-[0.8125rem] text-muted">{ticketMeta(ticket)}</span>
+                        <span className="mt-0.5 block truncate font-mono text-[0.8125rem] text-muted">{ticket.code}</span>
                       </span>
                       <ChevronRight size={18} strokeWidth={1.8} className="shrink-0 text-muted" aria-hidden />
                     </button>
@@ -310,7 +310,7 @@ export default function CompletePage() {
                 <h2 id="sale-title" className="text-sm font-semibold text-fg">
                   {t("complete.saleTitle")}
                 </h2>
-                {info.reference && <span className="min-w-0 truncate font-mono text-[13px] text-muted">{info.reference}</span>}
+                {info.reference && <span className="min-w-0 truncate font-mono text-[0.8125rem] text-muted">{info.reference}</span>}
               </div>
               <div className="go-surface mt-tight p-section">
                 <ul className="flex flex-col gap-tight">
@@ -356,9 +356,9 @@ export default function CompletePage() {
             <span className="rounded-go-sm bg-white p-3 ring-1 ring-line">
               <Qr value={shown.code} size={216} />
             </span>
-            <p className="mt-section font-mono text-[15px] text-fg">{shown.code}</p>
+            <p className="mt-section font-mono text-[0.9375rem] text-fg">{shown.code}</p>
             <p className="mt-1 text-sm text-muted">{ticketMeta(shown)}</p>
-            <p className="mt-section text-[13px] text-muted">{t("complete.qrHelp")}</p>
+            <p className="mt-section text-[0.8125rem] text-muted">{t("complete.qrHelp")}</p>
           </div>
         )}
       </Modal>
@@ -400,11 +400,11 @@ export default function CompletePage() {
                 aria-describedby={phoneHelpId}
                 placeholder="01XXXXXXXXX"
                 className={cn(
-                  "h-12 w-full rounded-go-sm border bg-card px-comfortable font-mono text-[15px] text-fg outline-none transition-colors duration-quick placeholder:text-faint focus:border-ember focus:ring-2 focus:ring-ember/20",
+                  "h-12 w-full rounded-go-sm border bg-card px-comfortable font-mono text-[0.9375rem] text-fg outline-none transition-colors duration-quick placeholder:text-faint focus:border-ember focus:ring-2 focus:ring-ember/20",
                   phoneInvalid ? "border-danger" : "border-line",
                 )}
               />
-              <p id={phoneHelpId} className={cn("text-[13px]", phoneInvalid ? "text-danger" : "text-muted")}>
+              <p id={phoneHelpId} className={cn("text-[0.8125rem]", phoneInvalid ? "text-danger" : "text-muted")}>
                 {phoneInvalid ? t("complete.smsInvalid") : t("complete.smsToHelp")}
               </p>
             </div>
@@ -429,11 +429,11 @@ export default function CompletePage() {
                 aria-describedby={emailHelpId}
                 placeholder="name@example.com"
                 className={cn(
-                  "h-12 w-full rounded-go-sm border bg-card px-comfortable text-[15px] text-fg outline-none transition-colors duration-quick placeholder:text-faint focus:border-ember focus:ring-2 focus:ring-ember/20",
+                  "h-12 w-full rounded-go-sm border bg-card px-comfortable text-[0.9375rem] text-fg outline-none transition-colors duration-quick placeholder:text-faint focus:border-ember focus:ring-2 focus:ring-ember/20",
                   emailInvalid ? "border-danger" : "border-line",
                 )}
               />
-              <p id={emailHelpId} className={cn("text-[13px]", emailInvalid ? "text-danger" : "text-muted")}>
+              <p id={emailHelpId} className={cn("text-[0.8125rem]", emailInvalid ? "text-danger" : "text-muted")}>
                 {emailInvalid ? t("complete.emailInvalid") : t("complete.emailToHelp")}
               </p>
             </div>
@@ -441,14 +441,14 @@ export default function CompletePage() {
 
           {wantsSms && (
             <div>
-              {sending === "both" && <p className="mb-1.5 text-[13px] font-medium text-muted">{t("complete.handOverSms")}</p>}
+              {sending === "both" && <p className="mb-1.5 text-[0.8125rem] font-medium text-muted">{t("complete.handOverSms")}</p>}
               <div className="rounded-go-sm border border-line bg-subtle p-comfortable text-sm text-fg">{smsText}</div>
-              <p className="mt-tight text-[13px] text-muted">{t("complete.smsMeta", { count: smsText.length })}</p>
+              <p className="mt-tight text-[0.8125rem] text-muted">{t("complete.smsMeta", { count: smsText.length })}</p>
             </div>
           )}
           {wantsEmail && (
             <div>
-              {sending === "both" && <p className="mb-1.5 text-[13px] font-medium text-muted">{t("complete.handOverEmail")}</p>}
+              {sending === "both" && <p className="mb-1.5 text-[0.8125rem] font-medium text-muted">{t("complete.handOverEmail")}</p>}
               {/* The message as it will arrive: its subject, then what it says. */}
               <div className="rounded-go-sm border border-line bg-subtle p-comfortable text-sm">
                 <p className="break-words font-semibold text-fg">{emailSubject}</p>
@@ -487,7 +487,7 @@ function HandOver({ icon, label, name, done, disabled, row, onClick }: { icon: R
       disabled={disabled}
       className={cn(
         "flex min-w-0 flex-1 items-center justify-center border-l border-line font-medium text-fg transition-colors duration-quick first:rounded-l-go first:border-l-0 last:rounded-r-go active:bg-muted-wash disabled:opacity-40",
-        row ? "h-12 gap-1.5 px-comfortable text-sm" : "h-16 flex-col gap-1 px-1 text-[13px]",
+        row ? "h-12 gap-1.5 px-comfortable text-sm" : "h-16 flex-col gap-1 px-1 text-[0.8125rem]",
       )}
     >
       <span aria-hidden className={cn("grid shrink-0 place-items-center", done ? "text-success" : "text-muted")}>
@@ -500,7 +500,7 @@ function HandOver({ icon, label, name, done, disabled, row, onClick }: { icon: R
 
 function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className={cn("flex items-baseline justify-between gap-comfortable", strong && "text-[15px] font-semibold")}>
+    <div className={cn("flex items-baseline justify-between gap-comfortable", strong && "text-[0.9375rem] font-semibold")}>
       <dt className={strong ? "text-fg" : "text-muted"}>{label}</dt>
       <dd className="tabular-nums text-fg">{value}</dd>
     </div>

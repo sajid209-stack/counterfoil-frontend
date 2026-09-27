@@ -101,7 +101,7 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-xs px-tight py-inline font-mono text-[12px] uppercase tracking-wide",
+        "inline-flex items-center rounded-xs px-tight py-inline font-mono text-[0.75rem] uppercase tracking-wide",
         resolvedShape === "record" ? OUTLINED[resolvedTone] : TONES[resolvedTone],
         className,
       )}

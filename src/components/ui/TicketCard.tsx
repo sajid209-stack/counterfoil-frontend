@@ -59,20 +59,20 @@ export function TicketCard({ data, className }: { data: TicketCardData; classNam
       <div style={bite("bottom")} className={`@container rounded-t-[24px] bg-white px-6 pb-6 pt-6 ${PRINT_EDGE} print:border-b-0`}>
         {(data.tierName || data.indexLabel) && (
           <div className="mb-4 flex items-center justify-between gap-3">
-            {data.tierName ? <span className="rounded-full bg-neutral-100 px-3 py-1 text-[12px] font-medium">{data.tierName}</span> : <span />}
-            {data.indexLabel && <span className="shrink-0 text-[12px] font-medium text-neutral-600">{data.indexLabel}</span>}
+            {data.tierName ? <span className="rounded-full bg-neutral-100 px-3 py-1 text-[0.75rem] font-medium">{data.tierName}</span> : <span />}
+            {data.indexLabel && <span className="shrink-0 text-[0.75rem] font-medium text-neutral-600">{data.indexLabel}</span>}
           </div>
         )}
-        <h2 className="break-words text-[22px] font-semibold leading-tight tracking-[-0.015em] [text-wrap:balance]">{data.productName}</h2>
-        <p className="mt-1 break-words text-[14px] text-neutral-600">{data.business}</p>
+        <h2 className="break-words text-[1.375rem] font-semibold leading-tight tracking-[-0.015em] [text-wrap:balance]">{data.productName}</h2>
+        <p className="mt-1 break-words text-[0.875rem] text-neutral-600">{data.business}</p>
         {data.fields.length > 0 && (
           // Two columns once the card has room for a date beside a time; one on the narrowest
           // phones, so a place like "Championship Court 1" wraps at its spaces instead of mid-word.
           <dl className="mt-5 grid grid-cols-1 gap-x-6 gap-y-4 border-t border-neutral-200 pt-5 @min-[17.5rem]:grid-cols-2">
             {data.fields.map((field) => (
               <div key={field.label} className="min-w-0">
-                <dt className="text-[13px] text-neutral-600">{field.label}</dt>
-                <dd className="mt-0.5 break-words text-[15px] font-semibold leading-snug">{field.value}</dd>
+                <dt className="text-[0.8125rem] text-neutral-600">{field.label}</dt>
+                <dd className="mt-0.5 break-words text-[0.9375rem] font-semibold leading-snug">{field.value}</dd>
               </div>
             ))}
           </dl>
@@ -87,9 +87,9 @@ export function TicketCard({ data, className }: { data: TicketCardData; classNam
             <Qr value={data.code} size={112} />
           </span>
           <div className="min-w-0">
-            <p className="text-[13px] text-neutral-600">{data.referenceLabel}</p>
-            <p className="mt-0.5 break-all font-mono text-[15px] font-medium">{data.code}</p>
-            <p className="mt-2 text-[13px] leading-snug text-neutral-600">{data.gateHint}</p>
+            <p className="text-[0.8125rem] text-neutral-600">{data.referenceLabel}</p>
+            <p className="mt-0.5 break-all font-mono text-[0.9375rem] font-medium">{data.code}</p>
+            <p className="mt-2 text-[0.8125rem] leading-snug text-neutral-600">{data.gateHint}</p>
           </div>
         </div>
       </div>

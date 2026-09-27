@@ -23,6 +23,7 @@ import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { Keypad } from "../_components/Keypad";
 import { ticketSnapshot } from "./_lib/handover";
+import { clearLiveSale, readLiveSale, writeLiveSale } from "./_lib/liveSale";
 
 const TODAY = DEMO_TODAY;
 // Payment methods this counter takes (would come from counter config).
@@ -97,10 +98,10 @@ function CartRow({
       >
         <Icon size={22} strokeWidth={1.6} className="shrink-0 text-muted" aria-hidden />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-medium">{label}</span>
-          {hint && <span className="block truncate text-[13px] text-muted">{hint}</span>}
+          <span className="block truncate text-[0.9375rem] font-medium">{label}</span>
+          {hint && <span className="block truncate text-[0.8125rem] text-muted">{hint}</span>}
         </span>
-        <span className="shrink-0 whitespace-nowrap text-[13px] text-muted">{value}</span>
+        <span className="shrink-0 whitespace-nowrap text-[0.8125rem] text-muted">{value}</span>
         <ChevronRight size={15} strokeWidth={1.5} className={`shrink-0 text-muted transition-transform duration-quick ${open ? "rotate-90" : ""}`} />
       </button>
       {open && <div className="pb-tight">{children}</div>}
@@ -149,32 +150,41 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const myRole = rolesQ.data?.data.find((r) => r.id === teamQ.data?.data.find((s) => s.id === SIGNED_IN_STAFF_ID)?.roleId);
   const discountLimit = myRole?.discountLimitPct ?? Infinity;
 
-  const [cart, setCart] = useState<CartEntry[]>([]);
+  /* The sale in progress survives a tab change. `PosScreen` is mounted by the
+     layout only on /pos and /pos/cart, so tapping Schedule unmounts it — and
+     before this, the sale silently went with it. Read through lazy
+     initialisers rather than an effect: restoring is what this state IS on
+     mount, not something that happens to it afterwards. */
+  /* Held in state, not a ref: the React Compiler forbids reading a ref during
+     render, and every initialiser below reads this one. A lazy useState runs
+     the read exactly once, on mount, which is when restoring means anything. */
+  const [restored] = useState(readLiveSale);
+  const [cart, setCart] = useState<CartEntry[]>(restored?.cart ?? []);
   const [sheet, setSheet] = useState<{ product: Product; initial: CartEntry | null; preset?: { date?: string; time?: string; resourceId?: string } } | null>(null);
   const [category, setCategory] = useState("all");
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [payInFull, setPayInFull] = useState(false);
   /** Minor amount the customer is paying up front, when the cashier sets one. */
-  const [advance, setAdvance] = useState<number | null>(null);
-  const [discountPct, setDiscountPct] = useState(0);
+  const [advance, setAdvance] = useState<number | null>(restored?.advance ?? null);
+  const [discountPct, setDiscountPct] = useState(restored?.discountPct ?? 0);
   /** A manager says "ten percent" or "take two hundred off" — both are real,
    *  and only one used to be expressible. The engine has always taken an
    *  absolute amount, so this is a question of what the cashier types. */
-  const [discountMode, setDiscountMode] = useState<DiscountMode>("percent");
-  const [discountAmt, setDiscountAmt] = useState(0);
-  const [discountReason, setDiscountReason] = useState("");
+  const [discountMode, setDiscountMode] = useState<DiscountMode>(restored?.discountMode ?? "percent");
+  const [discountAmt, setDiscountAmt] = useState(restored?.discountAmt ?? 0);
+  const [discountReason, setDiscountReason] = useState(restored?.discountReason ?? "");
   const [couponInput, setCouponInput] = useState("");
   /** Which cart action is expanded. One at a time — the cart is narrow and
    *  three open blocks is the wall this replaced. */
   type CartRowKey = "discount" | "coupon" | "passes" | "advance";
   const [cartRow, setCartRow] = useState<CartRowKey | null>(null);
   const toggleRow = (r: CartRowKey) => setCartRow((c) => (c === r ? null : r));
-  const [appliedCoupon, setAppliedCoupon] = useState<AppliedPromotion | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedPromotion | null>(restored?.coupon ?? null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [customOpen, setCustomOpen] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customAmount, setCustomAmount] = useState("");
-  const [pass, setPass] = useState<CreditPass | null>(null);
+  const [pass, setPass] = useState<CreditPass | null>(restored?.pass ?? null);
   const [passOpen, setPassOpen] = useState(false);
 
   // Settle a booking — look up an existing order by reference and take its
@@ -209,7 +219,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const [customTax, setCustomTax] = useState<"standard" | "reduced" | "exempt">("standard");
   // The attached customer RECORD (Milestone 2). `customer` stays as the name
   // snapshot the cart and receipt read, so nothing downstream had to change.
-  const [attached, setAttached] = useState<AttachedCustomer | null>(null);
+  const [attached, setAttached] = useState<AttachedCustomer | null>(restored?.attached ?? null);
   /** Which cart line has its discount open for editing. Tapping % used to
    *  CYCLE 0→5→10→15→0, so reaching 12 was impossible and reaching 5 from 15
    *  meant three more taps. It opens a field now. */
@@ -234,7 +244,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const pointsAccount = FEATURES.loyalty && attached?.id ? (pointsQ.data ?? null) : null;
   const programQ = useApiQuery(() => getLoyaltyProgram(), []);
   const program = FEATURES.loyalty ? programQ.data : null;
-  const [pointsToSpend, setPointsToSpend] = useState(0);
+  const [pointsToSpend, setPointsToSpend] = useState(restored?.pointsToSpend ?? 0);
   const [pointsOpen, setPointsOpen] = useState(false);
   const [membershipOpen, setMembershipOpen] = useState(false);
 
@@ -268,6 +278,12 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const [cashOpen, setCashOpen] = useState(false);
   const [tenderTaka, setTenderTaka] = useState("");
   const [cashSaving, setCashSaving] = useState(false);
+  /* Hold the sale. sessionStorage is an external store, so writing to it is
+     what an effect is for — and it is a write, never a setState. */
+  useEffect(() => {
+    writeLiveSale({ cart, discountMode, discountPct, discountAmt, discountReason, attached, pass, coupon: appliedCoupon, advance, pointsToSpend });
+  }, [cart, discountMode, discountPct, discountAmt, discountReason, attached, pass, appliedCoupon, advance, pointsToSpend]);
+
   const persistParked = (list: Parked[]) => { setParked(list); sessionStorage.setItem("pos_parked", JSON.stringify(list)); };
   const park = () => {
     if (cart.length === 0) return;
@@ -276,6 +292,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     setAdvance(null);
     setDiscountPct(0);
     setDiscountAmt(0); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0); void releaseCheckoutHolds(TILL_ID);
+    clearLiveSale();
     setParkOpen(false); setParkName("");
     toast.success(t("cartParked"));
   };
@@ -287,6 +304,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     setDiscountAmt(0); setDiscountPct(0); setAttached(null); setPass(null);
     setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0);
     void releaseCheckoutHolds(TILL_ID);
+    clearLiveSale();
     setClearOpen(false);
     toast.success(t("cart.cleared"));
   };
@@ -364,7 +382,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   const customTile = (
     <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10">
       <Plus size={20} strokeWidth={1.5} />
-      <span className="text-[13px]">{t("customAmount")}</span>
+      <span className="text-[0.8125rem]">{t("customAmount")}</span>
     </button>
   );
 
@@ -856,6 +874,10 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
       sayIfStockRefused(res.data.stockRefused);
       await settleMemberEffects(res.data.order.id, dueNow);
       sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, reference: res.data.order.reference, code: res.data.firstTicketCode, tickets: ticketSnapshot(res.data.order, res.data.tickets), change: 0, balance, receipt, payments: [{ method, amount: dueNow }], customer: completedCustomer() }));
+      /* Before navigating: the completion screen unmounts this component, and
+         a sold sale that came back on the next mount would be a second charge
+         waiting to happen. */
+      clearLiveSale();
       router.push("/pos/complete");
     } else toast.error(res.error.message);
   };
@@ -877,6 +899,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
       sayIfStockRefused(res.data.stockRefused);
       await settleMemberEffects(res.data.order.id, dueNow);
       sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, reference: res.data.order.reference, code: res.data.firstTicketCode, tickets: ticketSnapshot(res.data.order, res.data.tickets), change: changeMinor, balance, receipt, payments: [{ method: "cash", amount: dueNow, tendered: tenderedMinor, change: changeMinor }], customer: completedCustomer() }));
+      clearLiveSale();
       setCashOpen(false);
       router.push("/pos/complete");
     } else toast.error(res.error.message);
@@ -961,10 +984,10 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           <div data-focus-host className="go-surface flex h-[52px] min-w-0 flex-1 items-center gap-tight rounded-full px-section focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember">
             <Search size={18} strokeWidth={1.75} className="shrink-0 text-muted" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none focus-visible:outline-none placeholder:text-faint" />
-            {query && <button type="button" onClick={() => setQuery("")} className="text-[13px] text-muted hover:text-fg">{t("search.clear")}</button>}
+            {query && <button type="button" onClick={() => setQuery("")} className="text-[0.8125rem] text-muted hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
-            <button type="button" onClick={() => setParkOpen(true)} className="flex h-[52px] shrink-0 items-center rounded-full bg-ember/15 px-section text-[13px] font-medium text-brand-foreground">
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-[52px] shrink-0 items-center rounded-full bg-ember/15 px-section text-[0.8125rem] font-medium text-brand-foreground">
               {t("parkedBadge", { count: parked.length })}
             </button>
           )}
@@ -1034,14 +1057,14 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                         that wraps is worse than no pill. The meta line below
                         still carries the number; this is the glance. */}
                     {live && live.tone !== "ok" && (
-                      <span className={`shrink-0 whitespace-nowrap rounded-full px-tight py-inline text-[12px] font-medium ${live.tone === "none" ? "bg-danger/10 text-danger" : "bg-ember/15 text-brand-foreground"}`}>
+                      <span className={`shrink-0 whitespace-nowrap rounded-full px-tight py-inline text-[0.75rem] font-medium ${live.tone === "none" ? "bg-danger/10 text-danger" : "bg-ember/15 text-brand-foreground"}`}>
                         {live.tone === "none" ? t("sheet.soldOut") : t("live.limited")}
                       </span>
                     )}
                   </span>
 
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="line-clamp-3 text-[15px] font-semibold leading-snug">{p.name}</span>
+                    <span className="line-clamp-3 text-[0.9375rem] font-semibold leading-snug">{p.name}</span>
                     {/* The price is the figure a cashier reads out, so it is
                         the loudest thing on the card. 20px at 700 also makes
                         `ember` legal as a letterform: WCAG counts >=18.66px
@@ -1049,13 +1072,13 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                         measures 3.50:1 on white and 6.21:1 on the dark card.
                         At 13px it would not have been, which is why every
                         other price in this app uses the darker brand step. */}
-                    <span className="mt-inline text-[20px] font-bold leading-none text-ember">{formatPriceShort(from, currency)}</span>
-                    <span className="mt-tight line-clamp-2 text-[13px] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
+                    <span className="mt-inline text-[1.25rem] font-bold leading-none text-ember">{formatPriceShort(from, currency)}</span>
+                    <span className="mt-tight line-clamp-2 text-[0.8125rem] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
                     {/* What this product is doing RIGHT NOW, stated per booking
                         type — the next departure and its seats, how many lanes
                         are free, how much of today's allowance is left. */}
                     {live && (
-                      <span className={`mt-inline flex items-center gap-inline text-[13px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}>
+                      <span className={`mt-inline flex items-center gap-inline text-[0.8125rem] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}>
                         {/* A dot ahead of the words. Across a wall of products
                             the eye reads the colour before it reads anything —
                             and the words carry it anyway, so the dot is never
@@ -1079,7 +1102,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                   till had counted stock it never touched. */}
               {shelfHeading && customTile}
               {shelfHeading && (
-                <p className="col-span-full mt-tight flex items-center gap-tight text-[13px] font-semibold text-muted">
+                <p className="col-span-full mt-tight flex items-center gap-tight text-[0.8125rem] font-semibold text-muted">
                   <ShoppingBag size={15} strokeWidth={1.5} aria-hidden />
                   {t("shop.chip")}
                 </p>
@@ -1115,16 +1138,16 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                           {/* How many are already in this sale — the one thing
                               a second tap needs to confirm it landed. */}
                           {inCart > 0 && (
-                            <span className="rounded-full bg-ember-solid px-tight py-inline text-[12px] font-semibold text-white">{inCart}</span>
+                            <span className="rounded-full bg-ember-solid px-tight py-inline text-[0.75rem] font-semibold text-white">{inCart}</span>
                           )}
                           {gone && (
-                            <span className="whitespace-nowrap rounded-full bg-danger/10 px-tight py-inline text-[12px] font-medium text-danger">{t("sheet.soldOut")}</span>
+                            <span className="whitespace-nowrap rounded-full bg-danger/10 px-tight py-inline text-[0.75rem] font-medium text-danger">{t("sheet.soldOut")}</span>
                           )}
                         </span>
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="line-clamp-3 text-[15px] font-semibold leading-snug">{i.name}</span>
-                        <span className="mt-inline text-[20px] font-bold leading-none text-ember">{formatPriceShort(i.price, currency)}</span>
+                        <span className="line-clamp-3 text-[0.9375rem] font-semibold leading-snug">{i.name}</span>
+                        <span className="mt-inline text-[1.25rem] font-bold leading-none text-ember">{formatPriceShort(i.price, currency)}</span>
                         {/* The glyph already says it is from the shop and the
                             heading says it again, so this line carries what
                             neither can: what one tap actually buys.
@@ -1136,7 +1159,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                             bag under a shop glyph needs neither. One line
                             either way: two wrapped lines made the tile taller
                             than the bookings beside it. */}
-                        <span className="mt-tight line-clamp-2 text-[13px] leading-tight text-muted">
+                        <span className="mt-tight line-clamp-2 text-[0.8125rem] leading-tight text-muted">
                           {GENERIC_UNITS.has(i.unit.trim().toLowerCase())
                             ? i.kind === "merch"
                               ? null
@@ -1144,7 +1167,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                             : t("shop.per", { unit: i.unit })}
                         </span>
                         {low && (
-                          <span className="mt-inline flex items-center gap-inline text-[13px] font-medium leading-tight text-brand-foreground">
+                          <span className="mt-inline flex items-center gap-inline text-[0.8125rem] font-medium leading-tight text-brand-foreground">
                             <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
                             <span className="min-w-0 truncate">{t("shop.left", { count: i.onHand, unit: i.unit })}</span>
                           </span>
@@ -1172,7 +1195,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           {/* The count changes as lines come and go, so it is announced as one
               atomic status — "2 items in cart" — rather than a bare number that
               a screen reader reads out of context. */}
-          <p role="status" aria-atomic="true" className="min-w-0 flex-1 truncate text-center text-[15px] font-semibold">
+          <p role="status" aria-atomic="true" className="min-w-0 flex-1 truncate text-center text-[0.9375rem] font-semibold">
             {t("phoneSummary", { count: cart.length })}
           </p>
           <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-11 shrink-0 items-center gap-inline rounded-full bg-subtle px-comfortable text-sm font-medium text-fg disabled:text-faint dark:border dark:border-line dark:bg-transparent" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
@@ -1205,32 +1228,33 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                        first tote bag. */
                     onClick={() => { const prod = productById(e.productId); if (prod) setSheet({ product: prod, initial: e }); }} onKeyDown={(k) => { const prod = productById(e.productId); if (k.key === "Enter" && prod) setSheet({ product: prod, initial: e }); }}>
                     <div className="flex items-start justify-between gap-tight">
-                      <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{e.productName}</span>
+                      <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">{e.productName}</span>
                       <span className="shrink-0 text-right">
-                        <span className="block whitespace-nowrap text-[15px] font-semibold">{formatMoney(entryTotal(e), currency)}</span>
+                        <span className="block whitespace-nowrap text-[0.9375rem] font-semibold">{formatMoney(entryTotal(e), currency)}</span>
                         {/* The unit maths, but only where it is exactly true: one
                             tier, so qty x unit IS the line. A flat per-booking
                             price divided by a party size would be a number the
                             receipt never charged. */}
                         {e.items.length === 1 && e.fixedPrice == null && e.items[0].qty > 1 && (
-                          <span className="block whitespace-nowrap text-[13px] text-muted">
+                          <span className="block whitespace-nowrap text-[0.8125rem] text-muted">
                             {e.items[0].qty} × {formatMoney(e.items[0].unitPrice, currency)}
                           </span>
                         )}
                       </span>
                     </div>
-                    <div className="text-[13px] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
-                    {entryCoveredQty(e) > 0 && <div className="text-[13px] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
+                    <div className="text-[0.8125rem] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
+                    {entryCoveredQty(e) > 0 && <div className="text-[0.8125rem] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
                     {e.lineDiscountAmount ? (
-                      <div className="text-[13px] text-danger">−{formatMoney(e.lineDiscountAmount, currency)}</div>
+                      <div className="text-[0.8125rem] text-danger">−{formatMoney(e.lineDiscountAmount, currency)}</div>
                     ) : (e.lineDiscountPct ?? 0) > 0 ? (
-                      <div className="text-[13px] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>
+                      <div className="text-[0.8125rem] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>
                     ) : null}
-                    {entryBalance(e) > 0 && <div className="text-[13px] text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
+                    {entryBalance(e) > 0 && <div className="text-[0.8125rem] text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                   </div>
                   </div>
+                  <div className="mt-comfortable flex flex-wrap items-center gap-tight">
                   {simpleQty(e) && (
-                    <span className="mt-comfortable flex w-fit items-center gap-inline rounded-full border border-line">
+                    <span className="flex w-fit items-center gap-inline rounded-full border border-line">
                       <button type="button" aria-label={t("sheet.fewer")} disabled={e.items[0].qty <= 1} onClick={() => bumpQty(e.id, -1)} className="flex h-11 w-11 items-center justify-center rounded-full text-lg disabled:text-faint active:bg-ember/10">−</button>
                       <span className="min-w-6 text-center text-sm font-medium">{e.items[0].qty}</span>
                       <button type="button" aria-label={t("sheet.more")} onClick={() => bumpQty(e.id, 1)} className="flex h-11 w-11 items-center justify-center rounded-full text-lg active:bg-ember/10">+</button>
@@ -1240,20 +1264,22 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                       is the floor and these had it; the reference puts the name
                       ON the control, which is what a till worked by rotating
                       staff actually needs — a bare % beside a bin is guessable,
-                      not obvious. */}
-                  <div className="mt-comfortable flex items-stretch gap-tight">
+                      not obvious. They were 58px tiles stacking glyph over
+                      label on a row of their own; the name now sits BESIDE the
+                      glyph on the stepper's row, which keeps every word and
+                      gives the line 70px back. */}
                   <button
                     type="button"
                     aria-label={t("cart.lineDiscountLabel")}
                     onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
-                    className={`flex min-h-[58px] flex-1 flex-col items-center justify-center gap-inline rounded-go-sm text-[13px] active:bg-ember/20 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "bg-ember/15 font-medium text-brand-foreground" : "bg-subtle text-muted dark:bg-line"}`}
+                    className={`ml-auto flex h-11 items-center gap-inline rounded-full px-comfortable text-[0.8125rem] active:bg-ember/20 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "bg-ember/15 font-medium text-brand-foreground" : "bg-subtle text-muted dark:bg-line"}`}
                   >
-                    <span className="text-sm font-medium">{e.lineDiscountAmount ? "৳" : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}</span>
+                    <span className="font-medium">{e.lineDiscountAmount ? "৳" : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}</span>
                     <span className="whitespace-nowrap">{t("summary.discount")}</span>
                   </button>
                   {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex min-h-[58px] flex-1 flex-col items-center justify-center gap-inline rounded-go-sm bg-subtle text-[13px] text-muted active:bg-ember/20 dark:bg-line">
-                      <span className="text-sm font-medium">+{productById(e.productId)!.durationConfig!.incrementMinutes}m</span>
+                    <button type="button" onClick={() => extendEntry(e)} className="flex h-11 items-center gap-inline rounded-full bg-subtle px-comfortable text-[0.8125rem] text-muted active:bg-ember/20 dark:bg-line">
+                      <span className="font-medium">+{productById(e.productId)!.durationConfig!.incrementMinutes}m</span>
                       <span className="whitespace-nowrap">{t("cart.extend")}</span>
                     </button>
                   )}
@@ -1274,15 +1300,17 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                         }),
                       });
                     }}
-                    className="flex min-h-[58px] flex-1 flex-col items-center justify-center gap-inline rounded-go-sm bg-danger/10 text-[13px] text-danger active:bg-danger/20"
+                    className="flex h-11 items-center gap-inline rounded-full bg-danger/10 px-comfortable text-[0.8125rem] text-danger active:bg-danger/20"
                   >
-                    <Trash2 size={16} strokeWidth={1.75} />
+                    <Trash2 size={15} strokeWidth={1.75} aria-hidden />
                     <span className="whitespace-nowrap">{t("cart.remove")}</span>
                   </button>
                   </div>
                 </div>
                 {lineDiscEdit === e.id && (
-                  <div className="mt-tight rounded-go border border-line bg-subtle/50 p-tight">
+                  /* No frame of its own: it is already inside the line's card,
+                     and a box in a box is what the padding rhythm settled. */
+                  <div className="mt-tight border-t border-hairline pt-tight">
                     <DiscountInput
                       compact
                       label={t("cart.lineDiscountLabel")}
@@ -1325,7 +1353,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                   which left it owned by neither the lines nor what follows. */}
               {cart.length > 1 && (
                 <div className="-mt-tight flex justify-end">
-                  <button type="button" onClick={() => setClearOpen(true)} className="flex h-11 items-center rounded-full px-comfortable text-[13px] text-muted active:bg-ember/10">
+                  <button type="button" onClick={() => setClearOpen(true)} className="flex h-11 items-center rounded-full px-comfortable text-[0.8125rem] text-muted active:bg-ember/10">
                     {t("cart.clearAll")}
                   </button>
                 </div>
@@ -1358,14 +1386,14 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     person in front of them — with the phone under it, which is
                     what tells two people with one name apart. The card used to
                     read "Customer" over the phone and never state the name. */}
-                <span className={attached ? "block break-words text-[15px] font-medium" : "block truncate text-[15px] font-medium"}>
+                <span className={attached ? "block break-words text-[0.9375rem] font-medium" : "block truncate text-[0.9375rem] font-medium"}>
                   {attached ? attached.name : t("cart.customer")}
                 </span>
-                <span className="block truncate text-[13px] text-muted">
+                <span className="block truncate text-[0.8125rem] text-muted">
                   {attached ? (attached.phone || attached.email || t("cart.customer")) : t("cart.walkIn")}
                 </span>
               </span>
-              <span className="shrink-0 whitespace-nowrap text-[13px] text-muted">
+              <span className="shrink-0 whitespace-nowrap text-[0.8125rem] text-muted">
                 {attached ? t("cart.customerChange") : t("cart.customerAdd")}
               </span>
               <ChevronRight size={18} strokeWidth={1.6} className="shrink-0 text-muted" />
@@ -1388,7 +1416,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               className="mb-tight"
             />
           {overLimit && (
-            <p className="mb-tight rounded-go border border-line border-l-[3px] border-l-ember bg-card p-tight text-[13px]">
+            <p className="mb-tight rounded-go border border-line border-l-[3px] border-l-ember bg-card p-tight text-[0.8125rem]">
               {pt("pos.overPolicy", { limit: manualCapPct })}
             </p>
           )}
@@ -1432,7 +1460,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                   <button
                     type="button"
                     onClick={() => setAdvance(null)}
-                    className={`h-12 shrink-0 rounded-full border px-comfortable text-[13px] ${advance == null ? "border-ember bg-ember/10 text-brand-foreground" : "border-line"}`}
+                    className={`h-12 shrink-0 rounded-full border px-comfortable text-[0.8125rem] ${advance == null ? "border-ember bg-ember/10 text-brand-foreground" : "border-line"}`}
                   >
                     {t("advance.full")}
                   </button>
@@ -1443,19 +1471,19 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                       key={i}
                       type="button"
                       onClick={() => setAdvance(amt >= total ? null : amt)}
-                      className="h-12 flex-1 rounded-full border border-line bg-card px-tight text-[13px] active:bg-ember/10"
+                      className="h-12 flex-1 rounded-full border border-line bg-card px-tight text-[0.8125rem] active:bg-ember/10"
                     >
                       {i === 0 ? t("advance.minimum", { amount: formatMoney(amt, currency) }) : i === 1 ? t("advance.half") : t("advance.full")}
                     </button>
                   ))}
                 </div>
                 {advance != null && advance < advanceMin && (
-                  <p className="text-[13px] text-danger">
+                  <p className="text-[0.8125rem] text-danger">
                     {t("advance.belowMin", { amount: formatMoney(advanceMin, currency) })}
                   </p>
                 )}
                 {advanceValid && (
-                  <p className="text-[13px] text-muted">
+                  <p className="text-[0.8125rem] text-muted">
                     {t("advance.explain", { now: formatMoney(advance!, currency), later: formatMoney(total - advance!, currency) })}
                   </p>
                 )}
@@ -1466,21 +1494,21 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           {FEATURES.promotions && (
           <CartRow icon={TicketPercent} label={pt("list.coupon")} hint={appliedCoupon ? undefined : t("summary.noCoupon")} value={appliedCoupon ? (appliedCoupon.code ?? appliedCoupon.name) : t("summary.applyCoupon")} open={cartRow === "coupon"} onToggle={() => toggleRow("coupon")}>
           <div className="flex items-center justify-between gap-tight">
-            <span className="shrink-0 text-[13px] text-muted">{pt("list.coupon")}</span>
+            <span className="shrink-0 text-[0.8125rem] text-muted">{pt("list.coupon")}</span>
             {appliedCoupon ? (
-              <span className="flex min-w-0 items-center gap-inline text-[13px] text-success">
+              <span className="flex min-w-0 items-center gap-inline text-[0.8125rem] text-success">
                 <span className="truncate">{appliedCoupon.code ?? appliedCoupon.name}</span>
                 <button type="button" aria-label={pt("pos.remove")} onClick={() => { setAppliedCoupon(null); setCouponError(null); }} className="text-danger">✕</button>
               </span>
             ) : (
               <span className="flex min-w-0 items-center gap-inline">
                 <input value={couponInput} onChange={(e) => { setCouponInput(e.target.value); setCouponError(null); }} placeholder={pt("pos.couponPlaceholder")} className="h-11 w-28 rounded-full border border-line bg-card px-comfortable text-sm uppercase outline-none placeholder:text-faint placeholder:normal-case focus:border-inverse" />
-                <button type="button" onClick={applyCoupon} disabled={!couponInput.trim()} className="h-11 shrink-0 rounded-full border border-inverse bg-inverse px-section text-[13px] text-inverse-fg disabled:opacity-40">{pt("pos.apply")}</button>
+                <button type="button" onClick={applyCoupon} disabled={!couponInput.trim()} className="h-11 shrink-0 rounded-full border border-inverse bg-inverse px-section text-[0.8125rem] text-inverse-fg disabled:opacity-40">{pt("pos.apply")}</button>
               </span>
             )}
           </div>
           {couponError && (
-            <p className="mb-tight text-[13px] text-danger">{pt(`pos.rejected.${couponError}` as never)}</p>
+            <p className="mb-tight text-[0.8125rem] text-danger">{pt(`pos.rejected.${couponError}` as never)}</p>
           )}
           </CartRow>
           )}
@@ -1492,24 +1520,24 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
 
           <CartRow icon={Wallet} label={t("summary.passesMembership")} hint={pass ? undefined : t("summary.noPasses")} value={pass ? pass.code : t("summary.add")} open={cartRow === "passes"} onToggle={() => toggleRow("passes")}>
           <div className="mb-tight flex flex-wrap items-center justify-between gap-tight">
-            <span className="text-[13px] text-muted">{t("summary.pass")}</span>
+            <span className="text-[0.8125rem] text-muted">{t("summary.pass")}</span>
             {pass ? (
-              <span className="flex items-center gap-inline text-[13px]">
+              <span className="flex items-center gap-inline text-[0.8125rem]">
                 <span>{t("summary.passUsage", { code: pass.code, used: creditsUsed, left: pass.remaining - creditsUsed })}</span>
                 <button type="button" aria-label={t("summary.removePass")} onClick={() => setPass(null)} className="text-danger">✕</button>
               </span>
             ) : (
-              <button type="button" onClick={() => setPassOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[13px]">{t("summary.redeemPass")}</button>
+              <button type="button" onClick={() => setPassOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[0.8125rem]">{t("summary.redeemPass")}</button>
             )}
-            <button type="button" onClick={() => setSettleOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[13px]">{t("summary.settleBooking")}</button>
+            <button type="button" onClick={() => setSettleOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[0.8125rem]">{t("summary.settleBooking")}</button>
           </div>
 
           {/* Membership + points. Both need a customer attached, so the row
               says so rather than offering a control that cannot work. */}
           <div className="mb-tight flex flex-wrap items-center gap-tight empty:hidden">
-            {FEATURES.memberships && <button type="button" onClick={() => setMembershipOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[13px]">{t("summary.sellMembership")}</button>}
+            {FEATURES.memberships && <button type="button" onClick={() => setMembershipOpen(true)} className="h-12 rounded-full border border-line px-comfortable text-[0.8125rem]">{t("summary.sellMembership")}</button>}
             {pointsAccount && program?.enabled && (
-              <button type="button" onClick={() => setPointsOpen(true)} className="h-12 min-w-0 rounded-full border border-line px-comfortable text-[13px]">
+              <button type="button" onClick={() => setPointsOpen(true)} className="h-12 min-w-0 rounded-full border border-line px-comfortable text-[0.8125rem]">
                 <span className="truncate">{pointsToSpend > 0 ? t("summary.pointsApplied", { count: pointsToSpend }) : t("summary.spendPoints", { count: pointsAccount.balance })}</span>
               </button>
             )}
@@ -1519,7 +1547,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           {/* The member price is an entitlement, so say whose it is. */}
           {benefit && (
             <div className="mb-tight rounded-go border-l-2 border-ember bg-ember/5 px-comfortable py-tight">
-              <p className="min-w-0 break-words text-[13px]">
+              <p className="min-w-0 break-words text-[0.8125rem]">
                 <span className="font-medium">{benefit.tierName}</span>
                 {" · "}
                 {t("summary.memberRate", { pct: benefit.discountBps / 100 })}
@@ -1539,18 +1567,18 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               only route on a phone. */}
           {cart.length > 0 && (<>
           <div className="rounded-go bg-card p-comfortable">
-          <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.subtotal")}</span><span className="">{formatMoney(subtotal, currency)}</span></div>
-          {lineDiscountTotal > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.lineDiscounts")}</span><span className="text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
-          {manualDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{discountMode === "percent" ? t("summary.discountPct", { pct: discountPct }) : t("summary.discountFlat")}</span><span className="text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
-          {couponDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{appliedCoupon?.code ?? appliedCoupon?.name}</span><span className="text-danger">−{formatMoney(couponDiscount, currency)}</span></div>}
-          {memberDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span className="min-w-0 truncate">{t("summary.memberDiscount", { tier: benefit?.tierName ?? "" })}</span><span className="shrink-0 text-danger">−{formatMoney(memberDiscount, currency)}</span></div>}
-          {pointsDiscount > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.pointsSpent", { count: pointsToSpend })}</span><span className="text-danger">−{formatMoney(pointsDiscount, currency)}</span></div>}
-          {creditsValue > 0 && <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.passCredits", { count: creditsUsed })}</span><span className="text-success">−{formatMoney(creditsValue, currency)}</span></div>}
-          <div className="flex justify-between text-[13px] text-muted"><span>{vatRatePct != null ? t("summary.vatRate", { pct: vatRatePct }) : t("summary.vat")}</span><span className="">{formatMoney(tax, currency)}</span></div>
+          <div className="flex justify-between text-[0.8125rem] text-muted"><span>{t("summary.subtotal")}</span><span className="">{formatMoney(subtotal, currency)}</span></div>
+          {lineDiscountTotal > 0 && <div className="flex justify-between text-[0.8125rem] text-muted"><span>{t("summary.lineDiscounts")}</span><span className="text-danger">−{formatMoney(lineDiscountTotal, currency)}</span></div>}
+          {manualDiscount > 0 && <div className="flex justify-between text-[0.8125rem] text-muted"><span>{discountMode === "percent" ? t("summary.discountPct", { pct: discountPct }) : t("summary.discountFlat")}</span><span className="text-danger">−{formatMoney(manualDiscount, currency)}</span></div>}
+          {couponDiscount > 0 && <div className="flex justify-between text-[0.8125rem] text-muted"><span>{appliedCoupon?.code ?? appliedCoupon?.name}</span><span className="text-danger">−{formatMoney(couponDiscount, currency)}</span></div>}
+          {memberDiscount > 0 && <div className="flex justify-between text-[0.8125rem] text-muted"><span className="min-w-0 truncate">{t("summary.memberDiscount", { tier: benefit?.tierName ?? "" })}</span><span className="shrink-0 text-danger">−{formatMoney(memberDiscount, currency)}</span></div>}
+          {pointsDiscount > 0 && <div className="flex justify-between text-[0.8125rem] text-muted"><span>{t("summary.pointsSpent", { count: pointsToSpend })}</span><span className="text-danger">−{formatMoney(pointsDiscount, currency)}</span></div>}
+          {creditsValue > 0 && <div className="flex justify-between text-[0.8125rem] text-muted"><span>{t("summary.passCredits", { count: creditsUsed })}</span><span className="text-success">−{formatMoney(creditsValue, currency)}</span></div>}
+          <div className="flex justify-between text-[0.8125rem] text-muted"><span>{vatRatePct != null ? t("summary.vatRate", { pct: vatRatePct }) : t("summary.vat")}</span><span className="">{formatMoney(tax, currency)}</span></div>
           <div className="mt-tight flex items-baseline justify-between border-t border-line pt-tight text-lg font-semibold"><span>{t("summary.total")}</span><AnimatedMoney value={total} currency={currency} /></div>
           {depositBalance > 0 && (
             <>
-              <button type="button" onClick={() => setPayInFull((v) => !v)} className="mt-tight flex w-full items-center justify-between text-[13px]">
+              <button type="button" onClick={() => setPayInFull((v) => !v)} className="mt-tight flex w-full items-center justify-between text-[0.8125rem]">
                 <span className="text-muted">{t("summary.payInFull")}</span>
                 <span className={cn("flex h-6 w-10 shrink-0 items-center rounded-full px-0.5 transition-colors duration-quick", payInFull ? "bg-ember" : "bg-strong")}>
                   <span className={cn("h-5 w-5 rounded-full bg-card transition-transform duration-quick", payInFull && "translate-x-4")} />
@@ -1558,8 +1586,8 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               </button>
               {balance > 0 && (
                 <>
-                  <div className="flex justify-between text-[13px]"><span>{t("summary.dueNow")}</span><span className="">{formatMoney(dueNow, currency)}</span></div>
-                  <div className="flex justify-between text-[13px] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>
+                  <div className="flex justify-between text-[0.8125rem]"><span>{t("summary.dueNow")}</span><span className="">{formatMoney(dueNow, currency)}</span></div>
+                  <div className="flex justify-between text-[0.8125rem] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>
                 </>
               )}
             </>
@@ -1574,7 +1602,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           {/* Payment method — a named group of tiles. Non-cash methods only
               appear when a live PSP account is connected. */}
           <div className="rounded-go bg-card p-comfortable">
-            <p className="mb-tight flex items-center gap-inline text-[13px] font-medium text-muted">
+            <p className="mb-tight flex items-center gap-inline text-[0.8125rem] font-medium text-muted">
               <Wallet size={16} strokeWidth={1.75} />{t("summary.paymentMethod")}
             </p>
             <div className="flex gap-tight" role="radiogroup" aria-label={t("summary.paymentMethod")}>
@@ -1588,7 +1616,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     role="radio"
                     aria-checked={on}
                     onClick={() => setMethod(m.value)}
-                    className={`flex min-h-[64px] flex-1 flex-col items-center justify-center gap-inline rounded-go-sm border text-[13px] transition-colors duration-quick ${on ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card text-muted"}`}
+                    className={`flex min-h-[64px] flex-1 flex-col items-center justify-center gap-inline rounded-go-sm border text-[0.8125rem] transition-colors duration-quick ${on ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card text-muted"}`}
                   >
                     <Icon size={18} strokeWidth={1.75} />
                     <span className="max-w-full truncate px-inline">{enumL.method(m.value)}</span>
@@ -1648,7 +1676,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                 <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line" aria-hidden />
                 <div className="mb-section flex items-center justify-between">
                   <div>
-                    <p className="type-label text-[13px] text-brand-foreground">{t("cash.label")}</p>
+                    <p className="type-label text-[0.8125rem] text-brand-foreground">{t("cash.label")}</p>
                     <h2 className="type-h2 text-lg">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</h2>
                   </div>
                   <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-10 w-10 items-center justify-center rounded-full active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
@@ -1656,11 +1684,20 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
 
                 <div className="card-surface p-section">
                   <div className="flex justify-between text-muted"><span>{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</span><span className="text-lg">{formatMoney(dueNow, currency)}</span></div>
-                  {balance > 0 && <div className="mt-tight flex justify-between text-[13px] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>}
+                  {balance > 0 && <div className="mt-tight flex justify-between text-[0.8125rem] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>}
                   <div className="mt-tight flex justify-between"><span>{t("cash.tendered")}</span><span className="text-lg">{formatMoney(tenderedMinor, currency)}</span></div>
-                  <div className={`mt-tight flex items-baseline justify-between font-medium ${enough ? "text-success" : "text-muted"}`}>
-                    <span className="text-xl">{t("cash.change")}</span>
-                    <span className="text-5xl">{enough ? formatMoney(changeMinor, currency) : "—"}</span>
+                  {/* Change is the one figure on this sheet that is an ACTION,
+                      so it stays the largest thing on it — but 48px was too
+                      large to be true: measured at 390, a change of ৳99,424.00
+                      rendered 270px wide into the 243px its row had left once
+                      the label took its share, and clipped. It scales with the
+                      screen now, capped where it still fits the widest figure
+                      a drawer produces, and the label never shrinks. */}
+                  <div className={`mt-tight flex items-baseline justify-between gap-tight font-medium ${enough ? "text-success" : "text-muted"}`}>
+                    <span className="shrink-0 text-xl">{t("cash.change")}</span>
+                    <span className="min-w-0 truncate text-right" style={{ fontSize: "clamp(28px, 9.5vw, 40px)" }}>
+                      {enough ? formatMoney(changeMinor, currency) : "—"}
+                    </span>
                   </div>
                 </div>
 
@@ -1734,19 +1771,19 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             </div>
           )}
           {parked.length === 0 ? (
-            <p className="text-[13px] text-muted">{t("parked.nothing")}</p>
+            <p className="text-[0.8125rem] text-muted">{t("parked.nothing")}</p>
           ) : (
             <div className="flex flex-col gap-tight">
               {parked.map((p, i) => (
                 <div key={i} className="flex items-center justify-between rounded-go border border-line p-comfortable">
                   <div>
                     <p className="text-sm font-medium">{p.name}</p>
-                    <p className="text-[13px] text-muted">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
+                    <p className="text-[0.8125rem] text-muted">{t("parked.lines", { count: p.cart.length, amount: formatMoney(p.cart.reduce((s, e) => s + (e.fixedPrice ?? 0) + e.items.reduce((x, i2) => x + i2.unitPrice * i2.qty, 0), 0), currency) })}</p>
                   </div>
                   <Button shape="pill" size="sm" onClick={() => resume(i)} disabled={cart.length > 0} >{t("parked.resume")}</Button>
                 </div>
               ))}
-              {cart.length > 0 && <p className="text-[13px] text-muted">{t("parked.parkFirst")}</p>}
+              {cart.length > 0 && <p className="text-[0.8125rem] text-muted">{t("parked.parkFirst")}</p>}
             </div>
           )}
         </div>
@@ -1755,7 +1792,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
       <Modal open={settleOpen} onClose={closeSettle} title={t("settle.title")}>
         {!settleOrder ? (
           <div className="flex flex-col gap-section">
-            <p className="text-[13px] text-muted">{t("settle.help")}</p>
+            <p className="text-[0.8125rem] text-muted">{t("settle.help")}</p>
             <FormField label={t("settle.refLabel")} value={settleRef} onChange={(e) => setSettleRef(e.target.value)} placeholder={t("settle.refPlaceholder")} />
             <Button shape="pill" onClick={findBooking} loading={settleLoading} disabled={!settleRef.trim()}>{t("settle.find")}</Button>
           </div>
@@ -1764,7 +1801,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             <div className="rounded-go bg-subtle p-comfortable text-sm">
               <div className="flex items-center justify-between">
                 <span className="font-mono">{settleOrder.reference}</span>
-                <span className="text-[13px] text-muted">{enumL.status(settleOrder.status)}</span>
+                <span className="text-[0.8125rem] text-muted">{enumL.status(settleOrder.status)}</span>
               </div>
               {settleOrder.customerName && <p className="mt-inline text-muted">{settleOrder.customerName}</p>}
               <div className="mt-tight flex justify-between"><span className="text-muted">{t("settle.total")}</span><span className="tabular-nums">{formatMoney(settleOrder.total, currency)}</span></div>
@@ -1783,7 +1820,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             ) : (
               <p className="rounded-go bg-success/10 py-tight text-center text-sm font-medium text-success">{t("settle.fullyPaid")}</p>
             )}
-            <button type="button" onClick={() => { setSettleOrder(null); setSettleRef(""); }} className="text-center text-[13px] text-muted hover:text-fg">{t("settle.lookupAnother")}</button>
+            <button type="button" onClick={() => { setSettleOrder(null); setSettleRef(""); }} className="text-center text-[0.8125rem] text-muted hover:text-fg">{t("settle.lookupAnother")}</button>
           </div>
         )}
       </Modal>
@@ -1827,7 +1864,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               ))}
             </div>
             <p className="text-center text-lg">{formatMoney(dueNow, currency)}</p>
-            <p className="text-center text-[13px] text-muted">{t("wallet.qrInstruction")}</p>
+            <p className="text-center text-[0.8125rem] text-muted">{t("wallet.qrInstruction")}</p>
             <div className="flex gap-tight">
               <Button shape="pill" variant="secondary" fullWidth onClick={() => setNc({ ...nc, state: "failed" })}>{t("wallet.itFailed")}</Button>
               <Button shape="pill" fullWidth onClick={async () => { setNc({ ...nc, state: "confirmed" }); await settleInline(t("wallet.qrConfirmedNote")); setNc(null); }}>

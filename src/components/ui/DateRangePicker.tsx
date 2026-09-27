@@ -220,7 +220,7 @@ export function DateRangePicker({
           less than seven 36px columns — they overlap and swallow each other's clicks. */}
       <div className="grid grid-cols-[repeat(7,2.5rem)] md:grid-cols-[repeat(7,2.25rem)]" aria-hidden>
         {WEEKDAYS.map((w, i) => (
-          <span key={`${w}-${i}`} className="type-label flex h-6 w-10 items-center justify-center text-[12px] text-muted md:w-9">{w}</span>
+          <span key={`${w}-${i}`} className="type-label flex h-6 w-10 items-center justify-center text-[0.75rem] text-muted md:w-9">{w}</span>
         ))}
       </div>
       <div role="grid" aria-label={MONTH_FMT.format(month)} onKeyDown={onGridKey} className="grid grid-cols-[repeat(7,2.5rem)] gap-y-0.5 md:grid-cols-[repeat(7,2.25rem)]">
@@ -249,7 +249,7 @@ export function DateRangePicker({
               onClick={() => pickDay(iso)}
               onMouseEnter={() => draft.to === null && setHover(iso)}
               className={cn(
-                "relative flex h-10 w-10 items-center justify-center text-[13px] tabular-nums transition-colors duration-quick md:h-9 md:w-9",
+                "relative flex h-10 w-10 items-center justify-center text-[0.8125rem] tabular-nums transition-colors duration-quick md:h-9 md:w-9",
                 // The band: a continuous wash across the span, rounded only
                 // where a week or the range starts and stops.
                 inRange && !isEnd && "bg-ember/10 text-fg",
@@ -333,7 +333,7 @@ export function DateRangePicker({
                       aria-pressed={on}
                       onClick={() => pickPreset(p)}
                       className={cn(
-                        "flex h-11 w-full items-center gap-tight whitespace-nowrap rounded-sm px-comfortable text-left text-[13px] transition-colors duration-quick md:h-9",
+                        "flex h-11 w-full items-center gap-tight whitespace-nowrap rounded-sm px-comfortable text-left text-[0.8125rem] transition-colors duration-quick md:h-9",
                         on ? "bg-inverse font-medium text-inverse-fg" : "border border-line hover:bg-muted-wash md:border-0",
                       )}
                     >
@@ -346,7 +346,7 @@ export function DateRangePicker({
               <li className="max-md:hidden">
                 <span
                   className={cn(
-                    "flex h-9 items-center gap-tight rounded-sm px-comfortable text-[13px]",
+                    "flex h-9 items-center gap-tight rounded-sm px-comfortable text-[0.8125rem]",
                     pressed === "custom" ? "bg-inverse font-medium text-inverse-fg" : "text-muted",
                   )}
                 >
@@ -358,14 +358,14 @@ export function DateRangePicker({
 
             <div className="flex flex-col gap-comfortable p-comfortable">
               {/* What is being drawn, end by end. */}
-              <div className="flex items-center gap-tight text-[13px]">
+              <div className="flex items-center gap-tight text-[0.8125rem]">
                 <span className="flex min-w-0 flex-1 flex-col whitespace-nowrap rounded-sm border border-line px-comfortable py-inline">
-                  <span className="text-[12px] text-muted">{labels.from}</span>
+                  <span className="text-[0.75rem] text-muted">{labels.from}</span>
                   <span className="font-medium tabular-nums">{parseIso(draft.from) ? DAY_YEAR_FMT.format(parseIso(draft.from)!) : "—"}</span>
                 </span>
                 <span aria-hidden className="text-muted">→</span>
                 <span className={cn("flex min-w-0 flex-1 flex-col whitespace-nowrap rounded-sm border px-comfortable py-inline", draft.to === null ? "border-ember" : "border-line")}>
-                  <span className="text-[12px] text-muted">{labels.to}</span>
+                  <span className="text-[0.75rem] text-muted">{labels.to}</span>
                   <span className={cn("tabular-nums", draft.to ? "font-medium" : "text-muted")}>
                     {draft.to && parseIso(draft.to) ? DAY_YEAR_FMT.format(parseIso(draft.to)!) : labels.pickEnd}
                   </span>
@@ -397,17 +397,17 @@ export function DateRangePicker({
           </div>
 
           <div className="flex items-center gap-tight border-t border-hairline px-comfortable py-tight pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:pb-tight">
-            <span className="min-w-0 flex-1 truncate text-[13px] text-muted">
+            <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-muted">
               {drawnDays ? labels.days(drawnDays) : labels.pickEnd}
             </span>
-            <button type="button" onClick={() => close()} className="h-11 rounded-sm px-comfortable text-[13px] font-medium text-muted hover:bg-muted-wash hover:text-fg md:h-9">
+            <button type="button" onClick={() => close()} className="h-11 rounded-sm px-comfortable text-[0.8125rem] font-medium text-muted hover:bg-muted-wash hover:text-fg md:h-9">
               {labels.cancel}
             </button>
             <button
               type="button"
               onClick={apply}
               disabled={!draft.to}
-              className="h-11 rounded-sm bg-ember-solid px-comfortable text-[13px] font-medium text-white transition-opacity duration-quick disabled:opacity-40 md:h-9"
+              className="h-11 rounded-sm bg-ember-solid px-comfortable text-[0.8125rem] font-medium text-white transition-opacity duration-quick disabled:opacity-40 md:h-9"
             >
               {labels.apply}
             </button>

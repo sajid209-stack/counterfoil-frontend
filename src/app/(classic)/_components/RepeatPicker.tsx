@@ -46,7 +46,7 @@ export function RepeatPicker({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <span className="type-label text-[12px] text-muted">{t("repeat.title")}</span>
+      <span className="type-label text-[0.75rem] text-muted">{t("repeat.title")}</span>
 
       <div className="flex flex-wrap items-center gap-tight">
         <div className="flex items-center gap-tight">
@@ -101,12 +101,12 @@ export function RepeatPicker({
                 <span className={cn("shrink-0", o.ok ? "text-success" : "text-muted")}>
                   {o.ok ? <Check size={14} strokeWidth={2} /> : <X size={14} strokeWidth={2} />}
                 </span>
-                <span className={cn("min-w-0 flex-1 truncate font-mono text-[13px]", !o.ok && "text-muted line-through")}>
+                <span className={cn("min-w-0 flex-1 truncate font-mono text-[0.8125rem]", !o.ok && "text-muted line-through")}>
                   {dayLabel(o.date)}
                   {time ? ` · ${time}` : ""}
                 </span>
                 {!o.ok && (
-                  <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">
+                  <span className="shrink-0 whitespace-nowrap text-[0.75rem] text-muted">
                     {t(`repeat.reason_${o.reason ?? "taken"}`)}
                   </span>
                 )}
@@ -114,7 +114,7 @@ export function RepeatPicker({
             ))}
           </ul>
 
-          <p className="text-[12px] text-muted">
+          <p className="text-[0.75rem] text-muted">
             {blocked > 0
               ? t("repeat.summarySkipping", {
                   count: bookable,

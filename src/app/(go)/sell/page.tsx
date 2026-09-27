@@ -442,7 +442,7 @@ export default function SellPage() {
               <button
                 type="button"
                 onClick={() => setBrowsing(true)}
-                className="flex h-14 w-full items-center justify-center gap-tight rounded-go border border-dashed border-strong text-[14px] font-medium text-muted active:bg-ember/10"
+                className="flex h-14 w-full items-center justify-center gap-tight rounded-go border border-dashed border-strong text-[0.875rem] font-medium text-muted active:bg-ember/10"
               >
                 <Plus size={18} strokeWidth={1.75} />
                 {t("block.addAnother")}
@@ -478,14 +478,14 @@ export default function SellPage() {
                       {lines.length ? <Check size={13} strokeWidth={2.5} /> : <ChevronDown size={13} strokeWidth={2.5} className={open ? "rotate-180" : ""} />}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block break-words text-[15px] font-semibold leading-snug">{product.name}</span>
-                      <span className="mt-inline block text-[13px] text-muted">
+                      <span className="block break-words text-[0.9375rem] font-semibold leading-snug">{product.name}</span>
+                      <span className="mt-inline block text-[0.8125rem] text-muted">
                         {lines.length ? summaryOf(lines) : missing ? t(`missing.${missing}` as never) : ""}
                       </span>
                     </span>
                   </button>
                   <span className="flex shrink-0 items-center gap-tight">
-                    <span className="whitespace-nowrap text-[15px] font-semibold tabular-nums">
+                    <span className="whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums">
                       {formatMoney(amount, currency)}
                     </span>
                     <button
@@ -534,10 +534,10 @@ export default function SellPage() {
                 <Check size={13} strokeWidth={2.5} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block break-words text-[15px] font-semibold leading-snug">{c.productName}</span>
-                <span className="mt-inline block text-[13px] text-muted">{t("custom.lineLabel")}</span>
+                <span className="block break-words text-[0.9375rem] font-semibold leading-snug">{c.productName}</span>
+                <span className="mt-inline block text-[0.8125rem] text-muted">{t("custom.lineLabel")}</span>
               </span>
-              <span className="whitespace-nowrap text-[15px] font-semibold tabular-nums">
+              <span className="whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums">
                 {formatMoney(itemTotal(c), currency)}
               </span>
               <button
@@ -557,7 +557,7 @@ export default function SellPage() {
             <button
               type="button"
               onClick={() => setBrowsing(true)}
-              className={`h-12 w-full items-center justify-center gap-tight rounded-go border border-dashed border-strong text-[14px] font-medium text-muted active:bg-ember/10 ${wide ? "flex" : "hidden"}`}
+              className={`h-12 w-full items-center justify-center gap-tight rounded-go border border-dashed border-strong text-[0.875rem] font-medium text-muted active:bg-ember/10 ${wide ? "flex" : "hidden"}`}
             >
               <Plus size={18} strokeWidth={1.75} />
               {t("block.addAnother")}
@@ -596,7 +596,7 @@ export default function SellPage() {
           {/* ── Pay ──────────────────────────────────────────────────────── */}
           {payable && (
             <div className="rounded-go border border-line bg-card p-comfortable">
-              <p className="mb-tight text-[14px] font-semibold">{t("pay.label")}</p>
+              <p className="mb-tight text-[0.875rem] font-semibold">{t("pay.label")}</p>
 
               <div
                 className="relative grid h-14 rounded-full bg-line/60 p-inline"
@@ -617,14 +617,14 @@ export default function SellPage() {
                     key={m}
                     type="button"
                     onClick={() => setMethod(m)}
-                    className={`relative z-10 min-w-0 truncate px-inline text-[13px] transition-colors duration-quick ${method === m ? "font-medium text-white" : "text-muted"}`}
+                    className={`relative z-10 min-w-0 truncate px-inline text-[0.8125rem] transition-colors duration-quick ${method === m ? "font-medium text-white" : "text-muted"}`}
                   >
                     {enumL.method(m)}
                   </button>
                 ))}
               </div>
 
-              <div className="mt-section flex flex-col gap-inline text-[13px]">
+              <div className="mt-section flex flex-col gap-inline text-[0.8125rem]">
                 <div className="flex justify-between text-muted">
                   <span>{t("pay.subtotal")}</span>
                   <span className="tabular-nums">{formatMoney(totals.subtotal, currency)}</span>
@@ -665,7 +665,7 @@ export default function SellPage() {
 
               {/* The one figure the cashier reads out and takes. */}
               <div className="mt-tight flex items-baseline justify-between gap-comfortable rounded-go bg-ember/10 px-comfortable py-tight">
-                <span className="min-w-0 text-[14px] font-semibold text-brand-foreground">
+                <span className="min-w-0 text-[0.875rem] font-semibold text-brand-foreground">
                   {balance > 0 ? t("pay.collectNow") : t("pay.collect")}
                 </span>
                 <span className="shrink-0 whitespace-nowrap text-2xl font-semibold tabular-nums text-brand-foreground">
@@ -676,11 +676,11 @@ export default function SellPage() {
               {method === "cash" && (
                 <div className="mt-section">
                   <div className="flex items-baseline justify-between">
-                    <span className="text-[13px] text-muted">{t("pay.received")}</span>
-                    <span className="text-[17px] font-semibold tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
+                    <span className="text-[0.8125rem] text-muted">{t("pay.received")}</span>
+                    <span className="text-[1.0625rem] font-semibold tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
                   </div>
                   <div className={`mt-tight flex items-baseline justify-between ${cashReady ? "text-success" : "text-muted"}`}>
-                    <span className="text-[14px] font-medium">{t("pay.change")}</span>
+                    <span className="text-[0.875rem] font-medium">{t("pay.change")}</span>
                     <span className="text-3xl font-semibold tabular-nums">
                       {cashReady ? formatMoney(Math.max(0, changeMinor), currency) : "—"}
                     </span>
@@ -721,12 +721,12 @@ export default function SellPage() {
                     value={walletRef}
                     onChange={(e) => setWalletRef(e.target.value)}
                   />
-                  <p className="mt-tight text-[13px] text-muted">{t("pay.txnHint")}</p>
+                  <p className="mt-tight text-[0.8125rem] text-muted">{t("pay.txnHint")}</p>
                 </div>
               )}
 
               {method === "bangla_qr" && (
-                <p className="mt-section rounded-go border border-line bg-subtle/40 p-comfortable text-[13px] text-muted">
+                <p className="mt-section rounded-go border border-line bg-subtle/40 p-comfortable text-[0.8125rem] text-muted">
                   {t("pay.qrHint")}
                 </p>
               )}
@@ -753,10 +753,10 @@ export default function SellPage() {
                 total stays in the pay panel, where it is context rather than
                 a competing answer. */}
             <span className="min-w-0 flex-1">
-              <span className="block text-[12px] text-inverse-fg/60">
+              <span className="block text-[0.75rem] text-inverse-fg/60">
                 {balance > 0 ? t("footer.toCollect") : t("footer.total")}
               </span>
-              <span className="block truncate text-[17px] font-semibold tabular-nums text-inverse-fg">
+              <span className="block truncate text-[1.0625rem] font-semibold tabular-nums text-inverse-fg">
                 {formatMoney(dueNow, currency)}
               </span>
             </span>

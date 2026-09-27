@@ -47,8 +47,8 @@ function SaleRow({
         className="flex min-h-12 w-full items-center gap-tight py-tight text-left"
       >
         <Icon size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
-        <span className="min-w-0 flex-1 truncate text-[14px]">{label}</span>
-        <span className="min-w-0 shrink-0 truncate text-[13px] text-muted">{value}</span>
+        <span className="min-w-0 flex-1 truncate text-[0.875rem]">{label}</span>
+        <span className="min-w-0 shrink-0 truncate text-[0.8125rem] text-muted">{value}</span>
         <ChevronRight
           size={15}
           strokeWidth={1.5}
@@ -153,7 +153,7 @@ export function SaleRows({
         {/* The cap is named, and so is the way past it. A control that simply
             refuses is not an answer. */}
         {overLimit && (
-          <p className="mb-tight rounded-go border border-line border-l-[3px] border-l-ember bg-card p-tight text-[13px]">
+          <p className="mb-tight rounded-go border border-line border-l-[3px] border-l-ember bg-card p-tight text-[0.8125rem]">
             {t("rows.overLimit", { limit: capPct })}
           </p>
         )}
@@ -212,7 +212,7 @@ export function SaleRows({
                   <button
                     type="button"
                     onClick={() => onAdvance(null)}
-                    className={`h-12 shrink-0 rounded-full border px-comfortable text-[13px] ${
+                    className={`h-12 shrink-0 rounded-full border px-comfortable text-[0.8125rem] ${
                       advance == null ? "border-ember bg-ember/10 text-brand-foreground" : "border-line"
                     }`}
                   >
@@ -225,7 +225,7 @@ export function SaleRows({
                       key={i}
                       type="button"
                       onClick={() => onAdvance(amt >= total ? null : amt)}
-                      className="h-12 flex-1 rounded-full border border-line bg-card px-tight text-[13px] active:bg-ember/10"
+                      className="h-12 flex-1 rounded-full border border-line bg-card px-tight text-[0.8125rem] active:bg-ember/10"
                     >
                       {i === 0
                         ? t("rows.minimum", { amount: formatMoney(amt, currency) })
@@ -236,7 +236,7 @@ export function SaleRows({
                   ))}
                 </div>
                 {advance != null && advance < advanceMin && (
-                  <p className="text-[13px] text-danger">
+                  <p className="text-[0.8125rem] text-danger">
                     {t("rows.belowMin", { amount: formatMoney(advanceMin, currency) })}
                   </p>
                 )}
@@ -247,7 +247,7 @@ export function SaleRows({
               <button
                 type="button"
                 onClick={() => onPayInFull(!payInFull)}
-                className="flex min-h-12 w-full items-center justify-between gap-tight text-[13px]"
+                className="flex min-h-12 w-full items-center justify-between gap-tight text-[0.8125rem]"
               >
                 <span className="min-w-0 text-left text-muted">
                   {t("rows.depositExplain", { later: formatMoney(depositBalance, currency) })}

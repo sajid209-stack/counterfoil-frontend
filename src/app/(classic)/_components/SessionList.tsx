@@ -112,14 +112,14 @@ export function SessionList({
                   {s.time}
                 </span>
                 {s.meta && (
-                  <span className="min-w-0 flex-1 truncate text-[12px] text-muted">{s.meta}</span>
+                  <span className="min-w-0 flex-1 truncate text-[0.75rem] text-muted">{s.meta}</span>
                 )}
                 {/* The state of the session, in the corner the eye lands on:
                     places left is the number being decided on. The price sits
                     on the row below, beside the fill. */}
                 <span
                   className={cn(
-                    "ml-auto shrink-0 whitespace-nowrap text-[13px] font-medium",
+                    "ml-auto shrink-0 whitespace-nowrap text-[0.8125rem] font-medium",
                     closed
                       ? "text-muted"
                       : pressure === "gone"
@@ -158,12 +158,12 @@ export function SessionList({
                     style={{ width: `${Math.min(100, pctSold)}%` }}
                   />
                 </span>
-                <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">
+                <span className="shrink-0 whitespace-nowrap text-[0.75rem] text-muted">
                   {sold}/{s.capacity}
                 </span>
                 <span
                   className={cn(
-                    "ml-auto shrink-0 whitespace-nowrap text-[12px]",
+                    "ml-auto shrink-0 whitespace-nowrap text-[0.75rem]",
                     s.price === basePrice ? "text-muted" : "text-brand-foreground",
                   )}
                 >
@@ -172,7 +172,7 @@ export function SessionList({
               </span>
 
               {full && !closed && s.waitlist && (
-                <span className="text-[12px] font-medium text-brand-foreground">{t("sheet.joinWaitlist")} →</span>
+                <span className="text-[0.75rem] font-medium text-brand-foreground">{t("sheet.joinWaitlist")} →</span>
               )}
             </span>
           </button>
@@ -181,7 +181,7 @@ export function SessionList({
 
       {/* What the figure on each row is the price OF. */}
       {basePrice > 0 && (
-        <p className="text-[12px] text-muted">
+        <p className="text-[0.75rem] text-muted">
           {t("sheet.pricePerTicket", { amount: formatMoney(basePrice, currency) })}
         </p>
       )}

@@ -117,14 +117,14 @@ function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
         item.pressed && "bg-subtle",
       )}
     >
-      <span className="col-start-1 min-w-0 truncate text-[12px] font-medium text-muted">{item.label}</span>
+      <span className="col-start-1 min-w-0 truncate text-[0.75rem] font-medium text-muted">{item.label}</span>
       {/* On a phone the figure sits in the second column across both rows, so
           a context line tucks under the label rather than under the number. */}
       <span className="col-start-2 row-start-1 row-end-3 flex flex-wrap items-baseline justify-end gap-x-tight self-center sm:mt-inline sm:justify-start">
         {loading ? (
           <span className="my-1 block h-6 w-20 animate-pulse rounded-xs bg-line" />
         ) : (
-          <span className={cn("type-figure block whitespace-nowrap text-[26px] font-semibold leading-tight", item.tone === "warning" && "text-warning")}>
+          <span className={cn("type-figure block whitespace-nowrap text-[1.625rem] font-semibold leading-tight", item.tone === "warning" && "text-warning")}>
             {item.value}
           </span>
         )}
@@ -133,7 +133,7 @@ function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
       {/* Only where there is something to say — an empty line under three of
           four figures is the white space this band exists to remove. */}
       {item.context && !loading && (
-        <span className={cn("col-start-1 mt-inline block truncate text-[12px]", item.contextTone ?? "text-muted")}>{item.context}</span>
+        <span className={cn("col-start-1 mt-inline block truncate text-[0.75rem]", item.contextTone ?? "text-muted")}>{item.context}</span>
       )}
     </Tag>
   );
@@ -145,7 +145,7 @@ function Tile({ item, loading, row = false }: { item: StatItem; loading: boolean
   const figure = loading ? (
     <span className={cn("block animate-pulse rounded-xs bg-line", row ? "h-6 w-28" : "h-7 w-24")} />
   ) : (
-    <span className={cn("type-figure block whitespace-nowrap font-semibold leading-tight", row ? "text-[26px]" : "text-[28px]", item.tone === "warning" && "text-warning")}>
+    <span className={cn("type-figure block whitespace-nowrap font-semibold leading-tight", row ? "text-[1.625rem]" : "text-[1.75rem]", item.tone === "warning" && "text-warning")}>
       {item.value}
     </span>
   );
@@ -177,12 +177,12 @@ function Tile({ item, loading, row = false }: { item: StatItem; loading: boolean
       {row ? (
         <span className="min-w-0 flex-1">
           <span className="flex items-center justify-between gap-tight">
-            <span className="min-w-0 truncate text-[12px] font-medium text-muted">{item.label}</span>
+            <span className="min-w-0 truncate text-[0.75rem] font-medium text-muted">{item.label}</span>
             {item.delta}
           </span>
           <span className="mt-inline flex flex-wrap items-baseline gap-x-comfortable gap-y-inline">
             {figure}
-            {item.context && <span className={cn("text-[12px]", item.contextTone ?? "text-muted")}>{item.context}</span>}
+            {item.context && <span className={cn("text-[0.75rem]", item.contextTone ?? "text-muted")}>{item.context}</span>}
           </span>
         </span>
       ) : (
@@ -191,11 +191,11 @@ function Tile({ item, loading, row = false }: { item: StatItem; loading: boolean
               delta, so a tile with a comparison and one without are the same
               size — four tiles that differ by 4px read as a mistake. */}
           <span className="flex h-[22px] items-center gap-tight">
-            <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-muted">{item.label}</span>
+            <span className="min-w-0 flex-1 truncate text-[0.75rem] font-medium text-muted">{item.label}</span>
             {item.delta}
           </span>
           <span className="mt-tight block">{figure}</span>
-          <span className={cn("mt-inline block text-[12px]", item.contextTone ?? "text-muted")}>{item.context ?? " "}</span>
+          <span className={cn("mt-inline block text-[0.75rem]", item.contextTone ?? "text-muted")}>{item.context ?? " "}</span>
         </>
       )}
     </Tag>
@@ -219,7 +219,7 @@ export function DeltaPill({ now, then, goodWhen = "up", since }: { now: number; 
   const up = pct > 0;
   const good = goodWhen === "up" ? up : !up;
   return (
-    <span title={since} className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-[12px]", good ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+    <span title={since} className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-[0.75rem]", good ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
       {up ? "↗" : "↘"} {Math.abs(pct)}%
       {since && <span className="sr-only">{` ${since}`}</span>}
     </span>

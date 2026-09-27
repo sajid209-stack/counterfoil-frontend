@@ -69,7 +69,7 @@ export function PageShell({
           The description went the same way, and stays for a screen reader:
           orientation prose is read once and then scrolls past forever, but it
           is what tells someone arriving by keyboard what this page is for. */}
-      <h1 className="type-h1 break-words text-[22px] sm:text-[28px]">{title}</h1>
+      <h1 className="type-h1 break-words text-[1.375rem] sm:text-[1.75rem]">{title}</h1>
       {description && <p className="sr-only">{description}</p>}
     </div>
   );

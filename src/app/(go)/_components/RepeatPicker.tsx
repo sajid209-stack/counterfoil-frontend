@@ -46,7 +46,7 @@ export function RepeatPicker({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <span className="text-[14px] font-semibold text-fg">{t("repeat.title")}</span>
+      <span className="text-[0.875rem] font-semibold text-fg">{t("repeat.title")}</span>
 
       {/* One row at rest, one control per row when engaged.
        *
@@ -87,7 +87,7 @@ export function RepeatPicker({
        *  rule the duration and percent controls already follow. */}
       {count > 1 && (
         <div className="flex items-center gap-tight">
-          <span className="flex-1 text-[14px] font-semibold text-fg">{t("repeat.fine")}</span>
+          <span className="flex-1 text-[0.875rem] font-semibold text-fg">{t("repeat.fine")}</span>
           <button
             type="button"
             aria-label={t("repeat.fewer")}
@@ -124,12 +124,12 @@ export function RepeatPicker({
                 <span className={cn("shrink-0", o.ok ? "text-success" : "text-muted")}>
                   {o.ok ? <Check size={14} strokeWidth={2} /> : <X size={14} strokeWidth={2} />}
                 </span>
-                <span className={cn("min-w-0 flex-1 truncate text-[13px] tabular-nums", !o.ok && "text-muted line-through")}>
+                <span className={cn("min-w-0 flex-1 truncate text-[0.8125rem] tabular-nums", !o.ok && "text-muted line-through")}>
                   {dayLabel(o.date)}
                   {time ? ` · ${time}` : ""}
                 </span>
                 {!o.ok && (
-                  <span className="shrink-0 whitespace-nowrap text-[13px] text-muted">
+                  <span className="shrink-0 whitespace-nowrap text-[0.8125rem] text-muted">
                     {t(`repeat.reason_${o.reason ?? "taken"}`)}
                   </span>
                 )}
@@ -137,7 +137,7 @@ export function RepeatPicker({
             ))}
           </ul>
 
-          <p className="text-[13px] text-muted">
+          <p className="text-[0.8125rem] text-muted">
             {blocked > 0
               ? t("repeat.summarySkipping", {
                   count: bookable,

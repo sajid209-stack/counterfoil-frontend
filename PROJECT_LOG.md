@@ -12035,3 +12035,196 @@ exist until the popover has mounted.
   (bookings, venues, customers, categories, staff).
 - The Go tills' own sheets still use their own chips and steppers for selection
   — this change is about dropdowns, and a sheet is not one.
+
+
+## The POS cluster — five of the owner's twenty points (2026-09-27)
+
+Items 1, 16, 17, 18 and 19, taken together because they are all the till.
+Measured first, because a till's problems are quantities: every number below
+was taken on a 390 × 844 phone before anything was touched.
+
+### 17 — "POS Schedule below items got faded"
+
+A real defect, and on **every Go screen**, not only the Schedule.
+
+The floating tab bar's top edge sits **74px** from the bottom of the screen.
+The ground scrim under it — there so a list dissolves into the page rather than
+being sliced by a floating bar — was a flat **200px tall with its opaque run
+ending at 140**. So it **erased 66px of content that was nowhere near the bar**
+and washed out 60px more above that: 126px, **15% of the screen**.
+
+The stops are written in the bar's own units now, and `BAR_CLEAR` states that
+geometry once for everything that has to clear it. Measured after: the veil is
+**102px**, opaque exactly to the bar's top edge, reaching **28px** above it.
+
+### 19 — the calendar and the filter share a line
+
+The date group needs 254px of the 358 available; the Filters control was a
+**full-width 358px row of its own**, on a screen whose first bookable row
+already started at y=374. It is a 44px glyph on the date's line now, with what
+is filtered in its accessible name and a dot for "something is set" — the trade
+the OS calendar already made on a phone. The day starts at **y=330**.
+
+### 16 — the change figure was clipping, not merely large
+
+Measured rather than taken on faith: a change of **৳99,424.00 rendered 270px
+wide** at `text-5xl` into the **243px** its row had left once the label took its
+share. **Spare: −19px.** It clipped, silently, on the one figure a cashier reads
+out loud.
+
+It scales with the screen now (`clamp(28px, 9.5vw, 40px)`) and the label never
+shrinks: **37px, 208px wide, 43px spare**. It is still by far the largest thing
+on the sheet, which is the rule — change due is the one figure there that is an
+action.
+
+### 1a — the line discount, and the frame it sat in
+
+A cart line was **224px**, a quarter of the phone, for one ticket. The stepper
+had a row and **Discount and Remove had another, as 58px tiles** stacking glyph
+over label. Opening the discount added **138px** — the control alone was 130px,
+15% of the screen.
+
+- The controls share **one 44px row**. The **names stay**: "a bare % beside a
+  bin is guessable, not obvious" is a recorded decision about a till worked by
+  rotating staff, so the label moved beside its glyph rather than going away.
+  The stepper and Extend never collide — `simpleQty` needs a line with nothing
+  reserved and Extend needs a booking with a slot.
+- **`compact` became genuinely compact** in `DiscountInput`, which serves all
+  three tills because all three of its `compact` callers are the line-level
+  discount. The label goes (the button that opens it is named "Line discount"),
+  the resolved amount rides on the field row where the space was already empty,
+  and the chips lose 4px. **The % / ৳ pair stays** — that is a money-safety
+  decision: a cashier typing 200 must never wonder whether the till read 200%.
+- The panel lost its own border and background: it is inside the line's card,
+  and a box in a box is what the padding rhythm settled once already.
+
+Measured after: the line is **146px** closed and **241px** with its discount
+open, against 224 and 362.
+
+### 18 — and the defect it uncovered
+
+There was no cart affordance on `/schedule`, `/scan` or `/checkin`. Building
+the button the owner asked for turned up why:
+
+**A sale in progress was silently destroyed by tapping any other tab.**
+`pos/layout.tsx` renders `PosScreen` only on `/pos` and `/pos/cart`, so
+Schedule unmounts it. Driven: add a ticket, tap Schedule, tap Sell — the till
+reads **"0 items ৳0.00"**. Nothing says so. At a counter that is the worst
+class of bug there is: the guest is standing there, the sale is gone, and the
+only way to notice is to read the total.
+
+So the prerequisite came first. `pos/_lib/liveSale.ts` holds the sale in
+sessionStorage — the same trick `park` has always used, applied to the sale
+nobody parked — restored through **lazy initialisers** rather than an effect,
+because restoring is what that state *is* on mount. One rule matters more than
+the rest and is enforced at every exit: **a completed sale must never come
+back**, so both checkout paths clear it before they navigate, as do park and
+clear-all.
+
+Only then the button: round, 56px, bottom-right, clearing the bar from the same
+`BAR_CLEAR`, carrying the line count. It appears **only when there is a sale**
+(a cart button over an empty cart is furniture) and **not on the till**, where
+the summary bar already says the same thing in more words.
+
+### 1b — larger type for the till, and the obstacle that had to go first
+
+The September preferences work left text size out and said why: *"sizes are set
+in pixels … either switch would change some screens and not others."* That was
+correct — **414 pixel font sizes in the till alone** — and it is the reason a
+setting could not simply be added.
+
+So the obstacle went. **553 `text-[Npx]` utilities became `text-[Nrem]`** across
+`(go)`, `(classic)` and `components/ui`. 16 is a power of two, so every size in
+use converts exactly, and the conversion is a **no-op at the default** — proven
+against production rather than asserted: `/pos`, `/schedule` and `/checkin` draw
+**the same type scale as the deployed build, in whole pixels**.
+
+Then the setting is the browser's own mechanism: the **root font size**, 16 /
+18 / 20px, chosen in the More sheet beside the appearance picker because it is
+the same kind of per-device choice — a counter is one browser and whoever is
+standing at it should be able to read it. `PREFS_BOOT` applies it before the
+first paint, from the same list of paths the shell uses, so a cold load does
+not flick into size.
+
+**It is the TILL's text size and says so.** Only the till has been converted;
+the admin app still carries 840 pixel sizes, and scaling the root globally
+would move its `rem` utilities and leave those behind — the exact fault the
+earlier decision named. `GoShell` applies it on mount and **puts the document
+back on unmount**, so a cashier who set 20px does not find the reports at 20px.
+
+### Verified
+
+- **POS cluster, 20 checks, all passing**: the veil is 102px and reaches 28px
+  above the bar with its opaque run stopping at the bar's edge; the filter is a
+  44px glyph on the date's line and the day starts 44px higher; a sale survives
+  a trip to Schedule and comes back; the cart button is round, 56px, clears the
+  bar, says what it holds, and is absent from the till; a line is 146px and 241
+  with its discount open, with its % / ৳ pair, field and four chips intact; a
+  ৳99,424.00 change fits beside its label and is still the biggest figure there.
+- **Text size, 12 checks**: the root moves to 20px, the till's own type and the
+  tab labels move with it, it survives a reload with no flick, **the admin app
+  is left at 16px**, the till is large again on return, nothing is clipped or
+  scrolling sideways at the largest size, and it can be set back.
+- **The conversion, 6 checks**: the same type scale as production across three
+  routes, every size a whole pixel.
+- **The cart button, 16 checks** across Schedule, Scan and Check-In.
+- **The shelf still sells, 23 checks** (`shop3`), which is the harness that
+  guards the cart line item 1a restructured: the Shop chip, a tap landing a
+  line at its shelf price, mixed rates summed, **the stepper still stopping at
+  the seven on the shelf**, the sale completing with no ticket minted, and the
+  shelf lighter when the wall comes back.
+- **The cart button's absence, 10 checks**: with a sale held, `/schedule` and
+  `/scan` carry the button and **`/sell` and `/classic` do not**, with the sale
+  still held in each case — so it is the predicate refusing, not a sale lost on
+  the way there.
+- `tsc --noEmit` and `npm run build` clean. `eslint` across `(go)`, `(classic)`,
+  `components/ui` and `lib/prefs*`: **6 errors and 4 warnings, every one of them
+  the documented pre-existing set** — PosScreen's two, the four in
+  `components/ui`, and `(go)/login`'s unused import.
+- i18n: five keys authored in en and bn.
+
+**One error of mine worth recording**: the restored sale was first held in a
+`useRef`, which put **30 `react-hooks/refs` errors** on PosScreen — the React
+Compiler forbids reading a ref during render, and every state initialiser read
+it. A lazy `useState` runs the read once, on mount, which is when restoring
+means anything.
+
+
+**Two harness drafts retired rather than repaired.** A regression run reported
+`shop-e2e` at 12/14, and both failures were the harness rather than the till.
+`shop-e2e.mjs` and `shop2.mjs` are earlier drafts of what became `shop3.mjs`,
+and each still carried two checks that cannot pass any more:
+
+- *"the sold-out programme is badged"* — the sold-out item is the museum's
+  Exhibition programme, and since the till stopped filing its sales at
+  `locations[0]` it reads **its own counter's venue**, which is the fort. The
+  fort's shelf has nothing sold out, so the check was asserting a museum item
+  on a fort till. `shop3` dropped it and proves the badge by **selling** the
+  seven totes down instead.
+- *"the stepper stops at the 7 on the shelf"* — `getByRole("button", { name:
+  /more|\+/i })` matches the **Go tab bar's More tab** before any stepper, so
+  nine clicks opened and closed a sheet over the whole till. `shop3` already
+  carries the comment recording that trap and locates the stepper by
+  `button[aria-label="More"]`.
+
+Both drafts are deleted. A stale harness that reports a phantom regression
+costs more than no harness at all: the next session spends its first hour
+diagnosing a till that is working.
+
+### Open
+
+- **The admin app is not converted**, so the text size is the till's. Doing the
+  same sweep across `(os)`'s 840 sizes would make it an app-wide setting and
+  make the app honour the browser's own font-size preference, which is a WCAG
+  1.4.4 matter it currently fails everywhere. That is its own change.
+- **Spacing does not scale with the text.** Tailwind's `h-*` are rem so controls
+  grow, but the app's spacing tokens are px, so padding does not. It errs
+  towards bigger targets and reads correctly at all three sizes, but a full
+  scale would convert the spacing tokens too.
+- **`park` is lossy and always was**: it stores `discountPct` but not the mode,
+  the amount, the reason, the advance, the coupon or the points. The live-sale
+  record carries all of them, so resuming a parked cart is now the narrower of
+  the two paths. Worth reconciling.
+- The deck, the print pages and the event templates are deliberately excluded
+  from the conversion: a slide is laid out in real pixels and a printed ticket
+  is a physical object.

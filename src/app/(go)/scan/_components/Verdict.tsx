@@ -188,8 +188,8 @@ export function Verdict({
         <p className="type-display text-5xl tabular-nums">{labels.amount}</p>
         {labels.paidOf && <p className="text-base tabular-nums text-fg/75">{labels.paidOf}</p>}
         <p className="text-lg text-fg">{outcome.title}</p>
-        <p className="text-[13px] text-fg/75">{labels.code}</p>
-        {preview && <p className="text-[13px] text-fg/75">{labels.previewNote}</p>}
+        <p className="text-[0.8125rem] text-fg/75">{labels.code}</p>
+        {preview && <p className="text-[0.8125rem] text-fg/75">{labels.previewNote}</p>}
 
         <div className="flex w-full max-w-md shrink-0 flex-col gap-tight">
           <div className={cn("grid gap-tight", methods.length > 2 ? "grid-cols-2" : "grid-cols-1")}>
@@ -211,7 +211,7 @@ export function Verdict({
           <button type="button" disabled={busy} onClick={onSettle} className="h-16 rounded-full bg-ink text-lg font-medium text-paper disabled:opacity-50 active:opacity-90">
             {labels.takeAndAdmit}
           </button>
-          <button type="button" onClick={onClose} className="h-12 rounded-full text-[13px] text-fg/75 underline-offset-4 hover:underline">
+          <button type="button" onClick={onClose} className="h-12 rounded-full text-[0.8125rem] text-fg/75 underline-offset-4 hover:underline">
             {labels.dismiss}
           </button>
         </div>
@@ -235,8 +235,8 @@ export function Verdict({
           ))}
         </span>
         <p className="text-lg text-paper/90">{labels.groupSummary}</p>
-        <p className="text-[13px] text-paper/70">{labels.code}</p>
-        {preview && <p className="text-[13px] text-paper/70">{labels.previewNote}</p>}
+        <p className="text-[0.8125rem] text-paper/70">{labels.code}</p>
+        {preview && <p className="text-[0.8125rem] text-paper/70">{labels.previewNote}</p>}
         {remaining > 0 ? (
           <div className="flex shrink-0 flex-wrap items-center justify-center gap-tight">
             <button type="button" disabled={busy} onClick={() => onAdmit(1)} className="h-14 rounded-full border-2 border-paper px-major text-lg font-medium active:bg-paper/20">
@@ -249,7 +249,7 @@ export function Verdict({
         ) : (
           <p className="text-lg">{labels.everyoneIn}</p>
         )}
-        <button type="button" onClick={onClose} className="mt-tight h-12 shrink-0 rounded-full px-major text-[13px] text-paper/70 underline-offset-4 hover:underline">
+        <button type="button" onClick={onClose} className="mt-tight h-12 shrink-0 rounded-full px-major text-[0.8125rem] text-paper/70 underline-offset-4 hover:underline">
           {labels.dismiss}
         </button>
       </div>
@@ -300,7 +300,7 @@ export function Verdict({
 
       <span className="text-sm opacity-75">{labels.code}</span>
       {!admit && <span className="mt-tight max-w-sm text-base opacity-90">{labels.advice}</span>}
-      <span className="mt-tight text-[13px] opacity-70">{preview ? labels.previewNote : labels.dismiss}</span>
+      <span className="mt-tight text-[0.8125rem] opacity-70">{preview ? labels.previewNote : labels.dismiss}</span>
 
       {admit && !preview && (
         <span aria-hidden className="absolute inset-x-0 bottom-0 h-1 bg-paper/20">

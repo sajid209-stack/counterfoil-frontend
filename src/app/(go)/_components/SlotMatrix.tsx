@@ -77,7 +77,7 @@ export function SlotMatrix({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <span className="text-[14px] font-semibold text-fg">{resourceNoun}</span>
+      <span className="text-[0.875rem] font-semibold text-fg">{resourceNoun}</span>
       <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {rows.map((row) => {
           const on = row.id === active.id;
@@ -95,7 +95,7 @@ export function SlotMatrix({
                 }
               }}
               className={cn(
-                "flex min-h-12 shrink-0 flex-col items-center justify-center rounded-full border px-comfortable py-tight text-[13px] transition-colors duration-quick",
+                "flex min-h-12 shrink-0 flex-col items-center justify-center rounded-full border px-comfortable py-tight text-[0.8125rem] transition-colors duration-quick",
                 row.outOfService
                   ? "border-line bg-subtle text-muted line-through"
                   : on
@@ -105,7 +105,7 @@ export function SlotMatrix({
             >
               <span className="whitespace-nowrap">{row.name}</span>
               {!row.outOfService && (
-                <span className={cn("whitespace-nowrap text-[13px]", on ? "opacity-80" : "text-muted")}>
+                <span className={cn("whitespace-nowrap text-[0.8125rem]", on ? "opacity-80" : "text-muted")}>
                   {free > 0 ? t("sheet.slotsFree", { count: free }) : t("sheet.fullyBooked")}
                 </span>
               )}
@@ -114,7 +114,7 @@ export function SlotMatrix({
         })}
       </div>
 
-      <span className="mt-tight text-[14px] font-semibold text-fg">{t("sheet.time")}</span>
+      <span className="mt-tight text-[0.875rem] font-semibold text-fg">{t("sheet.time")}</span>
       <div className="grid grid-cols-4 gap-tight">
         {active.cells.map((cell) => {
           const selected = active.id === selectedResourceId && selectedTime === cell.time;
@@ -130,7 +130,7 @@ export function SlotMatrix({
                       : t("sheet.slotTaken", { time: cell.time, name: active.name }),
                   )
                 }
-                className="flex min-h-12 items-center justify-center rounded-go-sm border border-line bg-subtle px-1 py-tight text-[13px] text-muted line-through"
+                className="flex min-h-12 items-center justify-center rounded-go-sm border border-line bg-subtle px-1 py-tight text-[0.8125rem] text-muted line-through"
               >
                 {cell.time}
               </button>
@@ -142,7 +142,7 @@ export function SlotMatrix({
               type="button"
               onClick={() => onSelect(active.id, cell.time)}
               className={cn(
-                "flex min-h-12 flex-col items-center justify-center rounded-go-sm border px-1 py-tight text-[13px] transition-colors duration-quick",
+                "flex min-h-12 flex-col items-center justify-center rounded-go-sm border px-1 py-tight text-[0.8125rem] transition-colors duration-quick",
                 // The time is the last thing decided and the thing the CTA
                 // then names, so it is the one selection in this pattern drawn
                 // as a fill rather than a tint.
@@ -154,7 +154,7 @@ export function SlotMatrix({
               <span>{cell.time}</span>
               <span
                 className={cn(
-                  "whitespace-nowrap text-[13px]",
+                  "whitespace-nowrap text-[0.8125rem]",
                   selected ? "opacity-90" : cell.price === base ? "text-muted" : "text-brand-foreground",
                 )}
               >
@@ -166,7 +166,7 @@ export function SlotMatrix({
       </div>
 
       {/* What the figure on each tile is the price OF. */}
-      <p className="text-[13px] text-muted">
+      <p className="text-[0.8125rem] text-muted">
         {t("sheet.ratePer", { noun: resourceNoun.toLowerCase() })}
       </p>
     </div>

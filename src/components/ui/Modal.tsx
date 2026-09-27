@@ -124,7 +124,7 @@ export function Modal({
             title has to stop 60px in or it runs under the ×. */}
         {title && <h2 className="type-h2 pr-11 text-lg">{title}</h2>}
         {description && (
-          <p className="type-body mt-inline text-[13px] text-muted">
+          <p className="type-body mt-inline text-[0.8125rem] text-muted">
             {description}
           </p>
         )}

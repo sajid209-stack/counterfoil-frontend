@@ -77,8 +77,10 @@ export function DiscountInput({
   const h = compact ? "h-10" : "h-12";
 
   return (
-    <div className={cn("flex flex-col gap-tight", className)}>
-      {label && <span className="type-label text-[12px] text-muted">{label}</span>}
+    <div className={cn("flex flex-col", compact ? "gap-inline" : "gap-tight", className)}>
+      {/* Compact opens under a button that already names it, so a label here
+          would say the same thing twice in a cart line that cannot spare it. */}
+      {label && !compact && <span className="type-label text-[0.75rem] text-muted">{label}</span>}
 
       <div className="flex items-center gap-tight">
         <div className={cn("flex shrink-0 overflow-hidden border border-line", shape === "go" ? "rounded-full" : "rounded-sm")}>
@@ -101,8 +103,17 @@ export function DiscountInput({
           onChange={(e) => setDraft({ of: value, text: e.target.value })}
           onBlur={() => commit(text)}
           onKeyDown={(e) => { if (e.key === "Enter") { commit(text); (e.target as HTMLInputElement).blur(); } }}
+          aria-label={label}
           className={cn(h, "min-w-0 flex-1 border bg-card px-comfortable text-right font-mono text-sm outline-none", shape === "go" ? "rounded-full" : "rounded-sm", error ? "border-danger" : "border-line focus:border-ember")}
         />
+        {/* The same discount said the other way round. On a cart line it rides
+            here, where the row had room, rather than taking a line of its own
+            under the chips. */}
+        {compact && off > 0 && !error && (
+          <span className="shrink-0 whitespace-nowrap text-[0.8125rem] text-muted">
+            {mode === "percent" ? formatMoney(off, currency) : `${asPct.toFixed(asPct % 1 === 0 ? 0 : 1)}%`}
+          </span>
+        )}
       </div>
 
       {mode === "percent" && (
@@ -113,8 +124,8 @@ export function DiscountInput({
               type="button"
               onClick={() => { setDraft(null); setError(null); onChange(c); }}
               className={cn(
-                compact ? "h-9" : "h-11",
-                "min-w-12 flex-1 border px-tight text-[13px] font-medium",
+                compact ? "h-8" : "h-11",
+                "min-w-12 flex-1 border px-tight text-[0.8125rem] font-medium",
                 shape === "go" ? "rounded-full" : "rounded-sm",
                 value === c ? "border-ember bg-ember/10 text-brand-foreground" : "border-line bg-card active:bg-ember/10",
               )}
@@ -126,9 +137,9 @@ export function DiscountInput({
       )}
 
       {error ? (
-        <p className="text-[12px] text-danger">{error}</p>
-      ) : off > 0 ? (
-        <p className="text-[12px] text-muted">
+        <p className="text-[0.75rem] text-danger">{error}</p>
+      ) : off > 0 && !compact ? (
+        <p className="text-[0.75rem] text-muted">
           {mode === "percent"
             ? `= ${formatMoney(off, currency)} off`
             : `= ${asPct.toFixed(asPct % 1 === 0 ? 0 : 1)}% off`}

@@ -107,7 +107,7 @@ export function DataTable<T>({
               <div className="h-3 w-1/2 rounded-xs bg-line" />
             </div>
           ))}
-        {showEmpty && (emptyState ?? <p className="py-section text-center text-[13px] text-muted">No results.</p>)}
+        {showEmpty && (emptyState ?? <p className="py-section text-center text-[0.8125rem] text-muted">No results.</p>)}
         {!loading &&
           rows.map((row) => (
             <div
@@ -138,8 +138,8 @@ export function DataTable<T>({
                   // it silently: the value is on screen but unreadable, and
                   // nothing says so.
                   <div key={col.key} className="flex min-w-0 max-w-full items-baseline gap-inline">
-                    <dt className="type-label shrink-0 text-[12px] uppercase text-muted">{col.header}</dt>
-                    <dd className={cn("min-w-0 break-words text-[13px]", col.align === "right" && col.mono !== false && "font-mono", col.align === "right" && "tabular-nums")}>
+                    <dt className="type-label shrink-0 text-[0.75rem] uppercase text-muted">{col.header}</dt>
+                    <dd className={cn("min-w-0 break-words text-[0.8125rem]", col.align === "right" && col.mono !== false && "font-mono", col.align === "right" && "tabular-nums")}>
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "")}
                     </dd>
                   </div>
@@ -180,7 +180,7 @@ export function DataTable<T>({
                     scope="col"
                     style={col.width ? { width: col.width } : undefined}
                     className={cn(
-                      "type-label whitespace-nowrap px-comfortable py-tight text-[12px] text-muted",
+                      "type-label whitespace-nowrap px-comfortable py-tight text-[0.75rem] text-muted",
                       alignClass(col.align),
                     )}
                   >
@@ -242,7 +242,7 @@ export function DataTable<T>({
               <tr>
                 <td colSpan={columns.length} className="px-comfortable py-hero">
                   {emptyState ?? (
-                    <p className="text-center text-[13px] text-muted">No results.</p>
+                    <p className="text-center text-[0.8125rem] text-muted">No results.</p>
                   )}
                 </td>
               </tr>
@@ -342,7 +342,7 @@ function Pagination({
 
   return (
     <div className="flex items-center justify-between">
-      <p className="text-[12px] tabular-nums text-muted">
+      <p className="text-[0.75rem] tabular-nums text-muted">
         {loading ? "…" : `${from}–${to} of ${total}`}
       </p>
       <div className="flex items-center gap-tight">
@@ -355,7 +355,7 @@ function Pagination({
         >
           <ChevronLeft size={16} strokeWidth={1.5} />
         </button>
-        <span className="text-[12px] tabular-nums text-muted">
+        <span className="text-[0.75rem] tabular-nums text-muted">
           {page} / {totalPages}
         </span>
         <button

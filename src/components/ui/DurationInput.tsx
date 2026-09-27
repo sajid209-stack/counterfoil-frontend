@@ -98,7 +98,7 @@ export function DurationInput({
       {chips && chips.length > 0 && (
         <div className="flex flex-wrap gap-inline">
           {chips.map((c) => (
-            <button key={c} type="button" disabled={disabled} onClick={() => { setParseError(null); onChange(c); setText(formatDuration(c)); }} className={cn("h-11 min-w-11 rounded-xs border px-tight text-[12px] tabular-nums transition-colors duration-quick md:h-7 md:min-w-0", value === c ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted hover:border-inverse")}>
+            <button key={c} type="button" disabled={disabled} onClick={() => { setParseError(null); onChange(c); setText(formatDuration(c)); }} className={cn("h-11 min-w-11 rounded-xs border px-tight text-[0.75rem] tabular-nums transition-colors duration-quick md:h-7 md:min-w-0", value === c ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted hover:border-inverse")}>
               {formatDuration(c)}
             </button>
           ))}

@@ -118,7 +118,7 @@ export function DateStrip({
               )}
               <span
                 className={cn(
-                  "w-full truncate text-[13px] font-medium leading-tight",
+                  "w-full truncate text-[0.8125rem] font-medium leading-tight",
                   on && "text-brand-foreground",
                 )}
               >
@@ -126,7 +126,7 @@ export function DateStrip({
               </span>
               <span
                 className={cn(
-                  "w-full truncate text-[12px] leading-tight",
+                  "w-full truncate text-[0.75rem] leading-tight",
                   on ? "text-brand-foreground/70" : "text-muted",
                 )}
               >
@@ -135,7 +135,7 @@ export function DateStrip({
               {cap && (
                 <span
                   className={cn(
-                    "w-full truncate text-[12px] leading-tight",
+                    "w-full truncate text-[0.75rem] leading-tight",
                     cap.low ? "font-medium text-brand-foreground" : on ? "text-brand-foreground/70" : "text-muted",
                   )}
                 >
@@ -171,7 +171,7 @@ export function DateStrip({
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="flex min-h-12 w-full items-center justify-center gap-tight rounded-go border border-dashed border-strong text-[13px] text-muted active:bg-ember/10"
+          className="flex min-h-12 w-full items-center justify-center gap-tight rounded-go border border-dashed border-strong text-[0.8125rem] text-muted active:bg-ember/10"
         >
           <CalendarDays size={15} strokeWidth={1.5} />
           {labels.pick}

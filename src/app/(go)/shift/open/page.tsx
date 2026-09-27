@@ -15,13 +15,13 @@ export default function ShiftOpenPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
       <div>
-        <p className="type-label text-[13px] text-brand-foreground">{t("startLabel")}</p>
+        <p className="type-label text-[0.8125rem] text-brand-foreground">{t("startLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("openingTitle")}</h1>
         <p className="type-body mt-tight text-muted">{t("openingHint")}</p>
       </div>
 
       <div className="flex flex-col gap-tight">
-        <label htmlFor="opening-cash" className="type-label text-[13px] text-muted">{t("openingCash")}</label>
+        <label htmlFor="opening-cash" className="type-label text-[0.8125rem] text-muted">{t("openingCash")}</label>
         <input
           id="opening-cash"
           inputMode="decimal"

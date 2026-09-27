@@ -19,7 +19,7 @@ export interface ChartPoint {
 const useTip = () => {
   const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null);
   const node = tip ? (
-    <div className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-xs border border-line bg-card px-tight py-inline font-mono text-[12px] tabular-nums shadow-sm" style={{ left: tip.x, top: tip.y - 30 }}>
+    <div className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-xs border border-line bg-card px-tight py-inline font-mono text-[0.75rem] tabular-nums shadow-sm" style={{ left: tip.x, top: tip.y - 30 }}>
       {tip.text}
     </div>
   ) : null;
@@ -154,10 +154,10 @@ export function AreaChart({
             transform: "translateX(-50%)",
           }}
         >
-          <p className="text-[12px] text-muted">{active.title ?? active.label}</p>
-          <p className="whitespace-nowrap text-[13px] font-medium">{fmt(active.value)}</p>
+          <p className="text-[0.75rem] text-muted">{active.title ?? active.label}</p>
+          <p className="whitespace-nowrap text-[0.8125rem] font-medium">{fmt(active.value)}</p>
           {active.compare != null && (
-            <p className="whitespace-nowrap text-[12px] text-muted">{fmt(active.compare)}</p>
+            <p className="whitespace-nowrap text-[0.75rem] text-muted">{fmt(active.compare)}</p>
           )}
         </div>
       )}
@@ -185,7 +185,7 @@ export function AreaChart({
                 x1={padL} x2={padL + plotW} y1={y(v)} y2={y(v)}
                 stroke="var(--color-line)" strokeWidth="1" strokeDasharray="3 4"
               />
-              <text x={padL - 10} y={y(v) + 4} textAnchor="end" className="fill-[var(--color-muted)] text-[12px]">
+              <text x={padL - 10} y={y(v) + 4} textAnchor="end" className="fill-[var(--color-muted)] text-[0.75rem]">
                 {axis(v)}
               </text>
             </g>
@@ -209,7 +209,7 @@ export function AreaChart({
             // one step of the end; drop the tick, keep the end.
             if (isTick && !isLast && last - i < every) return null;
             return (
-              <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor="middle" className="fill-[var(--color-muted)] text-[12px]">
+              <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor="middle" className="fill-[var(--color-muted)] text-[0.75rem]">
                 {p.label}
               </text>
             );
@@ -249,10 +249,10 @@ export function AreaChart({
           aria-label. */}
       {hasCompare && compareLabel && (
         <div className="mt-tight flex items-center gap-section">
-          <span className="flex items-center gap-inline text-[12px] text-muted">
+          <span className="flex items-center gap-inline text-[0.75rem] text-muted">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ember" />{valueLabel}
           </span>
-          <span className="flex items-center gap-inline text-[12px] text-muted">
+          <span className="flex items-center gap-inline text-[0.75rem] text-muted">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted" />{compareLabel}
           </span>
         </div>
@@ -287,7 +287,7 @@ export function LineChart({ points, fmt, height = 160 }: { points: ChartPoint[];
           />
         ))}
         {points.map((p, i) => (points.length <= 14 || i % Math.ceil(points.length / 14) === 0 ? (
-          <text key={`l${i}`} x={x(i)} y={h - 1} textAnchor="middle" className="fill-[var(--color-faint)] font-mono text-[12px]">{p.label}</text>
+          <text key={`l${i}`} x={x(i)} y={h - 1} textAnchor="middle" className="fill-[var(--color-faint)] font-mono text-[0.75rem]">{p.label}</text>
         ) : null))}
       </svg>
     </div>
@@ -313,7 +313,7 @@ export function BarChart({ points, fmt, height = 140 }: { points: ChartPoint[]; 
             >
               <rect x={pad + i * bw + 1} y={h - 12 - bh} width={Math.max(1, bw - 2)} height={bh} rx={2} className="fill-[var(--color-ember)]" opacity={p.value === 0 ? 0.15 : 1} />
               {(points.length <= 12 || i % 2 === 0) && (
-                <text x={pad + i * bw + bw / 2} y={h - 2} textAnchor="middle" className="fill-[var(--color-faint)] font-mono text-[8px]">{p.label}</text>
+                <text x={pad + i * bw + bw / 2} y={h - 2} textAnchor="middle" className="fill-[var(--color-faint)] font-mono text-[0.5rem]">{p.label}</text>
               )}
             </g>
           );
@@ -330,9 +330,9 @@ export function HBarChart({ points, fmt }: { points: ChartPoint[]; fmt: (v: numb
     <div className="flex flex-col gap-tight">
       {points.map((p) => (
         <div key={p.label} className="flex items-center gap-tight" title={`${p.label} · ${fmt(p.value)}`}>
-          <span className="w-40 min-w-0 shrink-0 truncate text-[12px]">{p.label}</span>
+          <span className="w-40 min-w-0 shrink-0 truncate text-[0.75rem]">{p.label}</span>
           <span className="h-3 flex-1 overflow-hidden rounded-xs bg-line"><span className="block h-full rounded-xs bg-ember" style={{ width: `${(p.value / max) * 100}%` }} /></span>
-          <span className="w-24 shrink-0 whitespace-nowrap text-right font-mono text-[12px] tabular-nums">{fmt(p.value)}</span>
+          <span className="w-24 shrink-0 whitespace-nowrap text-right font-mono text-[0.75rem] tabular-nums">{fmt(p.value)}</span>
         </div>
       ))}
     </div>
@@ -390,10 +390,10 @@ export function DonutChart({
       </svg>
       <div className="min-w-0 flex-1">
         {shown.map((p, i) => (
-          <div key={p.label} className="flex items-center gap-tight text-[12px]">
+          <div key={p.label} className="flex items-center gap-tight text-[0.75rem]">
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: colors[i] }} />
             <span className="min-w-0 flex-1 truncate">{p.label}</span>
-            <span className="whitespace-nowrap font-mono text-[12px] tabular-nums">{fmt(p.value)} · {Math.round((p.value / total) * 100)}%</span>
+            <span className="whitespace-nowrap font-mono text-[0.75rem] tabular-nums">{fmt(p.value)} · {Math.round((p.value / total) * 100)}%</span>
           </div>
         ))}
       </div>

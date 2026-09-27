@@ -259,7 +259,7 @@ export default function CheckInPage() {
           <div className="flex flex-wrap items-center justify-between gap-tight">
             <div className="min-w-0">
               <h1 className="type-h1 text-xl">{t("title")}</h1>
-              {dayLabel && <p className="text-[13px] text-muted">{dayLabel}</p>}
+              {dayLabel && <p className="text-[0.8125rem] text-muted">{dayLabel}</p>}
             </div>
             <Button shape="pill" variant="secondary" icon={<UserPlus size={16} strokeWidth={1.5} />} onClick={() => { setWalkInProduct(productsQ.data?.data.find((p) => p.bookingType === "BT-01" && p.status === "active")?.id ?? ""); setWalkInOpen(true); }}>
               {t("addWalkIn")}
@@ -327,7 +327,7 @@ export default function CheckInPage() {
                           <span aria-hidden className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-line">
                             <span className={cn("block h-full rounded-full", full ? "bg-success" : "bg-inverse/40")} style={{ width: `${expected ? Math.round((inCount / expected) * 100) : 0}%` }} />
                           </span>
-                          <span className={cn("text-[13px]", full ? "font-semibold text-success" : "text-muted")}>{t("inOfTotal", { done: inCount, total: expected })}</span>
+                          <span className={cn("text-[0.8125rem]", full ? "font-semibold text-success" : "text-muted")}>{t("inOfTotal", { done: inCount, total: expected })}</span>
                         </span>
                       </span>
                     </button>
@@ -364,8 +364,8 @@ export default function CheckInPage() {
                                     the person in front of them, so it leads and
                                     it WRAPS — it used to be third in a muted
                                     mono run-on, cut off with an ellipsis. */}
-                                <span className={cn("block break-words text-[15px] font-semibold", !name && "font-mono text-sm")}>{name || o?.reference || b.orderId}</span>
-                                <span className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-[13px] text-muted">
+                                <span className={cn("block break-words text-[0.9375rem] font-semibold", !name && "font-mono text-sm")}>{name || o?.reference || b.orderId}</span>
+                                <span className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-[0.8125rem] text-muted">
                                   <span>{t("guests", { count: b.partySize })}</span>
                                   {(b.checkedIn ?? 0) > 0 && !done && <span>· {t("inOfTotal", { done: b.checkedIn ?? 0, total: b.partySize })}</span>}
                                   {name && <span className="font-mono">· {o?.reference ?? b.orderId}</span>}
@@ -374,16 +374,16 @@ export default function CheckInPage() {
 
                               <span className="flex shrink-0 flex-wrap items-center gap-tight">
                                 {b.noShow ? (
-                                  <span className="rounded-full bg-danger-solid px-comfortable py-inline text-[13px] font-medium text-white">
+                                  <span className="rounded-full bg-danger-solid px-comfortable py-inline text-[0.8125rem] font-medium text-white">
                                     {b.noShowReason ? t("noShowTagReason", { reason: b.noShowReason }) : t("noShowTag")}
                                   </span>
                                 ) : due > 0 ? (
                                   <>
-                                    <span className="rounded-full border border-warning/50 bg-warning-wash px-comfortable py-inline text-[13px] font-semibold text-fg">{t("owes", { amount: formatMoney(due) })}</span>
+                                    <span className="rounded-full border border-warning/50 bg-warning-wash px-comfortable py-inline text-[0.8125rem] font-semibold text-fg">{t("owes", { amount: formatMoney(due) })}</span>
                                     <Button shape="pill" onClick={() => setPayFor(b)}>{t("takeBalanceBtn")}</Button>
                                   </>
                                 ) : done ? (
-                                  <span className="rounded-full bg-success/15 px-comfortable py-inline text-[13px] font-semibold text-success">{t("allIn")}</span>
+                                  <span className="rounded-full bg-success/15 px-comfortable py-inline text-[0.8125rem] font-semibold text-success">{t("allIn")}</span>
                                 ) : (
                                   <>
                                     {b.partySize > 1 && (b.checkedIn ?? 0) < b.partySize - 1 && (
@@ -426,12 +426,12 @@ export default function CheckInPage() {
               ).map(([key, value]) => (
                 <div key={key} className="flex flex-col items-center gap-inline rounded-go-sm border border-hairline py-comfortable">
                   <span className="text-xl font-semibold tabular-nums">{value}</span>
-                  <span className="text-[13px] text-muted">{t(`stat_${key}`)}</span>
+                  <span className="text-[0.8125rem] text-muted">{t(`stat_${key}`)}</span>
                 </div>
               ))}
             </div>
             {day.owed > 0 && (
-              <p className="rounded-go-sm border border-warning/50 bg-warning-wash px-comfortable py-tight text-[13px] font-semibold text-fg">
+              <p className="rounded-go-sm border border-warning/50 bg-warning-wash px-comfortable py-tight text-[0.8125rem] font-semibold text-fg">
                 {t("owedAcrossDay", { amount: formatMoney(day.owed) })}
               </p>
             )}
@@ -442,7 +442,7 @@ export default function CheckInPage() {
       {/* Take the outstanding balance — any configured method works. */}
       <Modal open={!!payFor} onClose={() => { setPayFor(null); setPayAmount(null); }} title={payFor ? t("takeAmount", { amount: formatMoney(payDue) }) : t("takeBalanceTitle")}>
         <div className="mb-section flex flex-col gap-tight">
-          <label className="type-label text-[13px] text-muted" htmlFor="ci-amount">{t("amountLabel")}</label>
+          <label className="type-label text-[0.8125rem] text-muted" htmlFor="ci-amount">{t("amountLabel")}</label>
           <div className="flex items-center gap-tight">
             <input
               id="ci-amount"
@@ -454,15 +454,15 @@ export default function CheckInPage() {
               }}
               className="h-12 min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable text-right font-mono text-sm outline-none focus:border-ember"
             />
-            <button type="button" onClick={() => setPayAmount(null)} className="h-12 shrink-0 rounded-full border border-line px-comfortable text-[13px]">
+            <button type="button" onClick={() => setPayAmount(null)} className="h-12 shrink-0 rounded-full border border-line px-comfortable text-[0.8125rem]">
               {t("amountAll")}
             </button>
           </div>
           {payNow < payDue && payNow > 0 && (
-            <p className="text-[13px] text-muted">{t("partRemaining", { left: formatMoney(payDue - payNow) })}</p>
+            <p className="text-[0.8125rem] text-muted">{t("partRemaining", { left: formatMoney(payDue - payNow) })}</p>
           )}
         </div>
-        <p className="mb-section text-[13px] text-muted">{t("receiptNote")}</p>
+        <p className="mb-section text-[0.8125rem] text-muted">{t("receiptNote")}</p>
         <div className="grid grid-cols-2 gap-tight">
           {METHODS.map((m) => <Button shape="pill" key={m} variant="secondary" className="h-12" disabled={payNow <= 0} onClick={() => takeBalance(m)}>{enumL.method(m)}</Button>)}
         </div>
@@ -479,7 +479,7 @@ export default function CheckInPage() {
       </Modal>
 
       <Modal open={!!upgradeFor} onClose={() => setUpgradeFor(null)} title={t("upgradeTitle")}>
-        <p className="mb-section text-[13px] text-muted">{t("upgradeNote")}</p>
+        <p className="mb-section text-[0.8125rem] text-muted">{t("upgradeNote")}</p>
         <div className="flex flex-col gap-tight">
           {(productsQ.data?.data.find((x) => x.id === upgradeFor?.productId)?.tiers.filter((tier) => tier.active) ?? []).map((tier) => (
             <Button shape="pill" key={tier.id} variant="secondary" className="justify-between" onClick={() => upgrade(tier.id)}>
@@ -505,7 +505,7 @@ export default function CheckInPage() {
               <button type="button" aria-label={t("more")} onClick={() => setWalkInParty((g) => g + 1)} className="h-11 w-11 rounded-full border border-line text-lg">+</button>
             </div>
           </div>
-          <p className="text-[13px] text-muted">{t("walkInHint")}</p>
+          <p className="text-[0.8125rem] text-muted">{t("walkInHint")}</p>
         </div>
       </Modal>
     </main>

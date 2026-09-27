@@ -61,7 +61,7 @@ export function Field({
   return (
     <div className={cn("flex flex-col gap-tight", className)}>
       {label && (
-        <label htmlFor={htmlFor} className="type-label text-[12px] text-muted">
+        <label htmlFor={htmlFor} className="type-label text-[0.75rem] text-muted">
           {label}
           {required && <span className="ml-inline text-danger">*</span>}
         </label>
@@ -71,9 +71,9 @@ export function Field({
           screen reader reads the help — or the error — with the field rather
           than leaving it to be found by wandering. */}
       {error ? (
-        <p id={htmlFor ? `${htmlFor}-msg` : undefined} className="text-[12px] text-danger">{error}</p>
+        <p id={htmlFor ? `${htmlFor}-msg` : undefined} className="text-[0.75rem] text-danger">{error}</p>
       ) : help ? (
-        <p id={htmlFor ? `${htmlFor}-msg` : undefined} className="text-[12px] text-muted">{help}</p>
+        <p id={htmlFor ? `${htmlFor}-msg` : undefined} className="text-[0.75rem] text-muted">{help}</p>
       ) : null}
     </div>
   );
@@ -120,9 +120,9 @@ export function FormField({
           {label && <span className="text-sm">{label}</span>}
         </label>
         {error ? (
-          <p id={`${id}-msg`} className="text-[12px] text-danger">{error}</p>
+          <p id={`${id}-msg`} className="text-[0.75rem] text-danger">{error}</p>
         ) : help ? (
-          <p id={`${id}-msg`} className="text-[12px] text-muted">{help}</p>
+          <p id={`${id}-msg`} className="text-[0.75rem] text-muted">{help}</p>
         ) : null}
       </div>
     );

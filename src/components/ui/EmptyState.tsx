@@ -16,7 +16,7 @@ export function EmptyState({
         {icon && <div className="text-muted">{icon}</div>}
         <p className="type-h2 text-base">{title}</p>
         {message && (
-          <p className="type-body max-w-sm text-[13px] text-muted">{message}</p>
+          <p className="type-body max-w-sm text-[0.8125rem] text-muted">{message}</p>
         )}
       </div>
       {/* perforation — the stub tears here */}
@@ -26,7 +26,7 @@ export function EmptyState({
         <span className="mx-major flex-1 border-t-2 border-dashed border-line" />
       </div>
       <div className="flex items-center justify-center rounded-md border border-dashed border-line p-card">
-        {action ?? <span className="font-mono text-[12px] uppercase tracking-wider text-muted">Nothing here yet</span>}
+        {action ?? <span className="font-mono text-[0.75rem] uppercase tracking-wider text-muted">Nothing here yet</span>}
       </div>
     </div>
   );

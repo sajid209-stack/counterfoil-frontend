@@ -99,7 +99,7 @@ export function Catalogue({
           className="h-full w-full bg-transparent text-sm outline-none focus-visible:outline-none placeholder:text-faint"
         />
         {query && (
-          <button type="button" onClick={() => onQuery("")} className="text-[13px] text-muted hover:text-fg">
+          <button type="button" onClick={() => onQuery("")} className="text-[0.8125rem] text-muted hover:text-fg">
             {t("catalogue.clear")}
           </button>
         )}
@@ -154,23 +154,23 @@ export function Catalogue({
                       <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="card" />
                       {live && live.tone !== "ok" && (
                         <span
-                          className={`shrink-0 whitespace-nowrap rounded-full px-tight py-inline text-[12px] font-medium ${live.tone === "none" ? "bg-danger/10 text-danger" : "bg-ember/15 text-brand-foreground"}`}
+                          className={`shrink-0 whitespace-nowrap rounded-full px-tight py-inline text-[0.75rem] font-medium ${live.tone === "none" ? "bg-danger/10 text-danger" : "bg-ember/15 text-brand-foreground"}`}
                         >
                           {live.tone === "none" ? tp("sheet.soldOut") : tp("live.limited")}
                         </span>
                       )}
                     </span>
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="line-clamp-3 text-[15px] font-semibold leading-snug">{p.name}</span>
-                      <span className="mt-inline text-[20px] font-bold leading-none text-ember">
+                      <span className="line-clamp-3 text-[0.9375rem] font-semibold leading-snug">{p.name}</span>
+                      <span className="mt-inline text-[1.25rem] font-bold leading-none text-ember">
                         {formatPriceShort(from, currency)}
                       </span>
-                      <span className="mt-tight line-clamp-2 text-[13px] leading-tight text-muted">
+                      <span className="mt-tight line-clamp-2 text-[0.8125rem] leading-tight text-muted">
                         {behaviourSubtitle(p, { resources, team })}
                       </span>
                       {live && (
                         <span
-                          className={`mt-inline flex items-center gap-inline text-[13px] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}
+                          className={`mt-inline flex items-center gap-inline text-[0.8125rem] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}
                         >
                           <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
                           <span className="min-w-0 truncate">{live.text}</span>
@@ -187,7 +187,7 @@ export function Catalogue({
               className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10"
             >
               <Plus size={20} strokeWidth={1.5} />
-              <span className="text-[13px]">{t("catalogue.custom")}</span>
+              <span className="text-[0.8125rem]">{t("catalogue.custom")}</span>
             </button>
           </div>
         )}

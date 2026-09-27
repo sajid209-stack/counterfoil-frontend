@@ -172,7 +172,7 @@ export function DatePicker({
     }
   };
 
-  const cell = shape === "go" ? "h-11 w-11 rounded-go-sm text-[15px]" : "h-9 w-9 rounded-sm text-[13px]";
+  const cell = shape === "go" ? "h-11 w-11 rounded-go-sm text-[0.9375rem]" : "h-9 w-9 rounded-sm text-[0.8125rem]";
 
   return (
     <div
@@ -217,7 +217,7 @@ export function DatePicker({
           <span
             key={`${w}-${i}`}
             className={cn(
-              "type-label flex h-6 items-center justify-center text-[12px] text-muted",
+              "type-label flex h-6 items-center justify-center text-[0.75rem] text-muted",
               shape === "go" ? "w-11" : "w-9",
             )}
           >
@@ -277,7 +277,7 @@ export function DatePicker({
           if (!blocked(today)) onChange(today);
         }}
         className={cn(
-          "self-start px-tight text-[13px] text-brand-foreground transition-colors duration-quick hover:underline",
+          "self-start px-tight text-[0.8125rem] text-brand-foreground transition-colors duration-quick hover:underline",
           shape === "go" ? "h-11" : "h-8",
         )}
       >

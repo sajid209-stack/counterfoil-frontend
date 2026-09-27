@@ -45,5 +45,10 @@
     "catalog": "বুকিং ইভেন্ট পণ্য টিকিট bookings events products",
     "inventory": "স্টক মজুত পণ্য মার্চেন্ডাইজ সরবরাহ"
   },
-  "inventory": "ইনভেন্টরি"
+  "inventory": "ইনভেন্টরি",
+  "cartFab": "ঝুড়ি — {count, plural, one {# লাইন} other {# লাইন}}",
+  "textSize": "লেখার আকার",
+  "textSize_normal": "সাধারণ",
+  "textSize_large": "বড়",
+  "textSize_largest": "সবচেয়ে বড়"
 }

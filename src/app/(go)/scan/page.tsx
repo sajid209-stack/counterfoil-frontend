@@ -225,7 +225,7 @@ export default function ScanPage() {
         <div className="flex min-w-0 flex-col gap-section">
           <div>
             <h1 className="type-h1 text-xl">{t("title")}</h1>
-            <p className="text-[13px] text-muted">{t("subtitle")}</p>
+            <p className="text-[0.8125rem] text-muted">{t("subtitle")}</p>
           </div>
 
           {/* One object: the state of the gate, the field a scanner types
@@ -233,7 +233,7 @@ export default function ScanPage() {
           <section className="flex flex-col gap-comfortable rounded-go p-section go-surface">
             <p className="flex items-center gap-tight">
               <span aria-hidden className={cn("h-2 w-2 shrink-0 rounded-full", busy ? "bg-muted" : "bg-ember-solid")} />
-              <span className="text-[13px] font-semibold text-brand-foreground">{busy ? t("checking") : t("armed")}</span>
+              <span className="text-[0.8125rem] font-semibold text-brand-foreground">{busy ? t("checking") : t("armed")}</span>
             </p>
             <span data-focus-host className="block">
               <input
@@ -263,12 +263,12 @@ export default function ScanPage() {
                 </Button>
               )}
             </div>
-            <p className="text-[13px] text-muted">{t("armedHint")}</p>
+            <p className="text-[0.8125rem] text-muted">{t("armedHint")}</p>
           </section>
 
           {screens.length > 0 && (
             <section className="flex flex-col gap-tight">
-              <h2 className="text-[13px] font-semibold text-muted">{t("screensTitle")}</h2>
+              <h2 className="text-[0.8125rem] font-semibold text-muted">{t("screensTitle")}</h2>
               {/* Each button wears the treatment of the screen it opens — ink
                   for an admission, hatched danger for a refusal, amber for
                   money owing — so the row doubles as the key to the three. */}
@@ -309,15 +309,15 @@ export default function ScanPage() {
                 <div key={key} className="flex flex-col items-center gap-inline rounded-go-sm border border-hairline py-comfortable">
                   <Icon size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
                   <span className="text-xl font-semibold tabular-nums">{value}</span>
-                  <span className="text-[13px] text-muted">{t(`tally_${key}`)}</span>
+                  <span className="text-[0.8125rem] text-muted">{t(`tally_${key}`)}</span>
                 </div>
               ))}
             </div>
             )}
 
-            {log.length > 0 && <h3 className="text-[13px] font-semibold text-muted">{t("recentTitle")}</h3>}
+            {log.length > 0 && <h3 className="text-[0.8125rem] font-semibold text-muted">{t("recentTitle")}</h3>}
             {log.length === 0 ? (
-              <p className="text-[13px] text-muted">{t("noScansYet")}</p>
+              <p className="text-[0.8125rem] text-muted">{t("noScansYet")}</p>
             ) : (
               <ul className="flex flex-col">
                 {log.map((e, i) => (
@@ -332,10 +332,10 @@ export default function ScanPage() {
                       {e.verdict === "refuse" ? <X size={13} strokeWidth={3} /> : e.verdict === "balance" ? <Wallet size={12} strokeWidth={2} /> : <Check size={13} strokeWidth={3} />}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-mono text-[13px]">{e.code}</span>
-                      <span className="block truncate text-[13px] text-muted">{e.title || t(`tally_${e.verdict === "refuse" ? "refuse" : e.verdict === "balance" ? "balance" : "admit"}`)}</span>
+                      <span className="block truncate font-mono text-[0.8125rem]">{e.code}</span>
+                      <span className="block truncate text-[0.8125rem] text-muted">{e.title || t(`tally_${e.verdict === "refuse" ? "refuse" : e.verdict === "balance" ? "balance" : "admit"}`)}</span>
                     </span>
-                    <span className="shrink-0 text-[13px] text-muted">{format.dateTime(e.at, { hour: "numeric", minute: "numeric" })}</span>
+                    <span className="shrink-0 text-[0.8125rem] text-muted">{format.dateTime(e.at, { hour: "numeric", minute: "numeric" })}</span>
                   </li>
                 ))}
               </ul>
