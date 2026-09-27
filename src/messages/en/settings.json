@@ -732,6 +732,11 @@
         "title": "Storefront",
         "desc": "The public page each venue has — what is on it, what it says, and whether it is live.",
         "keywords": "storefront public page website venue landing url slug online"
+      },
+      "tickets": {
+        "title": "Ticket codes",
+        "desc": "What is printed on a ticket so it can be scanned, and what the till listens for.",
+        "keywords": "barcode code 39 qr scan scanner ticket print gate sku handheld"
       }
     },
     "menu": "Settings",
@@ -1092,5 +1097,27 @@
     "reducedUnset": "The reduced tax rate is 0%",
     "devicesQuiet": "{count, plural, one {# device has} other {# devices have}} gone quiet",
     "noTicket": "Customers aren't sent their tickets"
+  },
+  "tickets": {
+    "title": "Ticket codes",
+    "description": "What is printed on a ticket so it can be scanned, and what the till listens for.",
+    "printTitle": "What a ticket carries",
+    "printDesc": "A QR needs a camera or an imager. A barcode is what a laser handheld reads — the scanner most counters already own.",
+    "printLabel": "Code on the ticket",
+    "printHelp": "Drawn here at the size a ticket prints it.",
+    "print_qr": "QR code",
+    "print_qr_desc": "Read by a phone camera and by an imaging scanner.",
+    "print_barcode": "Barcode",
+    "print_barcode_desc": "Code 39 — read by any laser handheld. Wider than a QR.",
+    "print_both": "Both",
+    "print_both_desc": "Whichever the person at the gate is holding.",
+    "showText": "Print the code as text",
+    "showTextDesc": "So it can be typed at the gate when a scanner will not read.",
+    "tillTitle": "Scanning at the till",
+    "tillDesc": "The shop items you keep, found by the scanner you already have.",
+    "scanToSell": "Add shop items by scanning",
+    "scanToSellDesc": "{count, plural, =0 {No items have a code yet — add one on an item to scan it.} one {# item has a code the till can match.} other {# items have a code the till can match.}}",
+    "scanToSellNone": "None of your items has a code yet. Add one on an item and the till can find it.",
+    "saved": "Ticket codes saved"
   }
 }

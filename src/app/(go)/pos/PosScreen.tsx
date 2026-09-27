@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
 import { ArrowRight, Archive, Banknote, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { counterItems, inventoryItem, inventoryLineId, levelOf, peekCounters, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView } from "@/lib/api";
+import { counterItems, inventoryItem, inventoryLineId, levelOf, peekCounters, peekTicketCodeSettings, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_COUNTER_ID } from "@/lib/session";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
@@ -469,6 +469,57 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     ]);
     toast.success(t("added", { name: i.name }));
   };
+
+
+  /* ── the scanner the venue already owns ───────────────────────────────────
+     A barcode scanner is a keyboard that types very fast and presses Enter.
+     There is no API to ask for one, so it is recognised by its cadence: a
+     person cannot hold 120ms a character for a whole code.
+
+     Two deliberate limits. It listens only when the operator has switched it
+     on in Settings — a till that grabs keystrokes nobody asked it to grab is
+     a till that eats a cashier's typing. And it stands down whenever
+     something is being typed into: a cashier in the search box is searching,
+     and the same scan filters the wall to the item, because the search
+     already matches a SKU. Both paths end at the item; neither surprises.
+
+     The handler lives in a ref because it closes over the cart and the
+     shelf, and re-subscribing on every keystroke of a sale is how a listener
+     misses the one it was attached for. */
+  const scanBuf = useRef("");
+  const scanAt = useRef(0);
+  const onScan = useRef<(e: KeyboardEvent) => void>(() => {});
+  /* Assigned in an effect rather than during render — writing a ref while
+     rendering is what the React Compiler forbids, and this is the shape the
+     OS calendar's keyboard shortcuts already use. */
+  useEffect(() => {
+    onScan.current = (e: KeyboardEvent) => {
+      if (!peekTicketCodeSettings().scanToSell) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+      const now = Date.now();
+      if (now - scanAt.current > 120) scanBuf.current = "";
+      scanAt.current = now;
+      if (e.key === "Enter") {
+        const code = scanBuf.current.trim();
+        scanBuf.current = "";
+        if (code.length < 3) return;
+        const hit = shopItems.find((x) => (x.sku ?? "").trim().toUpperCase() === code.toUpperCase());
+        if (!hit) {
+          toast.error(t("shop.noCode", { code }));
+          return;
+        }
+        tapItem(hit);
+        return;
+      }
+      if (e.key.length === 1) scanBuf.current += e.key;
+    };
+  });
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => onScan.current(e);
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, []);
 
   const tapProduct = (p: Product) => {
     const activeTiers = p.tiers.filter((t) => t.active);

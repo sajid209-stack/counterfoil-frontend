@@ -459,6 +459,7 @@
       "equipment": "Equipment",
       "service": "Service"
     },
-    "per": "sold by the {unit}"
+    "per": "sold by the {unit}",
+    "noCode": "No shop item has the code {code}."
   }
 }

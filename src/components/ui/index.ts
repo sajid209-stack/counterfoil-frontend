@@ -38,6 +38,7 @@ export type { TimelineSpan } from "./ResourceTimeline";
 export { Avatar, ChoiceCard } from "./ChoiceCard";
 export { ProductThumb } from "./ProductThumb";
 export { Qr } from "./Qr";
+export { Barcode } from "./Barcode";
 export { TicketCard } from "./TicketCard";
 export type { TicketCardData } from "./TicketCard";
 export { AreaChart, BarChart, DonutChart, HBarChart, LineChart } from "./charts";

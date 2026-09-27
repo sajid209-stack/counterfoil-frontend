@@ -1239,6 +1239,22 @@ export interface AccessPolicy {
 // ── payments.v2 — the till's payment buttons, payouts and the cash drawer ────
 export type TillMethod = Extract<PaymentMethod, "cash" | "bkash" | "bangla_qr" | "card_terminal">;
 export type PayoutSchedule = "daily" | "weekly" | "monthly";
+/**
+ * What a ticket carries, and what the till listens for (ticketcodes.v1).
+ *
+ * `print` decides which code is drawn on a printed ticket. QR is right for a
+ * phone camera and for a gate imager; a Code 39 barcode is what a cheap laser
+ * handheld reads, and a venue that owns one could not scan its own tickets at
+ * all. `showText` keeps the code readable so it can be typed when a scanner
+ * fails, which is the reason it defaults on.
+ */
+export interface TicketCodeSettings {
+  print: "qr" | "barcode" | "both";
+  showText: boolean;
+  /** The till adds a shop item when its SKU is scanned. */
+  scanToSell: boolean;
+}
+
 export interface PaymentSettings {
   /** The till's payment buttons, in the order shown. Cash is always on. */
   methods: { method: TillMethod; enabled: boolean }[];

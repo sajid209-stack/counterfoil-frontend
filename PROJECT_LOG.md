@@ -12567,3 +12567,125 @@ the two keys the till no longer reads removed from both locales.
 - **The e-mail is still a preview, not a send.** There is no mail transport
   here, as there is no SMS gateway; what the template changes is what the till
   says it will send, which is what an operator reviews and signs off.
+
+
+## Ticket codes — the owner's item 2 (2026-09-27)
+
+*"In OS settings make sure a bar code and or code option is available with
+better UI and UX."*
+
+Two gaps, and they are the two ends of the same wire.
+
+**A ticket has always carried a QR**, which a phone camera reads and the imager
+in a modern gate scanner reads. It is exactly wrong for the scanner most
+counters in Bangladesh already own: a cheap laser handheld reads linear
+symbologies and **cannot see a QR at all**. A venue with one could not scan its
+own tickets.
+
+**And the shop has carried a SKU per item since inventory arrived**, with
+nothing anywhere reading it — recorded as open in this log at the time: *"a
+barcode has nowhere to go… there is no scan-to-sell at the counter."*
+
+### Settings → Ticket codes
+
+- **What a ticket carries** — QR, Barcode, or Both, and **the choice is made by
+  looking at it**: each option draws the code it means, at the size a ticket
+  prints it. "Code 39" tells an operator nothing; the picture tells them
+  everything, including that a barcode is wide, which is the one fact that
+  might change their mind.
+- **Print the code as text** — on by default, because a code that can be typed
+  is what saves a gate when a scanner will not read.
+- **Add shop items by scanning** — and the row says how many items actually
+  have a code to match, because a till that listens and can never answer is
+  worse than one that does not listen.
+
+### Code 39, and why the table is not written here
+
+**Code 39 rather than Code 128**: no check digit, every scanner ever made reads
+it, and its character set — digits, capitals, the hyphen — is exactly what a
+Counterfoil reference is made of. The cost is width, which a ticket stub has.
+
+**The encoding comes from `jsbarcode`, not from a table written by hand.** A
+symbology table is the kind of thing that is wrong in one character and
+silently unreadable for months, and this is the same reasoning that put
+`qrcode` behind the QR. Its object renderer is synchronous and needs no DOM, so
+the bars are rendered on the server and are in the HTML — which matters,
+because these pages print themselves on load.
+
+It is a runtime dependency, the second in this repo after `qrcode`, and for the
+same reason.
+
+**Proven rather than trusted**: 14 unit checks assert the property the
+symbology is named after — every character is nine elements of which exactly
+three are wide, separated by narrow gaps — so this is genuinely Code 39 and not
+merely something under that name. Plus: two codes draw differently, one code
+draws identically every time, lower case is lifted rather than refused, a
+character Code 39 cannot carry is replaced rather than dropped, and the bars
+extracted for the SVG cover every run of ink and never touch.
+
+### The till listens for the scanner the venue already has
+
+A barcode scanner is a keyboard that types very fast and presses Enter. There
+is no API to ask for one, so it is recognised by its cadence — a person cannot
+hold 120ms a character for a whole code.
+
+Two limits, both deliberate:
+
+- **Only when the operator has switched it on.** A till that grabs keystrokes
+  nobody asked it to grab is a till that eats a cashier's typing.
+- **It stands down whenever something is being typed into.** A cashier in the
+  search box is searching — and the same scan filters the wall to the item,
+  because the search already matches a SKU. Both paths end at the item and
+  neither surprises.
+
+A code nothing matches says so by name rather than doing nothing.
+
+### One defect found by driving it
+
+**Every option in the picker announced the sample code before its own name.** A
+QR and a barcode carry their own accessible names, which is right on a ticket
+and wrong in a chooser: "Both" read as *"QR code CF-2026-000123-01 Barcode
+CF-2026-000123-01 Both — whichever the person at the gate is holding."* The
+drawings are the illustration here and the label is the choice, so they are
+`aria-hidden` in the picker and named on the ticket.
+
+### Verified
+
+**27 checks, driven**: the page and its three options each drawing the code it
+means; the barcode drawn as real bars encoding the code beneath it; the option
+named by its words; the rail listing the page; a choice saved; **the printed
+ticket then carrying both codes**; barcode-only leaving no QR at all; the code
+in letters switchable off; the till ignoring a scan until it is switched on;
+**a scanned SKU adding the item it names, at its shelf price**; and an unknown
+code refused in words. At 390 and in Bangla: no sideways scroll, no hidden
+overflow, nothing under the 12px floor, no missing messages.
+
+Plus **14 unit checks** on the encoding, and the standing harnesses that the
+till and the shared ticket card could have broken: **shop3 23/23**, **settings
+navigation 55/55**, **the radius harness**. `tsc`, `npm run build` and `eslint`
+clean — `PosScreen` holds at its documented 2 errors and 3 warnings — and i18n
+parity **0 missing / 0 extra**.
+
+### Three harness traps, all recorded before and all hit again
+
+- `[aria-haspopup="menu"]` matched **the shell's Account button**, which is in
+  the DOM at every width, twice. The order's own menu is found by its name,
+  "More actions".
+- The orders list leads with the **overflow stress fixture**, which has six
+  lines and **no tickets at all**, so the print page it opens is empty and says
+  so. The walk searches for an order that has some.
+- And at 1440 the till's cart is a panel, not a pill, so there is nothing to
+  open before Charge.
+
+### Not done
+
+- **The gate does not decode a barcode from the camera yet.** `BarcodeDetector`
+  supports Code 39 and the gate already asks it for QR; widening the format
+  list is a line, but it cannot be verified here — headless Chromium has no
+  `BarcodeDetector` at all, which is recorded from the gate work. A wedge
+  scanner typing the code already works at the gate today, which is the path a
+  laser handheld actually uses.
+- **The other two tills do not listen.** `/sell` and `/classic` have no shelf
+  tiles either; this is `/pos`.
+- **Nothing prints a barcode for a shop item.** A shelf label is a different
+  object from a ticket, and the SKU field is typed rather than generated.

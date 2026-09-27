@@ -4,6 +4,7 @@ import {
   CreditCard,
   Gift,
   Globe,
+  ScanLine,
   LandPlot,
   LockKeyhole,
   MapPin,
@@ -30,6 +31,7 @@ export type SettingsItemKey =
   | "resources"
   | "categories"
   | "storefront"
+  | "tickets"
   | "payments"
   | "tax"
   | "memberships"
@@ -81,6 +83,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { key: "resources", href: "/settings/resources", icon: LandPlot },
       { key: "categories", href: "/settings/categories", icon: Tags },
       { key: "storefront", href: "/settings/storefront", icon: Globe },
+      { key: "tickets", href: "/settings/tickets", icon: ScanLine },
     ],
   },
   {

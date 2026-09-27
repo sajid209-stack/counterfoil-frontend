@@ -10,6 +10,7 @@
     "deck:pdf": "node scripts/deck-pdf.mjs"
   },
   "dependencies": {
+    "jsbarcode": "^3.12.3",
     "lucide-react": "^1.27.0",
     "next": "16.2.12",
     "next-intl": "^4.13.7",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jsbarcode": "^3.11.4",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",

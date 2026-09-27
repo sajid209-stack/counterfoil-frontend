@@ -1,3 +1,4 @@
+import { peekTicketCodeSettings } from "@/lib/api";
 import { useTranslations } from "next-intl";
 import type { TicketCardData, TicketField } from "@/components/ui/TicketCard";
 import type { Order, Ticket } from "@/lib/api/types";
@@ -36,6 +37,10 @@ export function useTicketLabels(): TicketLabels {
  */
 export function ticketCards(order: Order | undefined, tickets: Ticket[], business: string, labels: TicketLabels): { id: string; data: TicketCardData }[] {
   const sorted = [...tickets].sort((a, b) => a.code.localeCompare(b.code));
+  /* Read once for the whole order rather than per ticket: every ticket in one
+     print job carries the same code, and a setting read twice is a setting
+     that can differ halfway down a page. */
+  const codes = peekTicketCodeSettings();
   return sorted.map((ticket, index) => {
     const line = order?.lines.find((l) => l.id === ticket.lineId);
     const booking = line?.booking;
@@ -64,6 +69,11 @@ export function ticketCards(order: Order | undefined, tickets: Ticket[], busines
         fields,
         indexLabel: sorted.length > 1 ? labels.indexOf(index + 1, sorted.length) : undefined,
         code: ticket.code,
+        /* What this venue's own scanner can read — see Settings, Ticket
+           codes. Read here rather than passed down from four print pages
+           that would each have to remember. */
+        codeStyle: codes.print,
+        showCode: codes.showText,
         gateHint: labels.gateHint,
         referenceLabel: labels.reference,
       },
