@@ -800,12 +800,40 @@ export interface SeatCategory {
   isGeneralAdmission: boolean;
   gaCapacity?: number; // when GA, capacity of the standing area
 }
-export type SeatShape = "square" | "circle";
+export type SeatShape = "square" | "circle" | "rounded";
+/**
+ * What a sellable element on a plan IS. Absent reads as "seat", so every
+ * layout written before the designer existed is still valid and needs no
+ * migration — the same rule `EventDay` follows on an event.
+ */
+export type LayoutElementKind = "seat" | "table" | "ga";
+/**
+ * Scenery. It says where you are in the room — a screen, a stage, the door,
+ * the bar — and is never sellable, which is the whole reason it is a separate
+ * array from `seats` rather than a seat with no category.
+ */
+export type LayoutFixtureKind = "screen" | "stage" | "door" | "bar" | "wall" | "text";
+export interface LayoutFixture {
+  id: ID;
+  kind: LayoutFixtureKind;
+  label: string; // "SCREEN", "Bar", "Entrance", or whatever the operator types
+  posX: number;
+  posY: number;
+  width: number;
+  height: number;
+  rotation: number;
+}
+/** What kind of room this is, which decides the palette and the templates. */
+export type LayoutExperience = "cinema" | "theatre" | "restaurant" | "stadium" | "general";
 export interface LayoutSeat {
   id: ID;
   name: string; // seat label, e.g. "A1"
-  posX: number; // grid column (0-based)
-  posY: number; // grid row (0-based)
+  kind?: LayoutElementKind; // absent = "seat"
+  /* Canvas units, one unit being one seat pitch. A plain rows x columns grid
+     is the special case where these are the integer row and column, which is
+     why the layouts drawn before the designer existed still place correctly. */
+  posX: number;
+  posY: number;
   seatRow: string; // row label, e.g. "A"
   seatNumber: number;
   seatCategoryId: ID | null; // null = not for sale / aisle gap
@@ -826,8 +854,11 @@ export interface SeatLayout {
   rowLabels: string[]; // ["A","B",…]
   bufferAfterMinutes: number;
   seatCount: number;
+  experience?: LayoutExperience; // absent = "general"
   categories: SeatCategory[];
   seats: LayoutSeat[];
+  fixtures?: LayoutFixture[]; // absent = none
+
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
@@ -846,6 +877,21 @@ export interface AvailableSeat {
   price: Minor;
   posX: number;
   posY: number;
+  /* The shape of the thing, so the till draws the room the operator designed
+     rather than a grid of squares. All optional: a picker written before the
+     designer existed reads a plain 1x1 seat from the absent values. */
+  kind?: LayoutElementKind;
+  shape?: SeatShape;
+  width?: number;
+  height?: number;
+  rotation?: number;
+  capacity?: number; // a table seats this many
+}
+/** A plan as a buyer's screen draws it: what is for sale, and the scenery. */
+export interface SeatMap {
+  seats: AvailableSeat[];
+  fixtures: LayoutFixture[];
+  experience: LayoutExperience;
 }
 /** Link between a product and a seat layout (ConfigLayoutLink). */
 export interface ConfigLayoutLink {

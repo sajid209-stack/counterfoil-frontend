@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Clock, X, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Avatar, BlockedNotice, Button, ChoiceCard, FormField, ProductThumb, ResourceTimeline, useToast, DateStrip } from "@/components/ui";
-import { availableSeats } from "@/lib/api";
+import { Avatar, BlockedNotice, Button, ChoiceCard, FormField, PlanView, ProductThumb, ResourceTimeline, useToast, DateStrip } from "@/components/ui";
+import { seatMap } from "@/lib/api";
 import { SessionList } from "./SessionList";
 import { SlotMatrix } from "./SlotMatrix";
 import { RepeatPicker } from "./RepeatPicker";
@@ -187,8 +187,13 @@ export function ProductSheet({
   const tc = useTranslations("common");
   const seatT = useTranslations("seatmaps");
   const hasLayout = !!product.layoutId;
-  const seatsQ = useApiQuery(() => availableSeats(product.id), [product.id]);
-  const availSeats = seatsQ.data ?? [];
+  /* The whole room, not just the seats: before this the till printed its own
+     "SCREEN" banner above a CSS grid, which is a guess about the shape of the
+     room and wrong the moment it is a dining room. The scenery is now wherever
+     the operator put it. */
+  const seatsQ = useApiQuery(() => seatMap(product.id), [product.id]);
+  const availSeats = seatsQ.data?.seats ?? [];
+  const seatFixtures = seatsQ.data?.fixtures ?? [];
   const [selectedSeats, setSelectedSeats] = useState<string[]>(initial?.seatLabels ?? []);
   /** A seat map prices itself off the seats, not off the tier steppers — those
    *  stay at zero because a seat IS the ticket here. The CTA was reading them
@@ -1265,30 +1270,48 @@ export function ProductSheet({
             {hasLayout ? (
               // Visual seat picker (BT-07 seated) — tap seats to add to the sale.
               (() => {
-                const maxCol = Math.max(1, ...availSeats.map((s) => s.posX + 1));
                 const cats = [...new Map(availSeats.map((s) => [s.categoryUid, s])).values()];
                 return (
                   <div>
-                    <div className="mb-tight rounded-full bg-subtle py-inline text-center text-[0.8125rem] tracking-widest text-muted">{seatT("picker.screen")}</div>
-                    <div className="overflow-x-auto">
-                      <div data-seat-grid className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${maxCol}, 1.6rem)` }}>
-                        {availSeats.map((s) => {
-                          const sel = selectedSeats.includes(s.label);
-                          return (
-                            <button
-                              key={s.label}
-                              type="button"
-                              disabled={!s.available}
-                              onClick={() => setSelectedSeats((cur) => (cur.includes(s.label) ? cur.filter((x) => x !== s.label) : [...cur, s.label]))}
-                              title={`${s.label} · ${s.categoryName} · ${formatMoney(s.price, currency)}`}
-                              style={{ gridColumnStart: s.posX + 1, gridRowStart: s.posY + 1, ...(s.available && !sel ? { background: `${s.color}33`, color: s.color, borderColor: s.color } : {}) }}
-                              className={`h-7 rounded-[3px] border text-[0.5625rem] leading-none ${!s.available ? "cursor-not-allowed border-line bg-line text-muted line-through" : sel ? "border-ember bg-ember-solid font-medium text-white" : ""}`}
-                            >
-                              {s.label.replace(/^[A-Za-z]+/, "")}
-                            </button>
-                          );
-                        })}
-                      </div>
+                    {/* One renderer, shared with the designer in OS — so what a
+                        cashier is shown is the plan that was drawn, including
+                        where the screen or the bar actually is. */}
+                    <div data-seat-grid>
+                      <PlanView
+                        elements={availSeats.map((s) => ({
+                          id: s.label,
+                          name: s.label,
+                          kind: s.kind,
+                          posX: s.posX,
+                          posY: s.posY,
+                          width: s.width,
+                          height: s.height,
+                          shape: s.shape,
+                          rotation: s.rotation,
+                          capacity: s.capacity,
+                          color: s.color,
+                        }))}
+                        fixtures={seatFixtures}
+                        /* Enough height that a seat is drawn at least as large
+                           as the fixed 1.6rem grid this replaced — the picker
+                           is a thumb target before it is a picture. */
+                        minHeight={300}
+                        maxScale={30}
+                        stateOf={(el) => {
+                          const st = availSeats.find((x) => x.label === el.id);
+                          if (!st?.available) return "taken";
+                          return selectedSeats.includes(el.id) ? "selected" : "available";
+                        }}
+                        labelOf={(el) => {
+                          const st = availSeats.find((x) => x.label === el.id);
+                          return st ? `${st.label} · ${st.categoryName} · ${formatMoney(st.price, currency)}${st.available ? "" : ` · ${seatT("picker.sold")}`}` : el.name;
+                        }}
+                        onPick={(el) => {
+                          const st = availSeats.find((x) => x.label === el.id);
+                          if (!st?.available) return;
+                          setSelectedSeats((cur) => (cur.includes(el.id) ? cur.filter((x) => x !== el.id) : [...cur, el.id]));
+                        }}
+                      />
                     </div>
                     <div className="mt-tight flex flex-wrap items-center justify-between gap-tight text-[0.8125rem]">
                       <div className="flex flex-wrap gap-major text-muted">

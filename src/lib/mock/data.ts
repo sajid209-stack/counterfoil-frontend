@@ -123,11 +123,17 @@ export const seatLayouts: SeatLayout[] = [
     rowLabels: ["A", "B", "C", "D", "E", "F", "G", "H"],
     bufferAfterMinutes: 15,
     seatCount: 96,
+    experience: "cinema",
     categories: [
       { uid: "cat_stalls", name: "Stalls", color: "#F94A00", price: 40000, pricingMode: "fixed", isGeneralAdmission: false },
       { uid: "cat_balcony", name: "Balcony", color: "#2563EB", price: 70000, pricingMode: "fixed", isGeneralAdmission: false },
     ],
     seats: buildCinemaSeats(),
+    /* The hall's own screen. It used to be a banner the till printed above the
+       grid — a guess about the shape of the room, and one the operator could
+       neither move nor remove. It is part of the plan now, so what a cashier
+       sees is what was drawn. */
+    fixtures: [{ id: "fx_screen", kind: "screen", label: "SCREEN", posX: 0.5, posY: -1.6, width: 11, height: 0.75, rotation: 0 }],
     createdAt: T,
     updatedAt: T,
   },

@@ -13100,3 +13100,195 @@ link visible, reading "Team", no menu button, 0 console errors).
 Also worth restating from the inventory session: **do not run several harnesses
 and a build at once.** A contaminated run reported 6 console errors and a shifted
 chrome median; run alone on a settled server it reports **0**.
+
+## The floor-plan designer — item 12 (2026-09-27)
+
+*"properly plan, research and study about Seat layout, and different
+experiences, different industries, like theater, restaurants, and other to
+properly build world's best UI and UX for Seat layout in OS, need to be a
+custom design feed to customize, and need ready made elements for Seat, Screen
+for theater, table and others needed element by catalog experiences."*
+
+### What was there, and the one shape it could describe
+
+A fixed **rows × seatsPerRow grid** with three paint tools (assign a category,
+block, clear) and a **"SCREEN" banner the page printed above it**. Every element
+was one cell of a rectangle; "Regenerate grid" threw the plan away and rebuilt
+it.
+
+So it could describe exactly one room: a rectangle of identical seats with a
+screen at the front. It could not make an aisle, move anything, put the stage at
+the side, seat a table, or draw a dining room at all. `LayoutSeat` had carried
+`shape`, `width`, `height`, `rotation` and `capacity` since the model was
+written and **nothing set or read any of them**.
+
+The till had the same grid and the same invented banner, written separately.
+
+### What the research settled
+
+- **seats.io** draws seats in rows, blocks of rows, seats at tables, booths and
+  GA areas, on charts that start from a **venue-type selector**; sections are
+  drawn as shapes and then filled.
+- **Restaurant planners** (Resos, SevenRooms, SimpleHost, SeatPlan) all converge
+  on the same set: round/square/rectangular tables and booths with a **capacity**
+  each, plus a bar, walls, doors and zones; resize and rotate throughout. And the
+  sentence that decided the model: *"the tables drawn aren't just shapes — they're
+  the same tables the reservation system assigns bookings to."*
+- The project's own UX database, **Dragging Movements (High)**: WCAG 2.2 AA
+  requires a single-pointer alternative for every author-controlled drag. *"Don't
+  make dragging the only way to reorder, resize or select."*
+
+### Three rules, and the model that follows from them
+
+**1. The geometry is shared.** `lib/layout.ts` is pure — positions, hit testing
+(rotation-aware), marquee selection, the element factories, the palettes and the
+templates — and `components/ui/PlanView` is the one renderer, used by the
+designer **and by the till's picker**. An operator and a customer cannot be shown
+different rooms, which is the same reason the receipt and the printed ticket
+share `ReceiptParts`.
+
+**2. A table is one sellable thing whose capacity is its covers.** A restaurant
+books table 7 for four; a theatre sells seat A12. Four chairs drawn around a
+fixture would make *what did they buy* ambiguous on the one screen that must not
+be. So `planCapacity` sums covers rather than counting elements — nine tables in
+the seeded dining room are **32 seats**, and counting objects would have told the
+operator it seats nine.
+
+**3. Dragging is never the only way.** Everything a pointer does, a number does:
+the inspector edits across, down, width, height, the category and the covers;
+the arrow keys nudge (Shift for a whole unit); Delete removes; Ctrl+Z undoes.
+Every element is a real `<button>` with an accessible name, and a **keyboard
+activation is told from a mouse click by `detail === 0`** — without that, a
+click would re-select and collapse a shift-click selection to one element.
+
+**Contract, for the backend lane:** `LayoutElementKind`, `LayoutFixtureKind`,
+`LayoutFixture`, `LayoutExperience`, `SeatMap`, `LayoutSeat.kind`,
+`SeatLayout.experience`, `SeatLayout.fixtures`, and the shape fields on
+`AvailableSeat`. **Every one is optional and absent reads as what it used to
+be** — a 1×1 seat, no scenery, a general room — so every layout drawn before
+this is valid with no migration. `posX`/`posY` are now documented as canvas
+units, one unit being one seat pitch, which makes an old integer grid a special
+case of the new coordinates rather than a different thing.
+
+### The designer
+
+Palette on the left, canvas in the middle, inspector on the right, categories
+underneath. Pick a tool, tap the plan, it lands there. Drag to move, drag empty
+canvas to marquee-select, shift to add. Undo/redo, zoom, and a snap toggle
+(half a unit on, a tenth off).
+
+**The palette is the room's**, which is what the owner asked for: a cinema is
+offered seats, rows, blocks, a screen, a door and a text label; a restaurant is
+offered tables for 2/4/6, a booth, a bar, walls and a door **and no screen**; a
+theatre gets curved rows, a stage and a standing area; a stadium gets big blocks
+and terraces. `curve` bows a row, because every seat on a straight row faces the
+same way and in a real house they do not.
+
+**And a room to start from.** An empty canvas is the worst first screen a
+designer can show — the operator has to work out what a plan is made of before
+they can begin — so "New layout" now asks *what kind of space is this?* first
+and lands on a small real room they can rename and rearrange. The cinema
+template has an **aisle between its two blocks**, which is the thing the old
+grid structurally could not express.
+
+The list stopped describing every plan as "6×10 · 60 seats" — a figure that
+means nothing about a dining room and is not even true of a hall with an aisle.
+It draws **the plan itself** at 120px, names the kind of room, and states the
+covers.
+
+### The till draws what was drawn
+
+`seatMap(productId)` returns the seats **and the scenery**, and the picker is
+`PlanView`. The seeded hall's screen is now a fixture on the plan
+(`fixtures: [{ kind: "screen", … }]`) rather than a banner the till printed —
+so it is something an operator can move, and a dining room gets a bar and a door
+instead of a screen it does not have.
+
+Proven by selling rather than by rendering: two Stalls seats → **Charge ৳920.00**
+(2 × ৳400 + 15% VAT) → sale complete → **2 tickets**, and the seats the plan
+marks unavailable still read as sold.
+
+### Found by measuring
+
+- **234px of hidden overflow on a phone.** The three-column grid's base layout
+  was a single **implicit** track, which sizes to max-content — so the canvas
+  dragged the whole column to 608px inside a 390px screen and `main` swallowed
+  the difference. `grid-cols-1` plus `min-w-0`. That is the `min-width: auto`
+  fault this log has now recorded **five times**, in a fifth costume.
+- **Category labels drawn in the operator's own hex failed in dark** — blue
+  measured **2.79:1** on a dark card, on the list's chips and on every element
+  label. The colours are operator-chosen, so no fixed token can fix it: the
+  fill and the border carry the category and **the label is read in the theme's
+  ink**. That is the rule the calendar already settled — the hue is a ground,
+  never a letterform.
+- The pointer was being measured against the **wrong box**. `PlanView` centres
+  the plan surface inside its scroll container, so converting a pointer to units
+  against the wrapper drops everything by that offset. The surface carries
+  `data-plan-surface` and the designer measures that.
+
+### Verified
+
+- **58 unit checks** on the geometry, through `jiti`, before any UI existed: an
+  old integer grid still places where it always did, a curved row bows and stays
+  symmetric with its ends on the row line, a table's capacity is its covers, a
+  GA block counts its whole capacity, the extent pads and never collapses,
+  snapping and overlap, the palette differing per room, and **every template
+  checked for a category that exists on every element, unique ids, and nothing
+  sitting on top of anything else**.
+- **23 checks driving the designer**: the chooser, a restaurant arriving with
+  tables and a bar and covers counted rather than tables, the palette offering a
+  bar and no screen, a tool then a tap placing something, dragging moving it,
+  **undo putting it back**, arrow keys moving the selection, the position
+  editable as numbers, Delete, and a save.
+- **9 checks selling seats** end to end, as above.
+- **42 checks** at 1440 light, 1440 dark, 390 and Bangla across both routes:
+  contrast, the 12px floor, thumb targets, no sideways scroll or hidden
+  overflow, no console errors — plus all four templates drawing the room they
+  name with its own scenery.
+- Standing harnesses hold: **catalog 95/95, shop 23/23, top cards 84/84,
+  dropdowns 58/58, radius 8/8**. `tsc`, `npm run build` and `eslint` clean on
+  every file touched. i18n parity **0 missing / 0 extra** across 34 namespaces,
+  with the paint-tool editor's 13 orphaned keys removed from both locales —
+  `picker.screen` deliberately kept, because `/classic` still draws its own
+  banner by design.
+
+### Two probe corrections, both recorded lessons in new costumes
+
+- The contrast probe reported the page title at **2.22:1** on a page that is
+  plainly readable. `card-surface` computes to `color(srgb 1 1 1 / 0.72)`, whose
+  components are **0–1** — read as 0–255 they are near-black, so every piece of
+  text on a card measured as dark-on-dark. *A regex is not a colour parser*,
+  and canvas normalises the syntax but not the space.
+- `innerText` returns **rendered** text and `type-label` uppercases in CSS, so a
+  case-sensitive match failed on an inspector that was working. Fourth time.
+
+### Open
+
+- **A seat sold at the till is not taken off the map.** The only writer of
+  `isAvailable` is the seed and the designer — confirmed against `HEAD`'s own
+  copy of `layouts.ts`, so this is pre-existing rather than anything the shared
+  renderer changed. It means **two tills can sell one seat**, and it is the same
+  family as the `heldSeats` gap this log already records. The fix belongs in
+  `checkout()` beside the credits spend, and it needs a decision about whether a
+  clash refuses the sale or warns.
+- **`/sell` and `/classic` still draw their own seat grids**, so a non-grid room
+  renders wrongly there. Both are deliberate design variants; `/pos` is the
+  till this change followed.
+- **A table is not yet sold as a table.** The element and its covers are on the
+  contract and the till draws it, but `AvailableSeat` is still sold one label at
+  a time — booking table 7 for four is a change to the sale path, not to the
+  designer.
+- **No sections, no multiple floors and no curved *sections*.** seats.io has all
+  three; rows can curve here but a section is not an object yet.
+- Resize is by number rather than by a corner handle, and rotation is a 90°
+  button plus the numbers. Both are the WCAG-required path; a handle is the
+  convenience on top and is not built.
+
+Sources: [seats.io — drawing seats, tables and booths](https://support.seats.io/en/articles/3061221-how-do-i-draw-seats-tables-booths-etc) ·
+[seats.io — designing a floor plan](https://support.seats.io/en/collections/1174693-design-your-floor-plan) ·
+[seats.io — sections with a curve](https://support.seats.io/en/articles/2043354-how-to-draw-sections-with-a-curve) ·
+[Resos — visual restaurant table plan](https://resos.com/feature/visual-restaurant-table-plan/) ·
+[SevenRooms — restaurant floor plans](https://sevenrooms.com/blog/restaurant-floor-plan/) ·
+[SeatPlan — restaurant floor plan maker](https://seatplan.io/use-cases/restaurants) ·
+plus the project's own UX database: Dragging Movements (High), Keyboard
+Navigation (High), Compact Control Semantics (Critical).
