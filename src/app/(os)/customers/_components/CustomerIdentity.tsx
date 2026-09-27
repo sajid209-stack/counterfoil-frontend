@@ -74,7 +74,7 @@ export function CustomerIdentity({
             {customer.phone && (
               <a
                 href={`tel:${customer.phone.replace(/\s+/g, "")}`}
-                className="flex items-center gap-tight font-mono text-fg underline-offset-2 hover:underline"
+                className="flex min-h-11 items-center gap-tight font-mono text-fg underline-offset-2 hover:underline sm:min-h-0"
               >
                 <Phone size={13} strokeWidth={1.8} aria-hidden className="text-muted" />
                 {customer.phone}
@@ -83,7 +83,7 @@ export function CustomerIdentity({
             {customer.email && (
               <a
                 href={`mailto:${customer.email}`}
-                className="flex min-w-0 items-center gap-tight text-fg underline-offset-2 hover:underline"
+                className="flex min-h-11 min-w-0 items-center gap-tight text-fg underline-offset-2 hover:underline sm:min-h-0"
               >
                 <Mail size={13} strokeWidth={1.8} aria-hidden className="shrink-0 text-muted" />
                 <span className="min-w-0 break-all">{customer.email}</span>

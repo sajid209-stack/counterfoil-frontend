@@ -24,6 +24,7 @@ import { LogoMark } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { BarTitleContext } from "@/lib/barTitle";
 import { AccountMenu } from "./AccountMenu";
 import { CommandPalette } from "./CommandPalette";
 import { Sidebar } from "./Sidebar";
@@ -181,6 +182,9 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   const pageName = section ? tSettings(`nav.items.${section.key}.title`) : page ? t(page.key) : "Counterfoil";
 
   return (
+    /* What the bar is calling this page, published so a page's own heading can
+       stand down where it would only say it again — see `lib/barTitle`. */
+    <BarTitleContext value={pageName}>
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen shrink-0 overflow-y-auto md:block">
         <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
@@ -341,5 +345,6 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
     </div>
+    </BarTitleContext>
   );
 }

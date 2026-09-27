@@ -12950,3 +12950,153 @@ catalog's own 95 checks, because the templates live inside it. `tsc`,
 - **The gallery strip stays abstract.** Those tiles are `aria-hidden`
   decoration standing in for photographs; a monogram there would be saying
   something about nothing.
+
+## Every OS page on a phone — item 20 (2026-09-27)
+
+*"research full OS every page in mobile screen view like a professional UI UX
+research team, findout the UI and UX errors, issues, findout what can give a
+better UI and better UX and minimize the space management, reduce the waste of
+space, and fix them properly."*
+
+Measured before anything was touched: **30 routes at 390 × 844**, each asked the
+questions a person would notice, ranked by consequence — **A** the screen lies
+or hides something, **B** it is unusable for someone, **C** it wastes the screen.
+
+| | before | after |
+|---|---|---|
+| hidden overflow inside `main` | 0 | **0** |
+| silently clipped text | 0 | **0** |
+| console errors | 0 | **0** |
+| targets under the 44px thumb floor | **45** | **0** |
+| text under the 12px floor | 14, all `/deck` | 14, all `/deck` |
+
+The A class was already clean, which is what eight previous mobile passes
+bought. What was left was one usability fault and one waste, and both were
+mechanisms rather than screens.
+
+### Every OS page said its name twice
+
+The shell pass put the page's name in the phone's sticky bar and took the
+breadcrumb out. What it left behind was a 22px `<h1>` directly beneath saying
+the same word — on **thirty routes**, at the top of the screen with the least
+room for one.
+
+A page cannot simply drop its heading, and that is why this needed a mechanism
+rather than a class. **On a sub-page the bar names the section**: `/catalog/new`
+reads "Catalog" in the bar and "Add to your catalog" on the page;
+`/orders/ord_stress` reads "Orders" over its own reference; `/dashboard` reads
+"Dashboard" over the operator's business name. Hiding those would lose the only
+thing saying what you are looking at.
+
+So `lib/barTitle` publishes what the bar actually drew, and `PageShell` stands
+its heading down **only when the two are the same word** — `max-sm:sr-only`, so
+it stays in the document, because a page needs a heading whether or not it is
+drawn. Above `sm` nothing changes.
+
+**24 of the 30 headings stood down. The six that stayed are exactly the six that
+say something the bar does not**, which is the check rather than the claim:
+
+> `/dashboard` — "Lalbagh Heritage Attractions" · `/reports/sales` — "Sales
+> reports" · `/catalog/new` — "Add to your catalog" · `/orders/ord_stress` —
+> "CF-2026-999001" · `/customers/cus_stress` — "Mohammad Abdur Rahman
+> Chowdhury" · `/inventory/inv_tote` — "Souvenir tote bag"
+
+The heading is **25px**, and on a page that carries its own actions there was a
+further **8px** of flex gap left between an empty box and the buttons — a gap
+between nothing and something. It goes with the heading.
+
+Measured per route: `/orders` **110 → 85**, the eleven settings pages
+**170 → 145**, `/customers` **162 → 129**, `/catalog` **491 → 458**.
+
+### The targets, and the four that were real
+
+45 sounds like 45 problems and was four. Every genuine one is a value in a
+record that happens to be a link or a field:
+
+- the order page's **back link**, and its **note input** at `h-9` (36px),
+- the order's **buyer link** in the Placed card,
+- the customer record's **tel: and mailto: links** — which is precisely the
+  control somebody taps rather than reads.
+
+Each grows to 44px below `sm` and keeps its density from `sm` up, which is the
+responsive-by-form-factor rule the nav has followed since F10. The other 41 are
+the documented exemptions, and the harness now **states** them rather than
+reporting them: a link inside a sentence, a checkbox whose own `<label>` is the
+44px target, and a visually-hidden input behind a drawn control.
+
+### What was measured and deliberately left
+
+The remaining chrome was broken down element by element rather than judged by
+its total, because "waste" is a claim that has to be checked:
+
+- **`/catalog`'s 458px is the page's own controls.** A 52px New button, the
+  band of figures the owner asked for, the All/Bookings/Events tabs, a search
+  and a category filter — and a **57px one-time notice** ("Bookings and Events
+  are on one screen now") that is dismissible and remembered in `localStorage`.
+  `/events` redirects here, which is why the two measure alike.
+- **The settings pages' extra 60px is the Settings button** — the section-list
+  opener that replaced the "All settings" back link below `xl`. It is the only
+  way between sections at that width.
+- **`/orders` is at the floor**: 16px of page padding, a header that draws
+  nothing, 16px to the first card. 32px of chrome under the bar.
+- **The 14 sub-12px strings are all `/deck`**, which lays out on a fixed
+  1600 × 900 canvas and scales — the type is 12px and up as authored. A phone
+  reads it by pinch-zoom or as the PDF, which is the recorded decision from the
+  deck work.
+- **The tab bar's 11px labels** stay, as they have since the type sweep: five
+  tabs across 390px is a tab-bar convention and 14px does not fit.
+
+### Verified
+
+`mob1.mjs` is the standing mobile harness — 30 routes at 390 × 844, reporting
+hidden overflow, clipped text, sub-12px text, sub-44px targets, the tallest
+empty run inside `main`, where the page's own content begins, and console
+errors. Final: **hidden 0 · clipped 0 · under12 14 (all `/deck`) · under44 0 ·
+errors 0**.
+
+Standing harnesses hold, which matters here because `PageShell` renders on every
+OS route and `OsShell` wraps all of them: **top cards 84/84** (the bars still
+carry no trail and no prose at 1440 or 390 while still naming the page),
+**settings navigation 55/55**, **catalog 95/95**. `tsc --noEmit` and
+`npm run build` clean; `eslint` clean on every file touched except `OsShell`,
+which holds at its **one documented pre-existing** `set-state-in-effect`.
+i18n parity **0 missing / 0 extra** across 34 namespaces — no keys, because this
+is shape.
+
+### Open
+
+- **The heading is still drawn twice above `sm`**, where the bar carries the
+  title as well. That is correct rather than outstanding: on a desktop the bar's
+  copy is the page's `h1`, portalled into it, so there is only ever one. The
+  duplication was a phone-only fault.
+- **`/deck` is not responsive by design** and is the only route with text under
+  the floor.
+- **A phone still spends 458px before `/catalog`'s first row**, and every pixel
+  of it is a control the page owns. Cutting it further means deciding that one
+  of those controls should fold — an owner decision about that page rather than
+  a measurement.
+
+### A note for whoever runs this next: do not build against a live dev server
+
+Three harness runs in a row failed in three different places, and the cause was
+mine: `next build` and `next dev` **share `.next`**, so running `npm run build`
+while the dev server is up leaves it serving a broken route manifest. The
+symptom is the confusing part — **every settings sub-route 404'd**, including
+`/settings/team/new`, which is a file on disk.
+
+Attributed rather than guessed: the same three URLs return **200 on
+production**, so nothing in the product was broken. `rm -rf .next` and a restart
+fixed it.
+
+Two things follow. **Stop the dev server before building**, and start it again
+afterwards. And a harness that clicks into a settings record must
+`waitForURL(...)` rather than wait a guessed 1200ms — the back link is drawn by
+the settings *layout* from `usePathname()`, so until the router commits the new
+path the page correctly shows the section menu instead. On a cold `.next` that
+raced two checks into phantom failures; `settings-nav` is back at **55/55** with
+the wait fixed, and the record page was verified directly at both widths (back
+link visible, reading "Team", no menu button, 0 console errors).
+
+Also worth restating from the inventory session: **do not run several harnesses
+and a build at once.** A contaminated run reported 6 console errors and a shifted
+chrome median; run alone on a settled server it reports **0**.

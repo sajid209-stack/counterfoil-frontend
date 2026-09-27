@@ -267,7 +267,7 @@ export default function OrderDetailPage() {
         ) : undefined
       }
     >
-      <Link href="/orders" className="mb-section inline-flex items-center gap-inline text-[13px] text-muted hover:text-fg">
+      <Link href="/orders" className="mb-section inline-flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg sm:min-h-0">
         <ArrowLeft size={14} strokeWidth={1.5} /> {t("backOrders")}
       </Link>
 
@@ -390,7 +390,7 @@ export default function OrderDetailPage() {
                    the person who owes or is owed the figure beside it. */
                 <p className="mt-tight text-sm">
                   {o.customerId ? (
-                    <Link href={`/customers/${o.customerId}`} className="text-brand-foreground underline underline-offset-2">
+                    <Link href={`/customers/${o.customerId}`} className="inline-flex min-h-11 items-center text-brand-foreground underline underline-offset-2 sm:min-h-0">
                       {o.customerName}
                     </Link>
                   ) : (
@@ -442,7 +442,7 @@ export default function OrderDetailPage() {
                 ))
               )}
               <div className="mt-tight flex gap-tight">
-                <input value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNote()} placeholder={t("addNotePlaceholder")} className="h-9 min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse" />
+                <input value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNote()} placeholder={t("addNotePlaceholder")} className="h-11 min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse md:h-9" />
                 <Button size="sm" variant="secondary" disabled={!noteDraft.trim()} onClick={addNote}>{t("add")}</Button>
               </div>
             </Card>
