@@ -290,9 +290,13 @@ export function EventTemplate({
      Counting hero and countdown made the first visible index read "03", with
      01 and 02 nowhere on the page — a numbering that invites the reader to
      look for something that was never drawn. Hiding a section still renumbers
-     the rest rather than leaving a gap. */
+     the rest rather than leaving a gap.
+
+     `stats` is the same fault in its smaller form and survived that fix: the
+     figures band draws no heading, so it took 01 and showed nothing, and
+     every page began at 02. */
   const NUMBERED: SectionId[] = c.sections.filter(
-    (x) => x !== "hero" && x !== "countdown" && !absorbed.has(x),
+    (x) => x !== "hero" && x !== "countdown" && x !== "stats" && !absorbed.has(x),
   );
   const indexOf = (id: SectionId) => NUMBERED.indexOf(id) + 1;
 
@@ -975,6 +979,31 @@ export function EventTemplate({
             <p style={{ font: "400 15px/1.6 var(--e-body)", color: "var(--e-muted)", margin: "10px 0 0" }}>
               {dateLine} · {timeLine}
             </p>
+            {/* The link the conference variant has had since it was rebuilt,
+                and the other five templates did not: the plate beside this is
+                a placeholder for a map, and THIS is the thing a visitor
+                actually presses. */}
+            {event.venueName && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  [event.venueName, event.venueAddress].filter(Boolean).join(", "),
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  marginTop: 14,
+                  font: "600 14px/1 var(--e-body)",
+                  color: "var(--e-accent-ink)",
+                  textDecoration: "none",
+                }}
+              >
+                {labels.viewOnMap}
+                <ArrowRight size={14} strokeWidth={2} aria-hidden />
+              </a>
+            )}
           </div>
           {/* A map stands in as a themed plate rather than an embedded tile: a
               broken third-party map is worse than an honest placeholder, and
@@ -2071,8 +2100,23 @@ function LineupCards({
               borderBottom: featured ? `1px solid var(--e-line)` : undefined,
               background: plateArt(accent, i, isLight(theme.bg)),
               overflow: "hidden",
+              display: "grid",
+              placeItems: "center",
             }}
           >
+            {/* Whose plate this is, in two letters. Quiet enough to stay a
+                ground for the name under it, and the reason the plate no
+                longer reads as a photograph that failed to load. */}
+            <span
+              aria-hidden
+              style={{
+                font: `700 ${narrow ? "44px" : "64px"}/1 var(--e-display)`,
+                letterSpacing: theme.displayTracking,
+                color: `color-mix(in srgb, var(--e-accent) 34%, transparent)`,
+              }}
+            >
+              {monogram(e.name)}
+            </span>
             {/* The billing position, kept on the plate rather than beside the
                 name: it indexes the picture, and outlined so a six-name bill
                 is not a column of loud numerals. */}
@@ -2503,7 +2547,10 @@ function ScheduleList({ entries, narrow }: { entries: EventRecord["lineup"]; nar
                       borderRadius: 999,
                       border: `1px solid var(--e-line)`,
                       background: "var(--e-panel)",
-                      font: "600 11px/1 var(--e-body)",
+                      /* 12px, the floor this app has held product-wide since
+                         September. It was 11 — small uppercase is the hardest
+                         case to read, not the safe exception it looks like. */
+                      font: "600 12px/1 var(--e-body)",
                       letterSpacing: "0.1em",
                       color: "var(--e-accent-ink)",
                     }}
@@ -3727,6 +3774,25 @@ function accentInk(accent: string, bg: string, fg: string): string {
     if (ratio(C, B) >= 4.5) return `rgb(${C[0]}, ${C[1]}, ${C[2]})`;
   }
   return fg;
+}
+
+/**
+ * The monogram a plate carries where no photograph has been uploaded.
+ *
+ * Two letters of the name, set large and quiet. A soft wash alone reads as a
+ * photograph that failed to load — the thing this codebase decided was worse
+ * than no photograph at all when it deleted four seed images — while initials
+ * are plainly drawn and say something true about the person or the work they
+ * stand for.
+ */
+const TITLES = new Set(["dr", "dr.", "mr", "mr.", "mrs", "mrs.", "ms", "ms.", "prof", "prof.", "sir", "eng", "eng."]);
+
+function monogram(name: string): string {
+  /* A title is not a name: "Dr. Nusrat Jahan" was reading as DJ. */
+  const words = name.trim().split(/\s+/).filter((w) => w && !TITLES.has(w.toLowerCase()));
+  if (!words.length) return "";
+  const letters = words.length === 1 ? words[0].slice(0, 2) : words[0][0] + words[words.length - 1][0];
+  return letters.toUpperCase();
 }
 
 /** Cover art when the operator has not uploaded any.

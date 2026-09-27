@@ -12871,3 +12871,82 @@ times.
 - **The list is every quarter hour, not the venue's own hours.** Trading hours
   would make a shorter list, and would also hide the time somebody actually
   wants when an event runs late.
+
+
+## The event templates, looked at rather than read — item 14 (2026-09-27)
+
+*"In OS event creating, Conference, Exhibition and Travel Template UI needs to
+be more good, and appreciating UI design of landing page."*
+
+Rendered all six and read them as a visitor would. The structure of these pages
+is strong — the conference and the travel template were both rebuilt in
+September and it shows — so what was left was not a redesign. It was three
+things that made finished pages look unfinished, and all three are **shared**,
+so fixing them once fixes six templates rather than the three named.
+
+### A plate that says whose it is
+
+The portraits on a bill — speakers on a conference, artists on an exhibition —
+were a soft wash with fine rules over it. Three of them in a row read as three
+photographs that failed to load, which is the failure this codebase already
+decided was worse than no photograph at all when it deleted four seed images.
+
+Each plate now carries the **monogram** of the person or work it stands for,
+set large and quiet behind the position numeral. It is plainly drawn, it can
+never be mistaken for a broken image, and it says something true. "Dr. Nusrat
+Jahan" reads **NJ**, not DJ — a title is not a name, which is the kind of
+detail a page about people gets judged on.
+
+A concert's bill is deliberately **not** this: its billing is the type size,
+which is how a festival poster has always said who is headlining, and that
+stays.
+
+### The numbering started at 02, on every page
+
+The section numbers were fixed once already, when they started at 03. The
+smaller version of the same fault survived it: the figures band draws no
+heading, so it took 01 and showed nothing, and every template began at **02** —
+a numbering that invites the reader to look for something that was never
+drawn. It is numbered among the sections that actually carry a header now.
+
+### The map link five templates did not have
+
+The conference gained a real "View on map" when it was rebuilt: the plate
+beside it is a placeholder, and the link is the thing a visitor actually
+presses. The other five drew the placeholder and offered nothing to press. They
+all offer it now, built from the venue and its address.
+
+### And one below the floor
+
+The tournament's **VS** chip was 11px — small uppercase, which is the hardest
+case to read, not the safe exception it looks like. 12px, which is the floor
+this product has held everywhere since September.
+
+### Verified
+
+**36 checks across all six templates**: the numbering starts at 01, every
+template offers a real map link, nothing is under the 12px floor, nothing is
+clipped without an ellipsis, no console errors — and, where portraits are
+drawn, every one says whose it is with no title mistaken for a name. Plus the
+catalog's own 95 checks, because the templates live inside it. `tsc`,
+`npm run build` and `eslint` clean.
+
+### Two harness corrections, both recorded before
+
+- The "clipped text" check flagged one element on every template: the page
+  header's **`sr-only` line**, which is clipped to 1×1 on purpose. It measures
+  the geometry now rather than trusting a class name, because the variant
+  `max-sm:sr-only` exists too.
+- And a probe that never clicked found nothing at all: **the record folds its
+  preview**, so the template is not in the DOM until it is opened.
+
+### Deliberately not done
+
+- **No new hero artwork.** The exhibition's hero is title, subtitle and a meta
+  line on warm paper, and for a gallery that editorial restraint is right —
+  the works are the pictures. What these pages are actually short of is
+  photography, and that is an upload this product does not have yet rather
+  than a layout to invent.
+- **The gallery strip stays abstract.** Those tiles are `aria-hidden`
+  decoration standing in for photographs; a monogram there would be saying
+  something about nothing.
