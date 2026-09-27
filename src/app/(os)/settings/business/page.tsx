@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { PageShell, useToast } from "@/components/ui";
+import { PageShell, Select, useToast } from "@/components/ui";
 import { ReceiptFooter, ReceiptHeader } from "@/components/ReceiptParts";
-import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator, getTaxConfig, listLocations, updateOperator, type Operator } from "@/lib/api";
 import { DEMO_TODAY } from "@/lib/schedule";
@@ -211,24 +210,24 @@ export default function BusinessProfilePage() {
           <SettingsSection title={t("business.regionalTitle")} description={t("business.regionalDesc")}>
             <SettingRow label={t("business.currency")} description={t("business.currencyDesc")}>
               {({ id, describedBy }) => (
-                <select id={id} value={form.currency} onChange={(e) => set("currency", e.target.value)} aria-describedby={describedBy} className={cn(controlCls(), "pr-section")}>
-                  {CURRENCIES.map((code) => (
-                    <option key={code} value={code}>
-                      {code} — {currencyName(code, locale)}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  id={id}
+                  value={form.currency}
+                  onChange={(v) => set("currency", v)}
+                  aria-describedby={describedBy}
+                  options={CURRENCIES.map((code) => ({ value: code, label: `${code} — ${currencyName(code, locale)}` }))}
+                />
               )}
             </SettingRow>
             <SettingRow label={t("common.timezone")} description={t("business.timezoneDesc")}>
               {({ id, describedBy }) => (
-                <select id={id} value={form.timezone} onChange={(e) => set("timezone", e.target.value)} aria-describedby={describedBy} className={cn(controlCls(), "pr-section")}>
-                  {zones.map((zone) => (
-                    <option key={zone} value={zone}>
-                      {zoneLabel(zone)}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  id={id}
+                  value={form.timezone}
+                  onChange={(v) => set("timezone", v)}
+                  aria-describedby={describedBy}
+                  options={zones.map((zone) => ({ value: zone, label: zoneLabel(zone) }))}
+                />
               )}
             </SettingRow>
           </SettingsSection>

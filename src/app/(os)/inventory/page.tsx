@@ -9,6 +9,7 @@ import {
   Button,
   DataTable,
   EmptyState,
+  Select,
   PageShell,
   StatStrip,
   StatusPill,
@@ -307,33 +308,24 @@ export default function InventoryPage() {
             className="h-11 w-full min-w-0 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse sm:h-9 sm:w-56"
           />
           <div className="flex gap-tight sm:contents">
-          <select
+          <Select
             value={kind}
-            onChange={(e) => setKind(e.target.value)}
+            onChange={setKind}
             aria-label={t("kindAll")}
-            className="h-11 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse sm:h-9"
-          >
-            <option value="">{t("kindAll")}</option>
-            {(["merch", "food", "equipment", "service"] as const).map((k) => (
-              <option key={k} value={k}>
-                {t(`kind.${k}`)}
-              </option>
-            ))}
-          </select>
+            triggerClassName="text-[13px] sm:h-9"
+            options={[
+              { value: "", label: t("kindAll") },
+              ...(["merch", "food", "equipment", "service"] as const).map((k) => ({ value: k, label: t(`kind.${k}`) })),
+            ]}
+          />
           {locations.length > 1 && (
-            <select
+            <Select
               value={venue}
-              onChange={(e) => setVenue(e.target.value)}
+              onChange={setVenue}
               aria-label={t("allVenues")}
-              className="h-11 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse sm:h-9"
-            >
-              <option value="">{t("allVenues")}</option>
-              {locations.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.name}
-                </option>
-              ))}
-            </select>
+              triggerClassName="text-[13px] sm:h-9"
+              options={[{ value: "", label: t("allVenues") }, ...locations.map((l) => ({ value: l.id, label: l.name }))]}
+            />
           )}
           </div>
         </div>

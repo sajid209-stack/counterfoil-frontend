@@ -330,7 +330,7 @@ export function ProductForm({
                       return (
                         <label
                           key={r.id}
-                          className={`flex cursor-pointer items-center gap-comfortable rounded-sm border p-comfortable transition-colors duration-quick ${on ? "border-ember bg-ember/5" : "border-line hover:bg-subtle"}`}
+                          className={`flex cursor-pointer items-center gap-comfortable rounded-sm border p-comfortable transition-colors duration-quick ${on ? "border-ember bg-ember/5" : "border-line hover:bg-muted-wash"}`}
                         >
                           <input
                             type="checkbox"

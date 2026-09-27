@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Info } from "lucide-react";
-import { PageShell, useToast } from "@/components/ui";
+import { PageShell, Select, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getAccessPolicy, listRoles, listStaff, updateAccessPolicy, type AccessPolicy, type TwoStepRequirement } from "@/lib/api";
-import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, Switch, controlCls } from "../_components/SettingsKit";
+import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, Switch } from "../_components/SettingsKit";
 import { isElevated } from "../_lib/access";
 
 const TWO_STEP: TwoStepRequirement[] = ["off", "managers", "everyone"];
@@ -91,7 +91,7 @@ export default function SignInRulesPage() {
                   key={level}
                   className={cn(
                     "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
-                    checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-subtle/60",
+                    checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
                   )}
                 >
                   <input
@@ -138,19 +138,13 @@ export default function SignInRulesPage() {
         <SettingsSection title={t("signIn.sessionTitle")} description={t("signIn.sessionDesc")}>
           <SettingRow label={t("signIn.sessionHours")} description={t("signIn.sessionHoursDesc")}>
             {({ id, describedBy }) => (
-              <select
+              <Select
                 id={id}
-                value={form.sessionHours}
-                onChange={(e) => set({ sessionHours: Number(e.target.value) })}
+                value={String(form.sessionHours)}
+                onChange={(v) => set({ sessionHours: Number(v) })}
                 aria-describedby={describedBy}
-                className={cn(controlCls(), "pr-section")}
-              >
-                {SESSION_HOURS.map((h) => (
-                  <option key={h} value={h}>
-                    {span(h)}
-                  </option>
-                ))}
-              </select>
+                options={SESSION_HOURS.map((h) => ({ value: String(h), label: span(h) }))}
+              />
             )}
           </SettingRow>
           <SettingRow
@@ -163,19 +157,16 @@ export default function SignInRulesPage() {
             }
           >
             {({ id, describedBy }) => (
-              <select
+              <Select
                 id={id}
-                value={form.tillLockMinutes ?? "never"}
-                onChange={(e) => set({ tillLockMinutes: e.target.value === "never" ? null : Number(e.target.value) })}
+                value={String(form.tillLockMinutes ?? "never")}
+                onChange={(v) => set({ tillLockMinutes: v === "never" ? null : Number(v) })}
                 aria-describedby={describedBy}
-                className={cn(controlCls(), "pr-section")}
-              >
-                {TILL_LOCK.map((m) => (
-                  <option key={m ?? "never"} value={m ?? "never"}>
-                    {m === null ? t("signIn.never") : t("signIn.minutes", { count: m })}
-                  </option>
-                ))}
-              </select>
+                options={TILL_LOCK.map((m) => ({
+                  value: String(m ?? "never"),
+                  label: m === null ? t("signIn.never") : t("signIn.minutes", { count: m }),
+                }))}
+              />
             )}
           </SettingRow>
         </SettingsSection>
@@ -231,19 +222,13 @@ export default function SignInRulesPage() {
           </SettingRow>
           <SettingRow label={t("signIn.pinAttempts")} description={t("signIn.pinAttemptsDesc")}>
             {({ id, describedBy }) => (
-              <select
+              <Select
                 id={id}
-                value={form.pinAttempts}
-                onChange={(e) => set({ pinAttempts: Number(e.target.value) })}
+                value={String(form.pinAttempts)}
+                onChange={(v) => set({ pinAttempts: Number(v) })}
                 aria-describedby={describedBy}
-                className={cn(controlCls(), "pr-section")}
-              >
-                {PIN_ATTEMPTS.map((n) => (
-                  <option key={n} value={n}>
-                    {t("signIn.tries", { count: n })}
-                  </option>
-                ))}
-              </select>
+                options={PIN_ATTEMPTS.map((n) => ({ value: String(n), label: t("signIn.tries", { count: n }) }))}
+              />
             )}
           </SettingRow>
           <SettingRow label={t("signIn.deviceBound")} description={t("signIn.deviceBoundDesc")} labelFor={false}>

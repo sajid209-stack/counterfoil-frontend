@@ -318,7 +318,7 @@ export function WeekGrid({
                 className={cn(
                   "flex flex-1 flex-col items-center gap-0.5 py-tight",
                   today && "bg-ember/5",
-                  onPickDay && "transition-colors duration-quick hover:bg-subtle",
+                  onPickDay && "transition-colors duration-quick hover:bg-muted-wash",
                 )}
               >
                 <span

@@ -81,7 +81,7 @@ export function ColorPicker({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={label}
-        className="flex h-11 w-11 items-center justify-center rounded-sm transition-colors duration-quick hover:bg-subtle/60 md:h-9 md:w-9"
+        className="flex h-11 w-11 items-center justify-center rounded-sm transition-colors duration-quick hover:bg-muted-wash md:h-9 md:w-9"
       >
         <span
           aria-hidden
@@ -105,7 +105,7 @@ export function ColorPicker({
               role="menuitemradio"
               aria-checked={(value ?? null) === c}
               onClick={() => pick(c)}
-              className="flex min-h-11 w-full items-center gap-comfortable px-comfortable text-left text-sm text-fg transition-colors duration-quick hover:bg-subtle md:min-h-9"
+              className="flex min-h-11 w-full items-center gap-comfortable px-comfortable text-left text-sm text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
             >
               <span
                 aria-hidden

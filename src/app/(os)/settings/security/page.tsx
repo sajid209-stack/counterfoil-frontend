@@ -14,7 +14,7 @@ import {
   Tablet,
   type LucideIcon,
 } from "lucide-react";
-import { Button, ConfirmDialog, Modal, PageShell, useToast } from "@/components/ui";
+import { Button, ConfirmDialog, Modal, PageShell, Select, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getAccessPolicy, listRoles, listStaff } from "@/lib/api";
@@ -274,22 +274,18 @@ export default function SecurityPage() {
         <SettingsSection title={t("security.recovery")} description={t("security.recoveryNote")}>
           <SettingRow label={t("security.recoveryWho")}>
             {({ id }) => (
-              <select
+              <Select
                 id={id}
                 value={recovery}
-                onChange={(e) => {
-                  setRecovery(e.target.value);
-                  if (e.target.value) toast.success(t("security.recoverySet"));
+                onChange={(v) => {
+                  setRecovery(v);
+                  if (v) toast.success(t("security.recoverySet"));
                 }}
-                className={cn(controlCls(), "pr-section")}
-              >
-                <option value="">{t("security.noRecovery")}</option>
-                {managers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: t("security.noRecovery") },
+                  ...managers.map((s) => ({ value: s.id, label: s.name })),
+                ]}
+              />
             )}
           </SettingRow>
         </SettingsSection>

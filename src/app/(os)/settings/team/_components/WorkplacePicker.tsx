@@ -76,7 +76,7 @@ export function WorkplacePicker({
                           key={c.id}
                           className={cn(
                             "inline-flex min-h-11 cursor-pointer items-center gap-tight rounded-full border px-comfortable text-[13px] transition-colors duration-quick md:min-h-9",
-                            checked ? "border-ember-solid bg-ember/5 text-fg" : "border-line text-muted hover:bg-subtle/60",
+                            checked ? "border-ember-solid bg-ember/5 text-fg" : "border-line text-muted hover:bg-muted-wash",
                           )}
                         >
                           <input type="checkbox" checked={checked} onChange={() => toggleCounter(c.id)} className="h-4 w-4 accent-ember" />

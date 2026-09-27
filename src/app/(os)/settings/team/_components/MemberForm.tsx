@@ -183,7 +183,7 @@ export function MemberForm({
         aside={
           <Link
             href="/settings/roles"
-            className="inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg md:min-h-9"
+            className="inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
           >
             {t("team.manageRoles")}
           </Link>

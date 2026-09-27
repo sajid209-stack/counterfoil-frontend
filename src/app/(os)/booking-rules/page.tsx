@@ -8,6 +8,7 @@ import {
   Button,
   DataTable,
   EmptyState,
+  Select,
   PageShell,
   StatusPill,
   type Column,
@@ -67,11 +68,17 @@ export default function BookingRulesPage() {
                 className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
-            <select aria-label={tc("filterByStatus")} value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }} className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
-              <option value="all">{t("allStatuses")}</option>
-              <option value="active">{t("statusActive")}</option>
-              <option value="inactive">{t("statusInactive")}</option>
-            </select>
+            <Select
+              aria-label={tc("filterByStatus")}
+              value={status}
+              onChange={(v) => { setStatus(v); setPage(1); }}
+              triggerClassName="text-sm md:h-9"
+              options={[
+                { value: "all", label: t("allStatuses") },
+                { value: "active", label: t("statusActive") },
+                { value: "inactive", label: t("statusInactive") },
+              ]}
+            />
           </div>
         }
         emptyState={<EmptyState title={t("emptyTitle")} message={t("emptyMessage")} />}

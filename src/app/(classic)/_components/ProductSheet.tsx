@@ -534,7 +534,7 @@ export function ProductSheet({
             <h2 id="sheet-title" className="type-h2 break-words text-2xl">{product.name}</h2>
             <p className="mt-inline text-[13px] text-muted">{behaviourSubtitle(product, { resources, team })}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg active:bg-ember/10"><X size={20} strokeWidth={1.75} /></button>
+          <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg active:bg-ember/10"><X size={20} strokeWidth={1.75} /></button>
         </div>
 
         {/* Under two minutes it stops being information and becomes a

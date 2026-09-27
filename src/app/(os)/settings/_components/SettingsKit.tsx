@@ -398,7 +398,7 @@ export function RecordRow({
       <Link
         href={href}
         className={cn(
-          "flex min-h-16 items-center gap-section px-card py-comfortable transition-colors duration-quick hover:bg-subtle/60",
+          "flex min-h-16 items-center gap-section px-card py-comfortable transition-colors duration-quick hover:bg-muted-wash",
           // Room for the trailing controls: the card inset they sit at, plus
           // their width — 108px for a switch and a menu, 56 for one.
           trailing === 2 ? "pr-[calc(var(--spacing-card)_+_6.75rem)]" : trailing === 1 ? "pr-[calc(var(--spacing-card)_+_3.5rem)]" : undefined,

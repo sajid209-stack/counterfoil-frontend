@@ -97,7 +97,7 @@ export function SessionList({
                 ? "border-ember bg-ember/10"
                 : full
                   ? "border-line bg-subtle"
-                  : "border-line bg-card hover:bg-subtle active:bg-ember/10",
+                  : "border-line bg-card hover:bg-muted-wash active:bg-ember/10",
             )}
           >
             <span className="flex min-w-0 flex-1 flex-col gap-1.5">

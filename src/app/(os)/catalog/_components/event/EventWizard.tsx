@@ -612,7 +612,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
               <button
                 type="button"
                 onClick={() => setBigPreview(true)}
-                className="flex min-h-9 items-center gap-inline rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-subtle hover:text-fg"
+                className="flex min-h-9 items-center gap-inline rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-muted-wash hover:text-fg"
               >
                 <Maximize2 size={14} strokeWidth={1.5} aria-hidden />
                 {tb("fullPreview")}

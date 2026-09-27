@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CircleAlert } from "lucide-react";
-import { Button, ConfirmDialog, useToast } from "@/components/ui";
+import { Button, ConfirmDialog, Select, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
   createCounter,
@@ -39,9 +39,9 @@ const fromCounter = (c: Counter): Draft => ({
 });
 
 const chip =
-  "inline-flex min-h-11 items-center rounded-full border border-line px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-subtle/60 md:min-h-9";
+  "inline-flex min-h-11 items-center rounded-full border border-line px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
 const quiet =
-  "inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg md:min-h-9";
+  "inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9";
 
 /**
  * A counter: where it is, how customers can pay at it, what it sells.
@@ -174,19 +174,16 @@ export function CounterEditor({
         </SettingRow>
         <SettingRow label={t("common.location")} description={t("counters.locationDesc")}>
           {({ id, describedBy }) => (
-            <select
+            <Select
               id={id}
               value={form.locationId}
-              onChange={(e) => set({ locationId: e.target.value })}
+              onChange={(v) => set({ locationId: v })}
               aria-describedby={describedBy}
-              className={cn(controlCls(), "pr-section")}
-            >
-              {places.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.status === "inactive" ? `${l.name} · ${t("common.inactive")}` : l.name}
-                </option>
-              ))}
-            </select>
+              options={places.map((l) => ({
+                value: l.id,
+                label: l.status === "inactive" ? `${l.name} · ${t("common.inactive")}` : l.name,
+              }))}
+            />
           )}
         </SettingRow>
       </SettingsSection>
@@ -265,7 +262,7 @@ export function CounterEditor({
                             key={p.id}
                             className={cn(
                               "inline-flex min-h-11 max-w-full cursor-pointer items-center gap-tight rounded-full border px-comfortable py-inline text-[13px] transition-colors duration-quick md:min-h-9",
-                              checked ? "border-ember-solid bg-ember/5 text-fg" : "border-line text-muted hover:bg-subtle/60",
+                              checked ? "border-ember-solid bg-ember/5 text-fg" : "border-line text-muted hover:bg-muted-wash",
                             )}
                           >
                             <input

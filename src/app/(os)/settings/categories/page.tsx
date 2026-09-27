@@ -11,7 +11,7 @@ import { SectionSkeleton, SettingsSection, Switch, controlCls } from "../_compon
 import { ColorPicker } from "./_components/ColorPicker";
 
 const iconBtn =
-  "inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9";
+  "inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9";
 
 /**
  * Categories — the chips a cashier taps to narrow the till.

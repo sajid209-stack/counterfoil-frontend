@@ -50,7 +50,7 @@ export function MembershipSheet({
                 <button
                   type="button"
                   onClick={() => onPick(tier)}
-                  className="flex min-h-12 w-full items-center justify-between gap-tight rounded-go border border-line p-comfortable text-left transition-colors duration-quick hover:bg-subtle active:bg-ember/10"
+                  className="flex min-h-12 w-full items-center justify-between gap-tight rounded-go border border-line p-comfortable text-left transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10"
                 >
                   <span className="min-w-0">
                     <span className="block break-words text-sm font-medium">{tier.name}</span>

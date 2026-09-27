@@ -366,7 +366,7 @@ export default function NotificationsPage() {
               <button
                 type="button"
                 onClick={() => set({ template: DEFAULT_SMS_TEMPLATE })}
-                className="inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg md:min-h-9"
+                className="inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
               >
                 <RotateCcw size={14} strokeWidth={1.5} aria-hidden />
                 {t("notifications.reset")}
@@ -477,7 +477,7 @@ export default function NotificationsPage() {
                           onClick={() => toggleRole(ev, r.id)}
                           className={cn(
                             "inline-flex min-h-11 items-center gap-inline rounded-sm border px-comfortable text-[13px] font-medium transition-colors duration-quick md:min-h-9",
-                            on ? "border-ember-solid bg-ember/5 text-fg" : "border-line text-muted hover:bg-subtle/60 hover:text-fg",
+                            on ? "border-ember-solid bg-ember/5 text-fg" : "border-line text-muted hover:bg-muted-wash hover:text-fg",
                           )}
                         >
                           {on && <Check size={14} strokeWidth={2} aria-hidden className="text-brand-foreground" />}

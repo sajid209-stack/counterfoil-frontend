@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { cn } from "@/lib/cn";
+import { Select, type SelectOption } from "./Select";
 
 export type FieldVariant =
   | "text"
@@ -13,10 +14,9 @@ export type FieldVariant =
   | "toggle"
   | "date";
 
-export interface SelectOption {
-  value: string;
-  label: string;
-}
+/* One option shape across the app: Select owns it, and a Field's caller gets
+   its `note`, `group` and `disabled` for free. */
+export type { SelectOption } from "./Select";
 
 interface FormFieldProps {
   label?: string;
@@ -130,20 +130,22 @@ export function FormField({
 
   let field: React.ReactNode;
   if (variant === "select") {
+    /* Counterfoil's own dropdown rather than the platform's: a native list
+       cannot be themed, carries no second line or group heading, and puts its
+       chevron wherever the OS decides. Every `variant="select"` in the product
+       converts here, and gains type-ahead above four options. */
     field = (
-      <select
+      <Select
         id={id}
-        onChange={onChange}
-        {...described}
-        {...control}
-        className={cn(controlBase, border, "h-11 pr-section")}
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+        value={String(control.value ?? "")}
+        onChange={(v) => onChange?.({ target: { value: v, name: control.name } } as never)}
+        options={options}
+        name={control.name}
+        disabled={control.disabled}
+        aria-invalid={!!error}
+        aria-describedby={described["aria-describedby"]}
+        aria-label={label ? undefined : control.name}
+      />
     );
   } else if (variant === "textarea") {
     field = (

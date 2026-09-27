@@ -114,7 +114,7 @@ export function Catalogue({
             key={c.id}
             type="button"
             onClick={() => onCategory(c.id)}
-            className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}
+            className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-muted-wash"}`}
           >
             {c.name}
           </button>
@@ -184,7 +184,7 @@ export function Catalogue({
             <button
               type="button"
               onClick={onCustom}
-              className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-subtle active:bg-ember/10"
+              className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10"
             >
               <Plus size={20} strokeWidth={1.5} />
               <span className="text-[13px]">{t("catalogue.custom")}</span>

@@ -274,7 +274,7 @@ export default function CompletePage() {
                     <button
                       type="button"
                       onClick={() => setShown(ticket)}
-                      className="flex w-full items-center gap-comfortable px-section py-comfortable text-left transition-colors duration-quick active:bg-subtle"
+                      className="flex w-full items-center gap-comfortable px-section py-comfortable text-left transition-colors duration-quick active:bg-muted-wash"
                     >
                       {/* The QR is what the gate scans, so it is dark on white in either theme. */}
                       <span className="shrink-0 rounded-[10px] bg-white p-1 ring-1 ring-line">
@@ -294,7 +294,7 @@ export default function CompletePage() {
                     <button
                       type="button"
                       onClick={() => setAllTickets(true)}
-                      className="flex min-h-[48px] w-full items-center justify-center px-section text-sm font-medium text-brand-foreground transition-colors duration-quick active:bg-subtle"
+                      className="flex min-h-[48px] w-full items-center justify-center px-section text-sm font-medium text-brand-foreground transition-colors duration-quick active:bg-muted-wash"
                     >
                       {t("complete.showAllTickets", { count: tickets.length })}
                     </button>
@@ -486,7 +486,7 @@ function HandOver({ icon, label, name, done, disabled, row, onClick }: { icon: R
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "flex min-w-0 flex-1 items-center justify-center border-l border-line font-medium text-fg transition-colors duration-quick first:rounded-l-go first:border-l-0 last:rounded-r-go active:bg-subtle disabled:opacity-40",
+        "flex min-w-0 flex-1 items-center justify-center border-l border-line font-medium text-fg transition-colors duration-quick first:rounded-l-go first:border-l-0 last:rounded-r-go active:bg-muted-wash disabled:opacity-40",
         row ? "h-12 gap-1.5 px-comfortable text-sm" : "h-16 flex-col gap-1 px-1 text-[13px]",
       )}
     >

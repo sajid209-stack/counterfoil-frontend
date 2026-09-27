@@ -788,7 +788,7 @@ export default function PosPage() {
                    wrapped to two lines while the subtitle truncated to
                    "Open entry · no …". Moving it onto the subtitle's row gives
                    the name the full width beside the thumbnail. */
-                <div key={p.id} className="card-surface flex items-center overflow-hidden transition-colors duration-quick hover:bg-subtle">
+                <div key={p.id} className="card-surface flex items-center overflow-hidden transition-colors duration-quick hover:bg-muted-wash">
                 <button type="button" onClick={() => tapProduct(p)} className="flex min-w-0 flex-1 items-center gap-comfortable p-tight text-left active:bg-ember/10">
                   <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="thumb" />
                   <span className="flex min-w-0 flex-1 flex-col">
@@ -822,7 +822,7 @@ export default function PosPage() {
                 </button>
                 </div>
               ))}
-              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-sm border border-dashed border-line text-muted transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
+              <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[88px] items-center justify-center gap-tight rounded-sm border border-dashed border-line text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10">
                 <Plus size={20} strokeWidth={1.5} /><span className="text-[13px]">{t("customAmount")}</span>
               </button>
             </div>

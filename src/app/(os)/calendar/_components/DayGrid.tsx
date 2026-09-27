@@ -279,7 +279,7 @@ function EmptyLaneToggle({
         type="button"
         aria-expanded={open}
         onClick={onToggle}
-        className="flex h-9 items-center rounded-sm px-tight text-[13px] text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg"
+        className="flex h-9 items-center rounded-sm px-tight text-[13px] text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
       >
         {open ? hideLabel : showLabel(count)}
       </button>

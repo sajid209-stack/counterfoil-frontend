@@ -37,7 +37,7 @@ export function BlockedNotice({
             /* A bordered secondary, not a filled one: the card already has an
                ember edge carrying the alarm, and a black button appears nowhere
                else at this till. */
-            className="flex min-h-11 w-fit items-center rounded-go-sm border border-strong bg-card px-comfortable text-[13px] font-semibold text-fg active:bg-subtle"
+            className="flex min-h-11 w-fit items-center rounded-go-sm border border-strong bg-card px-comfortable text-[13px] font-semibold text-fg active:bg-muted-wash"
           >
             {action.label}
           </button>

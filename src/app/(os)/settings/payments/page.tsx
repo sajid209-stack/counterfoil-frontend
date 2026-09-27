@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowDown, ArrowUp, CircleAlert, CreditCard, Landmark, QrCode, Smartphone, Wallet, type LucideIcon } from "lucide-react";
-import { Button, ConfirmDialog, PageShell, StatusPill, useToast, type PillTone } from "@/components/ui";
+import { Button, ConfirmDialog, PageShell, Select, StatusPill, useToast, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -31,7 +31,7 @@ import type {
 } from "@/lib/api";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDay, formatMoney } from "@/lib/format";
-import { IconTile, SaveBar, SectionSkeleton, SettingRow, SettingsSection, SuffixInput, Switch, controlCls } from "../_components/SettingsKit";
+import { IconTile, SaveBar, SectionSkeleton, SettingRow, SettingsSection, SuffixInput, Switch } from "../_components/SettingsKit";
 
 const PROVIDERS: { provider: PaymentProvider; posture: PaymentAccount["posture"]; icon: LucideIcon }[] = [
   { provider: "bkash", posture: "merchant_of_record", icon: Smartphone },
@@ -54,7 +54,7 @@ const SCHEDULES: PayoutSchedule[] = ["daily", "weekly", "monthly"];
 const SAMPLE = 200_000;
 
 const arrow =
-  "inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent";
+  "inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent";
 
 interface RuleDraft {
   enabled: boolean;
@@ -494,7 +494,7 @@ export default function PaymentsPage() {
                   key={s}
                   className={cn(
                     "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
-                    checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-subtle/60",
+                    checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
                   )}
                 >
                   <input
@@ -516,19 +516,19 @@ export default function PaymentsPage() {
           {form.schedule !== "daily" && (
             <SettingRow label={form.schedule === "weekly" ? t("payouts.weekday") : t("payouts.monthDay")}>
               {({ id }) => (
-                <select id={id} value={form.day} onChange={(e) => set({ day: Number(e.target.value) })} className={cn(controlCls(), "pr-section")}>
-                  {form.schedule === "weekly"
-                    ? weekdays.map((name, d) => (
-                        <option key={d} value={d}>
-                          {name}
-                        </option>
-                      ))
-                    : Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
-                        <option key={d} value={d}>
-                          {t("payouts.dayOfMonth", { day: d })}
-                        </option>
-                      ))}
-                </select>
+                <Select
+                  id={id}
+                  value={String(form.day)}
+                  onChange={(v) => set({ day: Number(v) })}
+                  options={
+                    form.schedule === "weekly"
+                      ? weekdays.map((name, d) => ({ value: String(d), label: name }))
+                      : Array.from({ length: 28 }, (_, i) => i + 1).map((d) => ({
+                          value: String(d),
+                          label: t("payouts.dayOfMonth", { day: d }),
+                        }))
+                  }
+                />
               )}
             </SettingRow>
           )}

@@ -1457,7 +1457,7 @@ export function ProductSheet({
                     <button
                       type="button"
                       onClick={() => setHoldOpen(true)}
-                      className="mt-tight flex min-h-11 w-full items-center justify-center rounded-go-sm text-[13px] font-medium text-muted active:bg-subtle"
+                      className="mt-tight flex min-h-11 w-full items-center justify-center rounded-go-sm text-[13px] font-medium text-muted active:bg-muted-wash"
                     >
                       {t("sheet.holdInstead")}
                     </button>

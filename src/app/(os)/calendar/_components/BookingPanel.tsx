@@ -4,7 +4,7 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "re
 import { Check, Clock3, Minus, Plus, Search, Ticket, TriangleAlert, UserRound, Wallet, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { DateField } from "@/components/ui";
+import { DateField, Select } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useEnumLabels } from "@/lib/labels";
 import { formatMoney, formatPriceShort } from "@/lib/format";
@@ -867,7 +867,7 @@ function Panel({
             type="button"
             onClick={() => onClose(null)}
             aria-label={t("book.close")}
-            className="-mr-tight -mt-inline flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg md:h-9 md:w-9"
+            className="-mr-tight -mt-inline flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:h-9 md:w-9"
           >
             <X size={18} strokeWidth={1.5} />
           </button>
@@ -919,23 +919,25 @@ function Panel({
               {/* The chosen hour's option reads as the booking's real span —
                   "16:15 – 17:15" for a show that starts at a quarter past —
                   so the control and the block on the grid say one thing. */}
-              <select
+              <Select
+                bare
                 id={`${titleId}-hour`}
-                value={hour ?? ""}
-                onChange={(e) => {
-                  setHour(e.target.value === "" ? null : Number(e.target.value));
+                size="sm"
+                value={hour === null ? "" : String(hour)}
+                onChange={(v) => {
+                  setHour(v === "" ? null : Number(v));
                   setChosenKey(null);
                   setListOpen(true);
                 }}
-                className="h-9 min-w-0 cursor-pointer appearance-none rounded-sm bg-transparent px-tight text-[14px] font-medium tabular-nums text-fg outline-none transition-colors duration-quick hover:bg-muted-wash focus-visible:bg-muted-wash"
-              >
-                <option value="">{t("book.anyTime")}</option>
-                {hours.map((h) => (
-                  <option key={h.hour} value={h.hour}>
-                    {h.hour === hour && whenText ? whenText : toTime(h.hour * 60)}
-                  </option>
-                ))}
-              </select>
+                triggerClassName="rounded-sm px-tight text-[14px] font-medium tabular-nums text-fg hover:bg-muted-wash"
+                options={[
+                  { value: "", label: t("book.anyTime") },
+                  ...hours.map((h) => ({
+                    value: String(h.hour),
+                    label: h.hour === hour && whenText ? whenText : toTime(h.hour * 60),
+                  })),
+                ]}
+              />
             </div>
             {(where || (chosen && len != null) || ghost?.allDay) && (
               <p className="mt-0.5 text-[12px] text-muted">
@@ -979,7 +981,7 @@ function Panel({
                   <button
                     type="button"
                     onClick={() => setListOpen(true)}
-                    className="h-11 shrink-0 rounded-sm px-tight text-[13px] font-medium text-brand-foreground transition-colors duration-quick hover:bg-subtle md:h-9"
+                    className="h-11 shrink-0 rounded-sm px-tight text-[13px] font-medium text-brand-foreground transition-colors duration-quick hover:bg-muted-wash md:h-9"
                   >
                     {t("book.change")}
                   </button>
@@ -1165,18 +1167,19 @@ function Panel({
                   {mode === "book" && chosen.kind === "provider" && (
                     <label className="block">
                       <span className="type-label mb-tight block text-[12px] text-muted">{t("book.with")}</span>
-                      <select
+                      <Select
                         value={providerId}
-                        onChange={(e) => setProviderId(e.target.value)}
-                        className="h-11 w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9"
-                      >
-                        <option value="">{t("book.firstAvailable")}</option>
-                        {freeProvidersAt(chosen.product, date, chosen.time!).map((id) => (
-                          <option key={id} value={id}>
-                            {staff.find((s) => s.id === id)?.name ?? id}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setProviderId}
+                        aria-label={t("book.with")}
+                        triggerClassName="text-[13px] md:h-9"
+                        options={[
+                          { value: "", label: t("book.firstAvailable") },
+                          ...freeProvidersAt(chosen.product, date, chosen.time!).map((id) => ({
+                            value: id,
+                            label: staff.find((s) => s.id === id)?.name ?? id,
+                          })),
+                        ]}
+                      />
                     </label>
                   )}
 
@@ -1347,17 +1350,13 @@ function Panel({
               {pay !== "later" && methods.length > 1 && (
                 <label className="mt-tight block">
                   <span className="sr-only">{t("book.method")}</span>
-                  <select
+                  <Select
                     value={method}
-                    onChange={(e) => setMethod(e.target.value as TillMethod)}
-                    className="h-11 w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9"
-                  >
-                    {methods.map((m) => (
-                      <option key={m} value={m}>
-                        {enumL.method(m)}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setMethod(v as TillMethod)}
+                    aria-label={t("book.method")}
+                    triggerClassName="text-[13px] md:h-9"
+                    options={methods.map((m) => ({ value: m, label: enumL.method(m) }))}
+                  />
                 </label>
               )}
               <p className="mt-tight text-[12px] text-muted">
@@ -1474,7 +1473,7 @@ function MoreLine({ onClick, children }: { onClick: () => void; children: React.
     <button
       type="button"
       onClick={onClick}
-      className="mt-inline flex min-h-11 w-full items-center justify-between rounded-sm px-tight text-left text-[13px] text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg md:min-h-9"
+      className="mt-inline flex min-h-11 w-full items-center justify-between rounded-sm px-tight text-left text-[13px] text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
     >
       <span>{children}</span>
       <Plus size={14} strokeWidth={1.5} aria-hidden />
@@ -1625,7 +1624,7 @@ function OptionRow({
       onClick={onChoose}
       className={cn(
         "flex min-h-11 w-full items-center gap-comfortable rounded-sm border px-comfortable py-tight text-left transition-colors duration-quick",
-        on ? "border-ember bg-ember/5" : "border-line hover:border-strong hover:bg-subtle/60",
+        on ? "border-ember bg-ember/5" : "border-line hover:border-strong hover:bg-muted-wash",
       )}
     >
       <span
@@ -1687,7 +1686,7 @@ function Stepper({
           aria-label={t("book.less", { what: label })}
           disabled={value <= min}
           onClick={() => onChange(Math.max(min, value - 1))}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-fg transition-colors duration-quick hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-35 md:h-8 md:w-8"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-fg transition-colors duration-quick hover:bg-muted-wash disabled:cursor-not-allowed disabled:opacity-35 md:h-8 md:w-8"
         >
           <Minus size={14} strokeWidth={2} />
         </button>
@@ -1699,7 +1698,7 @@ function Stepper({
           aria-label={t("book.more", { what: label })}
           disabled={value >= max}
           onClick={() => onChange(Math.min(max, value + 1))}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-fg transition-colors duration-quick hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-35 md:h-8 md:w-8"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-fg transition-colors duration-quick hover:bg-muted-wash disabled:cursor-not-allowed disabled:opacity-35 md:h-8 md:w-8"
         >
           <Plus size={14} strokeWidth={2} />
         </button>

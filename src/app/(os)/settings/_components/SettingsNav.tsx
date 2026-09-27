@@ -57,7 +57,7 @@ export function SettingsRail({ pathname, noun, attention }: ListProps) {
                       title={reason}
                       className={cn(
                         "flex min-h-9 items-center gap-comfortable rounded-sm px-comfortable py-tight text-sm font-medium transition-colors duration-quick",
-                        current ? "bg-subtle text-fg" : "text-muted hover:bg-subtle/60 hover:text-fg",
+                        current ? "bg-subtle text-fg" : "text-muted hover:bg-muted-wash hover:text-fg",
                       )}
                     >
                       <Icon size={16} strokeWidth={1.5} aria-hidden className="shrink-0" />
@@ -142,7 +142,7 @@ export function SettingsMenu({ pathname, noun, attention }: ListProps) {
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => (open ? close() : setOpen(true))}
-        className="-ml-comfortable inline-flex min-h-11 items-center gap-tight rounded-sm px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:bg-subtle/60 md:min-h-9"
+        className="-ml-comfortable inline-flex min-h-11 items-center gap-tight rounded-sm px-comfortable text-sm font-medium text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
       >
         <PanelLeft size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
         {t("nav.menu")}
@@ -196,7 +196,7 @@ export function SettingsMenu({ pathname, noun, attention }: ListProps) {
                             onClick={() => close(false)}
                             className={cn(
                               "flex min-h-11 items-center gap-comfortable px-card py-tight text-sm transition-colors duration-quick",
-                              current ? "bg-subtle font-medium text-fg" : "text-fg hover:bg-subtle/60",
+                              current ? "bg-subtle font-medium text-fg" : "text-fg hover:bg-muted-wash",
                             )}
                           >
                             <Icon size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
@@ -230,7 +230,7 @@ export function BackToList({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="-ml-comfortable inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg md:min-h-9"
+      className="-ml-comfortable inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
     >
       <ChevronLeft size={16} strokeWidth={1.5} aria-hidden />
       {label}

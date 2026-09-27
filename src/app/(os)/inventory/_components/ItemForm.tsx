@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, FormField } from "@/components/ui";
+import { Button, FormField, Select } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { createInventoryItem, updateInventoryItem, type InventoryItem, type Location } from "@/lib/api";
 
@@ -95,21 +95,17 @@ export function ItemForm({
         <div className="grid gap-section sm:grid-cols-2">
           <label className="flex flex-col gap-inline">
             <span className="type-label text-[12px] text-muted">{t("form.kind")}</span>
-            <select
+            <Select
               value={kind}
-              onChange={(e) => {
-                const next = e.target.value as typeof kind;
+              onChange={(v) => {
+                const next = v as typeof kind;
                 setKind(next);
                 if (!item) setAtCounter(next === "merch" || next === "food");
               }}
-              className="h-11 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9"
-            >
-              {(["merch", "food", "equipment", "service"] as const).map((k) => (
-                <option key={k} value={k}>
-                  {t(`kind.${k}`)}
-                </option>
-              ))}
-            </select>
+              aria-label={t("form.kind")}
+              triggerClassName="text-[13px] md:h-9"
+              options={(["merch", "food", "equipment", "service"] as const).map((k) => ({ value: k, label: t(`kind.${k}`) }))}
+            />
           </label>
           <div className="flex flex-col gap-inline">
             <FormField label={t("form.unit")} value={unit} onChange={(e) => setUnit(e.target.value)} error={errors.unit} placeholder={t("form.unitPlaceholder")} />
@@ -139,17 +135,13 @@ export function ItemForm({
           <FormField label={t("form.cost")} variant="number" value={cost} onChange={(e) => setCost(e.target.value)} error={errors.cost} help={t("form.costHelp")} />
           <label className="flex flex-col gap-inline">
             <span className="type-label text-[12px] text-muted">{t("form.tax")}</span>
-            <select
+            <Select
               value={taxClass}
-              onChange={(e) => setTaxClass(e.target.value as typeof taxClass)}
-              className="h-11 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9"
-            >
-              {(["standard", "reduced", "exempt"] as const).map((k) => (
-                <option key={k} value={k}>
-                  {t(`tax.${k}`)}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setTaxClass(v as typeof taxClass)}
+              aria-label={t("form.tax")}
+              triggerClassName="text-[13px] md:h-9"
+              options={(["standard", "reduced", "exempt"] as const).map((k) => ({ value: k, label: t(`tax.${k}`) }))}
+            />
           </label>
         </div>
       </section>

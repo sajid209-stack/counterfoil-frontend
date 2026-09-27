@@ -261,7 +261,7 @@ export function MonthGrid({
                       type="button"
                       aria-label={createLabel?.(d)}
                       onClick={(ev) => onCreateDay?.(d, (ev.currentTarget.parentElement ?? ev.currentTarget).getBoundingClientRect())}
-                      className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-sm text-muted opacity-0 transition-opacity duration-quick hover:bg-subtle hover:text-brand-foreground focus-visible:opacity-100 group-hover/day:opacity-100"
+                      className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-sm text-muted opacity-0 transition-opacity duration-quick hover:bg-muted-wash hover:text-brand-foreground focus-visible:opacity-100 group-hover/day:opacity-100"
                     >
                       <Plus size={14} strokeWidth={2} aria-hidden />
                     </button>
@@ -274,7 +274,7 @@ export function MonthGrid({
                       today && "bg-ember-solid font-semibold text-white",
                       !today && outside && "text-muted",
                       !today && !outside && "text-fg",
-                      onPickDay && !today && "hover:bg-subtle",
+                      onPickDay && !today && "hover:bg-muted-wash",
                     )}
                   >
                     {d.getDate()}
@@ -319,7 +319,7 @@ export function MonthGrid({
                       <button
                         type="button"
                         onClick={onPickDay ? () => onPickDay(d) : undefined}
-                        className="self-start rounded-xs px-1 text-left text-[12px] text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg"
+                        className="self-start rounded-xs px-1 text-left text-[12px] text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
                       >
                         {moreLabel(rest)}
                       </button>

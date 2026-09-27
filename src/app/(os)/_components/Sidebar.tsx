@@ -68,7 +68,7 @@ export function Sidebar({
         collapsed ? "justify-center px-0" : "px-comfortable",
         active
           ? "bg-subtle text-fg"
-          : "text-muted hover:bg-subtle/60 hover:text-fg",
+          : "text-muted hover:bg-muted-wash hover:text-fg",
       )}
     >
       {/* 18px, not 20 — the reference draws these at 16. Stroke stays 1.5: the
@@ -109,7 +109,7 @@ export function Sidebar({
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-expanded={!collapsed}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg"
           >
             {collapsed ? <PanelLeftOpen size={20} strokeWidth={1.5} /> : <PanelLeftClose size={20} strokeWidth={1.5} />}
           </button>
@@ -135,7 +135,7 @@ export function Sidebar({
               href={s.href}
               title={collapsed ? t(s.key) : undefined}
               className={cn(
-                "flex items-center rounded-sm border border-line py-tight text-sm font-medium text-fg transition-colors duration-quick hover:border-ember hover:bg-subtle/60",
+                "flex items-center rounded-sm border border-line py-tight text-sm font-medium text-fg transition-colors duration-quick hover:border-ember hover:bg-muted-wash",
                 collapsed ? "justify-center px-0" : "justify-between px-comfortable",
               )}
             >

@@ -39,6 +39,7 @@ import {
   EmptyState,
   PageShell,
   ProductThumb,
+  Select,
   StatStrip,
   StatusPill,
   Tabs,
@@ -726,7 +727,6 @@ function Catalog() {
     },
   ];
 
-  const selectCls = "h-11 min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse md:h-9 md:flex-none";
   const filtered = !!q || states.length > 0 || !!category;
   const empty = !loading && items.filter((i) => i.state !== "archived").length === 0 && !wantArchived;
   const clearAll = () => {
@@ -1001,42 +1001,36 @@ function Catalog() {
                     {/* Two taxonomies under one select: the operator's own
                         categories for bookings, the six event categories for
                         events — grouped, so neither pretends to be the other. */}
-                    <select
+                    <Select
                       aria-label={t("allCategories")}
                       value={category}
-                      onChange={(e) => {
-                        setCategory(e.target.value);
+                      onChange={(v) => {
+                        setCategory(v);
                         setPage(1);
                       }}
-                      className={selectCls}
-                    >
-                      <option value="">{t("allCategories")}</option>
-                      {kind !== "events" && productCats.length > 0 && (
-                        <optgroup label={t("kind.bookings")}>
-                          {productCats.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </optgroup>
-                      )}
-                      {kind !== "bookings" && (
-                        <optgroup label={t("kind.events")}>
-                          {CATEGORIES.map((c) => (
-                            <option key={c.id} value={`ev:${c.id}`}>{te(`category.${c.key}`)}</option>
-                          ))}
-                        </optgroup>
-                      )}
-                    </select>
-                    <select
+                      triggerClassName="text-sm md:h-9"
+                      options={[
+                        { value: "", label: t("allCategories") },
+                        ...(kind !== "events"
+                          ? productCats.map((c) => ({ value: c.id, label: c.name, group: t("kind.bookings") }))
+                          : []),
+                        ...(kind !== "bookings"
+                          ? CATEGORIES.map((c) => ({ value: `ev:${c.id}`, label: te(`category.${c.key}`), group: t("kind.events") }))
+                          : []),
+                      ]}
+                    />
+                    <Select
                       aria-label={t("sortBy")}
                       value={sort.key}
-                      onChange={(e) => setSort({ key: e.target.value, order: "asc" })}
-                      className={selectCls}
-                    >
-                      <option value="smart">{t("sort.smart")}</option>
-                      <option value="name">{t("sort.name")}</option>
-                      <option value="price">{t("sort.price")}</option>
-                      <option value="updated">{t("sort.updated")}</option>
-                    </select>
+                      onChange={(v) => setSort({ key: v, order: "asc" })}
+                      triggerClassName="text-sm md:h-9"
+                      options={[
+                        { value: "smart", label: t("sort.smart") },
+                        { value: "name", label: t("sort.name") },
+                        { value: "price", label: t("sort.price") },
+                        { value: "updated", label: t("sort.updated") },
+                      ]}
+                    />
                     </div>
                   </div>
                   {/* State as counted chips — the facet under the views. "All"

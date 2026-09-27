@@ -1,9 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/cn";
+
+import { Select } from "@/components/ui";
 import type { Counter, Location } from "@/lib/api";
-import { controlCls } from "../../_components/SettingsKit";
+
 
 /**
  * Which counter a tablet opens, grouped by location — six counter names in a
@@ -26,29 +27,21 @@ export function CounterSelect({
 }) {
   const t = useTranslations("settings");
   return (
-    <select
+    <Select
       id={id}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={onChange}
       aria-describedby={describedBy}
-      className={cn(controlCls(), "pr-section")}
-    >
-      <option value="">{t("devices.noCounter")}</option>
-      {locations
-        .filter((l) => l.status !== "archived")
-        .map((l) => {
-          const here = counters.filter((c) => c.locationId === l.id && c.status !== "archived");
-          if (here.length === 0) return null;
-          return (
-            <optgroup key={l.id} label={l.name}>
-              {here.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </optgroup>
-          );
-        })}
-    </select>
+      options={[
+        { value: "", label: t("devices.noCounter") },
+        ...locations
+          .filter((l) => l.status !== "archived")
+          .flatMap((l) =>
+            counters
+              .filter((c) => c.locationId === l.id && c.status !== "archived")
+              .map((c) => ({ value: c.id, label: c.name, group: l.name })),
+          ),
+      ]}
+    />
   );
 }

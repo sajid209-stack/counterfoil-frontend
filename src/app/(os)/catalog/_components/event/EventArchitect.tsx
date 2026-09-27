@@ -29,7 +29,7 @@ import {
   Handshake,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { FormField } from "@/components/ui";
+import { FormField, Select } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { EventTemplate } from "@/components/events/EventTemplate";
 import { PreviewFrame } from "@/components/events/PreviewFrame";
@@ -324,7 +324,7 @@ export function EventArchitect({
                     aria-label={off ? t("architect.show") : t("customise.hide")}
                     disabled={locked}
                     onClick={(e) => { e.stopPropagation(); toggle(id); }}
-                    className="flex h-9 w-9 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg disabled:opacity-30"
+                    className="flex h-9 w-9 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:opacity-30"
                   >
                     {off ? <EyeOff size={15} strokeWidth={1.5} /> : <Eye size={15} strokeWidth={1.5} />}
                   </button>
@@ -421,7 +421,7 @@ export function EventArchitect({
                     <button
                       type="button"
                       onClick={addSponsor}
-                      className="min-h-11 rounded-sm border border-line px-comfortable text-[13px] font-medium text-fg transition-colors duration-quick hover:bg-subtle"
+                      className="min-h-11 rounded-sm border border-line px-comfortable text-[13px] font-medium text-fg transition-colors duration-quick hover:bg-muted-wash"
                     >
                       {t("architect.addSponsor")}
                     </button>
@@ -574,14 +574,16 @@ export function EventArchitect({
                             grid with a portrait. */}
                         <label className="grid gap-[6px]">
                           <span className="type-label text-[12px] text-muted">{t("architect.kind")}</span>
-                          <select
+                          <Select
                             value={l.kind ?? "person"}
-                            onChange={(e) => patchLineup(l.id, { kind: e.target.value as "person" | "session" })}
-                            className="min-h-11 rounded-sm border border-line bg-card px-comfortable text-[14px] text-fg"
-                          >
-                            <option value="person">{t("architect.kindPerson")}</option>
-                            <option value="session">{t("architect.kindSession")}</option>
-                          </select>
+                            onChange={(v) => patchLineup(l.id, { kind: v as "person" | "session" })}
+                            aria-label={t("architect.kind")}
+                            triggerClassName="text-[14px] text-fg"
+                            options={[
+                              { value: "person", label: t("architect.kindPerson") },
+                              { value: "session", label: t("architect.kindSession") },
+                            ]}
+                          />
                         </label>
                         <div className={cn("grid gap-tight", dayTabs.length > 1 ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
                           {/* The typed day field is only for an event with no
@@ -650,7 +652,7 @@ export function EventArchitect({
                 aria-pressed={device === d}
                 className={cn(
                   "flex h-11 w-11 items-center justify-center rounded-sm transition-colors duration-quick sm:h-9 sm:w-9",
-                  device === d ? "bg-inverse text-inverse-fg" : "text-muted hover:bg-subtle hover:text-fg",
+                  device === d ? "bg-inverse text-inverse-fg" : "text-muted hover:bg-muted-wash hover:text-fg",
                 )}
               >
                 <Icon size={16} strokeWidth={1.5} />
@@ -700,7 +702,7 @@ function Row({
           type="button"
           onClick={onToggle}
           aria-expanded={open}
-          className="flex min-h-11 min-w-0 flex-1 items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick hover:bg-subtle"
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick hover:bg-muted-wash"
         >
           <Icon size={16} strokeWidth={1.5} className={cn("shrink-0", muted ? "text-muted/60" : "text-muted")} />
           <span className={cn("type-label min-w-0 flex-1 truncate text-[12px]", muted ? "text-muted/60" : "text-fg")}>{label}</span>
@@ -743,17 +745,14 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
 function FontSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const t = useTranslations("events");
   return (
-    <select
+    /* Each option is set in the face it names: eight rows reading "Aa" is a
+       guessing game about a decision that repaints the whole page. */
+    <Select
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-11 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-ember focus:ring-2 focus:ring-ember/20"
-    >
-      {FONT_CHOICES.map((f) => (
-        <option key={f.id} value={f.css}>
-          {t(`font.${f.key}`)}
-        </option>
-      ))}
-    </select>
+      onChange={onChange}
+      aria-label={t("architect.typeface")}
+      options={FONT_CHOICES.map((f) => ({ value: f.css, label: t(`font.${f.key}`) }))}
+    />
   );
 }
 

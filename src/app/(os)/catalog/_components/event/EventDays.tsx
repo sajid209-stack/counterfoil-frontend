@@ -75,7 +75,7 @@ export function EventDays({
       <button
         type="button"
         onClick={() => setRange(nextDay(content.date || DEMO_TODAY, 1))}
-        className="min-h-11 self-start rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-subtle hover:text-fg sm:min-h-9"
+        className="min-h-11 self-start rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-muted-wash hover:text-fg sm:min-h-9"
       >
         {t("days.add")}
       </button>

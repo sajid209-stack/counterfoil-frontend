@@ -195,7 +195,7 @@ export function EventCanvas({
                   aria-pressed={displayFont === f.css}
                   className={cn(
                     "flex min-h-11 items-baseline justify-between gap-section rounded-sm px-comfortable py-tight text-left transition-colors duration-quick",
-                    displayFont === f.css ? "bg-inverse text-inverse-fg" : "hover:bg-subtle",
+                    displayFont === f.css ? "bg-inverse text-inverse-fg" : "hover:bg-muted-wash",
                   )}
                 >
                   <span className="min-w-0 truncate text-[19px] leading-tight" style={{ fontFamily: f.css }}>
@@ -242,7 +242,7 @@ export function EventCanvas({
                   <TimeInput value={content.endTime} onChange={(v) => onContent({ endTime: v })} className="w-28" />
                 </>
               ) : (
-                <button type="button" onClick={() => onContent({ endTime: "22:00" })} className="min-h-11 rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-subtle hover:text-fg sm:min-h-9">
+                <button type="button" onClick={() => onContent({ endTime: "22:00" })} className="min-h-11 rounded-sm px-tight text-[13px] font-medium text-muted hover:bg-muted-wash hover:text-fg sm:min-h-9">
                   {t("addEnd")}
                 </button>
               )}

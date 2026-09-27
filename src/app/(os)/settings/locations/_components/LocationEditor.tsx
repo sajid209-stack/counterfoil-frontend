@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, ConfirmDialog, useToast } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { Button, ConfirmDialog, Select, useToast } from "@/components/ui";
+
 import { createLocation, updateLocation, type Counter, type Location, type OpeningHours, type Resource } from "@/lib/api";
 import { CreateBar, SaveBar, SettingRow, SettingsSection, controlCls } from "../../_components/SettingsKit";
 import { TIMEZONES, zoneLabel } from "../../_lib/zones";
@@ -43,7 +43,7 @@ const BLANK: Draft = {
 };
 
 const chip =
-  "inline-flex min-h-11 items-center rounded-full border border-line px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-subtle/60 md:min-h-9";
+  "inline-flex min-h-11 items-center rounded-full border border-line px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
 
 /**
  * A location: where it is, when it is open, what hangs off it, and whether it
@@ -196,19 +196,13 @@ export function LocationEditor({
         </SettingRow>
         <SettingRow label={t("common.timezone")} description={t("locations.timezoneDesc")}>
           {({ id, describedBy }) => (
-            <select
+            <Select
               id={id}
               value={form.timezone}
-              onChange={(e) => set({ timezone: e.target.value })}
+              onChange={(v) => set({ timezone: v })}
               aria-describedby={describedBy}
-              className={cn(controlCls(), "pr-section")}
-            >
-              {zones.map((z) => (
-                <option key={z} value={z}>
-                  {zoneLabel(z)}
-                </option>
-              ))}
-            </select>
+              options={zones.map((z) => ({ value: z, label: zoneLabel(z) }))}
+            />
           )}
         </SettingRow>
       </SettingsSection>

@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import {
   DataTable,
   EmptyState,
+  Select,
   PageShell,
   StatStrip,
   StatusPill,
@@ -192,7 +193,6 @@ function OrdersPageInner() {
     },
   ];
 
-  const selectCls = "h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse";
   const resetPage = () => setPage(1);
 
   return (
@@ -244,25 +244,39 @@ function OrdersPageInner() {
                   className="h-11 w-full min-w-0 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:h-9 md:w-72"
                 />
               </div>
-              <select aria-label={t("allRanges")} value={range} onChange={(e) => { setRange(e.target.value as Range); resetPage(); }} className={selectCls}>
-                <option value="all">{t("allRanges")}</option>
-                <option value="today">{t("rangeToday")}</option>
-                <option value="7d">{t("range7d")}</option>
-                <option value="30d">{t("range30d")}</option>
-              </select>
-              <select aria-label={t("allStatuses")} value={status} onChange={(e) => { setStatus(e.target.value); resetPage(); }} className={selectCls}>
-                <option value="">{t("allStatuses")}</option>
-                <option value="paid">{enumL.status("paid")}</option>
-                <option value="pending">{enumL.status("pending")}</option>
-                <option value="partial">{enumL.status("partial")}</option>
-                <option value="refunded">{enumL.status("refunded")}</option>
-                <option value="cancelled">{enumL.status("cancelled")}</option>
-              </select>
-              <select aria-label={t("allChannels")} value={channel} onChange={(e) => { setChannel(e.target.value); resetPage(); }} className={selectCls}>
-                <option value="">{t("allChannels")}</option>
-                <option value="counter">{t("channelCounter")}</option>
-                <option value="online">{t("channelOnline")}</option>
-              </select>
+              <Select
+                aria-label={t("allRanges")}
+                value={range}
+                onChange={(v) => { setRange(v as Range); resetPage(); }}
+                options={[
+                  { value: "all", label: t("allRanges") },
+                  { value: "today", label: t("rangeToday") },
+                  { value: "7d", label: t("range7d") },
+                  { value: "30d", label: t("range30d") },
+                ]}
+              />
+              <Select
+                aria-label={t("allStatuses")}
+                value={status}
+                onChange={(v) => { setStatus(v); resetPage(); }}
+                options={[
+                  { value: "", label: t("allStatuses") },
+                  ...(["paid", "pending", "partial", "refunded", "cancelled"] as const).map((k) => ({
+                    value: k,
+                    label: enumL.status(k),
+                  })),
+                ]}
+              />
+              <Select
+                aria-label={t("allChannels")}
+                value={channel}
+                onChange={(v) => { setChannel(v); resetPage(); }}
+                options={[
+                  { value: "", label: t("allChannels") },
+                  { value: "counter", label: t("channelCounter") },
+                  { value: "online", label: t("channelOnline") },
+                ]}
+              />
             </div>
           }
           minWidth="58rem"

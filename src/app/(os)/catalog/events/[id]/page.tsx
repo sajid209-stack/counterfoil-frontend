@@ -343,7 +343,7 @@ export default function EventDetailPage() {
                       aria-pressed={device === d}
                       className={cn(
                         "flex h-11 w-11 items-center justify-center rounded-sm transition-colors duration-quick sm:h-9 sm:w-9",
-                        device === d ? "bg-inverse text-inverse-fg" : "text-muted hover:bg-subtle hover:text-fg",
+                        device === d ? "bg-inverse text-inverse-fg" : "text-muted hover:bg-muted-wash hover:text-fg",
                       )}
                     >
                       <Icon size={16} strokeWidth={1.5} />

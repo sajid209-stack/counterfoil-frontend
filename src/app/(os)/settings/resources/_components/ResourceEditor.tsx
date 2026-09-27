@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, ConfirmDialog, useToast } from "@/components/ui";
+import { Button, ConfirmDialog, Select, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { createResourceRecord, ownerBusyDetailed, updateResource, type Location, type Resource } from "@/lib/api";
 import { DEMO_TODAY, toTime } from "@/lib/schedule";
@@ -172,39 +172,27 @@ export function ResourceEditor({
         </SettingRow>
         <SettingRow label={t("resources.whatIsIt")} description={t("resources.kindDesc")}>
           {({ id, describedBy }) => (
-            <select
+            <Select
               id={id}
               value={form.noun}
-              onChange={(e) => set({ noun: e.target.value })}
+              onChange={(v) => set({ noun: v })}
               aria-describedby={describedBy}
-              className={cn(controlCls(), "pr-section")}
-            >
-              {nouns.map((n) => (
-                <option key={n} value={n}>
-                  {nounLabel(n)}
-                </option>
-              ))}
-            </select>
+              options={nouns.map((n) => ({ value: n, label: nounLabel(n) }))}
+            />
           )}
         </SettingRow>
         <SettingRow label={t("common.location")} description={t("resources.locationDesc")}>
           {({ id, describedBy }) => (
-            <select
+            <Select
               id={id}
               value={form.locationId}
-              onChange={(e) => set({ locationId: e.target.value })}
+              onChange={(v) => set({ locationId: v })}
               aria-describedby={describedBy}
-              className={cn(controlCls(), "pr-section")}
-            >
-              <option value="">{t("resources.noLocation")}</option>
-              {locations
-                .filter((l) => l.status !== "archived")
-                .map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.name}
-                  </option>
-                ))}
-            </select>
+              options={[
+                { value: "", label: t("resources.noLocation") },
+                ...locations.filter((l) => l.status !== "archived").map((l) => ({ value: l.id, label: l.name })),
+              ]}
+            />
           )}
         </SettingRow>
       </SettingsSection>
@@ -218,7 +206,7 @@ export function ResourceEditor({
                 key={k}
                 className={cn(
                   "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
-                  checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-subtle/60",
+                  checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
                 )}
               >
                 <input

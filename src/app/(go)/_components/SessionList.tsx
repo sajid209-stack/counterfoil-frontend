@@ -101,7 +101,7 @@ export function SessionList({
                   // are the same value, so it drops to the page ground instead
                   // to keep the recession.
                   ? "border-line bg-subtle dark:bg-surface"
-                  : "border-transparent bg-card shadow-go hover:bg-subtle active:bg-ember/10 dark:border-line",
+                  : "border-transparent bg-card shadow-go hover:bg-muted-wash active:bg-ember/10 dark:border-line",
             )}
           >
             <span className="flex min-w-0 flex-1 flex-col gap-1.5">

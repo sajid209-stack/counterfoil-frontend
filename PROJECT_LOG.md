@@ -11841,3 +11841,197 @@ warnings to 2** — three of the five went with the panel.
   **37/37**, reports **48/48**, multi-day **19/19** and **6/6**.
 - `tsc --noEmit` and `npm run build` clean; i18n parity **0 missing / 0 extra**
   across 34 namespaces.
+
+## Counterfoil's own dropdown, and a hover that reads (2026-09-27)
+
+Four of the owner's twenty points, taken together because three of them are one
+control: *"every dropdown boxes and section needs to be Counterfoil own dropdown
+UI … and need the typing search system when dropdown has more than 3-4 listing"*
+(7), *"every dropdown arrow needs to be well left aligned with proper padding"*
+(8), *"in OS all UI chips needs to remove the dots"* (11), and *"in OS settings
+mouse hover color … matches with background while hover"* (15).
+
+### 15 first, because it was a bug rather than a preference
+
+`hover:bg-subtle` was invisible in dark — **`--color-subtle` and `--color-card`
+are the same value there**, which this log has recorded three separate times and
+fixed one screen at a time on each. The owner found it again on Settings.
+
+It is a mechanism, not a screen: **83 hover fills across 53 files**, plus 9
+`active:` and 2 `focus-visible:`, every one of them painting the card in dark.
+All now take `--color-muted-wash`, which is a real step from the card in both
+themes (`#eae8e3` on white, `#2b2a27` on `#22211f`), and which `muted` still
+reads on at **4.59:1 light / 4.58:1 dark** — measured, because the whole point
+was a token that fails in one theme.
+
+`disabled:bg-subtle` is deliberately left alone: a disabled field says so
+through its text colour and its cursor, and painting it with the hover token
+would make it look hovered.
+
+### 7 and 8: one component, 47 call sites, zero native selects left
+
+A native `<select>` hands its list to the operating system. It cannot be
+themed, an option cannot carry a second line or a group heading, the chevron
+sits wherever the platform puts it, and on Windows the popup arrives in the
+system's font on a white sheet in the middle of a dark app.
+
+**`components/ui/Select`** is the ARIA combobox pattern: a `role="combobox"`
+trigger with `aria-expanded`/`aria-controls`, a `role="listbox"` popover,
+`role="option"` rows carrying `aria-selected`, and `aria-activedescendant`
+pointing at the highlight while focus stays in the field — the same rules
+`HeaderSearch` already follows, so a screen reader announces the option without
+the ring leaving the input.
+
+- **Type-ahead is the reason this is worth building rather than restyling.**
+  Above **five** options the popover grows a search field; below it, typing
+  jumps to the next option starting with those letters, which is the behaviour
+  a native select has and almost nothing rebuilt on the web keeps. Matching
+  ranks word-start before substring, so "p" offers Planetarium before Day Pass.
+- **The chevron sits in a reserved gutter** (`pr-tight` plus a fixed 20px
+  column) rather than floating after the text, so every arrow lines up down a
+  column of controls whatever each one says — item 8, measured rather than
+  eyeballed.
+- Opening lands the highlight on what is already chosen, so Enter is a no-op
+  rather than a silent change to the first row. Arrow keys skip disabled rows;
+  Home/End, Escape and Tab all behave.
+- `group` renders the `<optgroup>` cases as `role="group"` headings — a device's
+  counter list is grouped by venue, and the catalog's category filter keeps the
+  two taxonomies apart.
+
+**`Field`'s `variant="select"` branch renders it**, which converted 33 call
+sites in one edit; the other 47 were raw `<select>` elements and were converted
+by hand. `grep '<select'` now returns only the doc comment that explains what
+was replaced. `SelectOption` is one shape for the whole app — `Field` used to
+declare its own `{value,label}`, and its callers now get `note`, `group` and
+`disabled` for free.
+
+**Three variants, because a dropdown is not always a form control.** `size`
+carries the height and is the *only* place it is set — `sm` for a dense
+toolbar, `md` the form control, `lg` the till's 48px floor. `bare` draws no box
+and sizes to its own text, for a control that lives inside a chip or a card
+header that already has one; it takes no fixed height either, since a height is
+part of having a box.
+
+### The hazard a native select does not have, found by measuring
+
+A native `<select>` draws its list through the operating system: **nothing on
+the page can clip it and it can never leave the screen.** An ordinary
+absolutely-positioned panel loses both guarantees, and losing them silently is
+the worst way to lose them. So every converted dropdown was opened across 16
+routes at two widths — 41 popovers — and the browser was asked, at four points
+on each panel, whether the thing painted there was actually the panel.
+
+**Seven were clipped**, with three distinct causes:
+
+- **`section.card-surface` carries `overflow-hidden`** so its hairline rows stay
+  inside its rounded corners — and it cut the Sign-in rules popover clean in
+  half, at both widths. Any card does this. So does any scrolling table.
+- A trigger near an edge pushed the panel **63px past the right edge** on
+  `/orders` and **48px past the left** on `/dashboard`, both at 390.
+
+The panel is therefore **portalled to `<body>` and placed in viewport
+coordinates**, clamped to the window, flipping above the trigger where there is
+no room below, and capped to the space it actually has. No ancestor can clip
+it — including the ones nobody has thought of yet. Placement is written onto
+the node rather than into state: where it lands is a fact about the layout that
+has just happened, and a setState in an effect is an error here.
+
+Three consequences of the portal, each fixed before it could be measured:
+
+- **The outside-click test checked only the control**, so it would have closed
+  the popover on its own options.
+- **`Modal` listens for Escape on the document.** An Escape meant for the
+  popover would have closed the dialog underneath it, and an Enter meant for an
+  option would have reached a form behind. Both stop at the popover now.
+- A previous placement's height cap survived into the next measurement, so a
+  panel once squeezed against the bottom of the window would have stayed
+  squeezed after a resize that gave it room back.
+
+And one the portal did not cause but made visible: **the search field was a
+second `role="combobox"`**, so one control announced two of them and
+`[role="combobox"]` matched twice whenever a list was open. The trigger is the
+combobox — it owns `aria-expanded` and `aria-controls` — and the field is a
+filter inside its popup.
+
+### What the conversion had to be careful about
+
+- **The reports filter chips** are the one place a native select's intrinsic
+  sizing was doing real work — `[field-sizing:content]` inside a bordered chip.
+  That is what `bare` is for, and `dataAttrs` carries the `data-filter` handle
+  the page uses to focus a chip it has just added.
+- **The dashboard's activity filter** had a workaround that can now go. Its
+  comment recorded a real decision — a native select, "keyboard- and
+  screen-reader-correct on a touch device without a line of focus-trap code" —
+  and, because `card-surface` is white at 72%, the *options* had to be painted
+  one by one so an opaque control did not read as a white box and a transparent
+  one did not drop the popup to dark-on-dark. The comment now records that the
+  decision changed and why: `Select` carries the same semantics, and its
+  popover is a card of our own.
+- **`cn` does not merge conflicting utilities**, which the cart pass recorded in
+  September and which this change reproduced: the Go schedule's
+  `triggerClassName="h-12"` on a base of `h-11` produced `h-11 h-12`, decided by
+  stylesheet order rather than intent. Found by reading a failing harness's
+  dumped class list. That is why the height lives on `size` and the component
+  says so.
+
+### 11: the dot comes off the chip
+
+`StatusPill` is the app's one chip and it drew an `aria-hidden` dot before every
+label. Nothing is lost: the pill has always carried its word, and the two-axis
+treatment the September review added — tone for what happened to the money,
+tinted-vs-outlined for which lifecycle the word belongs to — is untouched. The
+`DOTS` map went with it.
+
+Boundaries, stated rather than assumed: the calendar's month and week **load
+dots** stay (on a phone they are the only thing saying a day has bookings), as
+do the attention dots on the settings rail, the sidebar's active marker, the
+save-bar's unsaved marker and the chart legend swatches. None of those is a
+chip; each is the only carrier of what it says.
+
+### Verified
+
+- **A new standing harness, 58 checks, all passing**, driven rather than
+  rendered: no native select survives on business, orders, the dashboard,
+  reports, the Go schedule or a phone; both arrows on a form sit in the same
+  gutter and all three orders filters share one; ArrowDown opens from the
+  keyboard, moves the highlight and Enter chooses and closes with the trigger
+  stating the choice; a four-option list correctly gets **no** search field and
+  type-to-jump instead; the calendar's long booking filter **does** grow one,
+  focuses it, narrows 18 → 1 on "bow", keeps focus on the input with
+  `aria-activedescendant` on the row, and takes it on Enter; a counter list is
+  grouped by venue; the in-card filter paints no box, sizes to its text and
+  opens a card of its own inside the window; on a phone every trigger clears
+  44px and the popover fits; and in dark and in Bangla the popover is opaque and
+  lists its options with no missing message and no console error.
+- **A hover probe, 9 checks**: across **13 settings routes**, every element
+  declaring a hover fill is composited against what it actually sits on —
+  **403 declarations in light and 403 in dark, none of them invisible**, against
+  a floor of 1.03:1. It also states the cause rather than the symptom: in dark
+  `--color-subtle` *is* `--color-card`, and the hover token is not.
+- Four standing harnesses had to learn the new control, because
+  Playwright's `selectOption` no longer applies anywhere in this app: `lib.mjs`
+  gained a shared `pick(pg, trigger, want)` that clicks the trigger and clicks
+  the option row.
+- `tsc --noEmit` and `npm run build` clean. `eslint`: every touched file is
+  clean, and `Select` and `Field` lint clean — the four errors elsewhere in
+  `src/components/ui` (DurationInput, ProductThumb, TimeInput, charts) are the
+  documented pre-existing set. No message keys added or removed: this is one
+  control and one token, not copy.
+
+**One error was mine and is worth recording**: `Select` set its highlight in an
+effect, which is an error in this repo. Which row is highlighted is a
+consequence of the press that opened the popover, so it is set in the handler;
+only the focus move stayed in an effect, because the field it moves to does not
+exist until the popover has mounted.
+
+### Open
+
+- **The 9 remaining sub-12px dots in OS are not chips** and were left, with the
+  reasons above. If the owner meant the calendar's phone load dots or the
+  catalog's type dot as well, each is one line.
+- **`SEARCHABLE_FROM` is 5**, so the app's four time zones and four payment
+  methods get type-to-jump rather than a field. That is the threshold doing its
+  job, but it means the search field only appears on the genuinely long lists
+  (bookings, venues, customers, categories, staff).
+- The Go tills' own sheets still use their own chips and steppers for selection
+  — this change is about dropdowns, and a sheet is not one.

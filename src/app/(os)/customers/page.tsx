@@ -299,7 +299,7 @@ export default function CustomersPage() {
                   className={`h-11 md:h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
                     segment === s.value
                       ? "border-ember bg-ember/10 text-brand-foreground"
-                      : "border-line text-muted hover:bg-subtle"
+                      : "border-line text-muted hover:bg-muted-wash"
                   }`}
                 >
                   {s.label}

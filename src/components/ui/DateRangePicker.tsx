@@ -257,7 +257,7 @@ export function DateRangePicker({
                 inRange && edgeR && !isEnd && "rounded-r-sm",
                 // The ends: the house rule, white inside solid ember.
                 isEnd && "rounded-sm bg-ember-solid font-semibold text-white",
-                !inRange && !off && "rounded-sm text-fg hover:bg-subtle",
+                !inRange && !off && "rounded-sm text-fg hover:bg-muted-wash",
                 off && "cursor-not-allowed text-muted opacity-50",
                 !inRange && iso === today && "ring-1 ring-inset ring-ember",
               )}
@@ -377,7 +377,7 @@ export function DateRangePicker({
                   type="button"
                   aria-label={labels.previousMonth}
                   onClick={() => setCursor((c) => addMonths(c, -1))}
-                  className="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-sm border border-line hover:bg-subtle"
+                  className="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-sm border border-line hover:bg-muted-wash"
                 >
                   <ChevronLeft size={16} strokeWidth={1.5} />
                 </button>
@@ -385,7 +385,7 @@ export function DateRangePicker({
                   type="button"
                   aria-label={labels.nextMonth}
                   onClick={() => setCursor((c) => addMonths(c, 1))}
-                  className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-sm border border-line hover:bg-subtle"
+                  className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-sm border border-line hover:bg-muted-wash"
                 >
                   <ChevronRight size={16} strokeWidth={1.5} />
                 </button>

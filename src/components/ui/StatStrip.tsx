@@ -113,7 +113,7 @@ function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
         // thrown away — the same clip that ate the till's selected-card ring.
         // Tailwind v4 resets a button to the default cursor, and a cell that
         // looks like content has nothing else to say it can be pressed.
-        item.onClick && "cursor-pointer hover:bg-subtle/60",
+        item.onClick && "cursor-pointer hover:bg-muted-wash",
         item.pressed && "bg-subtle",
       )}
     >

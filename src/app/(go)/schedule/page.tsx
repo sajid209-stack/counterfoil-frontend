@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, ChevronUp, SlidersHorizontal, Tag, Wrench } from "lucide-react";
-import { ActionMenu, Button, DateField, EmptyState, FormField, Modal, useToast, type ActionMenuItem } from "@/components/ui";
+import { ActionMenu, Button, DateField, EmptyState, FormField, Modal, Select, useToast, type ActionMenuItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay, sessionPressure } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
@@ -219,19 +219,20 @@ export default function SchedulePage() {
                   </button>
                 ))}
               </div>
-              <select
+              {/* The till's own radius and 48px floor: Go is touch at every
+                  width, so this keeps the pill rather than the OS corner. */}
+              <Select
                 value={bookingFilter}
-                onChange={(e) => setBookingFilter(e.target.value)}
+                onChange={setBookingFilter}
                 aria-label={t("filterBooking")}
-                className="h-12 w-full min-w-0 rounded-full border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse sm:max-w-[240px]"
-              >
-                <option value="all">{t("allBookings")}</option>
-                {bookingOptions.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                  </option>
-                ))}
-              </select>
+                className="w-full sm:max-w-[240px]"
+                size="lg"
+                triggerClassName="rounded-full text-sm"
+                options={[
+                  { value: "all", label: t("allBookings") },
+                  ...bookingOptions.map((o) => ({ value: o.id, label: o.name })),
+                ]}
+              />
             </div>
           </div>
 

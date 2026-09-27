@@ -457,7 +457,7 @@ function ChipPicker({
             className={`min-h-9 max-w-full rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
               on
                 ? "border-ember bg-ember/10 text-brand-foreground"
-                : "border-line text-muted hover:bg-subtle"
+                : "border-line text-muted hover:bg-muted-wash"
             }`}
           >
             <span className="block truncate">{o.label}</span>

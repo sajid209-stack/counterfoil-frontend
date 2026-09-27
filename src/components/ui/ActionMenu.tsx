@@ -96,7 +96,7 @@ export function ActionMenu({
           setOpen((v) => !v);
         }}
         className={cn(
-          "flex items-center justify-center text-muted transition-colors duration-quick hover:bg-subtle hover:text-fg",
+          "flex items-center justify-center text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg",
           shape === "go" ? "h-11 w-11 rounded-full border border-line" : "h-11 w-11 rounded-sm md:h-8 md:w-8",
           open && "bg-subtle text-fg",
         )}
@@ -140,7 +140,7 @@ export function ActionMenu({
                   ? "cursor-not-allowed text-muted"
                   : item.destructive
                     ? "text-danger hover:bg-danger/10"
-                    : "text-fg hover:bg-subtle",
+                    : "text-fg hover:bg-muted-wash",
               )}
             >
               {item.icon}

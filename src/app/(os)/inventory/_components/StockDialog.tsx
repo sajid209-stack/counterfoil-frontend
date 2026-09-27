@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button, FormField, Modal } from "@/components/ui";
+import { Button, FormField, Modal, Select } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { levelOf, recordMovement, recordReturn, stocktakeTo, type InventoryItemView, type Location } from "@/lib/api";
 
@@ -126,17 +126,13 @@ export function StockDialog({
         {kept.length > 1 && (
           <label className="flex flex-col gap-inline">
             <span className="type-label text-[12px] text-muted">{t("dialog.venue")}</span>
-            <select
+            <Select
               value={locationId}
-              onChange={(e) => setLocationId(e.target.value)}
-              className="h-11 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9"
-            >
-              {kept.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.name}
-                </option>
-              ))}
-            </select>
+              onChange={setLocationId}
+              aria-label={t("dialog.venue")}
+              triggerClassName="text-[13px] md:h-9"
+              options={kept.map((l) => ({ value: l.id, label: l.name }))}
+            />
           </label>
         )}
 

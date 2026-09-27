@@ -4,12 +4,12 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { KeyRound, Mail, Plus, UserCheck, UserMinus, UserX } from "lucide-react";
-import { ActionMenu, Avatar, Button, ConfirmDialog, PageShell, StatusPill, Tabs, useToast, type ActionMenuItem } from "@/components/ui";
+import { ActionMenu, Avatar, Button, ConfirmDialog, PageShell, Select, StatusPill, Tabs, useToast, type ActionMenuItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listLocations, listRoles, listStaff, revokeInvite, updateStaff, type Staff, type StaffStatus } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
-import { RecordList, RecordRow, SearchField, SectionSkeleton, controlCls } from "../_components/SettingsKit";
+import { RecordList, RecordRow, SearchField, SectionSkeleton } from "../_components/SettingsKit";
 import { useSince } from "../_lib/time";
 
 type Tab = "all" | StaffStatus;
@@ -162,7 +162,6 @@ export default function TeamPage() {
     ];
   };
 
-  const select = cn(controlCls(), "pr-section sm:w-44");
 
   return (
     <PageShell
@@ -188,24 +187,23 @@ export default function TeamPage() {
             header={
               <div className="flex flex-col gap-tight border-b border-hairline px-card py-tight sm:flex-row sm:flex-wrap sm:items-center">
                 <SearchField value={search} onChange={setSearch} label={t("team.searchLabel")} placeholder={t("team.searchPlaceholder")} />
-                <select aria-label={t("team.filterRole")} value={roleId} onChange={(e) => setRoleId(e.target.value)} className={select}>
-                  <option value="">{t("team.anyRole")}</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-                <select aria-label={t("team.filterLocation")} value={locationId} onChange={(e) => setLocationId(e.target.value)} className={select}>
-                  <option value="">{t("team.anyLocation")}</option>
-                  {locations
-                    .filter((l) => l.status !== "archived")
-                    .map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.name}
-                      </option>
-                    ))}
-                </select>
+                <Select
+                  aria-label={t("team.filterRole")}
+                  value={roleId}
+                  onChange={setRoleId}
+                  className="sm:w-44"
+                  options={[{ value: "", label: t("team.anyRole") }, ...roles.map((r) => ({ value: r.id, label: r.name }))]}
+                />
+                <Select
+                  aria-label={t("team.filterLocation")}
+                  value={locationId}
+                  onChange={setLocationId}
+                  className="sm:w-44"
+                  options={[
+                    { value: "", label: t("team.anyLocation") },
+                    ...locations.filter((l) => l.status !== "archived").map((l) => ({ value: l.id, label: l.name })),
+                  ]}
+                />
                 <div className="flex items-center gap-tight sm:ml-auto">
                   <p className="text-[13px] text-muted" aria-live="polite">
                     {filtering ? t("team.showing", { count: rows.length }) : null}
@@ -218,7 +216,7 @@ export default function TeamPage() {
                         setRoleId("");
                         setLocationId("");
                       }}
-                      className="inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg md:min-h-9"
+                      className="inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
                     >
                       {t("team.clearFilters")}
                     </button>

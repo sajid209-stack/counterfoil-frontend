@@ -285,7 +285,7 @@ export default function StorefrontEditorPage() {
                         aria-label={t("storefront.moveUp", { name: p.name })}
                         disabled={!on || i === 0}
                         onClick={() => move(p.id, -1)}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9"
                       >
                         <ArrowUp size={16} strokeWidth={1.5} aria-hidden />
                       </button>
@@ -294,7 +294,7 @@ export default function StorefrontEditorPage() {
                         aria-label={t("storefront.moveDown", { name: p.name })}
                         disabled={!on || i === ordered.length - 1}
                         onClick={() => move(p.id, 1)}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9"
                       >
                         <ArrowDown size={16} strokeWidth={1.5} aria-hidden />
                       </button>

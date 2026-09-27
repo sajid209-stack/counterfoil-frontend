@@ -10,7 +10,7 @@ import { TimeField } from "../../_components/TimeField";
 import { DAY_KEY, WEEK, dayProblem } from "../_lib/hours";
 
 const iconButton =
-  "inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-subtle/60 hover:text-fg";
+  "inline-flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg";
 
 /**
  * A week of opening hours.

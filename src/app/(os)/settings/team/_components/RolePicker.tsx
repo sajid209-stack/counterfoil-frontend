@@ -39,7 +39,7 @@ export function RolePicker({
             key={r.id}
             className={cn(
               "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
-              checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-subtle/60",
+              checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
             )}
           >
             <input

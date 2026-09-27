@@ -34,14 +34,6 @@ const OUTLINED: Record<PillTone, string> = {
   neutral: "border border-strong text-muted",
 };
 
-const DOTS: Record<PillTone, string> = {
-  success: "bg-success",
-  warning: "bg-warning",
-  danger: "bg-danger",
-  info: "bg-info",
-  neutral: "bg-muted",
-};
-
 /** Record lifecycle — is this thing on the shelf? — rather than what a sale did. */
 const RECORD = new Set(["active", "inactive", "archived", "suspended", "invited"]);
 
@@ -109,12 +101,11 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-inline rounded-xs px-tight py-inline font-mono text-[12px] uppercase tracking-wide",
+        "inline-flex items-center rounded-xs px-tight py-inline font-mono text-[12px] uppercase tracking-wide",
         resolvedShape === "record" ? OUTLINED[resolvedTone] : TONES[resolvedTone],
         className,
       )}
     >
-      <span className={cn("h-1.5 w-1.5 rounded-full", DOTS[resolvedTone])} aria-hidden />
       {label}
     </span>
   );

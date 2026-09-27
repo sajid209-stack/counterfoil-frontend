@@ -118,7 +118,7 @@ export function DataTable<T>({
               onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
               className={cn(
                 "card-surface p-card transition-transform duration-quick",
-                onRowClick && "cursor-pointer active:bg-subtle hover:-translate-y-0.5",
+                onRowClick && "cursor-pointer active:bg-muted-wash hover:-translate-y-0.5",
                 isSelected?.(row) && "border-ember bg-ember/5",
               )}
             >
@@ -293,7 +293,7 @@ export function DataTable<T>({
                          deepened, not swapped for the plain hover grey. */
                       (isSelected?.(row)
                         ? "cursor-pointer transition-colors duration-quick hover:bg-ember/10 focus-visible:bg-ember/10"
-                        : "cursor-pointer transition-colors duration-quick hover:bg-subtle focus-visible:bg-subtle"),
+                        : "cursor-pointer transition-colors duration-quick hover:bg-muted-wash focus-visible:bg-muted-wash"),
                   )}
                 >
                   {columns.map((col) => (

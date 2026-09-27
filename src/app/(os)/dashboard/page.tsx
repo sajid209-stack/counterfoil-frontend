@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, CalendarClock, Check, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, type LucideIcon } from "lucide-react";
-import { AreaChart, Button, DeltaPill, PageShell, StatStrip, StatusPill, type StatItem } from "@/components/ui";
+import { AreaChart, Button, DeltaPill, PageShell, Select, StatStrip, StatusPill, type StatItem } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getOperator,
@@ -507,14 +507,19 @@ export default function DashboardPage() {
       actions={
         <div className="flex items-center gap-tight">
           {locations.length > 1 && (
-            /* max-w, because a native select sizes itself to its LONGEST
-               option: with "Lalbagh Fort — Main Gate" in the list it measured
-               400px at 1024, which left the page title ~460px and wrapped
-               "Lalbagh Heritage Attractions" onto two lines inside the bar. */
-            <select aria-label={tc("filterByLocation")} value={locationId} onChange={(e) => setLocationId(e.target.value)} className="h-11 max-w-[180px] rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
-              <option value="all">{t("allLocations")}</option>
-              {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
+            /* Capped at 180px: the bar's width belongs to the page title, and
+               a venue called "Lalbagh Fort — Main Gate" would otherwise take
+               400px of it at 1024 and wrap the operator's own name onto two
+               lines. The name itself is never cut — the popover carries it in
+               full, which the native select could not do. */
+            <Select
+              aria-label={tc("filterByLocation")}
+              value={locationId}
+              onChange={setLocationId}
+              className="max-w-[180px]"
+              align="end"
+              options={[{ value: "all", label: t("allLocations") }, ...locations.map((l) => ({ value: l.id, label: l.name }))]}
+            />
           )}
           {/* Scope, not actions — a dashboard is a place to look. */}
           <div className="relative grid h-[52px] grid-cols-2 rounded-sm bg-line/60 p-inline sm:h-11">
@@ -756,30 +761,31 @@ export default function DashboardPage() {
                   sits on the heading row, where the reference puts it. */}
               <div className="flex items-baseline justify-between gap-tight px-card pb-tight pt-card">
                 <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("liveActivity")}</h2>
-                {/* A native select, not a bespoke popover: it is one control,
-                    it names the active filter instead of hiding it behind the
-                    word "Filter", and it arrives keyboard- and screen-reader-
-                    correct on a touch device without a line of focus-trap
-                    code. The control is transparent and the BACKGROUND SITS ON
-                    THE OPTIONS: card-surface is white at 72%, so an opaque
-                    bg-card control read as a white box floating in the header,
-                    while a transparent one would drop the popup to
-                    dark-on-dark. Painting the options directly satisfies both —
-                    the control disappears into the card, the list stays
-                    legible in either theme. */}
+                {/* This was a native select on purpose — one control, naming
+                    its own filter, keyboard- and screen-reader-correct with no
+                    focus-trap code. `Select` is now that control: it carries
+                    the same combobox semantics, and it retires the workaround
+                    this header needed. card-surface is white at 72%, so an
+                    opaque control read as a white box floating in the header
+                    while a transparent one dropped the native popup to
+                    dark-on-dark; the options had to be painted one by one.
+                    `bare` draws no box, and the popover is a card of our own. */}
                 <div className="relative flex shrink-0 items-center text-muted focus-within:text-fg hover:text-fg">
-                  <ListFilter size={13} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-0" />
-                  <select
+                  <ListFilter size={13} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-0 z-10" />
+                  <Select
+                    bare
                     aria-label={t("filterActivity")}
                     value={activityFilter}
-                    onChange={(e) => setActivityFilter(e.target.value as ActivityFilter)}
-                    className="min-h-11 cursor-pointer appearance-none rounded-xs bg-transparent py-inline pl-[19px] pr-0 text-[12px] text-current outline-none transition-colors duration-quick sm:min-h-0 [&>option]:bg-card [&>option]:text-fg"
-                  >
-                    <option value="all">{t("filterAll")}</option>
-                    <option value="sales">{t("filterSales")}</option>
-                    <option value="refunds">{t("filterRefunds")}</option>
-                    <option value="customers">{t("filterCustomers")}</option>
-                  </select>
+                    onChange={(v) => setActivityFilter(v as ActivityFilter)}
+                    align="end"
+                    triggerClassName="pl-[19px] text-[12px] font-normal text-current"
+                    options={[
+                      { value: "all", label: t("filterAll") },
+                      { value: "sales", label: t("filterSales") },
+                      { value: "refunds", label: t("filterRefunds") },
+                      { value: "customers", label: t("filterCustomers") },
+                    ]}
+                  />
                 </div>
               </div>
               {/* The reference's activity row: an icon badge, then two stacked
@@ -885,7 +891,7 @@ export default function DashboardPage() {
                           tabIndex={0}
                           onClick={() => router.push("/orders/" + o.id)}
                           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push("/orders/" + o.id); } }}
-                          className="cursor-pointer border-b border-line transition-colors duration-quick last:border-0 hover:bg-subtle focus-visible:bg-subtle"
+                          className="cursor-pointer border-b border-line transition-colors duration-quick last:border-0 hover:bg-muted-wash focus-visible:bg-muted-wash"
                         >
                           <td className="whitespace-nowrap px-major py-tight text-[13px] text-muted" title={formatDateTime(o.createdAt)}>
                             {formatRelative(o.createdAt, now)}
@@ -934,7 +940,7 @@ export default function DashboardPage() {
                         key={o.id}
                         type="button"
                         onClick={() => router.push("/orders/" + o.id)}
-                        className="flex w-full flex-col gap-inline border-b border-line px-card py-comfortable text-left last:border-0 active:bg-subtle"
+                        className="flex w-full flex-col gap-inline border-b border-line px-card py-comfortable text-left last:border-0 active:bg-muted-wash"
                       >
                         <span className="flex items-baseline justify-between gap-tight">
                           <span className="min-w-0 truncate font-mono text-[13px]">{o.reference}</span>

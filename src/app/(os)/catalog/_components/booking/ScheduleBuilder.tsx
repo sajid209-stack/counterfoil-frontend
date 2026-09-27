@@ -5,7 +5,7 @@ import { AlertTriangle, Plus, X } from "lucide-react";
 import { formatDuration } from "@/lib/duration";
 import { formatDay } from "@/lib/format";
 import { useTranslations } from "next-intl";
-import { DateField, DurationInput, FormField, TimeInput } from "@/components/ui";
+import { DateField, DurationInput, FormField, Select, TimeInput } from "@/components/ui";
 import type { BookingTypeCode, DayHours, ProductSchedule, Staff } from "@/lib/api";
 import {
   DEMO_TODAY,
@@ -112,11 +112,16 @@ export function ScheduleBuilder({
             const d = Number(dStr);
             return (
               <div key={d} className="flex items-center gap-tight">
-                <select value={d} onChange={(e) => moveOverride(d, Number(e.target.value))} className="h-11 md:h-10 rounded-sm border border-line bg-card px-tight text-sm outline-none focus:border-inverse">
-                  {value.openDays.filter((x) => x === d || !(x in overrides)).map((x) => (
-                    <option key={x} value={x}>{DAY_NAMES[x]}</option>
-                  ))}
-                </select>
+                <Select
+                  value={String(d)}
+                  onChange={(v) => moveOverride(d, Number(v))}
+                  aria-label={t("overrides")}
+                  className="w-auto"
+                  triggerClassName="w-auto pl-tight text-sm md:h-10"
+                  options={value.openDays
+                    .filter((x) => x === d || !(x in overrides))
+                    .map((x) => ({ value: String(x), label: DAY_NAMES[x] }))}
+                />
                 <TimeInput value={hrs.startTime} onChange={(t) => setOverride(d, { ...hrs, startTime: t })} className="w-32" />
                 <span className="text-muted">–</span>
                 <TimeInput value={hrs.endTime} onChange={(t) => setOverride(d, { ...hrs, endTime: t })} className="w-32" />

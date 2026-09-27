@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Bookmark, ChevronDown, ChevronRight, Download, ListFilter, Plus, Search, Trash2, X } from "lucide-react";
 import { DEMO_TODAY } from "@/lib/schedule";
-import { AreaChart, BarChart, Button, DateRangePicker, DonutChart, HBarChart, LineChart, Modal, PageShell, StatusPill, Tabs, useToast, FormField } from "@/components/ui";
+import { AreaChart, BarChart, Button, DateRangePicker, DonutChart, HBarChart, LineChart, Modal, PageShell, StatusPill, Select, Tabs, useToast, FormField } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -330,7 +330,6 @@ function SalesReportInner() {
     if (res.ok) pickMany(res.data.rows.map((r) => [r.id, r]), true);
   };
 
-  const selectCls = "h-11 md:h-9 rounded-sm border border-line bg-card px-tight text-[13px] outline-none focus:border-inverse";
   /* Inside a chip: no box of its own, as wide as what it says. */
   const chipCls = "h-11 md:h-9 min-w-0 max-w-[14rem] truncate bg-transparent pl-inline pr-0 text-[13px] font-medium outline-none [field-sizing:content]";
   const money = (v: number) => formatMoney(v);
@@ -339,14 +338,94 @@ function SalesReportInner() {
     const v = (filters as unknown as Record<string, string | undefined>)[k] ?? "";
     const on = (val: string) => set(k, val || undefined);
     switch (k) {
-      case "locationId": return <select aria-label={t("filters.anyLocation")} data-filter={k} value={v} onChange={(e) => on(e.target.value)} className={chipCls}><option value="">{t("filters.anyLocation")}</option>{(locationsQ.data?.data ?? []).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}</select>;
-      case "counterId": return <select aria-label={t("filters.anyCounter")} data-filter={k} value={v} onChange={(e) => on(e.target.value)} className={chipCls}><option value="">{t("filters.anyCounter")}</option>{(countersQ.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>;
-      case "staffId": return <select aria-label={t("filters.anyone")} data-filter={k} value={v} onChange={(e) => on(e.target.value)} className={chipCls}><option value="">{t("filters.anyone")}</option>{(staffQ.data?.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>;
-      case "productId": return <select aria-label={t("filters.anyProduct")} data-filter={k} value={v} onChange={(e) => on(e.target.value)} className={chipCls}><option value="">{t("filters.anyProduct")}</option>{(productsQ.data?.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>;
-      case "categoryId": return <select aria-label={t("filters.anyCategory")} data-filter={k} value={v} onChange={(e) => on(e.target.value)} className={chipCls}><option value="">{t("filters.anyCategory")}</option>{(categoriesQ.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>;
-      case "method": return <select aria-label={t("filters.anyMethod")} data-filter={k} value={v} onChange={(e) => on(e.target.value)} className={chipCls}><option value="">{t("filters.anyMethod")}</option><option value="cash">{enumL.method("cash")}</option><option value="bkash">{enumL.method("bkash")}</option><option value="bangla_qr">{enumL.method("bangla_qr")}</option><option value="card_terminal">{enumL.method("card_terminal")}</option></select>;
-      case "status": return <select aria-label={t("filters.anyStatus")} data-filter={k} value={v} onChange={(e) => on(e.target.value)} className={chipCls}><option value="">{t("filters.anyStatus")}</option><option value="completed">{enumL.status("completed")}</option><option value="refunded">{enumL.status("refunded")}</option><option value="partly_refunded">{enumL.status("partly_refunded")}</option><option value="void">{enumL.status("void")}</option></select>;
-      case "channel": return <select aria-label={t("filters.anyChannel")} data-filter={k} value={v} onChange={(e) => on(e.target.value)} className={chipCls}><option value="">{t("filters.anyChannel")}</option><option value="counter">{t("channel.counter")}</option><option value="online">{t("channel.online")}</option></select>;
+      case "locationId": return (
+        <Select
+          bare
+          size="sm"
+          aria-label={t("filters.anyLocation")}
+          dataAttrs={{ "data-filter": k }}
+          value={v}
+          onChange={on}
+          options={[{ value: "", label: t("filters.anyLocation") }, ...(locationsQ.data?.data ?? []).map((l) => ({ value: l.id, label: l.name }))]}
+        />
+      );
+      case "counterId": return (
+        <Select
+          bare
+          size="sm"
+          aria-label={t("filters.anyCounter")}
+          dataAttrs={{ "data-filter": k }}
+          value={v}
+          onChange={on}
+          options={[{ value: "", label: t("filters.anyCounter") }, ...(countersQ.data?.data ?? []).map((c) => ({ value: c.id, label: c.name }))]}
+        />
+      );
+      case "staffId": return (
+        <Select
+          bare
+          size="sm"
+          aria-label={t("filters.anyone")}
+          dataAttrs={{ "data-filter": k }}
+          value={v}
+          onChange={on}
+          options={[{ value: "", label: t("filters.anyone") }, ...(staffQ.data?.data ?? []).map((s) => ({ value: s.id, label: s.name }))]}
+        />
+      );
+      case "productId": return (
+        <Select
+          bare
+          size="sm"
+          aria-label={t("filters.anyProduct")}
+          dataAttrs={{ "data-filter": k }}
+          value={v}
+          onChange={on}
+          options={[{ value: "", label: t("filters.anyProduct") }, ...(productsQ.data?.data ?? []).map((p) => ({ value: p.id, label: p.name }))]}
+        />
+      );
+      case "categoryId": return (
+        <Select
+          bare
+          size="sm"
+          aria-label={t("filters.anyCategory")}
+          dataAttrs={{ "data-filter": k }}
+          value={v}
+          onChange={on}
+          options={[{ value: "", label: t("filters.anyCategory") }, ...(categoriesQ.data?.data ?? []).map((c) => ({ value: c.id, label: c.name }))]}
+        />
+      );
+      case "method": return (
+        <Select
+          bare
+          size="sm"
+          aria-label={t("filters.anyMethod")}
+          dataAttrs={{ "data-filter": k }}
+          value={v}
+          onChange={on}
+          options={[{ value: "", label: t("filters.anyMethod") }, ...(["cash", "bkash", "bangla_qr", "card_terminal"] as const).map((m) => ({ value: m, label: enumL.method(m) }))]}
+        />
+      );
+      case "status": return (
+        <Select
+          bare
+          size="sm"
+          aria-label={t("filters.anyStatus")}
+          dataAttrs={{ "data-filter": k }}
+          value={v}
+          onChange={on}
+          options={[{ value: "", label: t("filters.anyStatus") }, ...(["completed", "refunded", "partly_refunded", "void"] as const).map((k2) => ({ value: k2, label: enumL.status(k2) }))]}
+        />
+      );
+      case "channel": return (
+        <Select
+          bare
+          size="sm"
+          aria-label={t("filters.anyChannel")}
+          dataAttrs={{ "data-filter": k }}
+          value={v}
+          onChange={on}
+          options={[{ value: "", label: t("filters.anyChannel") }, ...[{ value: "counter", label: t("channel.counter") }, { value: "online", label: t("channel.online") }]]}
+        />
+      );
       case "minA": return <input data-filter={k} type="number" inputMode="decimal" aria-label={t("filters.minA")} placeholder={t("filters.minPlaceholder")} value={v} onChange={(e) => on(e.target.value)} className={`${chipCls} w-20 placeholder:font-normal placeholder:text-muted`} />;
       case "maxA": return <input data-filter={k} type="number" inputMode="decimal" aria-label={t("filters.maxA")} placeholder={t("filters.maxPlaceholder")} value={v} onChange={(e) => on(e.target.value)} className={`${chipCls} w-20 placeholder:font-normal placeholder:text-muted`} />;
       case "customer": return <input data-filter={k} aria-label={t("filters.customer")} placeholder={t("filters.customerPlaceholder")} value={v} onChange={(e) => on(e.target.value)} className={`${chipCls} w-32 placeholder:font-normal placeholder:text-muted`} />;
@@ -571,7 +650,7 @@ function SalesReportInner() {
                   <tr key={i} className="border-b border-line"><td colSpan={7} className="px-comfortable py-comfortable"><div className="h-4 animate-pulse rounded-xs bg-line" /></td></tr>
                 ))}
                 {!ordersQ.loading && outstanding.map((x) => { const { o, paid, owed } = x; return (
-                  <tr key={o.id} aria-selected={picked.has(o.id)} onClick={() => router.push(`/orders/${o.id}`)} className={cn("cursor-pointer border-b border-line last:border-0", picked.has(o.id) ? "bg-ember/5 hover:bg-ember/10" : "hover:bg-subtle/60")}>
+                  <tr key={o.id} aria-selected={picked.has(o.id)} onClick={() => router.push(`/orders/${o.id}`)} className={cn("cursor-pointer border-b border-line last:border-0", picked.has(o.id) ? "bg-ember/5 hover:bg-ember/10" : "hover:bg-muted-wash")}>
                     <td className="pl-comfortable" onClick={(e) => e.stopPropagation()}>
                       <label className="flex h-11 w-8 cursor-pointer items-center md:h-9">
                         <input type="checkbox" checked={picked.has(o.id)} onChange={() => togglePick(o.id, x)} aria-label={t("select.row", { ref: o.reference })} className="h-4 w-4 accent-[var(--color-ember)]" />
@@ -628,7 +707,7 @@ function SalesReportInner() {
                     <tr
                       key={String(r.key)}
                       aria-selected={picked.has(String(r.key))}
-                      className={cn("h-12 cursor-pointer border-b border-line last:border-0", picked.has(String(r.key)) ? "bg-ember/5 hover:bg-ember/10" : "hover:bg-subtle")}
+                      className={cn("h-12 cursor-pointer border-b border-line last:border-0", picked.has(String(r.key)) ? "bg-ember/5 hover:bg-ember/10" : "hover:bg-muted-wash")}
                       onClick={() => {
                         // Row click filters the Transactions tab — same scope, drilled.
                         if (groupBy === "product") { set("productId", String(r.key)); setAdded((a) => a.includes("productId") ? a : [...a, "productId"]); }
@@ -782,9 +861,19 @@ function SalesReportInner() {
             <div className={card}>
               <div className="mb-tight flex items-center justify-between">
                 <p className="type-label text-[12px] text-muted">{t("charts.revenueOverTime")} <span className="normal-case text-muted">{t("charts.revenueOverTimeNote")}</span></p>
-                <select aria-label={t("charts.auto")} value={gran} onChange={(e) => setGran(e.target.value as typeof gran)} className={selectCls}>
-                  <option value="auto">{t("charts.auto")}</option><option value="hour">{t("charts.hourly")}</option><option value="day">{t("charts.daily")}</option><option value="week">{t("charts.weekly")}</option>
-                </select>
+                <Select
+                  aria-label={t("charts.auto")}
+                  value={gran}
+                  onChange={(v) => setGran(v as typeof gran)}
+                  align="end"
+                  triggerClassName="text-[13px] md:h-9"
+                  options={[
+                    { value: "auto", label: t("charts.auto") },
+                    { value: "hour", label: t("charts.hourly") },
+                    { value: "day", label: t("charts.daily") },
+                    { value: "week", label: t("charts.weekly") },
+                  ]}
+                />
               </div>
               {/* AreaChart, not LineChart. The sales report's headline figure was
                   drawn by the sparkline component — no gridlines, no y-axis, and
@@ -885,7 +974,7 @@ function FragmentRow({ r, expanded, onToggle, onOpen, selected, onSelect }: { r:
   };
   return (
     <>
-      <tr aria-selected={selected} className={cn("h-12 cursor-pointer border-b border-line", selected ? "bg-ember/5 hover:bg-ember/10" : "hover:bg-subtle")} onClick={onOpen}>
+      <tr aria-selected={selected} className={cn("h-12 cursor-pointer border-b border-line", selected ? "bg-ember/5 hover:bg-ember/10" : "hover:bg-muted-wash")} onClick={onOpen}>
         <td className="pl-comfortable" onClick={(e) => e.stopPropagation()}>
           <label className="flex h-11 w-8 cursor-pointer items-center md:h-9">
             <input type="checkbox" checked={selected} onChange={onSelect} aria-label={t("select.row", { ref: r.reference })} className="h-4 w-4 accent-[var(--color-ember)]" />

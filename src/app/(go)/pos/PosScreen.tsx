@@ -362,7 +362,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   });
   const shelfHeading = shownItems.length > 0 && shown.length > 0;
   const customTile = (
-    <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-subtle active:bg-ember/10">
+    <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10">
       <Plus size={20} strokeWidth={1.5} />
       <span className="text-[13px]">{t("customAmount")}</span>
     </button>
@@ -986,7 +986,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                that is not one of the operator's own categories. */
             ...(shopItems.length > 0 ? [{ id: SHOP, name: t("shop.chip") }] : []),
           ].map((c) => (
-            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-subtle"}`}>{c.name}</button>
+            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-muted-wash"}`}>{c.name}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto">

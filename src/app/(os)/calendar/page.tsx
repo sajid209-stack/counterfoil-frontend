@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "lucide-react";
-import { Button, DateField, PageShell, Tabs, useToast } from "@/components/ui";
+import { Button, DateField, PageShell, Select, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, XL, useMediaQuery } from "@/lib/useMedia";
@@ -765,7 +765,7 @@ export default function CalendarPage() {
         compact ? "w-11 shrink-0 justify-center" : "px-comfortable",
         selectFilters > 0
           ? "border-ember bg-ember/10 text-brand-foreground"
-          : "border-line hover:bg-subtle",
+          : "border-line hover:bg-muted-wash",
       )}
       aria-label={compact ? (selectFilters > 0 ? t("filtersActive", { count: selectFilters }) : t("filters")) : undefined}
     >
@@ -835,7 +835,7 @@ export default function CalendarPage() {
                 type="button"
                 aria-label={t("previous")}
                 onClick={() => step(-1)}
-                className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
+                className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-muted-wash"
               >
                 <ChevronLeft size={16} strokeWidth={1.5} />
               </button>
@@ -856,7 +856,7 @@ export default function CalendarPage() {
                 type="button"
                 aria-label={t("next")}
                 onClick={() => step(1)}
-                className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-subtle"
+                className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-muted-wash"
               >
                 <ChevronRight size={16} strokeWidth={1.5} />
               </button>
@@ -944,29 +944,31 @@ export default function CalendarPage() {
             {compact && <div className="flex flex-wrap items-center gap-tight">{toneKey}</div>}
             {compact && categoryKeyRow}
             <div className="flex flex-wrap items-center gap-tight">
-            <select
+            <Select
               value={bookingFilter}
-              onChange={(e) => setBookingFilter(e.target.value)}
+              onChange={setBookingFilter}
               aria-label={t("filterBooking")}
-              className="h-11 md:h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
-            >
-              <option value="all">{t("allBookings")}</option>
-              {[...products].sort((a, b) => a.name.localeCompare(b.name)).map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+              size="sm"
+              className="max-w-full"
+              triggerClassName="text-[13px] md:h-9"
+              options={[
+                { value: "all", label: t("allBookings") },
+                ...[...products].sort((a, b) => a.name.localeCompare(b.name)).map((p) => ({ value: p.id, label: p.name })),
+              ]}
+            />
 
-            <select
+            <Select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
+              onChange={setCategoryFilter}
               aria-label={t("filterCategory")}
-              className="h-11 md:h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
-            >
-              <option value="all">{t("allCategories")}</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              size="sm"
+              className="max-w-full"
+              triggerClassName="text-[13px] md:h-9"
+              options={[
+                { value: "all", label: t("allCategories") },
+                ...categories.map((c) => ({ value: c.id, label: c.name })),
+              ]}
+            />
 
             {/* What colour MEANS. A segmented pair rather than a select,
                 because there are two answers and both are worth seeing —
@@ -990,17 +992,18 @@ export default function CalendarPage() {
             </span>
 
             {(resources.length > 0 || staff.length > 0) && (
-              <select
+              <Select
                 value={ownerFilter}
-                onChange={(e) => setOwnerFilter(e.target.value)}
+                onChange={setOwnerFilter}
                 aria-label={t("filterOwner")}
-                className="h-11 md:h-9 min-w-0 max-w-full rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse"
-              >
-                <option value="all">{t("allOwners")}</option>
-                {resources.map((r) => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
+                size="sm"
+                className="max-w-full"
+                triggerClassName="text-[13px] md:h-9"
+                options={[
+                  { value: "all", label: t("allOwners") },
+                  ...resources.map((r) => ({ value: r.id, label: r.name })),
+                ]}
+              />
             )}
             </div>
           </div>

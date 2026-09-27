@@ -8,6 +8,7 @@ import {
   Button,
   DataTable,
   EmptyState,
+  Select,
   PageShell,
   StatusPill,
   type Column,
@@ -81,12 +82,18 @@ export default function PricingPage() {
                 className="h-11 md:h-9 w-64 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
               />
             </div>
-            <select aria-label={t("allKinds")} value={kind} onChange={(e) => { setKind(e.target.value); setPage(1); }} className="h-11 md:h-9 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse">
-              <option value="">{t("allKinds")}</option>
-              <option value="standard">{t("kindStandard")}</option>
-              <option value="peak">{t("kindPeak")}</option>
-              <option value="off_peak">{t("kindOffPeak")}</option>
-            </select>
+            <Select
+              aria-label={t("allKinds")}
+              value={kind}
+              onChange={(v) => { setKind(v); setPage(1); }}
+              triggerClassName="text-sm md:h-9"
+              options={[
+                { value: "", label: t("allKinds") },
+                { value: "standard", label: t("kindStandard") },
+                { value: "peak", label: t("kindPeak") },
+                { value: "off_peak", label: t("kindOffPeak") },
+              ]}
+            />
           </div>
         }
         emptyState={<EmptyState title={t("emptyTitle")} message={t("emptyMessage")} />}

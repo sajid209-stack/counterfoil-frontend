@@ -188,7 +188,7 @@ export function DatePicker({
           aria-label={labels.previousMonth}
           onClick={() => setCursor((c) => addMonths(c, -1))}
           className={cn(
-            "flex items-center justify-center border border-line text-fg transition-colors duration-quick hover:bg-subtle",
+            "flex items-center justify-center border border-line text-fg transition-colors duration-quick hover:bg-muted-wash",
             shape === "go" ? "h-11 w-11 rounded-go-sm" : "h-8 w-8 rounded-sm",
           )}
         >
@@ -202,7 +202,7 @@ export function DatePicker({
           aria-label={labels.nextMonth}
           onClick={() => setCursor((c) => addMonths(c, 1))}
           className={cn(
-            "flex items-center justify-center border border-line text-fg transition-colors duration-quick hover:bg-subtle",
+            "flex items-center justify-center border border-line text-fg transition-colors duration-quick hover:bg-muted-wash",
             shape === "go" ? "h-11 w-11 rounded-go-sm" : "h-8 w-8 rounded-sm",
           )}
         >
@@ -254,8 +254,8 @@ export function DatePicker({
                 "flex items-center justify-center font-mono tabular-nums transition-colors duration-quick",
                 cell,
                 off && "cursor-not-allowed text-muted",
-                !off && !isSelected && outside && "text-muted hover:bg-subtle",
-                !off && !isSelected && !outside && "text-fg hover:bg-subtle",
+                !off && !isSelected && outside && "text-muted hover:bg-muted-wash",
+                !off && !isSelected && !outside && "text-fg hover:bg-muted-wash",
                 // The house rule: white inside a solid ember frame.
                 isSelected && "bg-ember-solid font-semibold text-white",
                 // Today, when it is not the chosen day, is outlined rather than
