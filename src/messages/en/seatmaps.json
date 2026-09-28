@@ -72,7 +72,10 @@
     "sold": "Sold",
     "selected": "{count} selected",
     "tapToChoose": "Tap seats to choose",
-    "screen": "SCREEN"
+    "screen": "SCREEN",
+    "heldFor": "Held for {who}",
+    "blocked": "Not for sale",
+    "seatWord": "Seat"
   },
   "experience": {
     "cinema": "Cinema",

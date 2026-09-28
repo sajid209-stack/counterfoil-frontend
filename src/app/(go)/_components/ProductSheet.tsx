@@ -57,6 +57,9 @@ export interface CartEntry {
   items: { tierId: string; tierName: string; unitPrice: number; qty: number }[];
   fixedPrice?: number; // resource slot resolved price (overrides items sum)
   seatLabels?: string[]; // BT-07 seated: chosen seat labels ("A5", "A6")
+  /** The same seats with the category that prices each one — what the SALE
+   *  needs, so the order records WHICH seat went. */
+  seats?: { label: string; tierId: string; tierName: string; unitPrice: number }[];
   partySize?: number; // group size for flat-per-booking entries ("Group of 6")
   taxRatePct?: number; // custom-amount entries carry their own rate
   /** …and their own class, so a reduced-rate bottle of water is recorded as
@@ -191,18 +194,7 @@ export function ProductSheet({
      "SCREEN" banner above a CSS grid, which is a guess about the shape of the
      room and wrong the moment it is a dining room. The scenery is now wherever
      the operator put it. */
-  const seatsQ = useApiQuery(() => seatMap(product.id), [product.id]);
-  const availSeats = seatsQ.data?.seats ?? [];
-  const seatFixtures = seatsQ.data?.fixtures ?? [];
   const [selectedSeats, setSelectedSeats] = useState<string[]>(initial?.seatLabels ?? []);
-  /** A seat map prices itself off the seats, not off the tier steppers — those
-   *  stay at zero because a seat IS the ticket here. The CTA was reading them
-   *  anyway and offering "Add 2 seats — ৳0.00" on a ৳800 pair. `submitSeats`
-   *  already priced the sale correctly from these same rows, so the button was
-   *  the only thing lying. */
-  const seatTotal = availSeats
-    .filter((s) => selectedSeats.includes(s.label))
-    .reduce((a, s) => a + s.price, 0);
   const activeTiers = product.tiers.filter((t) => t.active);
   const bt = product.bookingType;
   const resourceMode = isResourceType(bt);
@@ -228,6 +220,21 @@ export function ProductSheet({
   const [date, setDate] = useState(initial?.slotDate ?? preset?.date ?? firstBookable);
   const [slotTime, setSlotTime] = useState<string | undefined>(initial?.slotTime ?? preset?.time);
   const [resourceId, setResourceId] = useState<string | undefined>(initial?.resourceId ?? preset?.resourceId);
+
+  /* Keyed on the performance — declared after the date it depends on. The same
+     hall is sold again tomorrow, so seats taken for tonight must not be
+     missing from tomorrow's map. */
+  const seatsQ = useApiQuery(() => seatMap(product.id, date, slotTime), [product.id, date, slotTime]);
+  const availSeats = seatsQ.data?.seats ?? [];
+  const seatFixtures = seatsQ.data?.fixtures ?? [];
+  /** A seat map prices itself off the seats, not off the tier steppers — those
+   *  stay at zero because a seat IS the ticket here. The CTA was reading them
+   *  anyway and offering "Add 2 seats — ৳0.00" on a ৳800 pair. `submitSeats`
+   *  already priced the sale correctly from these same rows, so the button was
+   *  the only thing lying. */
+  const seatTotal = availSeats
+    .filter((s) => selectedSeats.includes(s.label))
+    .reduce((a, s) => a + s.price, 0);
   const [providerId, setProviderId] = useState<string | undefined>();
   const [guideId, setGuideId] = useState<string | undefined>();
   // Flexible durations come from the duration engine when configured.
@@ -546,6 +553,12 @@ export function ProductSheet({
       productId: product.id, productName: product.name,
       items,
       seatLabels: selectedSeats,
+      /* The seats themselves, and the PERFORMANCE they are for. A seat is
+         claimed for a (product, date, time) — without the date every showing
+         of the film shared one pool of seats. */
+      seats: chosen.map((s) => ({ label: s.label, tierId: s.categoryUid, tierName: s.categoryName, unitPrice: s.price })),
+      slotDate: date,
+      slotTime,
     }, pay);
   };
 
@@ -1304,7 +1317,18 @@ export function ProductSheet({
                         }}
                         labelOf={(el) => {
                           const st = availSeats.find((x) => x.label === el.id);
-                          return st ? `${st.label} · ${st.categoryName} · ${formatMoney(st.price, currency)}${st.available ? "" : ` · ${seatT("picker.sold")}`}` : el.name;
+                          if (!st) return el.name;
+                          /* A refusal names its own mechanism: sold, held for a
+                             named party, or taken off the plan. "Unavailable"
+                             tells a cashier nothing they can act on. */
+                          const why = st.available
+                            ? ""
+                            : st.unavailableReason === "held"
+                              ? ` · ${seatT("picker.heldFor", { who: st.heldFor ?? "" })}`
+                              : st.unavailableReason === "blocked"
+                                ? ` · ${seatT("picker.blocked")}`
+                                : ` · ${seatT("picker.sold")}`;
+                          return `${st.label} · ${st.categoryName} · ${formatMoney(st.price, currency)}${why}`;
                         }}
                         onPick={(el) => {
                           const st = availSeats.find((x) => x.label === el.id);

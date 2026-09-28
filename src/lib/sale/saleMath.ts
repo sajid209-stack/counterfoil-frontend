@@ -45,6 +45,15 @@ export interface SaleItem {
   /** A resolved span price (a lane hour, a duration) — overrides the items sum. */
   fixedPrice?: number;
   seatLabels?: string[];
+  /**
+   * The chosen seats, each with the category that prices it.
+   *
+   * `seatLabels` alone is what the cart line prints; this is what the SALE
+   * needs. Grouping seats into one line per category records that two Stalls
+   * tickets went and not which two, so the seat could never be claimed, the
+   * ticket could not name it, and two tills could sell A5 twice.
+   */
+  seats?: { label: string; tierId: string; tierName: string; unitPrice: number }[];
   /** Group size for per-booking pricing ("Group of 6"). */
   partySize?: number;
   /** Custom-amount items carry their own rate; catalogue items read the product. */
@@ -170,8 +179,36 @@ export function buildSaleLines(items: SaleItem[], ctx: SaleContext): LineInput[]
       });
     }
 
+    /* A seated performance sells one line per SEAT, so the order records which
+       seat went, the ticket can print it, and the next till is refused it. */
+    if (e.seats?.length) {
+      for (const st of e.seats) {
+        out.push({
+          productId: e.productId,
+          productName: e.productName,
+          tierId: st.tierId,
+          tierName: st.tierName,
+          admits: 1,
+          quantity: 1,
+          unitPrice: st.unitPrice,
+          lineDiscount: cut(st.unitPrice),
+          taxClass,
+          taxRate: rate,
+          booking: {
+            date: e.slotDate ?? "",
+            startTime: e.slotTime,
+            guests: 1,
+            seatLabel: st.label,
+          },
+        });
+      }
+    }
+
     let bookingAttached = e.fixedPrice != null;
     for (const i of e.items) {
+      /* The seat lines above already sold these; the category rows are only
+         how the sheet grouped them for the stepper. */
+      if (e.seats?.length && !addOnOf(i.tierId)) continue;
       if (addOnOf(i.tierId)) continue; // add-ons are appended below, as children
       const covered = coverage.get(`${e.id}|${i.tierId}`) ?? 0;
       const tier = p?.tiers.find((t) => t.id === i.tierId);

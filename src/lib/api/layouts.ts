@@ -1,5 +1,7 @@
 import { createResource, fail, ok, notFoundError, validationError } from "./client";
 import { peekProducts } from "./products";
+import { peekOrders } from "./orders";
+import { heldSeats, seatHoldsFor } from "./holds";
 import { plainGrid, planCapacity, rowLabel, sellableCount, TEMPLATES } from "../layout";
 import type {
   ApiResult,
@@ -81,20 +83,56 @@ export function saveLayoutPlan(
 
 /** The seats offered for a product's layout, as the POS/storefront picker reads
  *  them (catalog available-seats). Sold/blocked seats come back `available:false`. */
-export async function availableSeats(productId: string): Promise<ApiResult<AvailableSeat[]>> {
+/**
+ * The seats already bought for one performance.
+ *
+ * Derived from the ledger, never stored — the rule loyalty balances, hold
+ * expiry and membership lapsing all follow here, for the same reason: a stored
+ * flag and a ledger disagree exactly once, and then nobody can say which is
+ * right. Until this existed nothing recorded which seat a sale took, so a seat
+ * was never claimed and two tills could sell A5 twice.
+ *
+ * A seat is claimed for a PERFORMANCE — (product, date, start time) — because
+ * the same hall is sold again tomorrow.
+ */
+export function seatsTaken(productId: string, date?: string, slotTime?: string): Map<string, string> {
+  const taken = new Map<string, string>();
+  for (const o of peekOrders()) {
+    if (o.status === "cancelled") continue;
+    for (const l of o.lines) {
+      const b = l.booking;
+      if (l.productId !== productId || !b?.seatLabel) continue;
+      /* A refunded line gives its seat back: the guest is not coming. */
+      if ((l.refundedQuantity ?? 0) >= l.quantity) continue;
+      if (date && b.date && b.date !== date) continue;
+      if (slotTime && b.startTime && b.startTime !== slotTime) continue;
+      taken.set(b.seatLabel, o.reference);
+    }
+  }
+  return taken;
+}
+
+export async function availableSeats(productId: string, date?: string, slotTime?: string): Promise<ApiResult<AvailableSeat[]>> {
   const product = peekProducts().find((p) => p.id === productId);
   const layoutId = product?.layoutId;
   if (!layoutId) return ok<AvailableSeat[]>([]);
   const layout = resource.peek().find((l) => l.id === layoutId);
   if (!layout) return fail<AvailableSeat[]>(notFoundError("Seat layout"));
+  const taken = seatsTaken(productId, date, slotTime);
+  const held = new Set(date ? heldSeats(productId, date, slotTime) : []);
+  const holders = date ? seatHoldsFor(productId, date, slotTime) : new Map<string, string>();
   const cat = (uid: string | null) => layout.categories.find((c) => c.uid === uid);
   const seats = layout.seats
     .filter((s) => s.seatCategoryId) // only categorised seats are sellable
     .map<AvailableSeat>((s) => {
       const c = cat(s.seatCategoryId);
+      /* Three different "no", and the seat says which. "blocked" is the
+         operator taking it off the plan — a broken chair; the other two are
+         about this performance. */
+      const reason = !s.isAvailable ? "blocked" : taken.has(s.name) ? "sold" : held.has(s.name) ? "held" : undefined;
       return {
         label: s.name,
-        available: s.isAvailable,
+        available: !reason,
         section: c?.name ?? "",
         categoryUid: s.seatCategoryId!,
         categoryName: c?.name ?? "",
@@ -110,6 +148,8 @@ export async function availableSeats(productId: string): Promise<ApiResult<Avail
         height: s.height,
         rotation: s.rotation,
         capacity: s.capacity,
+        unavailableReason: reason,
+        heldFor: reason === "held" ? holders.get(s.name) : undefined,
       };
     });
   return ok(seats);
@@ -122,8 +162,8 @@ export async function availableSeats(productId: string): Promise<ApiResult<Avail
  * guess, and wrong the moment the room is a restaurant. The screen is now
  * wherever the operator put it, and a dining room has a bar and a door instead.
  */
-export async function seatMap(productId: string): Promise<ApiResult<SeatMap>> {
-  const res = await availableSeats(productId);
+export async function seatMap(productId: string, date?: string, slotTime?: string): Promise<ApiResult<SeatMap>> {
+  const res = await availableSeats(productId, date, slotTime);
   if (!res.ok) return fail<SeatMap>(res.error);
   const product = peekProducts().find((p) => p.id === productId);
   const layout = product?.layoutId ? resource.peek().find((l) => l.id === product.layoutId) : undefined;

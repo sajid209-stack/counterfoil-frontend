@@ -191,6 +191,24 @@ export function heldSeats(productId: ID, date: ISODate, slotStart?: string | nul
     .flatMap((h) => h.seatLabels ?? []);
 }
 
+/**
+ * Held seats with WHO each is held for, so a refusal at the till can name the
+ * party rather than saying a bare no. The rule `explainUnavailable` already
+ * follows: a refusal that names its own mechanism is one somebody can act on.
+ *
+ * A till's own checkout hold is deliberately anonymous — "Checkout in
+ * progress" is an internal constant, not a party's name, and a cashier must
+ * never be offered the chance to release another till's live cart.
+ */
+export function seatHoldsFor(productId: ID, date: ISODate, slotStart?: string | null): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const h of activeHolds()) {
+    if (h.productId !== productId || h.kind !== "seats" || !sameSlot(h, date, slotStart)) continue;
+    for (const label of h.seatLabels ?? []) out.set(label, h.heldFor);
+  }
+  return out;
+}
+
 /** True when a resource is held back over a span. */
 export function isResourceHeld(resourceId: ID, date: ISODate, startISO: string, endISO: string): boolean {
   return activeHolds().some(

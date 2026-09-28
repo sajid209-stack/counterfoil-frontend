@@ -547,6 +547,15 @@ export interface OrderLineBooking {
   providerName?: string;
   durationMinutes?: number;
   guests?: number;
+  /**
+   * Which seat this line bought, for a seated performance.
+   *
+   * Without it the sale records that two Stalls tickets went, and not WHICH
+   * two — so nothing downstream can say a seat is taken, the guest's ticket
+   * cannot name their seat, and two tills can sell A5 twice. A seat is claimed
+   * for a PERFORMANCE, which is this booking's own (date, startTime).
+   */
+  seatLabel?: string;
 }
 
 /** One sold thing. EVERYTHING here is a snapshot at time of sale — names,
@@ -886,6 +895,15 @@ export interface AvailableSeat {
   height?: number;
   rotation?: number;
   capacity?: number; // a table seats this many
+  /**
+   * Why it cannot be had, when it cannot. "blocked" is the operator taking it
+   * off sale on the plan (a broken chair); "sold" and "held" are about this
+   * performance. A refusal that names its own mechanism is the rule the gate
+   * and the holds register already follow.
+   */
+  unavailableReason?: "sold" | "held" | "blocked";
+  /** For a held seat: who it is being held for. */
+  heldFor?: string;
 }
 /** A plan as a buyer's screen draws it: what is for sale, and the scenery. */
 export interface SeatMap {

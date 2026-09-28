@@ -22,5 +22,6 @@
   "printAll": "Print all: tickets and receipt",
   "printAllTitle": "Ticket receipt",
   "orderNotFound": "This order could not be found.",
-  "ticketsCount": "{count, plural, one {# ticket} other {# tickets}}"
+  "ticketsCount": "{count, plural, one {# ticket} other {# tickets}}",
+  "seatLabel": "Seat"
 }

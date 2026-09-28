@@ -680,12 +680,37 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         });
       }
 
+      /* A seated performance sells one line per SEAT, so the order records
+         WHICH seat went — the ticket can then print it and the next till is
+         refused it. Grouping them into one line per category recorded that two
+         Stalls tickets went and not which two, so a seat could never be
+         claimed and two tills could sell A5 twice.
+
+         This mirrors `lib/sale/saleMath`, which the scrolling till uses. The
+         two builders are the documented duplication between the variants —
+         a change to one is a change to both, and this is the drift. */
+      if (e.seats?.length) {
+        for (const st of e.seats) {
+          inputs.push({
+            productId: e.productId, productName: e.productName,
+            tierId: st.tierId, tierName: st.tierName,
+            admits: 1, quantity: 1, unitPrice: st.unitPrice,
+            lineDiscount: pctOf(st.unitPrice),
+            taxClass, taxRate: rate,
+            booking: { date: e.slotDate ?? "", startTime: e.slotTime, guests: 1, seatLabel: st.label },
+          });
+        }
+      }
+
       // Tier / section / premium / custom items. Pass-covered quantities split
       // into their own 0-price untaxed lines. The entry's first tier line
       // carries the booking snapshot for slotted products.
       let bookingAttached = e.fixedPrice != null;
       for (const i of e.items) {
         if (addOnOf(i.tierId)) continue; // add-ons parent below
+        /* The seat lines above already sold these; the category rows are only
+           how the sheet grouped them for its own steppers. */
+        if (e.seats?.length) continue;
         const cov = coverage.get(`${e.id}|${i.tierId}`) ?? 0;
         const tier = p?.tiers.find((t) => t.id === i.tierId);
         const isPremium = i.tierId.startsWith("prem_");

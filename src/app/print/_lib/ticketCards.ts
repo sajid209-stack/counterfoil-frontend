@@ -8,6 +8,7 @@ export interface TicketLabels {
   date: string;
   time: string;
   where: string;
+  seat: string;
   guests: string;
   holder: string;
   gateHint: string;
@@ -22,6 +23,7 @@ export function useTicketLabels(): TicketLabels {
     date: t("dateLabel"),
     time: t("timeLabel"),
     where: t("whereLabel"),
+    seat: t("seatLabel"),
     guests: t("guestsLabel"),
     holder: t("holderLabel"),
     gateHint: t("gateHint"),
@@ -57,6 +59,9 @@ export function ticketCards(order: Order | undefined, tickets: Ticket[], busines
     const says = (text: string) => productName.toLowerCase().includes(text.toLowerCase());
     const where = booking?.resourceName ?? booking?.providerName;
     if (where && !says(where)) fields.push({ label: labels.where, value: where });
+    /* The seat, which the sale now records. A ticket for a seated performance
+       that does not say which seat is one the holder cannot use at the door. */
+    if (booking?.seatLabel) fields.push({ label: labels.seat, value: booking.seatLabel });
     if (admits > 1) fields.push({ label: labels.guests, value: String(admits) });
     if (order?.customerName) fields.push({ label: labels.holder, value: order.customerName });
 

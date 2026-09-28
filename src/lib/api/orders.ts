@@ -1,6 +1,7 @@
 import { createBooking } from "./bookings";
 import { itemForAddOn, recordMovement, recordSale } from "./inventory";
-import { createResource } from "./client";
+import { conflictError, createResource, fail } from "./client";
+import { seatsTaken } from "./layouts";
 import { issueTicket, redeemCredits, voidOrderTickets } from "./tickets";
 import { buildOrderLines, type LineInput } from "@/lib/orderMath";
 import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod, Ticket, WriteOffCategory } from "./types";
@@ -112,8 +113,12 @@ export async function addOrderLines(orderId: string, inputs: LineInput[], who = 
 
 /** Refund specific lines with a reason — marks the lines (refundedQuantity /
  *  refundedAmount), voids their unredeemed tickets, reverses the money as a
- *  negative payment, and puts refunded stock back on the shelf. Capacity
- *  release is a backend TODO. */
+ *  negative payment, and puts refunded stock back on the shelf.
+ *
+ *  A refunded SEAT goes back on sale by itself, because seat availability is
+ *  replayed from the ledger (`seatsTaken`) rather than stored — a fully
+ *  refunded line stops claiming its seat the moment it is marked. Slot and
+ *  daily capacity are still a backend TODO: those are counted, not named. */
 export async function refundOrderLines(orderId: string, lineIds: string[], reason: string, who = "Counter"): Promise<ApiResult<Order>> {
   const o = resource.peek().find((x) => x.id === orderId);
   if (!o) return resource.get(orderId);
@@ -229,6 +234,47 @@ export async function checkout(
   );
   const total = totals.total;
   const payNow = input.payNow ?? total;
+
+  /**
+   * The seats, re-checked at the moment money is taken.
+   *
+   * A cap on the picker stops ONE till. Two cashiers with the same slow cart
+   * both pass it, and the second sale silently takes a seat somebody is
+   * already holding a ticket for. This is the last point where that can be
+   * refused, which is why the check belongs here and not in the sheet — the
+   * same reasoning that put the credits spend above.
+   *
+   * It names the seat, because "that seat has gone" is something a cashier can
+   * act on and a bare refusal is not.
+   */
+  const wanted = lines.filter((l) => l.booking?.seatLabel);
+  if (wanted.length) {
+    const clashes: string[] = [];
+    const seen = new Set<string>();
+    for (const l of wanted) {
+      const b = l.booking!;
+      const key = `${l.productId}|${b.date ?? ""}|${b.startTime ?? ""}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        const taken = seatsTaken(l.productId, b.date || undefined, b.startTime);
+        for (const w of wanted) {
+          const wb = w.booking!;
+          if (`${w.productId}|${wb.date ?? ""}|${wb.startTime ?? ""}` !== key) continue;
+          if (taken.has(wb.seatLabel!)) clashes.push(wb.seatLabel!);
+        }
+      }
+    }
+    if (clashes.length) {
+      /* A conflict, not a form error: `validationError` defaults to "Please fix
+         the highlighted fields", and at a till there is no field to highlight —
+         the cashier gets a toast, so the toast has to be the whole sentence. */
+      return fail(
+        conflictError(
+          `${clashes.join(", ")} ${clashes.length === 1 ? "has" : "have"} just been sold. Choose another ${clashes.length === 1 ? "seat" : "seats"}.`,
+        ),
+      );
+    }
+  }
 
   // Spend pass credits first so an invalid pass fails the sale cleanly.
   if (input.credits && input.credits.count > 0) {

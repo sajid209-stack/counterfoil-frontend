@@ -51,6 +51,9 @@ export interface CartEntry {
   items: { tierId: string; tierName: string; unitPrice: number; qty: number }[];
   fixedPrice?: number; // resource slot resolved price (overrides items sum)
   seatLabels?: string[]; // BT-07 seated: chosen seat labels ("A5", "A6")
+  /** The same seats with the category that prices each one — what the SALE
+   *  needs, so the order records WHICH seat went. */
+  seats?: { label: string; tierId: string; tierName: string; unitPrice: number }[];
   partySize?: number; // group size for flat-per-booking entries ("Group of 6")
   taxRatePct?: number; // custom-amount entries carry their own rate
   lineDiscountPct?: number; // F11 line-level discount, as a percentage
@@ -165,17 +168,7 @@ export function ProductSheet({
   const tc = useTranslations("common");
   const seatT = useTranslations("seatmaps");
   const hasLayout = !!product.layoutId;
-  const seatsQ = useApiQuery(() => availableSeats(product.id), [product.id]);
-  const availSeats = seatsQ.data ?? [];
   const [selectedSeats, setSelectedSeats] = useState<string[]>(initial?.seatLabels ?? []);
-  /** A seat map prices itself off the seats, not off the tier steppers — those
-   *  stay at zero because a seat IS the ticket here. The CTA was reading them
-   *  anyway and offering "Add 2 seats — ৳0.00" on a ৳800 pair. `submitSeats`
-   *  already priced the sale correctly from these same rows, so the button was
-   *  the only thing lying. */
-  const seatTotal = availSeats
-    .filter((s) => selectedSeats.includes(s.label))
-    .reduce((a, s) => a + s.price, 0);
   const activeTiers = product.tiers.filter((t) => t.active);
   const bt = product.bookingType;
   const resourceMode = isResourceType(bt);
@@ -200,6 +193,17 @@ export function ProductSheet({
 
   const [date, setDate] = useState(initial?.slotDate ?? firstBookable);
   const [slotTime, setSlotTime] = useState<string | undefined>(initial?.slotTime);
+
+  /* Keyed on the performance, like the other two tills: seats taken for
+     tonight must not be missing from tomorrow's map. Declared after the date
+     it depends on. */
+  const seatsQ = useApiQuery(() => availableSeats(product.id, date, slotTime), [product.id, date, slotTime]);
+  const availSeats = seatsQ.data ?? [];
+  /** A seat map prices itself off the seats, not off the tier steppers — those
+   *  stay at zero because a seat IS the ticket here. */
+  const seatTotal = availSeats
+    .filter((s) => selectedSeats.includes(s.label))
+    .reduce((a, s) => a + s.price, 0);
   const [resourceId, setResourceId] = useState<string | undefined>(initial?.resourceId);
   const [providerId, setProviderId] = useState<string | undefined>();
   const [guideId, setGuideId] = useState<string | undefined>();
@@ -437,6 +441,10 @@ export function ProductSheet({
       productId: product.id, productName: product.name,
       items,
       seatLabels: selectedSeats,
+      /* Which seats, and for which performance — see the Go sheet. */
+      seats: chosen.map((s) => ({ label: s.label, tierId: s.categoryUid, tierName: s.categoryName, unitPrice: s.price })),
+      slotDate: date,
+      slotTime,
     }, pay);
   };
 

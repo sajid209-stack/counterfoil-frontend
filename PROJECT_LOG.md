@@ -13292,3 +13292,97 @@ Sources: [seats.io — drawing seats, tables and booths](https://support.seats.i
 [SeatPlan — restaurant floor plan maker](https://seatplan.io/use-cases/restaurants) ·
 plus the project's own UX database: Dragging Movements (High), Keyboard
 Navigation (High), Compact Control Semantics (Critical).
+
+## A seat can be sold once (2026-09-28)
+
+Owner, on the item left open by the designer: *"A seat sold at the till is
+never taken off the seat map… fix them properly."*
+
+### It was worse than "not taken off the map"
+
+Nothing recorded **which seat** a sale took. `submitSeats` grouped the chosen
+seats into one line per category, so the order said two Stalls tickets went and
+not which two. So: the seat could never be claimed, the guest's printed ticket
+could not name their seat, and two tills could sell A5 twice. The only writer
+of `isAvailable` was the seed and the designer — confirmed against `HEAD`.
+
+And a seat had no **performance**: `submitSeats` set no date, so every showing
+of the film shared one pool of seats.
+
+### The model
+
+A seat is claimed for a **performance** — (product, date, start time) — because
+the same hall is sold again tomorrow.
+
+- **`OrderLineBooking.seatLabel`** on the contract. A seated sale is now **one
+  order line per seat**, which is what makes the claim, the ticket and the
+  refund all possible. It also reads better on a receipt: three identical
+  charges is what a dispute is made of.
+- **`seatsTaken(product, date, slot)` replays the ledger.** Derived, never
+  stored — the rule loyalty balances, hold expiry and membership lapsing
+  already follow here, for the same reason: a stored flag and a ledger disagree
+  exactly once, and then nobody can say which is right.
+- **A refunded line stops claiming its seat**, so a refund puts it back on sale
+  by itself. `refundOrderLines`' comment said capacity release was a backend
+  TODO; for seats it no longer is, and the comment says which half still is.
+
+### The check that actually stops it is at the money, not in the picker
+
+A cap on the seat map stops **one** till. Two cashiers with the same slow cart
+both pass it, and the second sale silently takes a seat somebody already holds
+a ticket for. So `checkout()` re-checks every seat line at the moment money is
+taken and refuses the whole cart — **naming the seats**, because "A5 has just
+been sold. Choose another seat." is something a cashier can act on and a bare
+refusal is not. A mixed cart is refused whole: the good seat in it is not
+quietly taken.
+
+It is a **conflict**, not a validation error. `validationError` defaults to
+"Please fix the highlighted fields", and at a till there is no field to
+highlight — the cashier gets a toast, so the toast has to be the whole sentence.
+
+### Three different "no", and the seat says which
+
+`sold` and `held` are about this performance; **`blocked`** is the operator
+taking a seat off the plan — a broken chair. A held seat names the party it is
+held for, the way `explainUnavailable` does. A till's own checkout hold stays
+anonymous and un-releasable, as it already was.
+
+And the **ticket prints the seat**. A seat ticket that does not say which seat
+is one the holder cannot use at the door.
+
+### The duplication drifted, exactly as recorded
+
+The fix went into `lib/sale/saleMath` first — and the browser walk still did
+not claim the seats, because **`/pos` and `/classic` each have their own line
+builder**. That duplication is documented ("two implementations that will
+drift"); this is the drift. All three now build seat lines, and the comment in
+each points at the other two.
+
+### Verified
+
+- **15 unit checks** through the api layer, which is where the question lives:
+  a seat sells and the order records which one; the map then shows it sold
+  rather than blocked; **a second sale of the same seat is refused, naming
+  it**; a different seat still sells; the same seat is free again tomorrow; a
+  cart containing one gone seat is refused whole and the good seat in it is not
+  taken; a refunded seat goes back on sale.
+- **10 checks in the browser**: two seats chosen, `Charge ৳920.00` (2 × ৳400 +
+  15% VAT), sale complete, 2 tickets, and the seats then read as sold and
+  cannot be chosen again — while a seat the plan took off sale says "Not for
+  sale" instead.
+- Standing harnesses hold: the picker 8/8, ticket codes 27/27, shop 23/23.
+  `tsc` clean; lint holds at PosScreen's documented 2 errors / 3 warnings.
+
+### A harness lesson, for the third time this session
+
+Two harness runs reported phantom failures purely because several were running
+at once. Run them **one at a time**: `codes` reported 25/27 in a batch and
+27/27 alone.
+
+### Open
+
+- **Slot and daily capacity still do not release on refund** — those are
+  counted, not named, so there is nothing to give back without a booking-level
+  reversal. Seats were the nameable case.
+- **A seat hold placed from the calendar is honoured**; there is still no
+  per-seat hold UI at the till.
