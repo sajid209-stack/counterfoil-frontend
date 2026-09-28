@@ -298,10 +298,11 @@ export function priceSale(items: SaleItem[], ctx: SaleContext): SaleTotals {
   const benefit = ctx.benefit ?? null;
   const covers = (productId: string) => {
     if (!benefit || productId.startsWith("membership_")) return false;
-    if (benefit.productIds === null && benefit.categoryIds.length === 0) return true;
-    if (benefit.productIds?.includes(productId)) return true;
-    const cat = ctx.products.find((p) => p.id === productId)?.categoryId;
-    return !!cat && benefit.categoryIds.includes(cat);
+    /* null means everything; a list means those things. Catalogue groups were
+       a third scope and are gone, so a tier that covered a group now names
+       what it covers. */
+    if (benefit.productIds === null) return true;
+    return benefit.productIds.includes(productId);
   };
   const memberBase = benefit
     ? lines.filter((l) => covers(l.productId)).reduce((s, l) => s + l.unitPrice * l.quantity - (l.lineDiscount ?? 0), 0)

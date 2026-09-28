@@ -59,7 +59,6 @@
   "period_annual": "Yearly",
   "period_lifetime": "Lifetime",
   "scope_all": "Everything",
-  "scope_categories": "Chosen categories",
   "scope_products": "Chosen bookings",
   "summaryUnlimited": "Unlimited entry",
   "summaryVisits": "{count} visits each period",

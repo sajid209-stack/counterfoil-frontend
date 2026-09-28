@@ -22,7 +22,6 @@ const resource = createResource<Product>("products", "Product", {
     } else if (p.status !== status) {
       return false;
     }
-    if (f.categoryId && p.categoryId !== f.categoryId) return false;
     return true;
   },
   sort: {

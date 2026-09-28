@@ -246,7 +246,6 @@
     "status": "Status"
   },
   "filter": {
-    "allCategories": "All categories",
     "allStates": "All states"
   },
   "state": {

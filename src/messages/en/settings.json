@@ -338,7 +338,6 @@
     "selectAll": "Select all",
     "clearAll": "Clear",
     "productsRequired": "Pick at least one booking, or sell every booking.",
-    "uncategorised": "No category",
     "devicesTitle": "Devices",
     "devicesDesc": "Tablets that open this till.",
     "noDevice": "No tablet is paired to this counter.",
@@ -365,7 +364,8 @@
     },
     "openSwitch": "{name}: open for sales",
     "closedTag": "Closed",
-    "emptyTab": "No counters in this list."
+    "emptyTab": "No counters in this list.",
+    "allBookings": "What it sells"
   },
   "team": {
     "title": "Team",
@@ -596,38 +596,6 @@
     "actionsFor": "Actions for {name}",
     "emptyTab": "Nothing in this list."
   },
-  "categories": {
-    "title": "Categories",
-    "description": "The groups bookings are filed under — and the chips a cashier taps at the till.",
-    "emptyMessage": "Add one below, then file bookings under it on the booking's Details tab.",
-    "add": "Add category",
-    "added": "{name} added.",
-    "newPlaceholder": "New category name",
-    "count": "{count, plural, =0 {No bookings} one {# booking} other {# bookings}}",
-    "reorderFailed": "Could not reorder. Try again.",
-    "addLabel": "New category name",
-    "moveUpNamed": "Move {name} up",
-    "moveDownNamed": "Move {name} down",
-    "renameNamed": "Rename {name}",
-    "renamed": "Renamed to {name}.",
-    "listTitle": "Chips at the till",
-    "listDesc": "In the order the chips appear. Put the busiest first — it’s tapped all day. A hidden category keeps its bookings, and they still sell.",
-    "showSwitch": "Show {name} at the till",
-    "hiddenTag": "Hidden",
-    "shownToast": "{name} is shown at the till.",
-    "hiddenToast": "{name} is hidden at the till.",
-    "colorNamed": "Colour for {name}: {color}",
-    "colorSet": "{name} is now {color}",
-    "colorCleared": "{name} has no colour",
-    "colors": {
-      "none": "No colour",
-      "orange": "Orange",
-      "amber": "Amber",
-      "green": "Green",
-      "blue": "Blue",
-      "rose": "Rose"
-    }
-  },
   "nav": {
     "label": "Settings sections",
     "groups": {
@@ -667,11 +635,6 @@
         "title": "Resources",
         "desc": "Spaces and equipment that bookings take up.",
         "keywords": "court lane field room table studio bay equipment out of service repair"
-      },
-      "categories": {
-        "title": "Categories",
-        "desc": "How bookings are grouped, and the chips at the till.",
-        "keywords": "chips groups order sorting retire"
       },
       "payments": {
         "title": "Payments",

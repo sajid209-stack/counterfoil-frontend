@@ -7,7 +7,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { ArrowRight, Archive, Banknote, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, Ticket, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { counterEvents, counterItems, inventoryItem, inventoryLineId, levelOf, peekCounters, peekTicketCodeSettings, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
+import { counterEvents, counterItems, inventoryItem, inventoryLineId, levelOf, peekCounters, peekTicketCodeSettings, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_COUNTER_ID } from "@/lib/session";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
@@ -134,7 +134,6 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const enumL = useEnumLabels();
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   const opQ = useApiQuery(() => getOperator(), []);
-  const catsQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 1, filters: { status: "active" } }), []);
   const teamQ = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
@@ -320,11 +319,9 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const operator = opQ.data;
   const currency = operator?.currency ?? "BDT";
   const products = productsQ.data?.data ?? [];
-  const categories = catsQ.data?.data ?? [];
   const resources = resourcesQ.data?.data ?? [];
   const productById = (id: string) => products.find((p) => p.id === id);
 
-  const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "";
   /** Everything this till can actually sell, before the cashier narrows it.
    *  The chip row is built from THIS rather than from the filtered grid, so
    *  chips do not disappear from under the finger as someone types. */
@@ -374,21 +371,18 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
 /** Units that count rather than name. A tile says "sold by the bottle" and
  *  stays quiet about "each", which tells a cashier nothing they cannot see. */
 const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "pcs", "piece", "pieces"]);
-  /** Only groups that are switched on AND have something in them. An empty
-   *  chip is a control that filters the grid to nothing and tells the cashier
-   *  they have made a mistake — the seeded "Add-ons" group did exactly that. */
-
-  const chipCategories = categories
-    .filter((c) => c.active !== false && sellable.some((p) => p.categoryId === c.id))
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  /* The wall shows what is sold, filtered by KIND — bookings, the shelf, event
+     tickets — and by the search box. Catalogue groups are gone: they were a
+     taxonomy somebody had to maintain, and the search already spans every
+     name. */
   const shown = products
     .filter((p) => p.bookingType !== "BT-14") // field passes issue from Quick pass, not the grid
-    /* The shelf's chip id is not a category id, so picking it empties the
-       wall of bookings on its own and the shelf below takes over. */
-    .filter((p) => category === "all" || p.categoryId === category)
+    /* A kind chip that is not "all" empties the wall of bookings on its own and
+       the shelf or the events below take over. */
+    .filter(() => category === "all")
     .filter((p) => {
       const q = query.trim().toLowerCase();
-      return !q || p.name.toLowerCase().includes(q) || catName(p.categoryId).toLowerCase().includes(q);
+      return !q || p.name.toLowerCase().includes(q);
     });
   /* The shelf answers the same search box — a cashier typing "water" means
      the bottle, and having to know which chip it lives under first is the
@@ -797,10 +791,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   //    the manual-discount cap.
   const memberCovers = (productId: string) => {
     if (!benefit || productId.startsWith("membership_")) return false;
-    if (benefit.productIds === null && benefit.categoryIds.length === 0) return true;
-    if (benefit.productIds?.includes(productId)) return true;
-    const cat = productById(productId)?.categoryId;
-    return !!cat && benefit.categoryIds.includes(cat);
+    /* null means everything; a list means those things. */
+    if (benefit.productIds === null) return true;
+    return benefit.productIds.includes(productId);
   };
   const memberEligibleBase = benefit
     ? saleInputs
@@ -834,10 +827,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   const reasonNeeded = manualDiscount > 0 && !!policyQ.data?.requireReason && !discountReason.trim();
 
   const quoteLines = (): QuoteLine[] =>
-    cart.flatMap((e) => {
-      const cat = productById(e.productId)?.categoryId ?? null;
-      return e.items.filter((i) => i.unitPrice > 0).map((i) => ({ lineId: `${e.id}|${i.tierId}`, quantity: i.qty, unitAmount: i.unitPrice, categoryId: cat }));
-    });
+    cart.flatMap((e) =>
+      e.items.filter((i) => i.unitPrice > 0).map((i) => ({ lineId: `${e.id}|${i.tierId}`, quantity: i.qty, unitAmount: i.unitPrice })),
+    );
 
   const applyCoupon = async () => {
     const code = couponInput.trim();
@@ -1106,10 +1098,10 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             clipped container at least as often as it reads as "more this way". */}
         <div className="flex flex-wrap gap-tight py-inline">
           {[
+            /* Three chips at most, and each is a KIND of thing rather than a
+               group somebody named: everything, the shelf, event tickets. Each
+               appears only when there is something in it. */
             { id: "all", name: t("categoryAll") },
-            ...chipCategories,
-            /* Last, and only when the shelf has something: it is the one chip
-               that is not one of the operator's own categories. */
             ...(shopItems.length > 0 ? [{ id: SHOP, name: t("shop.chip") }] : []),
             ...(eventsForSale.length > 0 ? [{ id: EVENTS, name: t("event.chip") }] : []),
           ].map((c) => (

@@ -17,8 +17,7 @@ import {
   peekBookings,
   rescheduleBooking,
   listBookings,
-  listCategories,
-  listHolds,
+    listHolds,
   listProducts,
   listResources,
   listStaff,
@@ -52,10 +51,6 @@ import {
   windowStats,
   type CalEvent,
   type Ghost,
-  CATEGORY_CLASS,
-  CATEGORY_DOT,
-  NO_CATEGORY_CLASS,
-  NO_CATEGORY_DOT,
   TONE_CLASS,
   TONE_DOT,
   type EventTone,
@@ -143,7 +138,6 @@ export default function CalendarPage() {
     [],
   );
   const staffQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
-  const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
   const holdsQ = useApiQuery(() => listHolds({ pageSize: 500, filters: { effectiveStatus: "held" } }), []);
   const operatorQ = useApiQuery(() => getOperator(), []);
 
@@ -209,7 +203,7 @@ export default function CalendarPage() {
           ? { ...e, subtitle: [e.subtitle, t("unassigned")].filter(Boolean).join(" · ") }
           : e,
       ),
-      ...holdsToEvents(holdsQ.data?.data ?? [], products),
+      ...holdsToEvents(holdsQ.data?.data ?? []),
     ],
     [bookingsQ.data, holdsQ.data, products, resources, staff, guestOf, t],
   );
@@ -252,7 +246,6 @@ export default function CalendarPage() {
   // them are the same control, and drawing them separately would state the
   // same five words twice.
   const [bookingFilter, setBookingFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [tones, setTones] = useState<EventTone[]>(TONES);
   /* What a block's colour MEANS. Status is the default and always has been —
@@ -261,7 +254,6 @@ export default function CalendarPage() {
      is the owner's ask, and it answers a different question: not "what is
      happening to this booking" but "what KIND of thing is it", which is what
      a manager scanning a week for the tours actually wants. */
-  const [colorBy, setColorBy] = useState<"status" | "category">("status");
   /* Who the record says did it. Same constant the order page uses — the mock
      has no session user beyond DEMO_STAFF_ID, and inventing a second name for
      the same actor would put two people in one audit trail. */
@@ -277,10 +269,9 @@ export default function CalendarPage() {
   /** Only the folded-away selects count towards the badge — the tone toggles
    *  are on screen saying their own state, so counting them would report a
    *  filter as hidden while the user is looking straight at it. */
-  const selectFilters = [bookingFilter, categoryFilter, ownerFilter].filter(
+  const selectFilters = [bookingFilter, ownerFilter].filter(
     (v) => v !== "all",
   ).length;
-  const categories = useMemo(() => categoriesQ.data?.data ?? [], [categoriesQ.data]);
   /* What can be sold from the calendar as it is filtered. Filtered to the
      bowling, the grid shades the hours bowling cannot fill and the panel
      offers bowling — what you are looking at is what you can book. */
@@ -288,16 +279,14 @@ export default function CalendarPage() {
     () =>
       products.filter(
         (p) =>
-          (bookingFilter === "all" || p.id === bookingFilter) &&
-          (categoryFilter === "all" || p.categoryId === categoryFilter),
+          bookingFilter === "all" || p.id === bookingFilter,
       ),
-    [products, bookingFilter, categoryFilter],
+    [products, bookingFilter],
   );
   const filtered =
-    bookingFilter !== "all" || categoryFilter !== "all" || ownerFilter !== "all" || tones.length !== TONES.length;
+    bookingFilter !== "all" || ownerFilter !== "all" || tones.length !== TONES.length;
   const resetFilters = () => {
     setBookingFilter("all");
-    setCategoryFilter("all");
     setOwnerFilter("all");
     setTones(TONES);
   };
@@ -311,14 +300,10 @@ export default function CalendarPage() {
     () =>
       events.filter((e) => {
         if (bookingFilter !== "all" && e.productId !== bookingFilter) return false;
-        if (categoryFilter !== "all") {
-          const p = products.find((x) => x.id === e.productId);
-          if (!p || p.categoryId !== categoryFilter) return false;
-        }
         if (ownerFilter !== "all" && e.ownerId !== ownerFilter) return false;
         return true;
       }),
-    [events, bookingFilter, categoryFilter, ownerFilter, products],
+    [events, bookingFilter, ownerFilter],
   );
   const visible = useMemo(() => scoped.filter((e) => tones.includes(e.tone)), [scoped, tones]);
 
@@ -554,22 +539,14 @@ export default function CalendarPage() {
      week, which is the one thing it must not do. When the window has nothing
      in it AND something is filtering, say so and offer the way back. */
   const inWindow = view === "day" ? dayEvents : view === "week" ? weekEvents : monthEvents;
-  const inWindowForKey = inWindow;
   const emptyByFilter = !loading && inWindow.length === 0 && filtered;
-
-  /* A category's colour, by id, resolved once per render rather than per
-     block — a month view draws hundreds of them. */
-  const catColor = useMemo(() => {
-    const m = new Map<string, (typeof categories)[number]["color"]>();
-    for (const c of categories) m.set(c.id, c.color ?? null);
-    return m;
-  }, [categories]);
 
   /**
    * What a block is painted.
    *
-   * Two rules survive category mode and are not negotiable. **Held and closed
-   * keep their hatching**: those are the app's "you cannot have this" signal,
+   * Colour means STATUS — catalogue groups are gone, and with them the choice
+   * of painting by one. Two rules are not negotiable. **Held and closed keep
+   * their hatching**: those are the app's "you cannot have this" signal,
    * carried by texture as well as colour so it never depends on hue — and a
    * held slot painted in its category's colour would look sellable. And a
    * **no-show keeps its strike-through**, so the category says what the
@@ -577,12 +554,10 @@ export default function CalendarPage() {
    */
   const blockClass = useCallback(
     (e: CalEvent) => {
-      const paint = (() => {
-        if (colorBy === "status" || e.tone === "held" || e.tone === "locked") return TONE_CLASS[e.tone];
-        const color = catColor.get(e.categoryId ?? "") ?? null;
-        const base = color ? CATEGORY_CLASS[color] : NO_CATEGORY_CLASS;
-        return e.tone === "noshow" ? `${base} line-through` : base;
-      })();
+      /* Colour means STATUS. A no-show keeps its strike-through as well, so
+         "nobody came" is carried by shape and not by colour alone. */
+      const base = TONE_CLASS[e.tone];
+      const paint = e.tone === "noshow" ? `${base} line-through` : base;
       /* The booking just made, ringed for a moment where the draft stood —
          the answer to "did that work?" is on the grid, not only in a toast
          at the other corner of the screen. */
@@ -590,7 +565,7 @@ export default function CalendarPage() {
         ? `${paint} ring-2 ring-ember-solid ring-offset-1 ring-offset-card`
         : paint;
     },
-    [colorBy, catColor, justBooked],
+    [justBooked],
   );
   useEffect(() => {
     if (!justBooked) return;
@@ -629,11 +604,9 @@ export default function CalendarPage() {
 
   const dotClass = useCallback(
     (e: CalEvent) => {
-      if (colorBy === "status" || e.tone === "held" || e.tone === "locked") return TONE_DOT[e.tone];
-      const color = catColor.get(e.categoryId ?? "") ?? null;
-      return color ? CATEGORY_DOT[color] : NO_CATEGORY_DOT;
+      return TONE_DOT[e.tone];
     },
-    [colorBy, catColor],
+    [],
   );
 
   /* Lock, unlock and mark-arrived, from the block you are looking at. Each
@@ -799,18 +772,6 @@ export default function CalendarPage() {
     bookingsQ.reload();
   };
 
-  /** The categories actually on screen, so the key explains what is drawn
-   *  rather than listing a catalogue. */
-  const categoryKey = useMemo(() => {
-    if (colorBy !== "category") return [];
-    const ids = new Set(inWindowForKey.map((e) => e.categoryId ?? ""));
-    const rows = categories
-      .filter((c) => ids.has(c.id))
-      .map((c) => ({ id: c.id, name: c.name, dot: c.color ? CATEGORY_DOT[c.color] : NO_CATEGORY_DOT }));
-    if (ids.has("")) rows.push({ id: "", name: t("noCategory"), dot: NO_CATEGORY_DOT });
-    return rows;
-  }, [colorBy, inWindowForKey, categories, t]);
-
   /** The key IS the filter: each chip says what its colour means, how many
    *  are in view, and switches that state off when tapped. Drawing a legend
    *  and a filter separately would state the same five words twice. */
@@ -827,38 +788,14 @@ export default function CalendarPage() {
           on ? "border-line bg-card text-fg" : "border-line bg-subtle text-muted",
         )}
       >
-        {/* Only while colour means status. A key chip showing an ember
-            swatch beside blocks painted by category would be a legend for a
-            picture that is not on screen. */}
-        {colorBy === "status" && (
-          <span
-            className={cn(
-              "h-3.5 w-3.5 rounded-xs border",
-              TONE_SWATCH[tone],
-              !on && "opacity-40",
-            )}
-          />
-        )}
+        <span
+          className={cn("h-3.5 w-3.5 rounded-xs border", TONE_SWATCH[tone], !on && "opacity-40")}
+        />
         {t(TONE_KEY[tone])}
         <span className="font-mono text-[12px] text-muted">{toneCounts[tone]}</span>
       </button>
     );
   });
-
-  /* The category key is a KEY, not a second filter: the category select two
-     rows down already filters, and offering the same narrowing twice in one
-     toolbar is how a control ends up disagreeing with itself. */
-  const categoryKeyRow = categoryKey.length > 0 && (
-    <div className="flex flex-wrap items-center gap-comfortable rounded-sm border border-line bg-subtle px-comfortable py-tight">
-      <span className="type-label text-[12px] text-muted">{t("colourKey")}</span>
-      {categoryKey.map((c) => (
-        <span key={c.id || "none"} className="flex items-center gap-inline text-[12px] text-fg">
-          <span aria-hidden className={cn("h-3 w-3 rounded-full", c.dot)} />
-          {c.name}
-        </span>
-      ))}
-    </div>
-  );
 
   /* One button, rendered in one of two places: beside the date controls on a
      phone, and at the head of the key row on a desktop. Declaring it once is
@@ -894,7 +831,6 @@ export default function CalendarPage() {
   const filterBody = (
     <>
             {compact && <div className="flex flex-wrap items-center gap-tight">{toneKey}</div>}
-            {compact && categoryKeyRow}
             <div className="flex flex-wrap items-center gap-tight">
             <Select
               value={bookingFilter}
@@ -909,39 +845,11 @@ export default function CalendarPage() {
               ]}
             />
 
-            <Select
-              value={categoryFilter}
-              onChange={setCategoryFilter}
-              aria-label={t("filterCategory")}
-              size="sm"
-              className="max-w-full"
-              triggerClassName="text-[13px] md:h-9"
-              options={[
-                { value: "all", label: t("allCategories") },
-                ...categories.map((c) => ({ value: c.id, label: c.name })),
-              ]}
-            />
 
             {/* What colour MEANS. A segmented pair rather than a select,
                 because there are two answers and both are worth seeing —
                 and it sits with the filters because, like them, it changes
                 how the same day is read rather than which day it is. */}
-            <span role="group" aria-label={t("colorBy")} className="flex items-center gap-inline rounded-sm bg-line/60 p-inline">
-              {(["status", "category"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  aria-pressed={colorBy === mode}
-                  onClick={() => setColorBy(mode)}
-                  className={cn(
-                    "h-9 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:h-7",
-                    colorBy === mode ? "bg-card text-fg shadow-sm" : "text-muted hover:text-fg",
-                  )}
-                >
-                  {t(mode === "status" ? "colorByStatus" : "colorByCategory")}
-                </button>
-              ))}
-            </span>
 
             {(resources.length > 0 || staff.length > 0) && (
               <Select
@@ -1087,7 +995,6 @@ export default function CalendarPage() {
             {!compact && filtersButton}
 
             {!compact && toneKey}
-            {!compact && categoryKeyRow}
 
             {/* How the day's rows are cut — a way of looking, like the view
                 switch, so it is drawn as one: a segmented pair. In ember it

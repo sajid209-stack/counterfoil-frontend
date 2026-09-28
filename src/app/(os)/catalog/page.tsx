@@ -61,7 +61,6 @@ import {
   eventRevenue,
   runsOverDays,
   listBookings,
-  listCategories,
   listEvents,
   listProducts,
   listResources,
@@ -72,7 +71,7 @@ import {
   type Product,
 } from "@/lib/api";
 import { behaviourSubtitle } from "@/lib/behaviour";
-import { CATEGORIES, categoryById } from "@/lib/events/catalog";
+import { categoryById } from "@/lib/events/catalog";
 import { templateFontVars } from "@/lib/events/fonts";
 import { formatDay, formatPriceShort } from "@/lib/format";
 import { DAY_LABELS, DEMO_TODAY, demoNow } from "@/lib/schedule";
@@ -170,13 +169,11 @@ function Catalog() {
   const kind: Kind = kindParam === "bookings" || kindParam === "events" ? kindParam : "all";
   const setKind = (k: Kind) => {
     setPage(1);
-    setCategory("");
     router.replace(k === "all" ? "/catalog" : `/catalog?kind=${k}`, { scroll: false });
   };
 
   const [search, setSearch] = useState("");
   const [states, setStates] = useState<Facet[]>([]);
-  const [category, setCategory] = useState("");
   const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "smart", order: "asc" });
   const [page, setPage] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
@@ -196,12 +193,10 @@ function Catalog() {
   const archivedEventsQ = useApiQuery(() => listEvents({ pageSize: 200, filters: { status: "archived" } }), [reloadKey]);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
   const teamQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
-  const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), [reloadKey]);
 
   const resources = useMemo(() => resourcesQ.data?.data ?? [], [resourcesQ.data]);
   const team = useMemo(() => teamQ.data?.data ?? [], [teamQ.data]);
-  const productCats = useMemo(() => categoriesQ.data?.data ?? [], [categoriesQ.data]);
 
   /* What each booking has sold ahead of today — the fallback for a booking
      with no capacity to draw a bar against. Counted by the slot's own date: a
@@ -256,9 +251,6 @@ function Catalog() {
    *  disappearance. */
   const visibleByState = (i: CatalogItem) => (states.length ? states.some((f) => inFacet(i, f)) : i.state !== "archived");
   const ofKind = (i: CatalogItem, k: Kind) => k === "all" || (k === "bookings" ? i.kind === "booking" : i.kind === "event");
-  const matchesCategory = (i: CatalogItem) =>
-    !category ||
-    (category.startsWith("ev:") ? i.event?.categoryId === category.slice(3) : i.product?.categoryId === category);
 
   const base = items.filter(matchesSearch);
   const counts = {
@@ -266,7 +258,7 @@ function Catalog() {
     bookings: base.filter((i) => i.kind === "booking" && visibleByState(i)).length,
     events: base.filter((i) => i.kind === "event" && visibleByState(i)).length,
   };
-  const inKind = base.filter((i) => ofKind(i, kind) && matchesCategory(i));
+  const inKind = base.filter((i) => ofKind(i, kind));
   const facetCounts = Object.fromEntries(FACETS.map((f) => [f, inKind.filter((i) => inFacet(i, f)).length])) as Record<Facet, number>;
   const sorted = useMemo(() => {
     const list = inKind.filter(visibleByState);
@@ -289,13 +281,13 @@ function Catalog() {
       );
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from the filters above
-  }, [items, kind, q, states, category, sort]);
+  }, [items, kind, q, states, sort]);
   /* Rows hold their places through an action. The default order ranks by
      state, so taking a row off sale would otherwise move it — often to a later
      page — at the moment someone looks for it to check the change, or to press
      Undo. Changing a filter or the sort is asking for a new order, so the held
      one lapses as soon as any of them moves. */
-  const sig = `${kind}|${q}|${states.join()}|${category}|${sort.key}|${sort.order}`;
+  const sig = `${kind}|${q}|${states.join()}|${sort.key}|${sort.order}`;
   const [held, setHeld] = useState<{ sig: string; keys: string[] } | null>(null);
   const rows = useMemo(() => {
     if (!held || held.sig !== sig) return sorted;
@@ -727,12 +719,11 @@ function Catalog() {
     },
   ];
 
-  const filtered = !!q || states.length > 0 || !!category;
+  const filtered = !!q || states.length > 0;
   const empty = !loading && items.filter((i) => i.state !== "archived").length === 0 && !wantArchived;
   const clearAll = () => {
     setSearch("");
     setStates([]);
-    setCategory("");
     setPage(1);
   };
 
@@ -995,30 +986,9 @@ function Catalog() {
                       className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-line bg-card text-fg md:hidden"
                     >
                       <SlidersHorizontal size={16} strokeWidth={1.5} aria-hidden />
-                      {(category || sort.key !== "smart") && <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-ember" />}
+                      {sort.key !== "smart" && <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-ember" />}
                     </button>
                     <div className={cn("w-full gap-tight md:contents", filtersOpen ? "flex" : "hidden")}>
-                    {/* Two taxonomies under one select: the operator's own
-                        categories for bookings, the six event categories for
-                        events — grouped, so neither pretends to be the other. */}
-                    <Select
-                      aria-label={t("allCategories")}
-                      value={category}
-                      onChange={(v) => {
-                        setCategory(v);
-                        setPage(1);
-                      }}
-                      triggerClassName="text-sm md:h-9"
-                      options={[
-                        { value: "", label: t("allCategories") },
-                        ...(kind !== "events"
-                          ? productCats.map((c) => ({ value: c.id, label: c.name, group: t("kind.bookings") }))
-                          : []),
-                        ...(kind !== "bookings"
-                          ? CATEGORIES.map((c) => ({ value: `ev:${c.id}`, label: te(`category.${c.key}`), group: t("kind.events") }))
-                          : []),
-                      ]}
-                    />
                     <Select
                       aria-label={t("sortBy")}
                       value={sort.key}

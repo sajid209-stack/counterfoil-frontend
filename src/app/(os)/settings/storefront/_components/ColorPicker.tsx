@@ -3,14 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { CategoryColor } from "@/lib/api";
+import type { AccentColor } from "@/lib/api";
 
-/** The five the design system offers, in the order the picker lists them. */
-export const CATEGORY_COLORS: CategoryColor[] = ["orange", "amber", "green", "blue", "rose"];
+/** The five the design system offers, in the order the picker lists them.
+ *  It was the category picker; catalogue groups are gone and the storefront
+ *  accent is what still chooses from the palette. */
+export const ACCENT_COLORS: AccentColor[] = ["orange", "amber", "green", "blue", "rose"];
 
-/** The solid swatch. Category colour is a TOKEN name on the record, so the two
+/** The solid swatch. An accent is a TOKEN name on the record, so the two
  *  themes can take different steps of the same hue — see globals.css. */
-export const COLOR_DOT: Record<CategoryColor, string> = {
+export const COLOR_DOT: Record<AccentColor, string> = {
   orange: "bg-cat-orange",
   amber: "bg-cat-amber",
   green: "bg-cat-green",
@@ -36,12 +38,12 @@ export function ColorPicker({
   optionLabel,
   noneLabel,
 }: {
-  value: CategoryColor | null | undefined;
-  onChange: (next: CategoryColor | null) => void;
+  value: AccentColor | null | undefined;
+  onChange: (next: AccentColor | null) => void;
   /** Names the control, including the current colour. */
   label: string;
   /** Names one option — the picker cannot know the operator's language. */
-  optionLabel: (color: CategoryColor | null) => string;
+  optionLabel: (color: AccentColor | null) => string;
   noneLabel: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -66,7 +68,7 @@ export function ColorPicker({
     };
   }, [open]);
 
-  const pick = (next: CategoryColor | null) => {
+  const pick = (next: AccentColor | null) => {
     setOpen(false);
     trigger.current?.focus();
     if (next !== (value ?? null)) onChange(next);
@@ -98,7 +100,7 @@ export function ColorPicker({
           aria-label={label}
           className="absolute right-0 top-[calc(100%+4px)] z-40 w-48 rounded-md border border-line bg-card py-inline shadow-lg"
         >
-          {[null, ...CATEGORY_COLORS].map((c) => (
+          {[null, ...ACCENT_COLORS].map((c) => (
             <button
               key={c ?? "none"}
               type="button"

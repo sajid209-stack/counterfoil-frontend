@@ -1,6 +1,5 @@
 import { getTaxConfigState, ok } from "./client";
 import { peekBookings } from "./bookings";
-import { peekCategories } from "./categories";
 import { peekCounters } from "./counters";
 import { peekLocations } from "./locations";
 import { peekOrders } from "./orders";
@@ -13,7 +12,7 @@ import type { ApiResult, ID, ISODate, ISODateTime, Minor, Order, OrderLine, Paym
 // The contract the backend builds to. Do not change shapes without updating both.
 export type SalesGroupBy =
   | "product"
-  | "category"
+  | "kind"
   | "payment_method"
   | "counter"
   | "location"
@@ -60,7 +59,6 @@ export interface TransactionQuery {
   counterIds?: ID[];
   staffIds?: ID[];
   productIds?: ID[];
-  categoryIds?: ID[];
   paymentMethods?: PaymentMethod[];
   status?: TxStatus[];
   minAmount?: Minor;
@@ -201,8 +199,6 @@ export async function getSalesReport(query: SalesReportQuery): Promise<ApiResult
   const prev = summarise(inRange(orders, prevFrom, prevTo, query.locationId));
 
   // Lookups for labels
-  const productCat = new Map(peekProducts().map((p) => [p.id, p.categoryId]));
-  const catName = new Map(peekCategories().map((c) => [c.id, c.name]));
   const locName = new Map(peekLocations().map((l) => [l.id, l.name]));
   const cntName = new Map(peekCounters().map((c) => [c.id, c.name]));
   const stfName = new Map(peekStaff().map((s) => [s.id, s.name]));
@@ -220,7 +216,7 @@ export async function getSalesReport(query: SalesReportQuery): Promise<ApiResult
     const isRefund = o.status === "refunded";
     if (!isSettled && !isRefund) continue;
 
-    if (query.groupBy === "product" || query.groupBy === "category") {
+    if (query.groupBy === "product" || query.groupBy === "kind") {
       // F11: revenue attributes PER LINE at its net (post-discount) value.
       // Add-on child lines are products in their own right (bib hire ≠ turf).
       for (const line of o.lines) {
@@ -233,32 +229,27 @@ export async function getSalesReport(query: SalesReportQuery): Promise<ApiResult
           const label = key === "custom" ? "Custom" : line.productName;
           add(key, label, isSettled ? amt : 0, isRefund ? amt : isSettled ? lineRefund : 0, isSettled && line.admits > 0 && !line.parentLineId ? line.quantity : 0);
         } else {
-          /* Three lines are not catalogue items and would otherwise all land
-             in "Uncategorised": an extra on a booking, something sold on its
-             own from the shelf, and a custom amount. Each gets its own row,
-             because "the shop took ৳12,000" is a question an operator asks. */
-          const cid = line.productId.startsWith("addon_")
+          /* What KIND of thing sold, read off the line itself rather than off a
+             group somebody had to maintain. "The shop took ৳12,000" and "event
+             tickets took ৳40,000" are questions an operator asks, and each is
+             answered by the line's own id — an extra on a booking, something
+             off the shelf, an event ticket, a typed charge, or a booking. */
+          const kind = line.productId.startsWith("addon_")
             ? "addons"
             : line.productId.startsWith("inv_")
               ? "shop"
               : line.productId.startsWith("evt_")
                 ? "events"
-                : (productCat.get(line.productId) ?? "none");
-          add(
-            cid,
-            cid === "addons"
-              ? "Add-ons"
-              : cid === "shop"
-                ? "Shop"
-                : cid === "events"
-                  ? "Event tickets"
-                  : cid === "none"
-                    ? "Uncategorised"
-                    : (catName.get(cid) ?? "—"),
-            isSettled ? amt : 0,
-            isRefund ? amt : 0,
-            isSettled ? line.quantity : 0,
-          );
+                : line.productId === "custom"
+                  ? "custom"
+                  : "bookings";
+          const label =
+            kind === "addons" ? "Add-ons"
+            : kind === "shop" ? "Shop"
+            : kind === "events" ? "Event tickets"
+            : kind === "custom" ? "Custom"
+            : "Bookings";
+          add(kind, label, isSettled ? amt : 0, isRefund ? amt : 0, isSettled ? line.quantity : 0);
         }
       }
       continue;
@@ -315,10 +306,6 @@ function matches(o: Order, q: Omit<TransactionQuery, "sort" | "cursor" | "limit"
   if (q.counterIds?.length && !q.counterIds.includes(o.counterId ?? "")) return false;
   if (q.staffIds?.length && !q.staffIds.includes(o.staffId ?? "")) return false;
   if (q.productIds?.length && !o.lines.some((l) => q.productIds!.includes(l.productId))) return false;
-  if (q.categoryIds?.length) {
-    const cats = new Map(peekProducts().map((p) => [p.id, p.categoryId]));
-    if (!o.lines.some((l) => q.categoryIds!.includes(cats.get(l.productId) ?? ""))) return false;
-  }
   if (q.paymentMethods?.length) {
     const b = methodBucket(o);
     if (b === "mixed" || !q.paymentMethods.includes(b)) return false;

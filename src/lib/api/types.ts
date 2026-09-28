@@ -142,9 +142,9 @@ export interface PriceRule {
 export type PriceRuleInput = Omit<PriceRule, "id" | "createdAt" | "updatedAt">;
 export type PriceRulePatch = Partial<PriceRuleInput>;
 
-// ── Category ───────────────────────────────────────────────────────────────
+// ── Accent colours ─────────────────────────────────────────────────────────
 /**
- * What an operator may paint a category.
+ * The five colours anything in this product may be painted.
  *
  * A NAME, not a hex. The two themes need different steps of the same hue —
  * rose-700 reads on paper and disappears on ink — so storing `#be185d` would
@@ -156,19 +156,11 @@ export type PriceRulePatch = Partial<PriceRuleInput>;
  * and rose pass the lightness band, the chroma floor, the normal-vision floor
  * and contrast in both modes. See globals.css for the measured steps and the
  * two warnings that survive.
+ *
+ * It was `CategoryColor` while catalogue categories existed. They are gone;
+ * the palette outlived them because a storefront still picks from it.
  */
-export type CategoryColor = "orange" | "amber" | "green" | "blue" | "rose";
-
-export interface Category {
-  id: ID;
-  name: string;
-  sortOrder: number;
-  active: boolean;
-  /** Unset means the calendar draws it in the neutral "no colour" tone. */
-  color?: CategoryColor | null;
-  createdAt: ISODateTime;
-  updatedAt: ISODateTime;
-}
+export type AccentColor = "orange" | "amber" | "green" | "blue" | "rose";
 
 // ── Product ────────────────────────────────────────────────────────────────
 export interface ProductImage {
@@ -317,7 +309,6 @@ export interface Product {
   name: string;
   description: string;
   images: ProductImage[];
-  categoryId: ID | null;
   bookingType: BookingTypeCode;
   tiers: PriceTier[];
   locationIds: ID[];
@@ -434,7 +425,7 @@ export interface Storefront {
   /** The one colour the page is painted in, from the five the calendar's
    *  category palette already validated — so a storefront cannot be given a
    *  hue that fails its own contrast checks. */
-  accent?: CategoryColor | null;
+  accent?: AccentColor | null;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
@@ -504,8 +495,6 @@ export type ProductInput = Omit<Product, Assigned | "tiers"> & {
 };
 export type ProductPatch = Partial<ProductInput>;
 
-export type CategoryInput = Omit<Category, "id" | "createdAt" | "updatedAt">;
-export type CategoryPatch = Partial<CategoryInput>;
 
 export type LocationInput = Omit<Location, Assigned>;
 export type LocationPatch = Partial<LocationInput>;
@@ -1000,8 +989,6 @@ export interface PromotionEligibility {
   minSubtotal?: Minor;
   minQuantity?: number;
   firstPurchaseOnly?: boolean;
-  eligibleCategories?: ID[];
-  excludedCategories?: ID[];
 }
 export interface PromotionStacking { stackable: boolean; exclusive: boolean; }
 export interface Promotion {
@@ -1055,7 +1042,6 @@ export interface QuoteLine {
   lineId: string;
   quantity: number;
   unitAmount: Minor;
-  categoryId?: ID | null;
 }
 export interface PromotionQuote {
   subtotal: Minor;
@@ -1136,7 +1122,9 @@ export type BillingPeriod = "monthly" | "quarterly" | "annual" | "lifetime";
 
 /** What a tier's discount applies to. "all" is the common case; the other two
  *  exist because operators sell "20% off tours, full price on the cafe". */
-export type MembershipDiscountScope = "all" | "categories" | "products";
+/** Everything, or a chosen few. Catalogue groups are gone, so a scope
+ *  between the two no longer exists. */
+export type MembershipDiscountScope = "all" | "products";
 
 export interface MembershipTier {
   id: ID;
@@ -1151,7 +1139,6 @@ export interface MembershipTier {
   /** Member price = list price less this, wherever the scope applies (§16.4). */
   discountBps: number;
   discountScope: MembershipDiscountScope;
-  discountCategoryIds: ID[];
   discountProductIds: ID[];
   /** Visits included in each period; null means unlimited (§16.5). */
   includedVisits: number | null;
@@ -1218,9 +1205,6 @@ export interface MemberBenefit {
   discountBps: number;
   /** Product ids the discount applies to; null means everything. */
   productIds: ID[] | null;
-  /** Category ids the discount applies to. The till expands these against the
-   *  catalogue it already has loaded; the api layer only knows ids. */
-  categoryIds: ID[];
   visitsLeft: number | null;
   includedProductIds: ID[];
 }

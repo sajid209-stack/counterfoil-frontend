@@ -27,7 +27,6 @@
     "counterId": "কাউন্টার",
     "staffId": "টিম সদস্য",
     "productId": "বুকিং",
-    "categoryId": "ক্যাটাগরি",
     "method": "পেমেন্ট মাধ্যম",
     "status": "স্ট্যাটাস",
     "minA": "সর্বনিম্ন পরিমাণ",
@@ -39,7 +38,6 @@
     "anyCounter": "যেকোনো কাউন্টার",
     "anyone": "যেকেউ",
     "anyProduct": "যেকোনো বুকিং",
-    "anyCategory": "যেকোনো ক্যাটাগরি",
     "anyMethod": "যেকোনো মাধ্যম",
     "anyStatus": "যেকোনো স্ট্যাটাস",
     "anyChannel": "যেকোনো চ্যানেল",
@@ -96,12 +94,12 @@
   },
   "groupBy": {
     "product": "বুকিং",
-    "category": "ক্যাটাগরি",
     "payment_method": "পেমেন্ট",
     "counter": "কাউন্টার",
     "location": "লোকেশন",
     "staff": "টিম সদস্য",
-    "hour": "দিনের ঘণ্টা"
+    "hour": "দিনের ঘণ্টা",
+    "kind": "ধরন"
   },
   "charts": {
     "revenueOverTime": "সময় অনুযায়ী রাজস্ব",

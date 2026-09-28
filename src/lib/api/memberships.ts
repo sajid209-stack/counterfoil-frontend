@@ -337,7 +337,6 @@ export function memberBenefitFor(customerId: ID | null | undefined): MemberBenef
     tierName: m.tierName,
     discountBps: tier.discountBps,
     productIds: tier.discountScope === "all" ? null : tier.discountProductIds,
-    categoryIds: tier.discountScope === "categories" ? tier.discountCategoryIds : [],
     visitsLeft: m.visitsLeft,
     includedProductIds: tier.includedProductIds,
   };

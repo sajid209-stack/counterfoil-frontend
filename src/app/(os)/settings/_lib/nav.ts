@@ -14,8 +14,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Store,
-  Tags,
-  UserCog,
+    UserCog,
   UserRound,
   Users,
   type LucideIcon,
@@ -30,7 +29,6 @@ export type SettingsItemKey =
   | "locations"
   | "counters"
   | "resources"
-  | "categories"
   | "storefront"
   | "tickets"
   | "payments"
@@ -83,7 +81,6 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
       { key: "locations", href: "/settings/locations", icon: MapPin },
       { key: "counters", href: "/settings/counters", icon: Store },
       { key: "resources", href: "/settings/resources", icon: LandPlot },
-      { key: "categories", href: "/settings/categories", icon: Tags },
       { key: "storefront", href: "/settings/storefront", icon: Globe },
       { key: "tickets", href: "/settings/tickets", icon: ScanLine },
     ],

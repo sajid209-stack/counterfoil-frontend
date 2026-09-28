@@ -7,7 +7,6 @@ import { Button, EmptyState, PageShell, StatusPill } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getCounter,
-  listCategories,
   listDevices,
   listLocations,
   listPaymentAccounts,
@@ -24,7 +23,6 @@ export default function CounterPage() {
   const counterQ = useApiQuery(() => getCounter(params.id), [params.id]);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 200 }), []);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 500 }), []);
-  const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
   const devicesQ = useApiQuery(() => listDevices({ pageSize: 200, filters: { counterId: params.id } }), [params.id]);
   const accountsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
   // The counter as last written here, so a rename or a status change shows at once.
@@ -42,7 +40,7 @@ export default function CounterPage() {
   }
 
   const counter = latest?.id === params.id ? latest : counterQ.data;
-  const loading = locationsQ.loading || productsQ.loading || categoriesQ.loading || devicesQ.loading || accountsQ.loading;
+  const loading = locationsQ.loading || productsQ.loading || devicesQ.loading || accountsQ.loading;
   if (!counter || loading) {
     return (
       <PageShell title={t("counters.fallbackTitle")}>
@@ -65,7 +63,6 @@ export default function CounterPage() {
         counter={counter}
         locations={locations}
         products={productsQ.data?.data ?? []}
-        categories={categoriesQ.data?.data ?? []}
         devices={(devicesQ.data?.data ?? []).filter((d) => d.status !== "archived")}
         liveAccount={(accountsQ.data?.data ?? []).some((a) => a.status === "active" && a.chargesEnabled)}
         onSaved={setLatest}

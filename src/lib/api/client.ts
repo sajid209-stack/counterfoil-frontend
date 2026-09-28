@@ -51,7 +51,6 @@ type Row = { id: string; createdAt?: string; updatedAt?: string };
 
 const store: Record<string, Row[]> = {
   products: structuredClone(seed.products),
-  categories: structuredClone(seed.categories),
   locations: structuredClone(seed.locations),
   counters: structuredClone(seed.counters),
   roles: structuredClone(seed.roles),

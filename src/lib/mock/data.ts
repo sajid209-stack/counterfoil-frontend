@@ -7,7 +7,6 @@
 import type {
   AdvancePolicy,
   BookingRule,
-  Category,
   Counter,
   Customer,
   Device,
@@ -153,7 +152,7 @@ export const promotions: Promotion[] = [
   {
     id: "promo_bxgy", locationId: null, name: "Buy 3 tours, 4th half price", kind: "buy_x_get_y", source: "automatic",
     buyXGetY: { buyQuantity: 3, getQuantity: 1, getDiscountBps: 5000 },
-    eligibility: { channels: ["counter", "online"], eligibleCategories: ["cat_tours"] },
+    eligibility: { channels: ["counter", "online"] },
     stacking: { stackable: false, exclusive: true }, status: "active", createdAt: T, updatedAt: T,
   },
 ];
@@ -167,13 +166,6 @@ export const manualDiscountPolicy: ManualDiscountPolicy = {
   maxPercentBps: 1000, // cashiers can give up to 10% ad-hoc
   requireReason: true,
 };
-
-export const categories: Category[] = [
-  { id: "cat_entry", name: "Admission", sortOrder: 1, active: true, color: "blue", createdAt: T, updatedAt: T },
-  { id: "cat_tours", name: "Guided Tours", sortOrder: 2, active: true, color: "green", createdAt: T, updatedAt: T },
-  { id: "cat_events", name: "Events", sortOrder: 3, active: true, color: "orange", createdAt: T, updatedAt: T },
-  { id: "cat_addons", name: "Add-ons", sortOrder: 4, active: true, color: "amber", createdAt: T, updatedAt: T },
-];
 
 export const locations: Location[] = [
   {
@@ -231,7 +223,6 @@ export const products: Product[] = [
     name: "General Admission",
     description: "Same-day entry to the grounds. Come any time we're open.",
     images: [],
-    categoryId: "cat_entry",
     bookingType: "BT-01",
     tiers: [
       { id: "tier_adult", name: "Adult", price: 50000, admits: 1, note: "Entry to the grounds and the museum, any time we are open.", active: true },
@@ -261,7 +252,6 @@ export const products: Product[] = [
     name: "Winter Exhibition Pass",
     description: "Valid any day from 1 December to 28 February. Pick a date.",
     images: [{ id: "img_winter", url: "/seed/winter.jpg", alt: "Winter exhibition gallery" }],
-    categoryId: "cat_events",
     bookingType: "BT-02",
     tiers: [
       { id: "tier_w_adult", name: "Adult", price: 80000, active: true },
@@ -297,7 +287,6 @@ export const products: Product[] = [
     name: "Planetarium Show",
     description: "A 45-minute show. Pick a start time.",
     images: [{ id: "img_planetarium", url: "/seed/planetarium.jpg", alt: "Planetarium dome show" }],
-    categoryId: "cat_events",
     bookingType: "BT-03",
     tiers: [
       { id: "tier_p_adult", name: "Adult", price: 60000, active: true },
@@ -327,7 +316,6 @@ export const products: Product[] = [
     name: "Sculpture Garden",
     description: "Open daily. Capped so it never gets crowded.",
     images: [],
-    categoryId: "cat_entry",
     bookingType: "BT-06",
     tiers: [{ id: "tier_g_flat", name: "Entry", price: 35000, active: true }],
     locationIds: ["loc_fort"],
@@ -353,7 +341,6 @@ export const products: Product[] = [
     name: "Heritage Walking Tour",
     description: "A guided walk. Pick a departure — a guide leads each one.",
     images: [{ id: "img_tour", url: "/seed/tour.jpg", alt: "Old city heritage street" }],
-    categoryId: "cat_tours",
     bookingType: "BT-09",
     tiers: [
       { id: "tier_t_adult", name: "Adult", price: 120000, active: true },
@@ -389,7 +376,6 @@ export const products: Product[] = [
     name: "Sculpture Garden Tour",
     description: "A guided garden walk — same guides as the heritage tour, so 10:00 can only run one of them.",
     images: [],
-    categoryId: "cat_tours",
     bookingType: "BT-09",
     tiers: [{ id: "tier_t2_all", name: "Ticket", price: 90000, active: true }],
     locationIds: ["loc_fort"],
@@ -411,7 +397,6 @@ export const products: Product[] = [
     name: "All-Day Re-entry Pass",
     description: "Come and go all day — the gate re-admits while it's valid.",
     images: [],
-    categoryId: "cat_entry",
     bookingType: "BT-01",
     tiers: [{ id: "tier_re", name: "Day pass", price: 80000, active: true }],
     locationIds: ["loc_fort"],
@@ -425,7 +410,7 @@ export const products: Product[] = [
     updatedAt: T,
   },
   {
-    id: "prd_futsal", name: "Futsal", description: "Book a field for an hour — outdoor or indoor.", images: [], categoryId: "cat_events", bookingType: "BT-04",
+    id: "prd_futsal", name: "Futsal", description: "Book a field for an hour — outdoor or indoor.", images: [], bookingType: "BT-04",
     tiers: [{ id: "tier_fb_slot", name: "Slot", price: 150000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], dayOverrides: { 5: { startTime: "14:00", endTime: "23:00" } }, guideIds: [], exceptions: [] },
@@ -435,7 +420,7 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_cricket", name: "Cricket", description: "Played on the outdoor field — which futsal shares, so booking one takes the other off sale.", images: [{ id: "img_cricket", url: "/seed/cricket.jpg", alt: "Cricket pitch" }], categoryId: "cat_events", bookingType: "BT-04",
+    id: "prd_cricket", name: "Cricket", description: "Played on the outdoor field — which futsal shares, so booking one takes the other off sale.", images: [{ id: "img_cricket", url: "/seed/cricket.jpg", alt: "Cricket pitch" }], bookingType: "BT-04",
     tiers: [{ id: "tier_cr_slot", name: "Slot", price: 150000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], dayOverrides: { 5: { startTime: "14:00", endTime: "23:00" } }, guideIds: [], exceptions: [] },
@@ -447,7 +432,7 @@ export const products: Product[] = [
     // The turf's variable-duration booking: people take a court for as long as
     // they want in half-hour steps, and two hours is a deal rather than twice
     // the price of one.
-    id: "prd_badminton", name: "Badminton Court", description: "Book the court by the half hour.", images: [], categoryId: "cat_events", bookingType: "BT-05",
+    id: "prd_badminton", name: "Badminton Court", description: "Book the court by the half hour.", images: [], bookingType: "BT-05",
     tiers: [{ id: "tier_bd_hr", name: "Per hour", price: 80000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 30, sessionMinutes: 60, startTime: "06:00", endTime: "23:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
@@ -462,7 +447,7 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_bowling", name: "Bowling Lane", description: "Book a lane by the hour.", images: [{ id: "img_bowling", url: "/seed/bowling.jpg", alt: "Bowling lanes" }], categoryId: "cat_events", bookingType: "BT-05",
+    id: "prd_bowling", name: "Bowling Lane", description: "Book a lane by the hour.", images: [{ id: "img_bowling", url: "/seed/bowling.jpg", alt: "Bowling lanes" }], bookingType: "BT-05",
     tiers: [{ id: "tier_bw_hr", name: "Per hour", price: 80000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "10:00", endTime: "22:00", capacityPerSession: 1, dailyCapacity: null, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
@@ -481,7 +466,7 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_massage", name: "Deep Tissue Massage", description: "Book a therapist for 60 or 90 minutes.", images: [], categoryId: "cat_tours", bookingType: "BT-10",
+    id: "prd_massage", name: "Deep Tissue Massage", description: "Book a therapist for 60 or 90 minutes.", images: [], bookingType: "BT-10",
     tiers: [{ id: "tier_ms_60", name: "60 min", price: 300000, active: true }, { id: "tier_ms_90", name: "90 min", price: 450000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, schedule: null,
     providerIds: ["stf_nadia", "stf_karim"], providerNoun: "Therapist", providerPickable: true, flexibleDurations: [60, 90],
@@ -492,7 +477,7 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_film", name: "Evening Film", description: "Pick your section.", images: [], categoryId: "cat_events", bookingType: "BT-07",
+    id: "prd_film", name: "Evening Film", description: "Pick your section.", images: [], bookingType: "BT-07",
     tiers: [{ id: "tier_flm", name: "Ticket", price: 40000, active: true }],
     sections: [{ id: "sec_stalls", name: "Stalls", capacity: 120, price: 40000 }, { id: "sec_balcony", name: "Balcony", capacity: 40, price: 70000 }],
     layoutId: "layout_cinema",
@@ -500,14 +485,14 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_bundle", name: "Day Pass Bundle", description: "Admission + Garden + Planetarium in one ticket.", images: [], categoryId: "cat_entry", bookingType: "BT-08",
+    id: "prd_bundle", name: "Day Pass Bundle", description: "Admission + Garden + Planetarium in one ticket.", images: [], bookingType: "BT-08",
     tiers: [{ id: "tier_bn", name: "Bundle", price: 100000, active: true }],
     bundleComponentIds: ["prd_admission", "prd_garden", "prd_planetarium"],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null,
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_yoga_pack", name: "10-Class Yoga Pack", description: "Ten credits to spend on yoga sessions.", images: [], categoryId: "cat_entry", bookingType: "BT-12",
+    id: "prd_yoga_pack", name: "10-Class Yoga Pack", description: "Ten credits to spend on yoga sessions.", images: [], bookingType: "BT-12",
     tiers: [{ id: "tier_yp", name: "Pack", price: 400000, active: true }],
     credits: { count: 10, expiryDays: 90, productIds: ["prd_yoga"] },
     creditsPerBooking: 1,
@@ -515,7 +500,7 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_swim", name: "Beginner Swim Course", description: "Eight sessions, one enrolment.", images: [], categoryId: "cat_tours", bookingType: "BT-13",
+    id: "prd_swim", name: "Beginner Swim Course", description: "Eight sessions, one enrolment.", images: [], bookingType: "BT-13",
     tiers: [{ id: "tier_sw", name: "Course", price: 800000, active: true }],
     courseDates: ["2026-08-04", "2026-08-06", "2026-08-11", "2026-08-13", "2026-08-18", "2026-08-20", "2026-08-25", "2026-08-27"],
     joinPartway: false,
@@ -527,7 +512,7 @@ export const products: Product[] = [
     id: "prd_stress",
     name: "Grand Heritage Architectural Walking Tour of Old Dhaka with Rooftop Iftar Experience",
     description: "The stress-test product: nothing may overflow, collide, or clip.",
-    images: [], categoryId: "cat_tours", bookingType: "BT-03",
+    images: [], bookingType: "BT-03",
     tiers: [
       { id: "tier_st_adult", name: "Adult", price: 250000, active: true },
       { id: "tier_st_senior", name: "Senior Citizen (65+, valid ID required)", price: 180000, active: true },
@@ -537,7 +522,7 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_parking", name: "Parking Pass", description: "Issued at the gate against a plate number.", images: [], categoryId: null, bookingType: "BT-14",
+    id: "prd_parking", name: "Parking Pass", description: "Issued at the gate against a plate number.", images: [], bookingType: "BT-14",
     tiers: [{ id: "tier_pk", name: "Pass", price: 10000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter"], status: "active", archivedAt: null,
     flexibleDurations: [30, 60, 120, 180],
@@ -555,14 +540,14 @@ export const products: Product[] = [
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_yoga", name: "Yoga Session", description: "Drop-in class, capped — join the waitlist when full.", images: [], categoryId: "cat_tours", bookingType: "BT-06",
+    id: "prd_yoga", name: "Yoga Session", description: "Drop-in class, capped — join the waitlist when full.", images: [], bookingType: "BT-06",
     tiers: [{ id: "tier_yg", name: "Drop-in", price: 50000, active: true }],
     locationIds: ["loc_fort"], channels: ["counter", "online"], status: "active", archivedAt: null, waitlistEnabled: true,
     schedule: { slotMinutes: 60, sessionMinutes: 60, startTime: "07:00", endTime: "19:00", capacityPerSession: 0, dailyCapacity: 20, openDays: [0, 1, 2, 3, 4, 5, 6], guideIds: [], exceptions: [] },
     createdAt: T, updatedAt: T,
   },
   {
-    id: "prd_donation", name: "Support the Museum", description: "A voluntary donation — pay what you want.", images: [], categoryId: "cat_entry", bookingType: "BT-01",
+    id: "prd_donation", name: "Support the Museum", description: "A voluntary donation — pay what you want.", images: [], bookingType: "BT-01",
     tiers: [{ id: "tier_donation", name: "Donation", price: 5000, donation: true, admits: 0, active: true }],
     locationIds: ["loc_fort", "loc_museum"], channels: ["counter", "online"], status: "active", archivedAt: null,
     createdAt: T, updatedAt: T,
@@ -879,7 +864,6 @@ export const membershipTiers: MembershipTier[] = [
     renewalNoticeDays: 14,
     discountBps: 1000,
     discountScope: "all",
-    discountCategoryIds: [],
     discountProductIds: [],
     includedVisits: null,
     includedProductIds: ["prd_admission"],
@@ -898,9 +882,10 @@ export const membershipTiers: MembershipTier[] = [
     autoRenew: true,
     renewalNoticeDays: 21,
     discountBps: 1500,
-    discountScope: "categories",
-    discountCategoryIds: ["cat_tours", "cat_events"],
-    discountProductIds: [],
+    /* Was scoped to the Guided Tours and Events groups. With catalogue groups
+       gone it names the things themselves, which is what it always meant. */
+    discountScope: "products",
+    discountProductIds: ["prd_tour", "prd_massage", "prd_swim", "prd_yoga", "prd_film", "prd_planetarium"],
     includedVisits: null,
     includedProductIds: ["prd_admission"],
     maxMembers: 4,
@@ -918,9 +903,8 @@ export const membershipTiers: MembershipTier[] = [
     autoRenew: true,
     renewalNoticeDays: 5,
     discountBps: 500,
-    discountScope: "categories",
-    discountCategoryIds: ["cat_tours"],
-    discountProductIds: [],
+    discountScope: "products",
+    discountProductIds: ["prd_tour", "prd_massage", "prd_swim", "prd_yoga"],
     includedVisits: 6,
     includedProductIds: ["prd_admission", "prd_garden"],
     maxMembers: 1,

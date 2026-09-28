@@ -615,8 +615,7 @@ export function WeekGrid({
                   allDay: false,
                   ownerId: null,
                   productId: "",
-                  categoryId: null,
-                  tone: "booked",
+                          tone: "booked",
                   locked: false,
                 }
               : null;

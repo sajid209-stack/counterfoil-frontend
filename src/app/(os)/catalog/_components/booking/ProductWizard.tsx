@@ -11,7 +11,6 @@ import {
   createLocation,
   createProduct,
   createResourceRecord,
-  type Category,
   type Channel,
   type Location,
   type Product,
@@ -76,7 +75,6 @@ const PER_THING: (BookingKind | null)[] = ["space", "appointment", "pass", "bund
  * it, because a disabled button that will not say why is a dead end.
  */
 export function ProductWizard({
-  categories,
   locations: initialLocations,
   team,
   resources: initialResources,
@@ -84,7 +82,6 @@ export function ProductWizard({
   currency = "BDT",
   kind = null,
 }: {
-  categories: Category[];
   locations: Location[];
   team: Staff[];
   resources: Resource[];
@@ -107,7 +104,6 @@ export function ProductWizard({
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("");
   const [images, setImages] = useState<FormImage[]>([]);
   const tSetup = useTranslations("catalog.setup");
   const [booking, setBooking] = useState<BookingSetupResult | null>(() =>
@@ -283,7 +279,6 @@ export function ProductWizard({
     const input: ProductInput = {
       name, description,
       images: images.map(({ id, url, alt }) => ({ id, url, alt })),
-      categoryId: categoryId || null,
       bookingType: booking.bookingType,
       tiers: tiers.map((x) => ({ id: x.id, name: x.name, price: majorToMinor(x.price), maxPerOrder: x.maxPerOrder ? parseInt(x.maxPerOrder, 10) : undefined, admits: parseInt(x.admits, 10) || 1, ageNote: x.ageNote || undefined, active: x.active })),
       locationIds, channels,
@@ -453,7 +448,6 @@ export function ProductWizard({
                 className="sm:col-span-2"
               />
               <FormField label={t("description")} variant="textarea" placeholder={t("descriptionPlaceholder")} value={description} onChange={(e) => setDescription(e.target.value)} className="sm:col-span-2" />
-              <FormField label={t("category")} variant="select" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} options={[{ value: "", label: t("uncategorised") }, ...categories.map((c) => ({ value: c.id, label: c.name }))]} />
               <div className="sm:col-span-2"><ImageUploadField images={images} onChange={setImages} /></div>
             </div>
           )}
@@ -504,7 +498,7 @@ export function ProductWizard({
                   <>
                     <span className="block font-medium">{name}</span>
                     <span className="block text-muted">
-                      {[categories.find((c) => c.id === categoryId)?.name ?? t("uncategorised"), images.length ? t("photos", { count: images.length }) : t("noPhoto")].join(" · ")}
+                      {images.length ? t("photos", { count: images.length }) : t("noPhoto")}
                     </span>
                   </>
                 ) : (

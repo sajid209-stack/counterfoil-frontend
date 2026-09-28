@@ -10,7 +10,6 @@ import { cn } from "@/lib/cn";
 import {
   createCounter,
   updateCounter,
-  type Category,
   type Counter,
   type Device,
   type Location,
@@ -60,7 +59,6 @@ export function CounterEditor({
   counter,
   locations,
   products,
-  categories,
   devices = [],
   liveAccount,
   onSaved,
@@ -69,7 +67,6 @@ export function CounterEditor({
   counter?: Counter;
   locations: Location[];
   products: Product[];
-  categories: Category[];
   devices?: Device[];
   /** Whether any payment account can take charges right now. */
   liveAccount: boolean;
@@ -104,13 +101,12 @@ export function CounterEditor({
   const unbacked = !liveAccount && form.methods.some((m) => NEEDS_ACCOUNT.has(m));
 
   const sellable = products.filter((p) => p.status !== "archived");
-  const known = new Set(categories.map((c) => c.id));
-  const groups = [
-    ...[...categories]
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((c) => ({ key: c.id, name: c.name, items: sellable.filter((p) => p.categoryId === c.id) })),
-    { key: "none", name: t("counters.uncategorised"), items: sellable.filter((p) => !p.categoryId || !known.has(p.categoryId)) },
-  ].filter((g) => g.items.length > 0);
+  /* One list, by name. It used to be grouped by the operator's catalogue
+     groups; those are gone, and a counter's booking list is short enough to
+     read straight through. */
+  const groups = sellable.length
+    ? [{ key: "all", name: t("counters.allBookings"), items: [...sellable].sort((a, b) => a.name.localeCompare(b.name)) }]
+    : [];
 
   const toggleMethod = (m: PaymentMethod, on: boolean) =>
     set({ methods: orderedMethods(on ? [...form.methods, m] : form.methods.filter((x) => x !== m)) });

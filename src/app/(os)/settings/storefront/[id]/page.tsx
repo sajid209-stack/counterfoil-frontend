@@ -14,12 +14,12 @@ import {
   listProducts,
   storefrontProducts,
   updateStorefront,
-  type CategoryColor,
+  type AccentColor,
   type Product,
   type Storefront,
 } from "@/lib/api";
 import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, Switch, controlCls } from "../../_components/SettingsKit";
-import { CATEGORY_COLORS, COLOR_DOT } from "../../categories/_components/ColorPicker";
+import { ACCENT_COLORS, COLOR_DOT } from "../_components/ColorPicker";
 
 interface Draft {
   slug: string;
@@ -27,7 +27,7 @@ interface Draft {
   intro: string;
   contactPhone: string;
   contactEmail: string;
-  accent: CategoryColor | null;
+  accent: AccentColor | null;
   featured: string[];
 }
 
@@ -230,7 +230,7 @@ export default function StorefrontEditorPage() {
           <SettingRow label={t("storefront.accentLabel")} description={t("storefront.accentDesc")} labelFor={false}>
             {() => (
               <div role="group" aria-label={t("storefront.accentLabel")} className="flex flex-wrap gap-tight">
-                {[null, ...CATEGORY_COLORS].map((c) => (
+                {[null, ...ACCENT_COLORS].map((c) => (
                   <button
                     key={c ?? "none"}
                     type="button"

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import type { CategoryColor, Location, Storefront } from "@/lib/api";
+import type { AccentColor, Location, Storefront } from "@/lib/api";
 
 /**
  * The accent a venue paints its page in. The same five the calendar's
@@ -17,7 +17,7 @@ import type { CategoryColor, Location, Storefront } from "@/lib/api";
  * as a letter — so the page's words stay on the theme's ink tokens and links
  * take `brand-foreground`, which was chosen for exactly this.
  */
-export const ACCENT_BG: Record<CategoryColor, string> = {
+export const ACCENT_BG: Record<AccentColor, string> = {
   orange: "bg-cat-orange",
   amber: "bg-cat-amber",
   green: "bg-cat-green",
@@ -27,7 +27,7 @@ export const ACCENT_BG: Record<CategoryColor, string> = {
 /** A wash, written as an alpha for the same reason the calendar's blocks are:
  *  14% of a mid-toned hue is a pastel over paper and a tint dropped into the
  *  card over ink, which is the project's dark rule, in one declaration. */
-export const ACCENT_WASH: Record<CategoryColor, string> = {
+export const ACCENT_WASH: Record<AccentColor, string> = {
   orange: "bg-cat-orange/12",
   amber: "bg-cat-amber/14",
   green: "bg-cat-green/12",

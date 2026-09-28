@@ -18,7 +18,7 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
 import { ProductThumb } from "@/components/ui";
-import type { Category, Product, Resource, Staff } from "@/lib/api";
+import type { Product, Resource, Staff } from "@/lib/api";
 import { behaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { DEMO_TODAY } from "@/lib/schedule";
@@ -26,27 +26,21 @@ import { formatDay, formatPriceShort } from "@/lib/format";
 
 export function Catalogue({
   products,
-  categories,
   resources,
   team,
   currency,
   query,
   onQuery,
-  category,
-  onCategory,
   onPick,
   onCustom,
   loading,
 }: {
   products: Product[];
-  categories: Category[];
   resources: Resource[];
   team: Staff[];
   currency: string;
   query: string;
   onQuery: (q: string) => void;
-  category: string;
-  onCategory: (id: string) => void;
   onPick: (p: Product) => void;
   onCustom: () => void;
   loading: boolean;
@@ -57,21 +51,12 @@ export function Catalogue({
   // Field passes issue from Quick pass, not from the wall.
   const sellable = useMemo(() => products.filter((p) => p.bookingType !== "BT-14"), [products]);
 
-  const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "";
-
-  // A chip that filters to nothing is a control that tells the cashier they
-  // made a mistake, so both chip rows are built from the sellable catalogue
-  // rather than from the already-filtered grid.
-  const chipCategories = categories
-    .filter((c) => c.active !== false && sellable.some((p) => p.categoryId === c.id))
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-
-  const shown = sellable
-    .filter((p) => category === "all" || p.categoryId === category)
-    .filter((p) => {
-      const q = query.trim().toLowerCase();
-      return !q || p.name.toLowerCase().includes(q) || catName(p.categoryId).toLowerCase().includes(q);
-    });
+  /* Catalogue groups are gone, so the wall is everything sellable narrowed by
+     the search box alone. */
+  const shown = sellable.filter((p) => {
+    const q = query.trim().toLowerCase();
+    return !q || p.name.toLowerCase().includes(q);
+  });
 
   const liveWords = useMemo(
     () => ({
@@ -105,21 +90,6 @@ export function Catalogue({
         )}
       </div>
 
-      {/* Wraps rather than scrolls sideways. A chip that has scrolled out of
-            view is a group nobody knows exists, and the cut edge reads as a
-            clipped container at least as often as it reads as "more this way". */}
-        <div className="flex flex-wrap gap-tight py-inline">
-        {[{ id: "all", name: t("catalogue.all") }, ...chipCategories].map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => onCategory(c.id)}
-            className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-muted-wash"}`}
-          >
-            {c.name}
-          </button>
-        ))}
-      </div>
 
       <div className="min-w-0">
         {loading ? (

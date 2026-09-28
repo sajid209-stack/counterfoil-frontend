@@ -7,7 +7,6 @@ import {
   createResourceRecord,
   updateProduct,
   type BookingTypeCode,
-  type Category,
   type Channel,
   type Location,
   type Product,
@@ -51,7 +50,6 @@ function bookingSummary(code: BookingTypeCode): string {
 interface FormState {
   name: string;
   description: string;
-  categoryId: string;
   booking: BookingSetupResult;
   schedule: ProductSchedule | null;
   active: boolean;
@@ -87,7 +85,6 @@ function fromProduct(p: Product): FormState {
   return {
     name: p.name,
     description: p.description,
-    categoryId: p.categoryId ?? "",
     booking: {
       bookingType: p.bookingType,
       summary: bookingSummary(p.bookingType),
@@ -147,7 +144,6 @@ const TABS = [
 
 export function ProductForm({
   product,
-  categories,
   locations,
   team,
   resources: initialResources,
@@ -155,7 +151,6 @@ export function ProductForm({
   currency = "BDT",
 }: {
   product: Product;
-  categories: Category[];
   locations: Location[];
   team: Staff[];
   resources: Resource[];
@@ -203,7 +198,6 @@ export function ProductForm({
       name: state.name,
       description: state.description,
       images: state.images.map(({ id, url, alt }) => ({ id, url, alt })),
-      categoryId: state.categoryId || null,
       bookingType: state.booking.bookingType,
       tiers: state.tiers.map((t) => ({ id: t.id, name: t.name, price: majorToMinor(t.price), maxPerOrder: numOrUndef(t.maxPerOrder), admits: parseInt(t.admits, 10) || 1, ageNote: t.ageNote || undefined, donation: t.donation || undefined, active: t.active })),
       locationIds: state.locationIds,
@@ -278,7 +272,6 @@ export function ProductForm({
           <div className="grid gap-section sm:grid-cols-2">
             <FormField label="Name" required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="sm:col-span-2" />
             <FormField label="Description" variant="textarea" value={state.description} onChange={(e) => set("description", e.target.value)} className="sm:col-span-2" />
-            <FormField label="Category" variant="select" value={state.categoryId} onChange={(e) => set("categoryId", e.target.value)} options={[{ value: "", label: "Uncategorised" }, ...categories.map((c) => ({ value: c.id, label: c.name }))]} />
             <div className="sm:col-span-2"><ImageUploadField images={state.images} onChange={(images) => set("images", images)} /></div>
           </div>
         )}

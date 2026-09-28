@@ -13595,3 +13595,91 @@ live**.
 - **No per-listing price override in the UI.** `priceOverride` is on the
   contract and honoured by the split; the field is not drawn yet, so a listing
   is charged at the catalogue price.
+
+## Catalogue categories removed (2026-09-28)
+
+Owner, with three screenshots — the Categories settings page, the catalogue's
+"All categories" filter, and the till's chip row: *"remove these category system
+from everywhere in counterfoil OS and POS. we dont need category system."*
+
+### Two different things are called "category" here
+
+Only one was the ask, and getting that wrong would have destroyed a feature:
+
+- **`Category`** — the operator's catalogue groups (Admission, Guided Tours,
+  Events, Add-ons), with `Product.categoryId`. **Removed.**
+- **`CategoryId`** in `lib/events/catalog` — an event's *template kind*
+  (entertainment, sports, business, arts, travel, nightlife), which is what
+  picks one of the six event templates and their themes. **Kept**, untouched.
+- `SeatCategory` (Stalls, Balcony) and `WriteOffCategory` are also unrelated
+  and untouched.
+
+### What went
+
+The entity and its api module; `Product.categoryId`; the Settings →
+Categories page and its rail entry; the catalogue's filter; the field in the
+booking wizard and editor; the till chips in all three tills; the calendar's
+colour-by-category and its filter; the reports grouping and filter; the
+promotion eligibility fields; the membership "categories" discount scope; the
+seeded groups; and 26 orphaned message keys plus the deleted page's whole block,
+in both locales.
+
+### Four decisions worth stating, because they are judgement rather than deletion
+
+**1. The till keeps two chips.** The row is now **All · Shop · Event tickets**.
+Those last two are not categories — they are the two things on the wall that
+are not bookings, and they were asked for in the last two days. Removing them
+on an ambiguous highlight would have taken away a feature the owner asked for
+rather than one they asked to lose. **If the whole row should go, say so and it
+is a two-line change.**
+
+**2. Reports keep the grouping, renamed to Kind.** It was the only place
+answering "the shop took ৳12,000" and "event tickets took ৳40,000" — and with
+groups gone it no longer reads a taxonomy at all: the bucket comes off the
+line's own id (`addon_`, `inv_`, `evt_`, `custom`, otherwise a booking). A
+group-by still called Category would have been a leftover; deleting it would
+have lost a real answer.
+
+**3. The palette outlived the groups.** `CategoryColor` was the five validated
+accent colours, and the **storefront** picks from the same five. It is
+`AccentColor` now, and the picker moved out of the deleted categories folder
+into the storefront's own. The doc comment says why it was renamed rather than
+leaving a type named after something that no longer exists.
+
+**4. Category-scoped things were re-scoped, not dropped.** A membership tier
+that discounted "Guided Tours and Events" now names those bookings —
+`discountScope` is `all | products`, and the seeded tiers say the same thing in
+the only vocabulary left. Same for a counter's booking list, which was grouped
+by category and is now one list by name: short enough to read straight through.
+
+### What it costs, stated plainly
+
+- **The calendar can no longer colour by anything but status.** That was built
+  on 21 September at the owner's request and is removed at the owner's request;
+  a no-show keeps its strike-through, so state is still carried by shape as
+  well as colour.
+- **The catalogue lost its one filter that also narrowed events by template
+  kind** (Concert, Conference, Exhibition…). The kind is still in the Type
+  column and still matched by the search box. An event-type filter is a
+  separate, clearly-scoped thing if it is wanted back.
+- **The till's wall is no longer groupable.** Search matches every name, and
+  the wall is twenty-odd cards.
+
+### Verified
+
+**21 checks**, driven: the settings rail carries no Categories entry and the
+page is gone; the catalogue has no "All categories" and still filters and
+lists; the till has no category chips, keeps Shop and Event tickets, keeps All
+first, and still shows the whole wall; the calendar has no colour-by toggle and
+no category filter while its state key still reads; reports offer no Category
+grouping and no category filter; and a booking's editor has no Category field
+and still edits the booking. No console errors on any of them.
+
+Standing harnesses hold. `tsc --noEmit` clean from 129 errors, `eslint` clean on
+every file touched, and i18n parity **0 missing / 0 extra**.
+
+**One harness retired rather than repaired**: `cal4`'s "every block reads in
+category colour as well" would have passed *vacuously* — measuring status
+colours under a category label, because its clicks are `.catch()`-guarded. A
+check that cannot fail is worse than no check, which this log has recorded
+before.

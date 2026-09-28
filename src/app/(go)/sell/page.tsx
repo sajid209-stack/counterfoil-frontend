@@ -39,7 +39,6 @@ import {
   getAdvancePolicy,
   getManualDiscountPolicy,
   getOperator,
-  listCategories,
   listLocations,
   listPaymentAccounts,
   listProducts,
@@ -85,7 +84,6 @@ export default function SellPage() {
 
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   const opQ = useApiQuery(() => getOperator(), []);
-  const catsQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 1, filters: { status: "active" } }), []);
   const teamQ = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
@@ -107,7 +105,6 @@ export default function SellPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [browsing, setBrowsing] = useState(true);
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [tenderTaka, setTenderTaka] = useState("");
   const [walletRef, setWalletRef] = useState("");
@@ -392,14 +389,11 @@ export default function SellPage() {
   const catalogue = (
     <Catalogue
       products={products}
-      categories={catsQ.data?.data ?? []}
       resources={resources}
       team={team}
       currency={currency}
       query={query}
       onQuery={setQuery}
-      category={category}
-      onCategory={setCategory}
       onPick={pick}
       onCustom={() => setCustomOpen(true)}
       loading={productsQ.loading}

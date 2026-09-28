@@ -27,7 +27,6 @@
     "counterId": "Counter",
     "staffId": "Team member",
     "productId": "Booking",
-    "categoryId": "Category",
     "method": "Payment method",
     "status": "Status",
     "minA": "Min amount",
@@ -39,7 +38,6 @@
     "anyCounter": "Any counter",
     "anyone": "Anyone",
     "anyProduct": "Any booking",
-    "anyCategory": "Any category",
     "anyMethod": "Any method",
     "anyStatus": "Any status",
     "anyChannel": "Any channel",
@@ -96,12 +94,12 @@
   },
   "groupBy": {
     "product": "Booking",
-    "category": "Category",
     "payment_method": "Payment",
     "counter": "Counter",
     "location": "Location",
     "staff": "Team member",
-    "hour": "Hour of day"
+    "hour": "Hour of day",
+    "kind": "Kind"
   },
   "charts": {
     "revenueOverTime": "Revenue over time",

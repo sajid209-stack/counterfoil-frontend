@@ -17,7 +17,6 @@ import {
   archiveProduct,
   getOperator,
   getProduct,
-  listCategories,
   listLocations,
   listProducts,
   listResources,
@@ -33,7 +32,6 @@ export default function ProductDetailPage() {
   const toast = useToast();
 
   const prod = useApiQuery(() => getProduct(params.id), [params.id]);
-  const cats = useApiQuery(() => listCategories({ pageSize: 100 }), []);
   const locs = useApiQuery(() => listLocations({ pageSize: 100 }), []);
   const team = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100, filters: { status: "active" } }), []);
@@ -43,7 +41,7 @@ export default function ProductDetailPage() {
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [archiving, setArchiving] = useState(false);
 
-  const loading = prod.loading || cats.loading || locs.loading || team.loading || resourcesQ.loading || op.loading;
+  const loading = prod.loading || locs.loading || team.loading || resourcesQ.loading || op.loading;
 
   const doArchive = async () => {
     setArchiving(true);
@@ -110,7 +108,6 @@ export default function ProductDetailPage() {
       ) : (
         <ProductForm
           product={product}
-          categories={cats.data?.data ?? []}
           locations={locs.data?.data ?? []}
           team={team.data?.data ?? []}
           resources={resourcesQ.data?.data ?? []}

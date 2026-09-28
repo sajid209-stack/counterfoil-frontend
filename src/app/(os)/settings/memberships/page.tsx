@@ -17,7 +17,6 @@ import { useApiQuery } from "@/lib/useApi";
 import {
   archiveMembershipTier,
   createMembershipTier,
-  listCategories,
   listMembershipTiers,
   listProducts,
   membershipCountsByTier,
@@ -30,7 +29,7 @@ import {
 import { formatMoney } from "@/lib/format";
 
 const PERIODS: BillingPeriod[] = ["monthly", "quarterly", "annual", "lifetime"];
-const SCOPES: MembershipDiscountScope[] = ["all", "categories", "products"];
+const SCOPES: MembershipDiscountScope[] = ["all", "products"];
 
 const blankTier = (): MembershipTierInput => ({
   name: "",
@@ -41,7 +40,6 @@ const blankTier = (): MembershipTierInput => ({
   renewalNoticeDays: 14,
   discountBps: 1000,
   discountScope: "all",
-  discountCategoryIds: [],
   discountProductIds: [],
   includedVisits: null,
   includedProductIds: [],
@@ -199,7 +197,6 @@ function TierEditor({
   const t = useTranslations("memberships");
   const toast = useToast();
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
-  const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
 
   const [draft, setDraft] = useState<MembershipTierInput>(() =>
     tier
@@ -212,7 +209,6 @@ function TierEditor({
           renewalNoticeDays: tier.renewalNoticeDays,
           discountBps: tier.discountBps,
           discountScope: tier.discountScope,
-          discountCategoryIds: tier.discountCategoryIds,
           discountProductIds: tier.discountProductIds,
           includedVisits: tier.includedVisits,
           includedProductIds: tier.includedProductIds,
@@ -228,7 +224,7 @@ function TierEditor({
   const set = <K extends keyof MembershipTierInput>(key: K, value: MembershipTierInput[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
 
-  const toggleIn = (key: "discountCategoryIds" | "discountProductIds" | "includedProductIds", id: string) =>
+  const toggleIn = (key: "discountProductIds" | "includedProductIds", id: string) =>
     setDraft((d) => ({
       ...d,
       [key]: d[key].includes(id) ? d[key].filter((x) => x !== id) : [...d[key], id],
@@ -250,7 +246,6 @@ function TierEditor({
   };
 
   const products = productsQ.data?.data ?? [];
-  const categories = categoriesQ.data?.data ?? [];
 
   return (
     <Modal
@@ -366,16 +361,6 @@ function TierEditor({
               options={SCOPES.map((s) => ({ value: s, label: t(`scope_${s}`) }))}
             />
           </div>
-          {draft.discountScope === "categories" && (
-            <div className="mt-section">
-              <ChipPicker
-                options={categories.map((c) => ({ id: c.id, label: c.name }))}
-                selected={draft.discountCategoryIds}
-                onToggle={(id) => toggleIn("discountCategoryIds", id)}
-                emptyLabel={t("noCategories")}
-              />
-            </div>
-          )}
           {draft.discountScope === "products" && (
             <div className="mt-section">
               <ChipPicker

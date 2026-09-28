@@ -8,7 +8,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "../_ui";
 import { useApiQuery } from "@/lib/useApi";
-import { peekCounters, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { peekCounters, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
@@ -101,7 +101,6 @@ export default function PosPage() {
   const enumL = useEnumLabels();
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   const opQ = useApiQuery(() => getOperator(), []);
-  const catsQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 1, filters: { status: "active" } }), []);
   const teamQ = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
@@ -131,7 +130,6 @@ export default function PosPage() {
     return id;
   });
   const [deepLinkDone, setDeepLinkDone] = useState(false);
-  const [category, setCategory] = useState("all");
   /* Derived, not corrected. The old file kept a `method` state and then used
      an effect to force it back to cash when no PSP account was live — a
      setState in an effect, which this codebase forbids as an error. The
@@ -264,7 +262,6 @@ export default function PosPage() {
   const deepLinked =
     !deepLinkDone && deepLinkId ? (products.find((x) => x.id === deepLinkId) ?? null) : null;
   const activeSheet = sheet ?? (deepLinked ? { product: deepLinked, initial: null } : null);
-  const categories = catsQ.data?.data ?? [];
   const resources = resourcesQ.data?.data ?? [];
   /* Where this till stands. listLocations sorts by name, so locations[0] is
      whichever venue is alphabetically first — which filed a fort sale at the
@@ -272,24 +269,13 @@ export default function PosPage() {
   const tillLocationId =
     peekCounters().find((c) => c.id === DEMO_COUNTER_ID)?.locationId ?? locationsQ.data?.data[0]?.id ?? "loc_fort";
   const productById = (id: string) => products.find((p) => p.id === id);
-
-  const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? "";
-  /** Everything this till can actually sell, before the cashier narrows it.
-   *  The chip row is built from THIS rather than from the filtered grid, so
-   *  chips do not disappear from under the finger as someone types. */
-  const sellable = products.filter((p) => p.bookingType !== "BT-14");
-  /** Only groups that are switched on AND have something in them. An empty
-   *  chip is a control that filters the grid to nothing and tells the cashier
-   *  they have made a mistake — the seeded "Add-ons" group did exactly that. */
-  const chipCategories = categories
-    .filter((c) => c.active !== false && sellable.some((p) => p.categoryId === c.id))
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  /* Catalogue groups are gone, so the wall is everything sellable narrowed by
+     the search box alone. */
   const shown = products
     .filter((p) => p.bookingType !== "BT-14") // field passes issue from Quick pass, not the grid
-    .filter((p) => category === "all" || p.categoryId === category)
     .filter((p) => {
       const q = query.trim().toLowerCase();
-      return !q || p.name.toLowerCase().includes(q) || catName(p.categoryId).toLowerCase().includes(q);
+      return !q || p.name.toLowerCase().includes(q);
     });
 
   const entryTotal = (e: CartEntry) => (e.fixedPrice ?? 0) + e.items.reduce((s, i) => s + i.unitPrice * i.qty, 0);
@@ -552,10 +538,8 @@ export default function PosPage() {
   //    the manual-discount cap.
   const memberCovers = (productId: string) => {
     if (!benefit || productId.startsWith("membership_")) return false;
-    if (benefit.productIds === null && benefit.categoryIds.length === 0) return true;
-    if (benefit.productIds?.includes(productId)) return true;
-    const cat = productById(productId)?.categoryId;
-    return !!cat && benefit.categoryIds.includes(cat);
+    if (benefit.productIds === null) return true;
+    return benefit.productIds.includes(productId);
   };
   const memberEligibleBase = benefit
     ? saleInputs
@@ -589,8 +573,7 @@ export default function PosPage() {
 
   const quoteLines = (): QuoteLine[] =>
     cart.flatMap((e) => {
-      const cat = productById(e.productId)?.categoryId ?? null;
-      return e.items.filter((i) => i.unitPrice > 0).map((i) => ({ lineId: `${e.id}|${i.tierId}`, quantity: i.qty, unitAmount: i.unitPrice, categoryId: cat }));
+      return e.items.filter((i) => i.unitPrice > 0).map((i) => ({ lineId: `${e.id}|${i.tierId}`, quantity: i.qty, unitAmount: i.unitPrice }));
     });
 
   const applyCoupon = async () => {
@@ -786,11 +769,6 @@ export default function PosPage() {
             container rather than as "there is more this way". Bleeding it to
             the screen edge puts the cut on the edge itself, which is the
             affordance everyone already knows. */}
-        <div className="flex flex-wrap gap-inline pb-inline">
-          {[{ id: "all", name: t("categoryAll") }, ...chipCategories].map((c) => (
-            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-12 min-w-12 shrink-0 snap-start rounded-sm border px-comfortable text-sm ${category === c.id ? "border-ember bg-ember text-ink" : "border-line bg-card"}`}>{c.name}</button>
-          ))}
-        </div>
         <div className="flex-1 overflow-y-auto">
           {productsQ.loading ? (
             <div aria-busy="true" className="flex animate-pulse flex-col gap-tight p-section"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>

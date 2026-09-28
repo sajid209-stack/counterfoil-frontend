@@ -13,7 +13,6 @@ import {
   getSalesReport,
   getTaxReport,
   getTransactions,
-  listCategories,
   listCounters,
   listLocations,
   listOrders,
@@ -58,7 +57,6 @@ interface Filters {
   counterId?: string;
   staffId?: string;
   productId?: string;
-  categoryId?: string;
   method?: string;
   status?: string;
   minA?: string;
@@ -74,7 +72,6 @@ const FILTER_DEFS: { key: FilterKey; label: string }[] = [
   { key: "counterId", label: "Counter" },
   { key: "staffId", label: "Team member" },
   { key: "productId", label: "Booking" },
-  { key: "categoryId", label: "Category" },
   { key: "method", label: "Payment method" },
   { key: "status", label: "Status" },
   { key: "minA", label: "Min amount" },
@@ -90,7 +87,6 @@ const toQuery = (f: Filters): TransactionQuery => ({
   counterIds: f.counterId ? [f.counterId] : undefined,
   staffIds: f.staffId ? [f.staffId] : undefined,
   productIds: f.productId ? [f.productId] : undefined,
-  categoryIds: f.categoryId ? [f.categoryId] : undefined,
   paymentMethods: f.method ? [f.method as TransactionQuery["paymentMethods"] extends (infer U)[] | undefined ? U : never] : undefined,
   status: f.status ? [f.status as TxStatus] : undefined,
   minAmount: f.minA ? Math.round(parseFloat(f.minA) * 100) : undefined,
@@ -161,7 +157,6 @@ function SalesReportInner() {
     .sort((a, b) => b.owed - a.owed);
   const totalOwed = outstanding.reduce((s, x) => s + x.owed, 0);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
-  const categoriesQ = useApiQuery(() => listCategories({ pageSize: 100 }), []);
 
   // Saved views — name a filter set, restore it later.
   const [views, setViews] = useState<{ name: string; qs: string }[]>(() => {
@@ -380,17 +375,6 @@ function SalesReportInner() {
           value={v}
           onChange={on}
           options={[{ value: "", label: t("filters.anyProduct") }, ...(productsQ.data?.data ?? []).map((p) => ({ value: p.id, label: p.name }))]}
-        />
-      );
-      case "categoryId": return (
-        <Select
-          bare
-          size="sm"
-          aria-label={t("filters.anyCategory")}
-          dataAttrs={{ "data-filter": k }}
-          value={v}
-          onChange={on}
-          options={[{ value: "", label: t("filters.anyCategory") }, ...(categoriesQ.data?.data ?? []).map((c) => ({ value: c.id, label: c.name }))]}
         />
       );
       case "method": return (
@@ -694,7 +678,7 @@ function SalesReportInner() {
               ))}
             </div>
             <Tabs
-              items={(["product", "category", "payment_method", "counter", "location", "staff", "hour"] as const).map((v) => ({ value: v, label: t(`groupBy.${v}`) }))}
+              items={(["product", "kind", "payment_method", "counter", "location", "staff", "hour"] as const).map((v) => ({ value: v, label: t(`groupBy.${v}`) }))}
               value={groupBy}
               onChange={(v) => setGroupBy(v as SalesGroupBy)}
               className="mb-section"
@@ -715,7 +699,6 @@ function SalesReportInner() {
                         else if (groupBy === "counter") { set("counterId", String(r.key)); setAdded((a) => a.includes("counterId") ? a : [...a, "counterId"]); }
                         else if (groupBy === "location") { set("locationId", String(r.key)); setAdded((a) => a.includes("locationId") ? a : [...a, "locationId"]); }
                         else if (groupBy === "staff") { set("staffId", String(r.key)); setAdded((a) => a.includes("staffId") ? a : [...a, "staffId"]); }
-                        else if (groupBy === "category") { set("categoryId", String(r.key)); setAdded((a) => a.includes("categoryId") ? a : [...a, "categoryId"]); }
                         setTab("transactions"); setCursor(0);
                       }}
                     >
