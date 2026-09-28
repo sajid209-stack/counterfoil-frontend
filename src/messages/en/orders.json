@@ -112,5 +112,7 @@
   "moreActions": "More actions",
   "cardMoney": "Money",
   "settled": "Paid in full.",
-  "refundedLabel": "Refunded"
+  "refundedLabel": "Refunded",
+  "viaMarketplace": "Booked through {name}",
+  "marketplaceCut": "{commission} commission · {net} to you"
 }

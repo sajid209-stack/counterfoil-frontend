@@ -13386,3 +13386,212 @@ at once. Run them **one at a time**: `codes` reported 25/27 in a batch and
   reversal. Seats were the nameable case.
 - **A seat hold placed from the calendar is honoured**; there is still no
   per-seat hold UI at the till.
+
+## Events reach the till, the reports and a page of their own (2026-09-28)
+
+Owner, on two of the three items left open: *"Events still don't reach the till
+or reports, and there's no public event page — so an event's 'on sale' means
+published, ready rather than buyable."*
+
+### What a sale actually needed
+
+`EventTier.sold` was a stored number with a comment saying it should come from
+orders. It is an **opening balance** now — what had sold before this system was
+recording, which is what a venue migrating mid-season actually has — and sales
+made here are replayed from the ledger and added on read (`withLiveSales`). The
+same rule seat availability and loyalty balances follow: a stored running total
+and a ledger disagree exactly once, and then nobody can say which is right.
+
+Folding it in at the READ means every screen downstream — the templates, the
+catalogue, `dayFill`, `bundleSaving`, the settlement — is live without knowing
+anything about orders.
+
+### At the counter
+
+An **Event tickets** chip on the sell wall, beside Shop, and an `EventSheet` of
+its own. An event is not a booking: it has no schedule and no resources, it has
+**days and ticket types**, so a branch inside the booking sheet would have been
+a fourth meaning for the same controls.
+
+- **The day is chosen before the ticket**, where there is more than one. A flat
+  list of "Day 1 GA · Day 1 VIP · Day 2 GA · Both GA" is the same information
+  arranged so nobody can read it — and a Saturday-only pass correctly disappears
+  when Sunday is showing.
+- **A ticket is capped by the grouped capacity of every day it admits.** A
+  weekend pass takes a place on Saturday *and* Sunday, so it stops when the
+  fuller of the two runs out. Anything else oversells the day it covers.
+- Lines are `evt_<id>`, which is what lets a sale resolve back to its event in
+  reports and in the settlement — the trick an inventory line already uses.
+
+**The chip is "Event tickets", not "Events", and that is not a style choice**:
+the seeded catalogue already has a *category* called Events holding bookings, so
+two identical chips sat side by side. The render showed it immediately; a name
+match in the harness had been clicking the wrong one.
+
+### The settlement
+
+The report every box office settles a show on, and the one every ticketing
+platform converges on: per ticket type — **capacity, sold, unsold, face value,
+refunds, net** — then the same per day, and where it was bought. With a CSV,
+built from the same function the figures on screen use so the export and the
+page cannot disagree.
+
+The seeded tournament reads **Capacity 2,016 · Sold 836 · Face value ৳481,800**,
+by day 622/1,216 and 568/1,216 (a grouped capacity: the weekend passes count on
+both), and attributes all 836 to **"Before Counterfoil"** with a line saying
+they are counted but carry no money here. A settlement that quietly attributed
+revenue to sales it never saw would be the wrong number in the one report that
+must not have one.
+
+Sales reports bucket `evt_` lines under **Event tickets**, beside Add-ons and
+Shop, rather than dropping them in Uncategorised.
+
+### The page
+
+`/e/<slug>` — the address the record has been printing as "not live yet" since
+events were built. It renders `EventTemplate`, the very component the designer
+previews, so what an operator approves is what a visitor gets.
+
+**It publishes; it does not sell.** There is no online checkout in this product,
+so the live page must not inherit the preview's "Continue to checkout · Secure
+checkout · Instant e-tickets" — that is the right mock-up inside the designer
+and a promise this product cannot keep on a page a visitor is reading. The live
+page overrides those two labels and says where a ticket is really bought. A
+draft and an address nobody has taken are refused **identically**, because
+"not published yet" tells a guesser they are close.
+
+### Found by measuring
+
+- **191px of sideways scroll on a phone.** The template carries its own two
+  layouts and switches on `device`, the prop the designer's preview toggles —
+  so a real page has to decide from the viewport. It does, through the same
+  media query the app shell uses.
+- **My own seed broke the catalogue**, and the regression caught it: giving
+  every seeded event `channels: ["online", "counter"]` without `locationIds`
+  made each one fail the editor's own rule that a counter sale names its
+  venue, so saving an edit was silently refused. The seed states the box
+  office now — `locationIds` is *whose counters sell it*, not where the event
+  happens, and a fort box office selling a ticket to a concert across town is
+  exactly what a box office is for.
+- `{count}` without `number` is interpolated as typed, so "1180 unsold" sat
+  beside "2,016". Third time this project has hit it.
+
+### Verified
+
+- **17 checks** selling an event at the counter: the chip, the sheet asking the
+  two questions in order, the day filter hiding a day-1-only pass on day 2, the
+  stepper and total, the cart naming the day, and a sale completing with a
+  ticket per ticket.
+- **11 checks** on the settlement, including that it **adds up** — its capacity
+  and sold equal the tier table's, and sold plus unsold equals capacity.
+- **25 checks** on the public page across three templates, at desktop and
+  phone: it renders outside the admin shell, refuses a draft and an unknown
+  address identically without revealing which, promises no checkout it cannot
+  honour, says where tickets are really sold, and scrolls nowhere sideways.
+- Standing harnesses hold: catalog **95/95**, reports **48/48**.
+
+### Open
+
+- **Events still cannot be bought online**, which is why the page says so. That
+  is the online-checkout decision this project has deferred throughout, not an
+  events gap.
+- `/sell` and `/classic` have no event chip. Both are deliberate design
+  variants; `/pos` is the till this followed.
+- An event ticket does not yet scan at the gate as an event — it mints an
+  ordinary ticket, which admits, but the gate has no notion of *which day* a
+  two-day pass is being used for. That needs the per-day redemption decision
+  the multi-day work already recorded as open.
+
+## Marketplaces — the channel manager (2026-09-28)
+
+Item 3, the last of the twenty: *"A Marketplace menu in OS … add catalog to
+marketplaces, full workflow/userflow/onboarding research."*
+
+### What the research settled
+
+Every tours-and-attractions channel manager — Rezdy, Bokun, TrekkSoft,
+FareHarbor — is the same three things and not more: a **connection** to a
+marketplace carrying a commission agreed by contract, a **listing** per
+catalogue item, and a **sync** that pushes price and availability and pulls
+bookings back. The onboarding is: be an approved supplier, agree a rate, map
+your products, submit them for review.
+
+So those are the three objects on screen and there is nothing else.
+
+### The decision the screen exists for
+
+Not "connect Viator" — **"is it worth it?"**. A marketplace takes a quarter of
+the ticket and brings customers the operator would not have had. So the money
+is stated the way it is decided:
+
+> They take 25% — **you keep ৳1,125.00 of a ৳1,500.00 ticket.**
+
+and, on the channel, the question every operator asks second: *to take home
+what the counter takes, list at ৳1,875.00 to keep ৳1,500.00.* That is the
+mandatory-concrete-numbers rule the duration engine and the pricing preview
+already follow. Beside it, what the channel has actually brought in — **22
+bookings · ৳55,731.63 after commission** — replayed from the ledger, with each
+order's commission read off the ORDER rather than recomputed, because a
+renegotiated rate must not rewrite what was owed on last month's bookings.
+
+### The onboarding says what has to be true first
+
+The real process is long and mostly somebody else's: apply, be accepted, agree
+a contract, then connect. Pretending to own the application would be inventing a
+flow that ends on another company's website, so the dialog says plainly that an
+approved supplier account and an agreed commission are needed, **that
+Counterfoil does not apply on the operator's behalf**, and links there. Only the
+last step is Counterfoil's, and that is the step it offers.
+
+**Only the last four characters of an API key are kept**, and the field says so.
+Storing a whole credential in a mock that ships to a browser would be teaching
+the wrong lesson in the one place it matters.
+
+### Two rules that shape the listings screen
+
+- **Nothing can be listed that cannot be sold.** The picker greys out anything
+  with the same blockers the catalogue already shows on its rows — and *says
+  which*, because a disabled row that gives no reason reads as a fault rather
+  than a rule.
+- **Submitting is not publishing.** A marketplace reviews a listing and can
+  refuse it; drafts go to *In review* and the state that resolves them comes
+  back from the channel. Sync says exactly what it did — a button claiming to
+  have pushed prices somewhere would be the worst kind of lie on this screen.
+
+### Contract, for the backend lane
+
+`MarketplaceId`, `MarketplaceConnection`, `MarketplaceListing`, `ConnectionStatus`,
+`ListingStatus` and `OrderSource`. `Order.source` is optional and sits **beside**
+`channel` rather than widening it: a marketplace booking is still an online
+sale, so every report that buckets by channel keeps working, and an order
+without it is a direct sale — which is what every order written before this was.
+The order record shows the marketplace, its cut and its own reference, because
+otherwise the commission is invisible on the one record that should carry it.
+
+### The seed carries a channel that needs a decision
+
+A working Viator connection with live listings, and a Klook one whose listing
+the marketplace refused for want of photographs. A demo where everything is
+green teaches nobody what the screen is for.
+
+### Verified
+
+**22 checks, first run**: the rail entry; what is connected and what is not;
+the keep-of line in money; a channel needing attention naming its reason; the
+dialog stating what must be true first, that Counterfoil does not apply for
+you, the link, the worked example and the last-four note; connecting landing on
+the channel with its list-at figure; the picker stating the split per booking;
+a listing landing as a draft; and **sending moving it to review rather than
+live**.
+
+### Open
+
+- **Nothing calls Viator.** The contract is real and every rule that does not
+  need the network is enforced; the integration is the backend's.
+- **Only bookings can be listed.** An event is a catalogue item too and the
+  listing carries a plain `productId`, so it is a small change — but the
+  price a marketplace would charge for a multi-day event needs the day
+  question answered first.
+- **No per-listing price override in the UI.** `priceOverride` is on the
+  contract and honoured by the split; the field is not drawn yet, so a listing
+  is charged at the catalogue price.

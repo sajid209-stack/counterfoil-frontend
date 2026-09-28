@@ -76,6 +76,8 @@ const store: Record<string, Row[]> = {
   storefronts: structuredClone(seed.storefronts),
   inventoryItems: structuredClone(seed.inventoryItems),
   stockMovements: structuredClone(seed.stockMovements),
+  marketplaceConnections: structuredClone(seed.marketplaceConnections),
+  marketplaceListings: structuredClone(seed.marketplaceListings),
 };
 
 // ── Operator + demo-business switching ──────────────────────────────────────

@@ -384,6 +384,21 @@ export default function OrderDetailPage() {
             <Card title={t("cardPlaced")}>
               <p className="text-sm">{formatDateTime(o.createdAt)}</p>
               <p className="mt-inline text-[13px] text-muted">{channelLabel(o.channel)}</p>
+              {/* A marketplace sale is not a direct one: somebody else took
+                  the booking and keeps a cut, and without this the commission
+                  is invisible on the one record that should carry it. */}
+              {o.source && (
+                <p className="mt-inline text-[13px]">
+                  {t("viaMarketplace", { name: o.source.marketplaceName })}
+                  <span className="block text-muted">
+                    {t("marketplaceCut", {
+                      commission: formatMoney(o.source.commissionAmount),
+                      net: formatMoney(o.total - o.source.commissionAmount),
+                    })}
+                    {o.source.reference ? ` · ${o.source.reference}` : ""}
+                  </span>
+                </p>
+              )}
               {o.customerName && (
                 /* The buyer was rendered at 12px in the disabled grey, below
                    the channel, as if it were metadata about the sale. It is

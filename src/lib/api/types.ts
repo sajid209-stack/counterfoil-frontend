@@ -602,6 +602,10 @@ export interface Order {
   reference: string; // "CF-2026-008479"
   status: OrderStatus;
   channel: Channel;
+  /** Set when the sale came through a marketplace rather than direct. Kept
+   *  beside `channel` rather than widening it: a marketplace booking is still
+   *  an online sale, and every report that buckets by channel keeps working. */
+  source?: OrderSource;
   locationId: ID;
   counterId: ID | null;
   staffId: ID | null;
@@ -911,6 +915,68 @@ export interface SeatMap {
   fixtures: LayoutFixture[];
   experience: LayoutExperience;
 }
+/* ── Marketplaces (channel manager) ────────────────────────────────────────
+ *
+ * The shape every tours-and-attractions channel manager converges on — Rezdy,
+ * Bokun, TrekkSoft, FareHarbor: a CONNECTION to a marketplace, a COMMISSION
+ * agreed with it, and a LISTING per catalogue item you want it to sell. The
+ * marketplace takes the booking and remits what it owes, less its cut.
+ *
+ * Two things are deliberately on the contract even though the mock cannot do
+ * them, because they are what the backend will have to carry: the credential
+ * a connection needs, and the moment each listing last synced.
+ */
+export type MarketplaceId = "viator" | "getyourguide" | "klook" | "airbnb" | "expedia" | "tripadvisor";
+/** Not connected → connecting → live; `attention` is connected but unhappy. */
+export type ConnectionStatus = "disconnected" | "connecting" | "connected" | "attention";
+export interface MarketplaceConnection {
+  id: ID;
+  marketplaceId: MarketplaceId;
+  status: ConnectionStatus;
+  /** What the marketplace keeps, in basis points — 2500 is 25%. Negotiated per
+   *  contract, which is why it lives on the connection and not on the channel. */
+  commissionBps: number;
+  /** The account the operator holds with them, as they would recognise it. */
+  accountRef?: string;
+  /** Stored so a reconnect does not start from nothing. Never rendered. */
+  apiKeyLast4?: string;
+  /** Why it needs attention, in the operator's words. */
+  issue?: string;
+  lastSyncedAt?: ISODateTime | null;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+/** draft → submitted → live, or refused with a reason the marketplace gave. */
+export type ListingStatus = "draft" | "submitted" | "live" | "paused" | "rejected";
+export interface MarketplaceListing {
+  id: ID;
+  connectionId: ID;
+  /** The catalogue item being sold — a booking's id, or `evt_<id>`. */
+  productId: ID;
+  /** Snapshot, so renaming a booking does not rewrite what was listed. */
+  productName: string;
+  status: ListingStatus;
+  /** An override for this channel only. Absent means the catalogue price. */
+  priceOverride?: Minor | null;
+  rejectedReason?: string;
+  lastSyncedAt?: ISODateTime | null;
+  createdAt: ISODateTime;
+  updatedAt: ISODateTime;
+}
+/** Where a sale came from, when it did not come from this operator's own
+ *  counter or website. Optional and additive: an order without it is a direct
+ *  sale, which is what every order written before marketplaces was. */
+export interface OrderSource {
+  marketplaceId: MarketplaceId;
+  marketplaceName: string;
+  /** The marketplace's own reference, which is what a dispute is argued with. */
+  reference?: string;
+  /** Snapshot of the rate at the time of sale — a renegotiated commission must
+   *  not rewrite what was owed on last month's bookings. */
+  commissionBps: number;
+  commissionAmount: Minor;
+}
+
 /** Link between a product and a seat layout (ConfigLayoutLink). */
 export interface ConfigLayoutLink {
   layoutId: ID;

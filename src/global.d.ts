@@ -24,6 +24,8 @@ type Messages = {
   schedule: typeof import("./messages/en/schedule.json");
   moneysetup: typeof import("./messages/en/moneysetup.json");
   seatmaps: typeof import("./messages/en/seatmaps.json");
+  eventPage: typeof import("./messages/en/eventPage.json");
+  marketplaces: typeof import("./messages/en/marketplaces.json");
   promotions: typeof import("./messages/en/promotions.json");
   ticket: typeof import("./messages/en/ticket.json");
   pricing: typeof import("./messages/en/pricing.json");

@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Archive, ArrowLeft, Check, ChevronDown, Circle, Copy, Eye, EyeOff, Monitor, Pencil, Smartphone } from "lucide-react";
+import { Archive, ArrowLeft, Check, ChevronDown, Circle, Copy, Download, Eye, EyeOff, Monitor, Pencil, Smartphone } from "lucide-react";
 import { ActionMenu, Button, ConfirmDialog, EmptyState, PageShell, StatStrip, StatusPill, useToast, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -18,6 +18,7 @@ import {
   tierDays,
   eventChannels,
   eventRevenue,
+  eventSettlement,
   eventSold,
   getEvent,
   listLocations,
@@ -82,6 +83,42 @@ export default function EventDetailPage() {
   const q = useApiQuery(() => getEvent(params.id), [params.id]);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
   const e = q.data;
+  /* The settlement, and the file an accountant asks for. Built from the same
+     function the figures above it use, so the export and the screen can never
+     disagree — the rule the tax report already follows. */
+  const settlement = useMemo(
+    () => (e ? eventSettlement(e, (n) => tr("days.nth", { n })) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [e],
+  );
+  const exportSettlement = () => {
+    if (!settlement) return;
+    const major = (m: number) => (m / 100).toFixed(2);
+    const cell = (v: string | number) => {
+      const t = String(v);
+      return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+    };
+    const row = (xs: (string | number)[]) => xs.map(cell).join(",");
+    const lines = [
+      row([tr("colTicket"), tr("colPrice"), tr("settle.capacity"), tr("settle.sold"), tr("settle.unsoldCol"), tr("settle.faceValue"), tr("settle.refundedCol"), tr("settle.taken")]),
+      ...settlement.tiers.map((x) => row([x.name, major(x.price), x.capacity, x.sold, x.unsold, major(x.faceValue), major(x.refundedAmount), major(x.net)])),
+      row([tr("settle.total"), "", settlement.totals.capacity, settlement.totals.sold, settlement.totals.unsold, major(settlement.totals.faceValue), major(settlement.totals.refundedAmount), major(settlement.totals.net)]),
+    ];
+    if (settlement.days.length > 1) {
+      lines.push("", row([tr("settle.byDay"), tr("settle.capacity"), tr("settle.sold"), tr("settle.unsoldCol")]));
+      for (const d of settlement.days) lines.push(row([`${d.name} ${d.date}`, d.capacity, d.sold, d.unsold]));
+    }
+    if (settlement.byChannel.length) {
+      lines.push("", row([tr("settle.byChannel"), tr("settle.sold"), tr("settle.taken")]));
+      for (const c of settlement.byChannel) lines.push(row([tr(`settle.channel.${c.channel}`), c.sold, major(c.net)]));
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `settlement-${e?.slug ?? "event"}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
   const labels = useTemplateLabels(e?.categoryId ?? null);
 
@@ -283,6 +320,68 @@ export default function EventDetailPage() {
               </table>
             </section>
 
+            {/* The settlement. What a box office actually settles a show on,
+                and the one report every ticketing system converges on:
+                capacity against sold, what came in, what went back, and where
+                it was bought. The tier detail is the table above; this is the
+                answer to "how did it do". */}
+            {settlement && (
+            <section className="card-surface overflow-hidden lg:col-span-2" aria-labelledby="ev-settle">
+              <div className="flex flex-wrap items-center gap-tight border-b border-hairline px-card py-comfortable">
+                <h2 id="ev-settle" className="mr-auto text-base font-semibold tracking-[-0.4px]">{tr("settle.title")}</h2>
+                <Button size="sm" variant="secondary" icon={<Download size={14} strokeWidth={1.5} />} onClick={exportSettlement}>
+                  {tr("settle.export")}
+                </Button>
+              </div>
+              <div className="grid gap-card p-card sm:grid-cols-2 xl:grid-cols-4">
+                <Figure label={tr("settle.capacity")} value={settlement.totals.capacity.toLocaleString()} />
+                <Figure label={tr("settle.sold")} value={settlement.totals.sold.toLocaleString()} sub={tr("settle.unsold", { count: settlement.totals.unsold })} />
+                <Figure label={tr("settle.faceValue")} value={formatPriceShort(settlement.totals.faceValue)} />
+                <Figure
+                  label={tr("settle.taken")}
+                  value={formatPriceShort(settlement.totals.net)}
+                  sub={settlement.totals.refundedAmount > 0 ? tr("settle.refunded", { amount: formatPriceShort(settlement.totals.refundedAmount) }) : undefined}
+                />
+              </div>
+              {(settlement.days.length > 1 || settlement.byChannel.length > 0) && (
+                <div className="grid gap-card border-t border-hairline p-card sm:grid-cols-2">
+                  {settlement.days.length > 1 && (
+                    <div>
+                      <h3 className="type-label mb-tight">{tr("settle.byDay")}</h3>
+                      <ul className="flex flex-col gap-inline text-[13px]">
+                        {settlement.days.map((d) => (
+                          <li key={d.id} className="flex items-baseline justify-between gap-tight">
+                            <span className="min-w-0 truncate">{d.name} <span className="text-muted">· {formatDay(d.date)}</span></span>
+                            <span className="shrink-0 tabular-nums">{tc("soldOf", { sold: d.sold.toLocaleString(), cap: d.capacity.toLocaleString() })}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {settlement.byChannel.length > 0 && (
+                    <div>
+                      <h3 className="type-label mb-tight">{tr("settle.byChannel")}</h3>
+                      <ul className="flex flex-col gap-inline text-[13px]">
+                        {settlement.byChannel.map((c) => (
+                          <li key={c.channel} className="flex items-baseline justify-between gap-tight">
+                            <span>{tr(`settle.channel.${c.channel}`)}</span>
+                            <span className="shrink-0 tabular-nums">
+                              {tr("settle.tickets", { count: c.sold })}
+                              {c.channel !== "opening" && <span className="text-muted"> · {formatPriceShort(c.net)}</span>}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      {settlement.byChannel.some((c) => c.channel === "opening") && (
+                        <p className="mt-tight text-[12px] text-muted">{tr("settle.openingNote")}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+            )}
+
             <section className="card-surface p-card" aria-labelledby="ev-where">
               <h2 id="ev-where" className="text-base font-semibold tracking-[-0.4px]">{tr("where")}</h2>
               <dl className="mt-section flex flex-col gap-section text-[13px]">
@@ -312,7 +411,18 @@ export default function EventDetailPage() {
                 <div>
                   <dt className="type-label text-[12px] text-muted">{tr("page")}</dt>
                   <dd className="mt-inline text-[12px] text-muted">
-                    <span className="break-all font-mono">/e/{e.slug}</span> · {tr("notLive")}
+                    {/* The address is a real page now. It is only reachable
+                        while the event is published and sold online, so the
+                        link is offered exactly when it would work. */}
+                    <span className="break-all font-mono">/e/{e.slug}</span>
+                    {" · "}
+                    {e.published && e.status === "active" && (e.channels ?? ["online"]).includes("online") ? (
+                      <a className="text-brand-foreground underline underline-offset-2" href={`/e/${e.slug}`} target="_blank" rel="noreferrer">
+                        {tr("viewPage")}
+                      </a>
+                    ) : (
+                      tr("notLive")
+                    )}
                   </dd>
                 </div>
               </dl>
@@ -379,5 +489,17 @@ export default function EventDetailPage() {
         confirmLabel={tc("action.archive")}
       />
     </PageShell>
+  );
+}
+
+/** One figure in the settlement band: what it is, the number, and a line under
+ *  it only where there is something to say. */
+function Figure({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div>
+      <p className="type-label text-[12px] text-muted">{label}</p>
+      <p className="mt-inline text-[1.375rem] font-semibold tabular-nums">{value}</p>
+      {sub && <p className="text-[12px] text-muted">{sub}</p>}
+    </div>
   );
 }

@@ -241,10 +241,20 @@ export async function getSalesReport(query: SalesReportQuery): Promise<ApiResult
             ? "addons"
             : line.productId.startsWith("inv_")
               ? "shop"
-              : (productCat.get(line.productId) ?? "none");
+              : line.productId.startsWith("evt_")
+                ? "events"
+                : (productCat.get(line.productId) ?? "none");
           add(
             cid,
-            cid === "addons" ? "Add-ons" : cid === "shop" ? "Shop" : cid === "none" ? "Uncategorised" : (catName.get(cid) ?? "—"),
+            cid === "addons"
+              ? "Add-ons"
+              : cid === "shop"
+                ? "Shop"
+                : cid === "events"
+                  ? "Event tickets"
+                  : cid === "none"
+                    ? "Uncategorised"
+                    : (catName.get(cid) ?? "—"),
             isSettled ? amt : 0,
             isRefund ? amt : 0,
             isSettled ? line.quantity : 0,

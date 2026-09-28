@@ -367,7 +367,8 @@
     "rowHeld": "Held · {name}",
     "stockLeft": "{count} {unit} left",
     "stockOut": "None left",
-    "stockRefused": "{name} was charged but could not come off the shelf — it is not kept at this counter's venue."
+    "stockRefused": "{name} was charged but could not come off the shelf — it is not kept at this counter's venue.",
+    "buyNowShort": "Buy now"
   },
   "settle": {
     "title": "Settle a reservation",
@@ -461,5 +462,19 @@
     },
     "per": "sold by the {unit}",
     "noCode": "No shop item has the code {code}."
+  },
+  "event": {
+    "chip": "Event tickets",
+    "whichDay": "Which day?",
+    "whichTicket": "Which ticket?",
+    "dayN": "Day {n}",
+    "allDays": "all days",
+    "free": "Free",
+    "soldOut": "Sold out",
+    "left": "{count} left",
+    "runsDays": "runs {count} days",
+    "pickTickets": "Choose tickets",
+    "summary": "{count} tickets",
+    "add": "Add {count} tickets"
   }
 }

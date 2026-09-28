@@ -33,6 +33,8 @@ import type {
   Staff,
   TaxConfig,
   Storefront,
+  MarketplaceConnection,
+  MarketplaceListing,
 } from "@/lib/api/types";
 import { generateSales } from "./generate";
 import { demoDay } from "@/lib/schedule";
@@ -1370,3 +1372,45 @@ export const stockMovements: StockMovement[] = [
 
 /** Event fixtures live in their own file — see the note there. */
 export { events } from "./events";
+
+/**
+ * One marketplace already connected, and one that needs a decision.
+ *
+ * A screen whose whole point is "is this worth it?" has nothing to answer with
+ * on an empty fixture, so the seed carries a working channel with live
+ * listings and a second whose listings the marketplace refused — because the
+ * refused case is the one an operator has to learn to read, and a demo where
+ * everything is green teaches nobody what the screen is for.
+ */
+export const marketplaceConnections: MarketplaceConnection[] = [
+  {
+    id: "mkc_viator",
+    marketplaceId: "viator",
+    status: "connected",
+    commissionBps: 2500,
+    accountRef: "SUP-4417",
+    apiKeyLast4: "9f2c",
+    lastSyncedAt: "2026-07-29T08:40:00+06:00",
+    createdAt: "2026-05-02T10:00:00+06:00",
+    updatedAt: T,
+  },
+  {
+    id: "mkc_klook",
+    marketplaceId: "klook",
+    status: "attention",
+    commissionBps: 2000,
+    accountRef: "lalbagh-heritage",
+    issue: "They asked for photographs before the listing can go live.",
+    lastSyncedAt: "2026-07-21T19:05:00+06:00",
+    createdAt: "2026-07-01T09:30:00+06:00",
+    updatedAt: T,
+  },
+];
+
+export const marketplaceListings: MarketplaceListing[] = [
+  { id: "mkl_1", connectionId: "mkc_viator", productId: "prd_tour", productName: "Heritage Walking Tour", status: "live", lastSyncedAt: "2026-07-29T08:40:00+06:00", createdAt: "2026-05-02T10:05:00+06:00", updatedAt: T },
+  { id: "mkl_2", connectionId: "mkc_viator", productId: "prd_admission", productName: "General Admission", status: "live", lastSyncedAt: "2026-07-29T08:40:00+06:00", createdAt: "2026-05-02T10:06:00+06:00", updatedAt: T },
+  { id: "mkl_3", connectionId: "mkc_viator", productId: "prd_planetarium", productName: "Planetarium Show", status: "submitted", lastSyncedAt: null, createdAt: "2026-07-20T11:00:00+06:00", updatedAt: T },
+  { id: "mkl_4", connectionId: "mkc_klook", productId: "prd_admission", productName: "General Admission", status: "rejected", rejectedReason: "Photographs needed", lastSyncedAt: null, createdAt: "2026-07-01T09:35:00+06:00", updatedAt: T },
+  { id: "mkl_5", connectionId: "mkc_klook", productId: "prd_garden", productName: "Sculpture Garden", status: "draft", lastSyncedAt: null, createdAt: "2026-07-22T15:00:00+06:00", updatedAt: T },
+];

@@ -300,8 +300,33 @@ export function generateSales({
       }
     }
 
+    /* Some of the online sales came through a marketplace rather than the
+       operator's own page. Without this the Marketplaces screen answers its own
+       question — "is it worth it?" — with zero, which is honest and teaches
+       nobody what the screen is for. The commission is snapshotted onto the
+       order, because a renegotiated rate must not rewrite what was owed on
+       last month's bookings.
+
+       Drawn from the SAME `rand()` sequence as everything else and only inside
+       the online branch, so the fixture's orders, prices and bookings are
+       unmoved — the lesson the customer-stagger work recorded. */
+    const viaMarketplace = channel === "online" && rand() < 0.28;
+    const source = viaMarketplace
+      ? (() => {
+          const commissionBps = 2500;
+          return {
+            marketplaceId: "viator" as const,
+            marketplaceName: "Viator",
+            reference: `VT-${reference.replace(/\D/g, "").slice(-6)}`,
+            commissionBps,
+            commissionAmount: Math.round((total * commissionBps) / 10000),
+          };
+        })()
+      : undefined;
+
     orders.push({
       id: `ord_${seq}`, reference, status, channel,
+      ...(source ? { source } : {}),
       locationId: location.id, counterId: null, staffId: seller?.id ?? null,
       // Online sales always identify the buyer; at the counter most people
       // stay anonymous unless staff attached them (the POS customer chip).

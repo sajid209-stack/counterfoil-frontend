@@ -1,0 +1,6 @@
+{
+  "missingTitle": "This event isn't here",
+  "missingBody": "The link may be wrong, or the event may not be on sale yet.",
+  "buyAtVenue": "Buy at the box office",
+  "soldAt": "Tickets are sold at {venue}. Online sales aren't open yet."
+}

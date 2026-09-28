@@ -1,0 +1,119 @@
+{
+  "title": "Marketplaces",
+  "description": "List your catalogue where people are already looking, and see what it brings in.",
+  "connect": "Connect a marketplace",
+  "connectOne": "Connect",
+  "connectedTitle": "Connected",
+  "availableTitle": "Not connected yet",
+  "manage": "Manage",
+  "sync": "Sync",
+  "synced": "{name} synced.",
+  "theirSite": "Their supplier site",
+  "typically": "usually takes {pct}%",
+  "keepOf": "They take {pct}% — you keep {net} of a {price} ticket.",
+  "listingLine": "{live} of {total} listings live",
+  "broughtIn": "{orders} bookings · {net} after commission",
+  "empty": {
+    "title": "No marketplaces connected",
+    "body": "Connect one to list what you sell where people are already looking. You agree the commission with them; Counterfoil keeps the listings and the prices in step."
+  },
+  "stat": {
+    "live": "Live listings",
+    "orders": "Bookings",
+    "net": "After commission",
+    "commission": "Commission paid",
+    "listed": "Listings",
+    "liveOf": "{count} live"
+  },
+  "status": {
+    "disconnected": "Not connected",
+    "connecting": "Connecting",
+    "connected": "Connected",
+    "attention": "Needs attention"
+  },
+  "sells": {
+    "tours": "Tours and activities",
+    "attractions": "Attractions",
+    "stays": "Stays",
+    "everything": "Everything"
+  },
+  "dialog": {
+    "title": "Connect a marketplace",
+    "body": "Counterfoil keeps your listings and prices in step once you are connected.",
+    "which": "Which marketplace",
+    "firstTitle": "First, with {name}",
+    "firstBody": "You need an approved supplier account with {name} and an agreed commission before this will do anything. Counterfoil does not apply on your behalf.",
+    "open": "Open {name}",
+    "commission": "Their commission (%)",
+    "commissionHelp": "What you agreed in your contract with them.",
+    "commissionBad": "A commission has to be between 0 and 100%.",
+    "example": "On a {price} ticket they keep {commission} and you get {net}.",
+    "apiKey": "API key",
+    "apiKeyHelp": "From their supplier site. Only the last four characters are kept here.",
+    "account": "Account reference",
+    "accountHelp": "However they identify you — a supplier id or an email.",
+    "connect": "Connect",
+    "cancel": "Cancel"
+  },
+  "connected": "{name} connected.",
+  "oneDescription": "What {name} costs you, what is listed on it, and what it has brought in.",
+  "backToList": "Marketplaces",
+  "missing": "That connection is not here.",
+  "terms": "The deal",
+  "save": "Save",
+  "commissionSaved": "Commission saved.",
+  "onAExample": "On a typical ticket",
+  "toMatchTitle": "To take home what the counter takes",
+  "toMatch": "List at {list} to keep {target}.",
+  "lastSync": "Last synced",
+  "disconnect": "Disconnect",
+  "disconnectTitle": "Disconnect {name}?",
+  "disconnectBody": "Its {count, plural, one {# listing} other {# listings}} are removed with it. What has already sold is untouched, and you can connect again later.",
+  "disconnected": "{name} disconnected.",
+  "listingsTitle": "Listings",
+  "addListing": "Add a listing",
+  "sendDrafts": "Send {count, plural, one {# draft} other {# drafts}} for review",
+  "sendOne": "Send for review",
+  "submitted": "{count, plural, one {# listing} other {# listings}} sent for review.",
+  "pause": "Pause",
+  "resume": "Put back on sale",
+  "removeListing": "Remove",
+  "listingRemoved": "Listing removed.",
+  "listingAdded": "Listing added.",
+  "rowActions": "More actions",
+  "col": {
+    "listing": "Listing",
+    "theirPrice": "They charge",
+    "youKeep": "You keep",
+    "status": "Status"
+  },
+  "lessCommission": "after {amount} commission",
+  "theirPriceShort": "They charge {price}",
+  "youKeepShort": "you keep {net}",
+  "listing": {
+    "draft": "Draft",
+    "submitted": "In review",
+    "live": "Live",
+    "paused": "Paused",
+    "rejected": "Refused"
+  },
+  "noListings": {
+    "title": "Nothing listed yet",
+    "body": "Add the bookings you want {name} to sell."
+  },
+  "add": {
+    "title": "Add a listing",
+    "body": "Pick what you want this marketplace to sell.",
+    "search": "Search your catalogue",
+    "already": "Already listed here",
+    "cannot": "Can not be sold yet — {why}",
+    "split": "They charge {price} · you keep {net}",
+    "done": "Done"
+  },
+  "blocker": {
+    "noPrice": "no price",
+    "noSchedule": "no schedule",
+    "noResource": "nothing to book",
+    "noChannel": "sold nowhere"
+  }
+}

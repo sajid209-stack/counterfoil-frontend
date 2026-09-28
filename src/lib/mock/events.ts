@@ -23,6 +23,14 @@ function base(
     id,
     status: "active",
     published: true,
+    /* The operator's box office sells these as well as their own page — the
+       normal case for a venue, and the one worth seeding. `locationIds` names
+       WHOSE counters sell it, not where the event happens: a fort box office
+       can perfectly well sell a ticket to a concert across town, which is what
+       a box office is for. The app requires it whenever the counter is ticked,
+       so the seed states it rather than leaning on "empty means everywhere". */
+    channels: ["online", "counter"],
+    locationIds: ["loc_fort"],
     slug: id.replace("evt_", ""),
     title: "",
     categoryId,

@@ -4,10 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { ArrowRight, Archive, Banknote, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
+import { ArrowRight, Archive, Banknote, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, Ticket, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { counterItems, inventoryItem, inventoryLineId, levelOf, peekCounters, peekTicketCodeSettings, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView } from "@/lib/api";
+import { counterEvents, counterItems, inventoryItem, inventoryLineId, levelOf, peekCounters, peekTicketCodeSettings, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listCategories, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_COUNTER_ID } from "@/lib/session";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
@@ -21,6 +21,7 @@ import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
+import { EventSheet } from "../_components/EventSheet";
 import { Keypad } from "../_components/Keypad";
 import { ticketSnapshot } from "./_lib/handover";
 import { clearLiveSale, readLiveSale, writeLiveSale } from "./_lib/liveSale";
@@ -349,6 +350,27 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     [tillLocationId, cart],
   );
   const SHOP = "shop";
+  /* Events at the counter. Like the shelf, one chip of their own rather than a
+     category: an event is not a booking — it has days and ticket types, no
+     schedule and no resources — and filing it under the catalogue's groups
+     would put it behind a chip that means something else. Only events this
+     counter's venue actually sells. */
+  const eventsForSale = useMemo(
+    () => counterEvents(tillLocationId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from the store; the cart changing is when it can have moved
+    [tillLocationId, cart],
+  );
+  const EVENTS = "events";
+  const [eventSheet, setEventSheet] = useState<EventRecord | null>(null);
+  /** The cheapest ticket somebody could still buy — what a tile leads with,
+   *  the same "from" price the event's own page states. */
+  const eventFromPrice = (e: EventRecord) => {
+    const open = e.tiers.filter((t) => t.sold < t.quantity);
+    return open.length ? Math.min(...open.map((t) => t.price)) : Math.min(...e.tiers.map((t) => t.price), 0);
+  };
+  /** Places left across the whole event, so a tile can say it is nearly gone. */
+  const eventPlacesLeft = (e: EventRecord) =>
+    e.tiers.reduce((n, t) => n + Math.max(0, t.quantity - t.sold), 0);
 /** Units that count rather than name. A tile says "sold by the bottle" and
  *  stays quiet about "each", which tells a cashier nothing they cannot see. */
 const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "pcs", "piece", "pieces"]);
@@ -379,6 +401,11 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     return !q || i.name.toLowerCase().includes(q) || (i.sku ?? "").toLowerCase().includes(q);
   });
   const shelfHeading = shownItems.length > 0 && shown.length > 0;
+  const shownEvents = eventsForSale.filter((e) => {
+    if (category !== "all" && category !== EVENTS) return false;
+    const q = query.trim().toLowerCase();
+    return !q || e.title.toLowerCase().includes(q) || e.venueName.toLowerCase().includes(q);
+  });
   const customTile = (
     <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10">
       <Plus size={20} strokeWidth={1.5} />
@@ -1084,8 +1111,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             /* Last, and only when the shelf has something: it is the one chip
                that is not one of the operator's own categories. */
             ...(shopItems.length > 0 ? [{ id: SHOP, name: t("shop.chip") }] : []),
+            ...(eventsForSale.length > 0 ? [{ id: EVENTS, name: t("event.chip") }] : []),
           ].map((c) => (
-            <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-muted-wash"}`}>{c.name}</button>
+            <button key={c.id} type="button" data-chip={c.id} onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-muted-wash"}`}>{c.name}</button>
           ))}
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -1176,6 +1204,46 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               {/* Not a shelf item, so it goes ABOVE the heading rather than
                   under it — a catch-all charge filed under Shop would say the
                   till had counted stock it never touched. */}
+              {/* Events. Grouped under their own heading for the same reason
+                  the shelf is: an event is a different kind of thing from a
+                  booking, and a cashier scanning for one should not have to
+                  read past the other. A tap opens its own sheet — there IS
+                  something to decide: which day, and which ticket. */}
+              {shownEvents.length > 0 && (
+                <p className="col-span-full flex items-center gap-tight text-[0.8125rem] font-semibold text-muted">
+                  <Ticket size={15} strokeWidth={1.5} aria-hidden />
+                  {t("event.chip")}
+                </p>
+              )}
+              {shownEvents.map((e) => {
+                const left = eventPlacesLeft(e);
+                const gone = left <= 0;
+                return (
+                  <button
+                    key={e.id}
+                    type="button"
+                    disabled={gone}
+                    onClick={() => setEventSheet(e)}
+                    className={cn(
+                      "flex min-h-[140px] flex-col gap-tight rounded-go border p-comfortable text-left shadow-go transition-colors duration-quick",
+                      gone ? "border-line opacity-60" : "border-transparent bg-card active:bg-ember/10",
+                    )}
+                  >
+                    <span className="line-clamp-3 text-[0.9375rem] font-semibold leading-snug">{e.title}</span>
+                    <span className="mt-auto text-[1.25rem] font-bold text-brand-foreground">
+                      {eventFromPrice(e) === 0 ? t("event.free") : formatPriceShort(eventFromPrice(e), currency)}
+                    </span>
+                    <span className="text-[0.8125rem] text-muted">
+                      {formatDay(e.startsAt.slice(0, 10), { weekday: true })} · {e.venueName}
+                    </span>
+                    {gone ? (
+                      <span className="text-[0.8125rem] font-medium text-muted">{t("event.soldOut")}</span>
+                    ) : left <= 20 ? (
+                      <span className="text-[0.8125rem] font-medium text-warning">{t("event.left", { count: left })}</span>
+                    ) : null}
+                  </button>
+                );
+              })}
               {shelfHeading && customTile}
               {shelfHeading && (
                 <p className="col-span-full mt-tight flex items-center gap-tight text-[0.8125rem] font-semibold text-muted">
@@ -1318,7 +1386,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                         )}
                       </span>
                     </div>
-                    <div className="text-[0.8125rem] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
+                    <div className="text-[0.8125rem] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.eventDayLabel, e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
                     {entryCoveredQty(e) > 0 && <div className="text-[0.8125rem] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
                     {e.lineDiscountAmount ? (
                       <div className="text-[0.8125rem] text-danger">−{formatMoney(e.lineDiscountAmount, currency)}</div>
@@ -1737,6 +1805,17 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         </button>
       )}
 
+      {eventSheet && (
+        <EventSheet
+          event={eventSheet}
+          currency={currency}
+          onClose={() => setEventSheet(null)}
+          onAdd={(entry, pay) => {
+            upsertEntry(entry, pay);
+            setEventSheet(null);
+          }}
+        />
+      )}
       {sheet && <ProductSheet product={sheet.product} locationId={tillLocationId} currency={currency} initial={sheet.initial} preset={sheet.preset} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => setSheet(null)} team={teamQ.data?.data ?? []} resources={resources} />}
 
       {/* Inline cash tender — a bottom sheet over the cart, no page navigation. */}

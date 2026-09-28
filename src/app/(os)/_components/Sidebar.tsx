@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, Boxes, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
+import { ArrowUpRight, Boxes, Globe, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -39,6 +39,9 @@ export function Sidebar({
        constantly — a programme is in the catalogue as an extra and in
        inventory as a hundred and twenty copies. */
     { label: t("inventory"), href: "/inventory", icon: Boxes },
+    /* Beside the catalogue, because that is what it lists: the marketplaces
+       are where the same catalogue is sold by somebody else. */
+    { label: t("marketplaces"), href: "/marketplaces", icon: Globe },
     { label: t("reports"), href: "/reports/sales", icon: ChartNoAxesColumn },
   ];
 

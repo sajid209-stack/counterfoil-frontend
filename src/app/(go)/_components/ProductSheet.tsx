@@ -60,6 +60,9 @@ export interface CartEntry {
   /** The same seats with the category that prices each one — what the SALE
    *  needs, so the order records WHICH seat went. */
   seats?: { label: string; tierId: string; tierName: string; unitPrice: number }[];
+  /** Which day of a multi-day event these tickets admit ("Day 2"), for the
+   *  cart line. The date itself rides on `slotDate` like everything else. */
+  eventDayLabel?: string;
   partySize?: number; // group size for flat-per-booking entries ("Group of 6")
   taxRatePct?: number; // custom-amount entries carry their own rate
   /** …and their own class, so a reduced-rate bottle of water is recorded as

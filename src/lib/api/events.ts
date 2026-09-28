@@ -1,4 +1,5 @@
-import { createResource, fail, notFoundError, validationError } from "./client";
+import { createResource, fail, notFoundError, ok, validationError } from "./client";
+import { peekOrders } from "./orders";
 import type { AddOn, ApiResult, Channel, ListParams, ListResponse, Lifecycle, Minor } from "./types";
 import type { CategoryId, SectionId } from "@/lib/events/catalog";
 import { DEMO_TODAY } from "@/lib/schedule";
@@ -46,7 +47,12 @@ export interface EventTier {
   /** Minor units. Zero is a real answer — a free RSVP tier. */
   price: Minor;
   quantity: number;
-  /** Sold so far; derived from orders once the backend exists. */
+  /**
+   * The OPENING BALANCE — what had sold before this system was recording,
+   * which is what a venue migrating mid-season actually has. Sales made here
+   * are replayed from the ledger and added to it on read (`withLiveSales`),
+   * so nothing stores a running total that can drift from the orders.
+   */
   sold: number;
   description?: string;
   /** An early-bird tier stops selling on its own rather than by hand. */
@@ -248,10 +254,200 @@ const validate = (input: Partial<EventInput>, existingDays?: EventDay[]): Record
   return errors;
 };
 
-export const listEvents = (params?: ListParams): Promise<ApiResult<ListResponse<EventRecord>>> =>
-  resource.list(params);
+/* ── What has actually sold ───────────────────────────────────────────────
+ *
+ * `EventTier.sold` is an OPENING BALANCE — what went before this system was
+ * recording, which is exactly what a venue migrating mid-season has. Sales
+ * made here are replayed from the ledger and added to it, the same rule seat
+ * availability and loyalty balances follow: a stored running total and a
+ * ledger disagree exactly once, and then nobody can say which is right.
+ *
+ * It is folded in at the READ, so every screen downstream — the templates, the
+ * catalogue, `dayFill`, `bundleSaving`, the settlement report — is live without
+ * knowing anything about orders.
+ */
+const EVENT_LINE_PREFIX = "evt_";
+/** The order-line product id an event ticket is sold under. */
+export const eventLineId = (eventId: string) => `${EVENT_LINE_PREFIX}${eventId}`;
+export const eventIdFromLine = (productId: string) =>
+  productId.startsWith(EVENT_LINE_PREFIX) ? productId.slice(EVENT_LINE_PREFIX.length) : null;
 
-export const getEvent = (id: string): Promise<ApiResult<EventRecord>> => resource.get(id);
+export interface EventTierSales {
+  sold: number;
+  refunded: number;
+  gross: Minor;
+  net: Minor;
+}
+
+/** Per-tier sales for one event, replayed from the ledger. */
+export function eventLedger(eventId: string): Map<string, EventTierSales> {
+  const out = new Map<string, EventTierSales>();
+  for (const o of peekOrders()) {
+    if (o.status === "cancelled") continue;
+    for (const l of o.lines) {
+      if (eventIdFromLine(l.productId) !== eventId || !l.tierId) continue;
+      const cur = out.get(l.tierId) ?? { sold: 0, refunded: 0, gross: 0, net: 0 };
+      const refunded = l.refundedQuantity ?? 0;
+      cur.sold += l.quantity - refunded;
+      cur.refunded += refunded;
+      cur.gross += l.total;
+      cur.net += l.total - (l.refundedAmount ?? 0);
+      out.set(l.tierId, cur);
+    }
+  }
+  return out;
+}
+
+/** The record with its tiers' `sold` brought up to date from the ledger. */
+export function withLiveSales(e: EventRecord): EventRecord {
+  const led = eventLedger(e.id);
+  if (!led.size) return e;
+  return { ...e, tiers: e.tiers.map((t) => ({ ...t, sold: t.sold + (led.get(t.id)?.sold ?? 0) })) };
+}
+
+export const listEvents = async (params?: ListParams): Promise<ApiResult<ListResponse<EventRecord>>> => {
+  const res = await resource.list(params);
+  return res.ok ? { ...res, data: { ...res.data, data: res.data.data.map(withLiveSales) } } : res;
+};
+
+export const getEvent = async (id: string): Promise<ApiResult<EventRecord>> => {
+  const res = await resource.get(id);
+  return res.ok ? { ...res, data: withLiveSales(res.data) } : res;
+};
+
+/* ── The settlement ───────────────────────────────────────────────────────
+ *
+ * What a box office actually settles a show on, and the report every ticketing
+ * system converges on: per ticket type — capacity, sold, unsold and the face
+ * value that brought in — then the same per day, the channel split, and the
+ * refunds. Built from the ledger plus each tier's opening balance.
+ *
+ * Capacity is stated per DAY as a grouped capacity: a weekend pass takes a
+ * place on Saturday and on Sunday, so a day's sold count includes every ticket
+ * that admits it. Anything else reports a festival as half empty on the day it
+ * has actually filled.
+ */
+export interface SettlementRow {
+  id: string;
+  name: string;
+  price: Minor;
+  capacity: number;
+  sold: number;
+  unsold: number;
+  faceValue: Minor;
+  gross: Minor;
+  refunded: number;
+  refundedAmount: Minor;
+  net: Minor;
+}
+export interface EventSettlement {
+  event: EventRecord;
+  tiers: SettlementRow[];
+  days: { id: string; name: string; date: string; capacity: number; sold: number; unsold: number }[];
+  byChannel: { channel: Channel | "opening"; sold: number; net: Minor }[];
+  totals: { capacity: number; sold: number; unsold: number; faceValue: Minor; gross: Minor; refundedAmount: Minor; net: Minor };
+}
+
+export function eventSettlement(e: EventRecord, dayLabel: (i: number) => string): EventSettlement {
+  const led = eventLedger(e.id);
+  const tiers: SettlementRow[] = e.tiers.map((t) => {
+    const l = led.get(t.id);
+    /* The opening balance counts as sold and as face value, but carries no
+       money here: it was taken before this system was recording, and inventing
+       a figure for it would put a number in a settlement that nothing backs. */
+    const sold = t.sold + (l?.sold ?? 0);
+    return {
+      id: t.id,
+      name: t.name,
+      price: t.price,
+      capacity: t.quantity,
+      sold,
+      unsold: Math.max(0, t.quantity - sold),
+      faceValue: sold * t.price,
+      gross: l?.gross ?? 0,
+      refunded: l?.refunded ?? 0,
+      refundedAmount: (l?.gross ?? 0) - (l?.net ?? 0),
+      net: l?.net ?? 0,
+    };
+  });
+  /* Ordered by price, high to low, then by name — the order a settlement is
+     read in, and the one every box-office report uses. */
+  tiers.sort((a, b) => b.price - a.price || a.name.localeCompare(b.name));
+
+  const live = withLiveSales(e);
+  const days = eventDays(live).map((d, i) => {
+    const f = dayFill(live, d.id);
+    return {
+      id: d.id,
+      name: d.name?.trim() || dayLabel(i + 1),
+      date: d.date,
+      capacity: f.cap,
+      sold: f.sold,
+      unsold: Math.max(0, f.cap - f.sold),
+    };
+  });
+
+  const byChannel = new Map<string, { sold: number; net: Minor }>();
+  const opening = e.tiers.reduce((n, t) => n + t.sold, 0);
+  if (opening > 0) byChannel.set("opening", { sold: opening, net: 0 });
+  for (const o of peekOrders()) {
+    if (o.status === "cancelled") continue;
+    for (const l of o.lines) {
+      if (eventIdFromLine(l.productId) !== e.id) continue;
+      const cur = byChannel.get(o.channel) ?? { sold: 0, net: 0 };
+      cur.sold += l.quantity - (l.refundedQuantity ?? 0);
+      cur.net += l.total - (l.refundedAmount ?? 0);
+      byChannel.set(o.channel, cur);
+    }
+  }
+
+  const sum = (f: (r: SettlementRow) => number) => tiers.reduce((n, r) => n + f(r), 0);
+  return {
+    event: live,
+    tiers,
+    days,
+    byChannel: [...byChannel].map(([channel, v]) => ({ channel: channel as Channel | "opening", ...v })),
+    totals: {
+      capacity: sum((r) => r.capacity),
+      sold: sum((r) => r.sold),
+      unsold: sum((r) => r.unsold),
+      faceValue: sum((r) => r.faceValue),
+      gross: sum((r) => r.gross),
+      refundedAmount: sum((r) => r.refundedAmount),
+      net: sum((r) => r.net),
+    },
+  };
+}
+
+/**
+ * An event's public page, by its address.
+ *
+ * Refused unless it is **live** — published, active, and sold online. A draft
+ * and an address nobody has taken look identical from outside, which is the
+ * rule the storefront already follows: "not published yet" tells a guesser
+ * they are close.
+ */
+export async function getPublicEvent(slug: string): Promise<ApiResult<EventRecord>> {
+  const e = resource
+    .peek()
+    .find((x) => x.slug === slug && x.published && x.status === "active" && (x.channels ?? ["online"]).includes("online"));
+  if (!e) return fail<EventRecord>(notFoundError("Event"));
+  return ok(structuredClone(withLiveSales(e)));
+}
+
+/** Every event whose counters sell it at this venue, on sale today. */
+export function counterEvents(locationId: string | null): EventRecord[] {
+  return resource
+    .peek()
+    .filter(
+      (e) =>
+        e.status === "active" &&
+        e.published &&
+        (e.channels ?? ["online"]).includes("counter") &&
+        (!locationId || !e.locationIds?.length || e.locationIds.includes(locationId)),
+    )
+    .map(withLiveSales);
+}
 
 export function createEvent(input: EventInput): Promise<ApiResult<EventRecord>> {
   const errors = validate(input);
