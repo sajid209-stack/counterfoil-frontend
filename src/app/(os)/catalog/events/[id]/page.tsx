@@ -417,7 +417,7 @@ export default function EventDetailPage() {
                     <span className="break-all font-mono">/e/{e.slug}</span>
                     {" · "}
                     {e.published && e.status === "active" && (e.channels ?? ["online"]).includes("online") ? (
-                      <a className="text-brand-foreground underline underline-offset-2" href={`/e/${e.slug}`} target="_blank" rel="noreferrer">
+                      <a className="inline-flex min-h-11 items-center text-brand-foreground underline underline-offset-2 sm:min-h-0" href={`/e/${e.slug}`} target="_blank" rel="noreferrer">
                         {tr("viewPage")}
                       </a>
                     ) : (
