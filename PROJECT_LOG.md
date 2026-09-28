@@ -13683,3 +13683,161 @@ category colour as well" would have passed *vacuously* — measuring status
 colours under a category label, because its clicks are `.catch()`-guarded. A
 check that cannot fail is worse than no check, which this log has recorded
 before.
+
+## The ticket becomes a record, and a credential becomes a thing (2026-09-28)
+
+Owner, with a screenshot of the backend team's own admin page: *"need individual
+ticket details page and ticket must be shown on OS, from Order list and needs
+Credential systems for re-generating, so properly about ticket, order and
+credential and properly build it."*
+
+### The distinction the whole thing turns on
+
+A **ticket** is the right to come in. A **credential** is the token that proves
+it at the gate. They had been one field — `Ticket.code` — and that is why a
+guest who lost their phone could only be refunded and re-sold: a new code meant
+a new ticket, which moves money, breaks the seat claim and loses the order's
+history.
+
+So a credential is its own record now, and one rule makes the feature real
+rather than decorative:
+
+> **A scan resolves code → credential → ticket.**
+
+Matching `Ticket.code` directly — which is what `findTicketByCode` did — would
+admit a photograph of the replaced ticket for ever. **If re-issuing does not
+stop the old code scanning, "Re-issue" is a button that quietly prints a second
+valid ticket**, which is worse than no button at all.
+
+The second rule keeps everything else working: **at most one credential is
+active, and `Ticket.code` mirrors it**. Every path that prints, texts or scans
+still reads one field, and a re-issue changes what they all say at once.
+
+### Contract, for the backend lane
+
+`TicketCredential` (code · kind · reason · status · note · issuedBy ·
+supersededAt/ById), `TicketScan` with a typed `ScanRefusal`, and
+`Ticket.terminatedAt` / `terminatedReason`. Every one is additive, and a ticket
+written before this is valid with no migration.
+
+**`ScanRefusal` is a typed kind, not a sentence**: the gate speaks two
+languages, and a stored English phrase would read as English on a Bangla screen
+for ever.
+
+### Minted on read, not seeded
+
+`sync()` gives any ticket without one an initial credential whose code IS the
+ticket's own — so every stub already printed and every SMS already sent still
+scans, and the seed generator, a checkout and a demo-business swap are all
+covered without anything having to remember. It is the decision the storefront
+already made.
+
+It dates that credential **from the order that issued it**, because `Ticket`
+carries no timestamp of its own and stamping three hundred rows with the demo's
+noon would be three hundred fictional minutes.
+
+**`Resource.insert` is new for it.** `create` awaits simulated latency, which a
+synchronous read cannot do — the first version returned an empty list on the
+first paint and a full one on the second, which is how the unit run caught it.
+
+### `/tickets/[id]`
+
+Reached from the order, whose ticket rows are now links with the whole row as
+the target. Three sections, because they are three different things:
+
+- **What was bought** — ticket type, the day, admissions as a count
+  (*"0 of 4 used"*, because a family ticket three-quarters spent is neither
+  issued nor redeemed), face value, channel, issued, holder.
+- **Credentials** — every code the ticket has had, oldest first so the trail
+  reads forwards, with the replaced ones struck through and the reason in the
+  operator's own words. A re-issue **refuses a blank reason**: an unexplained
+  replacement is indistinguishable from a mistake six weeks later, which is the
+  rule holds and booking locks already hold.
+- **Check-in history** — every presentation at the gate, refusals included,
+  because *"this was turned away four times in a minute"* is what a steward
+  needs and a counted total cannot say.
+
+Beside them, **the stub the guest is holding**, drawn by `ticketCards` — the
+same function the print pages use, so what an operator reads a code off over the
+phone cannot differ from what was handed over.
+
+**Terminate** kills the entitlement by hand with a reason on the record, and
+revokes every credential with it. Distinct from the `void` a refund writes: no
+money moved, so the sale stands and the reason is the only explanation there
+will ever be.
+
+### At the gate
+
+Two new refusals, and the first is the point of the feature:
+
+- **Code replaced** — *"This code was replaced by a newer one. Ask them to check
+  for the latest ticket, or send them to the counter."* A guest holding last
+  week's screenshot must not hear "no such ticket", which sends them away
+  believing the system has lost their booking.
+- **Ticket terminated**, quoting what the manager typed.
+
+Each has its own glyph, because validation guidance treats valid, invalid and
+duplicate as three states and drawing two of them identically loses one. And
+**the gate now writes its scans down** — admitted and refused, against the
+ticket the code resolved to and naming which token was presented, so a replaced
+code shows up under the entitlement it belongs to rather than nowhere.
+
+### Two rules found by driving it, not by reading it
+
+- **A spent ticket cannot be re-issued.** A new token for an entitlement that
+  has already been through opens nothing, and offering it invites somebody to
+  try it on a guest who has already been in. A group ticket only part way
+  through is still `issued`, which is the case a re-issue genuinely serves.
+- **The record and the stub disagreed about the day.** `validFor` is stamped
+  from the sale, so on a booking made for a later date the page said *"Valid for
+  Wed 29 Jul"* beside a preview of the ticket reading *"Tue 7 Jul"*. Both were
+  drawn from the model and one of them was the wrong day. The record takes the
+  booking's date, as the printed ticket does.
+
+Also: the shared `Card` takes **no `title` prop** — spread onto a div it becomes
+a tooltip — so two headings rendered invisibly. The order page keeps its own
+titled Card for exactly this reason.
+
+### Verified
+
+- **58 unit checks** on the model: minting, idempotence, resolution, the reissue
+  refusing a blank reason, exactly one active credential, the trail pointing
+  forwards — and **the old code no longer admitting while still resolving, so
+  the gate can name the reason**. Plus terminate, the scan log, and a refund
+  revoking the token with the entitlement.
+- **37 checks driving the record and the gate in one document**, which the
+  cross-surface proof needs: an order lists its tickets as links, the record
+  states what was bought, the preview carries the live code, a blank re-issue is
+  refused in words, the reissue strikes the old code through and names who and
+  why — and then, through the sidebar and the Go tab bar so the store survives,
+  **the replaced code is REFUSED at the gate as "Code replaced" while the new
+  one admits**.
+- **21 checks** on a spent ticket (history from the record, no re-issue offered)
+  and on terminate end to end, including the gate quoting the manager's reason.
+- **31 checks** at 1440 light, 1440 dark, 390 and Bangla: contrast, the 12px
+  floor, clipping, page x-scroll, hidden overflow inside `main`, thumb targets
+  and console errors — all clean, with the page translated and no raw keys.
+- Standing harnesses hold: **codes 27/27, shop3 23/23, inventory-e2e 40/40,
+  catalog-e2e 95/95, topcards 84/84, rad 8/8**, and `mob1` at **hidden 0 ·
+  under12 14 (all `/deck`) · under44 0 · clipped 0 · errors 0**.
+- `tsc --noEmit`, `npm run build` and `eslint` clean on every file touched.
+  i18n parity **0 missing / 0 extra** across 37 namespaces, with a new `tickets`
+  namespace authored in en and bn.
+
+**One harness retired rather than repaired**: `mob1` still listed
+`/settings/categories`, deleted with the category system earlier today, and was
+reporting a 404 as a console error for ever.
+
+### Open
+
+- **There is no `/tickets` index and no nav entry.** A ticket is reached from
+  its order, which is what was asked for; a searchable list of every ticket
+  issued is a separate screen.
+- **A superseded code is shown in full.** The reference admin keeps the code out
+  of a read entirely — but this product prints it, texts it and shows it on the
+  completion screen, and an operator has to read it out over the phone. The
+  strike-through and the Replaced pill are what stop the confusion.
+- **Re-issue does not re-send.** It mints the token; getting it to the guest is
+  still Print or SMS from the order.
+- **An event ticket has no per-day redemption**, so a two-day pass still cannot
+  be admitted twice. Carried forward from the multi-day work.

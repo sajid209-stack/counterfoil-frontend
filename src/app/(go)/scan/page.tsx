@@ -9,6 +9,7 @@ import { useApiQuery } from "@/lib/useApi";
 import {
   addOrderPayment,
   admitTicket,
+  recordScan,
   canTakeNonCash,
   getOperator,
   listTickets,
@@ -18,7 +19,19 @@ import {
   type PaymentMethod,
 } from "@/lib/api";
 import { formatDateTime, formatDay, formatMoney } from "@/lib/format";
-import { resolveScan, type ScanOutcome } from "./_lib/outcome";
+import { resolveScan, type RefuseReason, type ScanOutcome } from "./_lib/outcome";
+import type { ScanRefusal } from "@/lib/api";
+
+/** The gate reason keys, as the record typed kinds. A refusal that carries no
+ *  ticket ("notFound") is not written down: there is no entitlement to file it
+ *  under. */
+const REFUSAL: Record<RefuseReason, ScanRefusal | undefined> = {
+  notFound: undefined,
+  alreadyRedeemed: "already_redeemed",
+  voidRefunded: "void",
+  replaced: "replaced",
+  terminated: "terminated",
+};
 import { CameraScanner, useCameraSupport } from "./_components/CameraScanner";
 import { Verdict } from "./_components/Verdict";
 
@@ -79,6 +92,21 @@ export default function ScanPage() {
          ticket that admits one — a group is spent person by person on the
          verdict itself. */
       if (!showOnly && result.verdict === "admit" && result.ticketId) await redeemTicket(result.ticketId);
+      /* And write it down, refusals included. A tally says how many were turned
+         away; the log says which ticket, on which code, and why, which is what
+         answers a guest at the counter insisting they have not been in. It is
+         filed against the ticket the CODE resolved to, so a replaced code shows
+         up under the entitlement it belongs to rather than nowhere. */
+      const refusal = result.reason ? REFUSAL[result.reason] : undefined;
+      if (!showOnly && result.ticketId && (result.verdict !== "refuse" || refusal)) {
+        await recordScan({
+          ticketId: result.ticketId,
+          credentialId: result.credentialId,
+          outcome: result.verdict === "refuse" ? "refused" : "admitted",
+          ...(refusal ? { refusal } : {}),
+          ...(result.verdict === "admit" ? { admitted: 1 } : {}),
+        });
+      }
       setBusy(false);
       setPreview(showOnly);
       setOutcome(result);
@@ -145,6 +173,7 @@ export default function ScanPage() {
       return;
     }
     if (!outcome.group) await redeemTicket(outcome.balance.ticketId);
+    if (!outcome.group) await recordScan({ ticketId: outcome.balance.ticketId, credentialId: outcome.credentialId, outcome: "admitted", admitted: 1 });
     setBusy(false);
     const next: ScanOutcome = { ...outcome, verdict: outcome.group ? "group" : "admit", balance: undefined };
     setOutcome(next);
@@ -161,7 +190,10 @@ export default function ScanPage() {
     setBusy(true);
     const res = await admitTicket(outcome.group.ticketId, count);
     setBusy(false);
-    if (res.ok) setAdmitted(res.data.admitted ?? 0);
+    if (res.ok) {
+      setAdmitted(res.data.admitted ?? 0);
+      await recordScan({ ticketId: outcome.group.ticketId, credentialId: outcome.credentialId, outcome: "admitted", admitted: count });
+    }
   };
 
   const tally = useMemo(() => {
@@ -202,6 +234,7 @@ export default function ScanPage() {
     balanceDue: t("balanceDue"),
     reason: outcome.reason ? t(outcome.reason) : outcome.title,
     advice: outcome.reason ? t(`advice_${outcome.reason}`) : "",
+    note: outcome.note ?? "",
     usedAt: outcome.usedAt ? t("usedAt", { when: formatDateTime(outcome.usedAt) }) : undefined,
     dated: outcome.dated ? t("datedFor", { date: formatDay(outcome.dated) }) : undefined,
     code: outcome.code,

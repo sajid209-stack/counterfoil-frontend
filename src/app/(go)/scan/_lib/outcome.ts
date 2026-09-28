@@ -1,5 +1,5 @@
 import { FEATURES } from "@/lib/features";
-import { findTicketByCode, peekOrders, peekProducts, scanMembership, ticketAdmits, type Ticket } from "@/lib/api";
+import { peekOrders, peekProducts, resolveTicketCode, scanMembership, ticketAdmits, type Ticket } from "@/lib/api";
 import { DEMO_TODAY } from "@/lib/schedule";
 
 /**
@@ -19,7 +19,16 @@ import { DEMO_TODAY } from "@/lib/schedule";
 export type Verdict = "admit" | "refuse" | "group" | "balance";
 
 /** Why a scan was refused. A message key, resolved by the screen. */
-export type RefuseReason = "notFound" | "alreadyRedeemed" | "voidRefunded";
+export type RefuseReason =
+  | "notFound"
+  | "alreadyRedeemed"
+  | "voidRefunded"
+  /** The code was replaced. A guest holding a screenshot of the old ticket
+   *  needs to hear that, not "no such ticket" — the second sends them away
+   *  believing the system has lost their booking. */
+  | "replaced"
+  /** Killed by hand, with a reason on the record. */
+  | "terminated";
 
 export interface ScanOutcome {
   verdict: Verdict;
@@ -29,6 +38,9 @@ export interface ScanOutcome {
   title: string;
   /** Refusals only. */
   reason?: RefuseReason;
+  /** The operator's own words, where a refusal has them — the reason a ticket
+   *  was terminated. Not a key: it was typed by a manager. */
+  note?: string;
   /** The moment a duplicate was first admitted — the one fact a steward
    *  facing a guest who says they have not been in actually needs. */
   usedAt?: string | null;
@@ -36,6 +48,8 @@ export interface ScanOutcome {
    *  enforced — see the note in `resolveScan`. */
   dated?: string | null;
   ticketId?: string;
+  /** Which token was presented, for the ticket own check-in history. */
+  credentialId?: string;
   group?: { ticketId: string; tierName: string; admits: number; admitted: number };
   /** `paid` and `total` so the screen can say what was settled at the
    *  counter — "you paid half already" is the sentence a steward needs. */
@@ -72,13 +86,28 @@ export async function resolveScan(raw: string): Promise<ScanOutcome> {
       : { verdict: "refuse", code: membership.code, title: membership.tierName, reason: "notFound" };
   }
 
-  const ticket = findTicketByCode(code);
-  if (!ticket) return { verdict: "refuse", code, title: "", reason: "notFound" };
+  /* Resolved through the CREDENTIAL rather than the ticket, which is the whole
+     point of credentials: a reissue supersedes the old code, so scanning it has
+     to fail — and fail with the reason, since the ticket itself is perfectly
+     valid and somebody is standing at the gate holding a picture of it. */
+  const hit = resolveTicketCode(code);
+  if (!hit) return { verdict: "refuse", code, title: "", reason: "notFound" };
+  const { ticket, credential } = hit;
+  const traced = { ticketId: ticket.id, credentialId: credential.id };
+  if (credential.status === "superseded") {
+    return { verdict: "refuse", code, title: label(ticket), reason: "replaced", usedAt: credential.supersededAt, ...traced };
+  }
+  if (ticket.terminatedAt) {
+    return { verdict: "refuse", code, title: label(ticket), reason: "terminated", note: ticket.terminatedReason, ...traced };
+  }
+  if (credential.status === "revoked") {
+    return { verdict: "refuse", code, title: label(ticket), reason: "voidRefunded", ...traced };
+  }
   if (ticket.status === "redeemed") {
-    return { verdict: "refuse", code: ticket.code, title: label(ticket), reason: "alreadyRedeemed", usedAt: ticket.redeemedAt };
+    return { verdict: "refuse", code: ticket.code, title: label(ticket), reason: "alreadyRedeemed", usedAt: ticket.redeemedAt, ...traced };
   }
   if (ticket.status === "void") {
-    return { verdict: "refuse", code: ticket.code, title: label(ticket), reason: "voidRefunded" };
+    return { verdict: "refuse", code: ticket.code, title: label(ticket), reason: "voidRefunded", ...traced };
   }
 
   /* The gate does NOT check the date, and that is a decision rather than an
@@ -108,11 +137,12 @@ export async function resolveScan(raw: string): Promise<ScanOutcome> {
       title: label(ticket),
       dated,
       ticketId: ticket.id,
+      credentialId: credential.id,
       balance: { orderId: owed.orderId, ticketId: ticket.id, amount: owed.amount, paid: owed.paid, total: owed.total },
       ...(group ? { group } : {}),
     };
   }
 
-  if (group) return { verdict: "group", code: ticket.code, title: label(ticket), dated, ticketId: ticket.id, group };
-  return { verdict: "admit", code: ticket.code, title: label(ticket), dated, ticketId: ticket.id };
+  if (group) return { verdict: "group", code: ticket.code, title: label(ticket), dated, ...traced, group };
+  return { verdict: "admit", code: ticket.code, title: label(ticket), dated, ...traced };
 }

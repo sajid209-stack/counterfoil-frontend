@@ -1,6 +1,7 @@
 import { createResource, fail, notFoundError, ok } from "./client";
+import { credentialsFor, resolveCredential, revokeCredentials } from "./credentials";
 import { peekProducts } from "./products";
-import type { ApiResult, ListParams, ListResponse, Ticket } from "./types";
+import type { ApiResult, ListParams, ListResponse, Ticket, TicketCredential } from "./types";
 
 const resource = createResource<Ticket>("tickets", "Ticket", {
   search: (t, q) => t.code.toLowerCase().includes(q),
@@ -19,9 +20,47 @@ export const listTickets = (
 
 export const getTicket = (id: string): Promise<ApiResult<Ticket>> => resource.get(id);
 
-/** Look up a ticket by its printed code (scan flow). */
+/** Unmediated read for the api layer (credentials resolve tickets by id). */
+export const peekTickets = (): Ticket[] => resource.peek();
+
+/** Write a field on a ticket from inside the api layer. */
+export const patchTicket = (id: string, patch: Partial<Ticket>): Promise<ApiResult<Ticket>> =>
+  resource.update(id, patch);
+
+/**
+ * Resolve a scanned code — through its CREDENTIAL, not the ticket.
+ *
+ * This is the whole reason credentials exist. A reissue mints a new code and
+ * supersedes the old one, so a scan has to ask the credential store which
+ * tokens are live: matching `Ticket.code` directly would admit a photograph of
+ * the replaced ticket for ever, and then "re-issue" would be a button that
+ * quietly printed a second valid ticket.
+ *
+ * The superseded and revoked ones come back too, so the gate can say WHY it is
+ * refusing rather than reporting an unknown code. A steward holding a
+ * screenshot needs "this was replaced on Sunday", not "no such ticket".
+ */
+export function resolveTicketCode(
+  code: string,
+): { ticket: Ticket; credential: TicketCredential } | undefined {
+  const credential = resolveCredential(code);
+  if (!credential) return undefined;
+  const ticket = resource.peek().find((t) => t.id === credential.ticketId);
+  return ticket ? { ticket, credential } : undefined;
+}
+
+/** Look up a ticket by a code that is still live. A replaced code resolves to
+ *  nothing here on purpose; the gate uses `resolveTicketCode` so it can name
+ *  the reason. */
 export function findTicketByCode(code: string): Ticket | undefined {
-  return resource.peek().find((t) => t.code.toLowerCase() === code.trim().toLowerCase());
+  const hit = resolveTicketCode(code);
+  return hit?.credential.status === "active" ? hit.ticket : undefined;
+}
+
+/** The code that currently scans — the active credential, which `Ticket.code`
+ *  mirrors. Read through the credential so the two cannot drift. */
+export function ticketCode(ticket: Ticket): string {
+  return credentialsFor(ticket.id).find((c) => c.status === "active")?.code ?? ticket.code;
 }
 
 /** Redeem a ticket at the gate. */
@@ -31,7 +70,12 @@ export const redeemTicket = (id: string): Promise<ApiResult<Ticket>> =>
 /** Void every unredeemed ticket on an order (refunds). */
 export async function voidOrderTickets(orderId: string, productId?: string): Promise<void> {
   const hit = resource.peek().filter((t) => t.orderId === orderId && t.status === "issued" && (!productId || t.productId === productId));
-  for (const t of hit) await resource.update(t.id, { status: "void" });
+  for (const t of hit) {
+    await resource.update(t.id, { status: "void" });
+    // The token dies with the entitlement, or the credentials list reads as a
+    // live code on a refunded ticket.
+    await revokeCredentials(t.id);
+  }
 }
 
 /** How many people a ticket admits — the line snapshot when present (F11),

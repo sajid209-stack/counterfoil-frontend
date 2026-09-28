@@ -638,6 +638,68 @@ export interface Ticket {
   redeemedAt: ISODateTime | null;
   creditsUsed?: number; // BT-12 packs: credits spent against this pass so far
   admitted?: number; // group tickets: people through the gate so far (3 of 4)
+  /** Terminated by hand: the entitlement is dead, with a reason on the record.
+   *  Distinct from `void`, which is what a refund does to it. */
+  terminatedAt?: ISODateTime | null;
+  terminatedReason?: string;
+}
+
+/* ── Credentials ───────────────────────────────────────────────────────────
+ *
+ * A credential is NOT the ticket. The ticket is the right to come in; the
+ * credential is the token that proves it at the gate. Keeping them apart is
+ * what makes a lost or photographed ticket fixable: re-issue mints a new
+ * credential, supersedes the old one, and the entitlement — the sale, the
+ * seat, the money — is untouched.
+ *
+ * At most one credential per ticket is ACTIVE. `Ticket.code` mirrors it, so
+ * everything that prints, texts or scans keeps reading one field and a
+ * re-issue changes what they all say at once.
+ */
+export type CredentialKind = "qr" | "barcode";
+export type CredentialStatus = "active" | "superseded" | "revoked";
+/** Why it exists: the first one, or a replacement for one that was replaced. */
+export type CredentialReason = "initial" | "reissue";
+export interface TicketCredential {
+  id: ID;
+  ticketId: ID;
+  /** What actually scans. Short and unambiguous, like the ticket's own code. */
+  code: string;
+  kind: CredentialKind;
+  reason: CredentialReason;
+  status: CredentialStatus;
+  /** Why it was replaced, in the operator's words — "guest lost their phone".
+   *  Never blank on a reissue: an unexplained replacement is indistinguishable
+   *  from a mistake six weeks later, the rule holds and locks already follow. */
+  note?: string;
+  issuedBy?: string;
+  createdAt: ISODateTime;
+  supersededAt?: ISODateTime | null;
+  /** The credential that replaced this one, so the trail reads forwards. */
+  supersededById?: ID | null;
+}
+
+/**
+ * One scan at the gate. Written whether or not it admitted, because "this was
+ * refused four times in a minute" is the thing a steward needs to see and a
+ * counted total cannot say.
+ */
+export type ScanOutcome = "admitted" | "refused";
+/** Why a scan was turned away. A typed kind rather than a sentence: the gate
+ *  speaks two languages and a stored English phrase would read as English on a
+ *  Bangla screen for ever. */
+export type ScanRefusal = "replaced" | "terminated" | "void" | "already_redeemed" | "unpaid";
+export interface TicketScan {
+  id: ID;
+  ticketId: ID;
+  /** Which token was presented — so "somebody tried the old code" is legible. */
+  credentialId?: ID | null;
+  at: ISODateTime;
+  outcome: ScanOutcome;
+  refusal?: ScanRefusal;
+  /** How many of a group went through on this scan. */
+  admitted?: number;
+  by?: string;
 }
 
 export type BookingStatus = "confirmed" | "cancelled";

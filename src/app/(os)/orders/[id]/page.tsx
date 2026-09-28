@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, CalendarClock, Lock, Printer, RotateCcw, Send, Unlock, Wallet } from "lucide-react";
+import { ArrowLeft, CalendarClock, ChevronRight, Lock, Printer, RotateCcw, Send, Unlock, Wallet } from "lucide-react";
 import {
   ActionMenu,
   Button,
@@ -420,16 +420,29 @@ export default function OrderDetailPage() {
               ) : (ticketsQ.data?.data.length ?? 0) === 0 ? (
                 <p className="text-[13px] text-muted">{t("noTickets")}</p>
               ) : (
+                /* Each row opens the ticket. This card can say what was issued
+                   and nothing else about it — which code currently scans, what
+                   happened at the gate, whether it was replaced and why are all
+                   the ticket's own record, and re-issuing a lost one has to live
+                   somewhere. The whole row is the target, as a DataTable row
+                   is, so a phone is not aiming at a code. */
                 ticketsQ.data!.data.map((tk) => (
-                  <div key={tk.id} className="flex items-center justify-between border-b border-line py-tight text-sm last:border-0">
-                    <span className="font-mono text-[12px]">{tk.code}</span>
-                    {/* A ticket has its own lifecycle, so it names its own tone rather
-                        than borrowing an order word: laundering "redeemed"
-                        through "active" also handed it the record-state
-                        outline, which is a booking's shape, not a ticket's.
-                        Issued = exists, not used yet. Redeemed = done. */}
-                    <StatusPill tone={tk.status === "issued" ? "info" : tk.status === "redeemed" ? "success" : "neutral"}>{enumL.status(tk.status)}</StatusPill>
-                  </div>
+                  <Link
+                    key={tk.id}
+                    href={`/tickets/${tk.id}`}
+                    className="-mx-inline flex min-h-11 items-center justify-between gap-tight rounded-sm border-b border-line px-inline py-tight text-sm last:border-0 hover:bg-muted-wash"
+                  >
+                    <span className="min-w-0 break-all font-mono text-[12px]">{tk.code}</span>
+                    <span className="flex shrink-0 items-center gap-inline">
+                      {/* A ticket has its own lifecycle, so it names its own tone rather
+                          than borrowing an order word: laundering "redeemed"
+                          through "active" also handed it the record-state
+                          outline, which is a booking's shape, not a ticket's.
+                          Issued = exists, not used yet. Redeemed = done. */}
+                      <StatusPill tone={tk.status === "issued" ? "info" : tk.status === "redeemed" ? "success" : "neutral"}>{enumL.status(tk.status)}</StatusPill>
+                      <ChevronRight size={15} strokeWidth={1.75} aria-hidden className="text-muted" />
+                    </span>
+                  </Link>
                 ))
               )}
             </Card>

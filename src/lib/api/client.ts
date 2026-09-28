@@ -61,6 +61,9 @@ const store: Record<string, Row[]> = {
   resources: structuredClone(seed.resources),
   orders: structuredClone(seed.orders),
   tickets: structuredClone(seed.tickets),
+  // Minted on first read rather than seeded — see lib/api/credentials.
+  ticketCredentials: [],
+  ticketScans: [],
   bookings: structuredClone(seed.bookings),
   paymentAccounts: structuredClone(seed.paymentAccounts),
   seatLayouts: structuredClone(seed.seatLayouts),
@@ -142,13 +145,16 @@ export function loadBusiness(name: string, currency: string, productIds: string[
   const keepBookings = structuredClone(seed.bookings).filter((b) => b.orderId === "ord_seed" && productIds.includes(b.productId));
   (store as Record<string, unknown[]>).orders = sales.orders;
   (store as Record<string, unknown[]>).tickets = [...sales.tickets, ...keepTickets];
+  // A new business's tickets are new tickets; their credentials mint on read.
+  (store as Record<string, unknown[]>).ticketCredentials = [];
+  (store as Record<string, unknown[]>).ticketScans = [];
   (store as Record<string, unknown[]>).bookings = [...sales.bookings, ...keepBookings];
 }
 
 /** Empty the operator's data for the golden path ("Start fresh"). */
 export function startFresh(): void {
   operatorState = { ...structuredClone(seed.operator), name: "" };
-  for (const k of ["products", "orders", "tickets", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds", "inventoryItems", "stockMovements"]) {
+  for (const k of ["products", "orders", "tickets", "ticketCredentials", "ticketScans", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds", "inventoryItems", "stockMovements"]) {
     (store as Record<string, unknown[]>)[k] = [];
   }
 }
@@ -173,6 +179,16 @@ export interface Resource<T> {
   list(params?: ListParams): Promise<ApiResult<ListResponse<T>>>;
   get(id: string): Promise<ApiResult<T>>;
   create(record: Omit<T, "id" | "createdAt" | "updatedAt">): Promise<ApiResult<T>>;
+  /**
+   * Synchronous write, for a derived record the api layer mints while reading.
+   *
+   * `create` awaits simulated latency, which a read cannot do — a synchronous
+   * read that had to await its own backfill would hand every caller an empty
+   * list on the first paint and a full one on the second. A record given its
+   * own `createdAt` keeps it, because a backfilled row is dated from the thing
+   * it was derived from rather than from the moment somebody looked at it.
+   */
+  insert(record: Omit<T, "id"> & { createdAt?: string }): T;
   update(id: string, patch: Partial<T>): Promise<ApiResult<T>>;
   /** soft-delete: sets status → "archived" (+ archivedAt when present) */
   archive(id: string): Promise<ApiResult<T>>;
@@ -238,6 +254,18 @@ export function createResource<T extends Row>(
       } as T;
       rows().push(created);
       return ok(created);
+    },
+
+    insert(record) {
+      const ts = nowISO();
+      const created = {
+        createdAt: ts,
+        updatedAt: ts,
+        ...(record as object),
+        id: genId(name),
+      } as T;
+      rows().push(created);
+      return created;
     },
 
     async update(id, patch) {

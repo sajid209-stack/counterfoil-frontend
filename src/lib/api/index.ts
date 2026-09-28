@@ -12,6 +12,7 @@ export * from "./devices";
 export * from "./resources";
 export * from "./orders";
 export * from "./tickets";
+export * from "./credentials";
 export * from "./bookings";
 export * from "./slots";
 export * from "./waitlist";

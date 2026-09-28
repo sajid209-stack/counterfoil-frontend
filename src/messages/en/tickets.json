@@ -1,0 +1,72 @@
+{
+  "fallbackTitle": "Ticket",
+  "loading": "Loading the ticket…",
+  "notFound": "That ticket could not be found.",
+  "backToOrder": "Back to the order",
+  "rowActions": "More actions",
+  "openOrder": "Open the order",
+  "printOrderTickets": "Print this order's tickets",
+  "entitlementNote": "What was bought. A new code does not change any of it.",
+  "fact": {
+    "type": "Ticket type",
+    "validFor": "Valid for",
+    "used": "Admissions",
+    "faceValue": "Face value",
+    "channel": "Sold",
+    "issued": "Issued",
+    "holder": "Ticket holder"
+  },
+  "channel": {
+    "counter": "At the counter",
+    "online": "Online",
+    "marketplace": "A marketplace"
+  },
+  "usedOf": "{used} of {total} used",
+  "credentials": "Credentials",
+  "credentialsNote": "The codes that open the gate. At most one is active — a re-issue replaces the one before it, and the replaced code stops scanning.",
+  "credStatus": {
+    "active": "Active",
+    "superseded": "Replaced",
+    "revoked": "Revoked"
+  },
+  "credReason": {
+    "initial": "First issue",
+    "reissue": "Re-issued"
+  },
+  "credKind": {
+    "qr": "QR",
+    "barcode": "Barcode"
+  },
+  "issueNo": "Issue {n}",
+  "history": "Check-in history",
+  "neverScanned": "Never scanned.",
+  "scan": {
+    "admitted": "Admitted",
+    "refused": "Turned away",
+    "people": "{count, plural, one {# person} other {# people}}",
+    "fromRecord": "from the ticket record"
+  },
+  "refusal": {
+    "replaced": "Code had been replaced",
+    "terminated": "Ticket terminated",
+    "void": "Ticket voided",
+    "already_redeemed": "Already used",
+    "unpaid": "Balance outstanding"
+  },
+  "preview": "What the guest is holding",
+  "previewNote": "Drawn exactly as it prints, with the code that currently scans.",
+  "reissue": "Re-issue",
+  "reissueTitle": "Re-issue the code",
+  "reissueBody": "A new code is created and this one stops working at the gate. The sale, the seat and anything already used stay as they are.",
+  "reissueReason": "Why is it being replaced?",
+  "reissuePlaceholder": "e.g. guest lost their phone",
+  "reissued": "A new code was issued. The old one no longer scans.",
+  "terminate": "Terminate",
+  "terminateTitle": "Terminate this ticket?",
+  "terminateBody": "The ticket stops working and cannot be re-issued. No money moves — refund the order instead if that is what is needed.",
+  "terminateReason": "Why is it being terminated?",
+  "terminatePlaceholder": "e.g. chargeback raised by the bank",
+  "terminated": "The ticket was terminated.",
+  "terminatedTitle": "This ticket was terminated",
+  "cancel": "Cancel"
+}

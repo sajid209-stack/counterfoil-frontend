@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Ban, RotateCcw, SearchX, Wallet } from "lucide-react";
+import { Ban, RefreshCw, RotateCcw, SearchX, ShieldOff, Wallet } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { PaymentMethod } from "@/lib/api";
 import type { RefuseReason, ScanOutcome } from "../_lib/outcome";
@@ -31,6 +31,8 @@ export interface VerdictLabels {
   reason: string;
   advice: string;
   usedAt?: string;
+  /** The reason a manager typed when they terminated it. */
+  note?: string;
   dated?: string;
   code: string;
   dismiss: string;
@@ -54,6 +56,11 @@ const KIND_ICON: Record<RefuseReason, typeof Ban> = {
   alreadyRedeemed: RotateCcw,
   voidRefunded: Ban,
   notFound: SearchX,
+  // A replaced code is the one refusal where the TICKET is fine: a guest
+  // holding last week screenshot after a reissue. The glyph says "there is a
+  // newer one" rather than "there is no ticket".
+  replaced: RefreshCw,
+  terminated: ShieldOff,
 };
 
 /** An admission tears a ticket.
@@ -294,6 +301,9 @@ export function Verdict({
             {labels.reason}
           </span>
           {labels.usedAt && <span className="text-lg opacity-90">{labels.usedAt}</span>}
+          {/* Typed by a manager, so it is shown as written rather than
+              translated, and it is the whole explanation a steward has. */}
+          {labels.note && <span className="text-lg opacity-90">{labels.note}</span>}
           {outcome.title && <span className="text-base opacity-80">{outcome.title}</span>}
         </>
       )}
