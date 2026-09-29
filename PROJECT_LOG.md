@@ -14182,3 +14182,29 @@ ember as 1.19:1. The audit reads `elementsFromPoint` now.
   panel**, ~200px apart. That is the relationship `/pos/cart` has — the panel is
   the receipt, the bar is the persistent copy — and matching the cart till was
   the earlier ask.
+
+## The venue moves into the bar (2026-09-29)
+
+Owner: *"there will be No All Locations filter in OS, Location Filter will be in
+header bar for all pages in OS, and for different Location will be Different
+Filters, except Settings page."*
+
+- **`lib/activeLocation.ts`** — one active venue per browser (`cf_location`),
+  read through `useSyncExternalStore`, resolved against the venues that exist so
+  an archived or unset id falls back to the first venue instead of pointing at
+  nothing. **There is no "all"**: one venue is always selected.
+- **`LocationSwitcher`** in the OS bar on every route except `/settings/*`,
+  where a venue is a record being edited rather than a lens. It draws nothing
+  for a one-venue operator. Rendered in exactly one of the two bars (gated on
+  `useMediaQuery(MD)`) — rendering it in both put two comboboxes named "Venue"
+  in the DOM with the hidden one first.
+- **Dashboard, orders, inventory and sales reports** read the active venue
+  instead of their own venue filter; their remaining filters narrow within it.
+- `Select` gained an `icon` slot for a control with no visible label.
+
+### Verified
+
+m1 48/48. The dropdown harness is 55/58: the three misses are the harness
+counting the new bar combobox as a page control (device page, orders gutter),
+not faults in the pages — the harness needs to scope to the page's own
+controls.

@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/cn";
 import { formatDateTime, formatMoney, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
+import { useActiveLocation } from "@/lib/activeLocation";
 import { demoNow } from "@/lib/schedule";
 
 export default function OrdersPage() {
@@ -57,7 +58,6 @@ function OrdersPageInner() {
   const [page, setPage] = useState(1);
 
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const locationName = (id: string) => locationsQ.data?.data.find((l) => l.id === id)?.name ?? "—";
 
   const channelLabel = (c: string) => (c === "counter" ? t("channelCounter") : c === "online" ? t("channelOnline") : c);
   /* A set filter comes back as a chip naming its VALUE, so a narrowed list
@@ -78,9 +78,15 @@ function OrdersPageInner() {
     return { from: start.toISOString(), to: end.toISOString() };
   }, [range, now]);
 
+  /* The venue comes from the bar, not from this page: it is the console's
+     lens, and the page's own filters narrow within it. `listOrders` has taken
+     a `locationId` filter since the customer work; the list simply never used
+     it, so an operator with three venues read one list of all three with
+     nothing saying so. */
+  const { id: locationId } = useActiveLocation(locationsQ.data?.data ?? []);
   const filters = useMemo(
-    () => ({ status: status || undefined, channel: channel || undefined, ...bounds }),
-    [status, channel, bounds],
+    () => ({ status: status || undefined, channel: channel || undefined, locationId: locationId || undefined, ...bounds }),
+    [status, channel, locationId, bounds],
   );
 
   const { data, loading } = useApiQuery(
@@ -151,14 +157,11 @@ function OrdersPageInner() {
     {
       // Where and how, as one answer. Two columns for one idea cost the width
       // the customer column needed.
-      key: "location",
-      header: t("colLocation"),
-      render: (o) => (
-        <span className="flex min-w-0 max-w-[12rem] flex-col">
-          <span className="truncate">{locationName(o.locationId)}</span>
-          <span className="truncate text-[12px] text-muted">{channelLabel(o.channel)}</span>
-        </span>
-      ),
+      key: "channel",
+      /* The bar says which venue, so a column saying it on every row earns
+         nothing — what it was really carrying was the channel. */
+      header: t("colChannel"),
+      render: (o) => <span className="truncate">{channelLabel(o.channel)}</span>,
     },
     {
       key: "items",

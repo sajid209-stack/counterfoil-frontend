@@ -25,6 +25,7 @@ import {
 import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
 import { formatDateTime, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
+import { useActiveLocation } from "@/lib/activeLocation";
 
 // The demo clock is shared, never copied: DEMO_TODAY's own comment warns
 // that two components each holding their own date is the bug.
@@ -105,7 +106,6 @@ const ACTIVITY_BADGE: Record<ActivityKind, { Icon: LucideIcon; className: string
 export default function DashboardPage() {
   const router = useRouter();
   const t = useTranslations("dashboard");
-  const tc = useTranslations("common");
   // Column names live in the orders namespace already; duplicating them
   // here would be two places for one word to drift.
   const to = useTranslations("orders");
@@ -122,7 +122,8 @@ export default function DashboardPage() {
   // rows, so there is no reason to pull the whole roster to find them.
   const customersQ = useApiQuery(() => listCustomers({ pageSize: 50, sort: "createdAt", order: "desc" }), []);
 
-  const [locationId, setLocationId] = useState<string>("all");
+  /* Read, not chosen here: the bar owns it. */
+  const { id: locationId } = useActiveLocation(locationsQ.data?.data ?? []);
   const [scope, setScope] = useState<"today" | "week">("today");
   const [trendDays, setTrendDays] = useState<7 | 14 | 30>(30);
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
@@ -133,7 +134,7 @@ export default function DashboardPage() {
   const loading = ordersQ.loading || bookingsQ.loading || productsQ.loading;
   const locations = locationsQ.data?.data ?? [];
   const allOrders = ordersQ.data?.data ?? [];
-  const orders = locationId === "all" ? allOrders : allOrders.filter((o) => o.locationId === locationId);
+  const orders = locationId ? allOrders.filter((o) => o.locationId === locationId) : allOrders;
   const bookings = bookingsQ.data?.data ?? [];
   const products = productsQ.data?.data ?? [];
   // Memoised, unlike its neighbours above: the activity feed depends on it,
@@ -506,21 +507,11 @@ export default function DashboardPage() {
       title={op.data?.name || t("title")}
       actions={
         <div className="flex items-center gap-tight">
-          {locations.length > 1 && (
-            /* Capped at 180px: the bar's width belongs to the page title, and
-               a venue called "Lalbagh Fort — Main Gate" would otherwise take
-               400px of it at 1024 and wrap the operator's own name onto two
-               lines. The name itself is never cut — the popover carries it in
-               full, which the native select could not do. */
-            <Select
-              aria-label={tc("filterByLocation")}
-              value={locationId}
-              onChange={setLocationId}
-              className="max-w-[180px]"
-              align="end"
-              options={[{ value: "all", label: t("allLocations") }, ...locations.map((l) => ({ value: l.id, label: l.name }))]}
-            />
-          )}
+          {/* The venue chooser used to be here, with **All locations** as its
+              default — so the cockpit opened on a figure summed across every
+              attraction, which is a figure nobody can act on, and no other
+              screen said which venues it was showing. It is in the bar now and
+              governs the whole console; see lib/activeLocation. */}
           {/* Scope, not actions — a dashboard is a place to look. */}
           <div className="relative grid h-[52px] grid-cols-2 rounded-sm bg-line/60 p-inline sm:h-11">
             <span aria-hidden className="absolute inset-y-inline rounded-xs bg-ember-solid transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />

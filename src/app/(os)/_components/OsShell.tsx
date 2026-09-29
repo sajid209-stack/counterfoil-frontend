@@ -23,8 +23,10 @@ import { LogoMark, Sheet } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 import { BarTitleContext } from "@/lib/barTitle";
 import { AccountMenu } from "./AccountMenu";
+import { LocationSwitcher } from "./LocationSwitcher";
 import { CommandPalette } from "./CommandPalette";
 import { Sidebar } from "./Sidebar";
 import { SETTINGS_GROUPS } from "../settings/_lib/nav";
@@ -199,6 +201,21 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   const page = PAGE_NAMES.find((p) => pathname === p.prefix || pathname.startsWith(`${p.prefix}/`));
   const pageName = section ? tSettings(`nav.items.${section.key}.title`) : page ? t(page.key) : "Counterfoil";
 
+  /* Which venue the console is looking at is a lens on the whole of it, so it
+     lives in the bar rather than among a page's own filters — and it governs
+     every page except Settings, where a venue is a RECORD being edited rather
+     than a lens being looked through. Scoping the list of venues to one venue
+     is a circle.
+
+     `/deck` is the other exception: it renders outside this shell entirely. */
+  const venueScoped = !pathname.startsWith("/settings");
+  /* Which bar draws the switcher — one of them, never both. Both bars are in
+     the DOM at every width and merely hidden by a media query, so rendering it
+     in each put two comboboxes named "Venue" on every page, with the invisible
+     one FIRST in document order. This app has been caught by that four times;
+     the gate is the one PageShell already uses for the same reason. */
+  const wide = useMediaQuery(MD);
+
   return (
     /* What the bar is calling this page, published so a page's own heading can
        stand down where it would only say it again — see `lib/barTitle`. */
@@ -227,7 +244,17 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           {/* A <p>, not a heading. The bar names the destination; the page's
               own <h1> renders in the content below it on a phone, and a
               heading above that h1 puts the document's outline out of order. */}
-          <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-fg">{pageName}</p>
+          {/* The venue takes the width on a phone where there is more than
+              one, because it is the thing that changes what every figure below
+              means; the page's own name is in the tab bar beneath. */}
+          {venueScoped ? (
+            <span className="flex min-w-0 flex-1 items-center gap-tight">
+              <span className="min-w-0 shrink truncate text-[15px] font-semibold text-fg">{pageName}</span>
+              {!wide && <LocationSwitcher compact />}
+            </span>
+          ) : (
+            <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-fg">{pageName}</p>
+          )}
           {/* The page's create action, as a plus. Empty on a page that has
               none, and it takes its gap with it. */}
           <div id="os-page-actions-mobile" className="flex shrink-0 items-center gap-inline empty:hidden" />
@@ -265,6 +292,10 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               inside the account menu the chrome is one 44px target, so the
               actions come up onto the same line and the bar loses a row. */}
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-tight">
+            {/* The venue first: it qualifies everything to its left, so it
+                reads as part of where you are rather than as one more of the
+                page's controls. */}
+            {venueScoped && wide && <LocationSwitcher />}
             {/* Empty on pages that declare no actions — it collapses to
                 nothing and takes its gap with it. */}
             <div id="os-page-actions" className="flex flex-wrap items-center justify-end gap-tight empty:hidden" />

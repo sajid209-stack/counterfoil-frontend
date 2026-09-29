@@ -47,5 +47,7 @@
   },
   "inventory": "ইনভেন্টরি",
   "cartFab": "ঝুড়ি — {count, plural, one {# লাইন} other {# লাইন}}",
-  "marketplaces": "মার্কেটপ্লেস"
+  "marketplaces": "মার্কেটপ্লেস",
+  "venue": "ভেন্যু",
+  "venueNotSelling": "বিক্রয় বন্ধ"
 }

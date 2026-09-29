@@ -55,6 +55,7 @@ export function Select({
   name,
   className,
   triggerClassName,
+  icon,
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledBy,
   "aria-invalid": ariaInvalid,
@@ -75,6 +76,8 @@ export function Select({
   name?: string;
   className?: string;
   triggerClassName?: string;
+  /** Drawn before the value. For a control that carries no visible label. */
+  icon?: React.ReactNode;
   "aria-label"?: string;
   "aria-labelledby"?: string;
   "aria-invalid"?: boolean;
@@ -324,6 +327,9 @@ export function Select({
           triggerClassName,
         )}
       >
+        {/* A glyph in front of the value, where the control has no label
+            beside it — the venue switcher in the bar names itself that way. */}
+        {icon && <span className="shrink-0 text-muted">{icon}</span>}
         <span className={cn("min-w-0 truncate", !bare && "flex-1", !selected && "text-muted")}>
           {selected ? selected.label : (placeholder ?? "")}
         </span>

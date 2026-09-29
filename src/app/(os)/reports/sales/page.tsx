@@ -8,6 +8,7 @@ import { DEMO_TODAY } from "@/lib/schedule";
 import { AreaChart, BarChart, Button, DateRangePicker, DonutChart, HBarChart, LineChart, Modal, PageShell, StatusPill, Select, Tabs, useToast, FormField } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
+import { useActiveLocation } from "@/lib/activeLocation";
 import {
   getAnalytics,
   getSalesReport,
@@ -68,7 +69,9 @@ interface Filters {
 const DEFAULTS: Filters = { preset: "30d", from: shift(NOW, -29), to: NOW };
 type FilterKey = keyof Omit<Filters, "preset" | "from" | "to">;
 const FILTER_DEFS: { key: FilterKey; label: string }[] = [
-  { key: "locationId", label: "Location" },
+  /* No Location chip: the bar owns the venue and every query below is scoped
+     to it. A page-level "Any location" would be a way back to the figure the
+     console stopped showing. */
   { key: "counterId", label: "Counter" },
   { key: "staffId", label: "Team member" },
   { key: "productId", label: "Booking" },
@@ -83,6 +86,7 @@ const FILTER_DEFS: { key: FilterKey; label: string }[] = [
 const toQuery = (f: Filters): TransactionQuery => ({
   from: f.from,
   to: f.to,
+  /* Set from the bar before the query is built — see `scoped` below. */
   locationIds: f.locationId ? [f.locationId] : undefined,
   counterIds: f.counterId ? [f.counterId] : undefined,
   staffIds: f.staffId ? [f.staffId] : undefined,
@@ -143,6 +147,10 @@ function SalesReportInner() {
 
   // Lookup data for filter controls.
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
+  /* The console's venue, folded into the filter object every query reads, so
+     the transactions, the summary, the tax return and the charts are all one
+     venue's without each of them remembering to ask. */
+  const { id: venueId } = useActiveLocation(locationsQ.data?.data ?? []);
   const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
   const staffQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
 
@@ -190,7 +198,12 @@ function SalesReportInner() {
     setAdded(FILTER_DEFS.map((d) => d.key).filter((k) => !!(f as unknown as Record<string, string | undefined>)[k]));
   };
 
-  const query = useMemo(() => toQuery(filters), [filters]);
+  /* The console's venue, folded in here rather than at each of the five call
+     sites below — the transactions, the summary, the outstanding list, the tax
+     return and the charts all read `query`, and one of them forgetting would
+     be a report describing a different venue from the one in the bar. */
+  const scoped = useMemo(() => ({ ...filters, locationId: venueId || filters.locationId }), [filters, venueId]);
+  const query = useMemo(() => toQuery(scoped), [scoped]);
 
   /* Rows ticked for export. Held per tab and per scope: changing the dates, a
      filter or the grouping is asking a different question, so what was ticked
@@ -235,8 +248,8 @@ function SalesReportInner() {
     });
   const clearPicked = () => setSel({ sig: "", items: new Map() });
   const summaryQ = useApiQuery(
-    () => getSalesReport({ from: filters.from, to: filters.to, groupBy, locationId: filters.locationId }),
-    [filters.from, filters.to, groupBy, filters.locationId],
+    () => getSalesReport({ from: scoped.from, to: scoped.to, groupBy, locationId: scoped.locationId }),
+    [scoped.from, scoped.to, groupBy, scoped.locationId],
   );
 
   // ── Analytics ────────────────────────────────────────────────────────────

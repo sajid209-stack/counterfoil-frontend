@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, useMediaQuery } from "@/lib/useMedia";
+import { useActiveLocation } from "@/lib/activeLocation";
 import { formatMoney, formatPriceShort } from "@/lib/format";
 import {
   archiveInventoryItem,
@@ -57,7 +58,6 @@ export default function InventoryPage() {
   const toast = useToast();
   const compact = !useMediaQuery(MD);
 
-  const [venue, setVenue] = useState<string>("");
   const [tab, setTab] = useState<"all" | "attention" | "archived">("all");
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<string>("");
@@ -68,13 +68,17 @@ export default function InventoryPage() {
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 50 }), []);
   const staffQ = useApiQuery(() => listStaff({ pageSize: 100 }), []);
   const locations = useMemo(() => locationsQ.data?.data ?? [], [locationsQ.data]);
+  /* From the bar. It used to be this page's own select, defaulting to every
+     venue added up — a count no single till can sell from, and the figure the
+     console stopped showing when the venue moved into the header. */
+  const { id: venue } = useActiveLocation(locations);
   const itemsQ = useApiQuery(
     () => listInventory({ pageSize: 200, locationId: venue || undefined }),
     [venue, stamp],
   );
-  /* With no venue picked the counts are every venue added up, which no single
-     till can sell. The column says which it is rather than letting one word
-     cover both. */
+  /* A venue is always chosen now, so the count is always this venue's and the
+     column says so. `scoped` survives for the one frame before the venues
+     arrive. */
   const scoped = venue !== "";
   const all = useMemo(() => itemsQ.data?.data ?? [], [itemsQ.data]);
 
@@ -327,25 +331,6 @@ export default function InventoryPage() {
                   />
                 ),
               },
-              ...(locations.length > 1
-                ? [
-                    {
-                      key: "venue",
-                      label: t("filterVenue"),
-                      active: venue ? locations.find((l) => l.id === venue)?.name ?? null : null,
-                      onClear: () => setVenue(""),
-                      control: (
-                        <Select
-                          value={venue}
-                          onChange={setVenue}
-                          aria-label={t("allVenues")}
-                          triggerClassName="text-[13px] md:h-9"
-                          options={[{ value: "", label: t("allVenues") }, ...locations.map((l) => ({ value: l.id, label: l.name }))]}
-                        />
-                      ),
-                    },
-                  ]
-                : []),
             ]}
           />
         </div>

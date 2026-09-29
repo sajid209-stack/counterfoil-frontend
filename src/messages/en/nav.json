@@ -47,5 +47,7 @@
   },
   "inventory": "Inventory",
   "cartFab": "Cart — {count, plural, one {# line} other {# lines}}",
-  "marketplaces": "Marketplaces"
+  "marketplaces": "Marketplaces",
+  "venue": "Venue",
+  "venueNotSelling": "Not selling"
 }
