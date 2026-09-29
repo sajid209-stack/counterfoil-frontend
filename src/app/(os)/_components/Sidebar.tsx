@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, Boxes, Globe, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
+import { ArrowLeftRight, ArrowUpRight, Boxes, Globe, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -29,6 +29,9 @@ export function Sidebar({
     { label: t("dashboard"), href: "/dashboard", icon: LayoutDashboard },
     { label: t("calendar"), href: "/calendar", icon: CalendarDays },
     { label: t("orders"), href: "/orders", icon: ReceiptText },
+    /* Beside Orders because it is the other half of the same question: an
+       order is what was sold, a transaction is what happened to the money. */
+    { label: t("transactions"), href: "/transactions", icon: ArrowLeftRight },
     { label: t("customers"), href: "/customers", icon: UsersRound },
     /* One door for everything sold. Bookings and Events were two rows that
        each held half the answer to "what do we sell?" — and an operator

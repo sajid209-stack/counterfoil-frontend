@@ -14208,3 +14208,104 @@ m1 48/48. The dropdown harness is 55/58: the three misses are the harness
 counting the new bar combobox as a page control (device page, orders gutter),
 not faults in the pages — the harness needs to scope to the page's own
 controls.
+
+## Transactions, payouts, and a storefront you can see while you edit it (2026-09-29)
+
+Owner: *"research Payment System and add Payment system UI and UX design
+properly, and need a Transaction page and menu for OS … and need storefront
+settings, a Storefront page UI/UX design and Preview option."*
+
+### What already existed, and what did not
+
+Settings → Payments was already the configuration half of a payment system —
+the till's methods and their order, provider accounts (bKash, SSLCommerz,
+Stripe) with their onboarding states, advances, the payout schedule and the
+cash drawer. What was missing was the **operating** half: nowhere in OS could
+anybody see the money itself. Orders answers "what did we sell"; nothing
+answered "what money moved, and does it agree with the drawer and the bank".
+
+### Transactions — `/transactions`, in the rail beside Orders
+
+The shape every payments console converged on (Stripe's Payments list,
+Square's Transactions, Shopify's Payouts):
+
+- **A ledger of movements, not orders.** A payment in, a refund out, or a
+  balance written off is one row each; a split-tender sale is two rows because
+  it was two payments. Signed amounts from the venue's side.
+- **Figures first**: collected, refunded, net (with the cash / digital split a
+  manager reconciles against), and the count — with any write-offs named and
+  excluded, since a write-off moves no money.
+- **Filters that narrow within the venue in the bar**: date (default last 30
+  days), type, method, status; search matches order, customer and the
+  provider's TrxID. **Export CSV** exports every matching row, not the page.
+- **A detail sheet** on each row: status, when, method, provider reference,
+  cash tendered and change, the order (linked), customer, channel, counter and
+  who took it; copy-ID and open-order actions.
+- **Payouts tab**: what the providers send to the bank on the Settings →
+  Payments schedule. Each confirmed bKash / Bangla QR / card transaction lands
+  in the first payout day after it happened, refunds come out of the same one;
+  paid / on its way / scheduled; the next payout and the last 30 days' total;
+  cash is shown separately as counted at the drawer, never paid out.
+
+`lib/api/transactions.ts` **derives** all of it from orders — `Transaction`,
+`listTransactions`, `getTransactionSummary`, `listPayouts` — so a ledger and an
+order cannot disagree, and a backend replaces it with one endpoint.
+
+Two decisions worth confirming:
+
+- **A full refund taken through `refundOrder`** flips the status without
+  writing the reversal (its own comment says the real endpoint would). The
+  ledger synthesises the refund row so a refunded order does not read as money
+  kept. The seed's refunded orders appear that way.
+- **Provider fees are not modelled.** The contract carries none, and a payout
+  figure with an invented fee in it is one nobody could reconcile. The tab says
+  fees appear on the provider's own statement.
+
+### Storefront — a live preview, publishing, and links
+
+- **The preview is drawn from the draft**, not the last save: headline,
+  intro, colour, contact, links and the chosen bookings all show as typed, with
+  "Showing unsaved changes" / "Matches what is saved" beside it.
+- **It renders in an iframe at a real device width** (`components/PreviewFrame`)
+  so Phone is the page's own phone layout rather than a desktop page squeezed
+  into a column. The content is **portalled** into the frame rather than loaded
+  by URL: the draft is React state and the mock store is memory, so a frame
+  that loaded a route would boot a second app and see neither. Styles, theme
+  and fonts are copied into the frame and followed.
+- **Beside the form from 1536px**, opening on Phone (fits at ~1:1); below that
+  a **Preview** button opens it full-width, opening on Desktop. At 1440 the two
+  columns were measured and rejected: with Settings' own menu beside the rail,
+  the form's labels broke a word to a line and the preview drew at a third.
+- The public page's body moved into `app/s/_components/StorefrontView` so the
+  live page and the preview are the same component. `preview` turns its links
+  off.
+- **Status and publishing on the editor**: Live / Draft, the address, copy
+  link, view page, publish / take offline. Publishing waits for a save — it
+  acts on the saved page.
+- **Links** (the contract always had them; the editor never exposed them):
+  label + https address, validated, removable.
+- **A standing fault fixed**: the colour buttons read
+  `settings.categories.colors.*`, which went with the category system on
+  2026-09-28 — production was throwing MISSING_MESSAGE on this screen. The
+  labels now live under `storefront.colors`.
+
+### Verified
+
+- **49 checks driving it** at 1920, 1440 and 390, light and dark, English and
+  Bangla: the ledger, the refund filter and signs, the detail sheet, payouts,
+  the rail item; the preview following a typed headline, phone at 390 and
+  desktop at 1280 inside the frame, a link appearing once valid, save → "matches
+  what is saved" → publish enabled; no console errors, no page x-scroll.
+- m1 47/48 — the one miss is the harness's hard-coded destination list, which
+  now has Transactions in it, as the rail does.
+- `tsc`, `eslint` on every changed file, and `npm run build` clean. i18n parity
+  **0 missing / 0 extra**, with a new `transactions` namespace in en and bn.
+
+### Open
+
+- **Online checkout on the storefront** is still deferred (see the storefront
+  entry). The payment accounts and advance rules it would need exist; say so
+  and it becomes the money-path change it is.
+- Payment `pending` / `failed` states are filterable but the seed has none —
+  seeding them means touching every place that sums `payments` (ten sites),
+  which should go with a real provider integration.

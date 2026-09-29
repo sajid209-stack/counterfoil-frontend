@@ -3,6 +3,7 @@
   "overview": "Overview",
   "calendar": "Calendar",
   "orders": "Orders",
+  "transactions": "Transactions",
   "customers": "Customers",
   "memberships": "Memberships",
   "reports": "Reports",
@@ -43,7 +44,8 @@
   "catalog": "Catalog",
   "aliases": {
     "catalog": "bookings events products tickets experiences what we sell",
-    "inventory": "stock merch items shop goods supplies"
+    "inventory": "stock merch items shop goods supplies",
+    "transactions": "payments refunds payouts money ledger bkash cash card"
   },
   "inventory": "Inventory",
   "cartFab": "Cart — {count, plural, one {# line} other {# lines}}",

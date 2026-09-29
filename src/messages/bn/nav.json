@@ -2,6 +2,7 @@
   "dashboard": "ড্যাশবোর্ড",
   "overview": "সারসংক্ষেপ",
   "calendar": "ক্যালেন্ডার",
+  "transactions": "লেনদেন",
   "orders": "অর্ডার",
   "customers": "গ্রাহক",
   "memberships": "সদস্যপদ",
@@ -43,7 +44,8 @@
   "catalog": "ক্যাটালগ",
   "aliases": {
     "catalog": "বুকিং ইভেন্ট পণ্য টিকিট bookings events products",
-    "inventory": "স্টক মজুত পণ্য মার্চেন্ডাইজ সরবরাহ"
+    "inventory": "স্টক মজুত পণ্য মার্চেন্ডাইজ সরবরাহ",
+    "transactions": "পেমেন্ট রিফান্ড পেআউট টাকা বিকাশ নগদ payments refunds payouts"
   },
   "inventory": "ইনভেন্টরি",
   "cartFab": "ঝুড়ি — {count, plural, one {# লাইন} other {# লাইন}}",

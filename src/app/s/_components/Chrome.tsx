@@ -49,6 +49,7 @@ export function StorefrontChrome({
   backHref,
   backLabel,
   poweredBy,
+  preview = false,
   children,
 }: {
   storefront: Storefront;
@@ -57,6 +58,9 @@ export function StorefrontChrome({
   backHref?: string;
   backLabel?: string;
   poweredBy: string;
+  /** Drawn inside the editor: the name is not a link, since following it
+   *  would leave the editor and lose the draft. */
+  preview?: boolean;
   children: React.ReactNode;
 }) {
   const accent = storefront.accent ?? null;
@@ -68,10 +72,17 @@ export function StorefrontChrome({
               visitor has, and a 23px text link is not a target on a touch
               screen — the inline-link exemption is for links inside prose,
               which these are not. */}
-          <Link href={`/s/${storefront.slug}`} className="-ml-tight flex min-h-11 min-w-0 items-center gap-tight rounded-sm px-tight sm:ml-0 sm:min-h-0 sm:px-0">
-            {accent && <span aria-hidden className={cn("h-5 w-1 shrink-0 rounded-full", ACCENT_BG[accent])} />}
-            <span className="min-w-0 truncate text-[15px] font-semibold">{location.name}</span>
-          </Link>
+          {preview ? (
+            <span className="flex min-h-11 min-w-0 items-center gap-tight sm:min-h-0">
+              {accent && <span aria-hidden className={cn("h-5 w-1 shrink-0 rounded-full", ACCENT_BG[accent])} />}
+              <span className="min-w-0 truncate text-[15px] font-semibold">{location.name}</span>
+            </span>
+          ) : (
+            <Link href={`/s/${storefront.slug}`} className="-ml-tight flex min-h-11 min-w-0 items-center gap-tight rounded-sm px-tight sm:ml-0 sm:min-h-0 sm:px-0">
+              {accent && <span aria-hidden className={cn("h-5 w-1 shrink-0 rounded-full", ACCENT_BG[accent])} />}
+              <span className="min-w-0 truncate text-[15px] font-semibold">{location.name}</span>
+            </Link>
+          )}
           {backHref && (
             <Link
               href={backHref}

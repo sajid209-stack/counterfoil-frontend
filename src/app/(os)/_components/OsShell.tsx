@@ -4,6 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  ArrowLeftRight,
   Boxes,
   Globe,
   Store,
@@ -66,6 +67,7 @@ const DESTINATIONS = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
   { href: "/orders", key: "orders", icon: ReceiptText },
+  { href: "/transactions", key: "transactions", icon: ArrowLeftRight },
   { href: "/customers", key: "customers", icon: UsersRound },
   { href: "/catalog", key: "catalog", icon: Ticket },
   { href: "/inventory", key: "inventory", icon: Boxes },
@@ -95,6 +97,7 @@ const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
   { prefix: "/dashboard", key: "dashboard" },
   { prefix: "/calendar", key: "calendar" },
   { prefix: "/orders", key: "orders" },
+  { prefix: "/transactions", key: "transactions" },
   { prefix: "/customers", key: "customers" },
   { prefix: "/catalog", key: "catalog" },
   { prefix: "/inventory", key: "inventory" },

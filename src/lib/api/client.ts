@@ -26,7 +26,7 @@ import type {
 // ── latency + result helpers ───────────────────────────────────────────────
 const MIN_MS = 200;
 const MAX_MS = 400;
-const delay = () =>
+export const delay = () =>
   new Promise<void>((r) => setTimeout(r, MIN_MS + Math.random() * (MAX_MS - MIN_MS)));
 
 export const ok = <T>(data: T): ApiResult<T> => ({ ok: true, data });
