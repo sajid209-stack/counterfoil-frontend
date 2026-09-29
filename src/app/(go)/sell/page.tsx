@@ -56,6 +56,8 @@ import { useMediaQuery } from "@/lib/useMedia";
 import { Catalogue } from "./_components/Catalogue";
 import { SelectionInline } from "./_components/SelectionInline";
 import { Keypad } from "../_components/Keypad";
+import { Pencil } from "lucide-react";
+import { usePrefs } from "@/lib/prefs";
 import { itemBalance, itemSeats, itemSlotISO, itemTotal, priceSale, type SaleItem } from "@/lib/sale/saleMath";
 import { draftFrom, newDraft, patternOf, resolveDraft, type Draft } from "@/lib/sale/selection";
 
@@ -106,7 +108,15 @@ export default function SellPage() {
   const [browsing, setBrowsing] = useState(true);
   const [query, setQuery] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("cash");
+  /* Empty reads as the exact amount — see the note on the v1 till. Here it
+     matters twice over: the cash block is drawn inline on a scrolling page
+     rather than in a sheet opened per sale, so a derived default follows the
+     cart as lines are added instead of going stale the moment it does. */
   const [tenderTaka, setTenderTaka] = useState("");
+  /* Whether the pad is on screen for this sale. The till's own setting decides
+     whether it is drawn at rest; this is the way to it when it is not. */
+  const [padOpen, setPadOpen] = useState(false);
+  const prefs = usePrefs();
   const [walletRef, setWalletRef] = useState("");
   const [saving, setSaving] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
@@ -264,7 +274,8 @@ export default function SellPage() {
   const openMissing = openEntry?.missing ?? null;
   const payable = totals.total > 0;
 
-  const tenderedMinor = (parseInt(tenderTaka || "0", 10) || 0) * 100;
+  const tenderedMinor = tenderTaka === "" ? dueNow : (parseInt(tenderTaka, 10) || 0) * 100;
+  const exactTender = tenderedMinor === dueNow;
   const changeMinor = tenderedMinor - dueNow;
   const cashReady = method !== "cash" || tenderedMinor >= dueNow;
   const walletReady = method !== "bkash" || walletRef.trim().length > 0;
@@ -599,7 +610,14 @@ export default function SellPage() {
                 {methods.length > 1 && (
                   <span
                     aria-hidden
-                    className="absolute inset-y-inline rounded-full bg-ember transition-[left] duration-quick ease-counterfoil"
+                    /* `ember-solid`, not `ember`: the plain token brightens to
+                       #FF7A3D in dark so that ember-as-TEXT stays legible on
+                       ink — and under WHITE as a fill that lift measured
+                       2.59:1 here, materially worse than light mode. Pinned it
+                       is 3.50:1 either way, which is the declared exception
+                       rather than two different readings. The app swept fifteen
+                       of these in September; this thumb was missed. */
+                    className="absolute inset-y-inline rounded-full bg-ember-solid transition-[left] duration-quick ease-counterfoil"
                     style={{
                       width: `calc(${100 / methods.length}% - 8px)`,
                       left: `calc(${Math.max(0, methods.indexOf(method)) * (100 / methods.length)}% + 4px)`,
@@ -611,7 +629,7 @@ export default function SellPage() {
                     key={m}
                     type="button"
                     onClick={() => setMethod(m)}
-                    className={`relative z-10 min-w-0 truncate px-inline text-[0.8125rem] transition-colors duration-quick ${method === m ? "font-medium text-white" : "text-muted"}`}
+                    className={`relative z-10 min-w-0 truncate px-inline text-[0.8125rem] transition-colors duration-quick ${method === m ? "font-medium text-white" : "text-fg"}`}
                   >
                     {enumL.method(m)}
                   </button>
@@ -669,21 +687,37 @@ export default function SellPage() {
 
               {method === "cash" && (
                 <div className="mt-section">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-[0.8125rem] text-muted">{t("pay.received")}</span>
-                    <span className="text-[1.0625rem] font-semibold tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
-                  </div>
-                  <div className={`mt-tight flex items-baseline justify-between ${cashReady ? "text-success" : "text-muted"}`}>
-                    <span className="text-[0.875rem] font-medium">{t("pay.change")}</span>
-                    <span className="text-3xl font-semibold tabular-nums">
-                      {cashReady ? formatMoney(Math.max(0, changeMinor), currency) : "—"}
+                  {/* The figure is the way to the pad — Square's pattern, and
+                      the reason there is no "type an amount" button under it. */}
+                  <button
+                    type="button"
+                    onClick={() => setPadOpen(true)}
+                    aria-label={`${t("pay.received")} ${formatMoney(tenderedMinor, currency)} — ${tp("cash.tapToChange")}`}
+                    className="flex min-h-11 w-full items-baseline justify-between gap-tight rounded-go-sm text-left active:bg-ember/10"
+                  >
+                    <span className="flex items-center gap-inline text-[0.8125rem] text-muted">
+                      {t("pay.received")}
+                      <Pencil size={12} strokeWidth={2} aria-hidden />
                     </span>
-                  </div>
+                    <span className="text-[1.0625rem] font-semibold tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
+                  </button>
+                  {/* Loud only when there is money to count back. */}
+                  {exactTender ? (
+                    <p className="mt-tight text-[0.875rem] font-medium text-success">{tp("cash.noChange")}</p>
+                  ) : (
+                    <div className={`mt-tight flex items-baseline justify-between ${cashReady ? "text-success" : "text-muted"}`}>
+                      <span className="text-[0.875rem] font-medium">{t("pay.change")}</span>
+                      <span className="text-3xl font-semibold tabular-nums">
+                        {cashReady ? formatMoney(Math.max(0, changeMinor), currency) : "—"}
+                      </span>
+                    </div>
+                  )}
                   <div className="mt-section flex gap-tight">
                     <button
                       type="button"
-                      onClick={() => setTenderTaka(String(Math.ceil(dueNow / 100)))}
-                      className="h-12 flex-1 rounded-full border border-inverse bg-card text-sm active:bg-ember/10"
+                      aria-pressed={exactTender}
+                      onClick={() => setTenderTaka("")}
+                      className={`h-12 flex-1 rounded-full border text-sm active:bg-ember/10 ${exactTender ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-inverse bg-card"}`}
                     >
                       {tp("cash.exact")}
                     </button>
@@ -698,12 +732,14 @@ export default function SellPage() {
                       </button>
                     ))}
                   </div>
-                  <div className="mt-section">
-                    <Keypad
-                      onKey={(d) => setTenderTaka((v) => (v + d).slice(0, 7))}
-                      onBackspace={() => setTenderTaka((v) => v.slice(0, -1))}
-                    />
-                  </div>
+                  {(prefs.posKeypad || padOpen) && (
+                    <div className="mt-section">
+                      <Keypad
+                        onKey={(d) => setTenderTaka((v) => (v + d).slice(0, 7))}
+                        onBackspace={() => setTenderTaka((v) => v.slice(0, -1))}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -750,7 +786,7 @@ export default function SellPage() {
                 count, which the button cannot say — exactly as the v1 till's
                 collapsed bar does. */}
             <span className="min-w-0 flex-1">
-              <span className="block text-[0.75rem] text-inverse-fg/60">
+              <span className="block text-[0.8125rem] text-inverse-fg/70">
                 {balance > 0 ? t("footer.total") : t("footer.items", { count: items.length })}
               </span>
               {balance > 0 && (

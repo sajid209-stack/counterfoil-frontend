@@ -14068,3 +14068,117 @@ are both in the DOM at phone width and both come first in document order.
   the bar is the persistent copy — and matching the cart till was the ask.
 - **The 11px tab-bar labels** stay, on both surfaces: five tabs across 390px is
   a tab-bar convention and 14px does not fit. Declared since the type sweep.
+
+## The cash step, in two presses (2026-09-29)
+
+Owner, with a screenshot of each till: the keypad block is not wanted on the
+scrolling till and needs an on/off there, the "Type an amount" button is not
+wanted on the cart till, and — the part that matters — *"make the payment
+system work faster and less flow… there will be so many bookings so the users
+need to be fast, otherwise the customer will have a bad experience."*
+
+### What the best tills actually do
+
+Researched rather than reasoned from taste, and both answers are copied
+directly:
+
+- **Shopify POS**: *"By default, the correct amount of the order is entered when
+  processing a cash payment."* Suggested amounts sit under the field and manual
+  entry is the third way in. So the exact amount is not something a cashier
+  tells the till — it is what the till opens at.
+- **Square**: *"you can tap on the amount displayed (shown in light grey) and
+  use the number pad."* The figure **is** the control; there is no separate
+  button for it.
+
+And from the design database, **`redundant-entry`** (WCAG 2.2 A): do not ask for
+information the system already has. Asking a cashier to press **Exact** to tell
+the till the number it just printed two lines above is exactly that.
+
+### Measured, both driven
+
+An exact cash sale, from a full cart to a completed order, counted by pressing:
+
+| | production (before) | this build |
+|---|---|---|
+| presses from cart to completed sale | **3** | **2** |
+| ready to complete when the step opens | no | **yes** |
+| the cash step's height | **706px** of a 900px screen | **388px** |
+
+One press off **every** exact cash sale, which at a counter here is most of
+them, and the step nearly halves.
+
+### What changed
+
+- **The tender is the amount due.** Empty reads as exact, derived rather than
+  set once — so it cannot go stale if the sale changes under it, and clearing
+  the pad returns to the default instead of to zero. A till reading "received
+  ৳0" is a till that refuses to complete.
+- **Change goes quiet at zero.** It is the one figure on the sheet that is an
+  *action* — money to count back — so it is the largest thing there **when
+  there is any**; at zero it is a single green line, "No change due", and the
+  loud thing is the button that finishes the sale. One loud line either way,
+  which is the rule the pay panel already follows. With a ৳1000 note against
+  ৳517.50 the change is ৳482.50 at 40px, as before.
+- **The received figure is the way to the pad** — Square's pattern, and the
+  reason "Type an amount" is gone. A row that already shows the number is a
+  better target than a button underneath it saying you could change it.
+- **Exact reads as chosen**, because it is: `aria-pressed`, an ember tint, and
+  pressing it returns to the default after a note.
+- **The pad is off by default**, in both tills, and the setting is now "keep the
+  number pad on screen" — a till whose cashier would rather type every tender
+  switches it on. The scrolling till had no such switch at all; it does now, and
+  it reads the same preference as the cart till.
+
+### Three real faults found while measuring, none of them new
+
+The audit ran against the composited backdrop rather than the ancestor chain,
+which is what caught the first of these:
+
+- **White on the payment thumb measured 2.59:1 in dark.** `--color-ember`
+  brightens to `#FF7A3D` so that ember-as-*text* stays legible on ink; under
+  white as a *fill* that lift is materially worse than light mode. September
+  swept fifteen of these onto the pinned `--color-ember-solid`; the scrolling
+  till's payment thumb was missed. 3.50:1 in both themes now — the declared
+  exception, at one value.
+- **An unselected payment segment read 4.37:1 in dark** — `muted` on the track,
+  the same family as the fault the cart pass fixed. The selected one is white on
+  ember and unmissable, so the others are read in full ink.
+- **The cash sheet's close button was 40px**, under the Go 44px floor, on a
+  surface that is touch at every width.
+
+And one that was mine, from last week: the scrolling till's footer label
+("1 item") was 12px, under the till's own **13px** reading floor.
+
+### Verified
+
+- **29 checks driving both tills**: the sheet opens at the exact amount and says
+  there is no change to give, Exact reads as chosen, no pad and no "Type an
+  amount", **Complete is live on open**, the received figure is a 44px control
+  that brings the pad, a note makes the change the largest figure on the sheet,
+  Exact puts it back, and the sale lands. Then the setting: off by default, on
+  keeps the pad drawn in **both** tills, and the exact default survives it.
+- **48 measured** across both tills, light, dark and Bangla, with the pad shut
+  and open: contrast against the real paint stack, the 13px Go floor, 44px
+  targets, clipping and page overflow — all clean.
+- **The tap count itself**, run against production and against this build, so
+  the table above is a comparison rather than a claim.
+- Standing harnesses hold: **m1 48/48**, **m4 95/95**, **m2 22/22** (rewritten
+  for the new pattern), **m3 8/8**, **shop3 23/23**, **codes 27/27**.
+- `tsc --noEmit`, `npm run build` and `eslint` clean — `PosScreen` holds at its
+  documented six and `/sell` lints clean. i18n parity **0 missing / 0 extra**,
+  with `cash.typeAmount` removed with the button it labelled.
+
+**A probe correction, for the fourth time in this project**: a segmented control
+paints its selection with an absolutely-positioned *sibling* under a z-10 label,
+so walking ancestors measures the track behind the thumb and reported white on
+ember as 1.19:1. The audit reads `elementsFromPoint` now.
+
+### Not changed
+
+- **`/classic` keeps its keypad and its old tender.** It is the deliberate
+  restoration of the pre-6-September design, and the owner named the Cart and
+  Scrolling tills.
+- **The scrolling till still shows the amount on its bar and in its receipt
+  panel**, ~200px apart. That is the relationship `/pos/cart` has — the panel is
+  the receipt, the bar is the persistent copy — and matching the cart till was
+  the earlier ask.

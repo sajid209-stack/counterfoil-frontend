@@ -99,7 +99,8 @@
     "change": "Change",
     "exact": "Exact",
     "completeSale": "Complete sale",
-    "typeAmount": "Type an amount"
+    "tapToChange": "tap to change",
+    "noChange": "No change due"
   },
   "custom": {
     "title": "Custom amount",
@@ -482,7 +483,7 @@
     "title": "Till settings",
     "thisDevice": "These apply to this device only, whoever is on it.",
     "keypad": "Number pad",
-    "keypadBody": "Draw the pad on the cash screen. Off, Exact and the note amounts stay and the pad is one press away.",
+    "keypadBody": "Keep the number pad on screen while taking cash. Off, the sale opens at the exact amount and tapping what was received brings the pad up.",
     "textBody": "Front of house is read at arm's length for a whole shift.",
     "appearance": "Appearance",
     "appearanceBody": "A daylight gate wants light; a night counter wants dark.",

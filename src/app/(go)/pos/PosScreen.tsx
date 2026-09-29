@@ -23,6 +23,7 @@ import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { EventSheet } from "../_components/EventSheet";
 import { Keypad } from "../_components/Keypad";
+import { Pencil } from "lucide-react";
 import { usePrefs } from "@/lib/prefs";
 import { ticketSnapshot } from "./_lib/handover";
 import { clearLiveSale, readLiveSale, writeLiveSale } from "./_lib/liveSale";
@@ -282,6 +283,16 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const prefs = usePrefs();
   const [padOpen, setPadOpen] = useState(false);
   const [cashOpen, setCashOpen] = useState(false);
+  /* What the cashier says they were handed. **Empty means the exact amount**,
+     which is what every serious POS defaults to — Shopify POS pre-fills "the
+     correct amount of the order" and offers suggestions under it. It saves a
+     tap on every exact cash sale, which at a Bangladeshi counter is most of
+     them, and WCAG 2.2's `redundant-entry` is the principle: do not ask for
+     information the system already has.
+
+     Derived rather than set once, so it cannot go stale if the sale changes
+     under it, and so clearing the pad returns to the default instead of to
+     zero — a till that reads "received ৳0" is a till that refuses to complete. */
   const [tenderTaka, setTenderTaka] = useState("");
   const [cashSaving, setCashSaving] = useState(false);
   /* Hold the sale. sessionStorage is an external store, so writing to it is
@@ -914,7 +925,10 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
 
     if (method === "cash") {
       // Inline tender step — no page navigation (keeps the cart in view).
+      // Cleared, which reads as the exact amount: the sheet opens ready to
+      // complete rather than waiting to be told what it already knows.
       setTenderTaka("");
+      setPadOpen(false);
       setCashOpen(true);
       return;
     }
@@ -1818,9 +1832,11 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
 
       {/* Inline cash tender — a bottom sheet over the cart, no page navigation. */}
       {cashOpen && (() => {
-        const tenderedMinor = (parseInt(tenderTaka || "0", 10) || 0) * 100;
+        const typed = tenderTaka !== "";
+        const tenderedMinor = typed ? (parseInt(tenderTaka, 10) || 0) * 100 : dueNow;
         const changeMinor = tenderedMinor - dueNow;
         const enough = tenderedMinor >= dueNow;
+        const exact = tenderedMinor === dueNow;
         return (
           <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true">
             <div className="go-sheet-scrim absolute inset-0 bg-inverse/40 backdrop-blur-sm" onClick={() => !cashSaving && setCashOpen(false)} aria-hidden />
@@ -1832,54 +1848,78 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                     <p className="type-label text-[0.8125rem] text-brand-foreground">{t("cash.label")}</p>
                     <h2 className="type-h2 text-lg">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</h2>
                   </div>
-                  <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-10 w-10 items-center justify-center rounded-full active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
+                  {/* 44px: Go is touch at every width, and this was 40. */}
+                  <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
                 </div>
 
                 <div className="card-surface p-section">
                   <div className="flex justify-between text-muted"><span>{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</span><span className="text-lg">{formatMoney(dueNow, currency)}</span></div>
                   {balance > 0 && <div className="mt-tight flex justify-between text-[0.8125rem] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>}
-                  <div className="mt-tight flex justify-between"><span>{t("cash.tendered")}</span><span className="text-lg">{formatMoney(tenderedMinor, currency)}</span></div>
-                  {/* Change is the one figure on this sheet that is an ACTION,
-                      so it stays the largest thing on it — but 48px was too
-                      large to be true: measured at 390, a change of ৳99,424.00
-                      rendered 270px wide into the 243px its row had left once
-                      the label took its share, and clipped. It scales with the
-                      screen now, capped where it still fits the widest figure
-                      a drawer produces, and the label never shrinks. */}
-                  <div className={`mt-tight flex items-baseline justify-between gap-tight font-medium ${enough ? "text-success" : "text-muted"}`}>
-                    <span className="shrink-0 text-xl">{t("cash.change")}</span>
-                    <span className="min-w-0 truncate text-right" style={{ fontSize: "clamp(28px, 9.5vw, 40px)" }}>
-                      {enough ? formatMoney(changeMinor, currency) : "—"}
+                  {/* The received figure IS the way to the pad, which is how
+                      Square does it — tap the amount and the keypad appears.
+                      It replaces a "Type an amount" button: a row that already
+                      shows the number is a better target than a button
+                      underneath it saying you could change it. */}
+                  <button
+                    type="button"
+                    onClick={() => setPadOpen(true)}
+                    aria-label={`${t("cash.tendered")} ${formatMoney(tenderedMinor, currency)} — ${t("cash.tapToChange")}`}
+                    className="mt-tight flex min-h-11 w-full items-center justify-between gap-tight rounded-go-sm text-left active:bg-ember/10"
+                  >
+                    <span className="flex min-w-0 items-center gap-inline">
+                      {t("cash.tendered")}
+                      <Pencil size={13} strokeWidth={2} aria-hidden className="shrink-0 text-muted" />
                     </span>
-                  </div>
+                    <span className="shrink-0 text-lg tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
+                  </button>
+                  {/* Change is an ACTION — money to count back — so it is the
+                      largest thing here WHEN THERE IS ANY. At zero there is
+                      nothing to do with it, and a 40px ৳0.00 was competing with
+                      the button that finishes the sale: one loud line either
+                      way, which is the rule the pay panel already follows.
+
+                      Not 48px: measured at 390, a change of ৳99,424.00 rendered
+                      270px wide into the 243px its row had left once the label
+                      took its share, and clipped. It scales with the screen,
+                      capped where the widest figure a drawer produces still
+                      fits, and the label never shrinks. */}
+                  {exact ? (
+                    <p className="mt-tight text-[0.9375rem] font-medium text-success">{t("cash.noChange")}</p>
+                  ) : (
+                    <div className={`mt-tight flex items-baseline justify-between gap-tight font-medium ${enough ? "text-success" : "text-muted"}`}>
+                      <span className="shrink-0 text-xl">{t("cash.change")}</span>
+                      <span className="min-w-0 truncate text-right" style={{ fontSize: "clamp(28px, 9.5vw, 40px)" }}>
+                        {enough ? formatMoney(changeMinor, currency) : "—"}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Quick chips: exact, then the common notes in the drawer. */}
+                {/* The suggestions, as Shopify POS draws them under the field:
+                    exact, then the notes that are actually in a drawer here.
+                    Exact reads as chosen from the start, because it is. */}
                 <div className="mt-section flex gap-tight">
-                  <button type="button" onClick={() => setTenderTaka(String(Math.ceil(dueNow / 100)))} className="h-12 flex-1 rounded-full border border-inverse bg-card text-sm active:bg-ember/10">{t("cash.exact")}</button>
+                  <button
+                    type="button"
+                    aria-pressed={exact}
+                    onClick={() => setTenderTaka("")}
+                    className={`h-12 flex-1 rounded-full border text-sm active:bg-ember/10 ${exact ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-inverse bg-card"}`}
+                  >
+                    {t("cash.exact")}
+                  </button>
                   {[500, 1000, 2000].map((amt) => (
                     <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-full border border-line bg-card text-sm active:bg-ember/10">৳{amt}</button>
                   ))}
                 </div>
 
-                {/* The pad, if this till draws one.
-                    Off, it is one press away rather than gone: the fast path at
-                    a counter is Exact, and 300px of pad under it is for the
-                    rarer tender — but a setting that made an amount untypable
-                    would be a setting that breaks the sale. Settings → the till
-                    (More → Settings) turns it off. */}
-                {prefs.posKeypad || padOpen ? (
+                {/* The pad only where it is wanted: on for a till that keeps it
+                    (Settings → the till), or once the received figure above has
+                    been pressed. 300px of screen for the rarer tender, on a
+                    sheet whose commonest outcome is one tap on Complete. */}
+                {(prefs.posKeypad || padOpen) && (
                   <div className="mt-section">
                     <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setPadOpen(true)}
-                    className="mt-section h-12 w-full rounded-full border border-line bg-card text-sm font-medium text-fg active:bg-ember/10"
-                  >
-                    {t("cash.typeAmount")}
-                  </button>
                 )}
 
                 <Button shape="pill" size="lg" fullWidth className="mt-section h-14" disabled={!enough} loading={cashSaving} onClick={() => completeCash(tenderedMinor, changeMinor)}>{t("cash.completeSale")}</Button>
