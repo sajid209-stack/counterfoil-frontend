@@ -12,7 +12,6 @@
  */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, EmptyState, Modal, PageShell, PlanView, useToast, seatToElement } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -55,7 +54,7 @@ export default function SeatLayoutsPage() {
     <PageShell
       title={t("list.title")}
       description={t("list.description")}
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => setChoosing(true)}>{t("list.new")}</Button>}
+      primary={{ label: t("list.new"), onClick: () => setChoosing(true) }}
     >
       {q.loading ? (
         <div aria-busy="true" className="grid gap-section sm:grid-cols-2 lg:grid-cols-3">

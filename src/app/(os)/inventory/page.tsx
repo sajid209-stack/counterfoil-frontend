@@ -3,12 +3,13 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Boxes, PackagePlus, Plus } from "lucide-react";
+import { Boxes, PackagePlus } from "lucide-react";
 import {
   ActionMenu,
   Button,
   DataTable,
   EmptyState,
+  FilterBar,
   Select,
   PageShell,
   StatStrip,
@@ -231,11 +232,7 @@ export default function InventoryPage() {
     <PageShell
       title={t("title")}
       description={t("description")}
-      actions={
-        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/inventory/new")}>
-          {t("add")}
-        </Button>
-      }
+      primary={{ label: t("add"), onClick: () => router.push("/inventory/new") }}
     >
       <div className="flex flex-col gap-section">
         {/* The figures a stock room is run on. Attention leads because it is
@@ -287,8 +284,8 @@ export default function InventoryPage() {
           />
         )}
 
-        {/* On a phone the search takes its own row: sharing one with two
-            selects left it two characters wide. */}
+        {/* The tab strip IS the page's cut and stays visible; kind and venue
+            fold on a phone, where four controls stacked took 148px. */}
         <div className="flex flex-col gap-tight sm:flex-row sm:flex-wrap sm:items-center">
           <Tabs
             items={[
@@ -300,34 +297,57 @@ export default function InventoryPage() {
             onChange={(v) => setTab(v as typeof tab)}
           />
           <span className="hidden flex-1 sm:block" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("searchPlaceholder")}
-            aria-label={t("searchPlaceholder")}
-            className="h-11 w-full min-w-0 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse sm:h-9 sm:w-56"
-          />
-          <div className="flex gap-tight sm:contents">
-          <Select
-            value={kind}
-            onChange={setKind}
-            aria-label={t("kindAll")}
-            triggerClassName="text-[13px] sm:h-9"
-            options={[
-              { value: "", label: t("kindAll") },
-              ...(["merch", "food", "equipment", "service"] as const).map((k) => ({ value: k, label: t(`kind.${k}`) })),
+          <FilterBar
+            className="min-w-0 sm:flex-row sm:items-center"
+            search={
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+                aria-label={t("searchPlaceholder")}
+                className="h-11 w-full min-w-0 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse sm:h-9 sm:w-56"
+              />
+            }
+            filters={[
+              {
+                key: "kind",
+                label: t("filterKind"),
+                active: kind ? t(`kind.${kind}`) : null,
+                onClear: () => setKind(""),
+                control: (
+                  <Select
+                    value={kind}
+                    onChange={setKind}
+                    aria-label={t("kindAll")}
+                    triggerClassName="text-[13px] md:h-9"
+                    options={[
+                      { value: "", label: t("kindAll") },
+                      ...(["merch", "food", "equipment", "service"] as const).map((k) => ({ value: k, label: t(`kind.${k}`) })),
+                    ]}
+                  />
+                ),
+              },
+              ...(locations.length > 1
+                ? [
+                    {
+                      key: "venue",
+                      label: t("filterVenue"),
+                      active: venue ? locations.find((l) => l.id === venue)?.name ?? null : null,
+                      onClear: () => setVenue(""),
+                      control: (
+                        <Select
+                          value={venue}
+                          onChange={setVenue}
+                          aria-label={t("allVenues")}
+                          triggerClassName="text-[13px] md:h-9"
+                          options={[{ value: "", label: t("allVenues") }, ...locations.map((l) => ({ value: l.id, label: l.name }))]}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
             ]}
           />
-          {locations.length > 1 && (
-            <Select
-              value={venue}
-              onChange={setVenue}
-              aria-label={t("allVenues")}
-              triggerClassName="text-[13px] sm:h-9"
-              options={[{ value: "", label: t("allVenues") }, ...locations.map((l) => ({ value: l.id, label: l.name }))]}
-            />
-          )}
-          </div>
         </div>
 
         {!itemsQ.loading && visible.length === 0 ? (

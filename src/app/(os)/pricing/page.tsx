@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import {
-  Button,
   DataTable,
   EmptyState,
   Select,
@@ -62,7 +61,7 @@ export default function PricingPage() {
   ];
 
   return (
-    <PageShell title={t("title")} description={t("description")} actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/pricing/new")}>{t("newRule")}</Button>}>
+    <PageShell title={t("title")} description={t("description")} primary={{ label: t("newRule"), onClick: () => router.push("/pricing/new") }}>
       <DataTable
         columns={columns}
         rows={data?.data ?? []}

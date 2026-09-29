@@ -25,5 +25,10 @@
   "openCalendar": "তারিখ বাছুন",
   "light": "হালকা",
   "dark": "গাঢ়",
-  "system": "সিস্টেম"
+  "system": "সিস্টেম",
+  "moreCount": "আরও {count}টি",
+  "figures": "সংখ্যা",
+  "filters": "ফিল্টার",
+  "clearFilter": "{name} মুছুন",
+  "clearAll": "সব মুছুন"
 }

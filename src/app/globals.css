@@ -669,7 +669,9 @@
    `backwards`, not `both`: the finished state is the element's natural one, so
    no transform lingers to create a containing block for anything inside. The
    prefers-reduced-motion block below neutralises both. */
-@keyframes go-sheet-in {
+/* Named for the motion rather than the surface: the OS sheet (components/ui/
+   Sheet) rises the same way, and one keyframe with two names would drift. */
+@keyframes sheet-up {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
 }
@@ -678,7 +680,7 @@
   to   { opacity: 1; }
 }
 .go-sheet-panel {
-  animation: go-sheet-in var(--duration-considered) var(--ease-counterfoil) backwards;
+  animation: sheet-up var(--duration-considered) var(--ease-counterfoil) backwards;
 }
 .go-sheet-scrim {
   animation: go-scrim-in var(--duration-standard) var(--ease-counterfoil) backwards;

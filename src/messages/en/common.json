@@ -25,5 +25,10 @@
   "openCalendar": "Choose a date",
   "light": "Light",
   "dark": "Dark",
-  "system": "System"
+  "system": "System",
+  "moreCount": "{count} more",
+  "figures": "Figures",
+  "filters": "Filters",
+  "clearFilter": "Clear {name}",
+  "clearAll": "Clear all"
 }

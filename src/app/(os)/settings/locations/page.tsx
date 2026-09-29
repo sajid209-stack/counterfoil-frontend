@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { MapPin, Plus } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { Button, ConfirmDialog, EmptyState, PageShell, StatusPill, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -94,11 +94,7 @@ export default function LocationsPage() {
     <PageShell
       title={t("locations.title")}
       description={t("locations.description")}
-      actions={
-        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/locations/new")}>
-          {t("locations.add")}
-        </Button>
-      }
+      primary={{ label: t("locations.add"), onClick: () => router.push("/settings/locations/new") }}
     >
       {!locationsQ.data || !countersQ.data ? (
         <SectionSkeleton />

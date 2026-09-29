@@ -4,24 +4,22 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   Boxes,
   Globe,
   Store,
   CalendarDays,
+  ChartNoAxesColumn,
   Check,
-  ChartLine,
   Ellipsis,
   LayoutDashboard,
   SquareStack,
   ReceiptText,
   Settings,
   Ticket,
-  TicketPercent,
-  X,
+  UsersRound,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { LogoMark } from "@/components/ui";
+import { LogoMark, Sheet } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -41,7 +39,24 @@ const MOBILE_TABS = [
   { href: "/catalog", key: "catalog", icon: Ticket },
 ] as const;
 
-// Same grid, same order, every time — muscle memory is the point.
+/**
+ * Everywhere a phone can go — the desktop rail's own list, in its own order.
+ *
+ * It is the rail rather than a list of its own, and that is the whole rule: the
+ * two had drifted into different products. The grid was offering **Analytics**
+ * (a tab of Reports, not a destination) and **Promotions** (a feature hidden
+ * behind `FEATURES.promotions`, so it 404s in spirit if not in fact), and it
+ * was missing **Customers**, which the rail has carried since it was built. So
+ * a phone could not reach a customer and could reach two things a desktop does
+ * not offer.
+ *
+ * Same grid, same order, every time — muscle memory is the point, and the order
+ * is the rail's so that moving between the two surfaces teaches one layout.
+ *
+ * The four in MOBILE_TABS repeat here on purpose: `nav-hierarchy` separates
+ * primary from secondary navigation, and a person who opens More looking for
+ * Orders should find it rather than be told to close the sheet.
+ */
 const DESTINATIONS = [
   // "dashboard", not "overview": the rail, the tab bar and the phone's own top
   // bar all call this Dashboard, and the More grid was the one place calling it
@@ -49,12 +64,11 @@ const DESTINATIONS = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
   { href: "/orders", key: "orders", icon: ReceiptText },
+  { href: "/customers", key: "customers", icon: UsersRound },
   { href: "/catalog", key: "catalog", icon: Ticket },
   { href: "/inventory", key: "inventory", icon: Boxes },
   { href: "/marketplaces", key: "marketplaces", icon: Globe },
-  { href: "/reports/sales", key: "reports", icon: BarChart3 },
-  { href: "/reports/sales?tab=analytics", key: "analytics", icon: ChartLine },
-  { href: "/promotions", key: "promotions", icon: TicketPercent },
+  { href: "/reports/sales", key: "reports", icon: ChartNoAxesColumn },
   { href: "/pos", key: "pos", icon: Store },
   { href: "/deck", key: "deck", icon: SquareStack },
   // One Settings entry, opening on the first section. Settings has no index
@@ -119,6 +133,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   const focused = /^\/catalog\/(new(\/|$)|events\/[^/]+\/edit$)/.test(pathname);
   const t = useTranslations("nav");
   const tSettings = useTranslations("settings");
+  const tCommon = useTranslations("common");
   const operatorQ = useApiQuery(() => getOperator(), []);
   const [moreOpen, setMoreOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -213,6 +228,9 @@ export function OsShell({ children }: { children: React.ReactNode }) {
               own <h1> renders in the content below it on a phone, and a
               heading above that h1 puts the document's outline out of order. */}
           <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-fg">{pageName}</p>
+          {/* The page's create action, as a plus. Empty on a page that has
+              none, and it takes its gap with it. */}
+          <div id="os-page-actions-mobile" className="flex shrink-0 items-center gap-inline empty:hidden" />
           <AccountMenu name={operatorQ.data?.name} compact />
         </div>
 
@@ -308,45 +326,44 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       </nav>
       )}
 
-      {/* More — full-height destination grid */}
-      {moreOpen && (
-        <div className="fixed inset-x-0 top-0 z-30 flex flex-col bg-surface md:hidden" style={{ bottom: "calc(56px + env(safe-area-inset-bottom))" }}>
-          <div className="flex items-center justify-between border-b border-line px-section py-tight">
-            <div>
-              <p className="text-sm font-medium">{operatorQ.data?.name ?? "Counterfoil"}</p>
-              <p className="font-mono text-[12px] text-muted">{t("workspace")}</p>
-            </div>
-            <button type="button" aria-label="Close" onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-sm active:bg-line">
-              <X size={20} strokeWidth={1.5} />
-            </button>
-          </div>
-          <div className="grid flex-1 auto-rows-min grid-cols-3 gap-tight overflow-y-auto p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
-            {DESTINATIONS.map((d) => {
-              const active = isActive(d.href);
-              const Icon = d.icon;
-              return (
-                <Link
-                  key={d.href}
-                  href={d.href}
-                  onClick={() => setMoreOpen(false)}
-                  className={cn(
-                    "relative flex h-24 flex-col items-center justify-center gap-tight rounded-sm border transition-colors duration-quick active:bg-ember/10",
-                    active ? "border-ember bg-ember/10 text-fg" : "border-line bg-card text-fg",
-                  )}
-                >
-                  {active && (
-                    <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-ember text-ink">
-                      <Check size={12} strokeWidth={2.5} />
-                    </span>
-                  )}
-                  <Icon size={24} strokeWidth={1.5} className={active ? "text-brand-foreground" : "text-muted"} />
-                  <span className="text-center text-[12px] font-medium leading-tight">{t(d.key)}</span>
-                </Link>
-              );
-            })}
-          </div>
+      {/* More — a sheet from the bottom, which is where it is opened from.
+          It used to be a full-height panel dropped from the TOP while the
+          finger that summoned it was at the bottom of the screen, and it
+          covered the whole page rather than reading as something over it. */}
+      <Sheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        title={t("more")}
+        closeLabel={tCommon("close")}
+        lead={<p className="truncate font-mono text-[12px] text-muted">{operatorQ.data?.name ?? "Counterfoil"}</p>}
+        className="md:hidden"
+      >
+        <div className="grid auto-rows-min grid-cols-3 gap-tight p-card">
+          {DESTINATIONS.map((d) => {
+            const active = isActive(d.href);
+            const Icon = d.icon;
+            return (
+              <Link
+                key={d.href}
+                href={d.href}
+                onClick={() => setMoreOpen(false)}
+                className={cn(
+                  "relative flex h-[5.25rem] flex-col items-center justify-center gap-tight rounded-sm border transition-colors duration-quick active:bg-ember/10",
+                  active ? "border-ember bg-ember/10 text-fg" : "border-line bg-card text-fg",
+                )}
+              >
+                {active && (
+                  <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-ember-solid text-white">
+                    <Check size={11} strokeWidth={3} />
+                  </span>
+                )}
+                <Icon size={22} strokeWidth={1.5} className={active ? "text-brand-foreground" : "text-muted"} />
+                <span className="px-inline text-center text-[12px] font-medium leading-tight">{t(d.key)}</span>
+              </Link>
+            );
+          })}
         </div>
-      )}
+      </Sheet>
     </div>
     </BarTitleContext>
   );

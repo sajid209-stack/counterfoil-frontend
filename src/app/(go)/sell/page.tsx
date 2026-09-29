@@ -740,19 +740,24 @@ export default function SellPage() {
           className="fixed inset-x-comfortable bottom-[calc(82px+env(safe-area-inset-bottom))] z-30 lg:static lg:mt-comfortable"
         >
           <div className="flex items-center gap-comfortable rounded-full bg-inverse px-section py-tight shadow-go-pop lg:rounded-go lg:px-comfortable">
-            {/* The figure here is what the button is about to take, not the
-                order total — a part-paid sale showed "Total ৳3,450" beside a
-                button reading "Take ৳1,950", which is two different numbers
-                side by side and the easiest kind of misread at a counter. The
-                total stays in the pay panel, where it is context rather than
-                a competing answer. */}
+            {/* The bar states the figure ONCE.
+                It used to read "Total ৳575.00" beside a button reading "Take
+                ৳575.00" — the same number twice, eight pixels apart, which is
+                what the owner boxed. So the left side carries a figure only
+                where it is a DIFFERENT one: on a part-paid sale the total and
+                the amount to collect genuinely differ, and both are worth
+                having. Paid in full it says what the sale is instead — the
+                count, which the button cannot say — exactly as the v1 till's
+                collapsed bar does. */}
             <span className="min-w-0 flex-1">
               <span className="block text-[0.75rem] text-inverse-fg/60">
-                {balance > 0 ? t("footer.toCollect") : t("footer.total")}
+                {balance > 0 ? t("footer.total") : t("footer.items", { count: items.length })}
               </span>
-              <span className="block truncate text-[1.0625rem] font-semibold tabular-nums text-inverse-fg">
-                {formatMoney(dueNow, currency)}
-              </span>
+              {balance > 0 && (
+                <span className="block truncate text-[1.0625rem] font-semibold tabular-nums text-inverse-fg">
+                  {formatMoney(totals.total, currency)}
+                </span>
+              )}
             </span>
             <Button
               shape="pill"

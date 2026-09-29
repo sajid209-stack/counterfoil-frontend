@@ -35,6 +35,20 @@ export interface DataTableProps<T> {
    *  much, in that order and not as five labelled pairs. Opt-in: pages
    *  that do not supply one keep the generic layout. */
   renderCard?: (row: T) => React.ReactNode;
+  /**
+   * How the rows read below md.
+   *
+   * `cards` (the default) is a stack of separate cards — right for a record
+   * with a picture and a few facts, and what fifteen tables in this app draw.
+   *
+   * `list` is one card of hairline-separated rows. A stack of cards spends
+   * 16px of gap plus 32px of padding on every row before a word of content,
+   * which measured 142px an order and 141px a customer at 390px — five rows to
+   * a screen, on the two lists somebody scrolls most. A list is the shape a
+   * phone reads a long index in, and it is what the owner asked for: "less
+   * info, like a table".
+   */
+  cardVariant?: "cards" | "list";
   /** Below this the table scrolls sideways instead of squeezing its
    *  columns. Opt-in, because a three-column table has nothing to gain
    *  from it — but a seven-column one squeezed to 766px wraps a reference
@@ -85,6 +99,7 @@ export function DataTable<T>({
   toolbar,
   emptyState,
   renderCard,
+  cardVariant = "cards",
   minWidth,
   pagination,
   skeletonRows = 6,
@@ -93,16 +108,23 @@ export function DataTable<T>({
   height = "box",
 }: DataTableProps<T>) {
   const showEmpty = !loading && rows.length === 0;
+  const list = cardVariant === "list";
 
   return (
     <div className="flex flex-col gap-section">
       {toolbar && <div>{toolbar}</div>}
 
       {/* Mobile (<768px): rows become tappable cards — primary line + labelled meta. */}
-      <div className="flex flex-col gap-section md:hidden">
+      <div className={cn("md:hidden", list ? "card-surface overflow-hidden" : "flex flex-col gap-section")}>
         {loading &&
-          Array.from({ length: 3 }).map((_, i) => (
-            <div key={`csk-${i}`} className="flex animate-pulse flex-col gap-tight card-surface p-card">
+          Array.from({ length: list ? 6 : 3 }).map((_, i) => (
+            <div
+              key={`csk-${i}`}
+              className={cn(
+                "flex animate-pulse flex-col gap-tight",
+                list ? "border-b border-hairline p-card last:border-0" : "card-surface p-card",
+              )}
+            >
               <div className="h-4 w-2/3 rounded-xs bg-line" />
               <div className="h-3 w-1/2 rounded-xs bg-line" />
             </div>
@@ -117,9 +139,15 @@ export function DataTable<T>({
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={onRowClick ? (e) => e.key === "Enter" && onRowClick(row) : undefined}
               className={cn(
-                "card-surface p-card transition-transform duration-quick",
-                onRowClick && "cursor-pointer active:bg-muted-wash hover:-translate-y-0.5",
-                isSelected?.(row) && "border-ember bg-ember/5",
+                list
+                  /* A row, not a card: no gap, no second border, and the lift
+                     goes with them — a row that rises out of its own list reads
+                     as a card that has come loose. */
+                  ? "border-b border-hairline p-card last:border-0"
+                  : "card-surface p-card transition-transform duration-quick",
+                onRowClick && "cursor-pointer active:bg-muted-wash",
+                onRowClick && !list && "hover:-translate-y-0.5",
+                isSelected?.(row) && (list ? "bg-ember/5" : "border-ember bg-ember/5"),
               )}
             >
               {renderCard ? (

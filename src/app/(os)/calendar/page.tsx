@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { Button, DateField, PageShell, Select, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -873,16 +873,12 @@ export default function CalendarPage() {
     <PageShell
       title={t("title")}
       description={t("description")}
-      actions={
-        <Button
-          icon={<Plus size={16} strokeWidth={1.5} />}
-          onClick={() => openNewBooking()}
-          title={t("book.newBookingKey")}
-          aria-keyshortcuts="C"
-        >
-          {t("book.newBooking")}
-        </Button>
-      }
+      primary={{
+        label: t("book.newBooking"),
+        onClick: () => openNewBooking(),
+        title: t("book.newBookingKey"),
+        keyShortcut: "C",
+      }}
     >
       <div className="flex flex-col gap-section">
         <CalendarStats

@@ -135,5 +135,7 @@
   "statReachableValue": "{total}-এর মধ্যে {count}",
   "customerSince": "{when} থেকে গ্রাহক",
   "archivedLabel": "আর্কাইভ",
-  "sinceAndSeen": "{since} থেকে গ্রাহক · সর্বশেষ {last}"
+  "sinceAndSeen": "{since} থেকে গ্রাহক · সর্বশেষ {last}",
+  "ordersCount": "{count, plural, one {# অর্ডার} other {# অর্ডার}}",
+  "filterReach": "যেভাবে পাওয়া যাবে"
 }

@@ -105,7 +105,8 @@
     "completeAmount": "{amount} সম্পন্ন করুন",
     "overLimit": "ম্যানেজারের অনুমোদন লাগবে",
     "needReason": "ছাড়ের কারণ লিখুন",
-    "toCollect": "নিতে হবে"
+    "toCollect": "নিতে হবে",
+    "items": "{count, plural, one {# আইটেম} other {# আইটেম}}"
   },
   "custom": {
     "title": "কাস্টম পরিমাণ",

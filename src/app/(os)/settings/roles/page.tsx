@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Copy, Plus, Trash2, UserCog } from "lucide-react";
-import { ActionMenu, Button, ConfirmDialog, PageShell, useToast } from "@/components/ui";
+import { Copy, Trash2, UserCog } from "lucide-react";
+import { ActionMenu, ConfirmDialog, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { createRole, deleteRole, listRoles, listStaff, type Role } from "@/lib/api";
 import { IconTile, RecordList, RecordRow, SectionSkeleton } from "../_components/SettingsKit";
@@ -72,11 +72,7 @@ export default function RolesPage() {
     <PageShell
       title={t("roles.title")}
       description={t("roles.description")}
-      actions={
-        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/roles/new")}>
-          {t("roles.newRole")}
-        </Button>
-      }
+      primary={{ label: t("roles.newRole"), onClick: () => router.push("/settings/roles/new") }}
     >
       {!rolesQ.data || !staffQ.data ? (
         <SectionSkeleton />

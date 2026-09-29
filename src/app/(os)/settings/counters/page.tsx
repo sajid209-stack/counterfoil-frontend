@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, Store } from "lucide-react";
+import { Store } from "lucide-react";
 import { Button, EmptyState, PageShell, StatusPill, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -87,11 +87,7 @@ export default function CountersPage() {
     <PageShell
       title={t("counters.title")}
       description={t("counters.description")}
-      actions={
-        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/counters/new")}>
-          {t("counters.add")}
-        </Button>
-      }
+      primary={{ label: t("counters.add"), onClick: () => router.push("/settings/counters/new") }}
     >
       {loading ? (
         <SectionSkeleton />

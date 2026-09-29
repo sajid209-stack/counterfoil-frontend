@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { KeyRound, Mail, Plus, UserCheck, UserMinus, UserX } from "lucide-react";
-import { ActionMenu, Avatar, Button, ConfirmDialog, PageShell, Select, StatusPill, Tabs, useToast, type ActionMenuItem } from "@/components/ui";
+import { KeyRound, Mail, UserCheck, UserMinus, UserX } from "lucide-react";
+import { ActionMenu, Avatar, ConfirmDialog, PageShell, Select, StatusPill, Tabs, useToast, type ActionMenuItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listLocations, listRoles, listStaff, revokeInvite, updateStaff, type Staff, type StaffStatus } from "@/lib/api";
@@ -167,11 +167,7 @@ export default function TeamPage() {
     <PageShell
       title={t("team.title")}
       description={t("team.description")}
-      actions={
-        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/team/new")}>
-          {t("team.invite")}
-        </Button>
-      }
+      primary={{ label: t("team.invite"), onClick: () => router.push("/settings/team/new") }}
     >
       <div className="flex max-w-5xl flex-col gap-section pb-hero">
         <Tabs

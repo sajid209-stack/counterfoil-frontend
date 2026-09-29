@@ -13841,3 +13841,230 @@ reporting a 404 as a console error for ever.
   still Print or SMS from the order.
 - **An event ticket has no per-day redemption**, so a two-day pass still cannot
   be admitted twice. Carried forward from the multi-day work.
+
+## The phone gets its screen back, and the till gets its own settings (2026-09-29)
+
+Eight owner items, six of them about how much of a phone is spent before any
+content. Measured first, on a 390 × 844 screen whose usable height is 735px
+once the 53px bar and the 56px tab bar are off it:
+
+| | content started at | figures band | filters | a row |
+|---|---|---|---|---|
+| /orders | **451** (61% of the screen) | 238 | 96 | **142** |
+| /customers | **495** (67%) | 238 | 44 | **141** |
+| /calendar | **651** (89%) | 244 | 44 | 51 |
+| /catalog | 458 | — | 390 | 107 |
+| /inventory | 353 | — | 148 | 124 |
+
+Five orders to a screen, on the list somebody scrolls most.
+
+### The rules this was built on, from the design database
+
+- **`progressive-disclosure`** (Apple HIG) — reveal progressively; do not
+  overwhelm upfront.
+- **`chip-collection-reflow`** (High) — wrap the collection before shrinking
+  labels, and make a `+n` overflow summary an **operable disclosure** rather
+  than a way of hiding values. This is the one that stops "hide the filters"
+  being the answer.
+- **`state-preservation`** (HIG/MD) — going back restores scroll, filter state
+  and input.
+- **`modal-escape`** (HIG) — a sheet must offer a clear way out, and dismiss on
+  a downward swipe.
+- **`overflow-menu`** (MD) — when actions exceed the space, use an overflow
+  rather than cramming.
+- **`bottom-nav-limit`** (Material) — five items, with labels.
+- **`nav-hierarchy`** (MD) — primary and secondary navigation kept apart.
+
+Two searches came back off-topic and were retried once, as the contract says;
+where the database had nothing on point the call is labelled as judgement below
+rather than dressed up as a match.
+
+### 4 — the figures fold on a phone
+
+The band is four figures, one per row at 390px: **238px above every list**. The
+lead figure now stays at full size and the rest sit behind a disclosure that
+**says how many they are** ("3 more") and points at what it opens. Remembered
+per browser, so somebody who wants all four keeps them.
+
+**81px, from 238.** From `sm` there is room for two across and the disclosure
+does not exist. The lead is `items[0]`, which every page already orders by
+importance.
+
+### 6 — the filters fold too, and say what is set
+
+New `components/ui/FilterBar`. Search stays — it is the one control a list is
+opened with — and everything else goes behind one **Filters** button that
+carries a count, on a sheet. Anything actually set comes back out as a chip
+that names its **value** and can clear it, so nothing a person chose is ever
+only inside a closed sheet. From `md` every control renders inline, as it
+always did.
+
+**The control exists once.** It is rendered on one side of a `useMediaQuery`
+rather than both sides with one hidden: a hidden copy is a real node, it comes
+first in document order, and this app has been caught by that three times (the
+sell wall, the page header, the orders nav).
+
+Applied to /orders (96px → 44), /inventory (148 → 96) and /catalog, whose
+bespoke version — a slider glyph that revealed the sort *inline* with a bare
+dot to say something was on — is gone. Customers has one filter, which is its
+own primary cut, so it stays visible.
+
+**The labels name the field, not the "everything" option.** They read
+`t("allRanges")` at first — "Any date" over a control reading "Any date", three
+rows down. A Select is named by its first option, which is right for a bare
+control inline and wrong under a label.
+
+### 7 and 8 — the two lists become lists
+
+`DataTable` gains `cardVariant="list"`: one card of hairline-separated rows
+instead of a stack of separate cards, which spent 16px of gap plus 32px of
+padding on every row before a word of content.
+
+- **An order** is two lines: who bought and how much, then the reference, when,
+  and what is still owed. It was six, and three of them restated something the
+  page can filter by (the venue, the channel) or nobody scans a list for (the
+  item count). **142px → 84px.**
+- **A customer** is two lines: the name and their spend, then the phone, the
+  order count and the last visit. It was the generic label/value dump, which
+  put an e-mail address and two consent chips above the two figures the list is
+  ranked by. **141px → 76px.** The phone rather than the e-mail, because two
+  customers share a name far more often than a number.
+
+Nothing is lost: both records carry everything, and consent is what the
+segments above the customer list filter on.
+
+### 3 — the create action is a plus in the bar
+
+`PageShell` gains `primary` — one declared create action, drawn as a labelled
+button on a desktop and as a **44px plus in the phone's top bar**, beside the
+account button, with its words as its accessible name. Secondary controls stay
+on the page, which is `overflow-menu`: a 390px bar cannot hold a page's whole
+toolbar.
+
+Fourteen pages moved. The account button's disc is 36px on a phone rather than
+32 — there it is one of two controls in the bar and was reading as a label.
+
+### 5 — More becomes a sheet, and lists what the desktop lists
+
+New `components/ui/Sheet`, because there were three bottom sheets in the app
+with three implementations. It carries a handle and **four ways out** — the
+close button, the backdrop, Escape, and a downward drag past 80px — which is
+`modal-escape` in full rather than in spirit. The `go-sheet-in` keyframe was
+renamed `sheet-up`: one motion, one name, two surfaces.
+
+More was not a sheet at all. It was a full-height panel dropped from the
+**top** while the finger that summoned it was at the bottom, covering the whole
+page rather than reading as something over it. It rises from the bottom now.
+
+**And it lists the desktop rail's own destinations, in the rail's order.** The
+two had drifted into different products: the grid offered **Analytics** (a tab
+of Reports, not a destination) and **Promotions** (hidden behind
+`FEATURES.promotions`), and was missing **Customers**, which the rail has
+carried since it was built. So a phone could not reach a customer and could
+reach two things a desktop does not offer. Eleven entries, matching the rail.
+
+### 1 — the till gets its own settings
+
+More offered "Settings" and opened **`/settings/business`** — the whole admin
+app, mid-shift, with the sidebar and the tax rates in front of a cashier who
+wanted to turn the number pad off.
+
+`/till-settings` is the till's: the number pad, text size, appearance and
+language — all four **this browser's**, which is what a till is, and the page
+says so. The business's own settings are one explicit link away, never the
+default. Appearance and text size moved off the More sheet rather than being
+drawn in both places.
+
+**The pad stays reachable when it is off.** The fast path at a counter is
+**Exact** — one tap — and 300px of pad under it is for the rarer tender. Off,
+the quick amounts stay and a **Type an amount** button brings the pad for that
+sale. A setting that made an amount untypable would be a setting that breaks
+the sale; hiding a control is only defensible while there is still a way to it.
+
+### 2 — the scrolling till's bar states the figure once
+
+It read **"Total ৳575.00"** beside a button reading **"Take ৳575.00"** — the
+same number twice, eight pixels apart, which is what the owner boxed.
+
+The left side now carries a figure only where it is a *different* one: on a
+part-paid sale the total and the amount to collect genuinely differ and both
+are worth having. Paid in full it says what the sale is instead — the count,
+which the button cannot say — exactly as the v1 till's collapsed bar does.
+
+### After
+
+| | content started at | now | a row |
+|---|---|---|---|
+| /orders | 451 | **243** | 142 → **84** |
+| /customers | 495 | **287** | 141 → **76** |
+| /calendar | 651 | **488** | — |
+| /catalog | 458 | **414** | — |
+| /inventory | 353 | **257** | — |
+
+/orders is 1,377px of document where it was 2,499; /customers 2,004 where it
+was 3,783. Twelve orders to a screen where there were five.
+
+### Three faults found by looking, not by the checks
+
+- **The number-pad switch had no thumb.** An absolutely positioned span inside
+  a `<button>` with no `left` starts from the button's **centred** content box,
+  so the translate pushed it off the edge. The settings `Switch` carries a
+  comment about exactly this, from the day it was fixed there; `left-0`.
+- **The till-settings page said every label twice** — "Appearance" over
+  "APPEARANCE" — because `AppearancePicker` and `LanguagePicker` name
+  themselves. Both take `showLabel`.
+- **Its last card sat under the tab bar.** The Go bar is a floating pill that
+  owns the bottom 76px, and a plain Go page reserves nothing for it.
+
+And one caught by the compiler rather than by me: the first `Sheet` reset its
+drag offset in an effect, which is an error in this repo. It never needed to —
+the drag handler always puts it back before it closes.
+
+### Verified
+
+- **New: 48 checks on the phone's OS** (the bar's plus, its 44px target and
+  its alignment with the account button, the fold and its memory, the filter
+  sheet, the chips, the two list shapes, the More sheet's contents) plus
+  **95 measured** across 390 and 1440, light and dark, English and Bangla:
+  contrast, the 12px floor, clipping, page and `main` overflow, thumb targets,
+  console noise — and the sheet's Escape, backdrop and swipe dismissals with
+  focus returning to whatever opened it.
+- **21 checks on the till's settings**, driven through More: the page is the
+  till's and not the business's, the switch turns the pad off, and a real sale
+  then reaches a cash screen with no pad, the quick amounts intact and **Type
+  an amount** bringing the pad back.
+- **8 on the scrolling till's bar**: the figure appears exactly once when paid
+  in full, and as two different figures when part paid.
+- Standing harnesses hold: **topcards 102/102** (rewritten for the fold — its
+  band probe was reading `firstElementChild`, which is now the disclosure, so
+  it measured a button with one chevron in it), **catalog-e2e 95/95**,
+  **mob1 clean at hidden 0 · under12 14 (all `/deck`) · under44 0 · clipped 0 ·
+  errors 0**, **dd1 58/58**, **settings-nav 55/55**, **reports-e2e 48/48**,
+  **inventory-e2e 40/40**, **holds-e2e 37/37**, **codes 27/27**,
+  **shop3 23/23**, **tk1 37/37**, **cal7 15/15**, **rad 8/8**.
+- `tsc --noEmit`, `npm run build` and `eslint` clean — **every** remaining lint
+  finding is in the documented pre-existing set, and none is in a file this
+  change created. i18n parity **0 missing / 0 extra** across 37 namespaces,
+  with `catalog.moreFilters` removed with the control it labelled and the four
+  `nav.textSize*` keys moved into `pos`, where their only reader now lives.
+
+**Two harness rules re-learned, both recorded before.** Run them one at a time:
+`dd1`, `codes`, `catalog-e2e` and `settings-nav` each reported a phantom
+failure in a batch and passed alone on a settled server — one was attributed
+against production (58/58 there) before being believed. And a probe must click
+the **visible** copy of a control: the desktop rail and the Go landscape rail
+are both in the DOM at phone width and both come first in document order.
+
+### Open
+
+- **/catalog still spends 414px** before its first row, and every pixel is a
+  control the page owns: the one-time notice about the merge, the All/Bookings/
+  Events views, the state facets, search and Filters. Folding one of those is a
+  decision about that page rather than a measurement.
+- **/reports/sales spends 928px**, which is its own filter line, four tabs and
+  its KPI band. It was rebuilt on 22 September and left alone here.
+- **`/sell` shows the amount on the bar and in its own receipt panel**, ~200px
+  apart. That is the relationship `/pos/cart` has — the panel is the receipt,
+  the bar is the persistent copy — and matching the cart till was the ask.
+- **The 11px tab-bar labels** stay, on both surfaces: five tabs across 390px is
+  a tab-bar convention and 14px does not fit. Declared since the type sweep.

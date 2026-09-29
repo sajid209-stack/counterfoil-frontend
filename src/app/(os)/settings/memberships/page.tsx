@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Archive, Plus } from "lucide-react";
+import { Archive } from "lucide-react";
 import {
   Button,
   ConfirmDialog,
@@ -75,11 +75,7 @@ export default function MembershipTiersPage() {
     <PageShell
       title={t("tiersTitle")}
       description={t("tiersDescription")}
-      actions={
-        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => setEditing("new")}>
-          {t("newTier")}
-        </Button>
-      }
+      primary={{ label: t("newTier"), onClick: () => setEditing("new") }}
     >
       {tiersQ.loading && (
         <div className="flex flex-col gap-tight">

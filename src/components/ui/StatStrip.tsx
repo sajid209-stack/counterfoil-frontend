@@ -1,6 +1,9 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
+import { setPrefs, usePrefs } from "@/lib/prefs";
 
 export interface StatItem {
   key: string;
@@ -45,6 +48,17 @@ export interface StatItem {
  * the owner asked for it to stay exactly as it is.
  *
  * Both live in this file so that a page cannot invent a third.
+ *
+ * **On a phone the band folds.** Four figures, one per row at 390px, measured
+ * 238px — and on /orders that put the first row of the list 451px down a 735px
+ * screen. So the lead figure stays at full size and the rest sit behind a
+ * disclosure that states how many they are: `progressive-disclosure` says
+ * reveal progressively, and `chip-collection-reflow` says an overflow summary
+ * has to be operable rather than a way of hiding values. It is remembered, so
+ * somebody who wants all four keeps them.
+ *
+ * The lead figure is `items[0]`, which every page already orders by importance
+ * — spend and orders lead, a count of nothing goes quiet.
  */
 export function StatStrip({
   items,
@@ -55,6 +69,10 @@ export function StatStrip({
   loading?: boolean;
   variant?: "band" | "tiles";
 }) {
+  // Read here rather than inside the fold, so the grid and the disclosure
+  // cannot disagree about which state they are in.
+  const { statsOpen: open } = usePrefs();
+
   if (variant === "tiles") {
     return (
       <>
@@ -81,12 +99,19 @@ export function StatStrip({
        through, so they land between cells however the row wraps — a per-cell
        border draws a stray edge the moment two figures sit on a second row. */
     <div className="card-surface overflow-hidden">
+      {items.length > 1 && <FoldedLead items={items} loading={loading} />}
       {/* One figure a row on a phone, two across from sm, one column each
           from xl. Measured, not guessed: four columns of a 768px screen leave
           146px of cell, and "৳462,206.03" at 26px needs 150 — the card clips,
           so the figure would be silently wrong rather than merely cramped. */}
       <div
-        className="grid gap-px bg-hairline sm:[grid-template-columns:repeat(2,minmax(0,1fr))] xl:[grid-template-columns:repeat(var(--stat-n),minmax(0,1fr))]"
+        id={GRID_ID}
+        className={cn(
+          "grid gap-px bg-hairline sm:[grid-template-columns:repeat(2,minmax(0,1fr))] xl:[grid-template-columns:repeat(var(--stat-n),minmax(0,1fr))]",
+          // Folded on a phone only; from sm there is room for two across and
+          // the disclosure does not exist.
+          items.length > 1 && !open && "max-sm:hidden",
+        )}
         style={{ "--stat-n": Math.min(items.length, 4) } as React.CSSProperties}
       >
         {items.map((item) => (
@@ -94,6 +119,56 @@ export function StatStrip({
         ))}
       </div>
     </div>
+  );
+}
+
+/** The id the disclosure controls, so a screen reader is told what it opens. */
+const GRID_ID = "stat-band-figures";
+
+/**
+ * The phone's folded band: the lead figure, and a count of the rest.
+ *
+ * It states what is hidden ("3 more") rather than offering a bare chevron — a
+ * disclosure that does not say what is behind it is a control nobody presses.
+ */
+function FoldedLead({ items, loading }: { items: StatItem[]; loading: boolean }) {
+  const t = useTranslations("common");
+  const { statsOpen: open } = usePrefs();
+  const lead = items[0];
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-controls={GRID_ID}
+      onClick={() => setPrefs({ statsOpen: !open })}
+      className={cn(
+        "flex w-full items-center gap-section px-card py-comfortable text-left transition-colors duration-quick active:bg-muted-wash sm:hidden",
+        open && "border-b border-hairline",
+      )}
+    >
+      <span className="min-w-0 flex-1">
+        {/* Open, the grid below draws every figure including this one, so the
+            header states what it is rather than repeating the number. */}
+        {open ? (
+          <span className="block truncate text-[0.8125rem] font-medium text-fg">{t("figures")}</span>
+        ) : (
+          <>
+            <span className="block truncate text-[0.75rem] font-medium text-muted">{lead.label}</span>
+            {loading ? (
+              <span className="mt-inline block h-6 w-24 animate-pulse rounded-xs bg-line" />
+            ) : (
+              <span className={cn("type-figure mt-inline block truncate text-[1.625rem] font-semibold leading-tight", lead.tone === "warning" && "text-warning")}>
+                {lead.value}
+              </span>
+            )}
+          </>
+        )}
+      </span>
+      <span className="flex shrink-0 items-center gap-inline text-[0.8125rem] font-medium text-muted">
+        {!open && t("moreCount", { count: items.length - 1 })}
+        <ChevronDown size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", open && "rotate-180")} />
+      </span>
+    </button>
   );
 }
 

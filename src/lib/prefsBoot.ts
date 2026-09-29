@@ -18,7 +18,7 @@
  * Declared here so the boot script and `GoShell` read one list. Two copies of
  * this would drift, and the symptom would be a cold load at the wrong size.
  */
-export const TILL_PATHS = ["/pos", "/sell", "/classic", "/schedule", "/scan", "/checkin", "/shift", "/login", "/reservations", "/quickpass", "/tills"];
+export const TILL_PATHS = ["/pos", "/sell", "/classic", "/schedule", "/scan", "/checkin", "/shift", "/login", "/reservations", "/quickpass", "/tills", "/till-settings"];
 
 /** 16px at normal — the browser's own default, and the size everything in the
  *  till was drawn against. */

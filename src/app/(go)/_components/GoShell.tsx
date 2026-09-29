@@ -23,14 +23,13 @@ import {
 import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
-import { AppearancePicker } from "@/components/ThemeProvider";
 import { Logo, Modal } from "@/components/ui";
 import { TillSwitcher } from "./TillSwitcher";
 import { useApiQuery } from "@/lib/useApi";
 import { listProducts } from "@/lib/api";
 import { isSlotBased } from "@/lib/schedule";
 import { liveSaleCount, onLiveSaleChange } from "../pos/_lib/liveSale";
-import { applyTillText, setPrefs, usePrefs, type TillText } from "@/lib/prefs";
+import { applyTillText, usePrefs } from "@/lib/prefs";
 
 /**
  * How much of the bottom of the screen the floating tab bar owns: it sits 12px
@@ -66,7 +65,11 @@ const MORE_ITEMS = [
   { key: "quickPass", icon: Ticket, href: "/quick-pass" },
   { key: "myProfile", icon: UserRound, href: "/profile" },
   { key: "switchUser", icon: Users, href: "/login" },
-  { key: "settings", icon: Settings, href: "/settings/business" },
+  /* The TILL's settings, not the business's. This used to open
+     /settings/business — the whole admin app, mid-shift, in front of a cashier
+     who wanted to turn the number pad off. The business settings are one
+     explicit link away on that page. */
+  { key: "settings", icon: Settings, href: "/till-settings" },
   { key: "help", icon: CircleHelp, action: "help" },
 ] as const;
 
@@ -298,42 +301,10 @@ export function GoShell({ children }: { children: React.ReactNode }) {
               })}
             </div>
 
-            {/* Appearance is a per-DEVICE choice — a daylight gate wants light,
-                a night counter wants dark — so it belongs with the other device
-                preferences here. It used to sit inside the close-drawer form,
-                where a theme picker competed with the primary action in the
-                middle of a cash count. */}
-            <div className="mt-section border-t border-line pt-section">
-              <AppearancePicker />
-            </div>
-
-            {/* Text size, for the same reason and in the same place: a device
-                choice, made by whoever is standing at it. Front-of-house is
-                read at arm's length for a whole shift, and 13px across a
-                counter is not readable by everyone who works one. */}
-            <div className="mt-section border-t border-line pt-section">
-              <p className="type-label mb-tight text-[0.8125rem] text-muted">{t("textSize")}</p>
-              <div role="radiogroup" aria-label={t("textSize")} className="flex gap-tight">
-                {(["normal", "large", "largest"] as TillText[]).map((v, i) => (
-                  <button
-                    key={v}
-                    type="button"
-                    role="radio"
-                    aria-checked={prefs.tillText === v}
-                    onClick={() => setPrefs({ tillText: v })}
-                    className={cn(
-                      "flex h-12 flex-1 items-center justify-center rounded-full border transition-colors duration-quick",
-                      prefs.tillText === v ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line text-muted active:bg-ember/10",
-                    )}
-                  >
-                    {/* Each option is set at the size it selects: a row of
-                        three identical labels is a guessing game about a
-                        choice that changes every screen behind it. */}
-                    <span style={{ fontSize: [15, 17, 19][i] }}>{t(`textSize_${v}`)}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Appearance and text size used to be drawn here as well. They are
+                the till's settings and they now live on the till's own settings
+                page, which is what the Settings tile opens — one control, one
+                place, rather than the same two in a sheet and on a page. */}
           </div>
         </div>
       )}

@@ -105,7 +105,8 @@
     "completeAmount": "Complete {amount}",
     "overLimit": "Needs a manager",
     "needReason": "Add a reason for the discount",
-    "toCollect": "To collect"
+    "toCollect": "To collect",
+    "items": "{count, plural, one {# item} other {# items}}"
   },
   "custom": {
     "title": "Custom amount",

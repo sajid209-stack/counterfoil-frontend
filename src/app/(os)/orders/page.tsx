@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import {
   DataTable,
   EmptyState,
+  FilterBar,
   Select,
   PageShell,
   StatStrip,
@@ -59,6 +60,10 @@ function OrdersPageInner() {
   const locationName = (id: string) => locationsQ.data?.data.find((l) => l.id === id)?.name ?? "—";
 
   const channelLabel = (c: string) => (c === "counter" ? t("channelCounter") : c === "online" ? t("channelOnline") : c);
+  /* A set filter comes back as a chip naming its VALUE, so a narrowed list
+     says what narrowed it rather than which field was touched. */
+  const rangeLabel = (r: Range) =>
+    r === "today" ? t("rangeToday") : r === "7d" ? t("range7d") : r === "30d" ? t("range30d") : t("allRanges");
 
   /** Half-open [from, to) for the chosen range, in the API's own ISO shape. */
   const bounds = useMemo(() => {
@@ -232,83 +237,115 @@ function OrdersPageInner() {
           onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
           onRowClick={(o) => router.push(`/orders/${o.id}`)}
           toolbar={
-            <div className="flex flex-wrap items-center gap-tight">
-              <div className="relative">
-                <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); resetPage(); }}
-                  // The API has always matched the customer name too; the old
-                  // placeholder said "by reference" and hid half the feature.
-                  placeholder={t("searchPlaceholder")}
-                  className="h-11 w-full min-w-0 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:h-9 md:w-72"
-                />
-              </div>
-              <Select
-                aria-label={t("allRanges")}
-                value={range}
-                onChange={(v) => { setRange(v as Range); resetPage(); }}
-                options={[
-                  { value: "all", label: t("allRanges") },
-                  { value: "today", label: t("rangeToday") },
-                  { value: "7d", label: t("range7d") },
-                  { value: "30d", label: t("range30d") },
-                ]}
-              />
-              <Select
-                aria-label={t("allStatuses")}
-                value={status}
-                onChange={(v) => { setStatus(v); resetPage(); }}
-                options={[
-                  { value: "", label: t("allStatuses") },
-                  ...(["paid", "pending", "partial", "refunded", "cancelled"] as const).map((k) => ({
-                    value: k,
-                    label: enumL.status(k),
-                  })),
-                ]}
-              />
-              <Select
-                aria-label={t("allChannels")}
-                value={channel}
-                onChange={(v) => { setChannel(v); resetPage(); }}
-                options={[
-                  { value: "", label: t("allChannels") },
-                  { value: "counter", label: t("channelCounter") },
-                  { value: "online", label: t("channelOnline") },
-                ]}
-              />
-            </div>
+            /* Search stays out; the three selects fold into one button on a
+               phone, with whatever is set coming back as a chip. Measured
+               before: four stacked controls were 96px of a 735px screen, on
+               top of a 238px figures band. */
+            <FilterBar
+              search={
+                <div className="relative">
+                  <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
+                  <input
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+                    // The API has always matched the customer name too; the old
+                    // placeholder said "by reference" and hid half the feature.
+                    placeholder={t("searchPlaceholder")}
+                    className="h-11 w-full min-w-0 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:h-9 md:w-72"
+                  />
+                </div>
+              }
+              filters={[
+                {
+                  key: "range",
+                  label: t("filterDate"),
+                  active: range === "all" ? null : rangeLabel(range),
+                  onClear: () => { setRange("all"); resetPage(); },
+                  control: (
+                    <Select
+                      aria-label={t("allRanges")}
+                      value={range}
+                      onChange={(v) => { setRange(v as Range); resetPage(); }}
+                      options={[
+                        { value: "all", label: t("allRanges") },
+                        { value: "today", label: t("rangeToday") },
+                        { value: "7d", label: t("range7d") },
+                        { value: "30d", label: t("range30d") },
+                      ]}
+                    />
+                  ),
+                },
+                {
+                  key: "status",
+                  label: t("filterStatus"),
+                  active: status ? enumL.status(status) : null,
+                  onClear: () => { setStatus(""); resetPage(); },
+                  control: (
+                    <Select
+                      aria-label={t("allStatuses")}
+                      value={status}
+                      onChange={(v) => { setStatus(v); resetPage(); }}
+                      options={[
+                        { value: "", label: t("allStatuses") },
+                        ...(["paid", "pending", "partial", "refunded", "cancelled"] as const).map((k) => ({
+                          value: k,
+                          label: enumL.status(k),
+                        })),
+                      ]}
+                    />
+                  ),
+                },
+                {
+                  key: "channel",
+                  label: t("filterChannel"),
+                  active: channel ? channelLabel(channel) : null,
+                  onClear: () => { setChannel(""); resetPage(); },
+                  control: (
+                    <Select
+                      aria-label={t("allChannels")}
+                      value={channel}
+                      onChange={(v) => { setChannel(v); resetPage(); }}
+                      options={[
+                        { value: "", label: t("allChannels") },
+                        { value: "counter", label: t("channelCounter") },
+                        { value: "online", label: t("channelOnline") },
+                      ]}
+                    />
+                  ),
+                },
+              ]}
+            />
           }
           minWidth="58rem"
+          cardVariant="list"
           renderCard={(o) => {
             const due = orderOutstanding(o);
             return (
-              /* An order has a natural shape — which one, who for, when and
-                 where, then the money — and reads far better in it than as
-                 five labelled pairs wrapped across a card. */
-              <div className="flex flex-col gap-tight">
-                <div className="flex items-start justify-between gap-tight">
-                  <span className="font-mono text-[13px]">{o.reference}</span>
-                  <StatusPill status={o.status} />
-                </div>
-                <span className={cn("break-words text-sm font-medium", !o.customerName && "text-muted")}>
-                  {o.customerName ?? t("walkIn")}
-                </span>
-                <span className="text-[12px] text-muted">
-                  {formatRelative(o.createdAt, now)} · {locationName(o.locationId)} · {channelLabel(o.channel)}
-                </span>
+              /* Two lines: who and how much, then which and when.
+                 It was six lines and 142px — five orders to a phone screen —
+                 and three of the six restated something the page can filter by
+                 (the venue and the channel) or nobody scans a list for (the
+                 item count). Both are on the order itself.
+                 Who leads rather than the reference, because that is what a
+                 person looking for an order remembers; the reference is beneath
+                 it, where it is still readable and still searchable. */
+              <div className="flex flex-col gap-inline">
                 <div className="flex items-baseline justify-between gap-tight">
-                  <span className="text-[12px] text-muted">
-                    {t("itemCount", { count: o.lines.reduce((sum, l) => sum + l.quantity, 0) })}
+                  <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", !o.customerName && "text-muted")}>
+                    {o.customerName ?? t("walkIn")}
                   </span>
-                  <span className="flex flex-col items-end">
-                    <span className="font-mono text-sm font-medium">{formatMoney(o.total)}</span>
+                  <span className="shrink-0 text-[13px] font-medium tabular-nums">{formatMoney(o.total)}</span>
+                </div>
+                <div className="flex items-baseline justify-between gap-tight">
+                  <span className="min-w-0 flex-1 truncate text-[12px] text-muted">
+                    <span className="font-mono">{o.reference}</span> · {formatRelative(o.createdAt, now)}
+                    {/* The one number somebody has to go and collect. In words
+                        as well as colour, and only when there is one. */}
                     {due > 0 && !isVoidedOrder(o) && (
-                      <span className="font-mono text-[12px] text-warning">
-                        {t("dueLabel", { amount: formatMoney(due) })}
-                      </span>
+                      <span className="text-warning"> · {t("dueLabel", { amount: formatMoney(due) })}</span>
                     )}
                   </span>
+                  <StatusPill status={o.status} />
                 </div>
               </div>
             );

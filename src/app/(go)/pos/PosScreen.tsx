@@ -23,6 +23,7 @@ import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
 import { EventSheet } from "../_components/EventSheet";
 import { Keypad } from "../_components/Keypad";
+import { usePrefs } from "@/lib/prefs";
 import { ticketSnapshot } from "./_lib/handover";
 import { clearLiveSale, readLiveSale, writeLiveSale } from "./_lib/liveSale";
 
@@ -275,6 +276,11 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const [nc, setNc] = useState<null | { method: "bkash" | "bangla_qr"; state: "pending" | "confirmed" | "failed"; txn: string }>(null);
   // Inline cash checkout — replaces the /pos/payment page navigation.
   const [clearOpen, setClearOpen] = useState(false);
+  /* Whether this till draws the number pad, and the way past it for one sale.
+     `padOpen` resets with the screen, so turning it off is still off next
+     time — a preference a stray tender could silently undo would not be one. */
+  const prefs = usePrefs();
+  const [padOpen, setPadOpen] = useState(false);
   const [cashOpen, setCashOpen] = useState(false);
   const [tenderTaka, setTenderTaka] = useState("");
   const [cashSaving, setCashSaving] = useState(false);
@@ -1856,9 +1862,25 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                   ))}
                 </div>
 
-                <div className="mt-section">
-                  <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
-                </div>
+                {/* The pad, if this till draws one.
+                    Off, it is one press away rather than gone: the fast path at
+                    a counter is Exact, and 300px of pad under it is for the
+                    rarer tender — but a setting that made an amount untypable
+                    would be a setting that breaks the sale. Settings → the till
+                    (More → Settings) turns it off. */}
+                {prefs.posKeypad || padOpen ? (
+                  <div className="mt-section">
+                    <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPadOpen(true)}
+                    className="mt-section h-12 w-full rounded-full border border-line bg-card text-sm font-medium text-fg active:bg-ember/10"
+                  >
+                    {t("cash.typeAmount")}
+                  </button>
+                )}
 
                 <Button shape="pill" size="lg" fullWidth className="mt-section h-14" disabled={!enough} loading={cashSaving} onClick={() => completeCash(tenderedMinor, changeMinor)}>{t("cash.completeSale")}</Button>
               </div>

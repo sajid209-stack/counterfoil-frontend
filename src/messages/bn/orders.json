@@ -114,5 +114,8 @@
   "settled": "সম্পূর্ণ পরিশোধিত।",
   "refundedLabel": "ফেরত দেওয়া হয়েছে",
   "viaMarketplace": "{name}-এর মাধ্যমে বুক",
-  "marketplaceCut": "{commission} কমিশন · আপনি পাবেন {net}"
+  "marketplaceCut": "{commission} কমিশন · আপনি পাবেন {net}",
+  "filterDate": "তারিখ",
+  "filterStatus": "অবস্থা",
+  "filterChannel": "যেখান থেকে বিক্রি"
 }

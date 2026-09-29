@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Archive, LandPlot, Plus, RotateCcw } from "lucide-react";
+import { Archive, LandPlot, RotateCcw } from "lucide-react";
 import { ActionMenu, Button, ConfirmDialog, EmptyState, Modal, PageShell, StatusPill, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -139,11 +139,7 @@ export default function ResourcesPage() {
     <PageShell
       title={title}
       description={t("resources.descriptionList")}
-      actions={
-        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/resources/new")}>
-          {addLabel}
-        </Button>
-      }
+      primary={{ label: addLabel, onClick: () => router.push("/settings/resources/new") }}
     >
       {loading ? (
         <SectionSkeleton />

@@ -135,5 +135,7 @@
   "statReachableValue": "{count} of {total}",
   "customerSince": "Customer since {when}",
   "archivedLabel": "Archived",
-  "sinceAndSeen": "Customer since {since} · last seen {last}"
+  "sinceAndSeen": "Customer since {since} · last seen {last}",
+  "ordersCount": "{count, plural, one {# order} other {# orders}}",
+  "filterReach": "Reachable by"
 }

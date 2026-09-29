@@ -25,7 +25,6 @@ import {
   RotateCcw,
   Search,
   Ship,
-  SlidersHorizontal,
   Trash2,
   Trophy,
   X,
@@ -39,6 +38,7 @@ import {
   EmptyState,
   PageShell,
   ProductThumb,
+  FilterBar,
   Select,
   StatStrip,
   StatusPill,
@@ -177,7 +177,6 @@ function Catalog() {
   const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "smart", order: "asc" });
   const [page, setPage] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   /* On a phone the checkboxes are a mode, not a column on every card. */
   const [selecting, setSelecting] = useState(false);
   const wantArchived = states.includes("archived");
@@ -735,6 +734,11 @@ function Catalog() {
   const facetChips = FACETS.filter((f) =>
     kind === "bookings" ? !["soldOut", "ended"].includes(f) : kind === "events" ? f !== "attention" : true,
   ).filter((f) => f === "archived" || states.includes(f) || facetCounts[f] > 0);
+  /* On a phone the row wraps to a second line at five chips, so Archived —
+     which is a different question from "which live state" — moves into the
+     filter sheet instead. `chip-collection-reflow` forbids clipping it; this
+     discloses it, which is what the rule asks for. */
+  const phoneChips = facetChips.filter((f) => f !== "archived" || states.includes("archived"));
 
   // ── the one-time note about the move ──────────────────────────────────────
   /* Read through useSyncExternalStore: the server has no storage, so it says
@@ -760,17 +764,13 @@ function Catalog() {
     <PageShell
       title={t("title")}
       description={t("description")}
+      primary={{ label: t("add"), href: kind === "all" ? "/catalog/new" : `/catalog/new?kind=${kind}` }}
       actions={
-        <div className="flex gap-tight">
-          {!compact && (
-            <Button variant="secondary" icon={<LayoutGrid size={16} strokeWidth={1.5} />} onClick={() => router.push("/catalog/layouts")}>
-              {tp("seatLayouts")}
-            </Button>
-          )}
-          <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push(kind === "all" ? "/catalog/new" : `/catalog/new?kind=${kind}`)}>
-            {t("add")}
+        !compact ? (
+          <Button variant="secondary" icon={<LayoutGrid size={16} strokeWidth={1.5} />} onClick={() => router.push("/catalog/layouts")}>
+            {tp("seatLayouts")}
           </Button>
-        </div>
+        ) : undefined
       }
     >
       {/* First run: nothing to list yet, so the page IS the way to add the
@@ -968,8 +968,6 @@ function Catalog() {
                         className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:h-9 md:w-72"
                       />
                     </div>
-                    {/* The two selects are a second thought on a phone: behind
-                        one button, so the list starts a row higher. */}
                     <button
                       type="button"
                       onClick={() => setSelecting((v) => !v)}
@@ -978,30 +976,59 @@ function Catalog() {
                     >
                       {selecting ? t("selectDone") : t("select")}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setFiltersOpen((v) => !v)}
-                      aria-expanded={filtersOpen}
-                      aria-label={t("moreFilters")}
-                      className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-line bg-card text-fg md:hidden"
-                    >
-                      <SlidersHorizontal size={16} strokeWidth={1.5} aria-hidden />
-                      {sort.key !== "smart" && <span aria-hidden className="absolute right-2 top-2 h-2 w-2 rounded-full bg-ember" />}
-                    </button>
-                    <div className={cn("w-full gap-tight md:contents", filtersOpen ? "flex" : "hidden")}>
-                    <Select
-                      aria-label={t("sortBy")}
-                      value={sort.key}
-                      onChange={(v) => setSort({ key: v, order: "asc" })}
-                      triggerClassName="text-sm md:h-9"
-                      options={[
-                        { value: "smart", label: t("sort.smart") },
-                        { value: "name", label: t("sort.name") },
-                        { value: "price", label: t("sort.price") },
-                        { value: "updated", label: t("sort.updated") },
+                    {/* The shared bar, so this page reads like the other lists:
+                        one Filters button on a phone, the control inline from
+                        md, and a chip for anything set. It used to be a
+                        hand-rolled toggle that revealed the sort INLINE with a
+                        bare dot to say something was on. */}
+                    <FilterBar
+                      filters={[
+                        /* Archived is a sheet filter on a PHONE only: from md
+                           the facet row has the width for it and draws it as a
+                           chip, and offering it in both places would put two
+                           controls named Archived on one screen. */
+                        ...(compact
+                          ? [
+                              {
+                                key: "archived",
+                                label: t("state.archived"),
+                                active: states.includes("archived") ? t("state.archived") : null,
+                                onClear: () => toggleFacet("archived"),
+                                control: (
+                                  <button
+                                    type="button"
+                                    aria-pressed={states.includes("archived")}
+                                    onClick={() => toggleFacet("archived")}
+                                    className={chip(states.includes("archived"))}
+                                  >
+                                    {t("state.archived")}
+                                  </button>
+                                ),
+                              },
+                            ]
+                          : []),
+                        {
+                          key: "sort",
+                          label: t("sortBy"),
+                          active: sort.key === "smart" ? null : t(`sort.${sort.key}`),
+                          onClear: () => setSort({ key: "smart", order: "asc" }),
+                          control: (
+                            <Select
+                              aria-label={t("sortBy")}
+                              value={sort.key}
+                              onChange={(v) => setSort({ key: v, order: "asc" })}
+                              triggerClassName="text-sm md:h-9"
+                              options={[
+                                { value: "smart", label: t("sort.smart") },
+                                { value: "name", label: t("sort.name") },
+                                { value: "price", label: t("sort.price") },
+                                { value: "updated", label: t("sort.updated") },
+                              ]}
+                            />
+                          ),
+                        },
                       ]}
                     />
-                    </div>
                   </div>
                   {/* State as counted chips — the facet under the views. "All"
                       is a chip too, pressed by default, so there is always one
@@ -1010,10 +1037,10 @@ function Catalog() {
                     <button type="button" aria-pressed={states.length === 0} onClick={() => { setStates([]); setPage(1); }} className={chip(states.length === 0)}>
                       {t("allStates")}
                     </button>
-                    {facetChips.map((s) => {
+                    {(compact ? phoneChips : facetChips).map((s) => {
                       const on = states.includes(s);
                       return (
-                        <button key={s} type="button" aria-pressed={on} onClick={() => toggleFacet(s)} className={cn(chip(on), s === "archived" && !on && !filtersOpen && "max-md:hidden")}>
+                        <button key={s} type="button" aria-pressed={on} onClick={() => toggleFacet(s)} className={chip(on)}>
                           {s === "attention" && <AlertTriangle size={13} strokeWidth={2} aria-hidden className={on ? "" : "text-warning"} />}
                           {t(s === "attention" ? "facet.attention" : `state.${s}`)}
                           {s !== "archived" && <span className={cn("text-[12px] tabular-nums", on ? "text-inverse-fg/80" : "text-muted")}>{facetCounts[s]}</span>}

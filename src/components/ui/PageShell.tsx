@@ -2,9 +2,38 @@
 
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { cn } from "@/lib/cn";
 import { useBarTitle } from "@/lib/barTitle";
+import { Button } from "./Button";
+
+/**
+ * A page's one create action.
+ *
+ * Separate from `actions` because the two want different room. On a phone a
+ * full-width "Add to your catalog" is 151px of a 358px line, on a page that
+ * already spends 451px before its first row — so the primary moves into the
+ * top bar as a plus, beside the account button, and its words become its
+ * accessible name. Secondary controls stay on the page, which is
+ * `overflow-menu`: cram nothing into a bar that cannot hold it.
+ *
+ * A page declares it rather than PageShell guessing which of its buttons is
+ * the important one.
+ */
+export interface PagePrimary {
+  label: string;
+  /** Defaults to a plus, which is what every one of these is. */
+  icon?: React.ReactNode;
+  onClick?: () => void;
+  href?: string;
+  disabled?: boolean;
+  /** Passed through to the desktop button — a keyboard shortcut hint. */
+  title?: string;
+  keyShortcut?: string;
+}
 
 // Standard page frame for OS screens: breadcrumb (derived from the path),
 // title, optional description, actions slot.
@@ -26,11 +55,13 @@ export function PageShell({
   title,
   description,
   actions,
+  primary,
   children,
 }: {
   title: string;
   description?: string;
   actions?: React.ReactNode;
+  primary?: PagePrimary;
   children: React.ReactNode;
 }) {
   // Resolved after mount: the slot lives in OsShell, above this in the tree,
@@ -47,6 +78,7 @@ export function PageShell({
   // md breakpoint means exactly one copy exists at any width.
   // Server snapshot false: assume narrow, so the header ships in the document.
   const wide = useMediaQuery(MD);
+  const router = useRouter();
   /* The phone's bar names the page; this heading repeats it unless the page
      is a sub-page the bar only knows the section of. */
   const barTitle = useBarTitle();
@@ -58,6 +90,46 @@ export function PageShell({
   // call, which is what keeps the snapshot stable enough for the hook.
   const slot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-header"), () => null);
   const actionSlot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-actions"), () => null);
+  const barSlot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-actions-mobile"), () => null);
+
+  const icon = primary?.icon ?? <Plus size={16} strokeWidth={1.75} />;
+  /* Desktop: the words, because there is room for them and a labelled button
+     is always the better one. */
+  const widePrimary = primary && (
+    <Button
+      icon={icon}
+      /* `Button` is a <button>; an anchor inside one is invalid markup, so a
+         destination is pushed. The phone's copy IS a Link, where a long-press
+         to open in a new tab is a thing people do. */
+      onClick={primary.onClick ?? (primary.href ? () => router.push(primary.href!) : undefined)}
+      disabled={primary.disabled}
+      title={primary.title}
+      aria-keyshortcuts={primary.keyShortcut}
+    >
+      {primary.label}
+    </Button>
+  );
+  /* Phone: the glyph, in the bar, with the words as its name. 44px, and the
+     same corner as the account button it sits beside, so the two read as one
+     pair rather than two unrelated controls. */
+  const narrowPrimary = primary
+    ? (() => {
+        const cls = cn(
+          "flex h-11 w-11 items-center justify-center rounded-sm bg-ember-solid text-white transition-opacity duration-quick active:opacity-80",
+          primary.disabled && "pointer-events-none opacity-40",
+        );
+        const body = <Plus size={20} strokeWidth={2} aria-hidden />;
+        return primary.href && !primary.disabled ? (
+          <Link href={primary.href} aria-label={primary.label} className={cls}>
+            {body}
+          </Link>
+        ) : (
+          <button type="button" onClick={primary.onClick} aria-label={primary.label} disabled={primary.disabled} className={cls}>
+            {body}
+          </button>
+        );
+      })()
+    : null;
 
   // Text only. The actions travel separately on desktop, because sharing a row
   // with the title squeezed it to 275px and wrapped the operator's name onto
@@ -94,7 +166,9 @@ export function PageShell({
       {/* Desktop: both blocks portal into the sticky bar. Below md they render
           here instead — one copy, either way. */}
       {wide && slot && createPortal(headerText, slot)}
-      {wide && actions && actionSlot && createPortal(actions, actionSlot)}
+      {wide && (actions || widePrimary) && actionSlot && createPortal(<>{actions}{widePrimary}</>, actionSlot)}
+      {/* The plus lives in the phone's bar, beside the account button. */}
+      {!wide && narrowPrimary && barSlot && createPortal(narrowPrimary, barSlot)}
       {!wide && (
         /* The gap goes with the heading: a flex gap between an empty box and
            the page's actions is 8px of stray space. */

@@ -114,5 +114,8 @@
   "settled": "Paid in full.",
   "refundedLabel": "Refunded",
   "viaMarketplace": "Booked through {name}",
-  "marketplaceCut": "{commission} commission · {net} to you"
+  "marketplaceCut": "{commission} commission · {net} to you",
+  "filterDate": "Date",
+  "filterStatus": "Status",
+  "filterChannel": "Sold through"
 }

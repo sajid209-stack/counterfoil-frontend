@@ -3,11 +3,12 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Download, Mail, Plus, Search, Smartphone } from "lucide-react";
+import { Download, Mail, Search, Smartphone } from "lucide-react";
 import {
   Button,
   DataTable,
   EmptyState,
+  FilterBar,
   FormField,
   Modal,
   PageShell,
@@ -217,6 +218,7 @@ export default function CustomersPage() {
     <PageShell
       title={t("title")}
       description={t("description")}
+      primary={{ label: t("addCustomer"), onClick: () => setAddOpen(true) }}
       actions={
         <div className="flex flex-wrap items-center gap-tight">
           <Button
@@ -226,9 +228,6 @@ export default function CustomersPage() {
             disabled={group.length === 0}
           >
             {t("exportGroup")}
-          </Button>
-          <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => setAddOpen(true)}>
-            {t("addCustomer")}
           </Button>
         </div>
       }
@@ -276,38 +275,83 @@ export default function CustomersPage() {
         }}
         onRowClick={(c) => router.push(`/customers/${c.id}`)}
         toolbar={
-          <div className="flex flex-wrap items-center gap-tight">
-            <div className="relative">
-              <Search
-                size={16}
-                strokeWidth={1.5}
-                className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted"
-              />
-              <input
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                placeholder={t("searchPlaceholder")}
-                className="h-11 md:h-9 w-64 max-w-full rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse"
-              />
+          <FilterBar
+            search={
+              <div className="relative">
+                <Search
+                  size={16}
+                  strokeWidth={1.5}
+                  className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted"
+                />
+                <input
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                  placeholder={t("searchPlaceholder")}
+                  className="h-11 md:h-9 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:w-64"
+                />
+              </div>
+            }
+            /* Who is reachable is the page's own cut rather than one filter
+               among several, so it stays visible at every width — and with one
+               filter on this page there is nothing left to fold. */
+            filters={[
+              {
+                key: "consent",
+                label: t("filterReach"),
+                active: segment === "all" ? null : segments.find((x) => x.value === segment)?.label ?? null,
+                onClear: () => { setSegment("all"); setPage(1); },
+                control: (
+                  <div className="flex flex-wrap gap-inline">
+                    {segments.map((s) => (
+                      <button
+                        key={s.value}
+                        type="button"
+                        onClick={() => { setSegment(s.value); setPage(1); }}
+                        aria-pressed={segment === s.value}
+                        className={`h-11 md:h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
+                          segment === s.value
+                            ? "border-ember bg-ember/10 text-brand-foreground"
+                            : "border-line text-muted hover:bg-muted-wash"
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                ),
+              },
+            ]}
+          />
+        }
+        cardVariant="list"
+        renderCard={(c) => (
+          /* Two lines: who and what they are worth, then how to reach them and
+             how often they come. It was six lines and 141px — the generic
+             label/value dump, which put an e-mail address and two consent chips
+             above the two figures a list is ranked by. Both are on the record,
+             and consent is what the segments above filter on. */
+          <div className="flex flex-col gap-inline">
+            <div className="flex items-baseline justify-between gap-tight">
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">{c.name}</span>
+              <span className={cn("shrink-0 text-[13px] font-medium tabular-nums", c.stats.spent === 0 && "text-muted")}>
+                {formatMoney(c.stats.spent)}
+              </span>
             </div>
-            <div className="flex flex-wrap gap-inline">
-              {segments.map((s) => (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => { setSegment(s.value); setPage(1); }}
-                  className={`h-11 md:h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
-                    segment === s.value
-                      ? "border-ember bg-ember/10 text-brand-foreground"
-                      : "border-line text-muted hover:bg-muted-wash"
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
+            <div className="flex items-baseline justify-between gap-tight text-[12px] text-muted">
+              <span className="min-w-0 flex-1 truncate">
+                {/* The phone, not the e-mail: two customers share a name far
+                    more often than a number, so it is the line that confirms
+                    the right person. */}
+                {c.phone ? <span className="font-mono">{c.phone}</span> : t("noContact")}
+                {" · "}
+                {t("ordersCount", { count: c.stats.orders })}
+              </span>
+              <span className="shrink-0 whitespace-nowrap">
+                {c.stats.lastSeen ? formatDate(c.stats.lastSeen) : "—"}
+              </span>
             </div>
           </div>
-        }
+        )}
         emptyState={
           <EmptyState
             title={t("emptyTitle")}

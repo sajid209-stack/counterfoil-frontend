@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { MonitorSmartphone, Plus } from "lucide-react";
+import { MonitorSmartphone } from "lucide-react";
 import { Button, ConfirmDialog, EmptyState, PageShell, StatusPill, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -95,11 +95,7 @@ export default function DevicesPage() {
     <PageShell
       title={t("devices.title")}
       description={t("devices.description")}
-      actions={
-        <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => router.push("/settings/devices/new")}>
-          {t("devices.register")}
-        </Button>
-      }
+      primary={{ label: t("devices.register"), onClick: () => router.push("/settings/devices/new") }}
     >
       {loading ? (
         <SectionSkeleton />

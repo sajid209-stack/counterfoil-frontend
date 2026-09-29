@@ -47,9 +47,5 @@
   },
   "inventory": "Inventory",
   "cartFab": "Cart — {count, plural, one {# line} other {# lines}}",
-  "textSize": "Text size",
-  "textSize_normal": "Normal",
-  "textSize_large": "Large",
-  "textSize_largest": "Largest",
   "marketplaces": "Marketplaces"
 }

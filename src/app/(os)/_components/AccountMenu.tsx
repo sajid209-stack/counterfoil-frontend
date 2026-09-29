@@ -67,8 +67,19 @@ export function AccountMenu({ name, compact = false }: { name?: string; compact?
         )}
       >
         {/* One step down from the button it sits in: two corners of the same
-            radius, five pixels apart, cross each other. */}
-        <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-xs bg-subtle text-[12px] font-bold text-fg ring-1 ring-line">
+            radius, five pixels apart, cross each other.
+
+            Larger on a phone — 36px inside the same 44px target — because
+            there it is one of only two controls in the bar and it was reading
+            as a label rather than a button. On desktop it sits inside a
+            bordered pill with a chevron, which already says it is pressable. */}
+        <span
+          aria-hidden
+          className={cn(
+            "grid shrink-0 place-items-center rounded-xs bg-subtle font-bold text-fg ring-1 ring-line",
+            compact ? "h-9 w-9 text-[13px]" : "h-8 w-8 text-[12px]",
+          )}
+        >
           {initials}
         </span>
         {!compact && <ChevronDown size={16} strokeWidth={1.5} aria-hidden />}

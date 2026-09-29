@@ -182,5 +182,7 @@
     "atCounter": "Sell it on its own at the counter",
     "atCounterHelp": "It appears on the till's Shop, for somebody who walks up and buys one. Extras on a booking work either way."
   },
-  "returnedAtDesk": "Returned at the desk"
+  "returnedAtDesk": "Returned at the desk",
+  "filterKind": "Kind",
+  "filterVenue": "Venue"
 }
