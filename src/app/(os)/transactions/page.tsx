@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Banknote, Copy, CreditCard, Download, FileMinus, QrCode, RotateCcw, Search, Smartphone, Ticket, Wallet, type LucideIcon } from "lucide-react";
 import {
@@ -15,18 +15,15 @@ import {
   Sheet,
   StatStrip,
   StatusPill,
-  Tabs,
   useToast,
   type Column,
   type PillTone,
 } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
-  getPaymentSettings,
   getTransactionSummary,
   listCounters,
   listLocations,
-  listPayouts,
   listStaff,
   listTransactions,
   peekTransactions,
@@ -34,18 +31,18 @@ import {
   type ListResponse,
   type PaymentMethod,
   type PaymentStatus,
-  type Payout,
-  type PayoutStatus,
+  type CollectedBy,
   type Transaction,
   type TransactionFilters,
   type TransactionKind,
   type TransactionSummary,
 } from "@/lib/api";
 import { cn } from "@/lib/cn";
-import { formatDay, formatDateTime, formatMoney, formatRelative } from "@/lib/format";
+import { formatDateTime, formatMoney, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { DEMO_TODAY, demoNow } from "@/lib/schedule";
+import { CollectorBadge } from "../money/_components/MoneyKit";
 
 const METHOD_ICON: Record<PaymentMethod, LucideIcon> = {
   cash: Wallet,
@@ -57,7 +54,6 @@ const METHOD_ICON: Record<PaymentMethod, LucideIcon> = {
 };
 
 const STATUS_TONE: Record<PaymentStatus, PillTone> = { confirmed: "success", pending: "info", failed: "danger" };
-const PAYOUT_TONE: Record<PayoutStatus, PillTone> = { paid: "success", in_transit: "info", scheduled: "neutral" };
 
 /** A query that waits: the venue has not resolved yet, and reading every
  *  venue's money for one frame would flash a figure that is not this venue's. */
@@ -93,19 +89,20 @@ export default function TransactionsPage() {
  */
 function TransactionsInner() {
   const router = useRouter();
-  const params = useSearchParams();
+
   const t = useTranslations("transactions");
   const tc = useTranslations("common");
+  const tm = useTranslations("money");
   const enumL = useEnumLabels();
   const toast = useToast();
   const now = useMemo(() => demoNow(), []);
 
-  const [tab, setTab] = useState(params.get("tab") === "payouts" ? "payouts" : "ledger");
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<Range>("30d");
   const [kind, setKind] = useState<TransactionKind | "">("");
   const [method, setMethod] = useState<PaymentMethod | "">("");
   const [status, setStatus] = useState<PaymentStatus | "">("");
+  const [heldBy, setHeldBy] = useState<CollectedBy | "">("");
   const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "at", order: "desc" });
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState<Transaction | null>(null);
@@ -133,9 +130,10 @@ function TransactionsInner() {
       kind: kind || undefined,
       method: method || undefined,
       status: status || undefined,
+      collectedBy: heldBy || undefined,
       ...bounds,
     }),
-    [locationId, kind, method, status, bounds],
+    [locationId, kind, method, status, heldBy, bounds],
   );
 
   const listQ = useApiQuery(
@@ -159,13 +157,14 @@ function TransactionsInner() {
   const exportCsv = () => {
     const rows = peekTransactions(filters, search).sort((a, b) => b.at.localeCompare(a.at));
     const q = (v: string) => `"${v.replace(/"/g, '""')}"`;
-    const header = "Date,Transaction ID,Type,Method,Status,Amount,Order,Customer,Channel,Provider reference";
+    const header = "Date,Transaction ID,Type,Method,Held by,Status,Amount,Order,Customer,Channel,Provider reference";
     const body = rows.map((r) =>
       [
         r.at,
         r.id,
         kindLabel(r.kind),
         r.method ? enumL.method(r.method) : "",
+        r.collectedBy ? tm(`heldBy.${r.collectedBy}`) : "",
         t(`status.${r.status}`),
         (r.amount / 100).toFixed(2),
         r.orderReference,
@@ -230,6 +229,9 @@ function TransactionsInner() {
     },
     { key: "kind", header: t("colType"), render: kindCell },
     { key: "method", header: t("colMethod"), render: methodCell },
+    /* Whose account the money went into — the fact that decides which way
+       Counterfoil's fee on it runs (Fees & balances). */
+    { key: "held", header: tm("heldBy.label"), render: (r) => (r.collectedBy ? <CollectorBadge by={r.collectedBy} /> : <span className="text-muted">—</span>) },
     {
       key: "customer",
       header: t("colCustomer"),
@@ -257,25 +259,12 @@ function TransactionsInner() {
       title={t("title")}
       description={t("description")}
       actions={
-        tab === "ledger" ? (
-          <Button variant="secondary" icon={<Download size={16} strokeWidth={1.5} />} onClick={exportCsv} disabled={!s || s.count === 0}>
-            {t("export")}
-          </Button>
-        ) : undefined
+        <Button variant="secondary" icon={<Download size={16} strokeWidth={1.5} />} onClick={exportCsv} disabled={!s || s.count === 0}>
+          {t("export")}
+        </Button>
       }
     >
       <div className="flex flex-col gap-section">
-        <Tabs
-          items={[
-            { value: "ledger", label: t("tabLedger") },
-            { value: "payouts", label: t("tabPayouts") },
-          ]}
-          value={tab}
-          onChange={setTab}
-        />
-
-        {tab === "ledger" ? (
-          <>
             <StatStrip
               loading={!s}
               items={[
@@ -371,6 +360,24 @@ function TransactionsInner() {
                       ),
                     },
                     {
+                      key: "held",
+                      label: tm("heldBy.label"),
+                      active: heldBy ? tm(`heldBy.${heldBy}`) : null,
+                      onClear: () => { setHeldBy(""); resetPage(); },
+                      control: (
+                        <Select
+                          aria-label={tm("heldBy.label")}
+                          value={heldBy}
+                          onChange={(v) => { setHeldBy(v as CollectedBy | ""); resetPage(); }}
+                          options={[
+                            { value: "", label: tm("heldBy.all") },
+                            { value: "platform", label: tm("heldBy.platform") },
+                            { value: "operator", label: tm("heldBy.operator") },
+                          ]}
+                        />
+                      ),
+                    },
+                    {
                       key: "status",
                       label: t("filterStatus"),
                       active: status ? t(`status.${status}`) : null,
@@ -413,10 +420,6 @@ function TransactionsInner() {
               emptyState={<EmptyState title={t("emptyTitle")} message={t("emptyMessage")} />}
               pagination={{ page, pageSize: PAGE_SIZE, total: listQ.data?.page.total ?? 0, onPageChange: setPage }}
             />
-          </>
-        ) : (
-          <PayoutsTab locationId={pending ? null : locationId} />
-        )}
       </div>
 
       <Sheet
@@ -493,125 +496,5 @@ function TransactionDetail({ tx, counter, staff, channel }: { tx: Transaction; c
         ))}
       </dl>
     </div>
-  );
-}
-
-function PayoutsTab({ locationId }: { locationId: string | null }) {
-  const t = useTranslations("transactions");
-  const enumL = useEnumLabels();
-  const settingsQ = useApiQuery(() => getPaymentSettings(), []);
-  const payoutsQ = useApiQuery(
-    () => (locationId === null ? held<Payout[]>() : listPayouts(locationId || undefined, DEMO_TODAY)),
-    [locationId],
-  );
-  const cashQ = useApiQuery(() => {
-    if (locationId === null) return held<TransactionSummary>();
-    const from = new Date(`${DEMO_TODAY}T00:00:00`);
-    from.setDate(from.getDate() - 29);
-    return getTransactionSummary({ locationId: locationId || undefined, method: "cash", from: from.toISOString() });
-  }, [locationId]);
-
-  const payouts = payoutsQ.data ?? [];
-  const next = [...payouts].reverse().find((p) => p.status !== "paid");
-  const monthAgo = (() => {
-    const d = new Date(`${DEMO_TODAY}T12:00:00`);
-    d.setDate(d.getDate() - 30);
-    return d.toISOString().slice(0, 10);
-  })();
-  const paid30 = payouts.filter((p) => p.status === "paid" && p.arrivesOn >= monthAgo).reduce((s, p) => s + p.amount, 0);
-  const schedule = settingsQ.data?.payoutSchedule ?? "daily";
-
-  const columns: Column<Payout>[] = [
-    {
-      key: "arrivesOn",
-      header: t("colArrives"),
-      render: (p) => <span className="whitespace-nowrap">{formatDay(p.arrivesOn, { weekday: true })}</span>,
-    },
-    {
-      key: "period",
-      header: t("colPeriod"),
-      render: (p) => (
-        <span className="whitespace-nowrap text-muted">
-          {p.from === p.to ? formatDay(p.from) : `${formatDay(p.from)} – ${formatDay(p.to)}`}
-        </span>
-      ),
-    },
-    {
-      key: "breakdown",
-      header: t("colBreakdown"),
-      render: (p) => (
-        <span className="text-[13px] text-muted">
-          {p.byMethod.map((m) => `${enumL.method(m.method)} ${formatMoney(m.amount)}`).join(" · ")}
-        </span>
-      ),
-    },
-    { key: "count", header: t("colCount"), align: "center", render: (p) => <span className="font-mono text-[13px]">{p.count}</span> },
-    { key: "status", header: t("colStatus"), render: (p) => <StatusPill tone={PAYOUT_TONE[p.status]}>{t(`payoutStatus.${p.status}`)}</StatusPill> },
-    {
-      key: "amount",
-      header: t("colAmount"),
-      align: "right",
-      render: (p) => <span className="whitespace-nowrap font-mono text-[13px] font-medium tabular-nums">{formatMoney(p.amount)}</span>,
-    },
-  ];
-
-  return (
-    <>
-      <StatStrip
-        loading={!payoutsQ.data || !cashQ.data}
-        items={[
-          {
-            key: "next",
-            label: t("payoutsNextLabel"),
-            value: next ? formatMoney(next.amount) : t("payoutsNextNone"),
-            context: next ? t("payoutsNextNote", { date: formatDay(next.arrivesOn, { weekday: true }) }) : null,
-          },
-          { key: "paid", label: t("payoutsPaidLabel"), value: formatMoney(paid30) },
-          {
-            key: "cash",
-            label: t("payoutsCashLabel"),
-            value: formatMoney(cashQ.data?.net ?? 0),
-            context: t("payoutsCashNote"),
-          },
-        ]}
-      />
-      <div className="flex flex-col gap-tight rounded-md border border-hairline bg-card px-card py-comfortable sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[13px] leading-relaxed text-muted">
-          {t("payoutsSchedule", {
-            schedule: t(schedule === "daily" ? "scheduleDaily" : schedule === "weekly" ? "scheduleWeekly" : "scheduleMonthly"),
-          })}{" "}
-          {t("feesNote")}
-        </p>
-        <Link
-          href="/settings/payments"
-          className="inline-flex min-h-11 shrink-0 items-center self-start rounded-sm text-[13px] font-medium text-fg underline-offset-2 hover:underline sm:self-center md:min-h-9"
-        >
-          {t("payoutsChange")}
-        </Link>
-      </div>
-      <DataTable
-        columns={columns}
-        rows={payouts}
-        getRowId={(p) => p.id}
-        loading={!payoutsQ.data}
-        minWidth="48rem"
-        cardVariant="list"
-        renderCard={(p) => (
-          <div className="flex flex-col gap-inline">
-            <div className="flex items-baseline justify-between gap-tight">
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">{formatDay(p.arrivesOn, { weekday: true })}</span>
-              <span className="shrink-0 font-mono text-[13px] font-medium tabular-nums">{formatMoney(p.amount)}</span>
-            </div>
-            <div className="flex items-baseline justify-between gap-tight">
-              <span className="min-w-0 flex-1 truncate text-[12px] text-muted">
-                {p.from === p.to ? formatDay(p.from) : `${formatDay(p.from)} – ${formatDay(p.to)}`} · {p.count}
-              </span>
-              <StatusPill tone={PAYOUT_TONE[p.status]}>{t(`payoutStatus.${p.status}`)}</StatusPill>
-            </div>
-          </div>
-        )}
-        emptyState={<EmptyState title={t("payoutsEmptyTitle")} message={t("payoutsEmptyMessage")} />}
-      />
-    </>
   );
 }

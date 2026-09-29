@@ -111,7 +111,7 @@
   },
   "payouts": {
     "title": "Payouts",
-    "description": "When money collected through bKash and SSLCommerz is paid into your bank. Stripe pays out from your own Stripe account.",
+    "description": "When the money Counterfoil holds for you — online payments taken on Counterfoil's account — is paid into your bank.",
     "schedule": "Payout schedule",
     "daily": "Every day",
     "dailyDesc": "Each day's takings, paid the next business day.",

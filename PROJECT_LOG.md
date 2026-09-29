@@ -14309,3 +14309,99 @@ Two decisions worth confirming:
 - Payment `pending` / `failed` states are filterable but the seed has none —
   seeding them means touching every place that sums `payments` (ten sites),
   which should go with a real provider integration.
+
+## Money — fees, balances, payouts and collections (2026-09-29)
+
+Owner, with a screenshot of the product's `/ledger/balances` and the backend
+team's *Payment System: Frontend Guide*: *"show a fee and payment menu,
+research UI and UX and properly build it."*
+
+The guide is the contract. The product repo (`products/os/web`) is not on this
+machine, so this is the prototype of it: the same business model, the same
+endpoint shapes in the mock layer, the same page list — built on this repo's
+primitives so the owner can click it.
+
+### The model (`lib/api/platformFees.ts`)
+
+- **Two accounts per gateway (bKash, SSLCommerz), per venue**: Counterfoil's
+  (`collected_by: platform`) or the tenant's own (`operator`). Stripe is not
+  offered — the backend refuses own-key Stripe.
+- **Cash and every counter payment is `operator`**, whatever the method.
+- **Fees on the amount excluding VAT**: 5% platform on both; 1.5% gateway on
+  Counterfoil's account only. Rates come from `getPlatformFeeRates()` in basis
+  points and `percentLabel()` formats them — no screen has a literal 5%.
+- **Fixed when the money moves**: which account held a payment is replayed from
+  the switch history (`collectsAt`), so a switch never rewrites the past. The
+  seed has the museum moving its bKash to its own account on 15 Jul, so its
+  July has both kinds of entry and both balances — the guide's mid-month case.
+- **Refunds return no fees**: a refund of Counterfoil-held money reduces "we
+  will pay you" by the full amount; of tenant-held money, changes nothing.
+- **Two balances, never netted**: earned / paid out / outstanding for "we will
+  pay you"; charged / collected / outstanding for "you owe us".
+- **Settlement runs**: payouts follow the payout schedule in Settings →
+  Payments (a run where refunds outweigh takings rolls into the next); fee
+  collections are weekly on Sunday, due in 7 days. Past runs are paid, the
+  newest collection is open, the payout arriving today is "sent". Every entry
+  carries the id and status of the run that settles it.
+- Payout destination (bank or bKash merchant, stored masked, re-verified on
+  change) and write-only gateway keys.
+
+### The screens — a **Money** group in the rail
+
+- **Fees & balances** (`/money/balances`) — the guide's §5.2 layout. Two balance
+  cards with the outstanding / earned / settled split and the next payout or
+  collection; "Why both balances?" naming the switch that caused it; the
+  period's arithmetic under a range picker; **Movements** paginated, with
+  payment · held by, VAT, platform fee, **gateway fee** (never "bKash fee"), we
+  pay you, you owe us and settlement, two filters and CSV export. A row opens
+  **"Why this amount?"** — a right-hand drawer laying the entry out as a
+  receipt (amount, less VAT, fee base, each fee at its rate, who owes whom) and
+  linking the payout or collection that settles it.
+- **Payouts** (`/money/payouts`, `/[id]`) — where it goes (masked bank, verified
+  or not, on hold with no bank), the upcoming run pinned and marked estimated,
+  history with collected / fees / refunds / paid; the detail has the bank
+  reference, every line traced to an order, and a statement download.
+- **Fee collections** (`/money/collections`, `/[id]`) — a billing history with
+  Pay now on open and overdue runs (card / bKash / internet banking, the
+  amount on the button); a past-due banner across the money pages.
+- **Transactions** moved into the group and gained a **Held by** column and
+  filter. Its "Payouts" tab from this morning is gone — it paid out every
+  non-cash payment, which is wrong under this model.
+- **Settings → Payments**: the old provider-account section is replaced by
+  **Payment accounts** — defaults and per-venue (same as default / its own),
+  each gateway a choice between the two accounts with its terms stated from the
+  API rates and the payout cadence; own with no keys asks for keys first;
+  every switch confirms, saying payments already taken are untouched; keys can
+  be replaced and removed (removing moves the account back to Counterfoil's so
+  no sale is refused); a switch history per venue. **Payout bank details**
+  below it.
+- **Order detail**: a "Counterfoil fees" block under Payments — each payment's
+  holder and what it owes, expanding to the same breakdown.
+- `Sheet` gained `side` — a right-hand drawer from md up.
+
+### Verified
+
+- **69 checks driving it** at 1440 and 390, light, dark and Bangla. Among them
+  the arithmetic on real rows: a Counterfoil-held row's "we pay you" equals
+  amount − platform − gateway, the platform fee is 5% of (amount − VAT) and
+  the gateway 1.5% of it; a tenant-held row owes exactly its platform fee. A
+  payout's lines sum to the payout. Pay now settles a collection. Switching to
+  own with no keys asks for keys and refuses empty ones, switching back
+  confirms with the "already taken" sentence, and the history records it. The
+  bank form refuses a short account number. No console errors, no page x-scroll.
+- Measured and fixed on the way: the movements table cut off its last two
+  columns at 1440 (when/order stacked, held-by folded into the payment cell);
+  "switched to Your own account" mid-sentence; Bangla "আপনি-এর কাছে" (now one
+  phrase per holder); the payout schedule's copy still promising Stripe
+  payouts; two sr-only submit buttons that doubled a button's name.
+- `tsc`, `eslint` and `npm run build` clean; i18n parity 0/0 with a new
+  `money` namespace in en and bn. m1 47/48 — its hard-coded rail list again.
+
+### Open — the guide's §8, still for product and backend
+
+Cadence (payouts on the tenant's schedule and weekly collections are this
+build's assumption), manual vs automated payouts, **netting** (kept apart, per
+the code), collection method and what overdue triggers, whether cash owes 5%
+(built as yes, per the code), who may see these pages (not gated here), per-
+venue vs per-tenant settlement (per venue here, bank per tenant), and retiring
+billing's separate 0.5% BYO upcharge.

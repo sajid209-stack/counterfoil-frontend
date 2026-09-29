@@ -1,8 +1,6 @@
 {
   "title": "লেনদেন",
   "description": "এই ভেন্যুর প্রতিটি পেমেন্ট, রিফান্ড ও রাইট-অফ — কী ড্রয়ারে আর কী ব্যাংকে পৌঁছেছে।",
-  "tabLedger": "লেনদেন",
-  "tabPayouts": "পেআউট",
   "export": "CSV এক্সপোর্ট",
   "exported": "{count, plural, one {#টি লেনদেন} other {#টি লেনদেন}} এক্সপোর্ট হয়েছে",
   "statCollected": "আদায়",
@@ -65,28 +63,5 @@
   "writeOffNote": "রাইট-অফ টাকা লেনদেন ছাড়াই পাওনা মিটিয়ে দেয়, তাই এটি আদায় বা নিটে ধরা হয় না।",
   "refundNote": "গ্রাহক যে পদ্ধতিতে দিয়েছিলেন সেখানেই ফেরত দেওয়া হয়েছে।",
   "channelCounter": "কাউন্টার",
-  "channelOnline": "অনলাইন",
-  "payoutsNextLabel": "পরবর্তী পেআউট",
-  "payoutsNextNone": "কোনোটি নির্ধারিত নেই",
-  "payoutsNextNote": "পৌঁছাবে {date}",
-  "payoutsPaidLabel": "পরিশোধিত, গত ৩০ দিন",
-  "payoutsCashLabel": "নগদ গ্রহণ, গত ৩০ দিন",
-  "payoutsCashNote": "ড্রয়ারে গোনা হয় — পেআউট হয় না",
-  "payoutsSchedule": "পেআউট হয় {schedule}। প্রতিটি পেআউটে আগেরটির পর থেকে প্রোভাইডারের আদায় থাকে, রিফান্ড বাদে। নগদ ড্রয়ারে থাকে এবং আপনি ব্যাংকে জমা দেন।",
-  "payoutsChange": "সময়সূচি বদলান",
-  "scheduleDaily": "প্রতিদিন",
-  "scheduleWeekly": "প্রতি সপ্তাহে",
-  "scheduleMonthly": "প্রতি মাসে",
-  "colArrives": "পৌঁছাবে",
-  "colPeriod": "আদায়ের সময়",
-  "colCount": "লেনদেন",
-  "colBreakdown": "পদ্ধতি অনুযায়ী",
-  "payoutStatus": {
-    "paid": "পরিশোধিত",
-    "in_transit": "পথে আছে",
-    "scheduled": "নির্ধারিত"
-  },
-  "payoutsEmptyTitle": "এখনো কোনো পেআউট নেই",
-  "payoutsEmptyMessage": "এই ভেন্যু বিকাশ, বাংলা QR বা কার্ডে পেমেন্ট নিলে পেআউট দেখা যাবে।",
-  "feesNote": "প্রোভাইডারের ফি প্রোভাইডার কেটে নেয় এবং তাদের নিজস্ব স্টেটমেন্টে দেখায়।"
+  "channelOnline": "অনলাইন"
 }

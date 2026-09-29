@@ -3,50 +3,31 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowDown, ArrowUp, CircleAlert, CreditCard, Landmark, QrCode, Smartphone, Wallet, type LucideIcon } from "lucide-react";
-import { Button, ConfirmDialog, PageShell, Select, StatusPill, useToast, type PillTone } from "@/components/ui";
+import { ArrowDown, ArrowUp, CreditCard, QrCode, Smartphone, Wallet, type LucideIcon } from "lucide-react";
+import { PageShell, Select, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import {
-  activatePaymentAccount,
-  createAccountLink,
-  createPaymentAccount,
-  disablePaymentAccount,
   getAdvancePolicy,
   getOperator,
   getPaymentSettings,
-  listPaymentAccounts,
   updateAdvancePolicy,
   updatePaymentSettings,
 } from "@/lib/api";
 import type {
   AdvancePolicy,
   AdvanceRule,
-  PaymentAccount,
-  PaymentAccountStatus,
-  PaymentProvider,
   PaymentSettings,
   PayoutSchedule,
   TillMethod,
 } from "@/lib/api";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDay, formatMoney } from "@/lib/format";
+import { PaymentAccounts } from "./_components/PaymentAccounts";
+import { PayoutBank } from "./_components/PayoutBank";
 import { IconTile, SaveBar, SectionSkeleton, SettingRow, SettingsSection, SuffixInput, Switch } from "../_components/SettingsKit";
 
-const PROVIDERS: { provider: PaymentProvider; posture: PaymentAccount["posture"]; icon: LucideIcon }[] = [
-  { provider: "bkash", posture: "merchant_of_record", icon: Smartphone },
-  { provider: "sslcommerz", posture: "merchant_of_record", icon: Landmark },
-  { provider: "stripe", posture: "connect", icon: CreditCard },
-];
-
 const METHOD_ICON: Record<TillMethod, LucideIcon> = { cash: Wallet, bkash: Smartphone, bangla_qr: QrCode, card_terminal: CreditCard };
-
-const STATUS_TONE: Record<PaymentAccountStatus, PillTone> = {
-  active: "success",
-  pending_onboarding: "warning",
-  restricted: "warning",
-  disabled: "neutral",
-};
 
 const SCHEDULES: PayoutSchedule[] = ["daily", "weekly", "monthly"];
 
@@ -155,22 +136,19 @@ export default function PaymentsPage() {
   const locale = useLocale();
   const toast = useToast();
 
-  const accountsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
   const advanceQ = useApiQuery(() => getAdvancePolicy(), []);
   const settingsQ = useApiQuery(() => getPaymentSettings(), []);
   const opQ = useApiQuery(() => getOperator(), []);
 
-  const [busy, setBusy] = useState<string | null>(null);
-  const [turningOff, setTurningOff] = useState<PaymentAccount | null>(null);
   // The list as last written, so a switch or an arrow moves under the finger.
   const [methods, setMethods] = useState<PaymentSettings["methods"] | null>(null);
   const [base, setBase] = useState<Form | null>(null);
   const [draft, setDraft] = useState<Form | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const accounts = accountsQ.data?.data ?? [];
-  const byProvider = (p: PaymentProvider) => accounts.find((a) => a.provider === p);
-  const nonCashOk = accounts.some((a) => a.status === "active" && a.chargesEnabled);
+  /* Counterfoil's account is always there to take a payment, so a till method
+     never waits on the tenant connecting one of their own. */
+  const nonCashOk = true;
   const currency = opQ.data?.currency ?? "BDT";
   const symbol = currencySymbol(currency, locale);
 
@@ -179,7 +157,7 @@ export default function PaymentsPage() {
   const form = draft ?? saved;
   const dirty = draft !== null && saved !== null && JSON.stringify(draft) !== JSON.stringify(saved);
 
-  if (!list || !form || !saved || !accountsQ.data) {
+  if (!list || !form || !saved) {
     return (
       <PageShell title={t("title")} description={t("description")}>
         <SectionSkeleton />
@@ -216,31 +194,6 @@ export default function PaymentsPage() {
     writeMethods(next);
   };
   const offered = list.filter((m) => m.method === "cash" || (m.enabled && nonCashOk));
-
-  // ── accounts: immediate ────────────────────────────────────────────────────
-  const connect = async (provider: PaymentProvider, posture: PaymentAccount["posture"]) => {
-    setBusy(provider);
-    const created = await createPaymentAccount({ provider, posture, locationId: null, country: "BD", defaultCurrency: "BDT" });
-    if (created.ok) await createAccountLink(created.data.id);
-    setBusy(null);
-    toast.info(t("accounts.linkOpened"));
-    accountsQ.reload();
-  };
-  const activate = async (acct: PaymentAccount) => {
-    setBusy(acct.provider);
-    await activatePaymentAccount(acct.id);
-    setBusy(null);
-    toast.success(t("accounts.activated", { provider: t(`provider.${acct.provider}`) }));
-    accountsQ.reload();
-  };
-  const turnOff = async (acct: PaymentAccount) => {
-    setTurningOff(null);
-    setBusy(acct.provider);
-    await disablePaymentAccount(acct.id);
-    setBusy(null);
-    toast.success(t("accounts.disabledToast", { provider: t(`provider.${acct.provider}`) }));
-    accountsQ.reload();
-  };
 
   // ── the form ───────────────────────────────────────────────────────────────
   const ruleErr = (ch: "counter" | "online") =>
@@ -355,55 +308,10 @@ export default function PaymentsPage() {
           </div>
         </SettingsSection>
 
-        <SettingsSection title={t("accounts.title")} description={t("accounts.description")}>
-          {PROVIDERS.map(({ provider, posture, icon }) => {
-            const acct = byProvider(provider);
-            const isBusy = busy === provider;
-            const items = (acct?.requirementsDue ?? []).map((r) => t(`requirement.${r}`)).join(", ");
-            const needsWork = !!acct && (acct.status === "pending_onboarding" || acct.status === "restricted");
-            return (
-              <div key={provider} className="flex flex-col gap-section px-card py-section sm:flex-row sm:items-center">
-                <div className="flex min-w-0 flex-1 items-start gap-section">
-                  <IconTile icon={icon} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-tight">
-                      <p className="text-sm font-medium text-fg">{t(`provider.${provider}`)}</p>
-                      {acct ? (
-                        <StatusPill tone={STATUS_TONE[acct.status]}>{t(`status.${acct.status}`)}</StatusPill>
-                      ) : (
-                        <StatusPill tone="neutral">{t("accounts.notConnected")}</StatusPill>
-                      )}
-                    </div>
-                    <p className={cn("mt-inline flex items-start gap-inline text-[13px] leading-relaxed", needsWork ? "text-warning" : "text-muted")}>
-                      {needsWork && <CircleAlert size={14} strokeWidth={1.5} aria-hidden className="mt-[3px] shrink-0" />}
-                      <span>{acct ? t(`accounts.state.${acct.status}`, { items }) : t(`provider.${provider}Helper`)}</span>
-                    </p>
-                    <p className="mt-inline text-[13px] text-muted">{t(`posture.${posture}`)}</p>
-                  </div>
-                </div>
-                <div className="flex shrink-0 gap-tight sm:justify-end">
-                  {!acct ? (
-                    <Button variant="secondary" loading={isBusy} onClick={() => connect(provider, posture)}>
-                      {t("accounts.connect")}
-                    </Button>
-                  ) : acct.status === "active" ? (
-                    <Button variant="secondary" loading={isBusy} onClick={() => setTurningOff(acct)}>
-                      {t("accounts.turnOff")}
-                    </Button>
-                  ) : acct.status === "disabled" ? (
-                    <Button variant="secondary" loading={isBusy} onClick={() => activate(acct)}>
-                      {t("accounts.turnOn")}
-                    </Button>
-                  ) : (
-                    <Button loading={isBusy} onClick={() => activate(acct)}>
-                      {t("accounts.finish")}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </SettingsSection>
+        {/* Whose account online payments go into — and so which way the fee
+            runs — then where Counterfoil sends what it owes. */}
+        <PaymentAccounts />
+        <PayoutBank />
 
         <SettingsSection title={t("advance.title")} description={t("advance.description")}>
           {(["counter", "online"] as const).map((ch) => {
@@ -579,16 +487,6 @@ export default function PaymentsPage() {
         <SaveBar dirty={dirty} saving={saving} invalid={invalid} onSave={save} onDiscard={() => setDraft(null)} />
       </div>
 
-      <ConfirmDialog
-        open={!!turningOff}
-        onClose={() => setTurningOff(null)}
-        onConfirm={() => {
-          if (turningOff) void turnOff(turningOff);
-        }}
-        title={turningOff ? t("accounts.turnOffTitle", { provider: t(`provider.${turningOff.provider}`) }) : ""}
-        message={t("accounts.turnOffBody")}
-        confirmLabel={t("accounts.turnOff")}
-      />
     </PageShell>
   );
 }

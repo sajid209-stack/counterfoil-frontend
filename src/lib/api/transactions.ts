@@ -1,18 +1,16 @@
 import { delay, ok } from "./client";
 import { peekOrders } from "./orders";
-import { peekPaymentSettings } from "./paymentSettings";
+import { collectsAt, type CollectedBy } from "./platformFees";
 import type {
   ApiResult,
   Channel,
   ID,
-  ISODate,
   ISODateTime,
   ListParams,
   ListResponse,
   Minor,
   Order,
   PaymentMethod,
-  PaymentSettings,
   PaymentStatus,
 } from "./types";
 
@@ -45,6 +43,9 @@ export interface Transaction {
   customerName: string | null;
   /** Null on a write-off: nothing was tendered. */
   method: PaymentMethod | null;
+  /** Whose account the money went into — Counterfoil's or the tenant's.
+   *  Null on a write-off, and on vouchers and pass credit, which are not money. */
+  collectedBy: CollectedBy | null;
   /** Signed minor units — see above. */
   amount: Minor;
   status: PaymentStatus;
@@ -63,6 +64,7 @@ export interface TransactionFilters {
   method?: PaymentMethod;
   status?: PaymentStatus;
   channel?: Channel;
+  collectedBy?: CollectedBy;
   /** Half-open [from, to), ISO. */
   from?: string;
   to?: string;
@@ -78,11 +80,25 @@ function fromOrder(o: Order): Transaction[] {
     staffId: o.staffId,
     customerName: o.customerName,
   };
+  /* Who held it — the rule platformFees applies: at the counter the tenant,
+     online whichever account the venue used at that moment. A refund goes back
+     out of whoever held the payment it reverses. */
+  const holder = (m: PaymentMethod, at: string): CollectedBy | null =>
+    m === "voucher" || m === "credit"
+      ? null
+      : o.channel !== "online"
+        ? "operator"
+        : collectsAt(o.locationId, m === "bkash" ? "bkash" : "sslcommerz", at) === "counterfoil"
+          ? "platform"
+          : "operator";
+  const first = o.payments.find((p) => p.amount > 0);
+  const firstHolder = first ? holder(first.method, first.createdAt) : null;
   const out: Transaction[] = o.payments.map((p) => ({
     ...base,
     id: p.id,
     kind: p.amount < 0 ? "refund" : "payment",
     method: p.method,
+    collectedBy: p.amount < 0 ? firstHolder : holder(p.method, p.createdAt),
     amount: p.amount,
     status: p.status,
     reference: p.reference,
@@ -102,6 +118,7 @@ function fromOrder(o: Order): Transaction[] {
       id: `${o.reference}-R`,
       kind: "refund",
       method: o.payments[0]?.method ?? "cash",
+      collectedBy: firstHolder,
       amount: -paid,
       status: "confirmed",
       at: o.updatedAt,
@@ -113,6 +130,7 @@ function fromOrder(o: Order): Transaction[] {
       id: `${o.reference}-W${i}`,
       kind: "write_off",
       method: null,
+      collectedBy: null,
       amount: w.amount,
       status: "confirmed",
       note: w.reason,
@@ -128,6 +146,7 @@ function matches(t: Transaction, f: TransactionFilters, q: string): boolean {
   if (f.method && t.method !== f.method) return false;
   if (f.status && t.status !== f.status) return false;
   if (f.channel && t.channel !== f.channel) return false;
+  if (f.collectedBy && t.collectedBy !== f.collectedBy) return false;
   if (f.from && t.at < f.from) return false;
   if (f.to && t.at >= f.to) return false;
   if (q) {
@@ -199,74 +218,4 @@ export async function getTransactionSummary(filters: TransactionFilters = {}, se
     writtenOff: sum(rows.filter((t) => t.kind === "write_off")),
     count: rows.length,
   });
-}
-
-/* ── payouts ────────────────────────────────────────────────────────────────
-   What the providers send to the bank, on the schedule set in Settings →
-   Payments. Each confirmed provider transaction lands in the first payout day
-   AFTER the day it happened; a refund comes out of the same payout. Cash is
-   not in any payout — it is in a drawer, and banking it is the operator's.
-
-   Fees are not modelled: the contract carries no provider fee, and a payout
-   figure with an invented fee in it would be a number nobody could reconcile. */
-
-export type PayoutStatus = "paid" | "in_transit" | "scheduled";
-
-export interface Payout {
-  id: ID;
-  arrivesOn: ISODate;
-  /** The first and last day of takings it carries. */
-  from: ISODate;
-  to: ISODate;
-  amount: Minor;
-  count: number;
-  status: PayoutStatus;
-  byMethod: { method: PaymentMethod; amount: Minor }[];
-}
-
-const isoDay = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-/** The first payout day strictly after `day` on this schedule. */
-export function payoutDayAfter(day: ISODate, schedule: PaymentSettings["payoutSchedule"], payoutDay: number): ISODate {
-  const d = new Date(`${day}T12:00:00`);
-  d.setDate(d.getDate() + 1);
-  if (schedule === "weekly") while (d.getDay() !== payoutDay) d.setDate(d.getDate() + 1);
-  if (schedule === "monthly") while (d.getDate() !== payoutDay) d.setDate(d.getDate() + 1);
-  return isoDay(d);
-}
-
-export async function listPayouts(locationId: string | undefined, today: ISODate): Promise<ApiResult<Payout[]>> {
-  await delay();
-  const { payoutSchedule, payoutDay } = peekPaymentSettings();
-  const rows = peekTransactions({ locationId }).filter(
-    (t) => t.kind !== "write_off" && t.status === "confirmed" && t.method !== null && PAYOUT_METHODS.includes(t.method),
-  );
-  const groups = new Map<ISODate, Transaction[]>();
-  for (const t of rows) {
-    const key = payoutDayAfter(t.at.slice(0, 10), payoutSchedule, payoutDay);
-    groups.set(key, [...(groups.get(key) ?? []), t]);
-  }
-  const out: Payout[] = [...groups.entries()].map(([arrivesOn, ts]) => {
-    const days = ts.map((t) => t.at.slice(0, 10)).sort();
-    const byMethod = PAYOUT_METHODS.map((method) => ({
-      method,
-      amount: ts.filter((t) => t.method === method).reduce((s, t) => s + t.amount, 0),
-    })).filter((m) => m.amount !== 0);
-    return {
-      id: `po_${arrivesOn}`,
-      arrivesOn,
-      from: days[0],
-      to: days[days.length - 1],
-      amount: ts.reduce((s, t) => s + t.amount, 0),
-      count: ts.length,
-      /* Sent the evening before it lands — so the one arriving today is on
-         its way rather than paid, which is the only honest thing to say
-         before the bank has confirmed it. */
-      status: arrivesOn < today ? "paid" : arrivesOn === today ? "in_transit" : "scheduled",
-      byMethod,
-    };
-  });
-  out.sort((a, b) => b.arrivesOn.localeCompare(a.arrivesOn));
-  return ok(out);
 }

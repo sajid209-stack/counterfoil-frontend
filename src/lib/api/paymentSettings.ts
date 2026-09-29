@@ -1,5 +1,5 @@
 import { ok } from "./client";
-import type { ApiResult, PaymentSettings, TillMethod } from "./types";
+import type { ApiResult, ISODate, PaymentSettings, TillMethod } from "./types";
 
 /*
  * How the business takes money at the counter, and when it is paid out
@@ -55,4 +55,16 @@ export const peekPaymentSettings = (): PaymentSettings => state;
  */
 export function tillMethods(nonCashOk: boolean): TillMethod[] {
   return state.methods.filter((m) => m.method === "cash" || (m.enabled && nonCashOk)).map((m) => m.method);
+}
+
+const isoDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** The first settlement day strictly after `day` on a schedule. */
+export function payoutDayAfterSchedule(day: ISODate, schedule: PaymentSettings["payoutSchedule"], payoutDay: number): ISODate {
+  const d = new Date(`${day}T12:00:00`);
+  d.setDate(d.getDate() + 1);
+  if (schedule === "weekly") while (d.getDay() !== payoutDay) d.setDate(d.getDate() + 1);
+  if (schedule === "monthly") while (d.getDate() !== payoutDay) d.setDate(d.getDate() + 1);
+  return isoDay(d);
 }

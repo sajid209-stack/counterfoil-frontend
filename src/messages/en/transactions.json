@@ -1,8 +1,6 @@
 {
   "title": "Transactions",
   "description": "Every payment, refund and write-off at this venue — what reached the drawer and the bank.",
-  "tabLedger": "Transactions",
-  "tabPayouts": "Payouts",
   "export": "Export CSV",
   "exported": "Exported {count, plural, one {# transaction} other {# transactions}}",
   "statCollected": "Collected",
@@ -65,28 +63,5 @@
   "writeOffNote": "A write-off clears what is owed without money moving, so it is not in collected or net.",
   "refundNote": "Refunded to the method the customer paid with.",
   "channelCounter": "Counter",
-  "channelOnline": "Online",
-  "payoutsNextLabel": "Next payout",
-  "payoutsNextNone": "None scheduled",
-  "payoutsNextNote": "Arrives {date}",
-  "payoutsPaidLabel": "Paid out, last 30 days",
-  "payoutsCashLabel": "Cash taken, last 30 days",
-  "payoutsCashNote": "Counted at the drawer — not paid out",
-  "payoutsSchedule": "Paid out {schedule}. Each payout carries the provider takings since the last one, less refunds. Cash stays in the drawer and is banked by you.",
-  "payoutsChange": "Change schedule",
-  "scheduleDaily": "every day",
-  "scheduleWeekly": "every week",
-  "scheduleMonthly": "every month",
-  "colArrives": "Arrives",
-  "colPeriod": "Takings from",
-  "colCount": "Transactions",
-  "colBreakdown": "By method",
-  "payoutStatus": {
-    "paid": "Paid",
-    "in_transit": "On its way",
-    "scheduled": "Scheduled"
-  },
-  "payoutsEmptyTitle": "No payouts yet",
-  "payoutsEmptyMessage": "Payouts appear once this venue takes bKash, Bangla QR or card payments.",
-  "feesNote": "Provider fees are deducted by the provider and shown on its own statement."
+  "channelOnline": "Online"
 }

@@ -40,6 +40,7 @@ import {
 import { formatDateTime, formatDay, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { OrderLinesDetail } from "@/components/OrderLinesDetail";
+import { OrderFees } from "../../money/_components/OrderFees";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -375,6 +376,7 @@ export default function OrderDetailPage() {
                   </div>
                 ))
               )}
+              <OrderFees orderId={o.id} />
             </Card>
             </div>
 

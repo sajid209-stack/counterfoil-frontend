@@ -45,11 +45,18 @@
   "aliases": {
     "catalog": "bookings events products tickets experiences what we sell",
     "inventory": "stock merch items shop goods supplies",
-    "transactions": "payments refunds payouts money ledger bkash cash card"
+    "transactions": "payments refunds payouts money ledger bkash cash card",
+    "balances": "fees platform fee commission balance owe owed gateway",
+    "payouts": "payout bank settlement paid out",
+    "collections": "invoice bill fee due pay counterfoil"
   },
   "inventory": "Inventory",
   "cartFab": "Cart — {count, plural, one {# line} other {# lines}}",
   "marketplaces": "Marketplaces",
   "venue": "Venue",
-  "venueNotSelling": "Not selling"
+  "venueNotSelling": "Not selling",
+  "money": "Money",
+  "balances": "Fees & balances",
+  "payouts": "Payouts",
+  "collections": "Fee collections"
 }

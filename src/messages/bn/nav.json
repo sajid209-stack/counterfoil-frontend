@@ -45,11 +45,18 @@
   "aliases": {
     "catalog": "বুকিং ইভেন্ট পণ্য টিকিট bookings events products",
     "inventory": "স্টক মজুত পণ্য মার্চেন্ডাইজ সরবরাহ",
-    "transactions": "পেমেন্ট রিফান্ড পেআউট টাকা বিকাশ নগদ payments refunds payouts"
+    "transactions": "পেমেন্ট রিফান্ড পেআউট টাকা বিকাশ নগদ payments refunds payouts",
+    "balances": "ফি প্ল্যাটফর্ম ফি ব্যালান্স পাওনা গেটওয়ে fees balance",
+    "payouts": "পেআউট ব্যাংক নিষ্পত্তি payout bank",
+    "collections": "ইনভয়েস বিল ফি বকেয়া পরিশোধ invoice"
   },
   "inventory": "ইনভেন্টরি",
   "cartFab": "ঝুড়ি — {count, plural, one {# লাইন} other {# লাইন}}",
   "marketplaces": "মার্কেটপ্লেস",
   "venue": "ভেন্যু",
-  "venueNotSelling": "বিক্রয় বন্ধ"
+  "venueNotSelling": "বিক্রয় বন্ধ",
+  "money": "অর্থ",
+  "balances": "ফি ও ব্যালান্স",
+  "payouts": "পেআউট",
+  "collections": "ফি আদায়"
 }

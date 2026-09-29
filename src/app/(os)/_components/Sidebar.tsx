@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeftRight, ArrowUpRight, Boxes, Globe, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
+import { ArrowLeftRight, ArrowUpRight, Boxes, FileText, Landmark, Scale, Globe, CalendarDays, ChartNoAxesColumn, LayoutDashboard, PanelLeftClose, PanelLeftOpen, ReceiptText, Settings, SquareStack, Store, Ticket, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -29,9 +29,6 @@ export function Sidebar({
     { label: t("dashboard"), href: "/dashboard", icon: LayoutDashboard },
     { label: t("calendar"), href: "/calendar", icon: CalendarDays },
     { label: t("orders"), href: "/orders", icon: ReceiptText },
-    /* Beside Orders because it is the other half of the same question: an
-       order is what was sold, a transaction is what happened to the money. */
-    { label: t("transactions"), href: "/transactions", icon: ArrowLeftRight },
     { label: t("customers"), href: "/customers", icon: UsersRound },
     /* One door for everything sold. Bookings and Events were two rows that
        each held half the answer to "what do we sell?" — and an operator
@@ -46,6 +43,17 @@ export function Sidebar({
        are where the same catalogue is sold by somebody else. */
     { label: t("marketplaces"), href: "/marketplaces", icon: Globe },
     { label: t("reports"), href: "/reports/sales", icon: ChartNoAxesColumn },
+  ];
+
+  /* Money — its own group, because it answers a different question from the
+     rest of the rail: not what the venue does, but what happened to the money
+     and who owes whom. Transactions is the money movements; the other three
+     are Counterfoil's fees on them and how each side is settled. */
+  const MONEY: { label: string; href: string; icon: IconType }[] = [
+    { label: t("transactions"), href: "/transactions", icon: ArrowLeftRight },
+    { label: t("balances"), href: "/money/balances", icon: Scale },
+    { label: t("payouts"), href: "/money/payouts", icon: Landmark },
+    { label: t("collections"), href: "/money/collections", icon: FileText },
   ];
 
   /* The surfaces you leave OS for. Each carries its own glyph because the
@@ -127,6 +135,11 @@ export function Sidebar({
         <nav className="flex flex-col gap-inline">
           {!collapsed && <p className="px-comfortable pb-inline font-mono text-[12px] uppercase tracking-wider text-muted">{t("overview")}</p>}
           {OPERATE.map((n) => item(n.label, n.href, isActive(n.href), n.icon))}
+        </nav>
+
+        <nav className="flex flex-col gap-inline" aria-label={t("money")}>
+          {!collapsed && <p className="px-comfortable pb-inline font-mono text-[12px] uppercase tracking-wider text-muted">{t("money")}</p>}
+          {MONEY.map((n) => item(n.label, n.href, isActive(n.href), n.icon))}
         </nav>
 
         {/* The two surfaces you LEAVE the admin app for. Same bordered

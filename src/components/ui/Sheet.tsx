@@ -30,6 +30,7 @@ export function Sheet({
   /** Drawn above the sheet's own title row — the account line on the More menu. */
   lead,
   className,
+  side = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -39,6 +40,9 @@ export function Sheet({
   footer?: React.ReactNode;
   lead?: React.ReactNode;
   className?: string;
+  /** From md up, a drawer on the right rather than a sheet from the bottom —
+   *  for a detail read beside a list, where a sheet would cover the list. */
+  side?: boolean;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const restore = useRef<HTMLElement | null>(null);
@@ -108,6 +112,7 @@ export function Sheet({
           // left behind to create a containing block; the global
           // reduced-motion block neutralises it.
           !drag && "animate-[sheet-up_220ms_cubic-bezier(0.32,0.72,0,1)_backwards]",
+          side && "md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-[30rem] md:rounded-tr-none md:rounded-bl-md",
           className,
         )}
       >
@@ -118,7 +123,7 @@ export function Sheet({
           onPointerMove={(e) => move(e.clientY)}
           onPointerUp={end}
           onPointerCancel={end}
-          className="flex cursor-grab touch-none justify-center pb-inline pt-tight active:cursor-grabbing"
+          className={cn("flex cursor-grab touch-none justify-center pb-inline pt-tight active:cursor-grabbing", side && "md:invisible")}
         >
           <span aria-hidden className="h-1 w-10 rounded-full bg-line" />
         </div>
