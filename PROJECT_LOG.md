@@ -14559,3 +14559,101 @@ sale (tote + water, **৳549.75** with standard and reduced VAT summed, complete
 with no ticket minted, **10/10**) and printing tickets from an order (**4/4**).
 Also fixed on the way: a stock tile read **"7 each left"** (pre-existing, in the
 committed copy); a unit of "each" now drops out, so it reads "7 left".
+
+## The till's Schedule becomes a board you book from (2026-10-01)
+
+Owner, with screenshots of the old Go schedule and the OS calendar on a phone:
+*"POS Schedule needs to be like OS calendar mobile … from that calendar POS user
+can book empty slots, they press the empty slot hour and can book from there
+directly (only for time-slot booking types, like turf and bowling) … there will
+be a lot of customer pressure on the POS user, and most POS users are not
+educated, some can't read — they remember the pattern, this button after that
+button … and add an option for slot holding in POS."*
+
+### What the research settled
+
+- **Court and turf booking systems** (CourtReserve, WakeSys, BookThisCourt,
+  Fit+Club) all converge on one screen: a live grid of every court against every
+  hour, where a free cell is tapped to book it.
+- **Designing for low-literacy users** (Medhi et al., *User Interface Design for
+  Low-literate and Novice Users*): pair every icon with a word, keep key
+  elements in the same place on every screen, use a linear sequence of
+  consistent steps, and a limited set of colours. The design follows from that.
+
+### The screen
+
+- **The week on top**, Monday first, with a dot per booking under each day —
+  the OS calendar's phone pattern. Today is ringed; the chosen day is filled.
+- **What to show**: Lanes · Fields · Courts · Shows & tours, each with how many
+  hours are free. The biggest group first. The board keeps each group to what a
+  phone can hold (four lanes fit at 72px a column).
+- **The board**: hours down the left, places across the top, a red line at now.
+  Four kinds of block, told apart by shape and a glyph as well as colour:
+  **free** is white with a big orange **+** and the price; **booked** is filled
+  orange with the customer's name (a tick once they are in); **on hold** is
+  striped with a lock and who it is for; a **show** carries its seats left and a
+  bar that empties as it sells. Grey behind them is time that cannot be booked.
+  A key under the board uses the same shapes.
+- **Tap a free hour** → a sheet with **Hold on the left and Sell on the right,
+  always**. If a field is shared (Cricket or Futsal) it asks which first. Sell
+  opens the till's own sheet already on that place, day and time — bowling
+  included — so the rest of the sale is the steps a cashier already knows.
+- **Hold** asks who it is for (a name or phone, refused in words when empty),
+  how many places on a show, and for how long: 15 min, 30 min, 1 hour, or until
+  somebody puts it back. It is a real hold through `placeHold` — the till, the
+  OS calendar and the availability engine all see it — and it can be undone.
+- **Tap a booking** → who, where and when, how many, whether they are here, and
+  one big **Check in**. **Tap a hold** → **Put back on sale** (left) or
+  **Sell to {name}** (right), which releases it and opens the till on exactly
+  what was being kept.
+- **List** shows the day's bookings and holds in time order.
+- **Tap a place's name** to close it (out of service, with a reason) or open it
+  again — the whole header is the control, because a "⋯" beside the name left
+  "La…" at four lanes, and the lane's number is what a non-reader looks for.
+- The day, group and view are **remembered** across a trip to the till and back,
+  so a second sale is not rung up on the wrong day.
+
+### One engine, not two
+
+`schedule/_lib/board.ts` builds the board from `openSlotsFor` and
+`bookingEnd` — the OS calendar's own engine and model — so the till and the
+office cannot disagree about whether 18:00 on the outdoor field can be sold.
+Only the counter's own venue is shown. Bookings that name no field are real and
+take a place, so they get a "No place set" column rather than being hidden.
+
+### Found while building it
+
+- **A show that lasts longer than the gap between departures drew each block
+  over the next.** On the board a departure now ends where the next begins.
+- **Long show names were cut from the middle** ("…hitectural Walking Tour…"):
+  a centred flex item needs a width before `truncate` can work.
+- The first pass read what the browser remembered during the first render,
+  which would disagree with the server. Nothing depending on it is drawn until
+  the browser has taken over.
+
+### Verified
+
+- **19 checks driven** across three scripts at 390, 1024 and in Bangla: groups
+  present with the biggest first; free cells thumb-sized; the sheet offering
+  Hold and Sell; an empty name refused in words; a hold drawn on the board, put
+  back, and gone; Sell opening the till on the place and time tapped (bowling's
+  flexible sheet included); holding 3 places on a show taking exactly 3 seats
+  off sale; **Sell to Nasir** opening the till on that field; the chosen group
+  surviving a trip to the till; no page x-scroll; no console errors.
+- The board's bookings match the OS calendar's list for the same day.
+- Contrast and touch targets in light and dark: every control at least 44px;
+  the only contrast findings are the declared white-on-ember rule.
+- The whole-product sweep: **51 routes clean** in Bangla at phone width.
+- `tsc`, `eslint` on every schedule file and `check-i18n` clean; 40 messages the
+  old screen used are removed from both locales.
+
+### Open
+
+- **The September schedule harness (105 checks) tested the old list** and is
+  retired rather than repaired; the three scripts above replace it.
+- **Holds use the real clock for their end time**, while the demo's day is
+  pinned to 29 July — a timed hold ends in real minutes from now, which is
+  right at a counter but means the demo's "now" line and a hold's end time are
+  on different clocks.
+- **Day numbers on the week strip use English digits** beside a Bangla month —
+  the app-wide digit decision recorded in the plain-language entry.
