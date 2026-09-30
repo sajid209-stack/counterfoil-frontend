@@ -196,7 +196,7 @@ export default function OrderDetailPage() {
     const res = await rescheduleBooking(moveFor.id, iso);
     if (res.ok) {
       await logOrderAction(params.id, `Moved ${moveProduct.name} to ${moveDate} ${moveTime}`);
-      toast.success(t("moved", { date: moveDate, time: moveTime }));
+      toast.success(t("moved", { date: formatDay(moveDate, { weekday: true }), time: moveTime }));
       setMoveFor(null);
       bookingsQ.reload();
       order.reload();
@@ -500,7 +500,7 @@ export default function OrderDetailPage() {
               <span className="font-mono tabular-nums">{formatMoney(owed)}</span>
             </div>
           )}
-          <FormField label={t("amountLabel")} variant="number" value={payTaka} onChange={(e) => setPayTaka(e.target.value)} help={t("amountHelp")} />
+          <FormField label={t("amountLabel")} variant="number" value={payTaka} onChange={(e) => setPayTaka(e.target.value)} help={t("amountHelp", { amount: formatMoney(owed) })} />
           <FormField label={t("methodLabel")} variant="select" value={payMethod} onChange={(e) => setPayMethod(e.target.value as PaymentMethod)} options={(["cash", "bkash", "card_terminal", "bangla_qr"] as PaymentMethod[]).map((m) => ({ value: m, label: enumL.method(m) }))} />
         </div>
       </Modal>
@@ -545,20 +545,20 @@ export default function OrderDetailPage() {
         }
       >
         <div className="flex flex-col gap-section">
-          <FormField label={t("writeOffAmount")} variant="number" value={woAmount} onChange={(e) => setWoAmount(e.target.value)} />
+          <FormField label={t("writeOffAmount")} variant="number" value={woAmount} onChange={(e) => setWoAmount(e.target.value)} help={owed > 0 ? t("writeOffAmountHelp", { amount: formatMoney(owed) }) : undefined} />
           <FormField label={t("writeOffCategory")} variant="select" value={woCategory} onChange={(e) => setWoCategory(e.target.value as WriteOffCategory)} options={[
             { value: "uncollectible", label: t("woUncollectible") },
             { value: "customer_dispute", label: t("woCustomerDispute") },
             { value: "business_decision", label: t("woBusinessDecision") },
             { value: "administrative", label: t("woAdministrative") },
           ]} />
-          <FormField label={t("writeOffReason")} placeholder={t("reasonPlaceholder")} value={woReason} onChange={(e) => setWoReason(e.target.value)} />
+          <FormField label={t("writeOffReason")} placeholder={t("writeOffReasonPlaceholder")} value={woReason} onChange={(e) => setWoReason(e.target.value)} />
         </div>
       </Modal>
 
       {/* Resend the ticket. */}
       <Modal open={resendOpen} onClose={() => setResendOpen(false)} title={t("resendModalTitle")}>
-        <p className="mb-section text-[13px] text-muted">{t("resendModalBody", { customer: o?.customerName ? t("resendToCustomer", { name: o.customerName }) : "" })}</p>
+        <p className="mb-section text-[13px] text-muted">{o?.customerName ? t("resendToCustomer", { name: o.customerName }) : t("resendModalBody")}</p>
         <div className="grid grid-cols-2 gap-tight">
           <Button variant="secondary" className="h-12" onClick={() => resend("email")}>{t("byEmail")}</Button>
           <Button variant="secondary" className="h-12" onClick={() => resend("sms")}>{t("bySms")}</Button>

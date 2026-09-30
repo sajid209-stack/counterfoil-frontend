@@ -196,9 +196,11 @@ export function TicketTiers({
           price: t("tickets.price"),
           qty: t("tickets.quantity"),
           sold: te("soldCol"),
-          details: tf("tierDetails"),
-          moveUp: tf("moveUp"),
-          moveDown: tf("moveDown"),
+          details: (name) => tf("moreFor", { name }),
+          detailsShort: tf("moreShort"),
+          moveUp: (name) => tf("moveUp", { name }),
+          moveDown: (name) => tf("moveDown", { name }),
+          unnamed: tf("unnamedTier"),
           soldOf: (n, cap) => te("soldOf", { sold: n.toLocaleString(), cap: cap.toLocaleString() }),
         }}
         rows={rows.map((r, i) => {
@@ -212,6 +214,7 @@ export function TicketTiers({
             price: r.price,
             onPrice: (v) => patch(r.id, { price: v }),
             priceError: errors[`tiers.${i}.price`],
+            pricePlaceholder: tf("pricePlaceholder"),
             qty: r.quantity,
             onQty: (v) => patch(r.id, { quantity: v }),
             qtyError: errors[`tiers.${i}.quantity`] ?? (i === 0 ? errors.tierQuantity : undefined),

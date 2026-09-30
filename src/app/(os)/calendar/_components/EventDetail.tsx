@@ -221,9 +221,10 @@ export function EventDetail({
                 <input
                   id="cal-lock-reason"
                   value={reason}
+                  placeholder={t(asking === "lock" ? "lockReasonPlaceholder" : "unlockReasonPlaceholder")}
                   autoFocus
                   onChange={(e) => setReason(e.target.value)}
-                  className="h-11 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse md:h-9"
+                  className="h-11 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none placeholder:text-muted focus:border-inverse md:h-9"
                 />
                 <div className="flex flex-wrap gap-tight">
                   <Button

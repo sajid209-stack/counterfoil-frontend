@@ -49,14 +49,20 @@ export default function ShiftClosePage() {
           <span>{t("variance")}</span>
           <span className="font-mono">{!entered ? "—" : `${variance > 0 ? "+" : ""}${formatMoney(variance)}`}</span>
         </div>
+        {/* Says what the difference means right now, not only when it is a
+            problem — "square" is worth hearing at the end of a shift. */}
         {tier === "off" && (
           <p className="mt-tight text-[0.8125rem] text-warning">{t("varianceOff", { amount: formatMoney(TOLERANCE) })}</p>
+        )}
+        {tier === "ok" && (
+          <p className="mt-tight text-[0.8125rem] text-success">{t("varianceOk", { amount: formatMoney(TOLERANCE) })}</p>
         )}
       </div>
 
       <div className="flex flex-col gap-tight">
-        <label className="type-label text-[0.8125rem] text-muted">{t("countedCash")}</label>
+        <label htmlFor="counted-cash" className="type-label text-[0.8125rem] text-muted">{t("countedCash")}</label>
         <input
+          id="counted-cash"
           inputMode="decimal"
           value={counted}
           onChange={(e) => setCounted(e.target.value)}

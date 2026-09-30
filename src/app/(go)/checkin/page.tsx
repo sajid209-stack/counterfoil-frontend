@@ -387,7 +387,7 @@ export default function CheckInPage() {
                                 ) : (
                                   <>
                                     {b.partySize > 1 && (b.checkedIn ?? 0) < b.partySize - 1 && (
-                                      <Button shape="pill" variant="secondary" loading={pending === b.id} onClick={() => checkIn(b, (b.checkedIn ?? 0) + 1)}>{t("plusOne")}</Button>
+                                      <Button shape="pill" variant="secondary" loading={pending === b.id} aria-label={t("plusOneLabel")} onClick={() => checkIn(b, (b.checkedIn ?? 0) + 1)}>{t("plusOne")}</Button>
                                     )}
                                     <Button shape="pill" loading={pending === b.id} onClick={() => checkIn(b, b.partySize)}>
                                       {b.partySize > 1 ? t("checkInCount", { count: b.partySize - (b.checkedIn ?? 0) }) : t("checkIn")}

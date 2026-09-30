@@ -145,6 +145,7 @@ export function LocationEditor({
               id={id}
               value={form.name}
               onChange={(e) => set({ name: e.target.value })}
+              placeholder={t("locations.namePlaceholder")}
               autoComplete="off"
               aria-invalid={!!nameErr || undefined}
               aria-describedby={describedBy}
@@ -157,7 +158,7 @@ export function LocationEditor({
             <div className="flex flex-col gap-tight">
               <input
                 aria-label={t("locations.street")}
-                placeholder={t("locations.street")}
+                placeholder={t("locations.streetPh")}
                 value={form.addressLine1}
                 onChange={(e) => set({ addressLine1: e.target.value })}
                 autoComplete="address-line1"
@@ -173,7 +174,7 @@ export function LocationEditor({
               />
               <div className="grid grid-cols-2 gap-tight">
                 <input
-                  aria-label={t("locations.cityPh")}
+                  aria-label={t("common.city")}
                   placeholder={t("locations.cityPh")}
                   value={form.city}
                   onChange={(e) => set({ city: e.target.value })}
@@ -183,7 +184,7 @@ export function LocationEditor({
                   className={controlCls(!!cityErr)}
                 />
                 <input
-                  aria-label={t("locations.countryPh")}
+                  aria-label={t("common.country")}
                   placeholder={t("locations.countryPh")}
                   value={form.country}
                   onChange={(e) => set({ country: e.target.value })}

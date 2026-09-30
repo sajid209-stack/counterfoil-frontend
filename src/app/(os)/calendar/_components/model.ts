@@ -29,7 +29,7 @@ export interface CalEvent {
   partySize?: number;
   /** Who the booking is for, when the order names them. */
   guest?: string | null;
-  /** "2 guests" — the head count, on its own. */
+  /** "2 people" — the head count, on its own. */
   party?: string;
   checkedIn?: number;
   orderId?: string;
@@ -135,6 +135,28 @@ function toneOf(b: Booking): EventTone {
   return "booked";
 }
 
+/** The words a block carries, in the reader's language. The page passes them
+ *  in from its messages; the English defaults keep the model usable on its
+ *  own, but a Bangla screen must never fall back to them. */
+export interface EventWords {
+  /** "2 people" — the head count on a block. */
+  people: (count: number) => string;
+  /** A session hold: nothing more is sold on that slot. */
+  holdWhole: string;
+  /** A lane, court or field held with no name of its own. */
+  holdPlace: string;
+  holdSeats: (count: number) => string;
+  holdSpaces: (count: number) => string;
+}
+
+const ENGLISH_WORDS: EventWords = {
+  people: (n) => `${n} ${n === 1 ? "person" : "people"}`,
+  holdWhole: "Sales stopped",
+  holdPlace: "Place on hold",
+  holdSeats: (n) => `${n} ${n === 1 ? "seat" : "seats"} on hold`,
+  holdSpaces: (n) => `${n} ${n === 1 ? "space" : "spaces"} on hold`,
+};
+
 export function bookingsToEvents(
   bookings: Booking[],
   products: Product[],
@@ -143,6 +165,7 @@ export function bookingsToEvents(
   /** Who an order is for. The desk's question at a lane is "who is on it",
    *  and the product name alone cannot answer it. */
   guestOf?: (orderId: string) => string | null,
+  words: EventWords = ENGLISH_WORDS,
 ): CalEvent[] {
   const productOf = (id: string) => products.find((p) => p.id === id);
   const ownerName = (id?: string | null) =>
@@ -154,7 +177,7 @@ export function bookingsToEvents(
       const product = productOf(b.productId);
       const owner = ownerName(b.resourceId);
       const guest = (b.orderId && guestOf?.(b.orderId)) || null;
-      const party = `${b.partySize} ${b.partySize === 1 ? "guest" : "guests"}`;
+      const party = words.people(b.partySize);
       const parts = [guest, party, owner].filter(Boolean);
       return {
         id: b.id,
@@ -179,7 +202,7 @@ export function bookingsToEvents(
 
 /** Holds belong on the calendar — a manager looking at a day needs to see the
  *  capacity that is spoken for as well as the capacity that is sold. */
-export function holdsToEvents(holds: HoldView[]): CalEvent[] {
+export function holdsToEvents(holds: HoldView[], words: EventWords = ENGLISH_WORDS): CalEvent[] {
   return holds
     .filter((h) => h.active)
     .map((h) => {
@@ -191,12 +214,12 @@ export function holdsToEvents(holds: HoldView[]): CalEvent[] {
           : new Date(`${h.date}T23:59:59`);
       const what =
         h.kind === "session"
-          ? "Session closed"
+          ? words.holdWhole
           : h.kind === "resource"
-            ? (h.resourceName ?? "Resource held")
+            ? (h.resourceName ?? words.holdPlace)
             : h.kind === "seats"
-              ? `${h.seatLabels?.length ?? 0} seats held`
-              : `${h.quantity} places held`;
+              ? words.holdSeats(h.seatLabels?.length ?? 0)
+              : words.holdSpaces(h.quantity);
       return {
         id: h.id,
         kind: "hold" as const,

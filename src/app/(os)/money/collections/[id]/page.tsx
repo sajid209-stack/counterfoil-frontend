@@ -78,7 +78,7 @@ export default function CollectionPage() {
             [t("collections.colBase"), formatMoney(c.feeBase)],
             [t("balances.platformFee", { rate: percentLabel(peekPlatformFeeRates().platformFeeBp) }), formatMoney(c.amount)],
             [t("collections.colPeriod"), periodText(c.periodFrom, c.periodTo)],
-            [t("collections.colDue"), formatDay(c.dueOn)],
+            [t("collections.payByLabel"), formatDay(c.dueOn)],
           ]}
         />
         <section aria-labelledby="lines-h" className="flex flex-col gap-comfortable">

@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Logo } from "@/components/ui";
 import { TILLS } from "@/lib/tills";
 
-export const metadata = { title: "Till designs · Counterfoil" };
+export async function generateMetadata() {
+  const t = await getTranslations("pos");
+  return { title: t("tills.metaTitle") };
+}
 
 /**
  * The chooser.
@@ -17,7 +21,8 @@ export const metadata = { title: "Till designs · Counterfoil" };
  * look at, not a thing a cashier does mid-shift, so it should not appear to be
  * part of a shift.
  */
-export default function TillsPage() {
+export default async function TillsPage() {
+  const t = await getTranslations("pos");
   return (
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col px-section py-hero">
       <div className="flex items-center justify-between gap-comfortable">
@@ -26,14 +31,13 @@ export default function TillsPage() {
           href="/"
           className="-my-tight inline-flex min-h-11 items-center gap-inline font-mono text-xs text-muted hover:text-ember sm:min-h-0"
         >
-          <ArrowLeft size={13} strokeWidth={1.5} /> Home
+          <ArrowLeft size={13} strokeWidth={1.5} aria-hidden /> {t("tills.home")}
         </Link>
       </div>
 
-      <h1 className="type-h1 mt-major text-3xl">Till designs</h1>
+      <h1 className="type-h1 mt-major text-3xl">{t("tills.title")}</h1>
       <p className="type-body mt-tight max-w-xl text-muted">
-        Three shapes for the same counter. They sell the same catalogue through the same
-        pricing and the same order engine — what differs is how a sale is assembled.
+        {t("tills.intro")}
       </p>
 
       <div className="mt-major flex flex-col gap-comfortable">
@@ -74,7 +78,7 @@ export default function TillsPage() {
                 <span className="flex flex-wrap items-center gap-tight">
                   <span className="type-h2 text-lg text-muted">{till.name}</span>
                   <span className="rounded-full bg-subtle px-tight py-inline font-mono text-xs text-muted">
-                    being built
+                    {t("tills.beingBuilt")}
                   </span>
                 </span>
                 <span className="type-body mt-inline block text-[14px] text-muted">{till.blurb}</span>
@@ -90,9 +94,9 @@ export default function TillsPage() {
           Each row is now a real 44px target on a phone with the glyph
           nudging on hover. */}
       <div className="mt-hero flex flex-wrap items-center gap-major border-t border-line pt-major font-mono text-xs text-muted">
-        <Link href="/dashboard" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">OS admin<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
-        <Link href="/tokens" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">Design tokens<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
-        <Link href="/kitchen-sink" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">Primitives<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
+        <Link href="/dashboard" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">{t("tills.osAdmin")}<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
+        <Link href="/tokens" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">{t("tills.tokens")}<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
+        <Link href="/kitchen-sink" className="group inline-flex min-h-11 items-center gap-inline transition-colors duration-quick hover:text-ember sm:min-h-0">{t("tills.primitives")}<ArrowRight size={13} strokeWidth={1.75} aria-hidden className="shrink-0 transition-transform duration-quick group-hover:translate-x-0.5" /></Link>
       </div>
     </main>
   );

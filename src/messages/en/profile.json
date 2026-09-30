@@ -3,13 +3,13 @@
   "email": "Email",
   "phone": "Phone",
   "noRole": "No role set",
-  "workingAt": "Where you are working",
+  "workingAt": "Where you're working",
   "counter": "Counter",
   "venue": "Venue",
   "language": "Language",
-  "languageDesc": "This device only — it does not change anyone else's.",
+  "languageDesc": "This device only. It doesn't change anyone else's.",
   "detailsTitle": "Your details",
-  "managerChanges": "A manager changes these in Settings.",
+  "managerChanges": "A manager can change these in Settings.",
   "switchUser": "Switch user",
-  "pinNote": "Signing out needs a PIN to come back."
+  "pinNote": "After you sign out, you need your PIN to come back."
 }

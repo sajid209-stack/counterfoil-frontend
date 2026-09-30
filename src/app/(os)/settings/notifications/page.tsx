@@ -313,7 +313,11 @@ export default function NotificationsPage() {
         </SettingsSection>
 
         <SettingsSection title={t("notifications.timingTitle")} description={t("notifications.timingDesc")}>
-          <SettingRow label={t("notifications.reminderHours")} description={t("notifications.reminderHoursDesc")} error={errors.reminder}>
+          <SettingRow
+            label={t("notifications.reminderHours")}
+            description={reminder === null ? t("notifications.reminderHoursDesc") : t("notifications.reminderHoursNow", { hours: reminder })}
+            error={errors.reminder}
+          >
             {({ id, describedBy }) => (
               <SuffixInput
                 id={id}
@@ -326,7 +330,11 @@ export default function NotificationsPage() {
               />
             )}
           </SettingRow>
-          <SettingRow label={t("notifications.followUpHours")} description={t("notifications.followUpHoursDesc")} error={errors.followUp}>
+          <SettingRow
+            label={t("notifications.followUpHours")}
+            description={followUp === null ? t("notifications.followUpHoursDesc") : t("notifications.followUpHoursNow", { hours: followUp })}
+            error={errors.followUp}
+          >
             {({ id, describedBy }) => (
               <SuffixInput
                 id={id}
@@ -385,6 +393,7 @@ export default function NotificationsPage() {
                   id={id}
                   value={form.senderName}
                   maxLength={11}
+                  placeholder={t("notifications.senderPlaceholder")}
                   autoComplete="off"
                   spellCheck={false}
                   onChange={(e) => set({ senderName: e.target.value })}
@@ -407,6 +416,7 @@ export default function NotificationsPage() {
                 id={id}
                 type="email"
                 autoComplete="email"
+                placeholder={t("notifications.replyToPlaceholder")}
                 value={form.replyToEmail}
                 onChange={(e) => set({ replyToEmail: e.target.value })}
                 aria-invalid={!!errors.replyTo || undefined}

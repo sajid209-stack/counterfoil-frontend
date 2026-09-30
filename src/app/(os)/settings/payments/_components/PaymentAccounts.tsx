@@ -70,6 +70,9 @@ export function PaymentAccounts() {
   const cadence = t(schedule === "daily" ? "settings.cadenceDaily" : schedule === "weekly" ? "settings.cadenceWeekly" : "settings.cadenceMonthly");
   const account = (locationId: string | null, p: GatewayProvider) => accounts.find((a) => a.locationId === locationId && a.provider === p);
   const accountLabel = (c: Collects) => (c === "own" ? t("settings.own") : t("settings.counterfoil"));
+  /* Lower-case forms inside a sentence: the option labels are titles, and
+     "now go to Your own account" reads as a typo. */
+  const accountInline = (c: Collects) => (c === "own" ? t("settings.ownInline") : t("settings.counterfoilInline"));
   const providerName = (p: GatewayProvider) => t(`gatewayProvider.${p}`);
 
   const reload = () => {
@@ -94,7 +97,7 @@ export function PaymentAccounts() {
     setBusy(true);
     if (pending.kind === "switch") {
       const res = await switchCollector(pending.locationId, pending.provider, pending.to);
-      if (res.ok) toast.success(t("settings.switched", { provider: providerName(pending.provider), to: accountLabel(pending.to) }));
+      if (res.ok) toast.success(t("settings.switched", { provider: providerName(pending.provider), to: accountInline(pending.to) }));
       else toast.error(res.error.message);
     } else if (pending.kind === "keys") {
       const res = await setGatewayCredentials(pending.locationId, pending.provider, keys);
@@ -105,7 +108,7 @@ export function PaymentAccounts() {
       }
       if (pending.thenSwitch) {
         await switchCollector(pending.locationId, pending.provider, "own");
-        toast.success(t("settings.switched", { provider: providerName(pending.provider), to: t("settings.own") }));
+        toast.success(t("settings.switched", { provider: providerName(pending.provider), to: t("settings.ownInline") }));
       } else {
         toast.success(t("settings.keysSaved", { provider: providerName(pending.provider) }));
       }
@@ -211,8 +214,8 @@ export function PaymentAccounts() {
     if (!pending) return { title: "", message: "", label: "" };
     if (pending.kind === "switch") {
       return {
-        title: t("settings.switchTitle", { provider: providerName(pending.provider), to: accountLabel(pending.to) }),
-        message: t("settings.switchBody", { to: accountLabel(pending.to) }),
+        title: t("settings.switchTitle", { provider: providerName(pending.provider), to: accountInline(pending.to) }),
+        message: t("settings.switchBody", { to: accountInline(pending.to) }),
         label: t("settings.switchConfirm"),
       };
     }
@@ -265,7 +268,7 @@ export function PaymentAccounts() {
                           }
                         }}
                         className={cn(
-                          "inline-flex min-h-9 items-center rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick",
+                          "inline-flex min-h-11 items-center rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:min-h-9",
                           own === v ? "bg-ember-solid text-white" : "text-muted hover:text-fg",
                         )}
                       >
@@ -305,7 +308,7 @@ export function PaymentAccounts() {
         title={keysPending ? t("settings.keysTitle", { provider: providerName(keysPending.provider) }) : ""}
         description={
           keysPending
-            ? `${t("settings.keysBody", { provider: providerName(keysPending.provider) })}${keysPending.thenSwitch ? ` ${t("settings.switchBody", { to: t("settings.own") })}` : ""}`
+            ? `${t("settings.keysBody", { provider: providerName(keysPending.provider) })}${keysPending.thenSwitch ? ` ${t("settings.switchBody", { to: t("settings.ownInline") })}` : ""}`
             : undefined
         }
         footer={

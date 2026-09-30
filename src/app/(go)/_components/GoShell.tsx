@@ -110,6 +110,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
     return () => applyTillText(null);
   }, [prefs.tillText]);
   const t = useTranslations("nav");
+  const tp = useTranslations("pos");
   const [moreOpen, setMoreOpen] = useState(false);
   const [salesOpen, setSalesOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -170,23 +171,23 @@ export function GoShell({ children }: { children: React.ReactNode }) {
       {/* Context bar — business · counter · shift state. Nav does NOT live here. */}
       <header className="flex items-center justify-between gap-tight px-section py-tight">
         <div className="flex min-w-0 items-center gap-tight">
-          <Link href="/login" aria-label="Counterfoil Go — sign in" className="flex h-12 shrink-0 items-center">
+          <Link href="/login" aria-label={tp("shell.signIn")} className="flex h-12 shrink-0 items-center">
             <Logo variant="go" size={30} />
           </Link>
-          <span className="hidden shrink-0 rounded-full bg-subtle px-comfortable py-inline text-[0.8125rem] text-muted dark:border dark:border-line dark:bg-transparent sm:block">Fort Main Gate</span>
-          <span className="hidden shrink-0 font-mono text-[0.8125rem] text-muted sm:block" title="Shift open for"><span className="sr-only">Shift open for </span>⏱ 3:24</span>
+          <span className="hidden shrink-0 rounded-full bg-subtle px-comfortable py-inline text-[0.8125rem] text-muted dark:border dark:border-line dark:bg-transparent sm:block">{tp("counter")}</span>
+          <span className="hidden shrink-0 font-mono text-[0.8125rem] text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
         </div>
         {/* Only on a till, and only where there is room for it. */}
         <TillSwitcher />
         <span className="flex shrink-0 items-center gap-tight">
           <ModeButton shape="round" />
-          <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse font-mono text-[0.8125rem] text-inverse-fg" title="Nadia Islam — my profile">N</Link>
+          <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse font-mono text-[0.8125rem] text-inverse-fg" title={tp("shell.myProfile", { name: "Nadia Islam" })} aria-label={tp("shell.myProfile", { name: "Nadia Islam" })}>N</Link>
         </span>
       </header>
 
       <div className="flex min-h-0 flex-1">
         {/* Tablet-landscape left rail (88px, icon over label) */}
-        <nav aria-label="Go navigation" className="sticky top-0 hidden h-[calc(100vh-64px)] w-[88px] shrink-0 flex-col gap-inline p-tight rail:flex">
+        <nav aria-label={tp("shell.menu")} className="sticky top-0 hidden h-[calc(100vh-64px)] w-[88px] shrink-0 flex-col gap-inline p-tight rail:flex">
           {tabs.map((t) => tabButton(t, true))}
           {moreButton(true)}
         </nav>
@@ -226,7 +227,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
           reserves its height (86px) so the bar never sits over a row — a fixed
           bar that overlaps content is the standing sticky-nav failure. */}
       <nav
-        aria-label="Go navigation"
+        aria-label={tp("shell.menu")}
         className="fixed inset-x-tight z-40 flex gap-inline rounded-full p-inline go-raised sm:inset-x-comfortable rail:hidden"
         style={{ bottom: "calc(12px + env(safe-area-inset-bottom))" }}
       >
@@ -271,11 +272,11 @@ export function GoShell({ children }: { children: React.ReactNode }) {
             <div className="mb-section flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
-                <p className="font-mono text-[0.8125rem] text-muted">Fort Main Gate · shift open 3:24</p>
+                <p className="font-mono text-[0.8125rem] text-muted">{tp("shell.shiftLine", { counter: tp("counter"), time: "3:24" })}</p>
               </div>
               <div className="flex items-center gap-tight">
                 <LocaleToggle />
-                <button type="button" aria-label="Close" onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-full active:bg-line">
+                <button type="button" aria-label={tp("shell.close")} onClick={() => setMoreOpen(false)} className="flex h-12 w-12 items-center justify-center rounded-full active:bg-line">
                   <X size={20} strokeWidth={1.5} />
                 </button>
               </div>
@@ -309,17 +310,17 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <Modal open={salesOpen} onClose={() => setSalesOpen(false)} title="My sales — this shift">
+      <Modal open={salesOpen} onClose={() => setSalesOpen(false)} title={tp("shell.salesTitle")}>
         <div className="flex flex-col gap-tight font-mono text-sm tabular-nums">
-          <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">Takings</span><span>{formatMoney(1245000)}</span></div>
-          <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">Sales</span><span>9</span></div>
-          <div className="flex justify-between"><span className="font-sans text-muted">Cash in drawer</span><span>{formatMoney(485000)}</span></div>
+          <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">{tp("shell.takings")}</span><span>{formatMoney(1245000)}</span></div>
+          <div className="flex justify-between border-b border-line pb-tight"><span className="font-sans text-muted">{tp("shell.sales")}</span><span>9</span></div>
+          <div className="flex justify-between"><span className="font-sans text-muted">{tp("shell.cashInDrawer")}</span><span>{formatMoney(485000)}</span></div>
         </div>
-        <p className="mt-section text-[0.8125rem] text-muted">Full breakdown at shift close.</p>
+        <p className="mt-section text-[0.8125rem] text-muted">{tp("shell.salesNote")}</p>
       </Modal>
 
-      <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title="Help">
-        <p className="text-sm text-muted">Stuck mid-queue? Call the duty manager on <span className="font-mono text-fg">01711-000000</span>, or find printable how-tos in OS under Settings.</p>
+      <Modal open={helpOpen} onClose={() => setHelpOpen(false)} title={tp("shell.helpTitle")}>
+        <p className="text-sm text-muted">{tp.rich("shell.helpBody", { phone: (c) => <span className="font-mono text-fg">{c}</span> })}</p>
       </Modal>
     </div>
   );

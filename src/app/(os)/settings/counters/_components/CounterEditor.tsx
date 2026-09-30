@@ -161,6 +161,7 @@ export function CounterEditor({
               id={id}
               value={form.name}
               onChange={(e) => set({ name: e.target.value })}
+              placeholder={t("counters.namePlaceholder")}
               autoComplete="off"
               aria-invalid={!!nameErr || undefined}
               aria-describedby={describedBy}

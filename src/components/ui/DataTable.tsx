@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 
 export interface Column<T> {
@@ -107,6 +108,7 @@ export function DataTable<T>({
   layout = "auto",
   height = "box",
 }: DataTableProps<T>) {
+  const tc = useTranslations("common");
   const showEmpty = !loading && rows.length === 0;
   const list = cardVariant === "list";
 
@@ -129,7 +131,7 @@ export function DataTable<T>({
               <div className="h-3 w-1/2 rounded-xs bg-line" />
             </div>
           ))}
-        {showEmpty && (emptyState ?? <p className="py-section text-center text-[0.8125rem] text-muted">No results.</p>)}
+        {showEmpty && (emptyState ?? <p className="py-section text-center text-[0.8125rem] text-muted">{tc("noResults")}</p>)}
         {!loading &&
           rows.map((row) => (
             <div
@@ -270,7 +272,7 @@ export function DataTable<T>({
               <tr>
                 <td colSpan={columns.length} className="px-comfortable py-hero">
                   {emptyState ?? (
-                    <p className="text-center text-[0.8125rem] text-muted">No results.</p>
+                    <p className="text-center text-[0.8125rem] text-muted">{tc("noResults")}</p>
                   )}
                 </td>
               </tr>
@@ -364,6 +366,7 @@ function Pagination({
   onPageChange: (page: number) => void;
   loading?: boolean;
 }) {
+  const tc = useTranslations("common");
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
@@ -378,7 +381,7 @@ function Pagination({
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1 || loading}
-          aria-label="Previous page"
+          aria-label={tc("previousPage")}
           className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint disabled:cursor-not-allowed hover:enabled:border-inverse"
         >
           <ChevronLeft size={16} strokeWidth={1.5} />
@@ -390,7 +393,7 @@ function Pagination({
           type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages || loading}
-          aria-label="Next page"
+          aria-label={tc("nextPage")}
           className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint disabled:cursor-not-allowed hover:enabled:border-inverse"
         >
           <ChevronRight size={16} strokeWidth={1.5} />

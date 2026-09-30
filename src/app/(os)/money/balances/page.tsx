@@ -43,6 +43,7 @@ import {
   downloadCsv,
   money,
   useHoldingLabel,
+  wrapHead,
   type Period,
 } from "../_components/MoneyKit";
 
@@ -145,7 +146,7 @@ export default function BalancesPage() {
        the fact that decides which of the two owed columns the row fills. */
     {
       key: "payment",
-      header: t("balances.colPaymentHeld"),
+      header: wrapHead(t("balances.colPaymentHeld")),
       render: (e) => (
         <span className="flex flex-col items-start gap-inline">
           <span className="whitespace-nowrap">{e.kind === "refund" ? `${t("kind.refund")} · ` : ""}{holding(e).split(" · ")[0]}</span>
@@ -155,21 +156,21 @@ export default function BalancesPage() {
     },
     { key: "amount", header: t("balances.colAmount"), align: "right", render: (e) => num(e.amount) },
     { key: "vat", header: t("balances.colVat"), align: "right", render: (e) => num(e.vat, { dim: true }) },
-    { key: "platform", header: t("balances.colPlatformFee"), align: "right", render: (e) => num(e.platformFee) },
-    { key: "gateway", header: t("balances.colGatewayFee"), align: "right", render: (e) => num(e.gatewayFee) },
+    { key: "platform", header: wrapHead(t("balances.colPlatformFee")), align: "right", render: (e) => num(e.platformFee) },
+    { key: "gateway", header: wrapHead(t("balances.colGatewayFee")), align: "right", render: (e) => num(e.gatewayFee) },
     {
       key: "payYou",
-      header: t("balances.colPayYou"),
+      header: wrapHead(t("balances.colPayYou")),
       align: "right",
       render: (e) => <span className={cn("whitespace-nowrap font-mono text-[13px] tabular-nums", e.owedToOperator === 0 ? "text-muted" : "font-medium")}>{money(e.owedToOperator)}</span>,
     },
     {
       key: "oweUs",
-      header: t("balances.colOweUs"),
+      header: wrapHead(t("balances.colOweUs")),
       align: "right",
       render: (e) => <span className={cn("whitespace-nowrap font-mono text-[13px] tabular-nums", e.owedByOperator === 0 ? "text-muted" : "font-medium")}>{money(e.owedByOperator)}</span>,
     },
-    { key: "settlement", header: t("settlement.label"), render: (e) => <SettlementBadge status={e.settlementStatus} /> },
+    { key: "settlement", header: wrapHead(t("settlement.label")), render: (e) => <SettlementBadge status={e.settlementStatus} /> },
   ];
 
   return (

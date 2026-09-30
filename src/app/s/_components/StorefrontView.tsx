@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
 import { ProductThumb } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import type { Location, Product, Resource, Staff, Storefront } from "@/lib/api";
-import { behaviourSubtitle } from "@/lib/behaviour";
+import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { formatPriceShort } from "@/lib/format";
 import { ACCENT_WASH, StorefrontChrome } from "./Chrome";
 
@@ -44,11 +44,16 @@ export function StorefrontView({
   preview?: boolean;
 }) {
   const t = useTranslations("storefront");
+  const subtitle = useBehaviourSubtitle();
+  const locale = useLocale();
   const accent = sf.accent ?? null;
 
   const today = location.openingHours.find((h) => h.dayOfWeek === now.getDay());
   const openToday = today && today.intervals.length > 0;
-  const dayName = (d: number) => new Intl.DateTimeFormat("en-GB", { weekday: "long" }).format(new Date(2026, 6, 5 + d));
+  /* In the reader's language: a Bangla page listing "Monday, Tuesday…" was
+     the one block of English left on it. Drawn only once the venue has
+     loaded, so the server and the browser never both render it. */
+  const dayName = (d: number) => new Intl.DateTimeFormat(locale === "bn" ? "bn-BD" : "en-GB", { weekday: "long" }).format(new Date(2026, 6, 5 + d));
 
   /** The cheapest active tier, which is what a public card says. */
   const fromPrice = (tiers: { price: number; active: boolean }[]) => {
@@ -103,7 +108,7 @@ export function StorefrontView({
                       <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="card" />
                       <div className="min-w-0 flex-1">
                         <p className="break-words text-[15px] font-semibold leading-snug">{p.name}</p>
-                        <p className="mt-inline text-[13px] text-muted">{behaviourSubtitle(p, { resources, team })}</p>
+                        <p className="mt-inline text-[13px] text-muted">{subtitle(p, { resources, team })}</p>
                       </div>
                     </div>
                     <p className="mt-auto flex items-baseline justify-between gap-tight pt-tight">

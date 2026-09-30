@@ -189,7 +189,7 @@ export default function TaxPage() {
             </SettingRow>
             <SettingRow label={t("tax.regNumber")} description={t("tax.regNumberDesc")}>
               {({ id, describedBy }) => (
-                <input id={id} value={form.reg} onChange={(e) => set("reg", e.target.value)} aria-describedby={describedBy} className={controlCls()} />
+                <input id={id} value={form.reg} onChange={(e) => set("reg", e.target.value)} placeholder={t("tax.regPlaceholder")} aria-describedby={describedBy} className={controlCls()} />
               )}
             </SettingRow>
             <SettingRow

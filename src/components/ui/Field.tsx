@@ -34,6 +34,11 @@ interface FormFieldProps {
   placeholder?: string;
   disabled?: boolean;
   rows?: number; // textarea
+  /** What the browser may fill in — a sign-in form without it makes somebody
+   *  type an address their phone already knows. */
+  autoComplete?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
 }
 

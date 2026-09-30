@@ -44,7 +44,7 @@ export default function PricingPage() {
   const columns: Column<PriceRule>[] = [
     { key: "name", header: t("colName"), sortable: true, render: (r) => <span className="font-medium">{r.name}</span> },
     { key: "scope", header: t("colAppliesTo"), render: (r) => <span className="text-[13px] text-muted">{scope(r)}</span> },
-    { key: "channel", header: t("colChannel"), render: (r) => <span className="font-mono text-[12px] text-muted">{r.channel}</span> },
+    { key: "channel", header: t("colChannel"), render: (r) => <span className="text-[13px] text-muted">{t(r.channel === "counter" ? "channelCounter" : r.channel === "online" ? "channelOnline" : "channelAll")}</span> },
     { key: "kind", header: t("colKind"), render: (r) => kindLabel[r.kind] },
     {
       key: "adjustmentPct",

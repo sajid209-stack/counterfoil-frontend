@@ -40,7 +40,7 @@ import { DEMO_STAFF_ID } from "@/lib/session";
 import { DEMO_TODAY, isFlexibleResource, isResourceType, isSlotBased, needsSchedule, slotISO, slotTimesOn, toMinutes, toTime } from "@/lib/schedule";
 import { resolveProductPrice } from "@/lib/pricing";
 import { durationOptions, formatDuration, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
-import { behaviourSubtitle } from "@/lib/behaviour";
+import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
 import { formatDay, formatMoney } from "@/lib/format";
 
@@ -190,6 +190,7 @@ export function ProductSheet({
 }) {
   const toast = useToast();
   const t = useTranslations("pos");
+  const subtitle = useBehaviourSubtitle();
   const tc = useTranslations("common");
   const seatT = useTranslations("seatmaps");
   const hasLayout = !!product.layoutId;
@@ -657,7 +658,7 @@ export function ProductSheet({
           <ProductThumb images={product.images} name={product.name} bookingType={product.bookingType} size="thumb" />
           <div className="min-w-0 flex-1">
             <h2 id="sheet-title" className="type-h2 break-words text-2xl">{product.name}</h2>
-            <p className="mt-inline text-[0.8125rem] text-muted">{behaviourSubtitle(product, { resources, team })}</p>
+            <p className="mt-inline text-[0.8125rem] text-muted">{subtitle(product, { resources, team })}</p>
           </div>
           <button type="button" onClick={onClose} aria-label={t("sheet.close")} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-subtle text-muted transition-colors duration-quick hover:text-fg active:bg-ember/10"><X size={20} strokeWidth={1.75} /></button>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Delete } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 // Big touch keypad (48px+ targets; ≥72px in large mode) for PIN and tender.
 export function Keypad({
@@ -12,6 +13,7 @@ export function Keypad({
   onBackspace: () => void;
   large?: boolean;
 }) {
+  const t = useTranslations("pos");
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
   const keyCls = `${large ? "h-20" : "h-16"} rounded-go border border-line bg-card text-2xl text-fg active:bg-ember/10`;
   return (
@@ -25,7 +27,7 @@ export function Keypad({
       <button type="button" onClick={() => onKey("0")} className={keyCls}>
         0
       </button>
-      <button type="button" onClick={onBackspace} aria-label="Backspace" className={`flex items-center justify-center ${keyCls}`}>
+      <button type="button" onClick={onBackspace} aria-label={t("keypad.backspace")} className={`flex items-center justify-center ${keyCls}`}>
         <Delete size={24} strokeWidth={1.5} />
       </button>
     </div>

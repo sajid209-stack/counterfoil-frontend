@@ -20,9 +20,8 @@ import {
   type Staff,
 } from "@/lib/api";
 import { formatPriceShort } from "@/lib/format";
-import { DAY_LABELS, defaultSchedule, isDailyCapped, isSlotBased, needsSchedule, slotTimes } from "@/lib/schedule";
+import { defaultSchedule, isDailyCapped, isSlotBased, needsSchedule, slotTimes } from "@/lib/schedule";
 import { defaultPolicies } from "@/lib/tax";
-import { formatDuration } from "@/lib/duration";
 import { bookingKindOf, type BookingKind } from "@/lib/catalog";
 import { BookingSetup, type BookingSetupResult, type SetupStart } from "./BookingSetup";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
@@ -30,6 +29,7 @@ import { PricingRulesField, type FormPricingRule } from "./PricingRulesField";
 import { ImageUploadField, type FormImage } from "./ImageUploadField";
 import { ScheduleBuilder } from "./ScheduleBuilder";
 import { WhereSold } from "../WhereSold";
+import { useCatalogFormat } from "../../_lib/useCatalogFormat";
 
 const majorToMinor = (s: string) => { const n = parseFloat(s); return Number.isFinite(n) ? Math.round(n * 100) : 0; };
 
@@ -93,6 +93,7 @@ export function ProductWizard({
   const t = useTranslations("catalog.wizard");
   const tc = useTranslations("catalog");
   const tf = useTranslations("catalog.fields");
+  const { dur: formatDuration, dayShort } = useCatalogFormat();
   const router = useRouter();
   const toast = useToast();
   const preset = presetFor(kind);
@@ -332,7 +333,7 @@ export function ProductWizard({
   /** The schedule, in a sentence: which days, which hours, and how much. */
   const whenLine = (() => {
     if (!schedule || !booking) return null;
-    const days = schedule.openDays.length === 7 ? t("everyDay") : [...schedule.openDays].sort().map((d) => DAY_LABELS[d]).join(" ");
+    const days = schedule.openDays.length === 7 ? t("everyDay") : [...schedule.openDays].sort().map((d) => dayShort(d)).join(" ");
     const hours = schedule.startTime && schedule.endTime ? `${schedule.startTime}–${schedule.endTime}` : "";
     const amount = isSlotBased(booking.bookingType)
       ? t("sessionsPerDay", { count: slotTimes(schedule).length })

@@ -404,7 +404,9 @@ export default function DashboardPage() {
       // The sparkline went: it drew the same seven days the revenue trend
       // chart draws in full immediately below it, and it was the reason this
       // tile's context slot held a picture where the other three held words.
-      context: t("vsLastWeek"),
+      // Says what the delta beside it is measured against, which depends on
+      // the scope: a week is compared with the week before, not with a day.
+      context: scope === "today" ? t("vsLastWeek") : t("vsWeekBefore"),
       delta: <DeltaPill now={revenue} then={revenuePrev} />,
     },
     {
@@ -461,7 +463,7 @@ export default function DashboardPage() {
       key: "idle",
       label: t("idleCapacity"),
       value: formatMoneyCompact(idleTotal),
-      sub: idle.length === 1 ? t("idleSessions", { count: idle.length }) : t("idleSessionsPlural", { count: idle.length }),
+      sub: t("idleSessions", { count: idle.length }),
       href: "/calendar",
     },
     {
@@ -513,10 +515,10 @@ export default function DashboardPage() {
               screen said which venues it was showing. It is in the bar now and
               governs the whole console; see lib/activeLocation. */}
           {/* Scope, not actions — a dashboard is a place to look. */}
-          <div className="relative grid h-[52px] grid-cols-2 rounded-sm bg-line/60 p-inline sm:h-11">
+          <div role="group" aria-label={t("scopeLabel")} className="relative grid h-[52px] grid-cols-2 rounded-sm bg-line/60 p-inline sm:h-11">
             <span aria-hidden className="absolute inset-y-inline rounded-xs bg-ember-solid transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />
             {(["today", "week"] as const).map((s) => (
-              <button key={s} type="button" onClick={() => setScope(s)} className={`relative z-10 h-full px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-white" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
+              <button key={s} type="button" aria-pressed={scope === s} onClick={() => setScope(s)} className={`relative z-10 h-full px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-white" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
             ))}
           </div>
         </div>
@@ -548,7 +550,7 @@ export default function DashboardPage() {
                     <span className="text-[12px] text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
                   ) : (
                     <div className="flex items-center gap-tight">
-                      <button type="button" onClick={() => skip(s.key)} className="text-[12px] text-muted hover:text-fg">{t("skip")}</button>
+                      <button type="button" aria-label={t("skipStep", { step: s.label })} onClick={() => skip(s.key)} className="min-h-11 px-tight text-[12px] text-muted hover:text-fg sm:min-h-0">{t("skip")}</button>
                       <Button size="sm" icon={<ArrowRight size={14} strokeWidth={1.5} />} onClick={() => router.push(s.href)}>{t("start")}</Button>
                     </div>
                   )}

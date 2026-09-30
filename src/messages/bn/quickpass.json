@@ -1,16 +1,16 @@
 {
-  "identifierFallback": "শনাক্তকারী",
+  "identifierFallback": "নাম বা নম্বর",
   "passFallback": "পাস",
-  "passIssuedTitle": "পাস ইস্যু হয়েছে",
-  "issueAnother": "আরেকটি ইস্যু করুন",
+  "passIssuedTitle": "পাস বিক্রি হয়েছে",
+  "issueAnother": "আরেকটি বিক্রি করুন",
   "gateLabel": "গেট",
   "title": "কুইক পাস",
-  "subtitle": "এখনই একটি সময়ভিত্তিক পাস ইস্যু করুন।",
-  "duration": "সময়কাল",
+  "subtitle": "নির্দিষ্ট সময়ের জন্য পাস বিক্রি করুন।",
+  "duration": "কতক্ষণ",
   "priceLabel": "দাম (৳)",
-  "priceHelp": "পাস কনফিগারেশন থেকে — বদলাতে এডিট করুন।",
-  "issuePass": "পাস ইস্যু · {amount}",
+  "priceHelp": "সাধারণ দাম। চাইলে বদলাতে পারেন।",
+  "issuePass": "পাস বিক্রি · {amount}",
   "shorter": "কম সময়",
   "longer": "বেশি সময়",
-  "deal": "নির্ধারিত দাম"
+  "deal": "বিশেষ দাম"
 }

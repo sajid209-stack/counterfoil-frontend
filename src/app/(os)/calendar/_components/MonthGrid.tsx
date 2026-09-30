@@ -41,6 +41,7 @@ export function MonthGrid({
   ghost = null,
   ghostLabel = "",
   createLabel,
+  openDayLabel,
 }: {
   /** Any date inside the month to render. */
   month: Date;
@@ -72,6 +73,9 @@ export function MonthGrid({
   ghostLabel?: string;
   /** The accessible name of a day's "new booking" target. */
   createLabel?: (d: Date) => string;
+  /** The accessible name of a day's number, which opens that day. A bare
+   *  "29" read out alone does not say which month, or what pressing it does. */
+  openDayLabel?: (d: Date) => string;
 }) {
   /** Which day the agenda underneath is showing. Only consulted when compact.
    *  Held as an ISO string so that changing month drops it automatically — the
@@ -137,6 +141,8 @@ export function MonthGrid({
                 <button
                   key={key}
                   type="button"
+                  aria-pressed={on}
+                  aria-label={dayHeading?.(d)}
                   onClick={() => setPicked(key)}
                   className={cn(
                     "flex min-h-[3.25rem] flex-col items-center gap-1 border-r border-hairline py-tight last:border-r-0",
@@ -268,6 +274,7 @@ export function MonthGrid({
                   )}
                   <button
                     type="button"
+                    aria-label={openDayLabel?.(d)}
                     onClick={onPickDay ? () => onPickDay(d) : undefined}
                     className={cn(
                       "mb-1 flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px] transition-colors duration-quick",

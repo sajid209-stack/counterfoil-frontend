@@ -1,14 +1,14 @@
 {
   "title": "Transactions",
-  "description": "Every payment, refund and write-off at this venue — what reached the drawer and the bank.",
-  "export": "Export CSV",
-  "exported": "Exported {count, plural, one {# transaction} other {# transactions}}",
+  "description": "Every payment, refund and forgiven balance at this venue.",
+  "export": "Download CSV",
+  "exported": "Saved {count, plural, one {# row} other {# rows}}",
   "statCollected": "Collected",
   "statRefunded": "Refunded",
-  "statNet": "Net",
+  "statNet": "After refunds",
   "statNetSplit": "Cash {cash} · Digital {digital}",
   "statCount": "Transactions",
-  "statWrittenOff": "{amount} written off, not counted",
+  "statWrittenOff": "{amount} forgiven, not counted",
   "searchPlaceholder": "Search order, customer or TrxID",
   "filterDate": "Date",
   "filterType": "Type",
@@ -24,12 +24,12 @@
   "kind": {
     "payment": "Payment",
     "refund": "Refund",
-    "write_off": "Write-off"
+    "write_off": "Balance forgiven"
   },
   "status": {
-    "confirmed": "Succeeded",
-    "pending": "Pending",
-    "failed": "Failed"
+    "confirmed": "Went through",
+    "pending": "Waiting",
+    "failed": "Didn't go through"
   },
   "colDate": "Date",
   "colType": "Type",
@@ -41,16 +41,16 @@
   "walkIn": "Walk-in",
   "noMethod": "No money moved",
   "emptyTitle": "No transactions",
-  "emptyMessage": "Nothing matches these filters at this venue. Try a wider date range.",
+  "emptyMessage": "Nothing at this venue matches these filters. Try more dates.",
   "detailTitle": "{kind} · {amount}",
   "detailAmount": "Amount",
   "detailStatus": "Status",
   "detailMethod": "Method",
   "detailWhen": "When",
-  "detailReference": "Provider reference",
-  "detailTendered": "Cash handed over",
+  "detailReference": "Payment reference",
+  "detailTendered": "Cash received",
   "detailChange": "Change given",
-  "detailChannel": "Channel",
+  "detailChannel": "Sold at",
   "detailCounter": "Counter",
   "detailStaff": "Taken by",
   "detailCustomer": "Customer",
@@ -60,8 +60,8 @@
   "openOrder": "Open order",
   "copyId": "Copy ID",
   "copied": "Copied",
-  "writeOffNote": "A write-off clears what is owed without money moving, so it is not in collected or net.",
-  "refundNote": "Refunded to the method the customer paid with.",
+  "writeOffNote": "Forgiving a balance clears what was owed. No money moved, so it is not in Collected or After refunds.",
+  "refundNote": "Paid back the same way the customer paid.",
   "channelCounter": "Counter",
   "channelOnline": "Online"
 }

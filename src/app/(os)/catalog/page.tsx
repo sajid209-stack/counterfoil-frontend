@@ -70,11 +70,11 @@ import {
   updateProduct,
   type Product,
 } from "@/lib/api";
-import { behaviourSubtitle } from "@/lib/behaviour";
+import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { categoryById } from "@/lib/events/catalog";
 import { templateFontVars } from "@/lib/events/fonts";
 import { formatDay, formatPriceShort } from "@/lib/format";
-import { DAY_LABELS, DEMO_TODAY, demoNow } from "@/lib/schedule";
+import { DEMO_TODAY, demoNow } from "@/lib/schedule";
 import type { Blocker, SellingWarning } from "@/lib/sellable";
 import {
   bookingKindOf,
@@ -157,6 +157,7 @@ export default function CatalogPage() {
  */
 function Catalog() {
   const t = useTranslations("catalog");
+  const subtitle = useBehaviourSubtitle();
   const tp = useTranslations("products");
   const te = useTranslations("events");
   const router = useRouter();
@@ -504,7 +505,7 @@ function Catalog() {
   const whenOf = (p: Product): [string, string | null] => {
     const s = p.schedule;
     if (s?.startTime && s.endTime) {
-      const days = s.openDays?.length === 7 || !s.openDays ? t("everyDay") : [...s.openDays].sort().map((d) => DAY_LABELS[d]).join(" ");
+      const days = s.openDays?.length === 7 || !s.openDays ? t("everyDay") : [...s.openDays].sort().map((d) => t(`day.short.${d}`)).join(" ");
       return [days, `${s.startTime}–${s.endTime}`];
     }
     if (p.courseDates?.length) return [t("sessions", { count: p.courseDates.length }), formatDay([...p.courseDates].sort()[0])];
@@ -566,7 +567,7 @@ function Catalog() {
     }
     return (
       <span className="block truncate text-[12px] text-muted">
-        {i.product ? behaviourSubtitle(i.product, { resources, team }) : i.event!.venueName}
+        {i.product ? subtitle(i.product, { resources, team }) : i.event!.venueName}
       </span>
     );
   };

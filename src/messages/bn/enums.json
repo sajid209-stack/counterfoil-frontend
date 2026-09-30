@@ -1,23 +1,23 @@
 {
   "status": {
-    "active": "সক্রিয়",
-    "inactive": "নিষ্ক্রিয়",
+    "active": "চালু",
+    "inactive": "চালু নেই",
     "confirmed": "নিশ্চিত",
-    "paid": "পরিশোধিত",
-    "completed": "সম্পন্ন",
-    "pending": "অপেক্ষমাণ",
+    "paid": "পরিশোধ হয়েছে",
+    "completed": "শেষ",
+    "pending": "অপেক্ষায়",
     "invited": "আমন্ত্রিত",
-    "partial": "আংশিক",
-    "partly_refunded": "আংশিক ফেরত",
-    "archived": "আর্কাইভকৃত",
-    "refunded": "ফেরতকৃত",
+    "partial": "কিছু টাকা বাকি",
+    "partly_refunded": "কিছু টাকা ফেরত",
+    "archived": "সরিয়ে রাখা",
+    "refunded": "টাকা ফেরত",
     "suspended": "স্থগিত",
     "cancelled": "বাতিল",
-    "void": "বাতিলকৃত",
-    "issued": "ইস্যুকৃত",
-    "redeemed": "ব্যবহৃত",
-    "expired": "মেয়াদোত্তীর্ণ",
-    "no_show": "অনুপস্থিত",
+    "void": "বাতিল",
+    "issued": "এখনো ব্যবহার হয়নি",
+    "redeemed": "ব্যবহার হয়েছে",
+    "expired": "মেয়াদ শেষ",
+    "no_show": "আসেনি",
     "draft": "খসড়া"
   },
   "method": {
@@ -26,11 +26,11 @@
     "bangla_qr": "বাংলা QR",
     "card_terminal": "কার্ড",
     "credits": "পাস",
-    "mixed": "মিশ্র"
+    "mixed": "ভাগ করে পেমেন্ট"
   },
   "tax": {
-    "standard": "স্ট্যান্ডার্ড (ভ্যাট)",
-    "reduced": "হ্রাসকৃত",
-    "exempt": "অব্যাহতিপ্রাপ্ত"
+    "standard": "সাধারণ ভ্যাট",
+    "reduced": "কম ভ্যাট",
+    "exempt": "ভ্যাট নেই"
   }
 }

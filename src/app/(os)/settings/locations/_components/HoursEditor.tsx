@@ -84,8 +84,8 @@ export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChan
                       {day.intervals.length > 1 && (
                         <button
                           type="button"
-                          aria-label={t("locations.removeHours")}
-                          title={t("locations.removeHours")}
+                          aria-label={t("locations.removeHours", { day: name, from: iv.opensAt, to: iv.closesAt })}
+                          title={t("locations.removeHours", { day: name, from: iv.opensAt, to: iv.closesAt })}
                           onClick={() => setDay(d, day.intervals.filter((_, j) => j !== i))}
                           className={iconButton}
                         >

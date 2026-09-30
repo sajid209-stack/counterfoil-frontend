@@ -1,16 +1,16 @@
 {
-  "identifierFallback": "Identifier",
+  "identifierFallback": "Name or number",
   "passFallback": "Pass",
-  "passIssuedTitle": "Pass issued",
-  "issueAnother": "Issue another",
+  "passIssuedTitle": "Pass sold",
+  "issueAnother": "Sell another",
   "gateLabel": "Gate",
   "title": "Quick pass",
-  "subtitle": "Issue a timed pass on the spot.",
-  "duration": "Duration",
+  "subtitle": "Sell a pass for a set time.",
+  "duration": "How long",
   "priceLabel": "Price (৳)",
-  "priceHelp": "From the pass configuration — edit to override.",
-  "issuePass": "Issue pass · {amount}",
+  "priceHelp": "The usual price. You can change it.",
+  "issuePass": "Sell pass · {amount}",
   "shorter": "Shorter",
   "longer": "Longer",
-  "deal": "set price"
+  "deal": "special price"
 }

@@ -121,7 +121,11 @@ export default function PayoutsPage() {
           <section aria-labelledby="up-h" className="flex flex-col gap-comfortable">
             <div>
               <h2 id="up-h" className="text-sm font-semibold text-fg">{t("payouts.upcoming")}</h2>
-              <p className="mt-inline text-[12px] text-muted">{t("payouts.estimated")}</p>
+              {/* Only a payout that has not gone yet can still grow; one on its
+                  way is a fixed sum, and saying otherwise under it is wrong. */}
+              {upcoming.some((p) => p.status === "scheduled") && (
+                <p className="mt-inline text-[12px] text-muted">{t("payouts.estimated")}</p>
+              )}
             </div>
             <DataTable
               columns={columns}

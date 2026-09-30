@@ -86,9 +86,11 @@ export function PriceTiersField({
             name: t("tierName"),
             price: t("price", { currency: symbol }),
             qty: t("admits"),
-            details: t("tierDetails"),
-            moveUp: t("moveUp"),
-            moveDown: t("moveDown"),
+            details: (name) => t("moreFor", { name }),
+            detailsShort: t("moreShort"),
+            moveUp: (name) => t("moveUp", { name }),
+            moveDown: (name) => t("moveDown", { name }),
+            unnamed: t("unnamedTier"),
             soldOf: () => "",
           }}
           rows={tiers.map((tier, i) => ({
@@ -100,6 +102,7 @@ export function PriceTiersField({
             price: tier.price,
             onPrice: (v) => update(i, { price: v }),
             priceError: errors[`tiers.${i}.price`],
+            pricePlaceholder: t("pricePlaceholder"),
             qty: tier.admits,
             onQty: (v) => update(i, { admits: v }),
             qtyPlaceholder: "1",
@@ -124,7 +127,7 @@ export function PriceTiersField({
                 />
               </>
             ),
-            remove: { label: t("removeTier"), onRemove: () => onChange(tiers.filter((_, idx) => idx !== i)) },
+            remove: { label: t("removeTier", { name: tier.name.trim() || t("unnamedTier") }), onRemove: () => onChange(tiers.filter((_, idx) => idx !== i)) },
             onUp: i > 0 ? () => move(i, -1) : undefined,
             onDown: i < tiers.length - 1 ? () => move(i, 1) : undefined,
           }))}

@@ -137,6 +137,7 @@ export function MemberForm({
               value={form.name}
               onChange={(e) => set({ name: e.target.value })}
               onBlur={() => blur("name")}
+              placeholder={t("team.namePlaceholder")}
               autoComplete="off"
               aria-invalid={!!nameErr || undefined}
               aria-describedby={describedBy}
@@ -152,6 +153,7 @@ export function MemberForm({
               inputMode="email"
               autoComplete="off"
               value={form.email}
+              placeholder={t("team.emailPlaceholder")}
               onChange={(e) => set({ email: e.target.value })}
               onBlur={() => blur("email")}
               aria-invalid={!!contactErr || undefined}
@@ -168,6 +170,7 @@ export function MemberForm({
               inputMode="tel"
               autoComplete="off"
               value={form.phone}
+              placeholder={t("team.phonePlaceholder")}
               onChange={(e) => set({ phone: e.target.value })}
               onBlur={() => blur("phone")}
               aria-describedby={describedBy}

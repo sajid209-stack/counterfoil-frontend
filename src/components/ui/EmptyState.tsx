@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 /** Empty state as a perforated ticket-stub outline — the brand's empty page. */
 export function EmptyState({
   icon,
@@ -10,6 +12,7 @@ export function EmptyState({
   message?: string;
   action?: React.ReactNode;
 }) {
+  const t = useTranslations("common");
   return (
     <div className="relative mx-auto w-full max-w-md">
       <div className="flex flex-col items-center justify-center gap-tight rounded-md border border-dashed border-line px-card pb-tight pt-hero text-center">
@@ -26,7 +29,7 @@ export function EmptyState({
         <span className="mx-major flex-1 border-t-2 border-dashed border-line" />
       </div>
       <div className="flex items-center justify-center rounded-md border border-dashed border-line p-card">
-        {action ?? <span className="font-mono text-[0.75rem] uppercase tracking-wider text-muted">Nothing here yet</span>}
+        {action ?? <span className="font-mono text-[0.75rem] uppercase tracking-wider text-muted">{t("nothingYet")}</span>}
       </div>
     </div>
   );

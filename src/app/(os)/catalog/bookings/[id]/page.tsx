@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Archive } from "lucide-react";
 import {
   Button,
@@ -23,13 +24,16 @@ import {
   listStaff,
   updateProduct,
 } from "@/lib/api";
-import { behaviourSubtitle } from "@/lib/behaviour";
+import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { ProductForm } from "../../_components/booking/ProductForm";
 
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const toast = useToast();
+  const t = useTranslations("catalog.record");
+  const subtitle = useBehaviourSubtitle();
+  const tc = useTranslations("catalog");
 
   const prod = useApiQuery(() => getProduct(params.id), [params.id]);
   const locs = useApiQuery(() => listLocations({ pageSize: 100 }), []);
@@ -50,11 +54,11 @@ export default function ProductDetailPage() {
     setConfirmArchive(false);
     if (res.ok) {
       const id = params.id;
-      toast.success("Booking archived.", {
-        label: "Undo",
+      toast.success(t("archived"), {
+        label: tc("undo"),
         run: async () => {
           await updateProduct(id, { status: "active", archivedAt: null } as never);
-          toast.success("Restored.");
+          toast.success(t("restored"));
         },
       });
       router.push("/catalog?kind=bookings");
@@ -65,11 +69,11 @@ export default function ProductDetailPage() {
 
   if (!loading && (prod.error || !prod.data)) {
     return (
-      <PageShell title="Booking">
+      <PageShell title={t("fallbackTitle")}>
         <EmptyState
-          title="Booking not found"
-          message="It may have been removed."
-          action={<Button onClick={() => router.push("/catalog?kind=bookings")}>Back to bookings</Button>}
+          title={t("notFound")}
+          message={t("notFoundBody")}
+          action={<Button onClick={() => router.push("/catalog?kind=bookings")}>{t("backButton")}</Button>}
         />
       </PageShell>
     );
@@ -80,16 +84,16 @@ export default function ProductDetailPage() {
 
   return (
     <PageShell
-      title={product?.name ?? "Booking"}
-      description={product ? behaviourSubtitle(product, { resources: resourcesQ.data?.data, team: team.data?.data }) : undefined}
+      title={product?.name ?? t("fallbackTitle")}
+      description={product ? subtitle(product, { resources: resourcesQ.data?.data, team: team.data?.data }) : undefined}
       actions={
         product && !archived ? (
           <Button
             variant="secondary"
-            icon={<Archive size={16} strokeWidth={1.5} />}
+            icon={<Archive size={16} strokeWidth={1.5} aria-hidden />}
             onClick={() => setConfirmArchive(true)}
           >
-            Archive
+            {t("archive")}
           </Button>
         ) : product && archived ? (
           <StatusPill status="archived" />
@@ -98,9 +102,9 @@ export default function ProductDetailPage() {
     >
       <Link
         href="/catalog?kind=bookings"
-        className="mb-section inline-flex items-center gap-inline text-[13px] text-muted hover:text-fg"
+        className="mb-section inline-flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg md:min-h-0"
       >
-        <ArrowLeft size={14} strokeWidth={1.5} /> Bookings
+        <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {t("back")}
       </Link>
 
       {loading || !product ? (
@@ -120,9 +124,9 @@ export default function ProductDetailPage() {
         open={confirmArchive}
         onClose={() => setConfirmArchive(false)}
         onConfirm={doArchive}
-        title="Archive this booking?"
-        message="It will be hidden from sale. You can restore it later from the backend."
-        confirmLabel="Archive"
+        title={t("archiveTitle")}
+        message={t("archiveBody")}
+        confirmLabel={t("archive")}
         loading={archiving}
       />
     </PageShell>

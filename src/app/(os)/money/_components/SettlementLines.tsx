@@ -7,7 +7,7 @@ import { Button, DataTable, Sheet, type Column } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { peekPlatformFeeRates, type PlatformFeeEntry } from "@/lib/api";
-import { CollectorBadge, FeeBreakdown, money, useHoldingLabel } from "./MoneyKit";
+import { CollectorBadge, FeeBreakdown, money, useHoldingLabel, wrapHead } from "./MoneyKit";
 
 /**
  * The lines of a payout or a collection — the same rows as Movements, so a
@@ -31,14 +31,14 @@ export function SettlementLines({ entries, side }: { entries: PlatformFeeEntry[]
     { key: "payment", header: t("balances.colPayment"), render: (e) => <span className="whitespace-nowrap">{e.kind === "refund" ? `${t("kind.refund")} · ` : ""}{holding(e).split(" · ")[0]}</span> },
     { key: "held", header: t("heldBy.label"), render: (e) => <CollectorBadge by={e.collectedBy} /> },
     { key: "amount", header: t("balances.colAmount"), align: "right", render: (e) => num(e.amount) },
-    { key: "base", header: t("balances.feeBase"), align: "right", render: (e) => num(e.feeBase) },
-    { key: "platform", header: t("balances.colPlatformFee"), align: "right", render: (e) => num(e.platformFee) },
+    { key: "base", header: wrapHead(t("balances.feeBase")), align: "right", render: (e) => num(e.feeBase) },
+    { key: "platform", header: wrapHead(t("balances.colPlatformFee")), align: "right", render: (e) => num(e.platformFee) },
     ...(side === "payYou"
       ? [
-          { key: "gateway", header: t("balances.colGatewayFee"), align: "right" as const, render: (e: PlatformFeeEntry) => num(e.gatewayFee) },
-          { key: "payYou", header: t("balances.colPayYou"), align: "right" as const, render: (e: PlatformFeeEntry) => num(e.owedToOperator, true) },
+          { key: "gateway", header: wrapHead(t("balances.colGatewayFee")), align: "right" as const, render: (e: PlatformFeeEntry) => num(e.gatewayFee) },
+          { key: "payYou", header: wrapHead(t("balances.colPayYou")), align: "right" as const, render: (e: PlatformFeeEntry) => num(e.owedToOperator, true) },
         ]
-      : [{ key: "oweUs", header: t("balances.colOweUs"), align: "right" as const, render: (e: PlatformFeeEntry) => num(e.owedByOperator, true) }]),
+      : [{ key: "oweUs", header: wrapHead(t("balances.colOweUs")), align: "right" as const, render: (e: PlatformFeeEntry) => num(e.owedByOperator, true) }]),
   ];
   return (
     <>

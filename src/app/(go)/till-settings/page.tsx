@@ -41,10 +41,13 @@ export default function TillSettingsPage() {
 
       {/* The number pad. First, because it is the one the owner asked for and
           the one that changes how a sale is taken. */}
-      <Row icon={<Calculator size={18} strokeWidth={1.75} />} title={t("tillSettings.keypad")} body={t("tillSettings.keypadBody")}>
+      {/* The line under the switch says what the CURRENT setting does, so a
+          cashier reads the consequence rather than both branches of it. */}
+      <Row icon={<Calculator size={18} strokeWidth={1.75} />} title={t("tillSettings.keypad")} body={t(prefs.posKeypad ? "tillSettings.keypadOn" : "tillSettings.keypadOff")}>
         <button
           type="button"
           role="switch"
+          aria-label={t("tillSettings.keypad")}
           aria-checked={prefs.posKeypad}
           onClick={() => setPrefs({ posKeypad: !prefs.posKeypad })}
           className={cn(
@@ -98,7 +101,7 @@ export default function TillSettingsPage() {
       </Row>
 
       {/* Not a dead end: everything else a till obeys — payment methods, the
-          float, the tolerance — is the business's, and set once for every
+          starting cash, the allowed difference — is the business's, and set once for every
           device rather than on each one. */}
       <Link
         href="/settings/business"

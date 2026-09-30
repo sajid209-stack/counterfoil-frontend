@@ -240,6 +240,7 @@ export default function ScanPage() {
     code: outcome.code,
     dismiss: outcome.verdict === "group" || outcome.verdict === "balance" ? t("scanNext") : t("readyNext"),
     plusOne: t("plusOne"),
+    plusOneLabel: t("plusOneLabel"),
     admitAll: (count: number) => t("admitAll", { count }),
     everyoneIn: t("everyoneIn"),
     groupSummary: outcome.group ? t("groupSummary", { reason: outcome.title, size: outcome.group.admits, admitted }) : "",

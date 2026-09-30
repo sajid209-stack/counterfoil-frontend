@@ -53,7 +53,8 @@ export default function CollectionsPage() {
       render: (c) =>
         payable(c) ? (
           <span onClick={(e) => e.stopPropagation()}>
-            <Button size="sm" onClick={() => setPaying(c)}>{t("collections.payNow")}</Button>
+            {/* Every row's button says "Pay now"; its name says which bill. */}
+            <Button size="sm" aria-label={t("collections.payNowFor", { number: c.number })} onClick={() => setPaying(c)}>{t("collections.payNow")}</Button>
           </span>
         ) : null,
     },

@@ -56,9 +56,16 @@ export interface TierTableLabels {
   price: string;
   qty: string;
   sold?: string;
-  details: string;
-  moveUp: string;
-  moveDown: string;
+  /** Icon buttons say what they do AND to which row — "Move Adult down",
+   *  not three identical "Move down"s in a list of three. Each takes the
+   *  row's name, or `unnamed` while the row has none. */
+  details: (name: string) => string;
+  /** The words beside the details button. It is the least obvious of the
+   *  row's icons (a sliders glyph), so it is the one that carries a label. */
+  detailsShort: string;
+  moveUp: (name: string) => string;
+  moveDown: (name: string) => string;
+  unnamed: string;
   soldOf: (sold: number, cap: number) => string;
 }
 
@@ -73,8 +80,8 @@ export function TierTable({
 }) {
   const withSold = rows.some((r) => r.sold !== undefined);
   const cols = withSold
-    ? "sm:grid-cols-[minmax(0,1fr)_8rem_6rem_9rem_10rem]"
-    : "sm:grid-cols-[minmax(0,1fr)_8rem_6rem_10rem]";
+    ? "sm:grid-cols-[minmax(0,1fr)_8rem_6rem_9rem_12.5rem]"
+    : "sm:grid-cols-[minmax(0,1fr)_8rem_6rem_12.5rem]";
   return (
     <div className="flex flex-col gap-tight">
       {/* One header for the table rather than a label on the first row only —
@@ -118,6 +125,7 @@ function TierRow({
   const shownPrice = editingPrice || r.price === "" || !/^\d+(\.\d+)?$/.test(r.price) ? r.price : Number(r.price).toLocaleString("en-US", { maximumFractionDigits: 2 });
   const pct = r.sold !== undefined && cap > 0 ? Math.min(100, Math.round((r.sold / cap) * 100)) : 0;
   const err = (e?: string) => (e ? "border-danger" : "border-line");
+  const who = r.name.trim() || labels.unnamed;
   return (
     <div className="rounded-sm border border-line bg-card">
       <div className={cn("grid grid-cols-2 items-start gap-tight p-comfortable", cols)}>
@@ -191,24 +199,25 @@ function TierRow({
               type="button"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
-              aria-label={labels.details}
-              title={labels.details}
+              aria-label={labels.details(who)}
+              title={labels.details(who)}
               className={cn(
-                "flex h-11 w-11 items-center justify-center rounded-sm hover:bg-muted-wash hover:text-fg sm:h-9 sm:w-9",
+                "flex h-11 items-center gap-inline rounded-sm px-tight text-[13px] font-medium hover:bg-muted-wash hover:text-fg sm:h-9",
                 open ? "bg-muted-wash text-fg" : "text-muted",
               )}
             >
-              <SlidersHorizontal size={16} strokeWidth={1.5} />
+              <SlidersHorizontal size={16} strokeWidth={1.5} aria-hidden />
+              <span aria-hidden>{labels.detailsShort}</span>
             </button>
           )}
           {r.onUp && (
-            <button type="button" aria-label={labels.moveUp} onClick={r.onUp} className="flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-fg sm:h-9 sm:w-9">
-              <ArrowUp size={16} strokeWidth={1.5} />
+            <button type="button" aria-label={labels.moveUp(who)} title={labels.moveUp(who)} onClick={r.onUp} className="flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-fg sm:h-9 sm:w-9">
+              <ArrowUp size={16} strokeWidth={1.5} aria-hidden />
             </button>
           )}
           {r.onDown && (
-            <button type="button" aria-label={labels.moveDown} onClick={r.onDown} className="flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-fg sm:h-9 sm:w-9">
-              <ArrowDown size={16} strokeWidth={1.5} />
+            <button type="button" aria-label={labels.moveDown(who)} title={labels.moveDown(who)} onClick={r.onDown} className="flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-fg sm:h-9 sm:w-9">
+              <ArrowDown size={16} strokeWidth={1.5} aria-hidden />
             </button>
           )}
           <button
@@ -219,7 +228,7 @@ function TierRow({
             onClick={r.remove.disabled ? undefined : r.remove.onRemove}
             className="flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-danger aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted sm:h-9 sm:w-9"
           >
-            <Trash2 size={16} strokeWidth={1.5} />
+            <Trash2 size={16} strokeWidth={1.5} aria-hidden />
           </button>
         </span>
       </div>

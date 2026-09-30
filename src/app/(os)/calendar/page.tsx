@@ -50,6 +50,7 @@ import {
   weekStart,
   windowStats,
   type CalEvent,
+  type EventWords,
   type Ghost,
   TONE_CLASS,
   TONE_DOT,
@@ -193,9 +194,22 @@ export default function CalendarPage() {
     return m;
   }, [bookingsQ.data]);
 
+  /* The words a block carries — "2 people", "Sales stopped" — from the
+     messages, so a Bangla screen does not draw English on every block. */
+  const words = useMemo<EventWords>(
+    () => ({
+      people: (count) => t("people", { count }),
+      holdWhole: t("holdWhole"),
+      holdPlace: t("holdPlace"),
+      holdSeats: (count) => t("holdSeatsHeld", { count }),
+      holdSpaces: (count) => t("holdSpacesHeld", { count }),
+    }),
+    [t],
+  );
+
   const events = useMemo<CalEvent[]>(
     () => [
-      ...bookingsToEvents(bookingsQ.data?.data ?? [], products, resources, staff, (id) => guestOf.get(id) ?? null).map((e) =>
+      ...bookingsToEvents(bookingsQ.data?.data ?? [], products, resources, staff, (id) => guestOf.get(id) ?? null, words).map((e) =>
         /* A booking of a lane or a field that is on none of them is using
            one the availability engine cannot see. Named on its block, so a
            "4 free" that is really three has a visible reason. */
@@ -203,9 +217,9 @@ export default function CalendarPage() {
           ? { ...e, subtitle: [e.subtitle, t("unassigned")].filter(Boolean).join(" · ") }
           : e,
       ),
-      ...holdsToEvents(holdsQ.data?.data ?? []),
+      ...holdsToEvents(holdsQ.data?.data ?? [], words),
     ],
-    [bookingsQ.data, holdsQ.data, products, resources, staff, guestOf, t],
+    [bookingsQ.data, holdsQ.data, products, resources, staff, guestOf, t, words],
   );
 
   /* The skeleton is for the first load only. A reload after a booking, a lock
@@ -1164,6 +1178,7 @@ export default function CalendarPage() {
               dayLabel={(d) => ({
                 weekday: new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(d),
                 day: String(d.getDate()),
+                long: t("openDay", { day: dayLong(d) }),
               })}
               compact={weekCompact}
               onMove={doMove}
@@ -1220,6 +1235,7 @@ export default function CalendarPage() {
               ghost={ghost}
               ghostLabel={t("book.untitled")}
               createLabel={(d) => t("book.newOn", { day: dayLong(d) })}
+              openDayLabel={(d) => t("openDay", { day: dayLong(d) })}
             />
           )}
         </div>

@@ -67,8 +67,8 @@ export default function BookingRuleEditorPage() {
       title={isNew ? t("newRule") : (form.name || t("editRule"))}
       actions={<Button loading={saving} onClick={save}>{t("save")}</Button>}
     >
-      <button type="button" onClick={() => router.push("/booking-rules")} className="mb-section flex items-center gap-inline text-[13px] text-muted hover:text-fg">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("back")}
+      <button type="button" onClick={() => router.push("/booking-rules")} className="mb-section flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg md:min-h-0">
+        <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {t("back")}
       </button>
 
       <div className="grid max-w-2xl gap-section card-surface p-card sm:grid-cols-2">
@@ -82,7 +82,7 @@ export default function BookingRuleEditorPage() {
           <span className="type-label mb-tight block text-[12px] text-muted">{t("fieldDays")}</span>
           <div className="flex flex-wrap gap-inline">
             {[0, 1, 2, 3, 4, 5, 6].map((d) => (
-              <button key={d} type="button" onClick={() => toggleDay(d)} className={`h-10 min-w-12 rounded-sm border px-comfortable text-[13px] ${form.daysOfWeek.includes(d) ? "border-ember bg-ember/5 font-medium" : "border-line"}`}>{t(`day.${d}` as never)}</button>
+              <button key={d} type="button" aria-pressed={form.daysOfWeek.includes(d)} onClick={() => toggleDay(d)} className={`h-11 min-w-12 rounded-sm border px-comfortable text-[13px] md:h-10 ${form.daysOfWeek.includes(d) ? "border-ember bg-ember/5 font-medium" : "border-line"}`}>{t(`day.${d}` as never)}</button>
             ))}
           </div>
         </div>

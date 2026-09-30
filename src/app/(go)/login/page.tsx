@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Avatar, Button, FormField, Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getAccessPolicy, listStaff, type Staff } from "@/lib/api";
@@ -18,6 +19,7 @@ const DEMO_PIN = "1234";
 
 export default function GoLoginPage() {
   const router = useRouter();
+  const t = useTranslations("pos");
   const staffQ = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
   // How many wrong PINs before the pause is the business's call, made in
   // Settings → Sign-in rules; three until that answer arrives.
@@ -62,7 +64,7 @@ export default function GoLoginPage() {
   };
 
   const stateLine = (s: Staff) =>
-    s.id === OPEN_SHIFT.staffId ? `On shift since ${OPEN_SHIFT.since}` : "Off";
+    s.id === OPEN_SHIFT.staffId ? t("login.onShiftSince", { time: OPEN_SHIFT.since }) : t("login.offShift");
 
   return (
     /* Full-bleed and quiet — this screen is a moment, not a form. It used to
@@ -72,15 +74,15 @@ export default function GoLoginPage() {
        the two surfaces that are mode-locked on purpose (a scan verdict and the
        ticket stub). */
     <main className="flex min-h-[calc(100vh-3.5rem)] flex-col items-center bg-surface px-section py-major text-fg">
-      <h1 className="sr-only">Sign in</h1>
-      {/* Context bar — confirm you're on the right till before signing in. */}
+      <h1 className="sr-only">{t("signInTitle")}</h1>
+      {/* Context bar — confirm you're at the right counter before signing in. */}
       <div className="w-full max-w-lg text-center">
         <p className="font-mono text-[0.8125rem] uppercase tracking-wider text-muted">
           {BUSINESS} · {COUNTER_NAME} · {DEVICE_NAME}
         </p>
         <p className="mt-inline font-mono text-[0.8125rem] text-muted">
-          {shiftOwner ? `Shift open — ${shiftOwner.name.split(" ")[0]}, since ${OPEN_SHIFT.since}` : "No shift open"}
-          <span className="ml-tight text-muted">· demo PIN {DEMO_PIN}</span>
+          {shiftOwner ? t("login.shiftOpenBy", { name: shiftOwner.name.split(" ")[0], time: OPEN_SHIFT.since }) : t("login.noShift")}
+          <span className="ml-tight text-muted">· {t("login.demoPin", { pin: DEMO_PIN })}</span>
         </p>
       </div>
 
@@ -89,7 +91,7 @@ export default function GoLoginPage() {
       {!who ? (
         <>
           {/* Step 1 — who are you. Faster than a PIN that must also identify. */}
-          <p className="type-label mt-major text-[0.8125rem] uppercase tracking-wide text-muted">Who&apos;s signing in?</p>
+          <p className="type-label mt-major text-[0.8125rem] uppercase tracking-wide text-muted">{t("login.whoTitle")}</p>
           <div className="mt-section grid w-full max-w-lg grid-cols-2 gap-tight sm:grid-cols-3">
             {team.map((s) => (
               <button
@@ -110,8 +112,8 @@ export default function GoLoginPage() {
               onClick={() => setSomeoneElse(true)}
               className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-go border border-dashed border-line p-comfortable text-muted active:border-ember"
             >
-              <span className="text-2xl leading-none">+</span>
-              <span className="text-sm">Someone else</span>
+              <span aria-hidden className="text-2xl leading-none">+</span>
+              <span className="text-sm">{t("login.someoneElse")}</span>
             </button>
           </div>
         </>
@@ -124,11 +126,11 @@ export default function GoLoginPage() {
             </span>
             <span className="text-lg">{who.name}</span>
             <button type="button" onClick={() => { setWho(null); setPin(""); setAttempts(0); setLocked(false); }} className="ml-tight text-[0.8125rem] text-muted underline-offset-4 active:underline">
-              Not you?
+              {t("login.notYou")}
             </button>
           </div>
 
-          <div className={`mt-section flex gap-comfortable ${shake ? "animate-[shake_0.12s_ease-in-out_0s_2]" : ""}`} aria-label={`${pin.length} of 4 digits entered`}>
+          <div className={`mt-section flex gap-comfortable ${shake ? "animate-[shake_0.12s_ease-in-out_0s_2]" : ""}`} role="img" aria-label={t("login.pinProgress", { count: pin.length })}>
             {[0, 1, 2, 3].map((i) => (
               <span key={i} className={`h-4 w-4 rounded-full border-2 border-fg ${i < pin.length ? "bg-fg" : "bg-transparent"}`} />
             ))}
@@ -136,13 +138,13 @@ export default function GoLoginPage() {
 
           {locked ? (
             <div className="mt-section flex flex-col items-center gap-tight text-center">
-              <p className="text-sm text-danger">Locked for 5 minutes. Ask a manager to unlock.</p>
-              <Button shape="pill" variant="secondary" onClick={() => { setLocked(false); setAttempts(0); setPin(""); }}>Manager override</Button>
+              <p className="text-sm text-danger">{t("login.locked")}</p>
+              <Button shape="pill" variant="secondary" onClick={() => { setLocked(false); setAttempts(0); setPin(""); }}>{t("login.managerUnlock")}</Button>
             </div>
           ) : (
             attempts > 0 && (
               <p className="mt-tight text-[0.8125rem] text-danger">
-                PIN not recognised. {maxAttempts - attempts} attempt{maxAttempts - attempts === 1 ? "" : "s"} left.
+                {t("login.wrongPin", { left: maxAttempts - attempts })}
               </p>
             )
           )}
@@ -157,11 +159,11 @@ export default function GoLoginPage() {
       <Modal
         open={takeOver}
         onClose={() => setTakeOver(false)}
-        title={`Take over from ${shiftOwner?.name.split(" ")[0] ?? "the current shift"}?`}
-        footer={<><Button shape="pill" variant="secondary" onClick={() => { setTakeOver(false); setPin(""); }}>Cancel</Button><Button shape="pill" onClick={() => router.push("/pos")}>Take over shift</Button></>}
+        title={t("login.takeOverTitle", { name: shiftOwner?.name.split(" ")[0] ?? t("login.takeOverFallback") })}
+        footer={<><Button shape="pill" variant="secondary" onClick={() => { setTakeOver(false); setPin(""); }}>{t("login.cancel")}</Button><Button shape="pill" onClick={() => router.push("/pos")}>{t("login.takeOver")}</Button></>}
       >
         <p className="text-sm text-muted">
-          The drawer and its sales stay attributed to {shiftOwner?.name ?? "the previous person"} up to this point. From here, everything records under {who?.name}.
+          {t("login.takeOverBody", { from: shiftOwner?.name ?? t("login.takeOverFallback"), to: who?.name ?? "" })}
         </p>
       </Modal>
 
@@ -169,12 +171,12 @@ export default function GoLoginPage() {
       <Modal
         open={someoneElse}
         onClose={() => setSomeoneElse(false)}
-        title="Sign in — someone else"
-        footer={<><Button shape="pill" variant="secondary" onClick={() => setSomeoneElse(false)}>Cancel</Button><Button shape="pill" disabled={!guestName.trim()} onClick={() => { setWho({ id: "guest", name: guestName.trim() }); setSomeoneElse(false); setPin(""); setAttempts(0); setLocked(false); }}>Continue</Button></>}
+        title={t("login.someoneElseTitle")}
+        footer={<><Button shape="pill" variant="secondary" onClick={() => setSomeoneElse(false)}>{t("login.cancel")}</Button><Button shape="pill" disabled={!guestName.trim()} onClick={() => { setWho({ id: "guest", name: guestName.trim() }); setSomeoneElse(false); setPin(""); setAttempts(0); setLocked(false); }}>{t("login.continue")}</Button></>}
       >
         <div className="flex flex-col gap-section">
-          <FormField label="Name" placeholder="Full name" value={guestName} onChange={(e) => setGuestName(e.target.value)} />
-          <FormField label="Email" placeholder="name@business.example" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} help="For staff not assigned to this counter." />
+          <FormField label={t("login.name")} placeholder={t("login.namePlaceholder")} value={guestName} onChange={(e) => setGuestName(e.target.value)} />
+          <FormField label={t("login.email")} placeholder="name@business.example" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} help={t("login.emailHelp")} />
         </div>
       </Modal>
     </main>

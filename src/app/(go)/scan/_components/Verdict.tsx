@@ -37,6 +37,8 @@ export interface VerdictLabels {
   code: string;
   dismiss: string;
   plusOne: string;
+  /** The words behind "+1", for a screen reader. */
+  plusOneLabel: string;
   admitAll: (count: number) => string;
   everyoneIn: string;
   groupSummary: string;
@@ -233,7 +235,7 @@ export function Verdict({
     return (
       <div className={cn(shell, "overflow-y-auto bg-ink py-section text-paper")} role="dialog" aria-modal="true" aria-label={labels.admit}>
         <AdmitMark />
-        <p className="type-display text-5xl">{remaining > 0 ? labels.admitCount(remaining) : labels.admit}</p>
+        <p className="type-display text-5xl uppercase">{remaining > 0 ? labels.admitCount(remaining) : labels.admit}</p>
         {/* How far through the party is, as a row of marks rather than a
             sentence to parse: at a door the steward is counting people. */}
         <span aria-hidden className="flex shrink-0 items-center gap-tight">
@@ -246,7 +248,7 @@ export function Verdict({
         {preview && <p className="text-[0.8125rem] text-paper/70">{labels.previewNote}</p>}
         {remaining > 0 ? (
           <div className="flex shrink-0 flex-wrap items-center justify-center gap-tight">
-            <button type="button" disabled={busy} onClick={() => onAdmit(1)} className="h-14 rounded-full border-2 border-paper px-major text-lg font-medium active:bg-paper/20">
+            <button type="button" disabled={busy} onClick={() => onAdmit(1)} aria-label={labels.plusOneLabel} className="h-14 rounded-full border-2 border-paper px-major text-lg font-medium active:bg-paper/20">
               {labels.plusOne}
             </button>
             <button type="button" disabled={busy} onClick={() => onAdmit(remaining)} className="h-14 rounded-full bg-paper px-major text-lg font-medium text-ink active:bg-paper/80">
@@ -282,7 +284,7 @@ export function Verdict({
       )}
     >
       <span className={cn("shrink-0", !admit && "animate-[shake_0.12s_ease-in-out_0s_2]")}>{admit ? <AdmitMark /> : <RefuseMark />}</span>
-      <span className="type-display text-5xl">{admit ? labels.admit : labels.doNotAdmit}</span>
+      <span className="type-display text-5xl uppercase">{admit ? labels.admit : labels.doNotAdmit}</span>
 
       {admit ? (
         <>

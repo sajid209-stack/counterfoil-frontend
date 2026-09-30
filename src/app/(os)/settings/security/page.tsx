@@ -242,7 +242,7 @@ export default function SecurityPage() {
               </div>
             </div>
           ) : (
-            <SettingRow label={t("security.currentEmail", { email })} description={t("security.emailChangeHelp")}>
+            <SettingRow label={t("security.newEmail")} description={t("security.emailChangeHelp", { email })}>
               {({ id, describedBy }) => (
                 <div className="flex gap-tight">
                   <input

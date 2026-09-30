@@ -94,6 +94,14 @@ export default function BusinessProfilePage() {
   const websiteErr = form && !optional(form.website, WEBSITE) ? t("business.websiteInvalid") : undefined;
   const lockErr = form && form.lockDays.trim() !== "" && !/^\d{1,4}$/.test(form.lockDays.trim()) ? t("business.lockInvalid") : undefined;
   const invalid = !!(nameErr || phoneErr || emailErr || websiteErr || lockErr);
+  // The help under the lock says what the number means right now, not what the
+  // field is for in general.
+  const lockDays = form && /^d{1,4}$/.test(form.lockDays.trim()) ? Number(form.lockDays.trim()) : null;
+  const lockHelp = !form || form.lockDays.trim() === ""
+    ? t("business.pastEditLockOff")
+    : lockDays !== null
+      ? t("business.pastEditLockOn", { days: lockDays })
+      : t("business.pastEditLockHelp");
   const zones = form && !TIMEZONES.includes(form.timezone) ? [form.timezone, ...TIMEZONES] : TIMEZONES;
   // The preview prints the first venue that sells, standing in for "wherever
   // the sale is made".
@@ -124,6 +132,8 @@ export default function BusinessProfilePage() {
     }
   };
 
+  // Each contact field shows a real example, so "what goes here?" is answered
+  // before anyone types.
   const textInput = (key: "phone" | "email" | "website", error: string | undefined, type: string, autoComplete: string) =>
     function Field({ id, describedBy }: { id: string; describedBy?: string }) {
       return (
@@ -133,6 +143,7 @@ export default function BusinessProfilePage() {
           value={form?.[key] ?? ""}
           onChange={(e) => set(key, e.target.value)}
           autoComplete={autoComplete}
+          placeholder={t(`business.${key}Placeholder`)}
           aria-invalid={!!error || undefined}
           aria-describedby={describedBy}
           className={controlCls(!!error)}
@@ -179,6 +190,7 @@ export default function BusinessProfilePage() {
                     id={id}
                     rows={3}
                     maxLength={FOOTER_MAX}
+                    placeholder={t("business.footerPlaceholder")}
                     value={form.footer}
                     onChange={(e) => set("footer", e.target.value)}
                     aria-describedby={describedBy}
@@ -233,7 +245,7 @@ export default function BusinessProfilePage() {
           </SettingsSection>
 
           <SettingsSection title={t("business.historyTitle")} description={t("business.historyDesc")}>
-            <SettingRow label={t("business.pastEditLock")} description={t("business.pastEditLockHelp")} error={lockErr}>
+            <SettingRow label={t("business.pastEditLock")} description={lockHelp} error={lockErr}>
               {({ id, describedBy }) => (
                 <SuffixInput
                   id={id}

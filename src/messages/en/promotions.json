@@ -1,63 +1,68 @@
 {
   "list": {
     "title": "Promotions",
-    "description": "Coupons, automatic discounts, and the cashier discount policy.",
+    "description": "Coupon codes, automatic discounts, and how much discount cashiers can give.",
     "new": "New promotion",
     "empty": "No promotions yet.",
     "coupon": "Coupon",
     "automatic": "Automatic",
-    "created": "Promotion created."
+    "created": "Promotion added.",
+    "defaultName": "New promotion"
   },
   "kind": {
     "percentage_off": "% off",
     "fixed_amount_off": "Amount off",
-    "buy_x_get_y": "Buy X get Y",
-    "fixed_price": "Fixed price",
-    "bundle_price": "Bundle price"
+    "buy_x_get_y": "Buy some, get some off",
+    "fixed_price": "Set price",
+    "bundle_price": "Price for a set"
   },
   "editor": {
     "back": "Promotions",
     "name": "Name",
     "kind": "Type",
-    "source": "Source",
-    "percent": "Percent off (%)",
-    "amount": "Amount",
-    "maxDiscount": "Max discount",
-    "minSubtotal": "Minimum spend",
-    "channels": "Where it applies",
-    "counter": "Counter",
+    "source": "How it's used",
+    "percent": "Discount (%)",
+    "amount": "Amount (৳)",
+    "maxDiscount": "Most it can take off (৳)",
+    "minSubtotal": "Least spend (৳)",
+    "channels": "Where it works",
+    "counter": "At the counter",
     "online": "Online",
-    "validFrom": "Valid from",
-    "validTo": "Valid to",
+    "validFrom": "Starts on",
+    "validTo": "Ends on",
     "status": "Status",
-    "save": "Save promotion",
+    "save": "Save",
     "saved": "Promotion saved.",
     "couponCode": "Coupon code",
     "bxgyNote": "Buy {buy}, get {get} at {pct}% off.",
-    "advancedNote": "Buy-X-get-Y and bundle rules are edited in the backend for now."
+    "advancedNote": "“Buy some, get some off” and set prices can't be changed here yet.",
+    "notFound": "Promotion not found",
+    "statusActive": "On",
+    "statusInactive": "Off",
+    "statusArchived": "Put away"
   },
   "policy": {
-    "title": "Cashier discount policy",
-    "description": "Limits on ad-hoc discounts staff can apply at the counter.",
-    "maxPercent": "Maximum discount (%)",
-    "requireReason": "Require a reason",
-    "save": "Save policy",
-    "saved": "Policy saved."
+    "title": "Cashier discount limit",
+    "description": "The most a cashier can take off a sale by hand at the counter.",
+    "maxPercent": "Biggest discount (%)",
+    "requireReason": "Cashier must give a reason",
+    "save": "Save",
+    "saved": "Limit saved."
   },
   "pos": {
     "couponPlaceholder": "Coupon code",
     "apply": "Apply",
-    "applied": "{name} applied",
+    "applied": "{name} added",
     "remove": "Remove",
-    "reasonLabel": "Discount reason",
-    "reasonPlaceholder": "Why the discount? (required)",
-    "overPolicy": "Over the {limit}% cashier limit — reduce the discount.",
+    "reasonLabel": "Reason for discount",
+    "reasonPlaceholder": "Why the discount? (needed)",
+    "overPolicy": "More than the {limit}% cashier limit. Make the discount smaller.",
     "rejected": {
-      "not_found": "No such coupon.",
-      "channel_not_eligible": "Not valid at the counter.",
-      "min_subtotal_not_met": "Spend more to use this coupon.",
+      "not_found": "No coupon has that code. Check it and try again.",
+      "channel_not_eligible": "This coupon doesn't work at the counter.",
+      "min_subtotal_not_met": "The sale is too small for this coupon.",
       "min_quantity_not_met": "Add more items to use this coupon.",
-      "no_discount": "This coupon doesn't apply to your cart."
+      "no_discount": "This coupon doesn't apply to anything in the cart."
     }
   }
 }

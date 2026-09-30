@@ -1,129 +1,82 @@
 {
   "title": "Payments",
-  "description": "How customers pay at the till, where the money goes, and how the cash drawer is counted.",
-  "accounts": {
-    "title": "Payment accounts",
-    "description": "Where wallet, QR and card money goes. Cash needs no account.",
-    "connect": "Connect",
-    "disable": "Disable",
-    "enabled": "Enabled",
-    "off": "Off",
-    "connected": "Connected",
-    "notConnected": "Not connected",
-    "linkOpened": "Setup link opened (demo).",
-    "activated": "{provider} is live — you can take payments now.",
-    "disabledToast": "{provider} turned off",
-    "finish": "Finish setup",
-    "turnOn": "Turn on",
-    "turnOff": "Turn off",
-    "turnOffTitle": "Turn off {provider}?",
-    "turnOffBody": "Tills stop offering it straight away. Payments already taken are not affected, and you can turn it on again.",
-    "state": {
-      "active": "Taking payments, and paying out.",
-      "pending_onboarding": "Not taking payments yet. Still needed: {items}.",
-      "restricted": "Taking payments, but payouts are paused. Still needed: {items}.",
-      "disabled": "Turned off. Nothing is charged through it."
-    }
-  },
-  "status": {
-    "pending_onboarding": "Setting up",
-    "active": "Live",
-    "restricted": "Payouts paused",
-    "disabled": "Off"
-  },
-  "posture": {
-    "merchant_of_record": "Counterfoil collects the money and pays it out to you.",
-    "connect": "Money goes straight to your own Stripe account."
-  },
-  "provider": {
-    "bkash": "bKash",
-    "sslcommerz": "SSLCommerz",
-    "stripe": "Card (Stripe)",
-    "bkashHelper": "Mobile wallet payments in Bangladesh.",
-    "sslcommerzHelper": "Cards, wallets and bank transfers in Bangladesh.",
-    "stripeHelper": "Card payments in most countries."
-  },
+  "description": "How customers pay at the counter, when you get paid, and the cash drawer.",
   "cash": {
     "title": "Cash drawer",
-    "description": "What a till starts the day with, and how close a count has to be.",
-    "float": "Opening float",
-    "floatDesc": "Suggested when a cashier opens a shift. They can change it.",
-    "tolerance": "Count tolerance",
-    "toleranceDesc": "A closing count this close to expected closes as square. Further out, the cashier records why.",
-    "example": "{near} out closes as square; {far} out asks for a reason.",
-    "invalid": "Enter an amount of zero or more."
-  },
-  "requirement": {
-    "business_profile": "business details",
-    "bank_account": "a bank account",
-    "identity_verification": "identity verification"
+    "description": "The cash each counter starts with, and how close the count must be.",
+    "float": "Starting cash",
+    "floatDesc": "Suggested when a cashier opens the counter. They can change it.",
+    "tolerance": "Allowed difference",
+    "toleranceDesc": "If the closing count is off by this much or less, it counts as correct. If more, the cashier must say why.",
+    "example": "Off by {near}: counts as correct. Off by {far}: the cashier gives a reason.",
+    "invalid": "Enter an amount, like 2000, or 0."
   },
   "advance": {
     "title": "Advance payments",
-    "description": "Whether a booking can be held on part of the money, and the least you will take. Set per channel — plenty of operators take an advance online, where the alternative is losing the booking, but collect in full at the counter.",
+    "description": "Can customers pay part now and the rest later? Set it for the counter and for online separately.",
     "counter": "At the counter",
-    "counterHelp": "Cashiers taking a phone booking or a walk-in.",
+    "counterHelp": "When a cashier takes a phone booking or a walk-in.",
     "online": "Online",
-    "onlineHelp": "Your storefront, when customers book themselves.",
-    "minKind": "Set the minimum as",
-    "percentOfTotal": "A percentage of the total",
-    "fixedAmount": "A fixed amount",
-    "minPercent": "Least accepted",
-    "minAmount": "Least accepted",
+    "onlineHelp": "When customers book on your web page.",
+    "minKind": "Set the least amount as",
+    "percentOfTotal": "Part of the total (%)",
+    "fixedAmount": "A fixed amount (৳)",
+    "minPercent": "Least amount",
+    "minAmount": "Least amount",
     "minHelp": "A cashier can always take more, up to the full amount.",
-    "saved": "Advance rules saved.",
-    "least": "Least taken up front",
-    "example": "On a {total} booking, at least {min} is taken now. A cashier can always take more.",
-    "invalidPercent": "Enter a whole percentage from 1 to 100.",
-    "invalidAmount": "Enter an amount above zero.",
-    "policiesNote": "Cancellation and no-show fees are set on each booking, under Policies.",
-    "policiesLink": "Go to bookings"
+    "saved": "Advance payment rules saved.",
+    "least": "Least amount paid now",
+    "example": "On a {total} booking, at least {min} is paid now. The rest is paid later.",
+    "invalidPercent": "Enter a whole number from 1 to 100.",
+    "invalidAmount": "Enter an amount more than 0, like 500.",
+    "policiesNote": "Fees for cancelling or not coming are set on each thing you sell, under Policies.",
+    "policiesLink": "Go to What you sell"
   },
   "methods": {
-    "title": "Payment methods at the till",
-    "description": "The buttons a cashier chooses from, in this order. Changes reach every till straight away.",
+    "title": "Ways to pay at the counter",
+    "description": "The payment buttons a cashier sees, in this order. Changes reach every counter at once.",
     "cash": {
       "name": "Cash",
-      "desc": "Notes and coins, with the change worked out at the till."
+      "desc": "Notes and coins. The change is worked out for you."
     },
     "bkash": {
       "name": "bKash",
-      "desc": "The customer pays from their bKash wallet."
+      "desc": "The customer pays from their bKash account."
     },
     "bangla_qr": {
       "name": "Bangla QR",
-      "desc": "The customer scans a QR code with any banking or wallet app."
+      "desc": "The customer scans a QR code with any bank or wallet app."
     },
     "card_terminal": {
-      "name": "Card terminal",
-      "desc": "A card reader connected to the till."
+      "name": "Card machine",
+      "desc": "A card machine connected to the counter."
     },
-    "cashLocked": "Always offered, so a till can still sell when everything else is down.",
-    "needsAccount": "Hidden at the till until a payment account below is taking payments.",
-    "switch": "Offer {method} at the till",
+    "cashLocked": "Always on, so a counter can still sell if everything else is down.",
+    "needsAccount": "Hidden at the counter until a payment account is set up.",
+    "switch": "Offer {method} at the counter",
     "moveUp": "Move {method} up",
     "moveDown": "Move {method} down",
-    "turnedOn": "{method} is offered at the till",
-    "turnedOff": "{method} is no longer offered at the till",
-    "previewLabel": "At the till now",
-    "previewNote": "The payment step a cashier sees, first button selected.",
+    "turnedOn": "{method} is now offered at the counter",
+    "turnedOff": "{method} is no longer offered at the counter",
+    "previewLabel": "What the cashier sees now",
+    "previewNote": "The first button is picked for them.",
     "alwaysOn": "Always on"
   },
   "payouts": {
     "title": "Payouts",
-    "description": "When the money Counterfoil holds for you — online payments taken on Counterfoil's account — is paid into your bank.",
-    "schedule": "Payout schedule",
+    "description": "When we send the money we hold for you (online payments) to your bank.",
+    "schedule": "How often",
     "daily": "Every day",
-    "dailyDesc": "Each day's takings, paid the next business day.",
+    "dailyDesc": "Each day's money, sent the next working day.",
     "weekly": "Every week",
-    "weeklyDesc": "The week's takings, on the day you choose.",
+    "weeklyDesc": "The week's money, on the day you choose.",
     "monthly": "Every month",
-    "monthlyDesc": "The month's takings, on the date you choose.",
-    "weekday": "Paid on",
-    "monthDay": "Paid on the",
+    "monthlyDesc": "The month's money, on the date you choose.",
+    "weekday": "Sent on",
+    "monthDay": "Sent on the",
     "dayOfMonth": "{day, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
     "next": "Next payout: {date}.",
-    "note": "Your bank may take a business day or more to show it."
+    "note": "Your bank may take a working day or more to show it."
   },
   "saved": "Payment settings saved"
 }

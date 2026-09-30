@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button, FormField, Tabs, useToast } from "@/components/ui";
 import {
   createResourceRecord,
@@ -33,17 +34,19 @@ const majorToMinor = (s: string) => { const n = parseFloat(s); return Number.isF
 const minorToMajor = (m: number) => (m / 100).toFixed(2);
 const numOrUndef = (s: string) => { const n = parseInt(s, 10); return Number.isFinite(n) ? n : undefined; };
 
-// Plain-language summary from a stored code — the operator never sees the code.
-function bookingSummary(code: BookingTypeCode): string {
+// Plain-language summary from a stored code — the operator never sees the
+// code. The same sentences the setup questions end on, so reopening a saved
+// booking says exactly what was chosen when it was made.
+function summaryKey(code: BookingTypeCode): string {
   switch (code) {
-    case "BT-01": return "Visitors can come any time — no date needed.";
-    case "BT-02": return "Visitors pick a date. No daily limit.";
-    case "BT-06": return "Visitors pick a date, capped per day. Once full, that date stops selling.";
-    case "BT-03": return "Visitors pick a date and time. Runs at set start times.";
-    case "BT-09": return "Visitors pick a date and time. A guide runs each departure.";
-    case "BT-04": return "Visitors book a space for a fixed slot. One booking at a time.";
-    case "BT-05": return "Visitors book a space — shared or flexible duration.";
-    default: return "Booking setup configured.";
+    case "BT-01": return "showUp";
+    case "BT-02": return "dateNoLimit";
+    case "BT-06": return "dateCapped";
+    case "BT-03": return "timed";
+    case "BT-09": return "guided";
+    case "BT-04": return "spaceFixed";
+    case "BT-05": return "spaceFlex";
+    default: return "configured";
   }
 }
 
@@ -81,13 +84,13 @@ interface FormState {
   passIdentifierLabel: string;
 }
 
-function fromProduct(p: Product): FormState {
+function fromProduct(p: Product, summaryOf: (code: BookingTypeCode) => string): FormState {
   return {
     name: p.name,
     description: p.description,
     booking: {
       bookingType: p.bookingType,
-      summary: bookingSummary(p.bookingType),
+      summary: summaryOf(p.bookingType),
       validityDays: p.validityDays,
       resource: isResourceType(p.bookingType)
         ? { resourceIds: p.resourceIds ?? [], exclusive: p.resourceExclusive !== false, bufferMinutes: p.bufferMinutes ?? 0, flexibleDurations: p.flexibleDurations }
@@ -133,14 +136,7 @@ function fromProduct(p: Product): FormState {
   };
 }
 
-const TABS = [
-  { value: "details", label: "Details" },
-  { value: "availability", label: "Availability" },
-  { value: "pricing", label: "Pricing" },
-  { value: "policies", label: "Policies" },
-  { value: "where", label: "Where it's sold" },
-  { value: "advanced", label: "Advanced" },
-];
+const TAB_KEYS = ["details", "availability", "pricing", "policies", "where", "advanced"] as const;
 
 export function ProductForm({
   product,
@@ -159,7 +155,14 @@ export function ProductForm({
 }) {
   const router = useRouter();
   const toast = useToast();
-  const initial = useMemo(() => fromProduct(product), [product]);
+  const t = useTranslations("catalog.form");
+  const tw = useTranslations("catalog.wizard");
+  const ts = useTranslations("catalog.setup");
+  const tf = useTranslations("catalog.fields");
+  const summaryOf = (code: BookingTypeCode) => ts(`summary.${summaryKey(code)}`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the translator is stable for a render's locale
+  const initial = useMemo(() => fromProduct(product, summaryOf), [product]);
+  const tabs = TAB_KEYS.map((value) => ({ value, label: t(`tab.${value}`) }));
   const [resources, setResources] = useState<Resource[]>(initialResources);
 
   const onCreateResource = async (name: string, noun: string) => {
@@ -179,8 +182,7 @@ export function ProductForm({
   const resourceNoun =
     resources.length && resources.every((r) => r.nounPlural === resources[0].nounPlural)
       ? resources[0].nounPlural
-      : "Resources";
-  const resourceSingular = resources[0]?.nounSingular ?? "resource";
+      : t("resourcesFallback");
 
   const dirty = useMemo(() => JSON.stringify(state) !== JSON.stringify(initial), [state, initial]);
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setState((s) => ({ ...s, [k]: v }));
@@ -252,8 +254,8 @@ export function ProductForm({
     const res = await updateProduct(product.id, input);
     setSaving(false);
     if (res.ok) {
-      toast.success("Changes saved.");
-      setState(fromProduct(res.data));
+      toast.success(t("saved"));
+      setState(fromProduct(res.data, summaryOf));
     } else if (res.error.code === "validation" && res.error.fieldErrors) {
       setErrors(res.error.fieldErrors);
       toast.error(res.error.message);
@@ -265,13 +267,13 @@ export function ProductForm({
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-section pb-hero">
-      <Tabs items={TABS} value={tab} onChange={setTab} />
+      <Tabs items={tabs} value={tab} onChange={setTab} />
 
       <div className="card-surface p-card">
         {tab === "details" && (
           <div className="grid gap-section sm:grid-cols-2">
-            <FormField label="Name" required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="sm:col-span-2" />
-            <FormField label="Description" variant="textarea" value={state.description} onChange={(e) => set("description", e.target.value)} className="sm:col-span-2" />
+            <FormField label={tw("name")} required value={state.name} onChange={(e) => set("name", e.target.value)} error={errors.name} className="sm:col-span-2" />
+            <FormField label={tw("description")} variant="textarea" placeholder={tw("descriptionPlaceholder")} value={state.description} onChange={(e) => set("description", e.target.value)} className="sm:col-span-2" />
             <div className="sm:col-span-2"><ImageUploadField images={state.images} onChange={(images) => set("images", images)} /></div>
           </div>
         )}
@@ -279,7 +281,7 @@ export function ProductForm({
         {tab === "availability" && (
           <div className="flex flex-col gap-section">
             <div>
-              <p className="type-label mb-tight text-[12px] text-muted">When people can use it</p>
+              <p className="type-label mb-tight text-[12px] text-muted">{t("howTitle")}</p>
               <BookingSetup
                 value={state.booking}
                 resources={resources}
@@ -309,13 +311,10 @@ export function ProductForm({
             {state.booking.resource && (
               <div>
                 <p className="type-h2 mb-tight text-base">{resourceNoun}</p>
-                <p className="type-body mb-section text-[13px] text-muted">
-                  Which of your {resourceNoun.toLowerCase()} this booking can be sold on. Availability is worked out per {resourceSingular.toLowerCase()}, across every booking that shares it.
-                </p>
+                <p className="type-body text-[13px] text-muted">{t("resourceHelp", { noun: resourceNoun })}</p>
+                <p className="type-body mb-section text-[13px] text-muted">{t("resourceShared")}</p>
                 {resources.length === 0 ? (
-                  <p className="text-[13px] text-muted">
-                    None set up yet — add them in Settings → {resourceNoun}.
-                  </p>
+                  <p className="text-[13px] text-muted">{t("resourceNone", { noun: resourceNoun })}</p>
                 ) : (
                   <div className="grid gap-tight sm:grid-cols-2">
                     {resources.map((r) => {
@@ -344,7 +343,7 @@ export function ProductForm({
                             <span className="truncate text-sm font-medium">{r.name}</span>
                             <span className="truncate text-[12px] text-muted">
                               {r.nounSingular}
-                              {r.outOfService ? " · out of service" : ""}
+                              {r.outOfService ? ` · ${t("resourceNotInUse")}` : ""}
                             </span>
                           </span>
                         </label>
@@ -353,15 +352,13 @@ export function ProductForm({
                   </div>
                 )}
                 {(state.booking.resource.resourceIds ?? []).length === 0 && (
-                  <p className="mt-tight text-[12px] text-danger">
-                    Pick at least one — a booking with none cannot be sold.
-                  </p>
+                  <p className="mt-tight text-[12px] text-danger">{t("resourcePickOne")}</p>
                 )}
               </div>
             )}
             {isFlexibleResource(state.booking.bookingType) && state.durationConfig && (
               <div>
-                <p className="type-h2 mb-section text-base">Durations & pricing</p>
+                <p className="type-h2 mb-section text-base">{t("lengthsTitle")}</p>
                 <DurationEngineField
                   value={state.durationConfig}
                   onChange={(cfg) => set("durationConfig", cfg)}
@@ -373,31 +370,38 @@ export function ProductForm({
             )}
             {needsSchedule(state.booking.bookingType) && state.schedule && (
               <div>
-                <p className="type-h2 mb-section text-base">Schedule</p>
+                <p className="type-h2 mb-section text-base">{t("scheduleTitle")}</p>
                 <ScheduleBuilder bookingType={state.booking.bookingType} value={state.schedule} onChange={(sch) => set("schedule", sch)} team={team} />
               </div>
             )}
             <TypeSpecificFields state={state} set={set} team={team} providerNoun={product.providerNoun} />
             {state.booking.bookingType === "BT-03" && state.schedule && (
               <div className="flex flex-col gap-tight">
-                <span className="type-label text-[12px] text-muted">Session names (optional)</span>
-                <p className="text-[12px] text-muted">Name a session and the name shows on tickets and the schedule — &quot;Morning show&quot;.</p>
+                <span className="type-label text-[12px] text-muted">{t("showNames")}</span>
+                <p className="text-[12px] text-muted">{t("showNamesHelp")}</p>
                 <div className="grid gap-tight sm:grid-cols-3">
-                  {slotTimes(state.schedule).map((t) => (
-                    <div key={t} className="flex items-center gap-tight">
-                      <span className="w-14 font-mono text-[13px] text-muted">{t}</span>
-                      <input type="text" value={state.sessionNames[t] ?? ""} placeholder="—" onChange={(e) => set("sessionNames", { ...state.sessionNames, [t]: e.target.value })} className="h-10 w-full rounded-sm border border-line px-comfortable text-sm outline-none focus:border-inverse" />
+                  {slotTimes(state.schedule).map((time) => (
+                    <div key={time} className="flex items-center gap-tight">
+                      <span className="w-14 text-[13px] tabular-nums text-muted">{time}</span>
+                      <input
+                        type="text"
+                        value={state.sessionNames[time] ?? ""}
+                        placeholder={t("showNamePlaceholder")}
+                        aria-label={t("showNameFor", { time })}
+                        onChange={(e) => set("sessionNames", { ...state.sessionNames, [time]: e.target.value })}
+                        className="h-11 w-full rounded-sm border border-line px-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-10"
+                      />
                     </div>
                   ))}
                 </div>
               </div>
             )}
             <div className="grid gap-section sm:grid-cols-2">
-              <FormField label="Max per order" variant="number" value={state.maxPerOrder} onChange={(e) => set("maxPerOrder", e.target.value)} />
-              <FormField label="Minimum age" variant="number" value={state.minAge} onChange={(e) => set("minAge", e.target.value)} />
-              <FormField label="On sale" variant="toggle" checked={state.active} onChange={(e) => set("active", (e.target as HTMLInputElement).checked)} help="Turn off to hide from sale." />
+              <FormField label={t("maxPerOrder")} variant="number" value={state.maxPerOrder} onChange={(e) => set("maxPerOrder", e.target.value)} help={t("noLimitHelp")} />
+              <FormField label={t("minAge")} variant="number" value={state.minAge} onChange={(e) => set("minAge", e.target.value)} help={t("noLimitHelp")} />
+              <FormField label={t("onSale")} variant="toggle" checked={state.active} onChange={(e) => set("active", (e.target as HTMLInputElement).checked)} help={state.active ? t("onSaleOn") : t("onSaleOff")} />
               {needsSchedule(state.booking.bookingType) && (
-                <FormField label="Waitlist when full" variant="toggle" checked={state.waitlist} onChange={(e) => set("waitlist", (e.target as HTMLInputElement).checked)} help="Let people join a waitlist." />
+                <FormField label={t("waitlist")} variant="toggle" checked={state.waitlist} onChange={(e) => set("waitlist", (e.target as HTMLInputElement).checked)} help={state.waitlist ? t("waitlistOn") : t("waitlistOff")} />
               )}
             </div>
           </div>
@@ -412,14 +416,15 @@ export function ProductForm({
               {basis === "per_booking" ? (
                 <div className="flex flex-col gap-tight">
                   <FormField
-                    label={`Price per booking (${currency})`}
+                    label={`${t("perBookingPrice")} (${currency === "BDT" ? "৳" : currency})`}
                     variant="number"
+                    placeholder="1500"
                     value={state.tiers[0]?.price ?? ""}
-                    onChange={(e) => set("tiers", state.tiers.length ? state.tiers.map((t, i) => (i === 0 ? { ...t, price: e.target.value } : t)) : [{ ...emptyTier(), name: "Booking", price: e.target.value }])}
+                    onChange={(e) => set("tiers", state.tiers.length ? state.tiers.map((t, i) => (i === 0 ? { ...t, price: e.target.value } : t)) : [{ ...emptyTier(), name: tf("tierStandard"), price: e.target.value }])}
                     className="max-w-xs"
-                    help="One price for the whole group — group size is capped by the party limits in Policies."
+                    help={t("perBookingHelp")}
                   />
-                  <p className="text-[12px] text-muted">Priced per booking. Switch to per-person tiers by changing the booking setup on the Availability tab.</p>
+                  <p className="text-[12px] text-muted">{t("perBookingSwitch", { tab: t("tab.availability") })}</p>
                 </div>
               ) : (
                 <PriceTiersField tiers={state.tiers} onChange={(tiers) => set("tiers", tiers)} errors={errors} currency={currency} />
@@ -439,7 +444,7 @@ export function ProductForm({
 
         {tab === "policies" && (
           <div className="flex flex-col gap-major">
-            <FormField label="Tax class" variant="select" value={state.taxClass} onChange={(e) => set("taxClass", e.target.value as TaxClass)} options={[{ value: "standard", label: "Standard (VAT)" }, { value: "reduced", label: "Reduced" }, { value: "exempt", label: "Exempt" }]} className="max-w-xs" help="Rates come from Business settings." />
+            <FormField label={t("taxLabel")} variant="select" value={state.taxClass} onChange={(e) => set("taxClass", e.target.value as TaxClass)} options={[{ value: "standard", label: t("taxStandard") }, { value: "reduced", label: t("taxReduced") }, { value: "exempt", label: t("taxExempt") }]} className="max-w-xs" help={t("taxHelp")} />
             <PoliciesField value={state.policies} onChange={(p) => set("policies", p)} />
           </div>
         )}
@@ -447,14 +452,19 @@ export function ProductForm({
         {tab === "where" && (
           <div className="grid gap-section sm:grid-cols-2">
             <div className="flex flex-col gap-tight">
-              <span className="type-label text-[12px] text-muted">Where it&apos;s sold</span>
-              <FormField label="At the counter" variant="toggle" checked={state.counter} onChange={(e) => set("counter", (e.target as HTMLInputElement).checked)} />
-              <FormField label="Online" variant="toggle" checked={state.online} onChange={(e) => set("online", (e.target as HTMLInputElement).checked)} />
+              <span className="type-label text-[12px] text-muted">{tw("soldWhere")}</span>
+              <FormField label={tw("atCounter")} variant="toggle" help={tw("atCounterHelp")} checked={state.counter} onChange={(e) => set("counter", (e.target as HTMLInputElement).checked)} />
+              <FormField label={tw("online")} variant="toggle" help={tw("onlineHelp")} checked={state.online} onChange={(e) => set("online", (e.target as HTMLInputElement).checked)} />
+              {!state.counter && !state.online ? (
+                <p className="text-[13px] font-medium text-danger">{tw("nowhere")}</p>
+              ) : !state.online ? (
+                <p className="text-[13px] text-warning">{tw("notOnline")}</p>
+              ) : null}
             </div>
             <div className="flex flex-col gap-tight">
-              <span className="type-label text-[12px] text-muted">Locations</span>
+              <span className="type-label text-[12px] text-muted">{tw("locations")}</span>
               {locations.map((l) => (
-                <label key={l.id} className="flex cursor-pointer items-center gap-tight text-sm">
+                <label key={l.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9">
                   <input type="checkbox" checked={state.locationIds.includes(l.id)} onChange={() => toggleLocation(l.id)} className="h-4 w-4 accent-ember" />
                   {l.name}
                 </label>
@@ -465,20 +475,20 @@ export function ProductForm({
 
         {tab === "advanced" && (
           <div className="flex flex-col gap-tight text-sm">
-            <p className="text-[13px] text-muted">Internal values for support and debugging. Read-only.</p>
-            <AdvancedRow label="Booking type" value={state.booking.bookingType} />
-            <AdvancedRow label="Booking ID" value={product.id} />
-            <AdvancedRow label="Created" value={product.createdAt} />
-            <AdvancedRow label="Updated" value={product.updatedAt} />
+            <p className="text-[13px] text-muted">{t("advancedHelp")}</p>
+            <AdvancedRow label={t("advType")} value={state.booking.bookingType} />
+            <AdvancedRow label={t("advId")} value={product.id} />
+            <AdvancedRow label={t("advCreated")} value={product.createdAt} />
+            <AdvancedRow label={t("advUpdated")} value={product.updatedAt} />
           </div>
         )}
       </div>
 
       <div className="sticky bottom-0 max-md:bottom-[calc(56px+env(safe-area-inset-bottom))] flex items-center justify-between border-t border-line bg-surface py-section">
-        <span className="font-mono text-[12px] text-muted">{dirty ? "Unsaved changes" : "No changes"}</span>
+        <span className="text-[12px] text-muted">{dirty ? t("unsaved") : t("noChanges")}</span>
         <div className="flex items-center gap-tight">
-          <Button variant="secondary" onClick={() => router.push("/catalog?kind=bookings")} disabled={saving}>Cancel</Button>
-          <Button onClick={save} loading={saving} disabled={!dirty}>Save changes</Button>
+          <Button variant="secondary" onClick={() => router.push("/catalog?kind=bookings")} disabled={saving}>{t("cancel")}</Button>
+          <Button onClick={save} loading={saving} disabled={!dirty}>{t("save")}</Button>
         </div>
       </div>
     </div>
@@ -498,13 +508,35 @@ function TypeSpecificFields({
   team: Staff[];
   providerNoun?: string;
 }) {
+  const t = useTranslations("catalog.form");
   const bt = state.booking.bookingType;
+  const days = parseInt(state.validityDaysStr, 10);
+  const hasDays = Number.isFinite(days) && days > 0;
 
   if (bt === "BT-01") {
     return (
       <div className="grid gap-section sm:grid-cols-2">
-        <FormField label="Valid after purchase" variant="select" value={state.validityMode} onChange={(e) => set("validityMode", e.target.value as FormState["validityMode"])} options={[{ value: "unlimited", label: "Until used — no expiry" }, { value: "days", label: "For N days" }, { value: "same_day", label: "Same day only" }]} help="When an unused ticket stops being accepted." />
-        {state.validityMode === "days" && <FormField label="Valid for (days)" variant="number" value={state.validityDaysStr} onChange={(e) => set("validityDaysStr", e.target.value)} />}
+        <FormField
+          label={t("validLabel")}
+          variant="select"
+          value={state.validityMode}
+          onChange={(e) => set("validityMode", e.target.value as FormState["validityMode"])}
+          options={[
+            { value: "unlimited", label: t("validUntilUsed") },
+            { value: "days", label: hasDays ? t("validDays", { count: days }) : t("validDaysBlank") },
+            { value: "same_day", label: t("validSameDay") },
+          ]}
+          help={
+            state.validityMode === "unlimited"
+              ? t("validHelpUnlimited")
+              : state.validityMode === "same_day"
+                ? t("validHelpSameDay")
+                : hasDays
+                  ? t("validHelpDays", { count: days })
+                  : t("validHelpDaysBlank")
+          }
+        />
+        {state.validityMode === "days" && <FormField label={t("daysCount")} variant="number" placeholder="30" value={state.validityDaysStr} onChange={(e) => set("validityDaysStr", e.target.value)} />}
       </div>
     );
   }
@@ -512,13 +544,29 @@ function TypeSpecificFields({
   if (bt === "BT-02") {
     return (
       <div className="grid gap-section sm:grid-cols-3">
-        <FormField label="Window" variant="select" value={state.windowMode} onChange={(e) => set("windowMode", e.target.value as FormState["windowMode"])} options={[{ value: "rolling", label: "N days from purchase" }, { value: "fixed", label: "Fixed season dates" }]} help="Rolling: each ticket's window starts when it's bought." />
+        <FormField
+          label={t("windowLabel")}
+          variant="select"
+          value={state.windowMode}
+          onChange={(e) => set("windowMode", e.target.value as FormState["windowMode"])}
+          options={[
+            { value: "rolling", label: hasDays ? t("windowRolling", { count: days }) : t("windowRollingBlank") },
+            { value: "fixed", label: t("windowFixed") },
+          ]}
+          help={
+            state.windowMode === "fixed"
+              ? t("windowHelpFixed")
+              : hasDays
+                ? t("windowHelpRolling", { count: days })
+                : t("windowHelpRollingBlank")
+          }
+        />
         {state.windowMode === "rolling" ? (
-          <FormField label="Valid for (days)" variant="number" value={state.validityDaysStr} onChange={(e) => set("validityDaysStr", e.target.value)} />
+          <FormField label={t("daysCount")} variant="number" placeholder="7" value={state.validityDaysStr} onChange={(e) => set("validityDaysStr", e.target.value)} />
         ) : (
           <>
-            <FormField label="From" variant="date" value={state.windowStart} onChange={(e) => set("windowStart", e.target.value)} />
-            <FormField label="To" variant="date" value={state.windowEnd} onChange={(e) => set("windowEnd", e.target.value)} />
+            <FormField label={t("from")} variant="date" value={state.windowStart} onChange={(e) => set("windowStart", e.target.value)} />
+            <FormField label={t("to")} variant="date" value={state.windowEnd} onChange={(e) => set("windowEnd", e.target.value)} />
           </>
         )}
       </div>
@@ -528,8 +576,14 @@ function TypeSpecificFields({
   if (bt === "BT-09") {
     return (
       <div className="grid gap-section sm:grid-cols-2">
-        <FormField label="Minimum party to run" variant="number" value={state.minPartyToRun} onChange={(e) => set("minPartyToRun", e.target.value)} help="Departures with fewer booked can be cancelled." />
-        <FormField label="Meeting point" value={state.meetingPoint} placeholder="Main gate" onChange={(e) => set("meetingPoint", e.target.value)} help="Printed on the ticket." />
+        <FormField
+          label={t("minGroup")}
+          variant="number"
+          value={state.minPartyToRun}
+          onChange={(e) => set("minPartyToRun", e.target.value)}
+          help={parseInt(state.minPartyToRun, 10) > 0 ? t("minGroupHelp", { count: parseInt(state.minPartyToRun, 10) }) : t("minGroupHelpBlank")}
+        />
+        <FormField label={t("meetingPoint")} value={state.meetingPoint} placeholder={t("meetingPointPlaceholder")} onChange={(e) => set("meetingPoint", e.target.value)} help={t("meetingPointHelp")} />
       </div>
     );
   }
@@ -539,15 +593,15 @@ function TypeSpecificFields({
     if (ids.length === 0) return null;
     return (
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-muted">Per-{(state.booking.provider?.noun ?? providerNoun ?? "provider").toLowerCase()} price & durations</span>
+        <span className="type-label text-[12px] text-muted">{t("providerExtras", { noun: state.booking.provider?.noun ?? providerNoun ?? t("providerFallback") })}</span>
         {ids.map((id) => {
           const extra = state.providerExtras[id] ?? { premium: "", durations: "" };
           const name = team.find((m) => m.id === id)?.name ?? id;
           return (
             <div key={id} className="grid items-center gap-tight sm:grid-cols-[1fr_10rem_12rem]">
               <span className="text-sm">{name}</span>
-              <FormField label="Extra charge" variant="number" placeholder="0" value={extra.premium} onChange={(e) => set("providerExtras", { ...state.providerExtras, [id]: { ...extra, premium: e.target.value } })} />
-              <FormField label="Durations (min)" placeholder="60, 90" value={extra.durations} onChange={(e) => set("providerExtras", { ...state.providerExtras, [id]: { ...extra, durations: e.target.value } })} />
+              <FormField label={t("extraCharge")} variant="number" placeholder="0" value={extra.premium} onChange={(e) => set("providerExtras", { ...state.providerExtras, [id]: { ...extra, premium: e.target.value } })} />
+              <FormField label={t("lengthsMin")} placeholder={t("lengthsPlaceholder")} value={extra.durations} onChange={(e) => set("providerExtras", { ...state.providerExtras, [id]: { ...extra, durations: e.target.value } })} />
             </div>
           );
         })}
@@ -557,19 +611,19 @@ function TypeSpecificFields({
 
   if (bt === "BT-12") {
     return (
-      <FormField label="Credits per booking" variant="number" value={state.creditsPerBooking} onChange={(e) => set("creditsPerBooking", e.target.value)} className="max-w-xs" help="What one booking costs from the pack — a 2-hour slot might cost 2." />
+      <FormField label={t("creditsPer")} variant="number" value={state.creditsPerBooking} onChange={(e) => set("creditsPerBooking", e.target.value)} className="max-w-xs" help={t("creditsPerHelp", { count: parseInt(state.creditsPerBooking, 10) || 1 })} />
     );
   }
 
   if (bt === "BT-13") {
     return (
-      <FormField label="Can join partway" variant="toggle" checked={state.joinPartway} onChange={(e) => set("joinPartway", (e.target as HTMLInputElement).checked)} help="Sell enrolment after the course has started." />
+      <FormField label={t("joinLate")} variant="toggle" checked={state.joinPartway} onChange={(e) => set("joinPartway", (e.target as HTMLInputElement).checked)} help={state.joinPartway ? t("joinLateOn") : t("joinLateOff")} />
     );
   }
 
   if (bt === "BT-14") {
     return (
-      <FormField label="Identifier asked at issue" value={state.passIdentifierLabel} placeholder="Plate number" onChange={(e) => set("passIdentifierLabel", e.target.value)} className="max-w-xs" help="What staff type in when issuing this pass." />
+      <FormField label={t("passId")} value={state.passIdentifierLabel} placeholder={t("passIdPlaceholder")} onChange={(e) => set("passIdentifierLabel", e.target.value)} className="max-w-xs" help={t("passIdHelp")} />
     );
   }
 

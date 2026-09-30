@@ -12,7 +12,7 @@ import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_COUNTER_ID } from "@/lib/session";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
-import { behaviourSubtitle } from "@/lib/behaviour";
+import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { taxRateFor } from "@/lib/tax";
 import { FEATURES } from "@/lib/features";
@@ -132,6 +132,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
   const router = useRouter();
   const toast = useToast();
   const t = useTranslations("pos");
+  const subtitle = useBehaviourSubtitle();
   const pt = useTranslations("promotions");
   const enumL = useEnumLabels();
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
@@ -1097,8 +1098,8 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               same 2px ember indicator the rest of the app uses, and it follows
               the radius. */}
           <div data-focus-host className="go-surface flex h-[52px] min-w-0 flex-1 items-center gap-tight rounded-full px-section focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember">
-            <Search size={18} strokeWidth={1.75} className="shrink-0 text-muted" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none focus-visible:outline-none placeholder:text-faint" />
+            <Search size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label={t("search.placeholder")} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none focus-visible:outline-none placeholder:text-faint" />
             {query && <button type="button" onClick={() => setQuery("")} className="text-[0.8125rem] text-muted hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
@@ -1189,7 +1190,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
                         At 13px it would not have been, which is why every
                         other price in this app uses the darker brand step. */}
                     <span className="mt-inline text-[1.25rem] font-bold leading-none text-ember">{formatPriceShort(from, currency)}</span>
-                    <span className="mt-tight line-clamp-2 text-[0.8125rem] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
+                    <span className="mt-tight line-clamp-2 text-[0.8125rem] leading-tight text-muted">{subtitle(p, { resources, team: teamQ.data?.data })}</span>
                     {/* What this product is doing RIGHT NOW, stated per booking
                         type — the next departure and its seats, how many lanes
                         are free, how much of today's allowance is left. */}
@@ -1581,6 +1582,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             <input
               value={discountReason}
               onChange={(e) => setDiscountReason(e.target.value)}
+              aria-label={pt("pos.reasonPlaceholder")}
               placeholder={pt("pos.reasonPlaceholder")}
               className={`mt-tight h-11 w-full rounded-go-sm border bg-card px-comfortable text-sm outline-none placeholder:text-faint ${reasonNeeded ? "border-danger" : "border-line focus:border-inverse"}`}
             />
@@ -1838,7 +1840,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         const enough = tenderedMinor >= dueNow;
         const exact = tenderedMinor === dueNow;
         return (
-          <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true">
+          <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true" aria-label={t("cash.label")}>
             <div className="go-sheet-scrim absolute inset-0 bg-inverse/40 backdrop-blur-sm" onClick={() => !cashSaving && setCashOpen(false)} aria-hidden />
             <div className="relative z-10 go-sheet-panel max-h-[90vh] overflow-y-auto rounded-t-go-lg bg-sheet p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
               <div className="mx-auto w-full max-w-[520px]">

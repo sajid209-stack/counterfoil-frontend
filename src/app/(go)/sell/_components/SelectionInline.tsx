@@ -658,7 +658,7 @@ export function SelectionInline({
     const categories = [...new Map(rows.map((r) => [r.categoryUid, r])).values()];
     return (
       <Step label={t("step.seats")}>
-        <p className="mb-tight rounded-go bg-subtle py-inline text-center text-[0.75rem] tracking-widest text-muted">
+        <p className="mb-tight rounded-go bg-subtle py-inline text-center text-[0.75rem] uppercase tracking-widest text-muted">
           {t("seats.screen")}
         </p>
         <div className="-mx-comfortable overflow-x-auto px-comfortable pb-1">

@@ -5,26 +5,26 @@
     "clear": "মুছুন",
     "all": "সব",
     "systems": "যেভাবে বিক্রি হয়",
-    "custom": "কাস্টম পরিমাণ"
+    "custom": "অন্য পরিমাণ"
   },
   "sale": {
     "empty": "এখনো কিছু যোগ করা হয়নি",
-    "emptyHint": "একটি বুকিং বেছে নিন — এখানেই সেটি সাজানোর জন্য চলে আসবে।"
+    "emptyHint": "এখানে যোগ করতে একটি বুকিংয়ে ট্যাপ করুন।"
   },
   "block": {
     "addAnother": "আরেকটি যোগ করুন",
     "remove": "সরান",
-    "done": "সম্পন্ন",
+    "done": "হয়ে গেছে",
     "slotCount": "{count}টি স্লট",
     "dayCount": "{count} দিন"
   },
   "step": {
     "date": "তারিখ",
-    "session": "সেশন",
-    "departure": "যাত্রা",
+    "session": "সময়ের স্লট",
+    "departure": "ছাড়ার সময়",
     "guide": "গাইড",
     "slot": "সময়",
-    "allowance": "আজকের সীমা",
+    "allowance": "আজ",
     "validity": "মেয়াদ",
     "tickets": "টিকিট বেছে নিন",
     "duration": "কতক্ষণ",
@@ -35,7 +35,7 @@
     "course": "কোর্স",
     "seats": "আসন বেছে নিন",
     "sections": "আসন বেছে নিন",
-    "places": "কতটি জায়গা"
+    "places": "কতজন"
   },
   "date": {
     "today": "আজ",
@@ -48,12 +48,12 @@
   },
   "session": {
     "noneToday": "এই তারিখে কিছু চলে না। অন্য দিন বেছে নিন।",
-    "soldOut": "এই সেশনের সব টিকিট বিক্রি হয়ে গেছে।",
+    "soldOut": "এই স্লটের সব টিকিট বিক্রি হয়ে গেছে।",
     "noGuide": "এই যাত্রার জন্য কোনো গাইড ফাঁকা নেই।"
   },
   "guide": {
-    "available": "ফাঁকা আছে",
-    "busy": "ফাঁকা নেই"
+    "available": "খালি",
+    "busy": "ব্যস্ত"
   },
   "slot": {
     "resource": "জায়গা",
@@ -71,36 +71,36 @@
     "resource": "জায়গা বেছে নিন",
     "guide": "গাইড বেছে নিন",
     "tickets": "কতগুলো তা বেছে নিন",
-    "unsupported": "মূল টিলে বিক্রি করুন",
-    "duration": "সময়কাল বেছে নিন",
+    "unsupported": "কার্ট স্ক্রিনে বিক্রি করুন",
+    "duration": "কতক্ষণ বেছে নিন",
     "provider": "কে করবেন বেছে নিন",
     "seats": "আসন বেছে নিন"
   },
   "unsupported": {
-    "title": "এই টিলে এখনো নেই",
-    "body": "এই বুকিংয়ের নির্বাচন পদ্ধতি এখনো এই টিলে নেই। আপাতত মূল টিলে বিক্রি করুন।"
+    "title": "এটা এখানে এখনো বিক্রি করা যায় না",
+    "body": "আপাতত কার্ট স্ক্রিনে বিক্রি করুন।"
   },
   "pay": {
-    "label": "পরিশোধ",
+    "label": "পেমেন্ট",
     "subtotal": "সাবটোটাল",
     "vat": "ভ্যাট",
     "total": "মোট",
     "change": "ফেরত",
     "txnLabel": "বিকাশ ট্রানজেকশন আইডি",
     "txnPlaceholder": "যেমন 8N7A2K4M1P",
-    "txnHint": "বিক্রি সম্পন্ন করার আগে গ্রাহকের কনফার্মেশন থেকে আইডিটি লিখুন।",
-    "qrHint": "গ্রাহককে কাউন্টারের বাংলা QR দেখান, পেমেন্ট নিশ্চিত হলে বিক্রি সম্পন্ন করুন।",
+    "txnHint": "গ্রাহকের বিকাশ SMS থেকে আইডিটি লিখুন।",
+    "qrHint": "গ্রাহককে কাউন্টারের Bangla QR দেখান। অ্যাপে পেমেন্ট হলে বিক্রি শেষ করুন।",
     "discountPct": "ছাড় {pct}%",
     "discountFlat": "ছাড়",
-    "dueNow": "এখন দিতে হবে",
-    "balanceAtArrival": "আসার সময় বাকি",
-    "received": "নগদ পাওয়া গেছে",
+    "dueNow": "এখন দেবে",
+    "balanceAtArrival": "আসার পর দেবে",
+    "received": "গ্রাহক দিয়েছে",
     "collect": "নিতে হবে",
     "collectNow": "এখন নিন"
   },
   "footer": {
     "total": "মোট",
-    "nothingYet": "এখনো পরিশোধের কিছু নেই",
+    "nothingYet": "এখনো দেওয়ার কিছু নেই",
     "takeAmount": "{amount} নিন",
     "completeAmount": "{amount} সম্পন্ন করুন",
     "overLimit": "ম্যানেজারের অনুমোদন লাগবে",
@@ -109,9 +109,9 @@
     "items": "{count, plural, one {# আইটেম} other {# আইটেম}}"
   },
   "custom": {
-    "title": "কাস্টম পরিমাণ",
-    "defaultName": "কাস্টম পরিমাণ",
-    "lineLabel": "এককালীন চার্জ"
+    "title": "অন্য পরিমাণ",
+    "defaultName": "অন্য পরিমাণ",
+    "lineLabel": "অন্য খরচ"
   },
   "complete": {
     "whatWasSold": "যা বিক্রি হয়েছে"
@@ -121,19 +121,19 @@
     "walkIn": "ওয়াক-ইন",
     "discount": "ছাড়",
     "none": "নেই",
-    "overLimit": "এই কাউন্টারের {limit}% সীমার বেশি। ম্যানেজারের অনুমোদন নিন।",
+    "overLimit": "আপনার {limit}% সীমার বেশি। ম্যানেজারকে বলুন।",
     "reason": "কারণ",
     "reasonPlaceholder": "এই ছাড় কেন?",
-    "payNow": "এখন পরিশোধ",
+    "payNow": "এখন নেবেন",
     "inFull": "সম্পূর্ণ",
     "half": "অর্ধেক",
     "advanceSummary": "এখন {now} · পরে {later}",
-    "deposit": "জমা · আসার সময় {later}",
-    "depositExplain": "আসার সময় {later} না রেখে এখনই পুরো টাকা নিন",
+    "deposit": "অগ্রিম · আসার পর {later}",
+    "depositExplain": "আসার পর {later} না রেখে এখনই সব নিন",
     "advanceAmount": "এখন যত নেবেন",
     "advancePlaceholder": "পরিমাণ",
     "minimum": "সর্বনিম্ন {amount}",
-    "belowMin": "এখন সর্বনিম্ন {amount} নিতে হবে।"
+    "belowMin": "এখন কমপক্ষে {amount} নিন।"
   },
   "flex": {
     "any": "যেকোনো",
@@ -148,16 +148,16 @@
     "noneFree": "{time}-এ কেউ ফাঁকা নেই।",
     "length": "প্রতিটি অ্যাপয়েন্টমেন্ট {length}।",
     "premium": "+{amount}",
-    "standard": "সাধারণ রেট"
+    "standard": "সাধারণ দাম"
   },
   "course": {
     "ready": "যোগ করার জন্য প্রস্তুত",
-    "runs": "{days} দিনে {count}টি সেশন, {range}",
+    "runs": "{days} দিনে {count}টি ক্লাস, {range}",
     "showDates": "সব তারিখ দেখুন",
     "hideDates": "তারিখ লুকান"
   },
   "seats": {
     "screen": "পর্দা",
-    "selected": "নির্বাচিত"
+    "selected": "বেছে নেওয়া"
   }
 }

@@ -322,7 +322,7 @@ export default function InventoryPage() {
                   <Select
                     value={kind}
                     onChange={setKind}
-                    aria-label={t("kindAll")}
+                    aria-label={t("filterKind")}
                     triggerClassName="text-[13px] md:h-9"
                     options={[
                       { value: "", label: t("kindAll") },

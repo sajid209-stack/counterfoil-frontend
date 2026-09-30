@@ -25,7 +25,7 @@ export default function PromotionEditorPage() {
   useEffect(() => { if (q.data) setP(q.data); }, [q.data]);
 
   if (!q.loading && (q.error || !q.data)) {
-    return <PageShell title={t("editor.back")}><EmptyState title="Not found" action={<Button onClick={() => router.push("/promotions")}>{t("editor.back")}</Button>} /></PageShell>;
+    return <PageShell title={t("editor.back")}><EmptyState title={t("editor.notFound")} action={<Button onClick={() => router.push("/promotions")}>{t("editor.back")}</Button>} /></PageShell>;
   }
   if (!p) return <PageShell title={t("editor.back")}><div className="h-40 animate-pulse rounded-md bg-line" /></PageShell>;
 
@@ -49,7 +49,7 @@ export default function PromotionEditorPage() {
   return (
     <PageShell title={p.name || t("editor.back")} actions={<Button loading={saving} onClick={save}>{t("editor.save")}</Button>}>
       <button type="button" onClick={() => router.push("/promotions")} className="mb-section flex items-center gap-inline text-[13px] text-muted hover:text-fg">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("editor.back")}
+        <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {t("editor.back")}
       </button>
 
       <div className="grid max-w-2xl gap-section card-surface p-card sm:grid-cols-2">
@@ -61,7 +61,7 @@ export default function PromotionEditorPage() {
         {isAmount && <FormField label={t("editor.amount")} variant="number" value={String((p.amount ?? 0) / 100)} onChange={(e) => setP({ ...p, amount: Math.round((parseFloat(e.target.value) || 0) * 100) })} />}
 
         <FormField label={t("editor.minSubtotal")} variant="number" value={p.eligibility.minSubtotal != null ? String(p.eligibility.minSubtotal / 100) : ""} onChange={(e) => setP({ ...p, eligibility: { ...p.eligibility, minSubtotal: e.target.value ? Math.round(parseFloat(e.target.value) * 100) : undefined } })} />
-        <FormField label={t("editor.status")} variant="select" value={p.status} onChange={(e) => setP({ ...p, status: e.target.value as Promotion["status"] })} options={[{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }, { value: "archived", label: "Archived" }]} />
+        <FormField label={t("editor.status")} variant="select" value={p.status} onChange={(e) => setP({ ...p, status: e.target.value as Promotion["status"] })} options={[{ value: "active", label: t("editor.statusActive") }, { value: "inactive", label: t("editor.statusInactive") }, { value: "archived", label: t("editor.statusArchived") }]} />
 
         <FormField label={t("editor.validFrom")} variant="date" value={p.validFrom ?? ""} onChange={(e) => setP({ ...p, validFrom: e.target.value || undefined })} />
         <FormField label={t("editor.validTo")} variant="date" value={p.validTo ?? ""} onChange={(e) => setP({ ...p, validTo: e.target.value || undefined })} />
@@ -70,7 +70,7 @@ export default function PromotionEditorPage() {
           <span className="type-label mb-tight block text-[12px] text-muted">{t("editor.channels")}</span>
           <div className="flex gap-tight">
             {(["counter", "online"] as Channel[]).map((ch) => (
-              <button key={ch} type="button" onClick={() => toggleChannel(ch)} className={`h-11 md:h-10 rounded-sm border px-comfortable text-[13px] ${p.eligibility.channels.includes(ch) ? "border-ember bg-ember/5 font-medium" : "border-line"}`}>{t(`editor.${ch}`)}</button>
+              <button key={ch} type="button" aria-pressed={p.eligibility.channels.includes(ch)} onClick={() => toggleChannel(ch)} className={`h-11 md:h-10 rounded-sm border px-comfortable text-[13px] ${p.eligibility.channels.includes(ch) ? "border-ember bg-ember/5 font-medium" : "border-line"}`}>{t(`editor.${ch}`)}</button>
             ))}
           </div>
         </div>

@@ -35,10 +35,11 @@ export default function GoBookingsPage() {
         <h1 className="type-h1 mt-tight text-2xl">{t("arrivalsTitle")}</h1>
       </div>
       <div className="relative">
-        <Search size={18} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
+        <Search size={18} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label={t("arrivalsSearchPlaceholder")}
           placeholder={t("arrivalsSearchPlaceholder")}
           className="h-12 w-full rounded-full border border-line bg-card pl-10 pr-section text-sm outline-none focus:border-inverse"
         />

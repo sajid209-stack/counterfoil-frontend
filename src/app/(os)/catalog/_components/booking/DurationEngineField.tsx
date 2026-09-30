@@ -1,25 +1,30 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { DurationInput, FormField } from "@/components/ui";
 import {
   durationConfigError,
   durationOptions,
-  formatDuration,
-  formatDurationShort,
   formulaPrice,
   hourlyEquivalent,
   isDealDuration,
   resolveDurationPrice,
 } from "@/lib/duration";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatPriceShort } from "@/lib/format";
 import { applyResourceRate } from "@/lib/api";
 import type { DurationConfig, PricingRule, Resource } from "@/lib/api";
+import { useCatalogFormat } from "../../_lib/useCatalogFormat";
 
 const majorToMinor = (s: string) => { const n = parseFloat(s); return Number.isFinite(n) ? Math.round(n * 100) : 0; };
 const minorToMajor = (m: number | undefined) => (m != null && m > 0 ? String(m / 100) : "");
+const hhmm = (min: number) => `${String(Math.floor(min / 60) % 24).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+
+const MODELS = ["hourly", "list", "base_extension"] as const;
 
 /** The liquid-time editor: min/max/increment, one of three pricing models,
- *  operational toggles, and the MANDATORY live preview of concrete prices. */
+ *  operational toggles, and the MANDATORY live preview of concrete prices.
+ *  Every help line says what the value means right now — "A walk-in at 17:07
+ *  starts at 17:15" — rather than what the setting is called. */
 export function DurationEngineField({
   value,
   onChange,
@@ -33,13 +38,17 @@ export function DurationEngineField({
   resources?: Resource[]; // per-resource rate examples in the preview
   currency?: string;
 }) {
+  const t = useTranslations("catalog.duration");
+  const { dur, dayShort } = useCatalogFormat();
   const set = <K extends keyof DurationConfig>(k: K, v: DurationConfig[K]) => onChange({ ...value, [k]: v });
   const err = durationConfigError(value);
   const options = err ? [] : durationOptions(value);
+  const symbol = currency === "BDT" ? "৳" : currency;
 
   // Preview: every bookable duration with its resolved (unbanded) price, plus
   // one concrete banded example so the operator verifies real numbers.
-  const EXAMPLE = { date: "2026-08-01", time: "19:00", label: "Sat 19:00" }; // a Saturday
+  const EXAMPLE = { date: "2026-08-01", time: "19:00", dow: 6 }; // a Saturday
+  const exampleLabel = `${dayShort(EXAMPLE.dow)} ${EXAMPLE.time}`;
   const exampleMinutes = options.includes(120) ? 120 : options[options.length - 1] ?? 60;
   const previewPrice = (minutes: number) => resolveDurationPrice(value, [], EXAMPLE.date, "10:00", minutes);
   const bandedExample = resolveDurationPrice(value, pricingRules, EXAMPLE.date, EXAMPLE.time, exampleMinutes);
@@ -54,50 +63,68 @@ export function DurationEngineField({
     onChange({ ...value, priceList: list });
   };
 
+  /* The example the hourly help line works out: an hour and a half, the
+     length an operator most often has to explain at the counter. */
+  const hourly = value.hourlyRate ?? 0;
+  const walkFrom = 17 * 60 + 7;
+  const round = value.walkInRoundMinutes || 15;
+  const walkTo = Math.ceil(walkFrom / round) * round;
+
   return (
     <div className="flex flex-col gap-section">
       <div className="grid gap-section sm:grid-cols-3">
-        <DurationInput label="Shortest booking" value={value.minMinutes} min={5} onChange={(n) => set("minMinutes", n)} chips={[30, 60]} />
-        <DurationInput label="Longest booking" value={value.maxMinutes} min={5} onChange={(n) => set("maxMinutes", n)} chips={[120, 180]} />
-        <DurationInput label="In steps of" value={value.incrementMinutes} min={5} step={5} onChange={(n) => set("incrementMinutes", n)} chips={[15, 30, 60]} />
+        <DurationInput label={t("shortest")} value={value.minMinutes} min={5} onChange={(n) => set("minMinutes", n)} chips={[30, 60]} />
+        <DurationInput label={t("longest")} value={value.maxMinutes} min={5} onChange={(n) => set("maxMinutes", n)} chips={[120, 180]} />
+        <DurationInput label={t("step")} value={value.incrementMinutes} min={5} step={5} onChange={(n) => set("incrementMinutes", n)} chips={[15, 30, 60]} />
       </div>
       {err ? (
         <p className="rounded-sm border border-danger bg-danger/5 px-comfortable py-tight text-[13px] text-danger">{err}</p>
       ) : (
-        <p className="text-[13px] text-muted">
-          Bookable durations: <span className="font-mono text-[12px]">{options.map(formatDurationShort).join(" · ")}</span>
-        </p>
+        <p className="text-[13px] text-muted">{t("lengths", { list: options.map(dur).join(" · ") })}</p>
       )}
 
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-muted">How is it priced?</span>
+        <span className="type-label text-[12px] text-muted">{t("modelTitle")}</span>
         <div className="flex flex-wrap gap-tight">
-          {([
-            { v: "hourly", label: "Hourly rate", helper: "One rate, prorated" },
-            { v: "list", label: "Price list", helper: "A price per duration" },
-            { v: "base_extension", label: "Base + extension", helper: "First block, then per step" },
-          ] as const).map((o) => (
-            <button key={o.v} type="button" onClick={() => set("pricingModel", o.v)} className={`flex flex-col items-start rounded-sm border px-comfortable py-tight text-left ${value.pricingModel === o.v ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}>
-              <span className="text-sm font-medium">{o.label}</span>
-              <span className={`text-[12px] ${value.pricingModel === o.v ? "opacity-70" : "text-muted"}`}>{o.helper}</span>
-            </button>
-          ))}
+          {MODELS.map((m) => {
+            const on = value.pricingModel === m;
+            return (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={on}
+                onClick={() => set("pricingModel", m)}
+                className={`flex min-h-11 flex-col items-start rounded-sm border px-comfortable py-tight text-left ${on ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}
+              >
+                <span className="text-sm font-medium">{t(`model.${m}.title`)}</span>
+                <span className={`text-[12px] ${on ? "opacity-70" : "text-muted"}`}>{t(`model.${m}.helper`)}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {value.pricingModel === "hourly" && (
-        <FormField label={`Rate per hour (${currency})`} variant="number" value={minorToMajor(value.hourlyRate)} onChange={(e) => set("hourlyRate", majorToMinor(e.target.value))} className="max-w-xs" help="Durations are prorated: 1 hr 15 min costs 1.25× this." />
+        <FormField
+          label={`${t("hourlyLabel")} (${symbol})`}
+          variant="number"
+          placeholder={t("pricePlaceholder")}
+          value={minorToMajor(value.hourlyRate)}
+          onChange={(e) => set("hourlyRate", majorToMinor(e.target.value))}
+          className="max-w-xs"
+          help={hourly > 0 ? t("hourlyHelp", { time: dur(90), price: formatPriceShort(Math.round(hourly * 1.5), currency) }) : t("hourlyHelpEmpty")}
+        />
       )}
 
       {value.pricingModel === "list" && !err && (
         <div className="flex flex-col gap-tight">
           <div className="flex items-center justify-between">
-            <span className="type-label text-[12px] text-muted">Price per duration</span>
-            <button type="button" onClick={fillFromHourly} className="text-[13px] text-brand-foreground hover:underline">Fill from hourly rate</button>
+            <span className="type-label text-[12px] text-muted">{t("listTitle")}</span>
+            <button type="button" onClick={fillFromHourly} className="min-h-11 text-[13px] text-brand-foreground hover:underline md:min-h-0">{t("fillFromHourly")}</button>
           </div>
           <div className="grid gap-tight sm:grid-cols-3">
             {options.map((d) => (
-              <FormField key={d} label={formatDuration(d)} variant="number" value={minorToMajor(value.priceList?.[d])} onChange={(e) => set("priceList", { ...value.priceList, [d]: majorToMinor(e.target.value) })} />
+              <FormField key={d} label={`${dur(d)} (${symbol})`} variant="number" value={minorToMajor(value.priceList?.[d])} onChange={(e) => set("priceList", { ...value.priceList, [d]: majorToMinor(e.target.value) })} />
             ))}
           </div>
         </div>
@@ -105,30 +132,28 @@ export function DurationEngineField({
 
       {value.pricingModel === "base_extension" && (
         <div className="grid gap-section sm:grid-cols-2">
-          <FormField label={`First ${formatDuration(value.minMinutes)} (${currency})`} variant="number" value={minorToMajor(value.basePrice)} onChange={(e) => set("basePrice", majorToMinor(e.target.value))} />
-          <FormField label={`Each extra ${formatDuration(value.incrementMinutes)} (${currency})`} variant="number" value={minorToMajor(value.extensionPrice)} onChange={(e) => set("extensionPrice", majorToMinor(e.target.value))} />
+          <FormField label={`${t("firstPart", { time: dur(value.minMinutes) })} (${symbol})`} variant="number" value={minorToMajor(value.basePrice)} onChange={(e) => set("basePrice", majorToMinor(e.target.value))} />
+          <FormField label={`${t("eachExtra", { time: dur(value.incrementMinutes) })} (${symbol})`} variant="number" value={minorToMajor(value.extensionPrice)} onChange={(e) => set("extensionPrice", majorToMinor(e.target.value))} />
         </div>
       )}
 
-      {/* Deal prices. A formula gets you most of the way — "an hour is ৳1,000
-          and every 15 minutes after is ৳250" — but the two-hour price an
+      {/* Special prices. A formula gets you most of the way — "an hour is
+          ৳1,000 and every 15 minutes after is ৳250" — but the two-hour price an
           operator actually sells is usually a round number they chose, not
-          what the arithmetic produces. Every bookable duration is listed with
-          what the formula would charge; typing over one sets a deal, clearing
-          it hands that duration back to the formula. */}
+          what the arithmetic produces. Every bookable length is listed with
+          what the formula would charge; typing over one sets a special price,
+          clearing it hands that length back to the formula. */}
       {value.pricingModel !== "list" && !err && options.length > 0 && (
         <div className="flex flex-col gap-tight">
           <div className="flex flex-wrap items-baseline justify-between gap-tight">
-            <span className="type-label text-[12px] text-muted">Deal prices</span>
+            <span className="type-label text-[12px] text-muted">{t("dealsTitle")}</span>
             {dealCount > 0 && (
-              <button type="button" onClick={() => set("priceOverrides", undefined)} className="text-[13px] text-brand-foreground hover:underline">
-                Clear all {dealCount}
+              <button type="button" onClick={() => set("priceOverrides", undefined)} className="min-h-11 text-[13px] text-brand-foreground hover:underline md:min-h-0">
+                {t("clearDeals", { count: dealCount })}
               </button>
             )}
           </div>
-          <p className="text-[12px] text-muted">
-            Optional. Leave a duration blank and it follows the formula above.
-          </p>
+          <p className="text-[12px] text-muted">{t("dealsHelp")}</p>
           <div className="grid gap-tight sm:grid-cols-2 lg:grid-cols-3">
             {options.map((d) => {
               const formula = formulaPrice(value, d);
@@ -136,15 +161,17 @@ export function DurationEngineField({
               return (
                 <div key={d} className={`flex items-center gap-comfortable rounded-sm border p-comfortable ${deal ? "border-ember bg-ember/5" : "border-line"}`}>
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-sm font-medium">{formatDuration(d)}</span>
+                    <span className="text-sm font-medium">{dur(d)}</span>
                     <span className={`font-mono text-[12px] ${deal ? "text-muted line-through" : "text-muted"}`}>
                       {formatMoney(formula, currency)}
                     </span>
                   </span>
+                  {/* The empty field shows the formula's own number, so an
+                      untouched length reads as "this is what it costs now". */}
                   <input
                     inputMode="decimal"
-                    placeholder="—"
-                    aria-label={`Deal price for ${formatDuration(d)}`}
+                    placeholder={String(Math.round(formula / 100))}
+                    aria-label={t("dealFor", { time: dur(d) })}
                     value={minorToMajor(value.priceOverrides?.[d])}
                     onChange={(e) => {
                       const next = { ...(value.priceOverrides ?? {}) };
@@ -153,7 +180,7 @@ export function DurationEngineField({
                       else next[d] = majorToMinor(raw);
                       set("priceOverrides", Object.keys(next).length ? next : undefined);
                     }}
-                    className="h-10 w-24 shrink-0 rounded-sm border border-line bg-card px-tight text-right font-mono text-sm outline-none focus:border-ember"
+                    className="h-11 w-24 shrink-0 rounded-sm border border-line bg-card px-tight text-right font-mono text-sm outline-none placeholder:text-muted focus:border-ember md:h-10"
                   />
                 </div>
               );
@@ -163,41 +190,55 @@ export function DurationEngineField({
       )}
 
       <div className="grid gap-section sm:grid-cols-3">
-        <FormField label="Must end by closing" variant="toggle" checked={value.mustEndByClose} onChange={(e) => set("mustEndByClose", (e.target as HTMLInputElement).checked)} help="Off: bookings can run past close (night turf)." />
-        <DurationInput label="Walk-in rounding" value={value.walkInRoundMinutes} min={5} step={5} onChange={(n) => set("walkInRoundMinutes", n)} chips={[5, 10, 15]} help='"Start now" rounds to this.' />
-        <DurationInput label="Lead time" value={value.leadTimeMinutes} onChange={(n) => set("leadTimeMinutes", n)} chips={[0, 15, 30]} help="Minimum notice before start." />
+        <FormField
+          label={t("mustEnd")}
+          variant="toggle"
+          checked={value.mustEndByClose}
+          onChange={(e) => set("mustEndByClose", (e.target as HTMLInputElement).checked)}
+          help={value.mustEndByClose ? t("mustEndOn") : t("mustEndOff")}
+        />
+        <DurationInput
+          label={t("walkIn")}
+          value={value.walkInRoundMinutes}
+          min={5}
+          step={5}
+          onChange={(n) => set("walkInRoundMinutes", n)}
+          chips={[5, 10, 15]}
+          help={t("walkInHelp", { from: hhmm(walkFrom), to: hhmm(walkTo) })}
+        />
+        <DurationInput
+          label={t("notice")}
+          value={value.leadTimeMinutes}
+          onChange={(n) => set("leadTimeMinutes", n)}
+          chips={[0, 15, 30]}
+          help={value.leadTimeMinutes > 0 ? t("noticeHelp", { time: dur(value.leadTimeMinutes) }) : t("noticeNone")}
+        />
       </div>
 
       {/* The mandatory preview — concrete numbers before saving. */}
       {!err && options.length > 0 && (
         <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="type-label text-[12px] text-muted">Preview</p>
-          <p className="mt-inline font-mono text-[13px]">
-            Bookable:{" "}
+          <p className="type-label text-[12px] text-muted">{t("preview")}</p>
+          <p className="mt-inline text-[13px] tabular-nums">
             {options.map((d, i) => (
               <span key={d}>
                 {i > 0 && " · "}
                 <span className={isDealDuration(value, d) ? "font-medium text-brand-foreground" : ""}>
-                  {formatDurationShort(d)} {formatMoney(previewPrice(d), currency)}
+                  {dur(d)} {formatMoney(previewPrice(d), currency)}
                 </span>
               </span>
             ))}
           </p>
-          {dealCount > 0 && (
-            <p className="mt-inline text-[12px] text-muted">
-              <span className="text-brand-foreground">Highlighted</span> durations are deal prices, not the formula.
-            </p>
-          )}
+          {dealCount > 0 && <p className="mt-inline text-[12px] text-muted">{t("previewDeals")}</p>}
           {pricingRules.length > 0 && (
             <p className="mt-tight text-[13px] text-muted">
-              {EXAMPLE.label}, {formatDuration(exampleMinutes)} example:{" "}
-              <span className="font-mono font-medium text-fg">{formatMoney(bandedExample, currency)}</span>
-              {bandedExample !== previewPrice(exampleMinutes) && " (time-band rules applied)"}
+              {t("example", { when: exampleLabel, time: dur(exampleMinutes), price: formatMoney(bandedExample, currency) })}
+              {bandedExample !== previewPrice(exampleMinutes) && ` ${t("exampleBands")}`}
             </p>
           )}
           {resources.some((r) => r.rateOverride) && (
-            <p className="mt-tight font-mono text-[12px] text-muted">
-              {EXAMPLE.label} · {resources.slice(0, 4).map((r) => `${r.name} → ${formatMoney(applyResourceRate(bandedExample, exampleMinutes, r), currency)}`).join(" · ")}
+            <p className="mt-tight text-[12px] tabular-nums text-muted">
+              {exampleLabel} · {resources.slice(0, 4).map((r) => `${r.name} → ${formatMoney(applyResourceRate(bandedExample, exampleMinutes, r), currency)}`).join(" · ")}
             </p>
           )}
         </div>

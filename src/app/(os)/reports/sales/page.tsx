@@ -68,19 +68,20 @@ interface Filters {
 }
 const DEFAULTS: Filters = { preset: "30d", from: shift(NOW, -29), to: NOW };
 type FilterKey = keyof Omit<Filters, "preset" | "from" | "to">;
-const FILTER_DEFS: { key: FilterKey; label: string }[] = [
+/* The words for each filter live in the messages (`filters.<key>`). */
+const FILTER_DEFS: { key: FilterKey }[] = [
   /* No Location chip: the bar owns the venue and every query below is scoped
      to it. A page-level "Any location" would be a way back to the figure the
      console stopped showing. */
-  { key: "counterId", label: "Counter" },
-  { key: "staffId", label: "Team member" },
-  { key: "productId", label: "Booking" },
-  { key: "method", label: "Payment method" },
-  { key: "status", label: "Status" },
-  { key: "minA", label: "Min amount" },
-  { key: "maxA", label: "Max amount" },
-  { key: "channel", label: "Channel" },
-  { key: "customer", label: "Customer" },
+  { key: "counterId" },
+  { key: "staffId" },
+  { key: "productId" },
+  { key: "method" },
+  { key: "status" },
+  { key: "minA" },
+  { key: "maxA" },
+  { key: "channel" },
+  { key: "customer" },
 ];
 
 const toQuery = (f: Filters): TransactionQuery => ({
@@ -350,7 +351,7 @@ function SalesReportInner() {
         <Select
           bare
           size="sm"
-          aria-label={t("filters.anyLocation")}
+          aria-label={t("filters.locationId")}
           dataAttrs={{ "data-filter": k }}
           value={v}
           onChange={on}
@@ -361,7 +362,7 @@ function SalesReportInner() {
         <Select
           bare
           size="sm"
-          aria-label={t("filters.anyCounter")}
+          aria-label={t("filters.counterId")}
           dataAttrs={{ "data-filter": k }}
           value={v}
           onChange={on}
@@ -372,7 +373,7 @@ function SalesReportInner() {
         <Select
           bare
           size="sm"
-          aria-label={t("filters.anyone")}
+          aria-label={t("filters.staffId")}
           dataAttrs={{ "data-filter": k }}
           value={v}
           onChange={on}
@@ -383,7 +384,7 @@ function SalesReportInner() {
         <Select
           bare
           size="sm"
-          aria-label={t("filters.anyProduct")}
+          aria-label={t("filters.productId")}
           dataAttrs={{ "data-filter": k }}
           value={v}
           onChange={on}
@@ -394,7 +395,7 @@ function SalesReportInner() {
         <Select
           bare
           size="sm"
-          aria-label={t("filters.anyMethod")}
+          aria-label={t("filters.method")}
           dataAttrs={{ "data-filter": k }}
           value={v}
           onChange={on}
@@ -405,7 +406,7 @@ function SalesReportInner() {
         <Select
           bare
           size="sm"
-          aria-label={t("filters.anyStatus")}
+          aria-label={t("filters.status")}
           dataAttrs={{ "data-filter": k }}
           value={v}
           onChange={on}
@@ -416,7 +417,7 @@ function SalesReportInner() {
         <Select
           bare
           size="sm"
-          aria-label={t("filters.anyChannel")}
+          aria-label={t("filters.channel")}
           dataAttrs={{ "data-filter": k }}
           value={v}
           onChange={on}
@@ -576,7 +577,7 @@ function SalesReportInner() {
                 <th className="w-8" />
                 {([
                   ["time", t("columns.time"), true], ["reference", t("columns.reference"), false], ["items", t("columns.items"), false], ["customer", t("columns.customer"), false],
-                  ["staff", t("columns.staff"), false], ["counter", t("columns.counter"), false], ["method", t("columns.method"), false], ["amount", t("columns.net"), true], ["status", t("columns.status"), true],
+                  ["staff", t("columns.staff"), false], ["counter", t("columns.counter"), false], ["method", t("columns.method"), false], ["amount", t("columns.amount"), true], ["status", t("columns.status"), true],
                 ] as const).map(([key, label, sortable]) => (
                   <th key={key} className={`type-label whitespace-nowrap px-comfortable py-tight text-left text-[12px] text-muted ${key === "amount" ? "text-right" : ""}`}>
                     {sortable ? (
@@ -655,7 +656,7 @@ function SalesReportInner() {
                     </td>
                     <td className="whitespace-nowrap px-comfortable py-tight font-mono text-[12px]">{o.reference}</td>
                     <td className="px-comfortable py-tight">{o.customerName ?? <span className="text-muted">—</span>}</td>
-                    <td className="whitespace-nowrap px-comfortable py-tight font-mono text-[12px] text-muted">{o.createdAt.slice(0, 10)}</td>
+                    <td className="whitespace-nowrap px-comfortable py-tight text-[13px] text-muted">{formatDay(o.createdAt.slice(0, 10))}</td>
                     <td className="whitespace-nowrap px-comfortable py-tight text-right font-mono tabular-nums">{formatMoney(o.total)}</td>
                     <td className="whitespace-nowrap px-comfortable py-tight text-right font-mono tabular-nums text-muted">{formatMoney(paid)}</td>
                     <td className="whitespace-nowrap px-comfortable py-tight text-right font-mono tabular-nums font-medium text-warning">{formatMoney(owed)}</td>
@@ -752,7 +753,7 @@ function SalesReportInner() {
                 <div className="min-w-0">
                   <h2 className="text-base font-semibold tracking-[-0.4px]">{t("tax.heading", { name: d?.taxName ?? "" })}</h2>
                   <p className="mt-inline text-[13px] text-muted">
-                    {t("tax.rangeLine", { from: filters.from, to: filters.to, orders: d?.orderCount ?? 0 })}
+                    {t("tax.rangeLine", { from: formatDay(filters.from), to: formatDay(filters.to), orders: d?.orderCount ?? 0 })}
                   </p>
                 </div>
                 <p className="text-[13px] text-muted">
@@ -858,7 +859,7 @@ function SalesReportInner() {
               <div className="mb-tight flex items-center justify-between">
                 <p className="type-label text-[12px] text-muted">{t("charts.revenueOverTime")} <span className="normal-case text-muted">{t("charts.revenueOverTimeNote")}</span></p>
                 <Select
-                  aria-label={t("charts.auto")}
+                  aria-label={t("charts.granularity")}
                   value={gran}
                   onChange={(v) => setGran(v as typeof gran)}
                   align="end"
@@ -917,7 +918,7 @@ function SalesReportInner() {
               </div>
               <div className={card}>
                 <p className="type-label mb-tight text-[12px] text-muted">{t("charts.leadTime")}</p>
-                {anQ.loading ? chartSkeleton : hasData(a?.lead_time) ? <BarChart points={a!.lead_time!} fmt={(v) => (v === 1 ? t("charts.bookings", { count: v }) : t("charts.bookingsPlural", { count: v }))} /> : emptyChart}
+                {anQ.loading ? chartSkeleton : hasData(a?.lead_time) ? <BarChart points={a!.lead_time!} fmt={(v) => t("charts.bookings", { count: v })} /> : emptyChart}
               </div>
             </div>
 
@@ -976,7 +977,7 @@ function FragmentRow({ r, expanded, onToggle, onOpen, selected, onSelect }: { r:
             <input type="checkbox" checked={selected} onChange={onSelect} aria-label={t("select.row", { ref: r.reference })} className="h-4 w-4 accent-[var(--color-ember)]" />
           </label>
         </td>
-        <td className="pl-tight"><button type="button" aria-label={t("transactions.lines")} aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); onToggle(); }} className="flex h-11 w-11 items-center justify-center text-muted hover:text-fg md:h-8 md:w-8">{expanded ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}</button></td>
+        <td className="pl-tight"><button type="button" aria-label={t("transactions.lines", { ref: r.reference })} aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); onToggle(); }} className="flex h-11 w-11 items-center justify-center text-muted hover:text-fg md:h-8 md:w-8">{expanded ? <ChevronDown size={15} strokeWidth={1.5} /> : <ChevronRight size={15} strokeWidth={1.5} />}</button></td>
         <td className="whitespace-nowrap px-comfortable text-[13px] tabular-nums">{formatDay(day)}, {time}</td>
         <td className="whitespace-nowrap px-comfortable font-mono text-[12px]">{r.reference}</td>
         <td className="min-w-0 max-w-36 truncate px-comfortable" title={r.itemsLabel}>{r.itemsLabel}</td>

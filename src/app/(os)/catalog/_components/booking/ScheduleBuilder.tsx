@@ -2,22 +2,21 @@
 
 import { useState } from "react";
 import { AlertTriangle, Plus, X } from "lucide-react";
-import { formatDuration } from "@/lib/duration";
 import { formatDay } from "@/lib/format";
 import { useTranslations } from "next-intl";
 import { DateField, DurationInput, FormField, Select, TimeInput } from "@/components/ui";
 import type { BookingTypeCode, DayHours, ProductSchedule, Staff } from "@/lib/api";
 import {
   DEMO_TODAY,
-  DAY_LABELS,
-  DAY_NAMES,
   isDailyCapped,
   isGuided,
   isSlotBased,
   slotTimes,
 } from "@/lib/schedule";
+import { useCatalogFormat } from "../../_lib/useCatalogFormat";
 
 const DURATION_CHIPS = [15, 30, 45, 60, 90, 120];
+const WEEK = [0, 1, 2, 3, 4, 5, 6];
 
 export function ScheduleBuilder({
   bookingType,
@@ -31,6 +30,7 @@ export function ScheduleBuilder({
   team: Staff[];
 }) {
   const t = useTranslations("catalog.fields");
+  const { dur, dayShort, dayLong } = useCatalogFormat();
   const [exDate, setExDate] = useState("");
   const set = <K extends keyof ProductSchedule>(k: K, v: ProductSchedule[K]) => onChange({ ...value, [k]: v });
   const toggleDay = (d: number) =>
@@ -44,7 +44,7 @@ export function ScheduleBuilder({
   };
   const removeException = (date: string) => set("exceptions", value.exceptions.filter((e) => e.date !== date));
 
-  // Per-day hour overrides ("Fri 14:00–23:00 while other days run base hours").
+  // Days whose hours differ from the rest ("Fri 14:00–23:00 while other days run base hours").
   const overrides = value.dayOverrides ?? {};
   const setOverride = (d: number, hrs: DayHours | null) => {
     const next: Record<number, DayHours> = { ...overrides };
@@ -67,7 +67,7 @@ export function ScheduleBuilder({
   const slots = isSlotBased(bookingType) ? slotTimes(value) : [];
   const openCount = value.openDays.length;
   const overrideSummary = Object.entries(overrides)
-    .map(([d, h]) => `${DAY_LABELS[Number(d)]} ${h.startTime}–${h.endTime}`)
+    .map(([d, h]) => `${dayShort(Number(d))} ${h.startTime}–${h.endTime}`)
     .join(" · ");
 
   return (
@@ -76,32 +76,54 @@ export function ScheduleBuilder({
         <div className="grid gap-section sm:grid-cols-2">
           <DurationInput label={t("every")} value={value.slotMinutes} min={5} onChange={(n) => set("slotMinutes", n)} chips={DURATION_CHIPS} help={t("everyHelp")} />
           <DurationInput label={t("lasts")} value={value.sessionMinutes} min={5} onChange={(n) => set("sessionMinutes", n)} chips={DURATION_CHIPS} />
-          <TimeInput label={t("first")} value={value.startTime} onChange={(t) => set("startTime", t)} help={t("firstHelp")} />
-          <TimeInput label={t("last")} value={value.endTime} onChange={(t) => set("endTime", t)} />
-          <FormField label={t("holds")} variant="number" value={String(value.capacityPerSession)} onChange={(e) => set("capacityPerSession", parseInt(e.target.value, 10) || 0)} />
+          <TimeInput label={t("first")} value={value.startTime} onChange={(v) => set("startTime", v)} help={t("firstHelp")} />
+          <TimeInput label={t("last")} value={value.endTime} onChange={(v) => set("endTime", v)} />
+          <FormField label={t("holds")} variant="number" placeholder="20" value={String(value.capacityPerSession)} onChange={(e) => set("capacityPerSession", parseInt(e.target.value, 10) || 0)} />
           {/* Allowed — a rotating group can overlap — but never silent: in one
               room, a 45-minute show every 30 minutes cannot happen. */}
           {value.sessionMinutes > value.slotMinutes && (
             <p className="flex items-start gap-tight rounded-sm bg-warning-wash px-comfortable py-tight text-[13px] text-fg sm:col-span-2">
               <AlertTriangle size={14} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-warning" />
-              {t("overlap", { lasts: formatDuration(value.sessionMinutes), every: formatDuration(value.slotMinutes) })}
+              {t("overlap", { lasts: dur(value.sessionMinutes), every: dur(value.slotMinutes) })}
             </p>
           )}
         </div>
       )}
 
       {isDailyCapped(bookingType) && (
-        <FormField label={t("perDay")} variant="number" value={String(value.dailyCapacity ?? 0)} onChange={(e) => set("dailyCapacity", parseInt(e.target.value, 10) || 0)} className="max-w-xs" help={t("perDayHelp")} />
+        <FormField
+          label={t("perDay")}
+          variant="number"
+          placeholder="200"
+          value={String(value.dailyCapacity ?? 0)}
+          onChange={(e) => set("dailyCapacity", parseInt(e.target.value, 10) || 0)}
+          className="max-w-xs"
+          help={t("perDayHelp", { count: (value.dailyCapacity ?? 0).toLocaleString() })}
+        />
       )}
 
       <div className="flex flex-col gap-tight">
         <span className="type-label text-[12px] text-muted">{t("openDays")}</span>
-        <div className="flex gap-inline">
-          {DAY_LABELS.map((label, d) => (
-            <button key={d} type="button" onClick={() => toggleDay(d)} className={`h-10 w-10 rounded-sm border text-[13px] ${value.openDays.includes(d) ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card text-muted"}`}>
-              {label}
-            </button>
-          ))}
+        {/* Named days, not two letters: "Tu" and "Th" are one letter apart,
+            and a day button that only a reader of English can tell apart is
+            no use to a Bangla reader at all. */}
+        <div className="flex flex-wrap gap-inline" role="group" aria-label={t("openDays")}>
+          {WEEK.map((d) => {
+            const on = value.openDays.includes(d);
+            return (
+              <button
+                key={d}
+                type="button"
+                onClick={() => toggleDay(d)}
+                aria-pressed={on}
+                aria-label={dayLong(d)}
+                title={dayLong(d)}
+                className={`h-11 min-w-11 rounded-sm border px-tight text-[13px] md:h-10 md:min-w-12 ${on ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card text-muted"}`}
+              >
+                {dayShort(d)}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -111,27 +133,35 @@ export function ScheduleBuilder({
           {Object.entries(overrides).map(([dStr, hrs]) => {
             const d = Number(dStr);
             return (
-              <div key={d} className="flex items-center gap-tight">
+              <div key={d} className="flex flex-wrap items-center gap-tight">
                 <Select
                   value={String(d)}
                   onChange={(v) => moveOverride(d, Number(v))}
-                  aria-label={t("overrides")}
+                  aria-label={t("overrideDay")}
                   className="w-auto"
                   triggerClassName="w-auto pl-tight text-sm md:h-10"
                   options={value.openDays
                     .filter((x) => x === d || !(x in overrides))
-                    .map((x) => ({ value: String(x), label: DAY_NAMES[x] }))}
+                    .map((x) => ({ value: String(x), label: dayLong(x) }))}
                 />
-                <TimeInput value={hrs.startTime} onChange={(t) => setOverride(d, { ...hrs, startTime: t })} className="w-32" />
-                <span className="text-muted">–</span>
-                <TimeInput value={hrs.endTime} onChange={(t) => setOverride(d, { ...hrs, endTime: t })} className="w-32" />
-                <button type="button" aria-label={t("removeOverride")} onClick={() => setOverride(d, null)} className="text-muted hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
+                <TimeInput value={hrs.startTime} onChange={(v) => setOverride(d, { ...hrs, startTime: v })} className="w-32" />
+                <span className="text-muted" aria-hidden>–</span>
+                <TimeInput value={hrs.endTime} onChange={(v) => setOverride(d, { ...hrs, endTime: v })} className="w-32" />
+                <button
+                  type="button"
+                  aria-label={t("removeOverride", { day: dayLong(d) })}
+                  title={t("removeOverride", { day: dayLong(d) })}
+                  onClick={() => setOverride(d, null)}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-danger md:h-9 md:w-9"
+                >
+                  <X size={16} strokeWidth={1.5} aria-hidden />
+                </button>
               </div>
             );
           })}
           {value.openDays.some((x) => !(x in overrides)) && (
-            <button type="button" onClick={addOverride} className="flex h-10 w-fit items-center gap-inline rounded-sm border border-line px-comfortable text-sm hover:border-inverse">
-              <Plus size={16} strokeWidth={1.5} /> {t("addOverride")}
+            <button type="button" onClick={addOverride} className="flex h-11 w-fit items-center gap-inline rounded-sm border border-line px-comfortable text-sm hover:border-inverse md:h-10">
+              <Plus size={16} strokeWidth={1.5} aria-hidden /> {t("addOverride")}
             </button>
           )}
         </div>
@@ -147,7 +177,7 @@ export function ScheduleBuilder({
           ) : (
             <div className="flex flex-wrap gap-inline">
               {team.map((m) => (
-                <button key={m.id} type="button" onClick={() => toggleGuide(m.id)} className={`rounded-sm border px-comfortable py-tight text-[13px] ${value.guideIds.includes(m.id) ? "border-ember bg-ember/10 text-brand-foreground" : "border-line text-muted"}`}>
+                <button key={m.id} type="button" aria-pressed={value.guideIds.includes(m.id)} onClick={() => toggleGuide(m.id)} className={`min-h-11 rounded-sm border px-comfortable py-tight text-[13px] md:min-h-9 ${value.guideIds.includes(m.id) ? "border-ember bg-ember/10 text-brand-foreground" : "border-line text-muted"}`}>
                   {m.name}
                 </button>
               ))}
@@ -180,22 +210,33 @@ export function ScheduleBuilder({
         </div>
       )}
 
-      {/* Exceptions */}
+      {/* Days it is closed */}
       <div className="flex flex-col gap-tight">
         <span className="type-label text-[12px] text-muted">{t("closedDates")}</span>
-        {value.exceptions.map((e) => (
-          <div key={e.date} className="flex items-center justify-between rounded-sm border border-line px-comfortable py-tight text-sm">
-            <span className="text-[13px]">{formatDay(e.date, { weekday: true })}</span>
-            <span className="flex items-center gap-section">
-              <span className="text-muted">{t("closed")}</span>
-              <button type="button" aria-label={t("remove")} onClick={() => removeException(e.date)} className="text-muted hover:text-danger"><X size={16} strokeWidth={1.5} /></button>
-            </span>
-          </div>
-        ))}
+        {value.exceptions.map((e) => {
+          const when = formatDay(e.date, { weekday: true });
+          return (
+            <div key={e.date} className="flex items-center justify-between rounded-sm border border-line py-inline pl-comfortable pr-inline text-sm">
+              <span className="text-[13px]">{when}</span>
+              <span className="flex items-center gap-tight">
+                <span className="text-muted">{t("closed")}</span>
+                <button
+                  type="button"
+                  aria-label={t("removeClosed", { date: when })}
+                  title={t("removeClosed", { date: when })}
+                  onClick={() => removeException(e.date)}
+                  className="flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-danger md:h-9 md:w-9"
+                >
+                  <X size={16} strokeWidth={1.5} aria-hidden />
+                </button>
+              </span>
+            </div>
+          );
+        })}
         <div className="flex gap-tight">
           <DateField value={exDate} today={DEMO_TODAY} onChange={setExDate} labels={{ previousMonth: t("previousMonth"), nextMonth: t("nextMonth"), today: t("today"), open: t("chooseDate") }} className="flex-1" />
-          <button type="button" onClick={addException} className="flex h-10 items-center gap-inline rounded-sm border border-line px-comfortable text-sm hover:border-inverse">
-            <Plus size={16} strokeWidth={1.5} /> {t("addClosed")}
+          <button type="button" onClick={addException} className="flex h-11 items-center gap-inline rounded-sm border border-line px-comfortable text-sm hover:border-inverse md:h-10">
+            <Plus size={16} strokeWidth={1.5} aria-hidden /> {t("addClosed")}
           </button>
         </div>
       </div>

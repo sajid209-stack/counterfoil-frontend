@@ -1,24 +1,19 @@
 "use client";
 
-import { formatMoney } from "@/lib/format";
+import { useTranslations } from "next-intl";
+import { formatDay, formatMoney } from "@/lib/format";
+import { useEnumLabels } from "@/lib/labels";
 import type { Order, OrderLine } from "@/lib/api";
-
-const METHOD_LABEL: Record<string, string> = {
-  cash: "Cash", card_terminal: "Card", bkash: "bKash", bangla_qr: "QR", voucher: "Voucher", credit: "Credit",
-};
-
-const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const prettyDate = (iso: string) => {
-  const d = new Date(`${iso}T12:00:00Z`);
-  return `${DOW[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
-};
 
 /** F11 §8 — the transaction detail: parent lines with their booking meta,
  *  add-ons indented underneath, per-line discounts on their own line, the
  *  footer math, and every payment. Money and times in DM Mono, right-aligned.
- *  Renders in full on the order page and inside expandable transaction rows. */
+ *  Renders in full on the order page, inside expandable transaction rows, and
+ *  on the printed receipt — so its words live in the messages, in both
+ *  languages, rather than as English literals in the markup. */
 export function OrderLinesDetail({ order, compact = false }: { order: Pick<Order, "lines" | "subtotal" | "lineDiscountTotal" | "orderDiscount" | "discountTotal" | "taxTotal" | "total" | "payments">; compact?: boolean }) {
+  const t = useTranslations("orders.lines");
+  const enumL = useEnumLabels();
   const parents = order.lines.filter((l) => !l.parentLineId);
   const childrenOf = (id: string) => order.lines.filter((l) => l.parentLineId === id);
   const money = "shrink-0 whitespace-nowrap text-right font-mono tabular-nums";
@@ -26,7 +21,7 @@ export function OrderLinesDetail({ order, compact = false }: { order: Pick<Order
   const lineMeta = (l: OrderLine) => {
     const parts: string[] = [];
     if (l.booking) {
-      const when = [prettyDate(l.booking.date), l.booking.startTime && l.booking.endTime ? `${l.booking.startTime}–${l.booking.endTime}` : l.booking.startTime].filter(Boolean).join(" · ");
+      const when = [formatDay(l.booking.date, { weekday: true }), l.booking.startTime && l.booking.endTime ? `${l.booking.startTime}–${l.booking.endTime}` : l.booking.startTime].filter(Boolean).join(" · ");
       if (when) parts.push(when);
     }
     parts.push(`${l.quantity} × ${formatMoney(l.unitPrice)}`);
@@ -35,6 +30,8 @@ export function OrderLinesDetail({ order, compact = false }: { order: Pick<Order
   };
 
   const refunded = (l: OrderLine) => l.refundedQuantity > 0;
+  const orderDiscountPct =
+    order.subtotal > 0 ? Math.round((order.orderDiscount / Math.max(1, order.subtotal - (order.lineDiscountTotal ?? 0))) * 100) : null;
 
   return (
     <div className={compact ? "text-[13px]" : "text-sm"}>
@@ -55,10 +52,10 @@ export function OrderLinesDetail({ order, compact = false }: { order: Pick<Order
           <p className="font-mono text-[12px] text-muted">{l.tierId ? `${l.quantity} ${l.tierName} × ${formatMoney(l.unitPrice)}` : lineMeta(l)}</p>
           {l.lineDiscount > 0 && (
             <div className="flex justify-between font-mono text-[12px] text-danger">
-              <span>Line discount</span><span className={money}>−{formatMoney(l.lineDiscount)}</span>
+              <span>{t("lineDiscount")}</span><span className={money}>−{formatMoney(l.lineDiscount)}</span>
             </div>
           )}
-          {refunded(l) && <p className="font-mono text-[12px] text-danger">Refunded {l.refundedQuantity} × · −{formatMoney(l.refundedAmount)}</p>}
+          {refunded(l) && <p className="font-mono text-[12px] text-danger">{t("refundedLine", { count: l.refundedQuantity, amount: formatMoney(l.refundedAmount) })}</p>}
           {childrenOf(l.id).map((c) => (
             <div key={c.id} className="mt-inline flex items-baseline justify-between gap-tight pl-section">
               <span className="min-w-0 break-words text-muted line-clamp-2">↳ {c.productName} · <span className="font-mono text-[12px]">{c.quantity} × {formatMoney(c.unitPrice)}</span></span>
@@ -69,23 +66,23 @@ export function OrderLinesDetail({ order, compact = false }: { order: Pick<Order
       ))}
 
       <div className="mt-tight flex flex-col gap-inline">
-        <div className="flex justify-between text-muted"><span>Subtotal</span><span className={money}>{formatMoney(order.subtotal)}</span></div>
-        {(order.lineDiscountTotal ?? 0) > 0 && <div className="flex justify-between text-muted"><span>Line discounts</span><span className={`${money} text-danger`}>−{formatMoney(order.lineDiscountTotal)}</span></div>}
+        <div className="flex justify-between text-muted"><span>{t("subtotal")}</span><span className={money}>{formatMoney(order.subtotal)}</span></div>
+        {(order.lineDiscountTotal ?? 0) > 0 && <div className="flex justify-between text-muted"><span>{t("lineDiscounts")}</span><span className={`${money} text-danger`}>−{formatMoney(order.lineDiscountTotal)}</span></div>}
         {(order.orderDiscount ?? 0) > 0 && (
           <div className="flex justify-between text-muted">
-            <span>Discount{order.subtotal > 0 ? ` ${Math.round((order.orderDiscount / Math.max(1, order.subtotal - (order.lineDiscountTotal ?? 0))) * 100)}%` : ""}</span>
+            <span>{orderDiscountPct === null ? t("discount") : t("discountPct", { pct: orderDiscountPct })}</span>
             <span className={`${money} text-danger`}>−{formatMoney(order.orderDiscount)}</span>
           </div>
         )}
-        <div className="flex justify-between text-muted"><span>VAT</span><span className={money}>{formatMoney(order.taxTotal ?? 0)}</span></div>
-        <div className="flex justify-between font-medium"><span>Total</span><span className={money}>{formatMoney(order.total)}</span></div>
+        <div className="flex justify-between text-muted"><span>{t("vat")}</span><span className={money}>{formatMoney(order.taxTotal ?? 0)}</span></div>
+        <div className="flex justify-between font-medium"><span>{t("total")}</span><span className={money}>{formatMoney(order.total)}</span></div>
       </div>
 
       {order.payments.length > 0 && (
         <p className="mt-tight border-t border-line pt-tight font-mono text-[12px] text-muted">
-          Paid&nbsp;&nbsp;{order.payments.filter((p) => p.amount > 0).map((p) => `${METHOD_LABEL[p.method] ?? p.method} ${formatMoney(p.amount)}`).join(" · ")}
+          {t("paid")}&nbsp;&nbsp;{order.payments.filter((p) => p.amount > 0).map((p) => `${enumL.method(p.method)} ${formatMoney(p.amount)}`).join(" · ")}
           {order.payments.some((p) => p.amount < 0) && (
-            <span className="text-danger"> · Refunded {formatMoney(-order.payments.filter((p) => p.amount < 0).reduce((s, p) => s + p.amount, 0))}</span>
+            <span className="text-danger"> · {t("refunded", { amount: formatMoney(-order.payments.filter((p) => p.amount < 0).reduce((s, p) => s + p.amount, 0)) })}</span>
           )}
         </p>
       )}

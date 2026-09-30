@@ -19,7 +19,7 @@ import { useTranslations } from "next-intl";
 import { Plus, Search } from "lucide-react";
 import { ProductThumb } from "@/components/ui";
 import type { Product, Resource, Staff } from "@/lib/api";
-import { behaviourSubtitle } from "@/lib/behaviour";
+import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDay, formatPriceShort } from "@/lib/format";
@@ -46,6 +46,7 @@ export function Catalogue({
   loading: boolean;
 }) {
   const t = useTranslations("sell");
+  const subtitle = useBehaviourSubtitle();
   const tp = useTranslations("pos");
 
   // Field passes issue from Quick pass, not from the wall.
@@ -76,10 +77,11 @@ export function Catalogue({
   return (
     <div className="flex min-h-0 min-w-0 flex-col gap-comfortable">
       <div data-focus-host className="go-surface flex h-[52px] min-w-0 items-center gap-tight rounded-full px-section focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember">
-        <Search size={18} strokeWidth={1.75} className="shrink-0 text-muted" />
+        <Search size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
         <input
           value={query}
           onChange={(e) => onQuery(e.target.value)}
+          aria-label={t("catalogue.searchPlaceholder")}
           placeholder={t("catalogue.searchPlaceholder")}
           className="h-full w-full bg-transparent text-sm outline-none focus-visible:outline-none placeholder:text-faint"
         />
@@ -136,7 +138,7 @@ export function Catalogue({
                         {formatPriceShort(from, currency)}
                       </span>
                       <span className="mt-tight line-clamp-2 text-[0.8125rem] leading-tight text-muted">
-                        {behaviourSubtitle(p, { resources, team })}
+                        {subtitle(p, { resources, team })}
                       </span>
                       {live && (
                         <span

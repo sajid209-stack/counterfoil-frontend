@@ -277,10 +277,10 @@ export function EventArchitect({
             </div>
           </Field>
           <Field label={t("customise.display")}>
-            <FontSelect value={custom.displayFont} onChange={(v) => setC({ displayFont: v })} />
+            <FontSelect label={t("customise.display")} value={custom.displayFont} onChange={(v) => setC({ displayFont: v })} />
           </Field>
           <Field label={t("customise.body")}>
-            <FontSelect value={custom.bodyFont} onChange={(v) => setC({ bodyFont: v })} />
+            <FontSelect label={t("customise.body")} value={custom.bodyFont} onChange={(v) => setC({ bodyFont: v })} />
           </Field>
           <Field label={t("customise.layout")}>
             <div className="flex flex-wrap gap-inline">
@@ -321,7 +321,9 @@ export function EventArchitect({
                 <>
                   <button
                     type="button"
-                    aria-label={off ? t("architect.show") : t("customise.hide")}
+                    aria-label={off ? t("architect.showSection", { name: label }) : t("architect.hideSection", { name: label })}
+                    title={off ? t("architect.showSection", { name: label }) : t("architect.hideSection", { name: label })}
+                    aria-pressed={!off}
                     disabled={locked}
                     onClick={(e) => { e.stopPropagation(); toggle(id); }}
                     className="flex h-9 w-9 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg disabled:opacity-30"
@@ -330,7 +332,8 @@ export function EventArchitect({
                   </button>
                   <button
                     type="button"
-                    aria-label={t("customise.moveUp")}
+                    aria-label={t("architect.moveSectionUp", { name: label })}
+                    title={t("architect.moveSectionUp", { name: label })}
                     disabled={off || i === 0}
                     onClick={(e) => { e.stopPropagation(); move(id, -1); }}
                     className="flex h-9 w-7 items-center justify-center text-muted transition-colors duration-quick hover:text-fg disabled:opacity-25"
@@ -339,7 +342,8 @@ export function EventArchitect({
                   </button>
                   <button
                     type="button"
-                    aria-label={t("customise.moveDown")}
+                    aria-label={t("architect.moveSectionDown", { name: label })}
+                    title={t("architect.moveSectionDown", { name: label })}
                     disabled={off || i >= custom.sections.length - 1}
                     onClick={(e) => { e.stopPropagation(); move(id, 1); }}
                     className="flex h-9 w-7 items-center justify-center text-muted transition-colors duration-quick hover:text-fg disabled:opacity-25"
@@ -559,7 +563,8 @@ export function EventArchitect({
                         <span className="type-label text-[12px] text-muted">{t("architect.entry")}</span>
                         <button
                           type="button"
-                          aria-label={t("tickets.remove")}
+                          aria-label={l.name.trim() ? t("architect.removeEntry", { name: l.name.trim() }) : t("architect.removeEntryUnnamed")}
+                          title={l.name.trim() ? t("architect.removeEntry", { name: l.name.trim() }) : t("architect.removeEntryUnnamed")}
                           onClick={() => dropLineup(l.id)}
                           className="flex h-9 w-9 items-center justify-center rounded-sm text-muted hover:text-danger"
                         >
@@ -616,7 +621,8 @@ export function EventArchitect({
                         <span className="type-label text-[12px] text-muted">{t("architect.question")}</span>
                         <button
                           type="button"
-                          aria-label={t("tickets.remove")}
+                          aria-label={f.q.trim() ? t("architect.removeQuestion", { q: f.q.trim() }) : t("architect.removeQuestionUnnamed")}
+                          title={f.q.trim() ? t("architect.removeQuestion", { q: f.q.trim() }) : t("architect.removeQuestionUnnamed")}
                           onClick={() => dropFaq(f.id)}
                           className="flex h-9 w-9 items-center justify-center rounded-sm text-muted hover:text-danger"
                         >
@@ -742,7 +748,9 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
   );
 }
 
-function FontSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+/** Named by the field it sits in ("Heading font", "Text font") — two
+ *  dropdowns sharing one name "Font" hid which one a screen reader was on. */
+function FontSelect({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   const t = useTranslations("events");
   return (
     /* Each option is set in the face it names: eight rows reading "Aa" is a
@@ -750,7 +758,7 @@ function FontSelect({ value, onChange }: { value: string; onChange: (v: string) 
     <Select
       value={value}
       onChange={onChange}
-      aria-label={t("architect.typeface")}
+      aria-label={label}
       options={FONT_CHOICES.map((f) => ({ value: f.css, label: t(`font.${f.key}`) }))}
     />
   );

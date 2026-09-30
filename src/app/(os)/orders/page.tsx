@@ -254,6 +254,7 @@ function OrdersPageInner() {
                     // The API has always matched the customer name too; the old
                     // placeholder said "by reference" and hid half the feature.
                     placeholder={t("searchPlaceholder")}
+                    aria-label={t("searchPlaceholder")}
                     className="h-11 w-full min-w-0 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:h-9 md:w-72"
                   />
                 </div>
@@ -266,7 +267,7 @@ function OrdersPageInner() {
                   onClear: () => { setRange("all"); resetPage(); },
                   control: (
                     <Select
-                      aria-label={t("allRanges")}
+                      aria-label={t("filterDate")}
                       value={range}
                       onChange={(v) => { setRange(v as Range); resetPage(); }}
                       options={[
@@ -285,7 +286,7 @@ function OrdersPageInner() {
                   onClear: () => { setStatus(""); resetPage(); },
                   control: (
                     <Select
-                      aria-label={t("allStatuses")}
+                      aria-label={t("filterStatus")}
                       value={status}
                       onChange={(v) => { setStatus(v); resetPage(); }}
                       options={[
@@ -305,7 +306,7 @@ function OrdersPageInner() {
                   onClear: () => { setChannel(""); resetPage(); },
                   control: (
                     <Select
-                      aria-label={t("allChannels")}
+                      aria-label={t("filterChannel")}
                       value={channel}
                       onChange={(v) => { setChannel(v); resetPage(); }}
                       options={[

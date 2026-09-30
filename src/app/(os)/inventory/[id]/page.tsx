@@ -80,7 +80,11 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
   if (!item) {
     return (
       <PageShell title={t("title")} description={t("description")}>
-        <p className="text-[13px] text-muted">{itemQ.loading ? t("loading") : t("notFound")}</p>
+        {itemQ.loading ? (
+          <div aria-busy="true" className="h-40 animate-pulse rounded-md bg-line/50" />
+        ) : (
+          <p className="text-[13px] text-muted">{t("notFound")}</p>
+        )}
       </PageShell>
     );
   }

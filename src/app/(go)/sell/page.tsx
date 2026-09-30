@@ -628,6 +628,7 @@ export default function SellPage() {
                   <button
                     key={m}
                     type="button"
+                    aria-pressed={method === m}
                     onClick={() => setMethod(m)}
                     className={`relative z-10 min-w-0 truncate px-inline text-[0.8125rem] transition-colors duration-quick ${method === m ? "font-medium text-white" : "text-fg"}`}
                   >

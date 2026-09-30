@@ -14405,3 +14405,157 @@ the code), collection method and what overdue triggers, whether cash owes 5%
 (built as yes, per the code), who may see these pages (not gated here), per-
 venue vs per-tenant settlement (per venue here, bank per tenant), and retiring
 billing's separate 0.5% BYO upcharge.
+
+## Plain language, across the whole product (2026-10-01)
+
+Owner, with seven screenshots of the add-something-to-sell flow and three
+suggested rewrites: *"the questions, short descriptions and titles are mostly
+confusing for users, even I don't understand some of them … this software will
+be used by mostly low-educated people. Review full Counterfoil OS and POS, find
+the UX problems and the title, question, description and understanding
+problems, and fix them properly."*
+
+### The rules, written down first — `docs/plain-language.md`
+
+A review of 4,900 strings by several hands only converges if the hands share a
+vocabulary, so the rules came before any rewriting: labels of one to four
+words; help lines of one sentence; say what happens rather than what it is
+called; **help text that changes with the value** ("Tickets can be bought until
+the slot starts." at 0 min, "Sales stop 15 min before the slot starts." at
+15); options that read as whole answers, with the summary after choosing using
+the same words; no jargon, idioms or British-isms; icons never alone. And a
+glossary in English and Bangla that is not optional — till → counter, tier →
+ticket type, admits → people per ticket, band → time price, session → time slot,
+override → different hours for a day, cut-off → stop selling, float → starting
+cash, tender → cash received, void → cancel, redeemed → used, waiver → signed
+safety form, customer → গ্রাহক, Save → সেভ করুন, Edit → বদলান.
+
+**`scripts/check-i18n.mjs`** is new: English and Bangla must carry the same keys
+**and the same top-level {placeholders}**. A rewrite that renames `{days}` in
+one language shows a raw `{days}` in the other. It found two pre-existing
+mismatches on its first run.
+
+### How it was done
+
+Five review passes in parallel, each owning its own files so none could
+overwrite another: the catalogue and booking setup; Settings (with
+memberships, promotions, loyalty and payments setup); the POS; events,
+calendar and seat maps; and money, orders, reports, dashboard, customers,
+stock, marketplaces and the storefront. Shared vocabulary (menu names, status
+words, sign-in) was done centrally and pushed to each pass as it was decided.
+
+### What the owner's screenshots asked for
+
+- **"When does it run?"** — "Sessions every / Each session lasts / Each session
+  holds" → "A new slot starts every / Each slot lasts / Max people per slot";
+  "Add day override" → "Set different hours for a day"; the overlap warning is
+  three short sentences that end on what to do.
+- **"What does it cost?"** — "Add tier / Admits" → "Add ticket type / People per
+  ticket"; the icon-only buttons are named for the ticket type ("More options
+  for Adult", "Move Adult down") and the sliders button carries the word
+  "More"; the price field shows "e.g. 500" rather than a lone ৳; "Prices by time
+  of day / Add band / the first band that matches wins" → "Prices for certain
+  times / Add a time price / If two times overlap, the higher one in the list is
+  used." **The "— —" was a bug**: an empty price printed an em-dash placeholder
+  beside an em-dash. It now says "Same price all day: ৳500", or asks for a price
+  first.
+- **Policies** — `PoliciesField` was hard-coded English and is translated. "Sales
+  cut-off before start" → "Stop selling before it starts", with the help line
+  following the value; "Free until N hours" → "Yes, free until 24 hr before";
+  re-entry, payment, group size and the waiver are questions whose options are
+  whole answers, and the summary repeats the chosen answers word for word.
+- **Opening hours** — "Timed bookings and the till follow these hours" → "When
+  customers can come. Bookings and counter sales follow these hours."
+- **"How do people book it?"** — the answers and the summary shown afterwards are
+  the same sentences now: "No date needed. Tickets work any day you're open." /
+  "Customers pick a date. No limit per day." / "…Limited tickets per day."
+
+### Beyond them
+
+- **Menu names a Bangla-only reader could not read.** The Bangla nav was mostly
+  English sounds in Bangla letters — ক্যাটালগ, ইনভেন্টরি, টিল ডিজাইন. Catalog →
+  **What you sell** / যা বিক্রি করেন; Inventory → **Stock**; Marketplaces → **Sell on
+  other sites**; Fee collections → **Fee bills**; Till design → **Sales screen**.
+  In Settings: Locations → **Venues**, Resources → **Courts, lanes & rooms**,
+  Storefront → **Web pages**, Notifications → **Messages & alerts**, Security →
+  **Password & security**, Preferences → **Display & language**. The command
+  palette still finds every page by its old name.
+- **Status badges say what they mean**: Redeemed → Used, Issued → Not used yet,
+  Void → Cancelled, No-show → Didn't come, Partial → Part paid, Mixed → Split
+  payment, Exempt → No VAT.
+- **The sign-in pages were English-only with no way to change language** — and
+  they are the first screen a Bangla-only cashier meets. The language choice is
+  on those pages now; all six (sign in, sign up, forgot, reset, invite, first
+  setup) are translated and plain, their labels are joined to their fields,
+  they refuse in words rather than greying out, and a developer's "token: …"
+  line that was printed under the invitation heading is gone. `FormField`
+  gained `autoComplete`, `inputMode` and `onKeyDown` so a sign-in form can let
+  the browser fill in what it knows.
+- **The line under every booking** — "Book a date · daily cap", "Guided · every
+  240 min", on the till tiles, the catalogue and the public page — was fixed
+  English from `lib/behaviour`. It is `useBehaviourSubtitle()` now, translated:
+  "Pick a date · limited per day", "With a guide · every 4 hr".
+- **The POS**: "Charge" → "Take payment"; "Park / Resume" → "Pause / Continue";
+  "Custom amount" → "Other amount"; the gate's "ADMIT / DO NOT ADMIT" → "Let in /
+  Do not let in", with refusals ending on what to do; "Opening float" →
+  "Starting cash"; "Expected / Variance" → "Should be / Difference". The till's
+  own settings page is "Display & language", the same name as the OS page for
+  the same kind of choice.
+- **Money**: "Platform fee / Gateway fee / Fee base" → "Counterfoil fee / Online
+  payment fee / Sales without VAT"; "settled separately and never set against
+  each other" → "We pay you and bill you separately. One is never taken off the
+  other."; Write off → "Forgive the balance (write off)". The rates are still
+  placeholders from the API.
+- **Calendar** blocks and holds were drawing English ("2 guests", "Session
+  closed") on Bangla screens; the model now takes translated words.
+  "Resources" → "Places", "Release the hold" → "Put back on sale".
+- Hard-coded English moved into messages across `OrderLinesDetail` (which prints
+  on receipts), the Go PIN screen, the Go and classic shells, the tills picker,
+  the booking editor, the shared table and empty state.
+
+### Verified
+
+- **A sweep of 51 routes** — every OS, POS, sign-in and public screen — in four
+  configurations (390 Bangla light, 1440 English light, 390 English dark, 1440
+  Bangla dark): **204 loads, zero** missing messages, raw keys, console errors,
+  page x-scroll or content swallowed by `main`.
+- Sign-in pages **74/74** in both languages, including the refusals in words.
+- The money harness, updated to the new wording by its pass, **69/69**.
+- `check-i18n`: **0 missing / 0 extra / placeholders match** across every
+  namespace. A scan of every English string for the glossary's forbidden words
+  finds only argument names and search keywords, which keep the old words on
+  purpose so search still finds them.
+- `tsc --noEmit` clean. `eslint` over the 86 changed code files reports the six
+  known `set-state-in-effect` errors (PosScreen ×2, pricing/[id],
+  booking-rules/[id], promotions ×2), each confirmed against its committed copy
+  by the pass that touched it. Nothing new.
+
+### Open
+
+- **Dates are still English on Bangla screens** — `formatDay` is pinned to
+  `en-GB` app-wide. Switching it risks hydration mismatches (the server and the
+  browser spell Bangla times differently, recorded in the Settings entry). An
+  app-wide decision.
+- **Digits are mixed in Bangla**: an ICU plural's `#` renders in Bangla numerals
+  while a bare `{n}` stays Latin, so "৯০ দিন" can sit beside "24 ঘণ্টা". Prices and
+  clock times are Latin everywhere by the standing convention. Settling one
+  numbering system is its own decision.
+- The duration box keeps "min / hr": it is typeable and parses what it shows.
+- CSV column headers are English — file contents for an accountant.
+- Some text still arrives in English from `lib/api` (validation messages,
+  history lines written into orders, `lib/duration` errors) and `lib/tills`.
+- **The older standing harnesses assert the old wording** and need their
+  regexes brought up to date; see the harness note below.
+
+### A note on the standing harnesses
+
+The older browser harnesses in the September scratchpads assert English wording
+that this pass changed ("Charge", "Search the catalog", the "Channel" filter),
+and two of them search for an order at another venue than the one the bar
+selects, which the venue-in-the-bar change made invisible from the list. Each
+failure was traced before anything was believed: none is a behaviour fault.
+The two money paths they guard were driven directly in the new words — a shelf
+sale (tote + water, **৳549.75** with standard and reduced VAT summed, completed
+with no ticket minted, **10/10**) and printing tickets from an order (**4/4**).
+Also fixed on the way: a stock tile read **"7 each left"** (pre-existing, in the
+committed copy); a unit of "each" now drops out, so it reads "7 left".

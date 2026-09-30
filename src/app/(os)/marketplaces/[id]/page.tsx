@@ -167,13 +167,20 @@ export default function MarketplacePage() {
       header: "",
       render: (l) => (
         <ActionMenu
-          label={t("rowActions")}
+          label={t("rowActions", { name: l.productName })}
           items={[
             l.status === "live"
               ? { key: "pause", label: t("pause"), onSelect: async () => { await updateListing(l.id, { status: "paused" }); reload(); } }
               : l.status === "paused"
                 ? { key: "resume", label: t("resume"), onSelect: async () => { await updateListing(l.id, { status: "live" }); reload(); } }
-                : { key: "send", label: t("sendOne"), disabled: l.status !== "draft", onSelect: async () => { await submitListings(conn.id, [l.id]); reload(); } },
+                : {
+                    key: "send",
+                    label: t("sendOne"),
+                    disabled: l.status !== "draft",
+                    /* A greyed item that says nothing reads as a fault. */
+                    hint: l.status === "submitted" ? t("sendHintSubmitted") : l.status === "rejected" ? t("sendHintRejected") : undefined,
+                    onSelect: async () => { await submitListings(conn.id, [l.id]); reload(); },
+                  },
             {
               key: "remove",
               label: t("removeListing"),

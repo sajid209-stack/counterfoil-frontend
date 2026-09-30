@@ -1,8 +1,8 @@
 {
   "title": "Events",
-  "description": "One-off occasions with their own page — concerts, tours, summits, exhibitions.",
+  "description": "One-time events with their own page, like concerts, tours and exhibitions.",
   "newTitle": "Add an event",
-  "newDescription": "Say what it is, when and where — then design its page and price the tickets. Put it on sale when you're ready.",
+  "newDescription": "Add the name, date and place. Then set up the page and ticket prices.",
   "create": "Create event",
   "back": "Back",
   "continue": "Continue",
@@ -14,10 +14,10 @@
   "addToCalendar": "Add to calendar",
   "step": {
     "categoryTitle": "What kind of event is it?",
-    "categoryHelp": "This picks the template, the palette and the typefaces. You can change all of them next.",
-    "ticketsTitle": "Tickets and pricing",
-    "ticketsHelp": "Most events sell better with two or three tiers than with one.",
-    "designTitle": "Build the page"
+    "categoryHelp": "This sets the page's look and colours. You can change them later.",
+    "ticketsTitle": "Tickets and prices",
+    "ticketsHelp": "Most events sell better with 2 or 3 ticket types, e.g. Regular and VIP.",
+    "designTitle": "Set up the page"
   },
   "category": {
     "entertainment": "Entertainment & Social",
@@ -28,17 +28,17 @@
     "nightlife": "Party & Nightlife"
   },
   "categoryBlurb": {
-    "entertainment": "Concerts, festivals, comedy, screenings. Poster energy, lineup up front.",
-    "sports": "Matches, tournaments, classes. High contrast, schedule and sign-up first.",
-    "business": "Conferences, seminars, launches. Clean and structured, agenda and speakers.",
-    "arts": "Exhibitions, fashion, cultural nights. Editorial, generous whitespace.",
-    "travel": "Tours, trips, cruises. Immersive photography and a day-by-day itinerary.",
-    "nightlife": "Clubs, raves, DJ nights. Dark, neon, lineup and door policy."
+    "entertainment": "Concerts, festivals, comedy. A bold poster look, performers first.",
+    "sports": "Matches, tournaments, classes. A strong look, times and sign-up first.",
+    "business": "Conferences, seminars, launches. A clean look with the plan and speakers.",
+    "arts": "Exhibitions, fashion shows, cultural nights. A calm look with lots of space.",
+    "travel": "Tours, trips, cruises. Big pictures and a day-by-day plan.",
+    "nightlife": "Clubs, DJ nights, parties. A dark neon look, lineup and entry rules."
   },
   "subtype": {
     "concert": "Concert",
     "music": "Live music",
-    "movie": "Screening",
+    "movie": "Film show",
     "drama": "Theatre",
     "standup": "Stand-up",
     "party": "Party",
@@ -48,24 +48,24 @@
     "match": "Match",
     "tournament": "Tournament",
     "race": "Race",
-    "recreational": "Recreational",
+    "recreational": "Fun activity",
     "workshop": "Workshop",
     "class": "Class",
     "conference": "Conference",
     "seminar": "Seminar",
     "launch": "Launch",
-    "corporate": "Corporate",
-    "networking": "Networking",
+    "corporate": "Company event",
+    "networking": "Meet-up",
     "training": "Training",
     "exhibition": "Exhibition",
     "fashion": "Fashion show",
-    "cultural": "Cultural",
-    "installation": "Installation",
+    "cultural": "Cultural show",
+    "installation": "Art installation",
     "screening": "Film screening",
-    "literary": "Literary",
+    "literary": "Book event",
     "tour": "Tour",
     "trip": "Trip",
-    "excursion": "Excursion",
+    "excursion": "Day trip",
     "sightseeing": "Sightseeing",
     "cruise": "Cruise",
     "package": "Travel package",
@@ -77,49 +77,49 @@
     "afterparty": "Afterparty"
   },
   "variant": {
-    "poster": "Poster",
+    "poster": "Big poster",
     "stacked": "Stacked",
-    "kinetic": "Kinetic",
-    "structured": "Structured",
-    "editorial": "Editorial",
-    "immersive": "Immersive",
-    "neon": "Neon",
-    "floodlit": "Floodlit",
-    "chart": "Chart"
+    "kinetic": "Slanted",
+    "structured": "Neat columns",
+    "editorial": "Magazine",
+    "immersive": "Big pictures",
+    "neon": "Neon lights",
+    "floodlit": "Floodlights",
+    "chart": "Map and route"
   },
   "section": {
-    "hero": "Hero",
+    "hero": "Top banner",
     "countdown": "Countdown",
     "about": "About",
     "lineup": "Lineup",
     "schedule": "Schedule",
-    "gallery": "Gallery",
+    "gallery": "Pictures",
     "tickets": "Tickets",
     "venue": "Venue",
     "faq": "Questions",
-    "fixtures": "Fixtures",
+    "fixtures": "Matches",
     "speakers": "Speakers",
-    "works": "Works",
-    "itinerary": "Itinerary",
+    "works": "Artworks",
+    "itinerary": "Trip plan",
     "djs": "Lineup",
     "stats": "At a glance",
-    "highlights": "Sneak peeks",
-    "video": "Watch",
+    "highlights": "Highlights",
+    "video": "Video",
     "sponsors": "Sponsors"
   },
   "customise": {
-    "accent": "Accent colour",
-    "type": "Typefaces",
-    "display": "Headings",
-    "body": "Body",
-    "layout": "Layout",
-    "sections": "Sections",
-    "sectionsHelp": "Reorder with the arrows. Hero and Tickets always show.",
+    "accent": "Main colour",
+    "type": "Fonts",
+    "display": "Heading font",
+    "body": "Text font",
+    "layout": "Page style",
+    "sections": "Parts of the page",
+    "sectionsHelp": "Use the arrows to change the order. The top banner and Tickets always show.",
     "always": "Always on",
     "hide": "Hide",
     "moveUp": "Move up",
     "moveDown": "Move down",
-    "preview": "Live preview"
+    "preview": "Preview"
   },
   "device": {
     "desktop": "Desktop",
@@ -127,39 +127,39 @@
     "mobile": "Mobile"
   },
   "font": {
-    "bebas": "Bebas Neue — condensed poster",
-    "syne": "Syne — geometric display",
-    "space": "Space Grotesk — technical",
-    "playfair": "Playfair Display — editorial serif",
-    "outfit": "Outfit — friendly geometric",
-    "inter": "Inter — neutral sans",
-    "mono": "DM Mono — monospaced",
-    "fraunces": "Fraunces"
+    "bebas": "Bebas Neue — tall and narrow",
+    "syne": "Syne — bold and wide",
+    "space": "Space Grotesk — modern",
+    "playfair": "Playfair Display — classic, like a magazine",
+    "outfit": "Outfit — friendly and round",
+    "inter": "Inter — plain and easy to read",
+    "mono": "DM Mono — typewriter style",
+    "fraunces": "Fraunces — soft and old-style"
   },
   "field": {
     "title": "Event name",
-    "subtitle": "One line underneath",
+    "subtitle": "Short line under the name",
     "subtitlePlaceholder": "One night, one stage, three decades of sound",
     "venue": "Venue",
     "venuePlaceholder": "Army Stadium",
     "address": "Address",
     "addressPlaceholder": "Banani, Dhaka 1213",
     "description": "About this event",
-    "descriptionPlaceholder": "What happens, who it's for, and anything someone should know before buying."
+    "descriptionPlaceholder": "What happens, who it is for, and what people should know before they buy."
   },
   "tickets": {
-    "remove": "Remove this ticket",
+    "remove": "Remove",
     "name": "Ticket name",
-    "namePlaceholder": "General admission",
+    "namePlaceholder": "Regular",
     "price": "Price (৳)",
-    "quantity": "How many",
+    "quantity": "How many to sell",
     "salesEnd": "Stop selling on",
-    "salesEndHelp": "Optional — this is what makes a tier an early bird.",
+    "salesEndHelp": "Optional. Use it for early-bird tickets that stop selling sooner.",
     "description": "Note on the ticket",
-    "descriptionPlaceholder": "First 20 metres, own entrance",
-    "add": "Add a ticket",
-    "capacity": "{count, plural, =0 {No capacity yet} one {# place in total} other {# places in total}}",
-    "potential": "{amount} if it all sells",
+    "descriptionPlaceholder": "e.g. Front rows, separate gate",
+    "add": "Add ticket type",
+    "capacity": "{count, plural, =0 {No tickets yet} one {# ticket in total} other {# tickets in total}}",
+    "potential": "{amount} if every ticket sells",
     "preset": {
       "earlyBird": "Early bird",
       "vip": "VIP",
@@ -167,10 +167,10 @@
     },
     "summaryEnds": "Stops selling {date}",
     "keepOne": "An event needs at least one ticket type",
-    "potentialUnpriced": "Add prices to see what it's worth",
-    "potentialFree": "Free — nothing to collect",
+    "potentialUnpriced": "Add prices to see how much you could earn",
+    "potentialFree": "All free. No money to collect.",
     "days": {
-      "admits": "Admits",
+      "admits": "Good for",
       "nth": "Day {n}",
       "dayTicket": "{day} pass",
       "allTicket": "All {count} days",
@@ -179,21 +179,21 @@
       "saves": "Save {amount}",
       "dayNamed": "{name} — {day}"
     },
-    "potentialNoCapacity": "Set how many to see what it’s worth"
+    "potentialNoCapacity": "Add how many to sell to see how much you could earn"
   },
   "error": {
-    "title": "Give the event a name.",
-    "venue": "Say where it is.",
-    "tierName": "Name the ticket.",
-    "tierQuantity": "Say how many are on sale."
+    "title": "Enter a name for the event.",
+    "venue": "Enter the venue.",
+    "tierName": "Enter a ticket name.",
+    "tierQuantity": "Enter how many tickets to sell."
   },
   "placeholder": {
     "title": "Your event name",
     "venue": "Your venue",
-    "description": "A line or two about what happens, who it's for, and what to expect on the day. This is where people decide.",
+    "description": "A line or two about what happens and who it is for.",
     "faqQ": "Can I get a refund?",
-    "faqA": "Up to 48 hours before the event, in full.",
-    "tier": "General admission"
+    "faqA": "Yes, in full, up to 48 hr before the event.",
+    "tier": "Regular"
   },
   "sample": {
     "entertainment": {
@@ -209,7 +209,7 @@
     "business": {
       "0": "Opening keynote",
       "1": "Panel",
-      "2": "Closing session"
+      "2": "Closing talk"
     },
     "arts": {
       "0": "Featured artist",
@@ -235,7 +235,7 @@
   "stat": {
     "events": "Events",
     "sold": "Tickets sold",
-    "revenue": "Revenue",
+    "revenue": "Sales",
     "live": "On sale"
   },
   "col": {
@@ -246,85 +246,94 @@
     "status": "Status"
   },
   "filter": {
-    "allStates": "All states"
+    "allStates": "Any status"
   },
   "state": {
-    "published": "Published",
+    "published": "Live",
     "draft": "Draft",
     "onSale": "On sale",
     "ended": "Ended",
     "archived": "Archived"
   },
   "emptyTitle": "No events yet",
-  "emptyMessage": "Create one and it gets its own page, its own look and its own tickets.",
+  "emptyMessage": "Add an event to give it its own page and tickets.",
   "architect": {
-    "title": "Event page architect",
-    "brand": "Brand identity",
+    "title": "Page designer",
+    "brand": "Colours and fonts",
     "show": "Show",
-    "entry": "Entry",
+    "entry": "Item",
     "name": "Name",
-    "namePlaceholder": "Nogor Baul",
+    "namePlaceholder": "e.g. Nogor Baul",
     "role": "Role or note",
-    "rolePlaceholder": "Headline",
+    "rolePlaceholder": "e.g. Main act",
     "at": "Time",
-    "addEntry": "Add to the bill",
+    "addEntry": "Add another",
     "question": "Question",
     "q": "Question",
     "a": "Answer",
     "addQuestion": "Add a question",
-    "countdownNote": "Counts down to the start time you set in Hero. Nothing to fill in.",
-    "galleryNote": "Six plates drawn from your accent colour. Image upload is not built yet.",
-    "ticketsNote": "Ticket names, prices and quantities are set on the next step.",
-    "statsNote": "Three figures a visitor reads before they scroll. Keep them short — a number and what it counts.",
-    "statValue": "Figure",
+    "countdownNote": "Counts down to the start time. Nothing to fill in.",
+    "galleryNote": "Shows 6 coloured tiles for now. Photo upload is coming later.",
+    "ticketsNote": "Set ticket names, prices and how many in the Tickets section.",
+    "statsNote": "A few short numbers people see first, e.g. 16 · Teams.",
+    "statValue": "Number",
     "statLabel": "What it counts",
-    "highlightsNote": "Short teasers for what is further down the page. Two words each is plenty.",
+    "highlightsNote": "1 or 2 words about what is on the page, e.g. Meals.",
     "chip": "Highlight",
-    "infoNote": "The three facts somebody checks before they commit. The label is yours to name.",
-    "infoLabel": "Label",
+    "infoNote": "3 facts people check before buying, e.g. Age · 18+.",
+    "infoLabel": "Heading",
     "infoValue": "Detail",
-    "videoNote": "A YouTube or Vimeo link. The page loads only the thumbnail until a visitor presses play.",
+    "videoNote": "Paste a YouTube or Vimeo link.",
     "videoUrl": "Video link",
-    "videoOk": "Link recognised — the video will appear on the page.",
-    "videoBad": "That link is not a YouTube or Vimeo video. The section stays hidden until it is.",
-    "sponsorsNote": "Who is backing the event. Group them by whatever you call the level — Headline, Partner — and the first group is drawn largest.",
+    "videoOk": "The link works. The video will show on the page.",
+    "videoBad": "This is not a YouTube or Vimeo link. Paste one to show the video.",
+    "sponsorsNote": "Who is supporting the event. Give each one a level, e.g. Main or Partner. The first level shows biggest.",
     "sponsorName": "Sponsor",
     "sponsorTier": "Level",
     "addSponsor": "Add a sponsor",
-    "removeLast": "Remove the last",
+    "removeLast": "Remove last sponsor",
     "organiser": "Hosted by",
-    "organiserPlaceholder": "Your organisation",
+    "organiserPlaceholder": "e.g. Dhaka Music Club",
     "organiserBlurb": "One line about them",
     "day": "Day",
-    "dayPlaceholder": "Day 1",
-    "kind": "Appears as",
-    "kindPerson": "A name on the bill",
-    "kindSession": "A slot on the agenda only",
-    "benefitsNote": "Three reasons to come, each with one line saying what it means. These sit beside the ticket panel.",
-    "benefit": "Benefit",
-    "benefitLine": "What it means",
-    "pairedWith": "On this template this is drawn beside {section} rather than on its own row. Switch it off here to remove it.",
-    "heroFromDetails": "The name, tagline, date and cover come from Details.",
-    "venueFromDetails": "The venue and address come from Details.",
+    "dayPlaceholder": "e.g. Day 1",
+    "kind": "Show as",
+    "kindPerson": "A person or act",
+    "kindSession": "A time in the schedule only",
+    "benefitsNote": "3 reasons to come, each with one short line. They show next to the tickets.",
+    "benefit": "Reason",
+    "benefitLine": "One line about it",
+    "pairedWith": "With this page style it shows next to {section}. Turn it off here to remove it.",
+    "heroFromDetails": "The name, short line, date and cover picture come from the event details.",
+    "venueFromDetails": "The venue and address come from the event details.",
     "editDetails": "Edit details",
     "sample": "Sample",
-    "sampleNote": "This is sample content for this kind of event. Edit it, hide the section, or keep it as written.",
-    "keepSample": "Keep as written",
+    "sampleNote": "This is example text. Change it, hide this part, or keep it.",
+    "keepSample": "Keep it",
     "dayTabs": "Which day",
     "dayNth": "Day {n}",
-    "dayEmpty": "Nothing on this day yet. Anything you add here goes on it."
+    "dayEmpty": "Nothing on this day yet. What you add here goes on this day.",
+    "typeface": "Font",
+    "showSection": "Show {name}",
+    "hideSection": "Hide {name}",
+    "moveSectionUp": "Move {name} up",
+    "moveSectionDown": "Move {name} down",
+    "removeEntry": "Remove {name}",
+    "removeEntryUnnamed": "Remove this item",
+    "removeQuestion": "Remove the question: {q}",
+    "removeQuestionUnnamed": "Remove this question"
   },
   "tpl": {
     "orderSummary": "Order summary",
-    "orderHint": "Select tickets to get started.",
+    "orderHint": "Choose tickets to start.",
     "total": "Total",
-    "selectTickets": "Select tickets",
-    "checkoutTrust": "Secure checkout · Instant e-tickets",
+    "selectTickets": "Choose tickets",
+    "checkoutTrust": "Safe payment · Tickets sent right away",
     "sellingFast": "Tickets selling fast",
     "almostGone": "Almost gone",
     "soldOutBadge": "Sold out",
-    "remaining": "{count} remaining",
-    "slotsAvailable": "Slots available",
+    "remaining": "{count} left",
+    "slotsAvailable": "Tickets available",
     "video": "Watch",
     "watchOn": "Watch on YouTube",
     "playVideo": "Play the video",
@@ -334,21 +343,21 @@
     "chooseTicket": "Choose your ticket",
     "perPerson": "/ person",
     "subtotal": "Subtotal",
-    "checkout": "Continue to checkout",
-    "viewAllSpeakers": "View all speakers",
-    "viewAgenda": "View agenda",
-    "viewOnMap": "View on map",
+    "checkout": "Continue to payment",
+    "viewAllSpeakers": "See all speakers",
+    "viewAgenda": "See the schedule",
+    "viewOnMap": "See on map",
     "viewLineup": "See the lineup",
     "ticketsSold": "Tickets sold",
     "ofCapacity": "of",
     "theRoute": "The route",
-    "departs": "Departs",
-    "returns": "Returns",
+    "departs": "Leaves",
+    "returns": "Comes back",
     "day": "Day",
     "allDays": "All days",
     "saves": "Save {amount}",
-    "admitsOn": "Admits",
-    "runsDays": "Runs {count} days"
+    "admitsOn": "Good for",
+    "runsDays": "Runs for {count} days"
   },
   "defaults": {
     "entertainment": {
@@ -366,7 +375,7 @@
       },
       "highlight0": "Backstage",
       "highlight1": "Soundcheck",
-      "highlight2": "Merch drop",
+      "highlight2": "T-shirts and more",
       "highlight3": "The venue",
       "info0": {
         "label": "Age",
@@ -377,7 +386,7 @@
         "value": "16:00. Show starts 18:00 sharp."
       },
       "info2": {
-        "label": "Capacity",
+        "label": "Max people",
         "value": "8,000 standing. No seats, no barriers."
       }
     },
@@ -388,7 +397,7 @@
       },
       "stat1": {
         "value": "৳200,000",
-        "label": "Prize pool"
+        "label": "Prize money"
       },
       "stat2": {
         "value": "3",
@@ -403,12 +412,12 @@
         "value": "Boots, shin pads, a light and a dark shirt."
       },
       "info1": {
-        "label": "First whistle",
-        "value": "09:00 daily. Final at 18:00 Sunday."
+        "label": "First match",
+        "value": "09:00 every day. Final at 18:00 on Sunday."
       },
       "info2": {
         "label": "Format",
-        "value": "Group stage, then straight knockout"
+        "value": "Group stage, then knockout"
       },
       "stat3": {
         "value": "2",
@@ -422,23 +431,23 @@
       },
       "stat1": {
         "value": "3",
-        "label": "Tracks"
+        "label": "Rooms"
       },
       "stat2": {
         "value": "600",
         "label": "Seats"
       },
-      "highlight0": "Gain real-world insights",
-      "highlight1": "Expand your network",
-      "highlight2": "Build what's next",
-      "highlight3": "Take the room home",
+      "highlight0": "Real-world lessons",
+      "highlight1": "Meet new people",
+      "highlight2": "Grow what you built",
+      "highlight3": "Watch it again later",
       "info0": {
         "label": "Doors",
-        "value": "08:30 registration. First session at 09:30."
+        "value": "Sign-in from 08:30. First talk at 09:30."
       },
       "info1": {
         "label": "Included",
-        "value": "Lunch, coffee and every session recorded"
+        "value": "Lunch, coffee and a recording of every talk"
       },
       "info2": {
         "label": "Getting there",
@@ -448,10 +457,10 @@
         "value": "1",
         "label": "Day"
       },
-      "benefit0": "Learn from the people running the products you use, not from a deck.",
-      "benefit1": "Meet the teams, investors and peers working on the same problems.",
-      "benefit2": "Leave with practical ways to scale what you have already built.",
-      "benefit3": "Every session is recorded, so the day does not end when it ends."
+      "benefit0": "Learn from people who run real businesses.",
+      "benefit1": "Meet teams, investors and people with the same goals.",
+      "benefit2": "Leave with practical ways to grow your business.",
+      "benefit3": "Every talk is recorded, so you can watch it again later."
     },
     "arts": {
       "stat0": {
@@ -472,7 +481,7 @@
       "highlight3": "The space",
       "info0": {
         "label": "Access",
-        "value": "Step-free throughout. Lift to the upper floor."
+        "value": "No steps anywhere. Lift to the upper floor."
       },
       "info1": {
         "label": "Open",
@@ -480,7 +489,7 @@
       },
       "info2": {
         "label": "Entry",
-        "value": "Timed entry every 30 minutes"
+        "value": "Time slots every 30 min"
       }
     },
     "travel": {
@@ -494,7 +503,7 @@
       },
       "stat2": {
         "value": "18",
-        "label": "Travellers max"
+        "label": "Max people"
       },
       "highlight0": "The route",
       "highlight1": "The boat",
@@ -510,11 +519,11 @@
       },
       "info2": {
         "label": "Group",
-        "value": "18 travellers, 2 guides, 1 cook"
+        "value": "18 people, 2 guides, 1 cook"
       },
       "stat3": {
         "value": "18",
-        "label": "Travellers max"
+        "label": "Max people"
       }
     },
     "nightlife": {
@@ -532,11 +541,11 @@
       },
       "highlight0": "The rooms",
       "highlight1": "The sound",
-      "highlight2": "Door policy",
+      "highlight2": "Entry rules",
       "highlight3": "Location",
       "info0": {
         "label": "Location",
-        "value": "Tejgaon. Address sent 6 hours before."
+        "value": "Tejgaon. Exact address sent 6 hr before."
       },
       "info1": {
         "label": "Doors",
@@ -550,28 +559,28 @@
   },
   "copyTitle": "{title} (copy)",
   "action": {
-    "menu": "Actions for {title}",
+    "menu": "More options for {title}",
     "edit": "Edit",
-    "duplicate": "Duplicate",
+    "duplicate": "Make a copy",
     "publish": "Publish",
     "unpublish": "Unpublish",
     "archive": "Archive",
-    "restore": "Restore",
+    "restore": "Bring back",
     "delete": "Delete",
-    "deleteBlocked": "{count, plural, one {# ticket has} other {# tickets have}} been sold — archive it instead"
+    "deleteBlocked": "{count, plural, one {# ticket was} other {# tickets were}} sold, so it can't be deleted. Archive it instead."
   },
   "confirm": {
     "archiveTitle": "Archive {title}?",
-    "archiveBody": "It comes off the list and off sale. Its orders and tickets are untouched, and you can restore it.",
+    "archiveBody": "It stops selling and leaves the list. Its orders and tickets stay. You can bring it back later.",
     "deleteTitle": "Delete {title}?",
-    "deleteBody": "This cannot be undone. Nothing has been sold, so nothing is left behind."
+    "deleteBody": "This can't be undone. No tickets were sold, so nothing else is lost."
   },
   "toast": {
     "published": "{title} is live",
     "unpublished": "{title} is off sale",
-    "duplicated": "Created {title}",
+    "duplicated": "Copy made: {title}",
     "archived": "{title} archived",
-    "restored": "{title} restored",
+    "restored": "{title} is back",
     "deleted": "{title} deleted"
   },
   "starts": "Starts"

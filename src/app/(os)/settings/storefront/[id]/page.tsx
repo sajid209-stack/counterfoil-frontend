@@ -401,6 +401,7 @@ export default function StorefrontEditorPage() {
                   id={id}
                   rows={4}
                   value={form.intro}
+                  placeholder={t("storefront.introPlaceholder")}
                   onChange={(e) => set({ intro: e.target.value })}
                   aria-describedby={describedBy}
                   className={cn(controlCls(), "h-auto py-tight leading-relaxed")}
@@ -436,12 +437,12 @@ export default function StorefrontEditorPage() {
           <SettingsSection title={t("storefront.contactTitle")} description={t("storefront.contactDesc")}>
             <SettingRow label={t("storefront.phoneLabel")}>
               {({ id }) => (
-                <input id={id} type="tel" value={form.contactPhone} onChange={(e) => set({ contactPhone: e.target.value })} className={controlCls()} />
+                <input id={id} type="tel" value={form.contactPhone} onChange={(e) => set({ contactPhone: e.target.value })} placeholder={t("storefront.phonePlaceholder")} className={controlCls()} />
               )}
             </SettingRow>
             <SettingRow label={t("storefront.emailLabel")}>
               {({ id }) => (
-                <input id={id} type="email" value={form.contactEmail} onChange={(e) => set({ contactEmail: e.target.value })} className={controlCls()} />
+                <input id={id} type="email" value={form.contactEmail} onChange={(e) => set({ contactEmail: e.target.value })} placeholder={t("storefront.emailPlaceholder")} className={controlCls()} />
               )}
             </SettingRow>
           </SettingsSection>
@@ -478,7 +479,7 @@ export default function StorefrontEditorPage() {
                             inputMode="url"
                             value={l.url}
                             onChange={(ev) => setLink(i, { url: ev.target.value })}
-                            placeholder="https://"
+                            placeholder={t("storefront.linkUrlPlaceholder")}
                             spellCheck={false}
                             aria-invalid={!!e.url || undefined}
                             className={cn(controlCls(!!e.url), "mt-inline font-mono")}

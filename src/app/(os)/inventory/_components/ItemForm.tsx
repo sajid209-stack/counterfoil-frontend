@@ -54,8 +54,10 @@ export function ItemForm({
 
   /* The unit is what makes a count mean anything — "3" of what? — so the
      field offers the words a venue actually uses rather than leaving it blank
-     and hoping. Typing over them is the point; these are a head start. */
-  const UNITS = ["each", "pair", "set", "bottle", "box", "hour"];
+     and hoping. Typing over them is the point; these are a head start. They
+     come from the messages, so a Bangla screen offers Bangla words: the unit
+     is written onto the item and read back in every count. */
+  const UNITS = (["each", "pair", "set", "bottle", "box", "hour"] as const).map((k) => t(`form.units.${k}`));
 
   const save = async () => {
     if (busy) return;
@@ -116,7 +118,7 @@ export function ItemForm({
                   type="button"
                   onClick={() => setUnit(u)}
                   className={cn(
-                    "min-h-9 rounded-full border px-comfortable text-[12px] transition-colors duration-quick",
+                    "min-h-11 rounded-full border px-comfortable text-[12px] transition-colors duration-quick md:min-h-9",
                     unit === u ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted hover:border-strong hover:text-fg",
                   )}
                 >

@@ -5,7 +5,7 @@
  * Comparing three designs from a chooser page means going home between every
  * look, by which time the thing being compared is a memory. This puts them one
  * tap apart, in the chrome, so the same catalogue can be seen three ways
- * without leaving the till.
+ * without leaving the counter.
  *
  * It appears ONLY on a till route. Everywhere else in Go it would be an offer
  * to change something the current screen is not.
@@ -17,16 +17,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { TILLS, tillFor } from "@/lib/tills";
 
 export function TillSwitcher() {
   const pathname = usePathname();
+  const t = useTranslations("pos");
   const current = tillFor(pathname);
   if (!current) return null;
 
   return (
     <nav
-      aria-label="Till design"
+      aria-label={t("shell.salesScreen")}
       className="hidden shrink-0 items-center gap-inline rounded-full bg-subtle p-inline sm:flex"
     >
       {TILLS.filter((t) => t.ready).map((t) => {

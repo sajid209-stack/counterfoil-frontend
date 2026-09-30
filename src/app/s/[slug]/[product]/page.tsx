@@ -8,7 +8,7 @@ import { ProductThumb } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getStorefrontPage, listResources, listStaff, type PriceTier } from "@/lib/api";
-import { behaviourSubtitle } from "@/lib/behaviour";
+import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { formatMoney } from "@/lib/format";
 import { demoNow } from "@/lib/schedule";
 import { ACCENT_BG, ACCENT_WASH, StorefrontChrome, StorefrontMissing } from "../../_components/Chrome";
@@ -28,6 +28,7 @@ import { ACCENT_BG, ACCENT_WASH, StorefrontChrome, StorefrontMissing } from "../
 export default function StorefrontProductPage() {
   const params = useParams<{ slug: string; product: string }>();
   const t = useTranslations("storefront");
+  const subtitle = useBehaviourSubtitle();
   const now = useMemo(() => demoNow(), []);
   const q = useApiQuery(() => getStorefrontPage(params.slug), [params.slug]);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 200 }), []);
@@ -74,7 +75,7 @@ export default function StorefrontProductPage() {
           <ProductThumb images={product.images} name={product.name} bookingType={product.bookingType} size="thumb" className="shrink-0" />
           <div className="min-w-0">
             <h1 className="type-h1 break-words text-[26px] sm:text-[32px]">{product.name}</h1>
-            <p className="mt-tight text-[14px] text-muted">{behaviourSubtitle(product, { resources, team })}</p>
+            <p className="mt-tight text-[14px] text-muted">{subtitle(product, { resources, team })}</p>
           </div>
         </header>
 

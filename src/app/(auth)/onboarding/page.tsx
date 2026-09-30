@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button, FormField } from "@/components/ui";
 import { updateOperator } from "@/lib/api";
 
@@ -11,6 +12,7 @@ const TIMEZONES = ["Asia/Dhaka", "Asia/Kuala_Lumpur", "America/New_York", "Ameri
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const t = useTranslations("auth.onboarding");
   const [name, setName] = useState("");
   const [country, setCountry] = useState("Bangladesh");
   const [currency, setCurrency] = useState("BDT");
@@ -20,7 +22,7 @@ export default function OnboardingPage() {
 
   const submit = async () => {
     if (!name.trim()) {
-      setError("Enter your business name to continue.");
+      setError(t("nameMissing"));
       return;
     }
     setSaving(true);
@@ -31,29 +33,27 @@ export default function OnboardingPage() {
 
   return (
     <div className="w-full max-w-md card-surface p-card">
-      <p className="type-label text-[13px] text-brand-foreground">Welcome</p>
-      <h1 className="type-h1 mt-inline text-2xl">Name your business</h1>
-      <p className="type-body mt-tight text-[13px] text-muted">
-        This is what guests and your team will see.
-      </p>
+      <p className="type-label text-[13px] text-brand-foreground">{t("eyebrow")}</p>
+      <h1 className="type-h1 mt-inline text-2xl">{t("title")}</h1>
+      <p className="type-body mt-tight text-[13px] text-muted">{t("lead")}</p>
 
       <div className="mt-major flex flex-col gap-section">
         <FormField
-          label="Business name"
-          placeholder="Lalbagh Heritage Attractions"
+          label={t("name")}
+          placeholder={t("namePlaceholder")}
           value={name}
           onChange={(e) => { setName(e.target.value); setError(""); }}
           error={error}
         />
-        <FormField label="Country" variant="select" value={country} onChange={(e) => setCountry(e.target.value)} options={COUNTRIES.map((c) => ({ value: c, label: c }))} />
+        <FormField label={t("country")} variant="select" value={country} onChange={(e) => setCountry(e.target.value)} options={COUNTRIES.map((c) => ({ value: c, label: c }))} />
         <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
-          <FormField label="Currency" variant="select" value={currency} onChange={(e) => setCurrency(e.target.value)} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
-          <FormField label="Timezone" variant="select" value={timezone} onChange={(e) => setTimezone(e.target.value)} options={TIMEZONES.map((t) => ({ value: t, label: t }))} />
+          <FormField label={t("currency")} variant="select" value={currency} onChange={(e) => setCurrency(e.target.value)} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />
+          <FormField label={t("timezone")} variant="select" value={timezone} onChange={(e) => setTimezone(e.target.value)} options={TIMEZONES.map((z) => ({ value: z, label: z }))} />
         </div>
       </div>
 
-      <Button fullWidth className="mt-major" loading={saving} onClick={submit}>
-        Continue
+      <Button fullWidth size="lg" className="mt-major" loading={saving} onClick={submit}>
+        {t("submit")}
       </Button>
     </div>
   );

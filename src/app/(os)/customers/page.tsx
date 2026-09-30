@@ -217,7 +217,7 @@ export default function CustomersPage() {
   return (
     <PageShell
       title={t("title")}
-      description={t("description")}
+      description={t("listDescription")}
       primary={{ label: t("addCustomer"), onClick: () => setAddOpen(true) }}
       actions={
         <div className="flex flex-wrap items-center gap-tight">
@@ -287,6 +287,7 @@ export default function CustomersPage() {
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   placeholder={t("searchPlaceholder")}
+                  aria-label={t("searchPlaceholder")}
                   className="h-11 md:h-9 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:w-64"
                 />
               </div>

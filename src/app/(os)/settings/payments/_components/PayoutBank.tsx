@@ -114,7 +114,7 @@ export function PayoutBank() {
                   aria-checked={form.kind === k}
                   onClick={() => { setErrors({}); setForm({ ...form, kind: k }); }}
                   className={cn(
-                    "inline-flex min-h-9 items-center rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick",
+                    "inline-flex min-h-11 items-center rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:min-h-9",
                     form.kind === k ? "bg-ember-solid text-white" : "text-muted hover:text-fg",
                   )}
                 >

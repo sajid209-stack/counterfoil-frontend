@@ -61,7 +61,12 @@ export const settlementHref = (id: string) => (id.startsWith("po_") ? `/money/pa
 
 export function SettlementBadge({ status }: { status: SettlementStatus }) {
   const t = useTranslations("money");
-  return <StatusPill tone={SETTLEMENT_TONE[status]}>{t(`settlement.${status}`)}</StatusPill>;
+  /* One line: a status broken over three lines reads as three statuses. */
+  return (
+    <span className="whitespace-nowrap">
+      <StatusPill tone={SETTLEMENT_TONE[status]}>{t(`settlement.${status}`)}</StatusPill>
+    </span>
+  );
 }
 
 /** "bKash online · held by Counterfoil", "Cash · held by you". */
@@ -188,6 +193,12 @@ export function PeriodPicker({ value, onChange }: { value: Period; onChange: (p:
     />
   );
 }
+
+/** A column header allowed to wrap onto two lines. The money tables have nine
+ *  columns, and headers that say what a column is ("Online payment fee")
+ *  are longer than the figures under them; kept on one line they pushed the
+ *  last column off a 1440 screen. */
+export const wrapHead = (label: string) => <span className="whitespace-normal">{label}</span>;
 
 /** Quoted when it must be; a customer called "Rahman, M." stays one cell. */
 export const csvCell = (v: string | number | null | undefined) => {

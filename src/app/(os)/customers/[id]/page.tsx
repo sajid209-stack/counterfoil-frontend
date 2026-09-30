@@ -256,7 +256,9 @@ function ActivityTab({ orders, loading }: { orders: Order[]; loading: boolean })
     {
       key: "status",
       header: t("colStatus"),
-      render: (o) => <StatusPill status={o.status}>{o.status.replace(/_/g, " ")}</StatusPill>,
+      // The pill names the status in the reader's language; the raw value
+      // printed here was English on every screen, underscores and all.
+      render: (o) => <StatusPill status={o.status} />,
     },
     {
       key: "total",

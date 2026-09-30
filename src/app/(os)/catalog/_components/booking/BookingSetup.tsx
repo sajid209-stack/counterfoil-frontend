@@ -6,8 +6,8 @@ import { ArrowLeft, Pencil, Plus, X } from "lucide-react";
 import { Button, DateField, DurationInput, FormField } from "@/components/ui";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDay } from "@/lib/format";
-import { formatDuration } from "@/lib/duration";
 import type { BookingTypeCode, Product, Resource, Staff } from "@/lib/api";
+import { useCatalogFormat } from "../../_lib/useCatalogFormat";
 
 /* Plain questions → the BT code is DERIVED, never shown. Covers all 14 types. */
 
@@ -62,6 +62,7 @@ export function BookingSetup({
   start?: SetupStart;
 }) {
   const t = useTranslations("catalog.setup");
+  const { dur: formatDuration } = useCatalogFormat();
   const [step, setStep] = useState<Step>(start);
   // resource — seeded from what the booking already has, so re-opening the
   // flow to change one answer does not silently empty the field list and make
@@ -280,7 +281,7 @@ export function BookingSetup({
             ))}
           </div>
           <DurationInput label={t("provider.howLong")} value={parseInt(provDuration, 10) || 60} min={5} onChange={(n) => setProvDuration(String(n))} chips={[30, 45, 60, 90]} className="max-w-xs" />
-          <FormField label={t("provider.pickable")} variant="toggle" checked={provPickable} onChange={(e) => setProvPickable((e.target as HTMLInputElement).checked)} help={t("provider.pickableHelp")} />
+          <FormField label={t("provider.pickable")} variant="toggle" checked={provPickable} onChange={(e) => setProvPickable((e.target as HTMLInputElement).checked)} help={t("provider.pickableHelp", { on: provPickable ? "yes" : "no" })} />
           {footer(finishProvider, provIds.length === 0 ? t("missing.provider") : null)}
         </div>
       )}
@@ -290,14 +291,14 @@ export function BookingSetup({
           <div className="flex flex-col gap-tight">
             <Question>{t("course.dates")}</Question>
             {courseDates.map((d) => (
-              <div key={d} className="flex items-center justify-between rounded-sm border border-line px-comfortable py-tight text-sm"><span className="text-[13px]">{formatDay(d, { weekday: true })}</span><button type="button" aria-label={t("course.remove")} onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="text-muted hover:text-danger"><X size={16} strokeWidth={1.5} /></button></div>
+              <div key={d} className="flex items-center justify-between rounded-sm border border-line px-comfortable py-tight text-sm"><span className="text-[13px]">{formatDay(d, { weekday: true })}</span><button type="button" aria-label={t("course.remove", { date: formatDay(d, { weekday: true }) })} title={t("course.remove", { date: formatDay(d, { weekday: true }) })} onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="-my-tight flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-danger md:h-9 md:w-9"><X size={16} strokeWidth={1.5} aria-hidden /></button></div>
             ))}
             <div className="flex gap-tight">
               <DateField size="form" value={courseDate} today={DEMO_TODAY} onChange={setCourseDate} labels={{ previousMonth: t("previousMonth"), nextMonth: t("nextMonth"), today: t("today"), open: t("chooseDate") }} className="flex-1" />
               <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} />} onClick={() => { if (courseDate && !courseDates.includes(courseDate)) { setCourseDates((d) => [...d, courseDate].sort()); setCourseDate(""); } }}>{t("course.addDate")}</Button>
             </div>
           </div>
-          <FormField label={t("course.places")} variant="number" value={courseCap} onChange={(e) => setCourseCap(e.target.value)} className="max-w-xs" />
+          <FormField label={t("course.places")} variant="number" placeholder="12" value={courseCap} onChange={(e) => setCourseCap(e.target.value)} className="max-w-xs" />
           {footer(finishCourse, courseDates.length === 0 ? t("missing.course") : null)}
         </div>
       )}

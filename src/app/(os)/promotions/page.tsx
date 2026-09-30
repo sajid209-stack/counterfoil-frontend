@@ -8,7 +8,6 @@ import { Button, DataTable, EmptyState, FormField, PageShell, StatusPill, useToa
 import { useApiQuery } from "@/lib/useApi";
 import { createPromotion, getManualDiscountPolicy, listPromotions, updateManualDiscountPolicy } from "@/lib/api";
 import type { ManualDiscountPolicy, Promotion } from "@/lib/api";
-import { formatMoney } from "@/lib/format";
 
 export default function PromotionsPage() {
   const t = useTranslations("promotions");
@@ -25,7 +24,7 @@ export default function PromotionsPage() {
   const create = async () => {
     setCreating(true);
     const res = await createPromotion({
-      locationId: null, name: "New promotion", kind: "percentage_off", source: "coupon",
+      locationId: null, name: t("list.defaultName"), kind: "percentage_off", source: "coupon",
       percentBps: 1000, eligibility: { channels: ["counter", "online"] },
       stacking: { stackable: true, exclusive: false }, status: "inactive",
     });

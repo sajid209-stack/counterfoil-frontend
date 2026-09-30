@@ -6,13 +6,13 @@
   "rowActions": "More actions",
   "openOrder": "Open the order",
   "printOrderTickets": "Print this order's tickets",
-  "entitlementNote": "What was bought. A new code does not change any of it.",
+  "entitlementNote": "What was bought. A new code doesn't change this.",
   "fact": {
     "type": "Ticket type",
     "validFor": "Valid for",
-    "used": "Admissions",
-    "faceValue": "Face value",
-    "channel": "Sold",
+    "used": "Used",
+    "faceValue": "Price",
+    "channel": "Where sold",
     "issued": "Issued",
     "holder": "Ticket holder"
   },
@@ -22,51 +22,51 @@
     "marketplace": "A marketplace"
   },
   "usedOf": "{used} of {total} used",
-  "credentials": "Credentials",
-  "credentialsNote": "The codes that open the gate. At most one is active — a re-issue replaces the one before it, and the replaced code stops scanning.",
+  "credentials": "Ticket codes",
+  "credentialsNote": "The codes that open the gate. Only one works at a time. A new code stops the old one.",
   "credStatus": {
     "active": "Active",
     "superseded": "Replaced",
-    "revoked": "Revoked"
+    "revoked": "Cancelled"
   },
   "credReason": {
-    "initial": "First issue",
-    "reissue": "Re-issued"
+    "initial": "First code",
+    "reissue": "New code"
   },
   "credKind": {
     "qr": "QR",
     "barcode": "Barcode"
   },
-  "issueNo": "Issue {n}",
+  "issueNo": "Code {n}",
   "history": "Check-in history",
   "neverScanned": "Never scanned.",
   "scan": {
-    "admitted": "Admitted",
+    "admitted": "Let in",
     "refused": "Turned away",
     "people": "{count, plural, one {# person} other {# people}}",
     "fromRecord": "from the ticket record"
   },
   "refusal": {
-    "replaced": "Code had been replaced",
-    "terminated": "Ticket terminated",
-    "void": "Ticket voided",
+    "replaced": "Old code",
+    "terminated": "Cancelled by the venue",
+    "void": "Ticket cancelled",
     "already_redeemed": "Already used",
-    "unpaid": "Balance outstanding"
+    "unpaid": "Not fully paid"
   },
-  "preview": "What the guest is holding",
-  "previewNote": "Drawn exactly as it prints, with the code that currently scans.",
-  "reissue": "Re-issue",
-  "reissueTitle": "Re-issue the code",
-  "reissueBody": "A new code is created and this one stops working at the gate. The sale, the seat and anything already used stay as they are.",
+  "preview": "What the customer has",
+  "previewNote": "As it prints, with the code that works now.",
+  "reissue": "New code",
+  "reissueTitle": "Give a new code",
+  "reissueBody": "A new code is made. This one stops working at the gate. The sale, seat and any entries so far stay the same.",
   "reissueReason": "Why is it being replaced?",
-  "reissuePlaceholder": "e.g. guest lost their phone",
-  "reissued": "A new code was issued. The old one no longer scans.",
-  "terminate": "Terminate",
-  "terminateTitle": "Terminate this ticket?",
-  "terminateBody": "The ticket stops working and cannot be re-issued. No money moves — refund the order instead if that is what is needed.",
-  "terminateReason": "Why is it being terminated?",
-  "terminatePlaceholder": "e.g. chargeback raised by the bank",
-  "terminated": "The ticket was terminated.",
-  "terminatedTitle": "This ticket was terminated",
-  "cancel": "Cancel"
+  "reissuePlaceholder": "e.g. Customer lost their phone",
+  "reissued": "New code made. The old one no longer works.",
+  "terminate": "Cancel ticket",
+  "terminateTitle": "Cancel this ticket?",
+  "terminateBody": "The ticket stops working. You can't give it a new code. No money is returned. To give money back, refund the order.",
+  "terminateReason": "Why cancel it?",
+  "terminatePlaceholder": "e.g. The bank reversed the payment",
+  "terminated": "Ticket cancelled.",
+  "terminatedTitle": "This ticket was cancelled",
+  "cancel": "Go back"
 }

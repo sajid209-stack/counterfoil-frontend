@@ -12,7 +12,7 @@ import { peekCounters, tillMethods, addOrderPayment, advanceMinimum, checkout, g
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
-import { behaviourSubtitle } from "@/lib/behaviour";
+import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { taxRateFor } from "@/lib/tax";
 import { FEATURES } from "@/lib/features";
@@ -97,6 +97,7 @@ export default function PosPage() {
   const router = useRouter();
   const toast = useToast();
   const t = useTranslations("pos");
+  const subtitle = useBehaviourSubtitle();
   const pt = useTranslations("promotions");
   const enumL = useEnumLabels();
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
@@ -754,7 +755,7 @@ export default function PosPage() {
           <span className="hidden h-12 shrink-0 items-center rounded-sm border border-line bg-card px-comfortable text-[0.8125rem] text-muted sm:flex">{t("counter")}</span>
           <div className="flex h-12 min-w-0 flex-1 items-center gap-tight rounded-sm border border-line bg-card px-comfortable focus-within:border-inverse">
             <Search size={16} strokeWidth={1.5} className="shrink-0 text-muted" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none placeholder:text-faint" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label={t("search.placeholder")} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none placeholder:text-faint" />
             {query && <button type="button" onClick={() => setQuery("")} className="text-[0.75rem] text-muted hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
@@ -790,7 +791,7 @@ export default function PosPage() {
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="line-clamp-2 text-[0.9375rem] font-semibold leading-tight">{p.name}</span>
                     <span className="mt-inline flex items-baseline gap-tight">
-                      <span className="min-w-0 flex-1 truncate text-[0.75rem] leading-tight text-muted">{behaviourSubtitle(p, { resources, team: teamQ.data?.data })}</span>
+                      <span className="min-w-0 flex-1 truncate text-[0.75rem] leading-tight text-muted">{subtitle(p, { resources, team: teamQ.data?.data })}</span>
                       <span className="shrink-0 whitespace-nowrap text-[0.8125rem] font-medium">{formatMoney(Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity]))), currency)}</span>
                     </span>
                     {/* What this product is doing RIGHT NOW, stated per booking
@@ -1146,7 +1147,7 @@ export default function PosPage() {
                   style={{ width: `calc(${pct}% - 8px)`, left: `calc(${idx * pct}% + 4px)` }}
                 />
                 {availableMethods.map((m) => (
-                  <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={`relative z-10 text-[0.8125rem] transition-colors duration-quick ${method === m.value ? "font-medium text-ink" : "text-muted"}`}>{enumL.method(m.value)}</button>
+                  <button key={m.value} type="button" aria-pressed={method === m.value} onClick={() => setMethod(m.value)} className={`relative z-10 text-[0.8125rem] transition-colors duration-quick ${method === m.value ? "font-medium text-ink" : "text-muted"}`}>{enumL.method(m.value)}</button>
                 ))}
               </div>
             );
@@ -1175,7 +1176,7 @@ export default function PosPage() {
         const changeMinor = tenderedMinor - dueNow;
         const enough = tenderedMinor >= dueNow;
         return (
-          <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true">
+          <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true" aria-label={t("cash.label")}>
             <div className="absolute inset-0 bg-inverse/40 backdrop-blur-sm" onClick={() => !cashSaving && setCashOpen(false)} aria-hidden />
             <div className="relative z-10 max-h-[90vh] overflow-y-auto rounded-t-md bg-sheet p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
               <div className="mx-auto w-full max-w-[520px]">

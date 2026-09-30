@@ -114,6 +114,7 @@ export function RoleEditor({
               id={id}
               value={form.name}
               onChange={(e) => set({ name: e.target.value })}
+              placeholder={t("roles.namePlaceholder")}
               autoComplete="off"
               aria-invalid={!!nameErr || undefined}
               aria-describedby={describedBy}

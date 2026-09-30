@@ -94,7 +94,9 @@ export function WeekGrid({
   onPeek?: (event: CalEvent | null, anchor: DOMRect | null) => void;
   onPickDay?: (date: Date) => void;
   /** Renders the column header, so the page owns date formatting. */
-  dayLabel: (d: Date) => { weekday: string; day: string };
+  /** `long` names the day in full for a screen reader: a button reading
+   *  "W 29" out loud does not say which day it is. */
+  dayLabel: (d: Date) => { weekday: string; day: string; long?: string };
   allDayLabel: string;
   /** Shown when the chosen day has nothing on it. */
   emptyLabel: string;
@@ -458,6 +460,7 @@ export function WeekGrid({
               <button
                 key={isoDate(d)}
                 type="button"
+                aria-label={label.long}
                 onClick={onPickDay ? () => onPickDay(d) : undefined}
                 className={cn(
                   "flex flex-1 flex-col items-center gap-0.5 py-tight",
@@ -1009,7 +1012,9 @@ function CompactWeek({
   events: CalEvent[];
   now: Date;
   onSelect?: (event: CalEvent) => void;
-  dayLabel: (d: Date) => { weekday: string; day: string };
+  /** `long` names the day in full for a screen reader: a button reading
+   *  "W 29" out loud does not say which day it is. */
+  dayLabel: (d: Date) => { weekday: string; day: string; long?: string };
   allDayLabel: string;
   emptyLabel: string;
   blockClass: (e: CalEvent) => string;
@@ -1054,6 +1059,7 @@ function CompactWeek({
               key={key}
               type="button"
               aria-pressed={on}
+              aria-label={label.long}
               onClick={() => setPicked(key)}
               className={cn(
                 "flex min-h-[3.5rem] flex-col items-center gap-1 border-r border-hairline py-tight last:border-r-0",
