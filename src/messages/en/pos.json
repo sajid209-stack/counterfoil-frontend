@@ -1,6 +1,6 @@
 {
   "search": {
-    "placeholder": "Search bookings…",
+    "placeholder": "Search what you sell…",
     "clear": "Clear"
   },
   "counter": "Fort Main Gate",
@@ -35,7 +35,12 @@
     "back": "Back",
     "walkIn": "Walk-in customer",
     "extend": "Add time",
-    "edit": "Change this item"
+    "edit": "Change this item",
+    "barLabel": "This sale",
+    "open": "Cart",
+    "vatIncluded": "VAT included",
+    "openCount": "Cart · {count}",
+    "openAria": "{count, plural, one {Cart, # item} other {Cart, # items}}"
   },
   "added": "Added {name}",
   "cartParked": "Sale paused.",
@@ -370,7 +375,11 @@
     "stockLeft": "{unit, select, each {{count} left} other {{count} {unit} left}}",
     "stockOut": "None left",
     "stockRefused": "{name} was paid for, but this venue has none in stock. Tell a manager.",
-    "buyNowShort": "Buy now"
+    "buyNowShort": "Buy now",
+    "holdShort": "Hold",
+    "started": "Already started",
+    "back": "Back",
+    "addAmount": "Add {amount}"
   },
   "settle": {
     "title": "Take booking payment",
@@ -550,5 +559,17 @@
     "osAdmin": "OS admin",
     "tokens": "Design tokens",
     "primitives": "Primitives"
+  },
+  "categoryLabel": "What to show",
+  "wall": {
+    "inSaleAria": "{name}, {count} in this sale"
+  },
+  "takeAmount": "Take {amount}",
+  "pay": {
+    "title": "Take payment",
+    "method": "How are they paying?",
+    "cardHint": "Take the card on the card machine, then press Complete sale.",
+    "walletHint": "Press Next. The next screen shows what the customer does, and what you check.",
+    "next": "Next"
   }
 }

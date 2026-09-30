@@ -70,9 +70,10 @@ export function SessionList({
 
   return (
     <div className="mb-section flex flex-col gap-tight">
+      {/* The departures as rows on ONE card, divided by hairlines — the
+          Schedule's drawing. */}
+      <div className="go-surface divide-y divide-line overflow-hidden rounded-go">
       {sessions.map((s) => {
-        const sold = Math.max(0, s.capacity - s.left);
-        const pctSold = s.capacity > 0 ? (sold / s.capacity) * 100 : 0;
         const full = s.left <= 0 || !!s.blockedReason;
         /* A stated reason wins over the count. `&& s.left > 0` meant a session
            closed for a private event, or one with no guide free, still read
@@ -91,17 +92,18 @@ export function SessionList({
               if (full) return onBlocked(s.time, s.blockedReason ?? t("sheet.full"));
               onSelect(s.time);
             }}
+            aria-pressed={isSelected}
+            data-focus-inset
             className={cn(
-              "flex min-h-16 w-full items-center rounded-go border p-comfortable text-left transition-colors duration-quick",
+              "relative flex min-h-16 w-full items-center px-comfortable py-comfortable text-left transition-colors duration-quick",
               isSelected
-                ? "border-ember bg-ember/10"
+                ? "bg-ember-solid text-white"
                 : full
-                  // Flat and *below* the page: an unavailable departure is
-                  // not an object you can pick up. In dark, `subtle` and `card`
-                  // are the same value, so it drops to the page ground instead
-                  // to keep the recession.
-                  ? "border-line bg-subtle dark:bg-surface"
-                  : "border-transparent bg-card shadow-go hover:bg-muted-wash active:bg-ember/10 dark:border-line",
+                  // Flat and *below* the card: an unavailable departure is not
+                  // something you can pick up. The page's own colour, which is
+                  // a step down from the card in both themes.
+                  ? "bg-surface"
+                  : "bg-card hover:bg-muted-wash/60 active:bg-ember/10",
             )}
           >
             <span className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -110,21 +112,23 @@ export function SessionList({
                 <span
                   className={cn(
                     "shrink-0 text-base font-semibold",
-                    full && !isSelected ? "text-muted" : "text-fg",
+                    isSelected ? "text-white" : full ? "text-muted" : "text-fg",
                   )}
                 >
                   {s.time}
                 </span>
                 {s.meta && (
-                  <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-muted">{s.meta}</span>
+                  <span className={cn("min-w-0 flex-1 truncate text-[0.8125rem]", isSelected ? "text-white" : "text-muted")}>{s.meta}</span>
                 )}
                 {/* The state of the session, in the corner the eye lands on:
                     places left is the number being decided on. The price sits
                     on the row below, beside the fill. */}
                 <span
                   className={cn(
-                    "ml-auto shrink-0 whitespace-nowrap text-[0.8125rem] font-medium",
-                    closed
+                    "ml-auto shrink-0 whitespace-nowrap text-[0.9375rem] font-semibold",
+                    isSelected
+                      ? "text-white"
+                      : closed
                       ? "text-muted"
                       : pressure === "gone"
                         ? "text-danger"
@@ -145,39 +149,17 @@ export function SessionList({
                 </span>
               </span>
 
-              {/* How full, at a glance — with the figure the bar is drawing. */}
-              <span className="flex items-center gap-tight">
-                <span className="flex h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-line" aria-hidden>
-                  <span
-                    className={cn(
-                      "h-full rounded-full",
-                      closed
-                        ? "bg-strong bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.18),rgb(0_0_0/0.18)_2px,transparent_2px,transparent_5px)]"
-                        : pressure === "gone" || pressure === "critical"
-                          ? "bg-ember"
-                          : pressure === "low"
-                            ? "bg-warning"
-                            : "bg-success",
-                    )}
-                    style={{ width: closed ? "100%" : `${Math.min(100, pctSold)}%` }}
-                  />
-                </span>
-                {/* A blocked row says nothing about how many sold, because
-                    nothing did: "15/15" beside a held session is the sold-out
-                    row's own figure, in the sold-out row's own place. */}
-                {!closed && (
-                  <span className="shrink-0 whitespace-nowrap text-[0.8125rem] text-muted">
-                    {sold}/{s.capacity}
-                  </span>
+              {/* The price, and no fill bar: the Schedule dropped its bar
+                  because a full bar read as "full" when it was full of empty
+                  seats, and the words above already say how many are left. The
+                  two screens now say it the same way. */}
+              <span
+                className={cn(
+                  "whitespace-nowrap text-[0.875rem] tabular-nums",
+                  isSelected ? "text-white" : s.price === basePrice ? "text-muted" : "font-semibold text-fg",
                 )}
-                <span
-                  className={cn(
-                    "ml-auto shrink-0 whitespace-nowrap text-[0.8125rem]",
-                    s.price === basePrice ? "text-muted" : "text-brand-foreground",
-                  )}
-                >
-                  {formatMoney(s.price, currency)}
-                </span>
+              >
+                {formatMoney(s.price, currency)}
               </span>
 
               {full && !closed && s.waitlist && (
@@ -187,6 +169,7 @@ export function SessionList({
           </button>
         );
       })}
+      </div>
 
       {/* What the figure on each row is the price OF. */}
       {basePrice > 0 && (

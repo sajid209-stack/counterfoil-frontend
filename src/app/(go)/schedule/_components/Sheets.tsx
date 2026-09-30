@@ -88,10 +88,10 @@ function HoldForm({
                  button that does the thing. */
               className={cn(
                 "inline-flex h-12 items-center justify-center gap-1 rounded-full border-2 px-tight text-[0.9375rem] font-semibold",
-                length === l ? "border-ember-solid bg-ember/10 text-fg" : "border-line bg-card text-fg",
+                length === l ? "border-ember-solid bg-ember-solid text-white" : "border-line bg-card text-fg",
               )}
             >
-              {length === l && <Check size={16} strokeWidth={3} className="shrink-0 text-brand-foreground" aria-hidden />}
+              {length === l && <Check size={16} strokeWidth={3} className="shrink-0" aria-hidden />}
               {l === "day" ? t("sheet.holdDay") : l === 60 ? t("sheet.hold1h") : t("sheet.holdMin", { count: l })}
             </button>
           ))}
@@ -261,7 +261,7 @@ export function SessionSheet({
         <p className="-mt-tight text-[0.875rem] text-muted">{when}</p>
         {mode === "tickets" ? (
           <>
-            <ul className="flex flex-col divide-y divide-hairline overflow-hidden rounded-go-sm border border-line">
+            <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-go-sm border border-line">
               {tiers.map((x) => {
                 const n = qty[x.id] ?? 0;
                 return (
@@ -407,7 +407,7 @@ export function BlockSheet({
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-comfortable border-b border-hairline py-tight last:border-b-0">
+    <div className="flex items-baseline justify-between gap-comfortable border-b border-line py-tight last:border-b-0">
       <dt className="text-[0.875rem] text-muted">{label}</dt>
       <dd className="text-right font-semibold text-fg">{value}</dd>
     </div>

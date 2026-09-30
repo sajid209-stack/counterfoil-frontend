@@ -172,7 +172,7 @@ export default function CompletePage() {
         };
 
   return (
-    <main className="mx-auto w-full max-w-xl px-section pb-[96px] pt-major sm:max-w-3xl rail:max-w-6xl rail:px-major rail:pb-major">
+    <main className="mx-auto w-full max-w-xl px-section pb-[160px] pt-major sm:max-w-3xl rail:max-w-6xl rail:px-major rail:pb-major">
       <div className="flex flex-col gap-wide rail:grid rail:grid-cols-[minmax(0,1fr)_minmax(0,440px)] rail:items-start rail:gap-wide">
         {/* ── What just happened, and what to do now ── */}
         <div className="flex flex-col gap-major">

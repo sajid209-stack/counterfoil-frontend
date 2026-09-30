@@ -34,7 +34,8 @@ import { taxRateFor } from "@/lib/tax";
 import { buildBoard, dayLoad, toTimeOfDay, type Block, type Column } from "./_lib/board";
 import { entriesFor, entryPrice, guideFor, holdEntries, needsWaiver, productsIn, sessionEntry, spansOf, type Pick } from "./_lib/toCart";
 import { Board } from "./_components/Board";
-import { BlockSheet, HoldSheet, SessionSheet, primary, secondary, type HoldRequest } from "./_components/Sheets";
+import { BlockSheet, HoldSheet, SessionSheet, type HoldRequest } from "./_components/Sheets";
+import { ActionBar, BarSummary } from "../_components/ActionBar";
 
 type View = "grid" | "list";
 type SessionBlock = Extract<Block, { type: "session" }>;
@@ -577,7 +578,7 @@ export default function SchedulePage() {
           corner={[format.dateTime(dayDate, { weekday: "short" }), format.dateTime(dayDate, { day: "numeric", ...latn })]}
           hideKey={picks.length > 0}
           notice={unassigned.length > 0 && (
-          <div className="flex flex-wrap items-center gap-tight border-b border-hairline px-comfortable py-tight">
+          <div className="flex flex-wrap items-center gap-tight border-b border-line px-comfortable py-tight">
             {unassigned.slice(0, 3).map(({ column, block }) => (
               <button
                 key={block.key}
@@ -606,7 +607,7 @@ export default function SchedulePage() {
       ) : listItems.length === 0 ? (
         <EmptyState title={t("board.listEmptyTitle")} message={t("board.listEmptyMessage")} />
       ) : (
-        <ul className="go-surface divide-y divide-hairline overflow-hidden rounded-go">
+        <ul className="go-surface divide-y divide-line overflow-hidden rounded-go">
           {listItems.map(({ column, block }) => {
             const isHold = block.type === "hold";
             const who = isHold ? block.hold.heldFor : (block.guest ?? t("board.walkIn"));
@@ -642,35 +643,32 @@ export default function SchedulePage() {
           Fixed above the tab bar, and the board ends above it, so no hour is
           ever under a button. Only there while something is chosen. */}
       {picks.length > 0 && view === "grid" && (
-        <section
+        <ActionBar
           id="sched-bar"
-          aria-label={t("bar.label")}
-          /* Bottom in classes, not an inline style: an inline style beats
-             `rail:`, and on a landscape tablet (no tab bar) the bar floated
-             85px up for a tab bar that is not there. */
-          className="fixed inset-x-tight bottom-[calc(84px+env(safe-area-inset-bottom))] z-40 flex flex-col gap-tight rounded-go bg-card p-comfortable go-raised sm:left-1/2 sm:right-auto sm:w-[30rem] sm:-translate-x-1/2 rail:bottom-comfortable"
+          label={t("bar.label")}
+          summary={
+            <BarSummary
+              lead={chosenCount}
+              /* Wraps rather than truncating: a touch screen has no hover to
+                 show the rest. The day is in the board's corner already. */
+              sub={chosenLine}
+              money={formatMoney(total)}
+              moneySub={t("bar.withVat")}
+              trailing={
+                <button
+                  type="button"
+                  onClick={clearPicks}
+                  aria-label={t("bar.clearAria")}
+                  className="-mr-1 -mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-muted-wash"
+                >
+                  <X size={20} strokeWidth={2} aria-hidden />
+                </button>
+              }
+            />
+          }
+          secondary={{ label: t("bar.hold"), icon: <Lock size={20} strokeWidth={2} aria-hidden />, onClick: () => setHoldOpen(true) }}
+          primary={{ label: t("bar.add"), icon: <ShoppingBag size={20} strokeWidth={2} aria-hidden />, onClick: addPicks }}
         >
-          <div className="flex items-start gap-tight">
-            <div className="min-w-0 flex-1">
-              <p aria-live="polite" className="text-[1rem] font-semibold text-fg">{chosenCount}</p>
-              {/* Wraps rather than truncating: a touch screen has no hover to
-                  show the rest. The day is in the board's corner already. */}
-              <p className="line-clamp-2 text-[0.8125rem] text-muted">{chosenLine}</p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="text-[1.125rem] font-semibold tabular-nums text-fg">{formatMoney(total)}</p>
-              <p className="text-[0.8125rem] text-muted">{t("bar.withVat")}</p>
-            </div>
-            <button
-              type="button"
-              onClick={clearPicks}
-              aria-label={t("bar.clearAria")}
-              className="-mr-1 -mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-muted-wash"
-            >
-              <X size={20} strokeWidth={2} aria-hidden />
-            </button>
-          </div>
-
           {offered.length > 1 && (
             <div role="radiogroup" aria-label={t("bar.sellAs")} className="flex flex-wrap items-center gap-tight">
               <span className="text-[0.8125rem] font-semibold text-muted">{t("bar.sellAs")}</span>
@@ -685,7 +683,7 @@ export default function SchedulePage() {
                     onClick={() => setChoice(p.id)}
                     className={cn(
                       "inline-flex h-11 items-center gap-tight rounded-full border-2 pl-1 pr-comfortable text-[0.9375rem] font-semibold",
-                      on ? "border-ember-solid bg-ember/10 text-fg" : "border-line bg-card text-fg",
+                      on ? "border-ember-solid bg-ember-solid text-white" : "border-line bg-card text-fg",
                     )}
                   >
                     {/* The booking's own picture, so the choice can be made by
@@ -703,7 +701,7 @@ export default function SchedulePage() {
                       </span>
                     )}
                     {p.name}
-                    {on && <Check size={16} strokeWidth={3} className="text-brand-foreground" aria-hidden />}
+                    {on && <Check size={16} strokeWidth={3} aria-hidden />}
                   </button>
                 );
               })}
@@ -722,18 +720,7 @@ export default function SchedulePage() {
             </label>
           )}
           {waiverMissing && <p role="alert" className="text-[0.8125rem] text-danger">{t("bar.waiverMissing")}</p>}
-
-          <div className="flex gap-tight">
-            <button type="button" className={secondary("h-13")} onClick={() => setHoldOpen(true)}>
-              <Lock size={20} strokeWidth={2} aria-hidden />
-              {t("bar.hold")}
-            </button>
-            <button type="button" className={primary("h-13", "flex-[1.4]")} onClick={addPicks}>
-              <ShoppingBag size={20} strokeWidth={2} aria-hidden />
-              {t("bar.add")}
-            </button>
-          </div>
-        </section>
+        </ActionBar>
       )}
 
       {holdOpen && (

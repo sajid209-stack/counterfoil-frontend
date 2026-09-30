@@ -22,7 +22,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { DatePicker } from "./DatePicker";
 
@@ -50,6 +50,7 @@ export function DateStrip({
   caption,
   min,
   className,
+  flat = false,
 }: {
   dates: string[];
   value: string;
@@ -61,6 +62,9 @@ export function DateStrip({
   caption?: (date: string) => { text: string; low?: boolean } | null;
   min?: string;
   className?: string;
+  /** The till's drawing: the days as flat cells on ONE card, divided by
+   *  hairlines, with the calendar as the last cell — the Schedule's grid. */
+  flat?: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -82,6 +86,74 @@ export function DateStrip({
   };
   const sub = (d: string) =>
     new Date(`${d}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+
+  if (flat) {
+    return (
+      <div className={cn("flex flex-col gap-tight", className)}>
+        <div className="go-surface overflow-hidden rounded-go">
+          <div className="-mb-px -mr-px grid grid-cols-3 sm:grid-cols-6">
+            {shown.map((d) => {
+              const on = value === d;
+              const cap = caption?.(d) ?? null;
+              const isMarked = marked.includes(d);
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={on}
+                  data-focus-inset
+                  onClick={() => onChange(d)}
+                  className={cn(
+                    "relative flex min-h-[3.75rem] flex-col items-center justify-center border-b border-r border-line px-inline py-tight text-center transition-colors duration-quick",
+                    on ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10",
+                  )}
+                >
+                  {isMarked && <span className={cn("absolute left-1.5 top-1.5 size-1.5 rounded-full", on ? "bg-white" : "bg-ember")} aria-hidden />}
+                  {on && <Check size={13} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
+                  <span className="w-full truncate text-[0.875rem] font-semibold leading-tight">{label(d)}</span>
+                  {/* Ink on the chosen day: muted on the orange tint fell to 4.4:1 in
+                      dark, under the reading floor. */}
+                  <span className={cn("w-full truncate text-[0.8125rem] leading-tight", on ? "text-white" : "text-muted")}>{sub(d)}</span>
+                  {cap && (
+                    <span className={cn("w-full truncate text-[0.8125rem] leading-tight", on ? "text-white" : cap.low ? "font-medium text-warning" : "text-muted")}>{cap.text}</span>
+                  )}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              aria-expanded={pickerOpen}
+              data-focus-inset
+              onClick={() => setPickerOpen((v) => !v)}
+              className={cn(
+                "flex min-h-[3.75rem] flex-col items-center justify-center gap-0.5 border-b border-r border-line px-inline text-[0.8125rem] font-medium transition-colors duration-quick",
+                pickerOpen ? "bg-ember/10 text-fg" : "bg-card text-muted active:bg-ember/10",
+              )}
+            >
+              <CalendarDays size={18} strokeWidth={1.75} aria-hidden />
+              {labels.pick}
+            </button>
+          </div>
+        </div>
+        {pickerOpen && (
+          <div className="go-surface overflow-hidden rounded-go">
+            <DatePicker
+              value={value}
+              today={today}
+              min={min}
+              labels={{ previousMonth: labels.previousMonth, nextMonth: labels.nextMonth, today: labels.today }}
+              shape="go"
+              autoFocus
+              onChange={(iso) => {
+                onChange(iso);
+                setPickerOpen(false);
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cn("flex flex-col gap-tight", className)}>

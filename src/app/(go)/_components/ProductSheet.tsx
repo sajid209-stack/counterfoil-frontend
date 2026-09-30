@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, Clock, X, Zap } from "lucide-react";
+import { Check, ChevronLeft, Clock, Lock, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar, BlockedNotice, Button, ChoiceCard, FormField, PlanView, ProductThumb, ResourceTimeline, useToast, DateStrip } from "@/components/ui";
 import { seatMap } from "@/lib/api";
@@ -42,7 +42,8 @@ import { resolveProductPrice } from "@/lib/pricing";
 import { durationOptions, formatDuration, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
-import { formatDay, formatMoney } from "@/lib/format";
+import { formatDay, formatMoney, formatPriceShort } from "@/lib/format";
+import { ActionBar } from "./ActionBar";
 
 export interface CartEntry {
   id: string;
@@ -108,52 +109,54 @@ function SheetFooter({
   disabled,
   onAdd,
   label,
-  buyLabel,
-  hold,
+  onHold,
+  holdRow,
+  onBack,
 }: {
   summary?: React.ReactNode;
   note?: React.ReactNode;
   disabled: boolean;
-  /** `pay` = the cashier wants to settle this now, not build a bigger sale. */
+  /** `pay` = settle this now; kept for callers, the sheet no longer offers it
+   *  (Take payment is one tap from the sell screen's own bar). */
   onAdd: (pay: boolean) => void;
   label: string;
-  /** Omitted where an express sale makes no sense (nothing chosen yet). */
+  /** Kept so call sites need not change; there is no second orange button. */
   buyLabel?: string;
-  /** The third thing a counter does with a slot: take it off sale for a party
-   *  that has asked but not paid. A text button under the sale's two buttons,
-   *  because it is the rarer of the three and must not compete with them. */
-  hold?: React.ReactNode;
+  /** Hold these places instead — the bar's left button, where "not now" always
+   *  is on this till. Absent where there is nothing to hold. */
+  onHold?: () => void;
+  /** Who a hold is for, once Hold has been pressed. */
+  holdRow?: React.ReactNode;
+  /** The left button when there is nothing to hold: the way out, in the
+   *  place the way out always is. */
+  onBack?: () => void;
 }) {
+  const t = useTranslations("pos");
+  /* The till's one bar: Hold on the left, the orange Add on the right — the
+     same pair in the same places as the Schedule's bar and the cart's foot.
+     Sticky, because the sheets that need it most are the long ones, where the
+     total and the action would otherwise scroll away mid-decision. */
   return (
-    <div className="sticky bottom-0 z-10 -mx-section mt-section border-t border-line bg-surface px-section pb-inline pt-comfortable">
-      {note}
-      {summary && <div className="mb-tight text-[0.8125rem]">{summary}</div>}
-      {/* Two exits, because a till serves two sales. Add keeps building one:
-          it closes the sheet and returns to the list, ready for the next
-          thing. Buy now is for the sale that is already finished — it adds the
-          line and opens the cart, so the next tap is Charge.
-
-          Side by side rather than stacked: two full-width buttons make the
-          second look like a second thought and cost a whole row of a sheet
-          that is already long. The lightning is the same shorthand the app
-          uses for an express action, and it keeps the primary CTA at nearly
-          full width where it was. */}
-      <div className="flex items-stretch gap-tight">
-        <Button size="lg" shape="pill" fullWidth disabled={disabled} onClick={() => onAdd(false)}>{label}</Button>
-        {buyLabel && (
-          <button
-            type="button"
-            disabled={disabled}
-            aria-label={buyLabel}
-            title={buyLabel}
-            onClick={() => onAdd(true)}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-ember text-brand-foreground transition-colors duration-quick disabled:opacity-40 hover:bg-ember/10 active:bg-ember/20"
-          >
-            <Zap size={20} strokeWidth={1.5} />
-          </button>
-        )}
-      </div>
-      {hold}
+    <div className="sticky bottom-0 z-10 -mx-section mt-section">
+      <ActionBar
+        docked="panel"
+        className="bg-surface"
+        summary={
+          <>
+            {note}
+            {summary && <div className="text-[0.8125rem]">{summary}</div>}
+            {holdRow}
+          </>
+        }
+        secondary={
+          onHold
+            ? { label: t("sheet.holdShort"), icon: <Lock size={20} strokeWidth={2} aria-hidden />, onClick: onHold }
+            : onBack
+              ? { label: t("sheet.back"), icon: <ChevronLeft size={20} strokeWidth={2} aria-hidden />, onClick: onBack }
+              : null
+        }
+        primary={{ label, icon: disabled ? undefined : <Plus size={20} strokeWidth={2.5} aria-hidden />, onClick: () => onAdd(false), disabled }}
+      />
     </div>
   );
 }
@@ -191,6 +194,14 @@ export function ProductSheet({
   const toast = useToast();
   const t = useTranslations("pos");
   const subtitle = useBehaviourSubtitle();
+  /* Escape closes, as every other sheet in the app does. On the page, not
+     the panel: the sheet does not take focus when it opens, so a key
+     handler on the panel never heard the key. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
   const tc = useTranslations("common");
   const seatT = useTranslations("seatmaps");
   const hasLayout = !!product.layoutId;
@@ -222,7 +233,26 @@ export function ProductSheet({
   })();
 
   const [date, setDate] = useState(initial?.slotDate ?? preset?.date ?? firstBookable);
-  const [slotTime, setSlotTime] = useState<string | undefined>(initial?.slotTime ?? preset?.time);
+  /* A timed sheet opens READY, on the next time that can be sold — the
+     next departure with seats, or the next start a lane is free for — so the
+     orange button works the moment the sheet opens, as it does for tickets.
+     A different time is one tap. */
+  const [slotTime, setSlotTime] = useState<string | undefined>(() => {
+    const given = initial?.slotTime ?? preset?.time;
+    if (given) return given;
+    const d0 = initial?.slotDate ?? preset?.date ?? firstBookable;
+    const notPast = (t: string) => d0 !== TODAY || toMinutes(t) >= NOW_MIN;
+    if (product.layoutId || !isOpenOn(product, d0)) return undefined;
+    if (isFlexibleResource(bt)) {
+      const shortest = product.durationConfig ? durationOptions(product.durationConfig)[0] : 60;
+      const sch = product.schedule ?? ({ ...PROVIDER_DAY, startTime: "06:00", endTime: "22:00" });
+      return slotTimesOn(sch, d0).find((t) => notPast(t) && !!firstFreeResource(product, d0, t, shortest));
+    }
+    if (isSlotBased(bt) && !isResourceType(bt)) {
+      return getSlots(product, d0).find((sl) => sl.remaining > 0 && notPast(sl.time))?.time;
+    }
+    return undefined;
+  });
   const [resourceId, setResourceId] = useState<string | undefined>(initial?.resourceId ?? preset?.resourceId);
 
   /* Keyed on the performance — declared after the date it depends on. The same
@@ -240,7 +270,9 @@ export function ProductSheet({
     .filter((s) => selectedSeats.includes(s.label))
     .reduce((a, s) => a + s.price, 0);
   const [providerId, setProviderId] = useState<string | undefined>();
-  const [guideId, setGuideId] = useState<string | undefined>();
+  const [guideId, setGuideId] = useState<string | undefined>(() =>
+    slotTime && (product.schedule?.guideIds?.length ?? 0) > 0 ? freeGuides(product, date, slotTime)[0] : undefined,
+  );
   // Flexible durations come from the duration engine when configured.
   const flexOptions = product.durationConfig
     ? durationOptions(product.durationConfig)
@@ -249,10 +281,14 @@ export function ProductSheet({
   const [qty, setQty] = useState<Record<string, number>>(() => {
     const q: Record<string, number> = {};
     const list = sectioned ? (product.sections ?? []).map((s) => s.id) : activeTiers.map((t) => t.id);
-    // Guided default: a sole tier/section starts at 1 so there's nothing to tap
-    // — the common case (one ticket type) becomes pick-date → Add.
-    const soleDefault = list.length === 1 && !initial ? 1 : 0;
-    list.forEach((id) => (q[id] = initial?.items.find((i) => i.tierId === id)?.qty ?? soleDefault));
+    /* One of the FIRST ticket type, ready — "one, please" is the commonest
+       answer at a counter, so the orange button works the moment the sheet
+       opens, as it does on the Schedule's tickets sheet. The operator's first
+       type, not the cheapest: the cheapest is usually a concession. */
+    const first = sectioned
+      ? list[0]
+      : activeTiers.find((x) => !x.donation)?.id;
+    list.forEach((id) => (q[id] = initial?.items.find((i) => i.tierId === id)?.qty ?? (!initial && id === first ? 1 : 0)));
     return q;
   });
 
@@ -384,6 +420,8 @@ export function ProductSheet({
     (product.addOns?.length ?? 0) > 0 ? (
       <div className="mt-section flex flex-col gap-tight">
         <span className="text-[0.875rem] font-semibold text-fg">{t("sheet.addOns")}</span>
+        {/* One card, divided rows — the rest of the till's drawing. */}
+        <div className="go-surface divide-y divide-line overflow-hidden rounded-go">
         {(product.addOns ?? []).map((a) => {
           const n = addOnQty[a.id] ?? 0;
           /* An extra that hands over a counted thing can only sell what is on
@@ -394,7 +432,7 @@ export function ProductSheet({
           const cap = stock ? stock.onHand : Infinity;
           const out = cap <= 0;
           return (
-            <div key={a.id} className={cn("flex min-h-14 items-center gap-tight rounded-go border p-comfortable", out ? "border-line bg-subtle" : "border-line bg-card")}>
+            <div key={a.id} className={cn("flex min-h-14 items-center gap-tight px-comfortable py-tight", out ? "bg-surface" : "bg-card")}>
               <div className="min-w-0 flex-1">
                 <span className={cn("block truncate text-sm", out && "text-muted")}>{a.name}</span>
                 <span className="text-[0.8125rem] text-muted">
@@ -414,6 +452,7 @@ export function ProductSheet({
             </div>
           );
         })}
+        </div>
       </div>
     ) : null;
 
@@ -482,11 +521,40 @@ export function ProductSheet({
   };
 
   /** Take the chosen places off sale for a named party, from the till. */
+  /** The span a field or lane hold keeps: the chosen place, from the chosen
+   *  start, for the chosen length. Null when there is no place yet. */
+  const resourceSpan = () => {
+    if (!resourceMode || !slotTime) return null;
+    const minutes = flexible ? duration : (product.schedule?.sessionMinutes ?? 60);
+    const lane = resourceId
+      ? getResourceMatrix(product, date).find((row) => row.resource.id === resourceId)?.resource
+      : flexible
+        ? firstFreeResource(product, date, slotTime, minutes)
+        : undefined;
+    return lane ? { lane, minutes } : null;
+  };
   const doHold = async () => {
     const who = holdFor.trim();
     if (!who || holding) return;
     setHolding(true);
-    const res = await placeHold({
+    const span = resourceSpan();
+    const res = span
+      ? await placeHold({
+          productId: product.id,
+          productName: product.name,
+          locationId: product.locationIds[0] ?? null,
+          kind: "resource",
+          date,
+          slotStart: slotISO(date, slotTime as string),
+          slotEnd: endISO(date, slotTime as string, span.minutes),
+          quantity: 1,
+          resourceId: span.lane.id,
+          resourceName: span.lane.name,
+          heldFor: who,
+          placedBy: team.find((x) => x.id === DEMO_STAFF_ID)?.name ?? t("sheet.counterActor"),
+          expiresAt: null,
+        })
+      : await placeHold({
       productId: product.id,
       locationId: product.locationIds[0] ?? null,
       kind: "capacity",
@@ -513,6 +581,27 @@ export function ProductSheet({
     toast.success(t("sheet.holdPlaced", { count: Math.max(1, partySize), heldFor: who }));
     onClose();
   };
+  /** Who a hold is for — the one row every footer that offers Hold shows once
+   *  Hold has been pressed. */
+  const holdRowNode = holdOpen ? (
+    <div className="mt-tight flex items-center gap-tight">
+      <input
+        value={holdFor}
+        autoFocus
+        onChange={(e) => setHoldFor(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") void doHold(); }}
+        placeholder={t("sheet.holdFor")}
+        aria-label={t("sheet.holdFor")}
+        className="h-12 min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable text-[0.8125rem] outline-none focus:border-inverse"
+      />
+      {/* Secondary: the sale is what this screen is for, and
+          an ember Hold beside a grey Add says the exception is
+          the point. */}
+      <Button variant="secondary" size="sm" shape="pill" disabled={!holdFor.trim() || holding} onClick={() => void doHold()}>
+        {t("sheet.holdPlace")}
+      </Button>
+    </div>
+  ) : null;
 
   const submitTiered = (onDate?: string, pay = false) => {
     const when = onDate ?? date;
@@ -646,7 +735,7 @@ export function ProductSheet({
   return (
     <div className="fixed inset-y-0 left-0 right-0 z-50 flex flex-col justify-end lg:right-[24rem]" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
       <div className="go-sheet-scrim absolute inset-0 bg-inverse/40 backdrop-blur-sm" onClick={onClose} aria-hidden />
-      <div className="relative z-10 go-sheet-panel max-h-[88vh] overflow-y-auto rounded-t-go-lg bg-surface p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
+      <div className="relative z-10 go-sheet-panel max-h-[88vh] overflow-y-auto rounded-t-go-lg bg-surface p-section pb-0">
         <div className="mx-auto w-full max-w-[680px]">
         <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line" aria-hidden />
         {/* The reference leads with the product: a real thumbnail rather than a
@@ -693,6 +782,7 @@ export function ProductSheet({
               }
               return (
                 <DateStrip
+                  flat
                   dates={chips}
                   value={date}
                   onChange={(d) => { setDate(d); setSlotTime(undefined); setResourceId(undefined); }}
@@ -809,7 +899,7 @@ export function ProductSheet({
                 missing; the matrix opened with nothing at all, which is the one
                 place a cashier cannot tell "not ready" from "broken". */}
             {!(resourceId && slotTime) && (
-              <SheetFooter disabled onAdd={() => {}} label={t("sheet.pickTime")} />
+              <SheetFooter onBack={onClose} disabled onAdd={() => {}} label={t("sheet.pickTime")} />
             )}
             {resourceId && slotTime && (() => {
               const row = matrix.find((r) => r.resource.id === resourceId);
@@ -839,7 +929,9 @@ export function ProductSheet({
                   />
                   {renderAddOns()}
                   <div className="mt-tight flex flex-col gap-tight">{renderGroup()}{renderWaiver()}</div>
-                  <SheetFooter
+                  <SheetFooter onBack={onClose}
+                    onHold={!holdOpen ? () => setHoldOpen(true) : undefined}
+                    holdRow={holdRowNode}
                     summary={
                       <span className="flex items-baseline justify-between gap-comfortable">
                         <span className="min-w-0 flex-1 text-muted">
@@ -858,7 +950,7 @@ export function ProductSheet({
                     label={
                       dates.length > 1
                         ? t("repeat.addDates", { count: dates.length, amount: formatMoney(price * dates.length, currency) })
-                        : t("sheet.addSelection", { name: row?.resource.name ?? "", time: slotTime, amount: formatMoney(price, currency) })
+                        : t("sheet.addAmount", { amount: formatPriceShort(price, currency) })
                     }
                   />
                 </>
@@ -910,23 +1002,11 @@ export function ProductSheet({
             if (slotTime && !startState(slotTime, d, resourceId).ok) { setSlotTime(undefined); toast.info(t("sheet.startNoLongerFits")); }
           };
 
-          // Start now: round the clock per config, first free lane.
-          const round = cfg?.walkInRoundMinutes || 15;
-          const nowTime = toTime(Math.ceil(NOW_MIN / round) * round);
-          const nowLane = date === TODAY && (!mustEnd || NOW_MIN + duration <= closeMin) ? firstFreeResource(product, date, nowTime, duration) : null;
-          const nowPrice = nowLane ? priceFor(nowTime, duration, nowLane) : 0;
-
           const endLabel = slotTime ? toTime(toMinutes(slotTime) + duration) : null;
           const chosenLaneFree = slotTime ? startState(slotTime, duration, resourceId).ok : false;
 
           return (
             <div className="mb-section flex flex-col gap-tight">
-              {date === TODAY && (
-                <button type="button" disabled={!nowLane || !waiverOk} onClick={() => nowLane && submitResource(nowLane.id, nowLane.name, nowTime, nowPrice, duration)} className={`flex h-12 items-center justify-between rounded-go border px-comfortable text-sm ${nowLane && waiverOk ? "border-ember bg-ember/10 font-medium" : "border-line bg-subtle text-muted"}`}>
-                  <span>{t("sheet.startNow", { time: nowTime, duration: formatDuration(duration), lane: nowLane ? ` · ${nowLane.name}` : "" })}</span>
-                  <span>{!nowLane ? t("sheet.noLaneFree") : !waiverOk ? t("sheet.waiverFirst") : formatMoney(nowPrice, currency)}</span>
-                </button>
-              )}
 
               {/* Duration is a stepper, not a wall of chips.
                   Nine buttons each carrying their own price was nine prices to
@@ -955,7 +1035,7 @@ export function ProductSheet({
                     <div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-go border border-line bg-card py-tight">
                       <span className="text-base font-medium">{formatDuration(duration)}</span>
                       {slotTime && (
-                        <span className="font-mono text-[0.8125rem] text-muted">
+                        <span className="text-[0.8125rem] tabular-nums text-muted">
                           {formatMoney(priceFor(slotTime, duration, laneOf(resourceId)), currency)}
                         </span>
                       )}
@@ -974,14 +1054,34 @@ export function ProductSheet({
               })()}
 
               <span className="text-[0.875rem] font-semibold text-fg">{lanes[0]?.nounSingular ?? t("sheet.resource")}</span>
-              <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <ChoiceCard raised selected={!resourceId} onClick={() => setResourceId(undefined)} className="flex h-14 items-center pl-comfortable pr-7 text-sm">{t("sheet.any")}</ChoiceCard>
-                {lanes.map((r) => (
-                  <ChoiceCard key={r.id} raised selected={resourceId === r.id} disabled={r.outOfService} onClick={() => setResourceId(r.id)} className="flex min-h-14 max-w-56 flex-col items-start justify-center py-inline pl-comfortable pr-7">
-                    <span className="block max-w-full truncate text-sm leading-tight">{r.name}{rateLabel(r) ? <span className="ml-inline whitespace-nowrap text-[0.8125rem] text-muted">{rateLabel(r)}</span> : null}</span>
-                    <span className="block max-w-full truncate text-[0.8125rem] leading-tight text-muted">{liveState(r)}</span>
-                  </ChoiceCard>
-                ))}
+              {/* One card of cells, as the Schedule draws its lanes: Any, then
+                  each lane with what it is doing now. Chosen is a tint with a
+                  ring and a tick. */}
+              <div className="go-surface overflow-hidden rounded-go">
+                <div className="-mb-px -mr-px grid grid-cols-3 sm:grid-cols-5">
+                  {[null, ...lanes].map((r) => {
+                    const on = r ? resourceId === r.id : !resourceId;
+                    return (
+                      <button
+                        key={r?.id ?? "any"}
+                        type="button"
+                        aria-pressed={on}
+                        disabled={!!r?.outOfService}
+                        data-focus-inset
+                        onClick={() => setResourceId(r?.id)}
+                        className={cn(
+                          "relative flex min-h-14 flex-col items-center justify-center border-b border-r border-line px-inline py-tight text-center transition-colors duration-quick",
+                          r?.outOfService ? "bg-surface text-muted line-through" : on ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10",
+                        )}
+                      >
+                        {on && <Check size={13} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
+                        <span className="w-full truncate text-[0.875rem] font-semibold">{r ? r.name : t("sheet.any")}</span>
+                        {r && <span className={cn("w-full truncate text-[0.8125rem]", on ? "text-white" : "text-muted")}>{liveState(r)}</span>}
+                        {r && rateLabel(r) && <span className={cn("w-full truncate text-[0.8125rem] font-semibold tabular-nums", on ? "text-white" : "text-fg")}>{rateLabel(r)}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* The lane's day at a glance — selection drawn live on the strip;
@@ -999,25 +1099,23 @@ export function ProductSheet({
 
               {blocked && <BlockedNotice message={blocked.message} onDismiss={() => setBlocked(null)} />}
 
-              <div className="flex items-center justify-between">
-                <span className="text-[0.875rem] font-semibold text-fg">{t("sheet.startTime")}</span>
-                {/* Chips for speed, the stepper for precision (walk-in rounding).
-                    It only exists once a start does: nudging nothing showed an
-                    em-dash between two live arrows, which reads as broken. */}
-                <div className={`flex items-center gap-inline ${slotTime ? "" : "hidden"}`}>
-                  <button type="button" aria-label={t("sheet.earlier")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const next = Math.max(flexTimes.length ? toMinutes(flexTimes[0]) : 0, base - round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-lg active:bg-ember/10">−</button>
-                  <span className="w-14 text-center text-[0.8125rem] font-medium">{slotTime}</span>
-                  <button type="button" aria-label={t("sheet.later")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const cap = mustEnd ? closeMin - duration : 24 * 60 - round; const next = Math.min(cap, base + round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-lg active:bg-ember/10">+</button>
+              <span className="text-[0.875rem] font-semibold text-fg">{t("sheet.startTime")}</span>
+              <div className="go-surface overflow-hidden rounded-go">
+                <div className="-mb-px -mr-px grid grid-cols-4 sm:grid-cols-6">
+                  {flexTimes.map((tt) => {
+                    const st = startState(tt, duration, resourceId);
+                    if (!st.ok) {
+                      return <button key={tt} type="button" data-focus-inset onClick={() => setBlocked({ message: t("sheet.unavailableStart", { time: tt, reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })} className="flex min-h-12 items-center justify-center border-b border-r border-line bg-surface text-[0.875rem] text-muted line-through" title={st.reason}>{tt}</button>;
+                    }
+                    const on = slotTime === tt;
+                    return (
+                      <button key={tt} type="button" aria-pressed={on} data-focus-inset onClick={() => { setSlotTime(tt); setBlocked(null); }} className={cn("flex min-h-12 items-center justify-center gap-1 border-b border-r border-line text-[0.9375rem] font-semibold tabular-nums transition-colors duration-quick", on ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10")}>
+                        {on && <Check size={13} strokeWidth={3} aria-hidden />}
+                        {tt}
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
-              <div className="flex flex-wrap gap-inline">
-                {flexTimes.map((tt) => {
-                  const st = startState(tt, duration, resourceId);
-                  if (!st.ok) {
-                    return <button key={tt} type="button" onClick={() => setBlocked({ message: t("sheet.unavailableStart", { time: tt, reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })} className="h-12 rounded-full border border-line bg-subtle px-comfortable text-[0.8125rem] text-muted line-through" title={st.reason}>{tt}</button>;
-                  }
-                  return <button key={tt} type="button" onClick={() => { setSlotTime(tt); setBlocked(null); }} className={`h-12 rounded-full border px-comfortable text-[0.8125rem] ${slotTime === tt ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{tt}</button>;
-                })}
               </div>
 
               {renderGroup()}
@@ -1061,7 +1159,9 @@ export function ProductSheet({
                   </div>
                 );
               })()}
-              <SheetFooter
+              <SheetFooter onBack={onClose}
+                onHold={slotTime && chosenLaneFree && !holdOpen ? () => setHoldOpen(true) : undefined}
+                holdRow={slotTime && chosenLaneFree ? holdRowNode : null}
                 disabled={!slotTime || !chosenLaneFree || !waiverOk}
                 onAdd={submitFlexible}
                 buyLabel={
@@ -1076,7 +1176,7 @@ export function ProductSheet({
                     : undefined
                 }
                 label={slotTime && chosenLaneFree
-                  ? t("sheet.addFlexible", { duration: formatDuration(duration), start: slotTime, end: endLabel ?? "", amount: formatMoney(priceFor(slotTime, duration, laneOf(resourceId) ?? firstFreeResource(product, date, slotTime, duration)), currency) })
+                  ? t("sheet.addAmount", { amount: formatPriceShort(priceFor(slotTime, duration, laneOf(resourceId) ?? firstFreeResource(product, date, slotTime, duration)), currency) })
                   // Says what is missing rather than sitting dead — the spec's
                   // "always show why", applied to the button itself.
                   : !slotTime ? t("sheet.pickStart") : !chosenLaneFree ? t("sheet.pickFreeLane") : t("sheet.addToSale")}
@@ -1220,12 +1320,15 @@ export function ProductSheet({
               const lock = isSessionLocked(product.id, date, slotISO(date, s.time))
                 ? blockingHold(product.id, date, slotISO(date, s.time))
                 : undefined;
+              const started = date === TODAY && toMinutes(s.time) < NOW_MIN;
               return {
                 time: s.time,
-                price: resolveProductPrice(product, date, s.time, basePrice),
+                price: resolveProductPrice(product, date, s.time, activeTiers.find((x) => !x.donation)?.price ?? basePrice),
                 capacity: s.capacity,
                 left: guideless ? 0 : left,
-                blockedReason: guideless
+                blockedReason: started
+                  ? t("sheet.started")
+                  : guideless
                   ? t("sheet.noGuideFree")
                   : lock
                     ? t("sheet.rowHeld", { name: lock.heldFor })
@@ -1378,7 +1481,7 @@ export function ProductSheet({
                         {[row.cap != null ? t("sheet.seatsCount", { count: row.cap }) : "", row.note].filter(Boolean).join(" · ")}
                       </div>
                     )}
-                    <div className="mt-0.5 text-[0.8125rem] font-medium tabular-nums text-brand-foreground">
+                    <div className="mt-0.5 text-[0.875rem] font-semibold tabular-nums text-fg">
                       {row.donation ? t("sheet.donationMin", { amount: formatMoney(row.price, currency) }) : formatMoney(row.price, currency)}
                     </div>
                   </div>
@@ -1432,8 +1535,16 @@ export function ProductSheet({
             })()}
             {renderAddOns()}
             {renderWaiver()}
-            {/* The live selection summary — plain language, mono numbers. */}
-            {partySize > 0 && (() => {
+            {depositPct > 0 && (
+              <p className="mt-section rounded-go border border-line bg-card p-comfortable text-[0.8125rem] text-muted">
+                {t.rich("sheet.depositNote", { pct: depositPct, b: (chunks) => <span className="font-medium text-fg">{chunks}</span> })}
+              </p>
+            )}
+            <SheetFooter onBack={onClose}
+              /* What will be added, beside the button that adds it: on a long
+                 sheet the ticket steppers are below the fold, and "Add ৳600"
+                 alone did not say what ৳600 buys. */
+              summary={partySize > 0 ? (() => {
               const list = sectioned ? (product.sections ?? []) : activeTiers;
               const itemsLabel = list.filter((x) => (qty[x.id] ?? 0) > 0).map((x) => `${qty[x.id]} ${x.name}`).join(" · ");
               const owner = guided ? guides.find((g) => g.id === guideId)?.name : provider ? assignedProvider?.name : undefined;
@@ -1449,7 +1560,7 @@ export function ProductSheet({
                 : formatDay(date, { weekday: true });
               const when = slotTime ? `${slotTime} ${dayWords}` : course ? null : (needsSchedule(bt) || provider) ? dayWords : null;
               return (
-                <div className="mt-tight flex items-baseline justify-between gap-comfortable border-t border-line pt-tight text-[0.8125rem]">
+                <div className="flex items-baseline justify-between gap-comfortable text-[0.8125rem]">
                   <span className="min-w-0 flex-1 text-muted">
                     {when && <><span className="tabular-nums">{when}</span> · </>}
                     {bt === "BT-02" && validity ? t("sheet.passCount", { count: tickets }) : itemsLabel}
@@ -1459,13 +1570,7 @@ export function ProductSheet({
                   <span className="shrink-0 font-medium tabular-nums">{formatMoney(total, currency)}</span>
                 </div>
               );
-            })()}
-            {depositPct > 0 && (
-              <p className="mt-section rounded-go border border-line bg-card p-comfortable text-[0.8125rem] text-muted">
-                {t.rich("sheet.depositNote", { pct: depositPct, b: (chunks) => <span className="font-medium text-fg">{chunks}</span> })}
-              </p>
-            )}
-            <SheetFooter
+            })() : undefined}
               disabled={hasLayout ? selectedSeats.length === 0 || !waiverOk : !canAddTiered}
               // Offered only once the sheet has something to sell — a Buy now
               // on an empty selection is a button that can only disappoint.
@@ -1484,7 +1589,8 @@ export function ProductSheet({
                  places on a dated slot. A seat map holds named seats and a
                  lane holds a span — both are the calendar's job, where the
                  whole day is on screen. */
-              hold={
+              onHold={needsSchedule(bt) && !hasLayout && !resourceMode && partySize > 0 && (!isSlotBased(bt) || !!slotTime) && !holdOpen ? () => setHoldOpen(true) : undefined}
+              holdRow={
                 needsSchedule(bt) && !hasLayout && !resourceMode && partySize > 0 ? (
                   holdOpen ? (
                     <div className="mt-tight flex items-center gap-tight">
@@ -1504,15 +1610,7 @@ export function ProductSheet({
                         {t("sheet.holdPlace")}
                       </Button>
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setHoldOpen(true)}
-                      className="mt-tight flex min-h-11 w-full items-center justify-center rounded-go-sm text-[0.8125rem] font-medium text-muted active:bg-muted-wash"
-                    >
-                      {t("sheet.holdInstead")}
-                    </button>
-                  )
+                  ) : null
                 ) : undefined
               }
               onAdd={(pay) => {
@@ -1534,13 +1632,17 @@ export function ProductSheet({
                 const ticketCount = list.reduce((a, x) => a + (qty[x.id] ?? 0), 0);
                 const valExtra = validity && (validity.priceDelta ?? 0) > 0 ? (validity.priceDelta ?? 0) * ticketCount : 0;
                 const total = list.reduce((a, x) => a + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0) + prem + valExtra;
-                const amount = formatMoney(total, currency);
-                if (bt === "BT-02" && ticketCount > 0) return t("sheet.addPass", { count: ticketCount, amount });
-                if (course) return t("sheet.enrolAmount", { amount });
-                if (provider) return assignedProvider ? t("sheet.addAppointment", { amount }) : t("sheet.pickProvider");
-                if (hasLayout) return selectedSeats.length ? t("sheet.addSeats", { count: selectedSeats.length, amount: formatMoney(seatTotal + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0), currency) }) : t("sheet.pickSeats");
-                if (n === 0) return t("sheet.pickTickets");
-                return t("sheet.addTickets", { count: n, amount });
+                /* The whole figure without its paisa: this sits beside Hold on
+                   a phone, and "৳600.00" was the part that got cut off. The
+                   summary line above states it to the paisa. */
+                const amount = formatPriceShort(total, currency);
+                /* Say what is missing before saying what will be bought: a
+                   greyed "Add 1 ticket" with no time chosen reads as broken. */
+                if (isSlotBased(bt) && !resourceMode && !provider && !slotTime && openToday) return t("sheet.pickTime");
+                if (provider && !assignedProvider) return t("sheet.pickProvider");
+                if (hasLayout) return selectedSeats.length ? t("sheet.addAmount", { amount: formatPriceShort(seatTotal + addOnItems().reduce((a, i) => a + i.unitPrice * i.qty, 0), currency) }) : t("sheet.pickSeats");
+                if (n === 0 && !course) return t("sheet.pickTickets");
+                return t("sheet.addAmount", { amount });
               })()}
             />
           </>

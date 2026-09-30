@@ -1,9 +1,11 @@
 "use client";
 
+import { Check } from "lucide-react";
+
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { formatMoney } from "@/lib/format";
+import { formatPriceShort } from "@/lib/format";
 
 export interface MatrixCell {
   time: string;
@@ -75,97 +77,113 @@ export function SlotMatrix({
   for (const r of rows) for (const c of r.cells) counts.set(c.price, (counts.get(c.price) ?? 0) + 1);
   const base = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0;
 
+  /* Drawn the way the Schedule draws its day: cells on ONE card, divided by
+     hairlines. A free hour is white with its price, the chosen one is solid
+     orange with a tick, and an hour that is gone sits on the page colour —
+     the same three grounds, so a cashier who knows one screen reads the
+     other. */
   return (
     <div className="mb-section flex flex-col gap-tight">
-      <span className="text-[0.875rem] font-semibold text-fg">{resourceNoun}</span>
-      <div className="-mx-comfortable flex items-stretch gap-tight overflow-x-auto px-comfortable pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {rows.map((row) => {
-          const on = row.id === active.id;
-          const free = row.cells.filter((c) => c.available).length;
-          return (
-            <button
-              key={row.id}
-              type="button"
-              onClick={() => {
-                if (row.outOfService) return onBlocked(t("sheet.outOfService"));
-                setViewId(row.id);
-                // Keep a chosen time only where the new resource also has it.
-                if (selectedTime && row.cells.some((c) => c.time === selectedTime && c.available)) {
-                  onSelect(row.id, selectedTime);
-                }
-              }}
-              className={cn(
-                "flex min-h-12 shrink-0 flex-col items-center justify-center rounded-full border px-comfortable py-tight text-[0.8125rem] transition-colors duration-quick",
-                row.outOfService
-                  ? "border-line bg-subtle text-muted line-through"
-                  : on
-                    ? "border-ember bg-ember/10 font-medium text-brand-foreground"
-                    : "border-line bg-card active:bg-ember/10",
-              )}
-            >
-              <span className="whitespace-nowrap">{row.name}</span>
-              {!row.outOfService && (
-                <span className={cn("whitespace-nowrap text-[0.8125rem]", on ? "opacity-80" : "text-muted")}>
-                  {free > 0 ? t("sheet.slotsFree", { count: free }) : t("sheet.fullyBooked")}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {rows.length > 1 && (
+        <>
+          <span className="text-[0.875rem] font-semibold text-fg">{resourceNoun}</span>
+          <div className="go-surface overflow-hidden rounded-go">
+            <div className="-mb-px -mr-px grid" style={{ gridTemplateColumns: `repeat(${Math.min(rows.length, 4)}, minmax(0, 1fr))` }}>
+              {rows.map((row) => {
+                const on = row.id === active.id;
+                const free = row.cells.filter((c) => c.available).length;
+                return (
+                  <button
+                    key={row.id}
+                    type="button"
+                    aria-pressed={on}
+                    data-focus-inset
+                    onClick={() => {
+                      if (row.outOfService) return onBlocked(t("sheet.outOfService"));
+                      setViewId(row.id);
+                      if (selectedTime && row.cells.some((c) => c.time === selectedTime && c.available)) {
+                        onSelect(row.id, selectedTime);
+                      }
+                    }}
+                    className={cn(
+                      "relative flex min-h-14 flex-col items-center justify-center border-b border-r border-line px-inline py-tight text-center transition-colors duration-quick",
+                      row.outOfService
+                        ? "bg-surface text-muted line-through"
+                        : on
+                          ? "bg-ember-solid text-white"
+                          : "bg-card text-fg active:bg-ember/10",
+                    )}
+                  >
+                    {on && <Check size={13} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
+                    <span className="w-full truncate text-[0.875rem] font-semibold">{row.name}</span>
+                    {!row.outOfService && (
+                      <span className={cn("w-full truncate text-[0.8125rem]", on ? "text-white" : "text-muted")}>
+                        {free > 0 ? t("sheet.slotsFree", { count: free }) : t("sheet.fullyBooked")}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
 
-      <span className="mt-tight text-[0.875rem] font-semibold text-fg">{t("sheet.time")}</span>
-      <div className="grid grid-cols-4 gap-tight">
-        {active.cells.map((cell) => {
-          const selected = active.id === selectedResourceId && selectedTime === cell.time;
-          if (!cell.available) {
+      <span className="mt-tight text-[0.875rem] font-semibold text-fg">{t("sheet.time")}{rows.length === 1 ? ` · ${active.name}` : ""}</span>
+      <div className="go-surface overflow-hidden rounded-go">
+        <div className="-mb-px -mr-px grid grid-cols-4">
+          {active.cells.map((cell) => {
+            const selected = active.id === selectedResourceId && selectedTime === cell.time;
+            if (!cell.available) {
+              return (
+                <button
+                  key={cell.time}
+                  type="button"
+                  data-focus-inset
+                  onClick={() =>
+                    onBlocked(
+                      active.outOfService
+                        ? t("sheet.outOfService")
+                        : t("sheet.slotTaken", { time: cell.time, name: active.name }),
+                    )
+                  }
+                  className="flex min-h-14 items-center justify-center border-b border-r border-line bg-surface px-1 text-[0.875rem] text-muted line-through"
+                >
+                  {cell.time}
+                </button>
+              );
+            }
             return (
               <button
                 key={cell.time}
                 type="button"
-                onClick={() =>
-                  onBlocked(
-                    active.outOfService
-                      ? t("sheet.outOfService")
-                      : t("sheet.slotTaken", { time: cell.time, name: active.name }),
-                  )
-                }
-                className="flex min-h-12 items-center justify-center rounded-go-sm border border-line bg-subtle px-1 py-tight text-[0.8125rem] text-muted line-through"
-              >
-                {cell.time}
-              </button>
-            );
-          }
-          return (
-            <button
-              key={cell.time}
-              type="button"
-              onClick={() => onSelect(active.id, cell.time)}
-              className={cn(
-                "flex min-h-12 flex-col items-center justify-center rounded-go-sm border px-1 py-tight text-[0.8125rem] transition-colors duration-quick",
-                // The time is the last thing decided and the thing the CTA
-                // then names, so it is the one selection in this pattern drawn
-                // as a fill rather than a tint.
-                selected
-                  ? "border-ember bg-ember-solid font-medium text-white"
-                  : "border-line bg-card active:bg-ember/10",
-              )}
-            >
-              <span>{cell.time}</span>
-              <span
+                aria-pressed={selected}
+                data-focus-inset
+                onClick={() => onSelect(active.id, cell.time)}
                 className={cn(
-                  "whitespace-nowrap text-[0.8125rem]",
-                  selected ? "opacity-90" : cell.price === base ? "text-muted" : "text-brand-foreground",
+                  "flex min-h-14 flex-col items-center justify-center gap-0.5 border-b border-r border-line px-1 transition-colors duration-quick",
+                  selected ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10",
                 )}
               >
-                {formatMoney(cell.price, currency)}
-              </span>
-            </button>
-          );
-        })}
+                <span className="flex items-center gap-1 text-[0.9375rem] font-semibold tabular-nums">
+                  {selected && <Check size={14} strokeWidth={3} aria-hidden />}
+                  {cell.time}
+                </span>
+                <span
+                  className={cn(
+                    "whitespace-nowrap text-[0.8125rem] tabular-nums",
+                    selected ? "font-medium" : cell.price === base ? "text-muted" : "font-semibold text-fg",
+                  )}
+                >
+                  {formatPriceShort(cell.price, currency)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* What the figure on each tile is the price OF. */}
+      {/* What the figure on each cell is the price OF. */}
       <p className="text-[0.8125rem] text-muted">
         {t("sheet.ratePer", { noun: resourceNoun.toLowerCase() })}
       </p>

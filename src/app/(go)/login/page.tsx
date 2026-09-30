@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Avatar, Button, FormField, Modal } from "@/components/ui";
+import { Button, FormField, Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getAccessPolicy, listStaff, type Staff } from "@/lib/api";
 import { Keypad } from "../_components/Keypad";
@@ -16,6 +16,34 @@ const DEVICE_NAME = "Fort iPad 1";
 const BUSINESS = "Lalbagh Heritage Attractions";
 const OPEN_SHIFT = { staffId: "stf_nadia", since: "09:14" };
 const DEMO_PIN = "1234";
+
+/** Each person's face has a colour of its own, so somebody who cannot read the
+ *  names finds themselves by colour. Handed out in the order people joined
+ *  this counter, so the first five never share one and a new hire takes the
+ *  next colour without repainting anybody else. The five are the validated
+ *  accent palette; the letters sit on a light wash of it in ink, so they read
+ *  in both themes. */
+const FACE_COLORS = ["orange", "blue", "green", "rose", "amber"] as const;
+type FaceColor = (typeof FACE_COLORS)[number];
+function faceColors(team: Staff[]): Map<string, FaceColor> {
+  const ordered = [...team].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+  return new Map(ordered.map((s, i) => [s.id, FACE_COLORS[i % FACE_COLORS.length]]));
+}
+function Face({ color, name, size }: { color: FaceColor; name: string; size: "lg" | "md" }) {
+  const c = color;
+  return (
+    <span
+      aria-hidden
+      className={`flex items-center justify-center rounded-full border-2 font-semibold text-fg ${size === "lg" ? "h-12 w-12 text-[1rem]" : "h-10 w-10 text-[0.9375rem]"}`}
+      style={{
+        borderColor: `var(--color-cat-${c})`,
+        background: `color-mix(in srgb, var(--color-cat-${c}) 22%, var(--color-card))`,
+      }}
+    >
+      {name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}
+    </span>
+  );
+}
 
 export default function GoLoginPage() {
   const router = useRouter();
@@ -37,6 +65,8 @@ export default function GoLoginPage() {
   const [guestEmail, setGuestEmail] = useState("");
 
   const team = (staffQ.data?.data ?? []).filter((s) => s.counterIds.includes(COUNTER_ID));
+  const colors = faceColors(team);
+  const colorOf = (id: string): FaceColor => colors.get(id) ?? "orange";
   const shiftOwner = staffQ.data?.data.find((s) => s.id === OPEN_SHIFT.staffId);
 
   const proceed = (person: NonNullable<typeof who>) => {
@@ -77,53 +107,54 @@ export default function GoLoginPage() {
       <h1 className="sr-only">{t("signInTitle")}</h1>
       {/* Context bar — confirm you're at the right counter before signing in. */}
       <div className="w-full max-w-lg text-center">
-        <p className="font-mono text-[0.8125rem] uppercase tracking-wider text-muted">
+        <p className="text-[0.875rem] font-medium text-muted">
           {BUSINESS} · {COUNTER_NAME} · {DEVICE_NAME}
         </p>
-        <p className="mt-inline font-mono text-[0.8125rem] text-muted">
+        <p className="mt-inline text-[0.8125rem] text-muted">
           {shiftOwner ? t("login.shiftOpenBy", { name: shiftOwner.name.split(" ")[0], time: OPEN_SHIFT.since }) : t("login.noShift")}
           <span className="ml-tight text-muted">· {t("login.demoPin", { pin: DEMO_PIN })}</span>
         </p>
       </div>
 
-      <span className="type-h2 mt-major text-2xl text-fg">Counterfoil</span>
 
       {!who ? (
         <>
           {/* Step 1 — who are you. Faster than a PIN that must also identify. */}
-          <p className="type-label mt-major text-[0.8125rem] uppercase tracking-wide text-muted">{t("login.whoTitle")}</p>
-          <div className="mt-section grid w-full max-w-lg grid-cols-2 gap-tight sm:grid-cols-3">
+          <p className="mt-major text-[1rem] font-semibold text-fg">{t("login.whoTitle")}</p>
+          {/* The people as cells on ONE card — the till's own drawing — each a
+              face, a name and whether they are on shift. Tap yours. */}
+          <div className="go-surface mt-section w-full max-w-lg overflow-hidden rounded-go">
+          <div className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3">
             {team.map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => { setWho(s); setPin(""); setAttempts(0); setLocked(false); }}
-                className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-go border border-line bg-card p-comfortable transition-colors duration-quick active:border-ember"
+                data-focus-inset
+                className="flex min-h-32 flex-col items-center justify-center gap-tight border-b border-r border-line bg-card p-comfortable transition-colors duration-quick active:bg-ember/10"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-inverse font-semibold text-inverse-fg">
-                  {s.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}
-                </span>
-                <span className="max-w-full truncate text-sm text-fg">{s.name}</span>
-                <span className={`font-mono text-[0.8125rem] ${s.id === OPEN_SHIFT.staffId ? "text-brand-foreground" : "text-muted"}`}>{stateLine(s)}</span>
+                <Face color={colorOf(s.id)} name={s.name} size="lg" />
+                <span className="max-w-full truncate text-[0.9375rem] font-semibold text-fg">{s.name}</span>
+                <span className={`text-[0.8125rem] ${s.id === OPEN_SHIFT.staffId ? "font-medium text-success" : "text-muted"}`}>{stateLine(s)}</span>
               </button>
             ))}
             <button
               type="button"
               onClick={() => setSomeoneElse(true)}
-              className="flex min-h-28 flex-col items-center justify-center gap-tight rounded-go border border-dashed border-line p-comfortable text-muted active:border-ember"
+              data-focus-inset
+              className="flex min-h-32 flex-col items-center justify-center gap-tight border-b border-r border-line bg-card p-comfortable text-muted active:bg-ember/10"
             >
-              <span aria-hidden className="text-2xl leading-none">+</span>
-              <span className="text-sm">{t("login.someoneElse")}</span>
+              <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-strong text-2xl leading-none">+</span>
+              <span className="text-[0.9375rem] font-medium">{t("login.someoneElse")}</span>
             </button>
+          </div>
           </div>
         </>
       ) : (
         <>
           {/* Step 2 — the PIN pad. */}
           <div className="mt-major flex items-center gap-tight">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-inverse font-semibold text-inverse-fg">
-              {who.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("")}
-            </span>
+            <Face color={colorOf(who.id)} name={who.name} size="md" />
             <span className="text-lg">{who.name}</span>
             <button type="button" onClick={() => { setWho(null); setPin(""); setAttempts(0); setLocked(false); }} className="ml-tight text-[0.8125rem] text-muted underline-offset-4 active:underline">
               {t("login.notYou")}

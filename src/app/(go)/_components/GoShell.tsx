@@ -103,6 +103,10 @@ export function GoShell({ children }: { children: React.ReactNode }) {
      at /pos/cart, which is a different sale. It belongs on the screens that
      have no till on them at all. */
   const onATill = ["/pos", "/sell", "/classic"].some((x) => path === x || path.startsWith(x + "/"));
+  /* Signing in is a door, not a room: no tabs, no rail, no cart and nobody's
+     initial in the corner. With the tab bar on the PIN screen, anyone could
+     walk past sign-in with one tap on Sell. */
+  const bare = path === "/login" || path.startsWith("/login/");
 
   const prefs = usePrefs();
   useEffect(() => {
@@ -175,27 +179,29 @@ export function GoShell({ children }: { children: React.ReactNode }) {
             <Logo variant="go" size={30} />
           </Link>
           <span className="hidden shrink-0 rounded-full bg-subtle px-comfortable py-inline text-[0.8125rem] text-muted dark:border dark:border-line dark:bg-transparent sm:block">{tp("counter")}</span>
-          <span className="hidden shrink-0 font-mono text-[0.8125rem] text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
+          <span className="hidden shrink-0 text-[0.8125rem] tabular-nums text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
         </div>
         {/* Only on a till, and only where there is room for it. */}
         <TillSwitcher />
         <span className="flex shrink-0 items-center gap-tight">
           <ModeButton shape="round" />
-          <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse font-mono text-[0.8125rem] text-inverse-fg" title={tp("shell.myProfile", { name: "Nadia Islam" })} aria-label={tp("shell.myProfile", { name: "Nadia Islam" })}>N</Link>
+          {!bare && <Link href="/profile" className="flex h-11 w-11 items-center justify-center rounded-full bg-inverse text-[0.875rem] font-semibold text-inverse-fg" title={tp("shell.myProfile", { name: "Nadia Islam" })} aria-label={tp("shell.myProfile", { name: "Nadia Islam" })}>N</Link>}
         </span>
       </header>
 
       <div className="flex min-h-0 flex-1">
         {/* Tablet-landscape left rail (88px, icon over label) */}
-        <nav aria-label={tp("shell.menu")} className="sticky top-0 hidden h-[calc(100vh-64px)] w-[88px] shrink-0 flex-col gap-inline p-tight rail:flex">
-          {tabs.map((t) => tabButton(t, true))}
-          {moreButton(true)}
-        </nav>
+        {!bare && (
+          <nav aria-label={tp("shell.menu")} className="sticky top-0 hidden h-[calc(100vh-64px)] w-[88px] shrink-0 flex-col gap-inline p-tight rail:flex">
+            {tabs.map((t) => tabButton(t, true))}
+            {moreButton(true)}
+          </nav>
+        )}
 
         {/* Content clears the bottom bar (+ home indicator) except in rail mode */}
         {/* BAR_CLEAR + 22px of breathing room. Kept as a class so `rail:pb-0`
             can still reset it — an inline style would beat the variant. */}
-        <div className="min-w-0 flex-1 pb-[calc(96px+env(safe-area-inset-bottom))] rail:pb-0">{children}</div>
+        <div className={cn("min-w-0 flex-1", bare ? "pb-section" : "pb-[calc(96px+env(safe-area-inset-bottom))] rail:pb-0")}>{children}</div>
       </div>
 
       {/* Bottom tab bar — phone + tablet portrait */}
@@ -213,6 +219,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
 
           The stops are written in the bar's own units now: opaque exactly as
           far as the bar reaches, then a 28px fade. */}
+      {!bare && (<>
       <div
         aria-hidden
         className="pointer-events-none fixed inset-x-0 bottom-0 z-20 rail:hidden"
@@ -234,6 +241,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
         {tabs.map((t) => tabButton(t, false))}
         {moreButton(false)}
       </nav>
+      </>)}
 
       {/* A sale in progress is reachable from anywhere.
           `PosScreen` is mounted only on /pos and /pos/cart, so a cashier who
@@ -247,7 +255,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
           clearance from BAR_CLEAR, because stacking fixed furniture without
           accounting for what is already there is how a control ends up
           untappable. */}
-      {liveCount > 0 && !onATill && (
+      {liveCount > 0 && !onATill && !bare && (
         <Link
           href="/pos/cart"
           aria-label={t("cartFab", { count: liveCount })}
@@ -268,11 +276,11 @@ export function GoShell({ children }: { children: React.ReactNode }) {
       {moreOpen && (
         <div className="fixed inset-0 z-50">
           <div className="go-sheet-scrim absolute inset-0 bg-inverse/40" onClick={() => setMoreOpen(false)} aria-hidden />
-          <div className="go-sheet-panel absolute inset-x-0 bottom-0 rounded-t-go-lg bg-sheet p-section shadow-go-pop" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
+          <div className="go-sheet-panel absolute inset-x-0 bottom-0 rounded-t-go-lg bg-surface p-section shadow-go-pop" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
             <div className="mb-section flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
-                <p className="font-mono text-[0.8125rem] text-muted">{tp("shell.shiftLine", { counter: tp("counter"), time: "3:24" })}</p>
+                <p className="text-[0.8125rem] text-muted">{tp("shell.shiftLine", { counter: tp("counter"), time: "3:24" })}</p>
               </div>
               <div className="flex items-center gap-tight">
                 <LocaleToggle />
@@ -281,25 +289,30 @@ export function GoShell({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-tight sm:grid-cols-4">
+            {/* One card of cells divided by hairlines, a picture over a word in
+                each — the same drawing as the sell screen, so the menu reads as
+                part of the till rather than as a different app. */}
+            <div className="go-surface overflow-hidden rounded-go">
+            <div className="-mb-px -mr-px grid grid-cols-3 sm:grid-cols-4">
               {MORE_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const inner = (
                   <>
-                    <Icon size={24} strokeWidth={1.5} />
-                    <span className="text-[0.8125rem] font-medium">{t(item.key)}</span>
+                    <Icon size={24} strokeWidth={1.5} className="text-muted" aria-hidden />
+                    <span className="text-[0.875rem] font-medium">{t(item.key)}</span>
                   </>
                 );
                 return "href" in item && item.href ? (
-                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-go bg-subtle text-fg transition-colors duration-quick active:bg-ember/15 dark:bg-line">
+                  <Link key={item.key} href={item.href} onClick={() => setMoreOpen(false)} data-focus-inset className="flex h-[5.5rem] flex-col items-center justify-center gap-tight border-b border-r border-line bg-card text-fg transition-colors duration-quick active:bg-ember/10">
                     {inner}
                   </Link>
                 ) : (
-                  <button key={item.key} type="button" onClick={() => runItem(item)} className="flex h-20 flex-col items-center justify-center gap-tight rounded-go bg-subtle text-fg transition-colors duration-quick active:bg-ember/15 dark:bg-line">
+                  <button key={item.key} type="button" onClick={() => runItem(item)} data-focus-inset className="flex h-[5.5rem] flex-col items-center justify-center gap-tight border-b border-r border-line bg-card text-fg transition-colors duration-quick active:bg-ember/10">
                     {inner}
                   </button>
                 );
               })}
+            </div>
             </div>
 
             {/* Appearance and text size used to be drawn here as well. They are

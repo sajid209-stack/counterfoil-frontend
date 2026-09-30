@@ -4,13 +4,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { ArrowRight, Archive, Banknote, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, Ticket, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
-import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
+import { Archive, Banknote, Check, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, Ticket, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
+import { BlockedNotice, Button, DiscountInput, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { counterEvents, counterItems, inventoryItem, inventoryLineId, levelOf, peekCounters, peekTicketCodeSettings, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_COUNTER_ID, DEMO_TILL_ID } from "@/lib/session";
-import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
+import { DEMO_TODAY, isFlexibleResource, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
+import { flexDurations } from "@/lib/sale/selection";
+import { resolveProductPrice } from "@/lib/pricing";
 import { productDurationPrice } from "@/lib/duration";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
@@ -21,6 +23,8 @@ import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
+import { WallHeading, WallTile } from "../_components/WallTile";
+import { ActionBar } from "../_components/ActionBar";
 import { EventSheet } from "../_components/EventSheet";
 import { Keypad } from "../_components/Keypad";
 import { Pencil } from "lucide-react";
@@ -311,6 +315,9 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     setDiscountPct(0);
     setDiscountAmt(0); setDiscountPct(0); setAttached(null); setPass(null); setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0); void releaseCheckoutHolds(TILL_ID);
     clearLiveSale();
+    /* A paused or cleared sale forgets where it came from, so the next,
+       unrelated sale does not finish on the Schedule. */
+    takeReturnTo();
     setParkOpen(false); setParkName("");
     toast.success(t("cartParked"));
   };
@@ -323,6 +330,7 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
     setAppliedCoupon(null); setDiscountReason(""); setPointsToSpend(0);
     void releaseCheckoutHolds(TILL_ID);
     clearLiveSale();
+    takeReturnTo();
     setClearOpen(false);
     toast.success(t("cart.cleared"));
   };
@@ -419,11 +427,56 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     return !q || e.title.toLowerCase().includes(q) || e.venueName.toLowerCase().includes(q);
   });
   const customTile = (
-    <button type="button" onClick={() => setCustomOpen(true)} className="flex min-h-[140px] flex-col items-center justify-center gap-tight rounded-go border border-dashed border-strong text-muted transition-colors duration-quick hover:bg-muted-wash active:bg-ember/10">
-      <Plus size={20} strokeWidth={1.5} />
-      <span className="text-[0.8125rem]">{t("customAmount")}</span>
+    <button type="button" data-focus-inset onClick={() => setCustomOpen(true)} className="flex min-h-[9.25rem] flex-col items-center justify-center gap-tight border-b border-r border-line bg-card text-muted transition-colors duration-quick hover:bg-muted-wash/60 active:bg-ember/10">
+      <span className="flex size-11 items-center justify-center rounded-full border-2 border-dashed border-strong"><Plus size={20} strokeWidth={2} aria-hidden /></span>
+      <span className="text-[0.875rem] font-medium">{t("customAmount")}</span>
     </button>
   );
+  /* What to show. Three at most, each a KIND of thing rather than a group
+     somebody named, and each only when there is something in it. */
+  const wallGroups = [
+    { id: "all", name: t("categoryAll") },
+    ...(shopItems.length > 0 ? [{ id: SHOP, name: t("shop.chip") }] : []),
+    ...(eventsForSale.length > 0 ? [{ id: EVENTS, name: t("event.chip") }] : []),
+  ];
+  /** The price a tile quotes: what one tap on it sells, now. Not the
+   *  cheapest ticket (General Admission read ৳300 — the child ticket — and its
+   *  sheet opened on Adult at ৳500), and not a list price no hour charges
+   *  (bowling read ৳800 while every lane sold at ৳1,000 at noon). A cashier
+   *  reads this number out to a customer, so it has to be the one the sale
+   *  will actually carry. */
+  const tilePrice = (p: Product) => {
+    const tiers = p.tiers.filter((x) => x.active && !x.donation);
+    const base = tiers.length ? Math.min(...tiers.map((x) => x.price)) : 0;
+    const noon = toTime(Math.ceil(nowMinutes / 60) * 60);
+    if (isFlexibleResource(p.bookingType)) {
+      const d = flexDurations(p)[0] ?? 60;
+      return productDurationPrice(p, DEMO_TODAY, noon, d, base);
+    }
+    if (isResourceType(p.bookingType)) return resolveProductPrice(p, DEMO_TODAY, noon, base);
+    if (p.sections?.length && !tiers.length) return Math.min(...p.sections.map((x) => x.price));
+    return tiers[0]?.price ?? base;
+  };
+  /** How many THINGS are in the sale, as the tiles count them — two waters and
+   *  a tote bag are three, not "2 items". A booking that is one thing (a field
+   *  hour, a lane) counts once; add-ons and premiums are not things. */
+  const unitCount = cart.reduce((n, e) => {
+    if (e.fixedPrice != null || e.seatLabels?.length) return n + Math.max(1, e.seatLabels?.length ?? 1);
+    const tiers = new Set([...(productById(e.productId)?.tiers.map((x) => x.id) ?? []), ...(productById(e.productId)?.sections?.map((x) => x.id) ?? [])]);
+    const q = e.items.filter((i) => tiers.has(i.tierId) || e.productId.startsWith("inv_") || e.productId === "custom").reduce((a, i) => a + i.qty, 0);
+    return n + Math.max(1, q);
+  }, 0);
+  /** How many of a booking are already in this sale: its tickets, or its
+   *  lines where a line is one booking (a field hour, a lane). */
+  const inSale = (productId: string) =>
+    cart
+      .filter((e) => e.productId === productId)
+      .reduce((n, e) => {
+        if (e.fixedPrice != null || e.seatLabels?.length) return n + Math.max(1, e.seatLabels?.length ?? 1);
+        const tiers = new Set(productById(productId)?.tiers.map((x) => x.id) ?? []);
+        const q = e.items.filter((i) => tiers.has(i.tierId)).reduce((a, i) => a + i.qty, 0);
+        return n + Math.max(1, q);
+      }, 0);
 
   // If non-cash becomes unavailable (no live PSP account), fall back to cash.
   useEffect(() => {
@@ -506,7 +559,9 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         items: [{ tierId: i.id, tierName: i.unit, unitPrice: i.price, qty: 1 }],
       },
     ]);
-    toast.success(t("added", { name: i.name }));
+    /* No toast: the tile's own count and the bar's total change under the
+       finger, and a toast per tap stacked over the top of the screen during
+       exactly the fast run of taps a queue produces. */
   };
 
 
@@ -566,7 +621,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     if (!needsSheet && activeTiers.length >= 1) {
       const tier = activeTiers[0];
       setCart((c) => [...c, { id: `entry_${globalThis.crypto.randomUUID().slice(0, 8)}`, productId: p.id, productName: p.name, items: [{ tierId: tier.id, tierName: tier.name, unitPrice: tier.price, qty: 1 }] }]);
-      toast.success(t("added", { name: p.name }));
+      /* No toast — the tile's count says it landed (see tapItem). */
       return;
     }
     setSheet({ product: p, initial: null });
@@ -921,24 +976,55 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     return { lines, bookings, credits, payload, receipt };
   };
 
+  /* Take payment opens ONE payment sheet, from the sell screen and from the
+     cart alike, and how the customer pays is chosen there — the way Square and
+     Shopify ask "how are they paying?" at the moment of paying. It used to be
+     four tiles in the cart above the button, which a phone could only reach by
+     opening the cart first. The sheet opens on the exact amount in cash, so the
+     commonest sale finishes with one more tap on the same orange button. */
   const charge = async () => {
-    const { payload } = buildSale();
+    setTenderTaka("");
+    setPadOpen(false);
+    setCashOpen(true);
+  };
 
-    if (method === "cash") {
-      // Inline tender step — no page navigation (keeps the cart in view).
-      // Cleared, which reads as the exact amount: the sheet opens ready to
-      // complete rather than waiting to be told what it already knows.
-      setTenderTaka("");
-      setPadOpen(false);
-      setCashOpen(true);
-      return;
+  /** Notes a customer hands over for this amount: the next round hundred,
+   *  five hundred and thousand above it, never one that is too small. A
+   *  fixed ৳500 against ৳582 due was a button that greyed out Complete. */
+  const quickNotes = (dueMinor: number) => {
+    const due = Math.ceil(dueMinor / 100);
+    const out: number[] = [];
+    for (const step of [100, 500, 1000, 2000, 5000]) {
+      const n = Math.ceil(due / step) * step;
+      if (n > due && !out.includes(n)) out.push(n);
+      if (out.length === 3) break;
     }
+    return out;
+  };
+
+  /** What the orange button in the payment sheet does, by method. */
+  const finishPayment = async (tenderedMinor: number, changeMinor: number) => {
+    if (method === "cash") return completeCash(tenderedMinor, changeMinor);
     if (method === "bkash" || method === "bangla_qr") {
       // The sale only lands once the wallet payment is confirmed.
+      setCashOpen(false);
       setNc({ method, state: "pending", txn: "" });
       return;
     }
+    setCashSaving(true);
     await settleInline();
+    setCashSaving(false);
+    setCashOpen(false);
+  };
+
+  /** From the sell screen: a sale with a problem to fix (a discount over the
+   *  limit, a missing reason) goes to the cart, where the problem is shown. */
+  const startPayment = () => {
+    if (overLimit || reasonNeeded) {
+      openCart();
+      return;
+    }
+    void charge();
   };
 
   /**
@@ -1076,7 +1162,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   }), [t]);
 
   return (
-    <div className="grid h-full grid-cols-1 gap-comfortable p-comfortable pb-[72px] lg:grid-cols-[1fr_23rem] lg:pb-comfortable">
+    <div className={cn("grid h-full grid-cols-1 gap-comfortable p-comfortable lg:grid-cols-[1fr_23rem] lg:pb-comfortable", "pb-[120px]")}>
       {/* The Go chrome names this screen visually; the heading exists so a
           screen reader lands on a named page rather than an unlabelled grid. */}
       <h1 className="sr-only">{t("posTitle")}</h1>
@@ -1108,233 +1194,124 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
             </button>
           )}
         </div>
-        {/* Category chips */}
-        {/* Full-bleed and snapping. The row already scrolled, but the last chip
-            was cut off INSIDE the page padding, which reads as a clipped
-            container rather than as "there is more this way". Bleeding it to
-            the screen edge puts the cut on the edge itself, which is the
-            affordance everyone already knows. */}
-        {/* Wraps rather than scrolls sideways. A chip that has scrolled out of
-            view is a group nobody knows exists, and the cut edge reads as a
-            clipped container at least as often as it reads as "more this way". */}
-        <div className="flex flex-wrap gap-tight py-inline">
-          {[
-            /* Three chips at most, and each is a KIND of thing rather than a
-               group somebody named: everything, the shelf, event tickets. Each
-               appears only when there is something in it. */
-            { id: "all", name: t("categoryAll") },
-            ...(shopItems.length > 0 ? [{ id: SHOP, name: t("shop.chip") }] : []),
-            ...(eventsForSale.length > 0 ? [{ id: EVENTS, name: t("event.chip") }] : []),
-          ].map((c) => (
-            <button key={c.id} type="button" data-chip={c.id} onClick={() => setCategory(c.id)} className={`h-11 min-w-11 shrink-0 snap-start rounded-full px-section text-sm shadow-go transition-colors duration-quick ${category === c.id ? "bg-ember-solid font-medium text-white" : "bg-card text-muted active:bg-muted-wash"}`}>{c.name}</button>
-          ))}
-        </div>
-        <div className="flex-1 overflow-y-auto">
+        {/* What to show — one segmented row, the Schedule's own control, and
+            only when there is a choice to make: everything, the shelf, event
+            tickets. Each appears only when there is something in it. */}
+        {wallGroups.length > 1 && (
+          <div
+            role="tablist"
+            aria-label={t("categoryLabel")}
+            className="go-surface grid gap-1 rounded-go p-1"
+            style={{ gridTemplateColumns: `repeat(${wallGroups.length}, minmax(0, 1fr))` }}
+          >
+            {wallGroups.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                role="tab"
+                aria-selected={category === c.id}
+                data-chip={c.id}
+                onClick={() => setCategory(c.id)}
+                className={cn(
+                  "flex min-h-11 items-center justify-center rounded-go-sm px-1 text-center text-[0.875rem] font-semibold leading-tight transition-colors duration-quick",
+                  category === c.id ? "bg-ember-solid text-white" : "text-fg hover:bg-muted-wash",
+                )}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {productsQ.loading ? (
-            <div aria-busy="true" className="flex animate-pulse flex-col gap-tight p-section"><div className="h-4 w-1/3 rounded-go-sm bg-line" /><div className="h-4 w-2/3 rounded-go-sm bg-line" /><div className="h-4 w-1/2 rounded-go-sm bg-line" /></div>
+            <div aria-busy="true" className="go-surface flex animate-pulse flex-col gap-tight rounded-go p-section"><div className="h-4 w-1/3 rounded-go-sm bg-line" /><div className="h-4 w-2/3 rounded-go-sm bg-line" /><div className="h-4 w-1/2 rounded-go-sm bg-line" /></div>
           ) : (
-            /* A grid of cards, two up on a phone. Each card answers the four
-               things a counter asks in the order it asks them: what is it,
-               what does it cost, and what is it doing right now.
-
-               Grid rows stretch, so cards in a row match height without any
-               content being clamped to make them match — the guidance is
-               explicit that a DISTINGUISHING NAME must not be clipped merely
-               for uniformity. The name gets three lines before it clamps, and
-               the sheet behind the card carries it in full either way. */
-            <div className="grid grid-cols-2 gap-comfortable sm:grid-cols-3 xl:grid-cols-4">
-              {shown.map((p) => {
-                const live = posLiveState(p, DEMO_TODAY, nowMinutes, liveWords);
-                const from = Math.min(...(p.tiers.filter((t) => t.active).map((t) => t.price).concat(p.sections?.map((s) => s.price) ?? []).concat([Infinity])));
-                return (
-                <div
-                  key={p.id}
-                  data-focus-host
-                  /* The focus ring lives on the CARD, not on the button inside
-                     it. `overflow-hidden` (which keeps the press tint inside
-                     the rounded corners) was clipping the button's outline
-                     completely, so tabbing across the product wall moved the
-                     focus and showed nothing at all.
-
-                     INSET, because an outset ring is painted outside the card's
-                     box and the scroller above is `overflow-y-auto` — which in
-                     CSS forces the other axis to clip too. Its content edge and
-                     the grid's first card share an origin with no padding
-                     between them, so the top row and the left column had two
-                     pixels of ember drawn outside the clip and thrown away.
-                     Inset needs no room, and it is what the search field on
-                     this same screen already does. */
-                  className="go-surface flex overflow-hidden transition-shadow duration-quick hover:shadow-md focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember active:scale-[0.99]"
-                >
-                <button type="button" onClick={() => tapProduct(p)} className="flex min-w-0 flex-1 flex-col gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-ember/10">
-                  <span className="flex w-full items-start justify-between gap-tight">
-                    <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="card" />
-                    {/* A status word in the corner, only where there is one to
-                        say. It stays on one line and never shrinks — a pill
-                        that wraps is worse than no pill. The meta line below
-                        still carries the number; this is the glance. */}
-                    {live && live.tone !== "ok" && (
-                      <span className={`shrink-0 whitespace-nowrap rounded-full px-tight py-inline text-[0.75rem] font-medium ${live.tone === "none" ? "bg-danger/10 text-danger" : "bg-ember/15 text-brand-foreground"}`}>
-                        {live.tone === "none" ? t("sheet.soldOut") : t("live.limited")}
-                      </span>
-                    )}
-                  </span>
-
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="line-clamp-3 text-[0.9375rem] font-semibold leading-snug">{p.name}</span>
-                    {/* The price is the figure a cashier reads out, so it is
-                        the loudest thing on the card. 20px at 700 also makes
-                        `ember` legal as a letterform: WCAG counts >=18.66px
-                        bold as large text, where the floor is 3:1 and ember
-                        measures 3.50:1 on white and 6.21:1 on the dark card.
-                        At 13px it would not have been, which is why every
-                        other price in this app uses the darker brand step. */}
-                    <span className="mt-inline text-[1.25rem] font-bold leading-none text-ember">{formatPriceShort(from, currency)}</span>
-                    <span className="mt-tight line-clamp-2 text-[0.8125rem] leading-tight text-muted">{subtitle(p, { resources, team: teamQ.data?.data })}</span>
-                    {/* What this product is doing RIGHT NOW, stated per booking
-                        type — the next departure and its seats, how many lanes
-                        are free, how much of today's allowance is left. */}
-                    {live && (
-                      <span className={`mt-inline flex items-center gap-inline text-[0.8125rem] leading-tight ${live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-brand-foreground" : "text-success"}`}>
-                        {/* A dot ahead of the words. Across a wall of products
-                            the eye reads the colour before it reads anything —
-                            and the words carry it anyway, so the dot is never
-                            the only signal. */}
-                        <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
-                        <span className="min-w-0 truncate">{live.text}</span>
-                      </span>
-                    )}
-                  </span>
-                </button>
-                </div>
-                );
-              })}
-              {/* A line across the grid before the shelf starts, when both
-                  are on screen. Interleaved alphabetically, a bottle of water
-                  sat between two bookings and a cashier scanning for the
-                  Planetarium had to read past it; these are a different kind
-                  of thing and they group. */}
-              {/* Not a shelf item, so it goes ABOVE the heading rather than
-                  under it — a catch-all charge filed under Shop would say the
-                  till had counted stock it never touched. */}
-              {/* Events. Grouped under their own heading for the same reason
-                  the shelf is: an event is a different kind of thing from a
-                  booking, and a cashier scanning for one should not have to
-                  read past the other. A tap opens its own sheet — there IS
-                  something to decide: which day, and which ticket. */}
-              {shownEvents.length > 0 && (
-                <p className="col-span-full flex items-center gap-tight text-[0.8125rem] font-semibold text-muted">
-                  <Ticket size={15} strokeWidth={1.5} aria-hidden />
-                  {t("event.chip")}
-                </p>
-              )}
-              {shownEvents.map((e) => {
-                const left = eventPlacesLeft(e);
-                const gone = left <= 0;
-                return (
-                  <button
-                    key={e.id}
-                    type="button"
-                    disabled={gone}
-                    onClick={() => setEventSheet(e)}
-                    className={cn(
-                      "flex min-h-[140px] flex-col gap-tight rounded-go border p-comfortable text-left shadow-go transition-colors duration-quick",
-                      gone ? "border-line opacity-60" : "border-transparent bg-card active:bg-ember/10",
-                    )}
-                  >
-                    <span className="line-clamp-3 text-[0.9375rem] font-semibold leading-snug">{e.title}</span>
-                    <span className="mt-auto text-[1.25rem] font-bold text-brand-foreground">
-                      {eventFromPrice(e) === 0 ? t("event.free") : formatPriceShort(eventFromPrice(e), currency)}
-                    </span>
-                    <span className="text-[0.8125rem] text-muted">
-                      {formatDay(e.startsAt.slice(0, 10), { weekday: true })} · {e.venueName}
-                    </span>
-                    {gone ? (
-                      <span className="text-[0.8125rem] font-medium text-muted">{t("event.soldOut")}</span>
-                    ) : left <= 20 ? (
-                      <span className="text-[0.8125rem] font-medium text-warning">{t("event.left", { count: left })}</span>
-                    ) : null}
-                  </button>
-                );
-              })}
-              {shelfHeading && customTile}
-              {shelfHeading && (
-                <p className="col-span-full mt-tight flex items-center gap-tight text-[0.8125rem] font-semibold text-muted">
-                  <ShoppingBag size={15} strokeWidth={1.5} aria-hidden />
-                  {t("shop.chip")}
-                </p>
-              )}
-              {/* The shelf. Same card, one deliberate difference: a tap sells
-                  it rather than opening anything, because there is nothing to
-                  decide. Stock is silent when it is fine, says the number when
-                  it is low, and dims the card when it is gone — a wall where
-                  every card shouts a count is a wall nobody reads. */}
-              {shownItems.map((i) => {
-                const gone = i.tracked && i.onHand <= 0;
-                const low = i.tracked && !gone && i.onHand <= i.lowAt;
-                const inCart = cart.find((e) => e.productId === inventoryLineId(i.id))?.items[0]?.qty ?? 0;
-                return (
-                  <div
-                    key={i.id}
-                    data-focus-host
-                    className={cn(
-                      "go-surface flex overflow-hidden transition-shadow duration-quick focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember",
-                      gone ? "opacity-60" : "hover:shadow-md active:scale-[0.99]",
-                    )}
-                  >
-                    <button
-                      type="button"
+            /* One card, cells divided by hairlines: each tile draws its own
+               right and bottom rule, and the grid is pulled 1px out on those
+               two sides so the card's edge is not drawn twice. Grid rows
+               stretch, so a row of tiles matches height without clamping a
+               name to make it — a name that tells two bookings apart gets
+               three lines, and the sheet behind it carries the rest. */
+            <div className="go-surface overflow-hidden rounded-go">
+              <div className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
+                {shown.map((p) => {
+                  const live = posLiveState(p, DEMO_TODAY, nowMinutes, liveWords);
+                  const n = inSale(p.id);
+                  return (
+                    <WallTile
+                      key={p.id}
+                      onClick={() => tapProduct(p)}
+                      ariaLabel={n > 0 ? t("wall.inSaleAria", { name: p.name, count: n }) : undefined}
+                      thumb={<ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="card" />}
+                      name={p.name}
+                      price={formatPriceShort(tilePrice(p), currency)}
+                      meta={subtitle(p, { resources, team: teamQ.data?.data })}
+                      live={live}
+                      count={n}
+                      flag={live && live.tone === "low" ? t("live.limited") : undefined}
+                      soldOut={!!live && live.tone === "none"}
+                      soldOutLabel={t("sheet.soldOut")}
+                    />
+                  );
+                })}
+                {/* Events: a different kind of thing from a booking, so they
+                    group under their own heading. A tap opens its own sheet —
+                    there is something to decide: which day, which ticket. */}
+                {shownEvents.length > 0 && <WallHeading icon={<Ticket size={16} strokeWidth={1.75} aria-hidden />}>{t("event.chip")}</WallHeading>}
+                {shownEvents.map((e) => {
+                  const left = eventPlacesLeft(e);
+                  const gone = left <= 0;
+                  return (
+                    <WallTile
+                      key={e.id}
+                      onClick={() => setEventSheet(e)}
+                      disabled={gone}
+                      thumb={<span className="flex size-11 shrink-0 items-center justify-center rounded-go-sm bg-subtle text-muted"><Ticket size={20} strokeWidth={1.5} aria-hidden /></span>}
+                      name={e.title}
+                      price={eventFromPrice(e) === 0 ? t("event.free") : formatPriceShort(eventFromPrice(e), currency)}
+                      meta={`${formatDay(e.startsAt.slice(0, 10), { weekday: true })} · ${e.venueName}`}
+                      live={!gone && left <= 20 ? { tone: "low", text: t("event.left", { count: left }) } : null}
+                      soldOut={gone}
+                      soldOutLabel={t("event.soldOut")}
+                    />
+                  );
+                })}
+                {/* Not a shelf item, so it goes ABOVE the shop heading rather
+                    than under it — a catch-all charge filed under Shop would
+                    say the till had counted stock it never touched. */}
+                {shelfHeading && customTile}
+                {shelfHeading && <WallHeading icon={<ShoppingBag size={16} strokeWidth={1.75} aria-hidden />}>{t("shop.chip")}</WallHeading>}
+                {/* The shelf. One tap sells it — there is nothing to decide.
+                    Stock is silent when fine, says the number when low, and
+                    the tile moves to the page colour when it is gone. */}
+                {shownItems.map((i) => {
+                  const gone = i.tracked && i.onHand <= 0;
+                  const low = i.tracked && !gone && i.onHand <= i.lowAt;
+                  const inCart = cart.find((e) => e.productId === inventoryLineId(i.id))?.items[0]?.qty ?? 0;
+                  return (
+                    <WallTile
+                      key={i.id}
                       onClick={() => tapItem(i)}
-                      className="flex min-w-0 flex-1 flex-col gap-comfortable p-comfortable text-left transition-colors duration-quick active:bg-ember/10"
-                    >
-                      <span className="flex w-full items-start justify-between gap-tight">
-                        <span className="flex size-11 shrink-0 items-center justify-center rounded-go-sm bg-subtle text-muted">
-                          <ShopGlyph kind={i.kind} />
-                        </span>
-                        <span className="flex shrink-0 items-center gap-inline">
-                          {/* How many are already in this sale — the one thing
-                              a second tap needs to confirm it landed. */}
-                          {inCart > 0 && (
-                            <span className="rounded-full bg-ember-solid px-tight py-inline text-[0.75rem] font-semibold text-white">{inCart}</span>
-                          )}
-                          {gone && (
-                            <span className="whitespace-nowrap rounded-full bg-danger/10 px-tight py-inline text-[0.75rem] font-medium text-danger">{t("sheet.soldOut")}</span>
-                          )}
-                        </span>
-                      </span>
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="line-clamp-3 text-[0.9375rem] font-semibold leading-snug">{i.name}</span>
-                        <span className="mt-inline text-[1.25rem] font-bold leading-none text-ember">{formatPriceShort(i.price, currency)}</span>
-                        {/* The glyph already says it is from the shop and the
-                            heading says it again, so this line carries what
-                            neither can: what one tap actually buys.
-
-                            The unit wins where it names a thing — one BOTTLE,
-                            one PAIR — because that is the fact a cashier needs
-                            and the glyph cannot give. Where the unit is a
-                            quantity word the kind takes its place, and a tote
-                            bag under a shop glyph needs neither. One line
-                            either way: two wrapped lines made the tile taller
-                            than the bookings beside it. */}
-                        <span className="mt-tight line-clamp-2 text-[0.8125rem] leading-tight text-muted">
-                          {GENERIC_UNITS.has(i.unit.trim().toLowerCase())
-                            ? i.kind === "merch"
-                              ? null
-                              : t(`shop.kind.${i.kind}`)
-                            : t("shop.per", { unit: i.unit })}
-                        </span>
-                        {low && (
-                          <span className="mt-inline flex items-center gap-inline text-[0.8125rem] font-medium leading-tight text-brand-foreground">
-                            <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
-                            <span className="min-w-0 truncate">{t("shop.left", { count: i.onHand, unit: i.unit })}</span>
-                          </span>
-                        )}
-                      </span>
-                    </button>
-                  </div>
-                );
-              })}
-              {!shelfHeading && customTile}
+                      ariaLabel={inCart > 0 ? t("wall.inSaleAria", { name: i.name, count: inCart }) : undefined}
+                      thumb={<span className="flex size-11 shrink-0 items-center justify-center rounded-go-sm bg-subtle text-muted"><ShopGlyph kind={i.kind} /></span>}
+                      name={i.name}
+                      price={formatPriceShort(i.price, currency)}
+                      meta={
+                        GENERIC_UNITS.has(i.unit.trim().toLowerCase())
+                          ? i.kind === "merch"
+                            ? null
+                            : t(`shop.kind.${i.kind}`)
+                          : t("shop.per", { unit: i.unit })
+                      }
+                      live={low ? { tone: "low", text: t("shop.left", { count: i.onHand, unit: i.unit }) } : null}
+                      count={inCart}
+                      soldOut={gone}
+                      soldOutLabel={t("sheet.soldOut")}
+                    />
+                  );
+                })}
+                {!shelfHeading && customTile}
+              </div>
             </div>
           )}
         </div>
@@ -1353,11 +1330,17 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               atomic status — "2 items in cart" — rather than a bare number that
               a screen reader reads out of context. */}
           <p role="status" aria-atomic="true" className="min-w-0 flex-1 truncate text-center text-[0.9375rem] font-semibold">
-            {t("phoneSummary", { count: cart.length })}
+            {t("phoneSummary", { count: unitCount })}
           </p>
-          <button type="button" disabled={cart.length === 0} onClick={() => { setParkName(customer); setParkOpen(true); }} className="flex h-11 shrink-0 items-center gap-inline rounded-full bg-subtle px-comfortable text-sm font-medium text-fg disabled:text-faint dark:border dark:border-line dark:bg-transparent" title={cart.length === 0 ? t("cart.parkNothing") : t("cart.parkThis")}>
-            <Archive size={16} strokeWidth={1.75} />{t("cart.park")}
-          </button>
+          {/* Paused sales come back from here; pausing this one is the
+              foot's left button, beside Take payment. */}
+          {parked.length > 0 ? (
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-11 shrink-0 items-center gap-inline rounded-full bg-ember/15 px-comfortable text-[0.8125rem] font-medium text-brand-foreground">
+              {t("parkedBadge", { count: parked.length })}
+            </button>
+          ) : cartOpen ? (
+            <span className="w-[5.5rem] shrink-0 lg:hidden" aria-hidden />
+          ) : null}
         </div>
         {/* One scrolling region for the sale itself — the lines AND the rows
             that modify them. They used to be separate: the lines were flex-1
@@ -1369,147 +1352,149 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="p-comfortable">
           {cart.length === 0 ? (
-            <EmptyState title={t("cart.empty")} message={t("cart.emptyHint")} />
+            /* Nothing yet: said once, plainly, on the same card the lines will
+               sit on. */
+            <div className="go-surface flex flex-col items-center gap-tight rounded-go px-section py-section text-center">
+              <ShoppingBag size={28} strokeWidth={1.5} className="text-muted" aria-hidden />
+              <p className="text-[1rem] font-semibold text-fg">{t("cart.empty")}</p>
+              <p className="text-[0.875rem] text-muted">{t("cart.emptyHint")}</p>
+            </div>
           ) : (
-            <div className="flex flex-col gap-comfortable">
+            <div className="flex flex-col gap-tight">
+              {/* The lines on ONE card, divided by hairlines — the Schedule's
+                  drawing. Each line reads the same way: picture, what it is,
+                  the money on the right; under it, what can be done to it,
+                  quiet until it is wanted. Tapping the words opens the line in
+                  its sheet to change it. */}
+              <div className="go-surface divide-y divide-line overflow-hidden rounded-go">
               {cart.map((e) => (
-                <div key={e.id} className="go-surface p-comfortable">
-                <div className="flex flex-col gap-tight">
+                <div key={e.id} className="px-comfortable py-comfortable">
                   <div className="flex items-start gap-comfortable">
-                  {productById(e.productId) && (
-                    <ProductThumb images={productById(e.productId)!.images} name={e.productName} bookingType={productById(e.productId)!.bookingType} size="thumb" />
-                  )}
-                  <div className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center" role="button" tabIndex={0} /* Guarded on the PRODUCT, not on one magic id: a custom amount and
-                       something off the shelf both have no booking behind them, and
-                       `productById(...)!` on either was a crash waiting for the
-                       first tote bag. */
-                    onClick={() => { const prod = productById(e.productId); if (prod) setSheet({ product: prod, initial: e }); }} onKeyDown={(k) => { const prod = productById(e.productId); if (k.key === "Enter" && prod) setSheet({ product: prod, initial: e }); }}>
-                    <div className="flex items-start justify-between gap-tight">
-                      <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">{e.productName}</span>
-                      <span className="shrink-0 text-right">
-                        <span className="block whitespace-nowrap text-[0.9375rem] font-semibold">{formatMoney(entryTotal(e), currency)}</span>
-                        {/* The unit maths, but only where it is exactly true: one
-                            tier, so qty x unit IS the line. A flat per-booking
-                            price divided by a party size would be a number the
-                            receipt never charged. */}
-                        {e.items.length === 1 && e.fixedPrice == null && e.items[0].qty > 1 && (
-                          <span className="block whitespace-nowrap text-[0.8125rem] text-muted">
-                            {e.items[0].qty} × {formatMoney(e.items[0].unitPrice, currency)}
-                          </span>
-                        )}
-                      </span>
+                    {productById(e.productId) && (
+                      <ProductThumb images={productById(e.productId)!.images} name={e.productName} bookingType={productById(e.productId)!.bookingType} size="chip" className="h-10 w-10" />
+                    )}
+                    <div
+                      className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center"
+                      role="button"
+                      tabIndex={0}
+                      /* Guarded on the PRODUCT: a custom amount and something off
+                         the shelf have no booking behind them. */
+                      onClick={() => { const prod = productById(e.productId); if (prod) setSheet({ product: prod, initial: e }); }}
+                      onKeyDown={(k) => { const prod = productById(e.productId); if (k.key === "Enter" && prod) setSheet({ product: prod, initial: e }); }}
+                    >
+                      <div className="flex items-start justify-between gap-tight">
+                        <span className="min-w-0 flex-1 break-words text-[0.9375rem] font-semibold leading-snug">{e.productName}</span>
+                        <span className="shrink-0 text-right">
+                          <span className="block whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums">{formatMoney(entryTotal(e), currency)}</span>
+                          {e.items.length === 1 && e.fixedPrice == null && e.items[0].qty > 1 && (
+                            <span className="block whitespace-nowrap text-[0.8125rem] text-muted">
+                              {e.items[0].qty} × {formatMoney(e.items[0].unitPrice, currency)}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="text-[0.8125rem] text-muted">{[/* The stepper already says how many of a plain line. */ simpleQty(e) ? "" : e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.eventDayLabel, e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
+                      {entryCoveredQty(e) > 0 && <div className="text-[0.8125rem] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
+                      {e.lineDiscountAmount ? (
+                        <div className="text-[0.8125rem] text-danger">−{formatMoney(e.lineDiscountAmount, currency)}</div>
+                      ) : (e.lineDiscountPct ?? 0) > 0 ? (
+                        <div className="text-[0.8125rem] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>
+                      ) : null}
+                      {entryBalance(e) > 0 && <div className="text-[0.8125rem] text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                     </div>
-                    <div className="text-[0.8125rem] text-muted">{[e.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "), e.seatLabels?.length ? e.seatLabels.join(", ") : "", e.eventDayLabel, e.resourceLabel, e.providerLabel, e.partySize != null ? t("cart.groupOf", { count: e.partySize }) : ""].filter(Boolean).join(" · ")}{slotLabel(e)}</div>
-                    {entryCoveredQty(e) > 0 && <div className="text-[0.8125rem] text-success">{t("cart.paidWithPass", { count: entryCoveredQty(e) })}</div>}
-                    {e.lineDiscountAmount ? (
-                      <div className="text-[0.8125rem] text-danger">−{formatMoney(e.lineDiscountAmount, currency)}</div>
-                    ) : (e.lineDiscountPct ?? 0) > 0 ? (
-                      <div className="text-[0.8125rem] text-danger">{t("cart.lineDiscount", { pct: e.lineDiscountPct ?? 0 })}</div>
-                    ) : null}
-                    {entryBalance(e) > 0 && <div className="text-[0.8125rem] text-muted">{t("cart.depositNow", { pct: productById(e.productId)?.policies?.depositPct ?? 0, balance: formatMoney(entryBalance(e), currency) })}</div>}
                   </div>
-                  </div>
-                  <div className="mt-comfortable flex flex-wrap items-center gap-tight">
-                  {simpleQty(e) && (
-                    <span className="flex w-fit items-center gap-inline rounded-full border border-line">
-                      <button type="button" aria-label={t("sheet.fewer")} disabled={e.items[0].qty <= 1} onClick={() => bumpQty(e.id, -1)} className="flex h-11 w-11 items-center justify-center rounded-full text-lg disabled:text-faint active:bg-ember/10">−</button>
-                      <span className="min-w-6 text-center text-sm font-medium">{e.items[0].qty}</span>
-                      <button type="button" aria-label={t("sheet.more")} onClick={() => bumpQty(e.id, 1)} className="flex h-11 w-11 items-center justify-center rounded-full text-lg active:bg-ember/10">+</button>
-                    </span>
-                  )}
-                  {/* Named, not guessed. "Add aria-label for icon-only buttons"
-                      is the floor and these had it; the reference puts the name
-                      ON the control, which is what a till worked by rotating
-                      staff actually needs — a bare % beside a bin is guessable,
-                      not obvious. They were 58px tiles stacking glyph over
-                      label on a row of their own; the name now sits BESIDE the
-                      glyph on the stepper's row, which keeps every word and
-                      gives the line 70px back. */}
-                  <button
-                    type="button"
-                    aria-label={t("cart.lineDiscountLabel")}
-                    onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
-                    className={`ml-auto flex h-11 items-center gap-inline rounded-full px-comfortable text-[0.8125rem] active:bg-ember/20 ${(e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "bg-ember/15 font-medium text-brand-foreground" : "bg-subtle text-muted dark:bg-line"}`}
-                  >
-                    <span className="font-medium">{e.lineDiscountAmount ? "৳" : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : "%"}</span>
-                    <span className="whitespace-nowrap">{t("summary.discount")}</span>
-                  </button>
-                  {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
-                    <button type="button" onClick={() => extendEntry(e)} className="flex h-11 items-center gap-inline rounded-full bg-subtle px-comfortable text-[0.8125rem] text-muted active:bg-ember/20 dark:bg-line">
-                      <span className="font-medium">+{productById(e.productId)!.durationConfig!.incrementMinutes}m</span>
-                      <span className="whitespace-nowrap">{t("cart.extend")}</span>
+                  {/* What can be done to the line: a stepper where the quantity
+                      is just a number, then quiet word-and-picture buttons. */}
+                  <div className="mt-tight flex flex-wrap items-center gap-x-inline gap-y-tight">
+                    {simpleQty(e) && (
+                      <span className="mr-auto flex w-fit items-center rounded-full border border-line">
+                        <button type="button" aria-label={t("sheet.fewer")} disabled={e.items[0].qty <= 1} onClick={() => bumpQty(e.id, -1)} className="flex h-11 w-11 items-center justify-center rounded-full text-lg disabled:text-faint active:bg-ember/10">−</button>
+                        <span className="min-w-6 text-center text-[0.9375rem] font-semibold tabular-nums">{e.items[0].qty}</span>
+                        <button type="button" aria-label={t("sheet.more")} onClick={() => bumpQty(e.id, 1)} className="flex h-11 w-11 items-center justify-center rounded-full text-lg active:bg-ember/10">+</button>
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      aria-label={t("cart.lineDiscountLabel")}
+                      aria-expanded={lineDiscEdit === e.id}
+                      onClick={() => setLineDiscEdit((cur) => (cur === e.id ? null : e.id))}
+                      className={cn(
+                        "flex h-11 items-center gap-inline rounded-full px-tight text-[0.8125rem] font-medium active:bg-ember/10",
+                        !simpleQty(e) && "ml-auto",
+                        (e.lineDiscountPct ?? 0) > 0 || e.lineDiscountAmount ? "text-brand-foreground" : "text-muted",
+                      )}
+                    >
+                      <Percent size={15} strokeWidth={2} aria-hidden />
+                      <span className="whitespace-nowrap">{e.lineDiscountAmount ? formatMoney(e.lineDiscountAmount, currency) : (e.lineDiscountPct ?? 0) > 0 ? `−${e.lineDiscountPct}%` : t("summary.discount")}</span>
                     </button>
+                    {productById(e.productId)?.durationConfig && e.fixedPrice != null && e.slotEnd && (
+                      <button type="button" onClick={() => extendEntry(e)} className="flex h-11 items-center gap-inline rounded-full px-tight text-[0.8125rem] font-medium text-muted active:bg-ember/10">
+                        <Plus size={15} strokeWidth={2} aria-hidden />
+                        <span className="whitespace-nowrap">{t("cart.extend")} {productById(e.productId)!.durationConfig!.incrementMinutes}m</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      aria-label={t("cart.remove")}
+                      onClick={() => {
+                        const at = cart.findIndex((x) => x.id === e.id);
+                        const line = e;
+                        setCart((c) => c.filter((x) => x.id !== e.id));
+                        toast.success(t("cart.removed", { name: e.productName }), {
+                          label: t("cart.undo"),
+                          run: () => setCart((c) => {
+                            if (c.some((x) => x.id === line.id)) return c;
+                            const next = [...c];
+                            next.splice(Math.min(at, next.length), 0, line);
+                            return next;
+                          }),
+                        });
+                      }}
+                      className="flex h-11 items-center gap-inline rounded-full px-tight text-[0.8125rem] font-medium text-danger active:bg-danger/10"
+                    >
+                      <Trash2 size={15} strokeWidth={2} aria-hidden />
+                      <span className="whitespace-nowrap">{t("cart.remove")}</span>
+                    </button>
+                  </div>
+                  {lineDiscEdit === e.id && (
+                    <div className="mt-tight border-t border-line pt-tight">
+                      <DiscountInput
+                        compact
+                        label={t("cart.lineDiscountLabel")}
+                        mode={e.lineDiscountAmount != null ? "amount" : "percent"}
+                        onMode={(m) =>
+                          setCart((c) =>
+                            c.map((x) =>
+                              x.id === e.id
+                                ? m === "amount"
+                                  ? { ...x, lineDiscountAmount: x.lineDiscountAmount ?? 0, lineDiscountPct: undefined }
+                                  : { ...x, lineDiscountPct: x.lineDiscountPct ?? 0, lineDiscountAmount: undefined }
+                                : x,
+                            ),
+                          )
+                        }
+                        value={e.lineDiscountAmount != null ? e.lineDiscountAmount : (e.lineDiscountPct ?? 0)}
+                        base={entryTotal(e)}
+                        currency={currency}
+                        onChange={(v) =>
+                          setCart((c) =>
+                            c.map((x) =>
+                              x.id === e.id
+                                ? x.lineDiscountAmount != null
+                                  ? { ...x, lineDiscountAmount: v }
+                                  : { ...x, lineDiscountPct: v }
+                                : x,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
                   )}
-                  <button
-                    type="button"
-                    aria-label={t("cart.remove")}
-                    onClick={() => {
-                      const at = cart.findIndex((x) => x.id === e.id);
-                      const line = e;
-                      setCart((c) => c.filter((x) => x.id !== e.id));
-                      toast.success(t("cart.removed", { name: e.productName }), {
-                        label: t("cart.undo"),
-                        run: () => setCart((c) => {
-                          if (c.some((x) => x.id === line.id)) return c;
-                          const next = [...c];
-                          next.splice(Math.min(at, next.length), 0, line);
-                          return next;
-                        }),
-                      });
-                    }}
-                    className="flex h-11 items-center gap-inline rounded-full bg-danger/10 px-comfortable text-[0.8125rem] text-danger active:bg-danger/20"
-                  >
-                    <Trash2 size={15} strokeWidth={1.75} aria-hidden />
-                    <span className="whitespace-nowrap">{t("cart.remove")}</span>
-                  </button>
-                  </div>
-                </div>
-                {lineDiscEdit === e.id && (
-                  /* No frame of its own: it is already inside the line's card,
-                     and a box in a box is what the padding rhythm settled. */
-                  <div className="mt-tight border-t border-hairline pt-tight">
-                    <DiscountInput
-                      compact
-                      label={t("cart.lineDiscountLabel")}
-                      mode={e.lineDiscountAmount != null ? "amount" : "percent"}
-                      onMode={(m) =>
-                        setCart((c) =>
-                          c.map((x) =>
-                            x.id === e.id
-                              ? m === "amount"
-                                ? { ...x, lineDiscountAmount: x.lineDiscountAmount ?? 0, lineDiscountPct: undefined }
-                                : { ...x, lineDiscountPct: x.lineDiscountPct ?? 0, lineDiscountAmount: undefined }
-                              : x,
-                          ),
-                        )
-                      }
-                      value={e.lineDiscountAmount != null ? e.lineDiscountAmount : (e.lineDiscountPct ?? 0)}
-                      base={entryTotal(e)}
-                      currency={currency}
-                      onChange={(v) =>
-                        setCart((c) =>
-                          c.map((x) =>
-                            x.id === e.id
-                              ? x.lineDiscountAmount != null
-                                ? { ...x, lineDiscountAmount: v }
-                                : { ...x, lineDiscountPct: v }
-                              : x,
-                          ),
-                        )
-                      }
-                    />
-                  </div>
-                )}
                 </div>
               ))}
-              {/* After the lines, not above them: the top of the cart is for
-                  the sale, and down here "clear all" plainly acts on the list
-                  it follows rather than sitting in a 44px strip of its own.
-                  Pulled up 8px because the gap below it — the panel's own
-                  padding, then a rule — was the same 12px as the gap above,
-                  which left it owned by neither the lines nor what follows. */}
+              </div>
               {cart.length > 1 && (
-                <div className="-mt-tight flex justify-end">
+                <div className="flex justify-end">
                   <button type="button" onClick={() => setClearOpen(true)} className="flex h-11 items-center rounded-full px-comfortable text-[0.8125rem] text-muted active:bg-ember/10">
                     {t("cart.clearAll")}
                   </button>
@@ -1756,67 +1741,34 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         </div>
         </div>
 
-        <div className={`border-t border-line p-comfortable ${cart.length === 0 ? "hidden" : ""}`}>
-          {/* Payment method — a named group of tiles. Non-cash methods only
-              appear when a live PSP account is connected. */}
-          <div className="rounded-go bg-card p-comfortable">
-            <p className="mb-tight flex items-center gap-inline text-[0.8125rem] font-medium text-muted">
-              <Wallet size={16} strokeWidth={1.75} />{t("summary.paymentMethod")}
-            </p>
-            <div className="flex gap-tight" role="radiogroup" aria-label={t("summary.paymentMethod")}>
-              {availableMethods.map((m) => {
-                const Icon = METHOD_ICON[m.value] ?? Wallet;
-                const on = method === m.value;
-                return (
-                  <button
-                    key={m.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => setMethod(m.value)}
-                    className={`flex min-h-[64px] flex-1 flex-col items-center justify-center gap-inline rounded-go-sm border text-[0.8125rem] transition-colors duration-quick ${on ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card text-muted"}`}
-                  >
-                    <Icon size={18} strokeWidth={1.75} />
-                    <span className="max-w-full truncate px-inline">{enumL.method(m.value)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <Button size="lg" shape="pill" fullWidth className="mt-tight h-14" disabled={cart.length === 0 || overLimit || reasonNeeded} onClick={charge}>
-            {/* The amount never wraps; the method gives way first on narrow screens. */}
-            {/* The amount never wraps; the method gives way first on narrow
-                screens, which is why it is the second half of the string. */}
-            <span className="min-w-0 truncate">{cart.length > 0 ? t("chargeAmount", { amount: formatMoney(dueNow, currency), method: enumL.method(method) }) : t("charge")}</span>
-            <ArrowRight size={18} strokeWidth={2} className="shrink-0" aria-hidden />
-          </Button>
-        </div>
+        {cart.length > 0 && (
+          <ActionBar
+            docked="panel"
+            className="lg:rounded-b-go"
+            label={t("cart.barLabel")}
+            secondary={{ label: t("cart.park"), icon: <Archive size={20} strokeWidth={2} aria-hidden />, onClick: () => { setParkName(customer); setParkOpen(true); } }}
+            primary={{
+              label: t("takeAmount", { amount: formatPriceShort(dueNow, currency) }),
+              icon: <Banknote size={20} strokeWidth={2} aria-hidden />,
+              onClick: () => void charge(),
+              disabled: overLimit || reasonNeeded,
+            }}
+          />
+        )}
       </div>
 
-      {/* Phone summary bar — the floating action pill the reference draws:
-          inset from the screen edges and sitting above the nav rather than
-          welded to the bottom of the page.
-
-          It stays put when the cart is empty and goes quiet instead of away.
-          Hiding it read better and cost real function: this is the ONLY route
-          into the cart on a phone, and the customer picker lives inside it, so
-          hiding it made "attach the member before ringing anything up"
-          impossible. Loud ember once there is a sale, a plain card until
-          then. */}
+      {/* The phone's sale bar — Cart on the left, Take on the right, always
+          there. An empty sale shows "Cart · 0" and a Take that waits, so the
+          bar never appears under the finger on the first tap and the cart
+          (where a customer is attached before anything is rung up) is always
+          one tap away. */}
       {!cartOpen && (
-        <button
-          type="button"
-          onClick={() => openCart()}
-          className={cn(
-            "fixed inset-x-comfortable z-30 flex h-14 items-center justify-between gap-comfortable rounded-full px-section shadow-go-pop transition-[transform,background-color] duration-quick active:scale-[0.99] lg:hidden",
-            cart.length > 0 ? "bg-ember-solid text-white" : "bg-card text-muted",
-          )}
-          style={{ bottom: "calc(82px + env(safe-area-inset-bottom))" }}
-        >
-          <span className="min-w-0 truncate text-sm font-medium">{customer ? t("phoneSummaryCustomer", { count: cart.length, customer }) : t("phoneSummary", { count: cart.length })}</span>
-          <span className="shrink-0 whitespace-nowrap text-sm font-semibold">{t("viewCart", { amount: formatMoney(dueNow, currency) })}</span>
-        </button>
+          <ActionBar
+            className="lg:hidden"
+            label={t("cart.barLabel")}
+            secondary={{ label: t("cart.openCount", { count: unitCount }), icon: <ShoppingBag size={20} strokeWidth={2} aria-hidden />, onClick: openCart, ariaLabel: t("cart.openAria", { count: unitCount }) }}
+            primary={{ label: t("takeAmount", { amount: formatPriceShort(dueNow, currency) }), icon: <Banknote size={20} strokeWidth={2} aria-hidden />, onClick: startPayment, disabled: cart.length === 0 }}
+          />
       )}
 
       {eventSheet && (
@@ -1832,100 +1784,141 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
       )}
       {sheet && <ProductSheet product={sheet.product} locationId={tillLocationId} currency={currency} initial={sheet.initial} preset={sheet.preset} seatsInCart={seatsInCart} onAdd={upsertEntry} onClose={() => setSheet(null)} team={teamQ.data?.data ?? []} resources={resources} />}
 
-      {/* Inline cash tender — a bottom sheet over the cart, no page navigation. */}
+      {/* The payment sheet — one sheet for every way of paying. */}
       {cashOpen && (() => {
+        const cash = method === "cash";
         const typed = tenderTaka !== "";
-        const tenderedMinor = typed ? (parseInt(tenderTaka, 10) || 0) * 100 : dueNow;
+        const tenderedMinor = cash && typed ? (parseInt(tenderTaka, 10) || 0) * 100 : dueNow;
         const changeMinor = tenderedMinor - dueNow;
         const enough = tenderedMinor >= dueNow;
         const exact = tenderedMinor === dueNow;
         return (
-          <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true" aria-label={t("cash.label")}>
+          <div className="fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true" aria-label={t("pay.title")}>
             <div className="go-sheet-scrim absolute inset-0 bg-inverse/40 backdrop-blur-sm" onClick={() => !cashSaving && setCashOpen(false)} aria-hidden />
-            <div className="relative z-10 go-sheet-panel max-h-[90vh] overflow-y-auto rounded-t-go-lg bg-sheet p-section" style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
-              <div className="mx-auto w-full max-w-[520px]">
-                <div className="mx-auto mb-tight h-1 w-10 rounded-full bg-line" aria-hidden />
-                <div className="mb-section flex items-center justify-between">
-                  <div>
-                    <p className="type-label text-[0.8125rem] text-brand-foreground">{t("cash.label")}</p>
-                    <h2 className="type-h2 text-lg">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</h2>
-                  </div>
-                  {/* 44px: Go is touch at every width, and this was 40. */}
-                  <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
+            <div className="go-sheet-panel relative z-10 mx-auto flex max-h-[92vh] w-full max-w-[560px] flex-col rounded-t-go-lg bg-sheet">
+              <div className="flex items-center justify-between gap-tight px-section pb-tight pt-tight">
+                <span className="w-11" aria-hidden />
+                <span className="h-1 w-10 rounded-full bg-line" aria-hidden />
+                {/* 44px: Go is touch at every width. */}
+                <button type="button" onClick={() => setCashOpen(false)} aria-label={t("cash.close")} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-ember/10"><X size={20} strokeWidth={1.5} /></button>
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col gap-section overflow-y-auto px-section pb-section">
+                {/* What is being paid, as large as the screen allows: it is the
+                    number the customer is told. */}
+                <div className="text-center">
+                  <p className="text-[0.875rem] font-medium text-muted">{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</p>
+                  <p className="mt-inline font-bold tabular-nums text-fg" style={{ fontSize: "clamp(32px, 10vw, 44px)", lineHeight: 1.1 }}>{formatMoney(dueNow, currency)}</p>
+                  {balance > 0 && <p className="mt-inline text-[0.8125rem] text-muted">{t("summary.balanceAtArrival")} {formatMoney(balance, currency)}</p>}
                 </div>
 
-                <div className="card-surface p-section">
-                  <div className="flex justify-between text-muted"><span>{balance > 0 ? t("cash.depositDue") : t("cash.amountDue")}</span><span className="text-lg">{formatMoney(dueNow, currency)}</span></div>
-                  {balance > 0 && <div className="mt-tight flex justify-between text-[0.8125rem] text-muted"><span>{t("summary.balanceAtArrival")}</span><span className="">{formatMoney(balance, currency)}</span></div>}
-                  {/* The received figure IS the way to the pad, which is how
-                      Square does it — tap the amount and the keypad appears.
-                      It replaces a "Type an amount" button: a row that already
-                      shows the number is a better target than a button
-                      underneath it saying you could change it. */}
-                  <button
-                    type="button"
-                    onClick={() => setPadOpen(true)}
-                    aria-label={`${t("cash.tendered")} ${formatMoney(tenderedMinor, currency)} — ${t("cash.tapToChange")}`}
-                    className="mt-tight flex min-h-11 w-full items-center justify-between gap-tight rounded-go-sm text-left active:bg-ember/10"
-                  >
-                    <span className="flex min-w-0 items-center gap-inline">
-                      {t("cash.tendered")}
-                      <Pencil size={13} strokeWidth={2} aria-hidden className="shrink-0 text-muted" />
-                    </span>
-                    <span className="shrink-0 text-lg tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
-                  </button>
-                  {/* Change is an ACTION — money to count back — so it is the
-                      largest thing here WHEN THERE IS ANY. At zero there is
-                      nothing to do with it, and a 40px ৳0.00 was competing with
-                      the button that finishes the sale: one loud line either
-                      way, which is the rule the pay panel already follows.
-
-                      Not 48px: measured at 390, a change of ৳99,424.00 rendered
-                      270px wide into the 243px its row had left once the label
-                      took its share, and clipped. It scales with the screen,
-                      capped where the widest figure a drawer produces still
-                      fits, and the label never shrinks. */}
-                  {exact ? (
-                    <p className="mt-tight text-[0.9375rem] font-medium text-success">{t("cash.noChange")}</p>
-                  ) : (
-                    <div className={`mt-tight flex items-baseline justify-between gap-tight font-medium ${enough ? "text-success" : "text-muted"}`}>
-                      <span className="shrink-0 text-xl">{t("cash.change")}</span>
-                      <span className="min-w-0 truncate text-right" style={{ fontSize: "clamp(28px, 9.5vw, 40px)" }}>
-                        {enough ? formatMoney(changeMinor, currency) : "—"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* The suggestions, as Shopify POS draws them under the field:
-                    exact, then the notes that are actually in a drawer here.
-                    Exact reads as chosen from the start, because it is. */}
-                <div className="mt-section flex gap-tight">
-                  <button
-                    type="button"
-                    aria-pressed={exact}
-                    onClick={() => setTenderTaka("")}
-                    className={`h-12 flex-1 rounded-full border text-sm active:bg-ember/10 ${exact ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-inverse bg-card"}`}
-                  >
-                    {t("cash.exact")}
-                  </button>
-                  {[500, 1000, 2000].map((amt) => (
-                    <button key={amt} type="button" onClick={() => setTenderTaka(String(amt))} className="h-12 flex-1 rounded-full border border-line bg-card text-sm active:bg-ember/10">৳{amt}</button>
-                  ))}
-                </div>
-
-                {/* The pad only where it is wanted: on for a till that keeps it
-                    (Settings → the till), or once the received figure above has
-                    been pressed. 300px of screen for the rarer tender, on a
-                    sheet whose commonest outcome is one tap on Complete. */}
-                {(prefs.posKeypad || padOpen) && (
-                  <div className="mt-section">
-                    <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
+                {/* How they are paying: one row of flat cells, each a picture
+                    and a word. Chosen is a tint with a tick — orange as a fill
+                    belongs to the button that finishes the sale. */}
+                {availableMethods.length > 1 && (
+                  <div role="radiogroup" aria-label={t("pay.method")} className="go-surface grid overflow-hidden rounded-go" style={{ gridTemplateColumns: `repeat(${availableMethods.length}, minmax(0, 1fr))` }}>
+                    {availableMethods.map((m, i) => {
+                      const Icon = METHOD_ICON[m.value] ?? Wallet;
+                      const on = method === m.value;
+                      return (
+                        <button
+                          key={m.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={on}
+                          data-focus-inset
+                          onClick={() => { setMethod(m.value); setTenderTaka(""); setPadOpen(false); }}
+                          className={cn(
+                            "relative flex min-h-[4.5rem] flex-col items-center justify-center gap-inline px-inline text-[0.875rem] font-semibold transition-colors duration-quick",
+                            i > 0 && "border-l border-line",
+                            on ? "bg-ember-solid text-white" : "bg-card text-fg",
+                          )}
+                        >
+                          <Icon size={22} strokeWidth={1.75} aria-hidden />
+                          <span className="max-w-full truncate">{enumL.method(m.value)}</span>
+                          {on && <Check size={14} strokeWidth={3} className="absolute right-1.5 top-1.5" aria-hidden />}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 
-                <Button shape="pill" size="lg" fullWidth className="mt-section h-14" disabled={!enough} loading={cashSaving} onClick={() => completeCash(tenderedMinor, changeMinor)}>{t("cash.completeSale")}</Button>
+                {cash ? (
+                  <>
+                    <div className="go-surface divide-y divide-line overflow-hidden rounded-go">
+                      {/* The received figure IS the way to the pad, which is how
+                          Square does it — tap the amount and the keypad appears. */}
+                      <button
+                        type="button"
+                        onClick={() => setPadOpen(true)}
+                        aria-label={`${t("cash.tendered")} ${formatMoney(tenderedMinor, currency)} — ${t("cash.tapToChange")}`}
+                        className="flex min-h-14 w-full items-center justify-between gap-tight px-comfortable text-left active:bg-ember/10"
+                      >
+                        <span className="flex min-w-0 items-center gap-inline text-[0.9375rem]">
+                          {t("cash.tendered")}
+                          <Pencil size={13} strokeWidth={2} aria-hidden className="shrink-0 text-muted" />
+                        </span>
+                        <span className="shrink-0 text-lg font-semibold tabular-nums">{formatMoney(tenderedMinor, currency)}</span>
+                      </button>
+                      {/* Change is an ACTION — money to count back — so it is the
+                          largest thing here WHEN THERE IS ANY. At zero it is one
+                          quiet line, and the loud thing is the button. */}
+                      {exact ? (
+                        <p className="flex min-h-14 items-center px-comfortable text-[0.9375rem] font-medium text-success">{t("cash.noChange")}</p>
+                      ) : (
+                        <div className={`flex min-h-14 items-baseline justify-between gap-tight px-comfortable py-tight font-semibold ${enough ? "text-success" : "text-muted"}`}>
+                          <span className="shrink-0 text-xl">{t("cash.change")}</span>
+                          <span className="min-w-0 truncate text-right" style={{ fontSize: "clamp(28px, 9.5vw, 40px)" }}>
+                            {enough ? formatMoney(changeMinor, currency) : "—"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* The notes actually in a drawer here, as flat cells: exact
+                        first, and chosen from the start, because it is. */}
+                    <div className="go-surface grid grid-cols-4 overflow-hidden rounded-go">
+                      <button
+                        type="button"
+                        aria-pressed={exact}
+                        data-focus-inset
+                        onClick={() => setTenderTaka("")}
+                        className={cn("relative h-14 text-[0.9375rem] font-semibold", exact ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10")}
+                      >
+                        {t("cash.exact")}
+                      </button>
+                      {quickNotes(dueNow).map((amt) => {
+                        const on = typed && parseInt(tenderTaka, 10) === amt;
+                        return (
+                          <button key={amt} type="button" aria-pressed={on} data-focus-inset onClick={() => setTenderTaka(String(amt))} className={cn("h-14 border-l border-line text-[0.9375rem] font-semibold tabular-nums", on ? "bg-ember-solid text-white" : "bg-card active:bg-ember/10")}>
+                            {formatPriceShort(amt * 100, currency)}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* The pad only where it is wanted: on for a till that keeps
+                        it, or once the received figure has been pressed. */}
+                    {(prefs.posKeypad || padOpen) && (
+                      <Keypad onKey={(d) => setTenderTaka((t) => (t + d).slice(0, 7))} onBackspace={() => setTenderTaka((t) => t.slice(0, -1))} />
+                    )}
+                  </>
+                ) : (
+                  <p className="rounded-go bg-card px-comfortable py-section text-center text-[0.9375rem] text-fg">
+                    {method === "card_terminal" ? t("pay.cardHint") : t("pay.walletHint")}
+                  </p>
+                )}
               </div>
+              <ActionBar
+                docked="panel"
+                label={t("pay.title")}
+                secondary={{ label: t("cart.back"), icon: <ChevronLeft size={20} strokeWidth={2} aria-hidden />, onClick: () => setCashOpen(false), disabled: cashSaving }}
+                primary={{
+                  label: cash || method === "card_terminal" ? t("cash.completeSale") : t("pay.next"),
+                  icon: <Check size={20} strokeWidth={2.5} aria-hidden />,
+                  onClick: () => void finishPayment(tenderedMinor, changeMinor),
+                  disabled: (cash && !enough) || cashSaving,
+                }}
+              />
             </div>
           </div>
         );

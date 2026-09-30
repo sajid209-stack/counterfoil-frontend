@@ -340,7 +340,7 @@ export default function ScanPage() {
                   ["balance", tally.balance, Wallet],
                 ] as const
               ).map(([key, value, Icon]) => (
-                <div key={key} className="flex flex-col items-center gap-inline rounded-go-sm border border-hairline py-comfortable">
+                <div key={key} className="flex flex-col items-center gap-inline rounded-go-sm border border-line py-comfortable">
                   <Icon size={16} strokeWidth={1.5} aria-hidden className="text-muted" />
                   <span className="text-xl font-semibold tabular-nums">{value}</span>
                   <span className="text-[0.8125rem] text-muted">{t(`tally_${key}`)}</span>
@@ -355,7 +355,7 @@ export default function ScanPage() {
             ) : (
               <ul className="flex flex-col">
                 {log.map((e, i) => (
-                  <li key={e.id} className={cn("flex items-center gap-tight py-tight", i > 0 && "border-t border-hairline")}>
+                  <li key={e.id} className={cn("flex items-center gap-tight py-tight", i > 0 && "border-t border-line")}>
                     <span
                       aria-hidden
                       className={cn(

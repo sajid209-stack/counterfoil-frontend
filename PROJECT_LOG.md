@@ -14801,3 +14801,191 @@ hour under the cashier's finger between the first tap and the second.
   and `v2b.mjs` replace them.
 - **"Assign a place"** for a booking with no place is not built; the chip opens
   the booking.
+
+## The whole till, redrawn in the Schedule's language (2026-10-01)
+
+Owner, after the Schedule grid: *"the new POS schedule UI is very great, I love
+it — research the design and redesign the full UI vibe like that new schedule
+UI vibe … need more user friendly, easy to use … most POS users are not
+educated … they remember the pattern, this button after that button."*
+
+### What the research settled
+
+- **Motor memory is the product.** A 2026 benchmark of Square, Toast and
+  Lightspeed found the till that keeps its core structure stable wins with
+  high-turnover staff, and that cashiers lose speed the moment "the path to an
+  action is not predictable". Toast's own redesign put controls "on the same
+  position on all pages".
+- **One tap adds a simple item; a tile shows what is already in the sale**
+  (Square's item grid: tap to add, details only when there are variations).
+- **"How are they paying?" is asked at the moment of paying**, on its own
+  screen (Square, Shopify POS), not as a setting above the button.
+
+### The rule the whole till now follows
+
+**The orange button is always bottom-right, and it always moves the sale
+forward**: Add to sale → Take payment → Complete sale → New sale. The "not now"
+action is always its left-hand neighbour: Hold, Cart, Pause, Back.
+`(go)/_components/ActionBar.tsx` is that pair, used by every screen that has
+it — the Schedule's bar, the sell screen's bar, the cart's foot, every booking
+sheet's foot and the payment sheet — so it cannot drift between them.
+
+And the Schedule's drawing everywhere: **one card of flat cells divided by
+hairlines**, white where something can be done, the page's colour where it
+cannot, orange as a fill only for what is chosen and the button that acts.
+
+### Sell
+
+- **The wall is one grid of tiles** (`WallTile`), not floating cards. Each tile
+  answers in the same order: picture, name, price (ink, the largest thing by
+  size), what it is, what it is doing now. A tile already in the sale gets a
+  solid orange count and a light wash; a sold-out tile sits on the page colour.
+- **No toast per tap** — the count on the tile and the bar's total confirm it,
+  and a toast per tap stacked over the screen during a fast run of taps.
+- "What to show" is one segmented row, as on the Schedule.
+- **On a phone, a bar**: "3 items · ৳582.00 · VAT included", Cart on the left,
+  Take payment on the right. It counts things, not lines: two waters and a
+  tote bag are three.
+
+### Pay
+
+- **Take payment opens one payment sheet**, from the sell screen or the cart:
+  the amount large; how they pay as a row of cells (Cash, bKash, Bangla QR,
+  Card — Cash chosen); exact cash by default ("No change due"); notes as cells;
+  Back / Complete sale. The four method tiles left the cart.
+- **A cash sale is now two taps from the wall**: tap the item, Take payment,
+  Complete sale. bKash and QR go on to their own confirming step.
+
+### Cart
+
+- The lines on one card, divided by hairlines, each with quiet word-and-picture
+  actions (stepper, Discount, Remove with Undo); the quantity is not printed
+  twice. **Pause moved to the foot's left**, beside Take ৳X.
+
+### Booking sheets
+
+- **Open ready**: one of the operator's first ticket type is chosen, so the
+  orange button works at once — as the Schedule's tickets sheet does.
+- Dates are flat cells with **More dates as the last cell**; times are one grid
+  (chosen solid orange with a tick, gone on the page colour); shows are rows on
+  one card with their seats left and no fill bar (the Schedule dropped its bar
+  because a full bar read as "full"); lanes, extras and "start now" follow.
+- The footer is the shared bar: **Hold on the left** (once there is a time to
+  hold), **Add on the right**. The extra lightning "Buy now" button went: Take
+  payment is one tap from the wall now. A button that cannot act yet says what
+  is missing ("Choose a time"), not what it would buy.
+- **Escape closes a booking sheet**, as every other sheet does (it did not).
+
+### The rest of the till
+
+- Check-in's parties are rows on the session card, with Check in the
+  right-most button of every row and the menu to its left.
+- The More menu is one card of cells.
+- **Sign-in is a door, not a room**: no tab bar, rail, cart or avatar on the
+  PIN screen — with the tab bar there, anyone could walk past sign-in with one
+  tap. The staff are one card of cells.
+- Shift screens use Inter figures instead of typewriter digits (the type spec
+  keeps DM Mono for codes).
+
+### Found on the way
+
+- **Pause and Clear never forgot where a sale started.** The last commit's edit
+  to PosScreen did not apply (the file has Windows line endings and the edit
+  matched on `\n`), so a paused sale from the Schedule could send the next,
+  unrelated sale's New sale back to the Schedule. Fixed, and the edit scripts
+  now read and write the file's own line endings.
+
+### The review loop
+
+An independent principal-designer review (strict scale) after each round.
+Round 1 found, and round 2 fixed:
+
+- **Tile prices misquoted.** General Admission read ৳300 — the child ticket —
+  while its sheet opened on Adult at ৳500; Bowling read a list price (৳800) no
+  hour charges while every lane sold at ৳1,000. A tile now quotes what one tap
+  sells, now (`tilePrice`): the first ticket type, a field's resolved hourly
+  price, a lane's duration-engine price for its shortest length.
+- **A quick note that could not be used**: a fixed ৳500 against ৳582 due greyed
+  out Complete. The notes are worked out from the amount due — the next round
+  hundred, five hundred and thousand above it.
+- **The sheet footer stopped 16px short of the bottom edge**, with content
+  showing under it; the panel's bottom padding is gone.
+- **Four looks for "chosen"** became one: solid orange, white, a tick — dates,
+  times, lanes, places, show rows, payment method, the chosen note, hold length
+  and the Schedule's "sell as". Tiles keep their count badge.
+- **Orange as text** left prices (ink), low stock and "Limited" (amber) and
+  "on shift" (green).
+- **Timed sheets open ready** on the next time that can be sold, so the orange
+  button reads "Add ৳X" the moment they open; the "Start now" card went.
+- **One word and one picture per step**: "Take ৳582" with a banknote on the
+  bar, the cart foot and the tablet panel; "Add ৳X" with a plus on every sheet;
+  the bag is only Cart. Sheets always have a left button — Hold, or Back.
+- **A denser phone wall**: the description line waits for the sheet, tiles are
+  7.5rem, and the bar is two buttons, "Cart · 3" and "Take ৳582".
+- Cart actions on one row; the till's lines use the stronger line token, for
+  daylight; the shift clock, check-in counts and prices out of the typewriter
+  face; "Search what you sell…"; New sale no longer covers the sale.
+
+Round 3 fixed what round 2 still found:
+
+- **The sell bar is always there on a phone.** An empty sale reads "Cart · 0"
+  with a Take that waits. The lone Cart pill in the corner covered a tile's
+  price, and a bar that appeared on the first tap moved the wall under the
+  finger. The wall's bottom padding no longer changes when the first thing is
+  added.
+- **One control for a bowling start.** The "− 12:00 +" stepper beside the start
+  grid was a second way to choose the same thing; the grid is the control.
+  Each lane cell says what it is doing ("Free", "In use until 19:30"), and a
+  price only where the lane's rate differs (Lane 4, ৳1,000/hr).
+- **A show that has started is not for sale.** Planetarium's 11:00 and 11:45
+  read "Already started" and cannot be chosen, instead of looking sellable.
+  Show rows are priced at the ticket the sheet opens on, not the list price.
+- **What will be added sits beside the button that adds it.** On a ticket
+  sheet the summary ("12:30 today · 1 Adult · ৳600") moved from below the
+  steppers into the footer.
+- **Hold works on fields and lanes too**, as the Schedule offers it: once a
+  time is chosen, the footer's left button is Hold, which asks who it is for
+  and takes that field or lane off sale for the chosen span.
+- **A guided departure chosen by default has its guide chosen too.**
+- **Each person on the sign-in screen has a colour of their own**, handed out
+  in the order they joined the counter, so the first five never share one and
+  somebody who cannot read the names finds themselves by colour.
+- **Check-in puts the booking code on its own line**, instead of after a "·"
+  that wrapped to a line starting with a dot.
+
+### Verified
+
+- Till harness (wall, shelf sale to a completed order, sheets opening ready,
+  bKash step, cart lines, stepper, remove and undo, footers on the bottom
+  edge): **38/38 at 390, 36/36 at 1280**.
+- Round-3 checks: **24/24 at 390, 16/16 at 1280** — the empty bar and its
+  disabled Take, no corner pill, the wall not moving on the first add, no
+  start stepper, every lane stating its state and only Lane 4 its price, Hold
+  on a lane and on a field hour, a lane held for a named party, "Already
+  started", the summary in the footer, five distinct sign-in colours, the
+  check-in code on its own line, no console errors.
+- Schedule 31/31 and 4/4, new sale returning to where it started 2/2,
+  printing 4/4, and a smoke sweep of every Go route at 390 and 1280: no
+  console errors, no page x-scroll.
+- POS audit in light and dark at 390 and 1280: the only findings are the
+  declared white-on-ember rule (3.50:1) and the check-in search field, 42px
+  inside its 44px pill.
+- `tsc` clean; `eslint` on every changed file reports only `PosScreen`'s
+  documented baseline (2 errors, 3 warnings), and the sign-in page's unused
+  import is gone. i18n parity 0 missing / 0 extra.
+
+### Open
+
+- The shift timer in the Go header still reads a fixed 3:24.
+- Bangla dates print English month names ("4 Aug") — the app-wide `en-GB`
+  date decision recorded in the plain-language entry.
+- The Scan field still raises the phone keyboard; a coarse-pointer
+  `inputMode="none"` with a "Type a code" toggle was not done.
+- Round 3 was not put back through the independent review; its scores stand
+  at round 2 (8 · 8 · 7 · 8 · 7 · 8 · 7 of 10).
+
+Sources: [Square — set up the item grid](https://squareup.com/help/us/en/article/8334-set-up-item-grid) ·
+[Square — build the customer's cart](https://squareup.com/help/us/en/article/8238-build-your-customer-s-cart-in-the-square-retail-pos-app) ·
+[Toast — the new POS experience, with Lou Orfanos](https://pos.toasttab.com/blog/on-the-line/new-toast-pos-experience-with-lou-orfanos) ·
+[interface-design.co.uk — POS software UX benchmarking 2026](https://interface-design.co.uk/blog/pos-software-ux-benchmarking-2026-the-coherence-gap/) ·
+[Shopify — POS UI](https://www.shopify.com/blog/pos-ui)

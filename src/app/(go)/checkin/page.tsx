@@ -333,7 +333,9 @@ export default function CheckInPage() {
                     </button>
 
                     {isOpen && (
-                      <div className="flex flex-col gap-tight border-t border-hairline p-section pt-comfortable">
+                      /* The parties as rows on the session's own card,
+                         divided by hairlines — no box inside a box. */
+                      <div className="flex flex-col divide-y divide-line border-t border-line">
                         {items.map((b) => {
                           const o = orderOf(b);
                           const due = outstanding(o);
@@ -358,7 +360,7 @@ export default function CheckInPage() {
                           }
                           const name = o?.customerName?.trim();
                           return (
-                            <div key={b.id} data-party className="flex flex-col gap-tight rounded-go-sm border border-hairline px-comfortable py-comfortable sm:flex-row sm:items-center">
+                            <div key={b.id} data-party className="flex items-center gap-comfortable px-section py-comfortable">
                               <span className="min-w-0 flex-1">
                                 {/* The name is what a steward matches against
                                     the person in front of them, so it leads and
@@ -368,11 +370,22 @@ export default function CheckInPage() {
                                 <span className="mt-inline flex flex-wrap items-center gap-x-tight gap-y-inline text-[0.8125rem] text-muted">
                                   <span>{t("guests", { count: b.partySize })}</span>
                                   {(b.checkedIn ?? 0) > 0 && !done && <span>· {t("inOfTotal", { done: b.checkedIn ?? 0, total: b.partySize })}</span>}
-                                  {name && <span className="font-mono">· {o?.reference ?? b.orderId}</span>}
                                 </span>
+                                {/* The code on its own line: it is what a guest
+                                    reads off their phone, and after a "·" it
+                                    wrapped to a line that began with a dot. */}
+                                {name && <span className="mt-inline block break-all font-mono text-[0.8125rem] text-muted">{o?.reference ?? b.orderId}</span>}
                               </span>
 
-                              <span className="flex shrink-0 flex-wrap items-center gap-tight">
+                              {/* The row's one action is the right-most thing in
+                                  it, orange, on every row — the till's pattern:
+                                  the button that moves things on is always
+                                  bottom-right. Anything else sits behind ⋯ to
+                                  its left. */}
+                              <span className="flex shrink-0 flex-wrap items-center justify-end gap-tight">
+                                {menu.length > 0 ? (
+                                  <ActionMenu shape="go" items={menu} label={t("rowMenu", { name: name || (o?.reference ?? b.orderId) })} />
+                                ) : null}
                                 {b.noShow ? (
                                   <span className="rounded-full bg-danger-solid px-comfortable py-inline text-[0.8125rem] font-medium text-white">
                                     {b.noShowReason ? t("noShowTagReason", { reason: b.noShowReason }) : t("noShowTag")}
@@ -394,11 +407,6 @@ export default function CheckInPage() {
                                     </Button>
                                   </>
                                 )}
-                                {menu.length > 0 ? (
-                                  <ActionMenu shape="go" items={menu} label={t("rowMenu", { name: name || (o?.reference ?? b.orderId) })} />
-                                ) : (
-                                  <span aria-hidden className="h-11 w-11 shrink-0" />
-                                )}
                               </span>
                             </div>
                           );
@@ -416,7 +424,7 @@ export default function CheckInPage() {
         <aside className="flex flex-col gap-section">
           <section className="flex flex-col gap-comfortable rounded-go p-section go-surface">
             <h2 className="text-sm font-semibold">{t("summaryTitle")}</h2>
-            <div className="grid grid-cols-3 gap-tight text-center">
+            <div className="grid grid-cols-3 divide-x divide-line overflow-hidden rounded-go-sm border border-line text-center">
               {(
                 [
                   ["expected", day.expected],
@@ -424,7 +432,7 @@ export default function CheckInPage() {
                   ["toCome", Math.max(0, day.expected - day.arrived)],
                 ] as const
               ).map(([key, value]) => (
-                <div key={key} className="flex flex-col items-center gap-inline rounded-go-sm border border-hairline py-comfortable">
+                <div key={key} className="flex flex-col items-center gap-inline py-comfortable">
                   <span className="text-xl font-semibold tabular-nums">{value}</span>
                   <span className="text-[0.8125rem] text-muted">{t(`stat_${key}`)}</span>
                 </div>
@@ -472,7 +480,7 @@ export default function CheckInPage() {
         <div className="flex flex-col gap-tight">
           {(productsQ.data?.data.find((x) => x.id === extraFor?.productId)?.addOns ?? []).map((a) => (
             <Button shape="pill" key={a.id} variant="secondary" className="justify-between" onClick={() => addExtra(a.id)}>
-              <span>{a.name}</span><span className="font-mono tabular-nums">{formatMoney(a.price)}{a.perPerson ? t("perHead") : ""}</span>
+              <span>{a.name}</span><span className="tabular-nums">{formatMoney(a.price)}{a.perPerson ? t("perHead") : ""}</span>
             </Button>
           ))}
         </div>
@@ -483,7 +491,7 @@ export default function CheckInPage() {
         <div className="flex flex-col gap-tight">
           {(productsQ.data?.data.find((x) => x.id === upgradeFor?.productId)?.tiers.filter((tier) => tier.active) ?? []).map((tier) => (
             <Button shape="pill" key={tier.id} variant="secondary" className="justify-between" onClick={() => upgrade(tier.id)}>
-              <span>{tier.name}</span><span className="font-mono tabular-nums">{formatMoney(tier.price)}</span>
+              <span>{tier.name}</span><span className="tabular-nums">{formatMoney(tier.price)}</span>
             </Button>
           ))}
         </div>
@@ -501,7 +509,7 @@ export default function CheckInPage() {
             <span className="text-sm">{t("partySize")}</span>
             <div className="flex items-center gap-tight">
               <button type="button" aria-label={t("fewer")} onClick={() => setWalkInParty((g) => Math.max(1, g - 1))} className="h-11 w-11 rounded-full border border-line text-lg">−</button>
-              <span className="w-8 text-center font-mono tabular-nums">{walkInParty}</span>
+              <span className="w-8 text-center font-semibold tabular-nums">{walkInParty}</span>
               <button type="button" aria-label={t("more")} onClick={() => setWalkInParty((g) => g + 1)} className="h-11 w-11 rounded-full border border-line text-lg">+</button>
             </div>
           </div>

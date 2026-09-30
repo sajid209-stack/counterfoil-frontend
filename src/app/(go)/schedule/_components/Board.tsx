@@ -169,7 +169,7 @@ export function Board({
      the booking to "Sab… Bo…". The page names them above the board instead. */
   const columns = group.columns.filter((c) => c.kind !== "unassigned");
   const cols = columns.length;
-  const hourLines = `repeating-linear-gradient(to bottom, transparent 0, transparent ${HOUR_PX - 1}px, var(--color-hairline) ${HOUR_PX - 1}px, var(--color-hairline) ${HOUR_PX}px)`;
+  const hourLines = `repeating-linear-gradient(to bottom, transparent 0, transparent ${HOUR_PX - 1}px, var(--color-line) ${HOUR_PX - 1}px, var(--color-line) ${HOUR_PX}px)`;
 
   return (
     <div ref={card} className="go-surface flex min-h-[240px] flex-col overflow-hidden rounded-go">
@@ -210,12 +210,12 @@ export function Board({
                   type="button"
                   onClick={() => onColumn(c)}
                   aria-label={t("board.placeMenu", { place: name })}
-                  className="flex min-w-[60px] flex-1 flex-col items-center justify-center border-l border-hairline px-1 text-center hover:bg-muted-wash"
+                  className="flex min-w-[60px] flex-1 flex-col items-center justify-center border-l border-line px-1 text-center hover:bg-muted-wash"
                 >
                   {body}
                 </button>
               ) : (
-                <div key={c.id} className="flex min-w-[60px] flex-1 flex-col items-center justify-center border-l border-hairline px-1 text-center">
+                <div key={c.id} className="flex min-w-[60px] flex-1 flex-col items-center justify-center border-l border-line px-1 text-center">
                   {body}
                 </div>
               );
@@ -235,7 +235,7 @@ export function Board({
             {columns.map((c) => {
               const list = group.blocks.get(c.id) ?? [];
               return (
-                <div key={c.id} className="relative min-w-[60px] flex-1 border-l border-hairline bg-card">
+                <div key={c.id} className="relative min-w-[60px] flex-1 border-l border-line bg-card">
                   {/* Time nobody can book is the grey ground. Everything else
                       is drawn on white — so there is no grey BETWEEN things,
                       only where there is nothing to be had. It is the PAGE's

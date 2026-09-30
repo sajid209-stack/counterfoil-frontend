@@ -1,6 +1,6 @@
 {
   "search": {
-    "placeholder": "বুকিং খুঁজুন…",
+    "placeholder": "যা বিক্রি করেন তা খুঁজুন…",
     "clear": "মুছুন"
   },
   "counter": "Fort Main Gate",
@@ -35,7 +35,12 @@
     "back": "ফিরে যান",
     "walkIn": "ওয়াক-ইন গ্রাহক",
     "extend": "সময় বাড়ান",
-    "edit": "এই আইটেম বদলান"
+    "edit": "এই আইটেম বদলান",
+    "barLabel": "এই বিক্রি",
+    "open": "কার্ট",
+    "vatIncluded": "ভ্যাট সহ",
+    "openCount": "কার্ট · {count}",
+    "openAria": "কার্ট, {count}টি"
   },
   "added": "{name} যোগ হয়েছে",
   "cartParked": "বিক্রি থামিয়ে রাখা হয়েছে।",
@@ -370,7 +375,11 @@
     "stockLeft": "{unit, select, each {আর {count}টি আছে} other {আর {count} {unit} আছে}}",
     "stockOut": "আর নেই",
     "stockRefused": "{name}-এর টাকা নেওয়া হয়েছে, কিন্তু এই ভেন্যুর স্টকে এটি নেই। ম্যানেজারকে জানান।",
-    "buyNowShort": "এখনই কিনুন"
+    "buyNowShort": "এখনই কিনুন",
+    "holdShort": "হোল্ড",
+    "started": "শুরু হয়ে গেছে",
+    "back": "ফিরে যান",
+    "addAmount": "যোগ করুন {amount}"
   },
   "settle": {
     "title": "বুকিংয়ের বাকি নিন",
@@ -550,5 +559,17 @@
     "osAdmin": "OS অ্যাডমিন",
     "tokens": "ডিজাইন টোকেন",
     "primitives": "প্রিমিটিভ"
+  },
+  "categoryLabel": "কী দেখাবেন",
+  "wall": {
+    "inSaleAria": "{name}, এই বিক্রিতে {count}টি"
+  },
+  "takeAmount": "{amount} নিন",
+  "pay": {
+    "title": "পেমেন্ট নিন",
+    "method": "কীভাবে টাকা দিচ্ছেন?",
+    "cardHint": "কার্ড মেশিনে কার্ড নিন, তারপর বিক্রি শেষ করুন চাপুন।",
+    "walletHint": "পরবর্তী চাপুন। পরের স্ক্রিনে গ্রাহক কী করবেন আর আপনি কী দেখবেন তা আছে।",
+    "next": "পরবর্তী"
   }
 }

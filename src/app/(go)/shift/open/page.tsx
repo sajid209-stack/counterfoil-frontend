@@ -15,19 +15,19 @@ export default function ShiftOpenPage() {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-section px-section py-hero">
       <div>
-        <p className="type-label text-[0.8125rem] text-brand-foreground">{t("startLabel")}</p>
+        <p className="text-[0.875rem] font-semibold text-brand-foreground">{t("startLabel")}</p>
         <h1 className="type-h1 mt-tight text-2xl">{t("openingTitle")}</h1>
         <p className="type-body mt-tight text-muted">{t("openingHint")}</p>
       </div>
 
       <div className="flex flex-col gap-tight">
-        <label htmlFor="opening-cash" className="type-label text-[0.8125rem] text-muted">{t("openingCash")}</label>
+        <label htmlFor="opening-cash" className="text-[0.875rem] font-semibold text-fg">{t("openingCash")}</label>
         <input
           id="opening-cash"
           inputMode="decimal"
           value={float}
           onChange={(e) => setFloat(e.target.value)}
-          className="h-14 rounded-go-sm border border-line bg-card px-section font-mono text-2xl outline-none focus:border-inverse"
+          className="h-14 rounded-go-sm border border-line bg-card px-section text-2xl font-semibold tabular-nums outline-none focus:border-inverse"
         />
       </div>
 

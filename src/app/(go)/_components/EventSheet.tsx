@@ -158,7 +158,7 @@ export function EventSheet({
               const n = qty[tier.id] ?? 0;
               const bundle = multi && isBundleTier(event, tier);
               return (
-                <div key={tier.id} className={cn("flex items-center gap-tight p-comfortable", i > 0 && "border-t border-hairline")}>
+                <div key={tier.id} className={cn("flex items-center gap-tight p-comfortable", i > 0 && "border-t border-line")}>
                   <div className="min-w-0 flex-1">
                     <p className="text-[0.9375rem] font-medium">
                       {tier.name}
@@ -201,7 +201,7 @@ export function EventSheet({
         </section>
 
         <div className="sticky bottom-0 -mx-section bg-sheet px-section pt-tight">
-          <div className="mb-tight flex items-center justify-between border-t border-hairline pt-tight text-[0.875rem]">
+          <div className="mb-tight flex items-center justify-between border-t border-line pt-tight text-[0.875rem]">
             <span className="text-muted">
               {count > 0 ? t("event.summary", { count }) : t("event.pickTickets")}
               {multi && dayId ? ` · ${labelOfDay(dayId)}` : ""}
