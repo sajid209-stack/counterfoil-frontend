@@ -24,3 +24,11 @@ export const DEMO_STAFF_ID = "stf_nadia";
  * replace.
  */
 export const DEMO_COUNTER_ID = "cnt_fort_main";
+
+/**
+ * The till this device is. Its own checkout holds are placed and released
+ * under this id, so anything that adds to the sale on its behalf — the
+ * Schedule booking a tapped hour straight into the cart — has to hold the
+ * places under the same name, or the till could never let them go again.
+ */
+export const DEMO_TILL_ID = "till_fort_main";

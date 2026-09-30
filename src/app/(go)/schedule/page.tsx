@@ -3,34 +3,49 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, LayoutGrid, List, Lock } from "lucide-react";
-import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
+import { Check, ChevronLeft, ChevronRight, LayoutGrid, List, Lock, ShoppingBag, TriangleAlert, X } from "lucide-react";
+import { Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { formatMoney } from "@/lib/format";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, slotISO } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
-import { DEMO_COUNTER_ID, DEMO_STAFF_ID } from "@/lib/session";
+import { LG, useMediaQuery } from "@/lib/useMedia";
+import { DEMO_COUNTER_ID, DEMO_STAFF_ID, DEMO_TILL_ID } from "@/lib/session";
 import {
   activeHolds,
   checkInBooking,
+  getOperator,
   listProducts,
   listResources,
   listStaff,
   peekBookings,
   peekCounters,
   peekOrders,
+  placeCheckoutHold,
   placeHold,
   releaseHold,
   updateResource,
   type Resource,
 } from "@/lib/api";
 import { shiftDay } from "@/lib/dayModel";
-import type { OpenOption } from "@/app/(os)/calendar/_components/openSlots";
+import { appendToLiveSale, setReturnTo } from "../pos/_lib/liveSale";
+import { buildOrderLines } from "@/lib/orderMath";
+import { taxRateFor } from "@/lib/tax";
 import { buildBoard, dayLoad, toTimeOfDay, type Block, type Column } from "./_lib/board";
+import { entriesFor, entryPrice, guideFor, holdEntries, needsWaiver, productsIn, sessionEntry, spansOf, type Pick } from "./_lib/toCart";
 import { Board } from "./_components/Board";
-import { BlockSheet, SlotSheet, type HoldRequest } from "./_components/Sheets";
+import { BlockSheet, HoldSheet, SessionSheet, primary, secondary, type HoldRequest } from "./_components/Sheets";
 
 type View = "grid" | "list";
-type FreePick = { column: Column; block: Extract<Block, { type: "free" | "session" }> };
+type SessionBlock = Extract<Block, { type: "session" }>;
+type SessionPick = {
+  column: Column;
+  block: SessionBlock;
+  /** Selling a held group: start on its size, and release the hold first. */
+  presetQty?: number;
+  releaseHoldId?: string;
+  sellLabel?: string;
+};
 type BlockPick = { column: Column; block: Extract<Block, { type: "booking" | "hold" }> };
 
 const noopSubscribe = () => () => {};
@@ -58,13 +73,17 @@ function mondayOf(ymd: string): string {
 }
 
 /**
- * The counter's schedule: the day as a board of places and hours, where a
- * free hour is sold or held by tapping it.
+ * The counter's schedule: the day as a board of places and hours.
  *
- * It is the OS calendar's phone layout — a week strip, then the day — built
- * for a till instead of an office: one venue (the one this counter is at),
- * places as columns so an empty hour has a place to be tapped, and every
- * action ending on the same two buttons in the same two places.
+ * Tap free hours to choose them — they turn orange — and a bar comes up with
+ * the two things a counter does with them: **Hold** on the left, **Add to
+ * sale** on the right. Add to sale puts them straight into the cart; nothing
+ * asks again for the day, the field or the time that was just tapped.
+ *
+ * That is the pattern court and turf systems settled on (a multi-select grid
+ * with a sticky bar, contiguous hours merged into one booking), and it is the
+ * one a cashier under pressure can work from memory: tap the hours, tap the
+ * orange button.
  */
 export default function SchedulePage() {
   const router = useRouter();
@@ -73,16 +92,26 @@ export default function SchedulePage() {
   const toast = useToast();
 
   /* Where the cashier was — the day, the group, the view — survives a trip to
-     the till and back. Sell leaves this screen, and coming back to today's
-     courts when you were on Saturday's lanes is how a second sale gets
-     rung up on the wrong day. */
+     the till and back. Coming back to today's courts when you were on
+     Saturday's lanes is how a second sale gets rung up on the wrong day. */
   const [date, setDateState] = useState<string>(() => remembered("date") ?? DEMO_TODAY);
   const [view, setViewState] = useState<View>(() => (remembered("view") === "list" ? "list" : "grid"));
   const [groupKey, setGroupState] = useState<string | null>(() => remembered("group"));
-  const setDate = (d: string) => { setDateState(d); remember("date", d); };
-  const setView = (v: View) => { setViewState(v); remember("view", v); };
-  const setGroupKey = (g: string) => { setGroupState(g); remember("group", g); };
-  const [freePick, setFreePick] = useState<FreePick | null>(null);
+  /* What is chosen belongs to what is on screen: a different day or group is
+     a different question, and a choice nobody can see any more must not be
+     sold by the next tap. */
+  const [picks, setPicks] = useState<Pick[]>([]);
+  const [choice, setChoice] = useState<string | null>(null);
+  const [waiverOk, setWaiverOk] = useState(false);
+  const [waiverMissing, setWaiverMissing] = useState(false);
+  const [lastKey, setLastKey] = useState<string | null>(null);
+  const clearPicks = () => { setPicks([]); setChoice(null); setWaiverOk(false); setWaiverMissing(false); setLastKey(null); };
+  const setDate = (d: string) => { setDateState(d); remember("date", d); clearPicks(); };
+  const setView = (v: View) => { setViewState(v); remember("view", v); clearPicks(); };
+  const setGroupKey = (g: string) => { setGroupState(g); remember("group", g); clearPicks(); };
+
+  const [holdOpen, setHoldOpen] = useState(false);
+  const [sessionPick, setSessionPick] = useState<SessionPick | null>(null);
   const [blockPick, setBlockPick] = useState<BlockPick | null>(null);
   const [busy, setBusy] = useState(false);
   /* The mock store is synchronous and the board reads it directly, so a
@@ -95,11 +124,22 @@ export default function SchedulePage() {
   const productsQ = useApiQuery(() => listProducts({ pageSize: 200, filters: { status: "active" } }), []);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 200 }), [version]);
   const staffQ = useApiQuery(() => listStaff({ pageSize: 200 }), []);
+  const operatorQ = useApiQuery(() => getOperator(), []);
+  const staff = staffQ.data?.data ?? [];
 
   const locationId = peekCounters().find((c) => c.id === DEMO_COUNTER_ID)?.locationId ?? "loc_fort";
   const isToday = date === DEMO_TODAY;
   const nowMinutes = isToday ? DEMO_NOW_MINUTES : null;
-  const me = (staffQ.data?.data ?? []).find((s) => s.id === DEMO_STAFF_ID)?.name ?? t("sheet.counter");
+  const me = staff.find((s) => s.id === DEMO_STAFF_ID)?.name ?? t("sheet.counter");
+  /* "Wed 29 Jul" — day before month, the way the rest of the app writes a
+     date, built from parts so the English locale does not turn it round. */
+  const dayDate = new Date(`${date}T12:00:00`);
+  /* Latin digits for every date here: the week strip, the times and the
+     prices are all Latin, and "২৯" beside "29" for the same day, 60px apart,
+     is two scripts for one fact. */
+  const latn = { numberingSystem: "latn" } as const;
+  const dayShort = `${format.dateTime(dayDate, { day: "numeric", ...latn })} ${format.dateTime(dayDate, { month: "short" })}`;
+  const dayLabel = `${format.dateTime(dayDate, { weekday: "short" })} ${dayShort}`;
 
   const groups = useMemo(
     () =>
@@ -131,65 +171,173 @@ export default function SchedulePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, locationId, version]);
 
+  // ── what is chosen, and what it becomes ───────────────────────────────
+  const selected = useMemo(() => new Set(picks.map((p) => p.block.key)), [picks]);
+  const offered = useMemo(() => productsIn(picks), [picks]);
+  const entries = useMemo(() => entriesFor(picks, choice, date), [picks, choice, date]);
+  /* What the till will ask for, VAT included — worked out by the till's own
+     order engine, so the number the cashier reads out here is the number on
+     the Take-payment button a moment later. */
+  const total = useMemo(() => {
+    const op = operatorQ.data;
+    const byId = new Map((productsQ.data?.data ?? []).map((p) => [p.id, p]));
+    return buildOrderLines(
+      entries.map((e) => {
+        const p = byId.get(e.productId);
+        return { productId: e.productId, productName: e.productName, tierName: e.productName, quantity: 1, unitPrice: entryPrice(e), taxRate: p ? taxRateFor(p, op) / 100 : 0 };
+      }),
+      0,
+      "quote",
+    ).totals.total;
+  }, [entries, operatorQ.data, productsQ.data]);
+  const chosenMinutes = picks.reduce((s, p) => s + (p.block.end - p.block.start), 0);
+  const chosenCount = chosenMinutes % 60 === 0 ? t("bar.hours", { count: chosenMinutes / 60 }) : t("bar.minutes", { count: chosenMinutes });
+  const spans = useMemo(() => spansOf(picks, choice), [picks, choice]);
+  const waiver = needsWaiver(spans.map((s) => s.product));
+  /* "Indoor Field 12:00–13:00, 15:00–16:00" — each place named once. */
+  const chosenLine = useMemo(() => {
+    const byPlace = new Map<string, string[]>();
+    for (const s of spans) byPlace.set(s.column.name, [...(byPlace.get(s.column.name) ?? []), `${toTimeOfDay(s.start)}–${toTimeOfDay(s.end)}`]);
+    return [...byPlace].map(([name, r]) => `${name} ${r.join(", ")}`).join(" · ");
+  }, [spans]);
+
+  const toggleFree = (column: Column, block: Extract<Block, { type: "free" }>) => {
+    setPicks((p) => (p.some((x) => x.block.key === block.key) ? p.filter((x) => x.block.key !== block.key) : [...p, { column, block }]));
+    setLastKey(block.key);
+  };
+
   // ── actions ────────────────────────────────────────────────────────────
-  /* Sell opens the till's own sheet, already on this place, this day and
-     this time. The till asks the rest (how many people, how long) and then
-     Buy now → Complete — the same steps as any other sale. */
+  /* Only for what the board cannot sell itself (a seat map, sections): the
+     till's own sheet, already on this day and time. */
   const openTill = (productId: string, time: string, resourceId?: string) => {
     sessionStorage.setItem("pos_open_product", productId);
     sessionStorage.setItem("pos_open_slot", JSON.stringify({ date, time, resourceId }));
     router.push("/pos");
   };
 
-  const sell = (option: OpenOption) => {
-    if (!freePick) return;
-    const time = freePick.block.type === "free" ? freePick.block.time : freePick.block.time;
-    openTill(option.product.id, time, freePick.column.kind === "resource" ? freePick.column.id : undefined);
+  /* Into the sale, and on to the cart. The till is not mounted here, so the
+     lines go where it looks for them when it opens. */
+  const toCart = (lines: typeof entries) => {
+    appendToLiveSale(lines);
+    /* Paid, the next guest in this queue is asking about another hour — so
+       New sale comes back here rather than to the sell wall. */
+    setReturnTo("/schedule");
+    router.push("/pos/cart");
+  };
+
+  const addPicks = () => {
+    if (!entries.length) return;
+    if (waiver && !waiverOk) {
+      setWaiverMissing(true);
+      return;
+    }
+    const lines = entries;
+    clearPicks();
+    toCart(lines);
   };
 
   const lengthToExpiry = (length: HoldRequest["length"]) =>
     length === "day" ? null : new Date(Date.now() + length * 60000).toISOString();
 
-  const hold = async (option: OpenOption, req: HoldRequest) => {
-    if (!freePick) return;
+  const holdPicks = async (req: HoldRequest) => {
     setBusy(true);
-    const { column, block } = freePick;
-    const res =
-      block.type === "free"
-        ? await placeHold({
-            productId: option.product.id,
-            productName: option.product.name,
-            locationId,
-            kind: "resource",
-            date,
-            slotStart: slotISO(date, block.time),
-            slotEnd: slotISO(date, toTimeOfDay(block.end)),
-            quantity: 1,
-            resourceId: column.id,
-            resourceName: column.name,
-            heldFor: req.heldFor,
-            placedBy: me,
-            expiresAt: lengthToExpiry(req.length),
-          })
-        : await placeHold({
-            productId: block.product.id,
-            productName: block.product.name,
-            locationId,
-            kind: "capacity",
-            date,
-            slotStart: slotISO(date, block.time),
-            slotEnd: slotISO(date, toTimeOfDay(block.end)),
-            quantity: req.quantity,
-            heldFor: req.heldFor,
-            placedBy: me,
-            expiresAt: lengthToExpiry(req.length),
-          });
+    const placed: string[] = [];
+    for (const s of spans) {
+      const res = await placeHold({
+        productId: s.product.id,
+        productName: s.product.name,
+        locationId,
+        kind: "resource",
+        date,
+        slotStart: slotISO(date, toTimeOfDay(s.start)),
+        slotEnd: slotISO(date, toTimeOfDay(s.end)),
+        quantity: 1,
+        resourceId: s.column.id,
+        resourceName: s.column.name,
+        heldFor: req.heldFor,
+        placedBy: me,
+        expiresAt: lengthToExpiry(req.length),
+      });
+      if (!res.ok) {
+        toast.error(res.error.message);
+        break;
+      }
+      placed.push(res.data.id);
+    }
+    setBusy(false);
+    if (!placed.length) return;
+    setHoldOpen(false);
+    clearPicks();
+    setVersion((v) => v + 1);
+    toast.success(t("toast.held", { name: req.heldFor }), {
+      label: t("toast.undo"),
+      run: async () => {
+        for (const id of placed) await releaseHold(id);
+        setVersion((v) => v + 1);
+      },
+    });
+  };
+
+  const openSession = (column: Column, block: SessionBlock) => {
+    const p = block.product;
+    if (p.layoutId || (p.sections?.length ?? 0) > 0) {
+      openTill(p.id, block.time);
+      return;
+    }
+    if (block.remaining <= 0) return;
+    setSessionPick({ column, block });
+  };
+
+  const addSession = async (qty: Record<string, number>) => {
+    if (!sessionPick) return;
+    const { block, releaseHoldId } = sessionPick;
+    const p = block.product;
+    const guide = guideFor(p, date, block.time, staff);
+    if (guide === null) return;
+    setBusy(true);
+    if (releaseHoldId) await releaseHold(releaseHoldId);
+    const entry = sessionEntry(p, date, block.time, qty, guide);
+    const seats = entry.items.reduce((s, i) => s + i.qty, 0);
+    /* The till holds the places while its cart is open, so a second till
+       cannot sell them out from under this sale. Held under the till's own
+       name, so the till can let them go again when the sale ends. */
+    await placeCheckoutHold({
+      productId: p.id,
+      productName: p.name,
+      locationId,
+      date,
+      slotStart: slotISO(date, block.time),
+      quantity: seats,
+      placedBy: DEMO_TILL_ID,
+    });
+    setBusy(false);
+    setSessionPick(null);
+    toCart([entry]);
+  };
+
+  const holdSession = async (req: HoldRequest) => {
+    if (!sessionPick) return;
+    const { block } = sessionPick;
+    setBusy(true);
+    const res = await placeHold({
+      productId: block.product.id,
+      productName: block.product.name,
+      locationId,
+      kind: "capacity",
+      date,
+      slotStart: slotISO(date, block.time),
+      slotEnd: slotISO(date, toTimeOfDay(block.end)),
+      quantity: req.quantity,
+      heldFor: req.heldFor,
+      placedBy: me,
+      expiresAt: lengthToExpiry(req.length),
+    });
     setBusy(false);
     if (!res.ok) {
       toast.error(res.error.message);
       return;
     }
-    setFreePick(null);
+    setSessionPick(null);
     setVersion((v) => v + 1);
     toast.success(t("toast.held", { name: req.heldFor }), {
       label: t("toast.undo"),
@@ -211,13 +359,39 @@ export default function SchedulePage() {
     toast.success(t("toast.released", { name: h.heldFor }));
   };
 
-  /* The person it was held for is at the counter: the hold goes, and the
-     till opens on exactly what was being kept for them. */
+  /* The person it was held for is at the counter: the hold goes, and exactly
+     what was being kept for them goes into the sale. */
   const sellHold = async () => {
     if (!blockPick || blockPick.block.type !== "hold") return;
     const h = blockPick.block.hold;
-    await releaseHold(h.id);
-    openTill(h.productId, (h.slotStart ?? "").slice(11, 16), h.resourceId ?? undefined);
+    const product = (productsQ.data?.data ?? []).find((p) => p.id === h.productId);
+    const time = (h.slotStart ?? "").slice(11, 16);
+    if (h.kind === "resource" && product) {
+      const resource = (resourcesQ.data?.data ?? []).find((r) => r.id === h.resourceId);
+      const lines = holdEntries(h, product, resource, date);
+      await releaseHold(h.id);
+      setBlockPick(null);
+      if (lines.length) toCart(lines);
+      else openTill(h.productId, time, h.resourceId ?? undefined);
+      return;
+    }
+    // Places held on a show: the tickets sheet, starting on the group's size.
+    const shows = groups.find((g) => g.isSessions);
+    const column = shows?.columns.find((c) => c.id === h.productId);
+    const block = column && (shows?.blocks.get(column.id) ?? []).find((b): b is SessionBlock => b.type === "session" && b.time === time);
+    setBlockPick(null);
+    if (column && block) {
+      setSessionPick({
+        column,
+        block: { ...block, remaining: block.remaining + h.quantity },
+        presetQty: h.quantity,
+        releaseHoldId: h.id,
+        sellLabel: t("sheet.sellTo", { name: h.heldFor }),
+      });
+    } else {
+      await releaseHold(h.id);
+      openTill(h.productId, time);
+    }
   };
 
   const checkIn = async () => {
@@ -243,32 +417,18 @@ export default function SchedulePage() {
     if (res.ok) {
       toast.success(outOfService ? t("markedOut", { name: oos.name }) : t("backInService", { name: oos.name }));
       setOos(null);
+      clearPicks();
       setVersion((v) => v + 1);
       productsQ.reload();
     } else toast.error(res.error.message);
   };
 
-  // ── what the sheets are about ─────────────────────────────────────────
-  const freeTitle = freePick ? (freePick.column.kind === "session" ? freePick.column.name : freePick.column.name) : "";
-  const freeWhen = freePick
-    ? `${toTimeOfDay(freePick.block.start)}–${toTimeOfDay(freePick.block.end)} · ${format.dateTime(new Date(`${date}T12:00:00`), { weekday: "short", day: "numeric", month: "short" })}`
-    : "";
-  const freeOptions: OpenOption[] = freePick
-    ? freePick.block.type === "free"
-      ? freePick.block.options
-      : [
-          {
-            key: freePick.block.key,
-            product: freePick.block.product,
-            kind: "session",
-            date,
-            time: freePick.block.time,
-            price: freePick.block.price,
-            remaining: freePick.block.remaining,
-            capacity: freePick.block.capacity,
-          },
-        ]
-    : [];
+  /* Bookings on this group that name no place: named above the board. */
+  const unassigned = useMemo(() => {
+    const out: { column: Column; block: Extract<Block, { type: "booking" }> }[] = [];
+    for (const c of group?.columns ?? []) if (c.kind === "unassigned") for (const b of group?.blocks.get(c.id) ?? []) if (b.type === "booking") out.push({ column: c, block: b });
+    return out.sort((a, b) => a.block.start - b.block.start);
+  }, [group]);
 
   const listItems = useMemo(() => {
     const out: { column: Column; block: Extract<Block, { type: "booking" | "hold" }> }[] = [];
@@ -283,29 +443,90 @@ export default function SchedulePage() {
      first paint and the hydrated one disagree about the day. */
   const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const loading = !hydrated || productsQ.loading || resourcesQ.loading;
+  const sessionGuideMissing = sessionPick ? guideFor(sessionPick.block.product, date, sessionPick.block.time, staff) === null : false;
+
+  /* What to show.
+     One row, each place-type an equal share of it, so four groups sit on one
+     line of a phone instead of wrapping onto two. The name alone: a count
+     beside it made the short names sit on one line and the long ones wrap,
+     which read as four different controls. The board shows what is free; a
+     screen reader still hears the count. A venue with one kind of place has
+     nothing to choose, so it gets no row at all. From 1024px up the tabs sit
+     on the week's own row, where there is room, and the board gets the line. */
+  const wide = useMediaQuery(LG);
+  const showTabs = groups.length > 1 && view === "grid";
+  const groupTabs = (frame: string) => (
+    <div
+      role="tablist"
+      aria-label={t("board.whatLabel")}
+      className={cn("grid gap-1 rounded-go p-1", frame)}
+      style={{ gridTemplateColumns: `repeat(${Math.min(groups.length, 4)}, minmax(0, 1fr))` }}
+    >
+      {groups.map((g) => {
+        const on = g.key === group?.key;
+        return (
+          <button
+            key={g.key}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            aria-label={t("board.groupAria", { name: g.label, count: g.freeCount })}
+            onClick={() => setGroupKey(g.key)}
+            className={cn(
+              "flex min-h-12 items-center justify-center rounded-go-sm px-1 text-center text-[0.875rem] font-semibold leading-tight transition-colors duration-quick",
+              on ? "bg-ember-solid text-white" : "text-fg hover:bg-muted-wash",
+            )}
+          >
+            {g.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-section px-gutter pb-40 pt-section">
+    <main className={cn("mx-auto flex w-full max-w-5xl flex-col gap-comfortable px-gutter pt-comfortable", view === "grid" ? "pb-0" : "pb-section")}>
       <h1 className="sr-only">{t("title")}</h1>
 
-      {/* ── the week, with how busy each day is ── */}
-      <section className="go-surface flex flex-col gap-tight rounded-go p-tight">
-        <div className="flex items-center justify-between gap-tight px-inline">
-          <button type="button" onClick={() => setDate(shiftDay(date, -7))} aria-label={t("prevWeek")} className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-muted-wash">
+      {/* ── the week, with how busy each day is ──
+          One row of controls (which week, back to today, grid or list) over
+          one row of days. Every pixel above the board is an hour the cashier
+          cannot see, so nothing here takes a line of its own. */}
+      <section className="go-surface flex flex-col gap-inline rounded-go p-tight">
+        <div className="flex items-center gap-inline">
+          <button type="button" onClick={() => setDate(shiftDay(date, -7))} aria-label={t("prevWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-muted-wash">
             <ChevronLeft size={20} strokeWidth={2} aria-hidden />
           </button>
-          <p className="text-[0.9375rem] font-semibold text-fg">
-            {format.dateTime(new Date(`${date}T12:00:00`), { month: "long", year: "numeric" })}
+          <p className="min-w-0 truncate text-center text-[0.9375rem] font-semibold text-fg">
+            {format.dateTime(dayDate, { month: "long", year: "numeric", ...latn })}
           </p>
-          <div className="flex items-center gap-inline">
-            {!isToday && (
-              <button type="button" onClick={() => setDate(DEMO_TODAY)} className="inline-flex h-11 items-center rounded-full border-2 border-line px-comfortable text-[0.875rem] font-semibold text-fg">
-                {t("today")}
-              </button>
-            )}
-            <button type="button" onClick={() => setDate(shiftDay(date, 7))} aria-label={t("nextWeek")} className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-muted-wash">
-              <ChevronRight size={20} strokeWidth={2} aria-hidden />
+          <button type="button" onClick={() => setDate(shiftDay(date, 7))} aria-label={t("nextWeek")} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-muted-wash">
+            <ChevronRight size={20} strokeWidth={2} aria-hidden />
+          </button>
+          {showTabs && wide ? <div className="min-w-0 flex-1 px-tight">{groupTabs("bg-subtle")}</div> : <span className="flex-1" />}
+          {!isToday && (
+            <button type="button" onClick={() => setDate(DEMO_TODAY)} className="inline-flex h-11 shrink-0 items-center rounded-full border-2 border-line px-comfortable text-[0.875rem] font-semibold text-fg">
+              {t("today")}
             </button>
+          )}
+          {/* Grid or list, as two pictures with their names on them for a
+              screen reader: the grid is where selling happens, the list is
+              the day's bookings in time order. */}
+          <div role="radiogroup" aria-label={t("board.viewLabel")} className="inline-flex shrink-0 rounded-full border border-line bg-card">
+            {(["grid", "list"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                role="radio"
+                aria-checked={view === v}
+                aria-label={t(v === "grid" ? "board.viewGrid" : "board.viewList")}
+                title={t(v === "grid" ? "board.viewGrid" : "board.viewList")}
+                onClick={() => setView(v)}
+                className={cn("inline-flex h-11 w-12 items-center justify-center rounded-full", view === v ? "bg-fg text-surface" : "text-muted")}
+              >
+                {v === "grid" ? <LayoutGrid size={18} aria-hidden /> : <List size={18} aria-hidden />}
+              </button>
+            ))}
           </div>
         </div>
         <div className="grid grid-cols-7 gap-1">
@@ -319,9 +540,9 @@ export default function SchedulePage() {
                 type="button"
                 onClick={() => setDate(d.date)}
                 aria-pressed={on}
-                aria-label={format.dateTime(dt, { weekday: "long", day: "numeric", month: "long" })}
+                aria-label={format.dateTime(dt, { weekday: "long", day: "numeric", month: "long", ...latn })}
                 className={cn(
-                  "flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-go-sm transition-colors duration-quick",
+                  "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-go-sm transition-colors duration-quick",
                   on ? "bg-ember-solid text-white" : today ? "ring-2 ring-inset ring-ember-solid text-fg" : "text-fg hover:bg-muted-wash",
                 )}
               >
@@ -340,56 +561,7 @@ export default function SchedulePage() {
         </div>
       </section>
 
-      {/* ── what to show, and how ── */}
-      <div className="flex flex-wrap items-center justify-between gap-tight">
-        <div role="tablist" aria-label={t("board.whatLabel")} className="flex flex-wrap gap-tight">
-          {groups.map((g) => {
-            const on = g.key === group?.key;
-            return (
-              <button
-                key={g.key}
-                type="button"
-                role="tab"
-                aria-selected={on}
-                onClick={() => { setGroupKey(g.key); setView("grid"); }}
-                className={cn(
-                  "inline-flex h-11 items-center gap-inline rounded-full border-2 px-comfortable text-[0.9375rem] font-semibold transition-colors duration-quick",
-                  on && view === "grid" ? "border-ember-solid bg-ember-solid text-white" : "border-line bg-card text-fg",
-                )}
-              >
-                {g.label}
-                <span className={cn("rounded-full px-1.5 text-[0.8125rem] tabular-nums", on && view === "grid" ? "bg-white/25" : "bg-subtle text-muted")}>
-                  {g.freeCount}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="-mt-tight flex items-center justify-between gap-tight">
-        <p className="min-w-0 text-[0.875rem] text-muted">
-          {view === "grid" && group ? t("board.freeLine", { count: group.freeCount }) : t("board.listLine", { count: listItems.length })}
-        </p>
-        <div role="radiogroup" aria-label={t("board.viewLabel")} className="inline-flex rounded-full border-2 border-line bg-card p-0.5">
-          {(["grid", "list"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              role="radio"
-              aria-checked={view === v}
-              onClick={() => setView(v)}
-              className={cn(
-                "inline-flex h-10 items-center gap-inline rounded-full px-comfortable text-[0.875rem] font-semibold",
-                view === v ? "bg-fg text-surface" : "text-muted",
-              )}
-            >
-              {v === "grid" ? <LayoutGrid size={16} aria-hidden /> : <List size={16} aria-hidden />}
-              {t(v === "grid" ? "board.viewGrid" : "board.viewList")}
-            </button>
-          ))}
-        </div>
-      </div>
+      {showTabs && !wide && groupTabs("go-surface")}
 
       {loading ? (
         <div className="go-surface h-[60dvh] animate-pulse rounded-go" />
@@ -397,22 +569,39 @@ export default function SchedulePage() {
         <EmptyState title={t("board.emptyTitle")} message={t("board.emptyMessage")} />
       ) : view === "grid" ? (
         <>
-          <Board
-            group={group}
-            nowMinutes={nowMinutes}
-            onFree={(column, block) => setFreePick({ column, block })}
-            onSession={(column, block) => block.remaining > 0 && setFreePick({ column, block })}
-            onBooking={(column, block) => setBlockPick({ column, block })}
-            onHold={(column, block) => setBlockPick({ column, block })}
-            onColumn={(c) => { if (c.resource) { setOos(c.resource); setOosReason(c.resource.outOfServiceReason ?? ""); } }}
-          />
-          {/* The key, drawn with the same shapes the board uses. */}
-          <ul aria-label={t("board.keyLabel")} className="flex flex-wrap gap-x-section gap-y-tight text-[0.875rem] text-muted">
-            <li className="flex items-center gap-inline"><span aria-hidden className="flex h-5 w-5 items-center justify-center rounded border border-line bg-card font-bold text-ember">+</span>{t("board.keyFree")}</li>
-            <li className="flex items-center gap-inline"><span aria-hidden className="h-5 w-5 rounded border-l-[3px] border-l-ember-solid bg-ember/15" />{t("board.keyBooked")}</li>
-            <li className="flex items-center gap-inline"><span aria-hidden className="flex h-5 w-5 items-center justify-center rounded border border-dashed border-strong"><Lock size={11} /></span>{t("board.onHold")}</li>
-            <li className="flex items-center gap-inline"><span aria-hidden className="h-5 w-5 rounded bg-subtle ring-1 ring-inset ring-line" />{t("board.keyClosed")}</li>
-          </ul>
+        <Board
+          group={group}
+          nowMinutes={nowMinutes}
+          selected={selected}
+          focusKey={lastKey}
+          corner={[format.dateTime(dayDate, { weekday: "short" }), format.dateTime(dayDate, { day: "numeric", ...latn })]}
+          hideKey={picks.length > 0}
+          notice={unassigned.length > 0 && (
+          <div className="flex flex-wrap items-center gap-tight border-b border-hairline px-comfortable py-tight">
+            {unassigned.slice(0, 3).map(({ column, block }) => (
+              <button
+                key={block.key}
+                type="button"
+                onClick={() => setBlockPick({ column, block })}
+                className="inline-flex min-h-11 max-w-full items-center gap-tight rounded-full border border-warning/40 bg-warning-wash px-comfortable text-left text-[0.875rem] text-fg"
+              >
+                <TriangleAlert size={16} strokeWidth={2} className="shrink-0 text-warning" aria-hidden />
+                <span className="min-w-0 truncate">
+                  <span className="font-semibold">{t("board.noPlaceShort")}</span>
+                  {" · "}
+                  {block.guest ?? t("board.walkIn")} {toTimeOfDay(block.start)}
+                </span>
+              </button>
+            ))}
+            {unassigned.length > 3 && <span className="text-[0.875rem] text-muted">{t("board.noPlaceMore", { count: unassigned.length - 3 })}</span>}
+          </div>
+        )}
+          onFree={toggleFree}
+          onSession={openSession}
+          onBooking={(column, block) => setBlockPick({ column, block })}
+          onHold={(column, block) => setBlockPick({ column, block })}
+          onColumn={(c) => { if (c.resource) { setOos(c.resource); setOosReason(c.resource.outOfServiceReason ?? ""); } }}
+        />
         </>
       ) : listItems.length === 0 ? (
         <EmptyState title={t("board.listEmptyTitle")} message={t("board.listEmptyMessage")} />
@@ -449,18 +638,129 @@ export default function SchedulePage() {
         </ul>
       )}
 
-      {freePick && (
-        <SlotSheet
-          key={freePick.block.key}
+      {/* ── what is chosen: Hold on the left, Add to sale on the right ──
+          Fixed above the tab bar, and the board ends above it, so no hour is
+          ever under a button. Only there while something is chosen. */}
+      {picks.length > 0 && view === "grid" && (
+        <section
+          id="sched-bar"
+          aria-label={t("bar.label")}
+          /* Bottom in classes, not an inline style: an inline style beats
+             `rail:`, and on a landscape tablet (no tab bar) the bar floated
+             85px up for a tab bar that is not there. */
+          className="fixed inset-x-tight bottom-[calc(84px+env(safe-area-inset-bottom))] z-40 flex flex-col gap-tight rounded-go bg-card p-comfortable go-raised sm:left-1/2 sm:right-auto sm:w-[30rem] sm:-translate-x-1/2 rail:bottom-comfortable"
+        >
+          <div className="flex items-start gap-tight">
+            <div className="min-w-0 flex-1">
+              <p aria-live="polite" className="text-[1rem] font-semibold text-fg">{chosenCount}</p>
+              {/* Wraps rather than truncating: a touch screen has no hover to
+                  show the rest. The day is in the board's corner already. */}
+              <p className="line-clamp-2 text-[0.8125rem] text-muted">{chosenLine}</p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-[1.125rem] font-semibold tabular-nums text-fg">{formatMoney(total)}</p>
+              <p className="text-[0.8125rem] text-muted">{t("bar.withVat")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={clearPicks}
+              aria-label={t("bar.clearAria")}
+              className="-mr-1 -mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-muted-wash"
+            >
+              <X size={20} strokeWidth={2} aria-hidden />
+            </button>
+          </div>
+
+          {offered.length > 1 && (
+            <div role="radiogroup" aria-label={t("bar.sellAs")} className="flex flex-wrap items-center gap-tight">
+              <span className="text-[0.8125rem] font-semibold text-muted">{t("bar.sellAs")}</span>
+              {offered.map((p) => {
+                const on = (choice ?? spans[0]?.product.id) === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => setChoice(p.id)}
+                    className={cn(
+                      "inline-flex h-11 items-center gap-tight rounded-full border-2 pl-1 pr-comfortable text-[0.9375rem] font-semibold",
+                      on ? "border-ember-solid bg-ember/10 text-fg" : "border-line bg-card text-fg",
+                    )}
+                  >
+                    {/* The booking's own picture, so the choice can be made by
+                        someone who does not read the name. */}
+                    {p.images?.length ? (
+                      <span className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
+                        <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="chip" className="h-8 w-8" />
+                      </span>
+                    ) : (
+                      /* No photograph: its first letters, not the fallback
+                         glyph — a map pin beside a cricket photo read as a
+                         picture that failed to load. */
+                      <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-inverse text-[0.8125rem] font-semibold text-inverse-fg">
+                        {p.name.slice(0, 2)}
+                      </span>
+                    )}
+                    {p.name}
+                    {on && <Check size={16} strokeWidth={3} className="text-brand-foreground" aria-hidden />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {waiver && (
+            <label className="flex min-h-11 cursor-pointer items-center gap-tight text-[0.875rem] text-fg">
+              <input
+                type="checkbox"
+                checked={waiverOk}
+                onChange={(e) => { setWaiverOk(e.target.checked); setWaiverMissing(false); }}
+                className="h-5 w-5 accent-[var(--color-ember-solid)]"
+              />
+              {t("bar.waiver")}
+            </label>
+          )}
+          {waiverMissing && <p role="alert" className="text-[0.8125rem] text-danger">{t("bar.waiverMissing")}</p>}
+
+          <div className="flex gap-tight">
+            <button type="button" className={secondary("h-13")} onClick={() => setHoldOpen(true)}>
+              <Lock size={20} strokeWidth={2} aria-hidden />
+              {t("bar.hold")}
+            </button>
+            <button type="button" className={primary("h-13", "flex-[1.4]")} onClick={addPicks}>
+              <ShoppingBag size={20} strokeWidth={2} aria-hidden />
+              {t("bar.add")}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {holdOpen && (
+        <HoldSheet
           open
-          onClose={() => setFreePick(null)}
-          title={freeTitle}
-          when={freeWhen}
-          options={freeOptions}
-          isSession={freePick.block.type === "session"}
-          maxHold={freePick.block.type === "session" ? freePick.block.remaining : 1}
-          onSell={sell}
-          onHold={hold}
+          onClose={() => setHoldOpen(false)}
+          title={t("sheet.holdTitle", { what: chosenCount })}
+          when={`${dayLabel} · ${chosenLine}`}
+          onHold={holdPicks}
+          busy={busy}
+        />
+      )}
+
+      {sessionPick && (
+        <SessionSheet
+          key={sessionPick.block.key + (sessionPick.releaseHoldId ?? "")}
+          open
+          onClose={() => setSessionPick(null)}
+          product={sessionPick.block.product}
+          block={sessionPick.block}
+          title={sessionPick.block.product.name}
+          when={`${sessionPick.block.time}–${toTimeOfDay(sessionPick.block.end)} · ${dayLabel}`}
+          initialQty={sessionPick.presetQty}
+          sellLabel={sessionPick.sellLabel}
+          guideMissing={sessionGuideMissing}
+          onAdd={addSession}
+          onHold={sessionPick.releaseHoldId ? undefined : holdSession}
           busy={busy}
         />
       )}
@@ -501,3 +801,4 @@ export default function SchedulePage() {
     </main>
   );
 }
+

@@ -131,7 +131,10 @@ export function Sheet({
         <div className="flex items-start justify-between gap-tight border-b border-hairline pb-tight pl-card pr-tight">
           <div className="min-w-0 flex-1">
             {lead}
-            <p className="truncate text-sm font-semibold text-fg">{title}</p>
+            {/* Wraps to a second line rather than cutting: a sheet's title is often
+                the name that tells two things apart ("…Walking Tour of Old
+                Dhaka" against "…Walking Tour of Old Dhaka with Rooftop Iftar"). */}
+            <p className="line-clamp-2 break-words text-sm font-semibold text-fg">{title}</p>
           </div>
           <button
             type="button"

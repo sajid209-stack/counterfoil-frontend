@@ -14657,3 +14657,147 @@ take a place, so they get a "No place set" column rather than being hidden.
   on different clocks.
 - **Day numbers on the week strip use English digits** beside a Bangla month —
   the app-wide digit decision recorded in the plain-language entry.
+
+## The Schedule, second pass: a grid, and straight to the cart (2026-10-01)
+
+Owner, with screenshots of the till's booking sheet and the board: *"calendar of
+POS schedule needs to be more user friendly, and the booking from Schedule needs
+to go direct to cart, not individual booking page … round radius slot buttons
+looks very odd, and the gap background between looking more odd … research some
+POS UI and most great UI POSs in the world, like Shopify and others and redesign
+the UI properly."*
+
+### What the research settled
+
+- **Court and turf schedulers** (CourtReserve, Playtomic Manager, Square
+  Appointments' side-by-side calendar) draw the day as a **grid of cells**, not
+  a stack of cards: empty time is the cell itself, and you tap it to book.
+- **A multi-select grid with a sticky action bar** is how a court system books
+  several hours at once: tap across courts and times, a bar shows "N slots",
+  and contiguous hours on one court merge into one booking.
+- **Shopify's POS guidance**: less is more, the same look everywhere, and the
+  most frequent action in the fewest taps.
+
+### The board is a grid now
+
+- **Every hour of every place is a cell, meeting its neighbours on hairlines.**
+  A free hour is a white cell with a quiet + and its price; there are no
+  rounded cards and no grey showing between them. Grey is only time that cannot
+  be booked, and it is the page's own colour, so it recedes — in dark too,
+  where the old grey was the card colour and closed time looked sellable.
+- **Tap an hour and it turns solid orange with a tick. Tap more to take
+  several.** A bar comes up above the tab bar: "2 hours · ৳3,450.00", the place
+  and hours, **Hold on the left, Add to sale on the right** — the same pair, in
+  the same places, as every sheet on this screen.
+- **Add to sale goes straight into the cart and opens it.** No booking sheet
+  asks again for the day, the field or the time. Lines are built by
+  `schedule/_lib/toCart.ts` with the till's own price rules: a field's hour
+  through `resolveProductPrice`, a lane through the duration engine, the
+  lane's own rate on top. **Two touching hours on a lane are one two-hour
+  booking**; a field stays one line per hour, as the OS calendar books it,
+  because the availability engine reads a fixed-slot booking by its slot. The
+  till is not mounted on the Schedule, so the lines go into the live sale
+  (`appendToLiveSale`) where the till reads them when it opens.
+- **The total is what the till will charge, VAT included**, worked out by
+  `buildOrderLines` — the number the cashier reads out is the number on
+  Take payment a moment later.
+- **A field shared by two bookings** asks "Sell as" in the bar, each choice with
+  the booking's own picture.
+- **Hold** asks who it is for and for how long; contiguous hours on one place
+  become one hold. **Sell to {name}** on a hold now puts exactly what was held
+  into the cart.
+- **A show** opens a tickets sheet with one of the operator's FIRST ticket type
+  chosen — not the cheapest, which was a senior concession — then Hold or Add
+  to sale. More tickets than seats is refused in words, and a guided tour with
+  no guide free says so. The till holds the places while its cart is open,
+  under the till's own id (`DEMO_TILL_ID`, now shared), so it can release them.
+- **After paying, New sale comes back to the Schedule** when the sale started
+  there (`setReturnTo` / `takeReturnTo`); a till-started sale still returns to
+  the till, and parking or clearing a sale forgets it.
+- **No invented group size**: a line from the board carries none, where the
+  sheet opened on "Group of 2" that nobody chose.
+
+### The screen around it
+
+- **The board fills the screen and scrolls inside itself**; the page does not
+  scroll on a phone. Its height is measured onto the node, and it ends above
+  the bar when the bar is up, so no hour sits under a button.
+- **One row of controls over the days**: which week, back to today, and a
+  grid/list toggle as two icons. **Place types are one segmented row**
+  (Lanes · Fields · Courts · Shows & tours), with their free counts in the
+  accessible name; a venue with one kind of place gets no row.
+- **The day is in the grid's corner** ("Wed 29 Jul"). The key sits under the
+  grid and steps aside while the bar is up.
+- **"No place set" is a chip above the board**, not a column: the column cost a
+  fifth of a phone's width and cut its one booking to "Sab… Bo…". Five lanes
+  now fit a 390px phone at 60px a column.
+- Scrolling snaps to whole hours, so the row at the top always has its time.
+- Show blocks drop their fill bar (a full green bar read as "full"); seats left
+  is the larger line.
+- The shared sheet's title wraps to two lines instead of cutting a long name.
+
+### The review loop
+
+An independent principal-designer review, strict scale, after each round:
+
+| Area | R1 | R2 |
+|---|---|---|
+| Grid clarity | 7 | 8 |
+| Speed of the sell flow | 8 | 9 |
+| Learnability (low literacy) | 6 | 7 |
+| Visual polish | 7 | 8 |
+| Phone layout | 5 | 5 |
+| Tablet/desktop layout | 5 | 7 |
+| Accessibility | 6 | 7 |
+
+Round 1's findings fixed: the desktop bar floated 85px above the floor (an
+inline style beat the rail class); the total left out VAT; "No place set"
+wasted width; the invented group size; hour labels sliced by auto-scroll; US
+date order and "2 times chosen"; the hold length drawn solid orange like the
+action; a double focus ring on the name field; dark-mode grey; the free "+"
+now grey, so orange means chosen, booked or the button.
+
+Round 2's findings fixed: the no-place note moved into the board's footer, so
+it steps aside with the key instead of pushing the board down; "VAT included"
+sits under the price; a booking with no photograph shows its first letters,
+not a map pin; the hold and tickets sheets put their title first; dates on
+this screen use Latin digits, like the week strip and the prices; from 1024px
+the place types sit on the week's own row; the now line clears the header
+rule; a short day (four hours of shows) no longer leaves a white band.
+
+Declined, with reasons: a two-hour line for fields (above); a neutral colour
+for booked time, which stays the OS calendar's booked orange; and collapsing
+the week strip on the first tap to win back phone rows — it would move every
+hour under the cashier's finger between the first tap and the second.
+
+### Verified
+
+- **Schedule harness, 31 checks, all passing at 390 and 1440, 30 at 768**:
+  no page x-scroll; no page scroll on a phone; free hours thumb-sized and flush
+  (radius 0) on the card; chosen hours pressed; the bar counts hours, totals
+  ৳3,450.00 with VAT, offers Hold and Add to sale and asks Sell as; the key
+  steps aside with the no-place note; no "No place set" column but a note in
+  the board footer, which is on screen; the board ends above the bar; un-choosing works; Add to sale lands on the cart with no sheet and two
+  Futsal lines; no group size; paying and New sale returns to the Schedule,
+  where the hour now reads booked; the desktop bar 16px off the floor; two
+  lane hours become one 12:00–14:00 line; an empty hold name refused in words;
+  the hold drawn; Sell to Karim into the cart; a show's tickets into the cart.
+- **Show holds, 4 checks**: first ticket type, not a concession; holding 3
+  places takes exactly 3 seats off sale; too many tickets refused in words.
+- **Audit** in light and dark at 390 and 1024, at rest, with the bar, with the
+  hold sheet and the tickets sheet: every target at least 44px, nothing under
+  13px, no x-scroll; the only contrast findings are the declared white-on-ember
+  rule.
+- Standing: till sale 10/10, printing 4/4, a till-started sale still returns to
+  the till, calendar 15/15.
+- `tsc`, `eslint` on every changed file and `check-i18n` clean.
+
+### Open
+
+- **Extras and group size** are not asked on the board; one tap on the cart
+  line opens the sheet with the line loaded.
+- **The last-session schedule scripts** (`sched.mjs`, `sched2.mjs`,
+  `sched3.mjs`) tested the Sell-opens-the-sheet flow and are retired; `v2.mjs`
+  and `v2b.mjs` replace them.
+- **"Assign a place"** for a booking with no place is not built; the chip opens
+  the booking.

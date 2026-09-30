@@ -108,3 +108,60 @@ export function clearLiveSale(): void {
 export function liveSaleCount(): number {
   return readLiveSale()?.cart.length ?? 0;
 }
+
+/**
+ * Put lines into the sale from somewhere that is not the till.
+ *
+ * The Schedule books a tapped hour straight into the cart rather than sending
+ * the cashier through the booking sheet a second time. The till is not mounted
+ * while the Schedule is on screen, so the lines go where the till will look for
+ * them when it mounts — the live sale — and everything else about the sale in
+ * progress (its customer, its discount) is left exactly as it was.
+ */
+export function appendToLiveSale(entries: CartEntry[]): void {
+  if (!entries.length) return;
+  const sale = readLiveSale() ?? {
+    cart: [],
+    discountMode: "percent" as const,
+    discountPct: 0,
+    discountAmt: 0,
+    discountReason: "",
+    attached: null,
+    pass: null,
+    coupon: null,
+    advance: null,
+    pointsToSpend: 0,
+  };
+  writeLiveSale({ ...sale, cart: [...sale.cart, ...entries] });
+}
+
+/**
+ * Where "New sale" goes after this sale is paid.
+ *
+ * A sale started from the Schedule should end back on the Schedule — the next
+ * guest in that queue is asking about another hour, not browsing the sell
+ * wall. Deliberately NOT cleared with the live sale: checkout clears the sale
+ * before the completion screen opens, and that screen is the one that asks.
+ * Parking or clearing the sale discards it, so an abandoned sale does not send
+ * the next, unrelated one somewhere odd.
+ */
+const RETURN = "pos_return";
+
+export function setReturnTo(path: string): void {
+  try {
+    sessionStorage.setItem(RETURN, path);
+  } catch {
+    /* the till still works; New sale just goes to the sell wall */
+  }
+}
+
+/** Read it once and forget it. */
+export function takeReturnTo(): string | null {
+  try {
+    const v = sessionStorage.getItem(RETURN);
+    sessionStorage.removeItem(RETURN);
+    return v;
+  } catch {
+    return null;
+  }
+}

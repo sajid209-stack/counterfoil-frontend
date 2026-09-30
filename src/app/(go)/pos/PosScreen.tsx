@@ -9,7 +9,7 @@ import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, Pro
 import { useApiQuery } from "@/lib/useApi";
 import { counterEvents, counterItems, inventoryItem, inventoryLineId, levelOf, peekCounters, peekTicketCodeSettings, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
-import { DEMO_COUNTER_ID } from "@/lib/session";
+import { DEMO_COUNTER_ID, DEMO_TILL_ID } from "@/lib/session";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
@@ -26,7 +26,7 @@ import { Keypad } from "../_components/Keypad";
 import { Pencil } from "lucide-react";
 import { usePrefs } from "@/lib/prefs";
 import { ticketSnapshot } from "./_lib/handover";
-import { clearLiveSale, readLiveSale, writeLiveSale } from "./_lib/liveSale";
+import { clearLiveSale, readLiveSale, takeReturnTo, writeLiveSale } from "./_lib/liveSale";
 
 const TODAY = DEMO_TODAY;
 // Payment methods this counter takes (would come from counter config).
@@ -574,7 +574,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
 
   // The till identifies itself so its own holds can be found and released
   // again. A real device id lands with the backend; the counter is enough here.
-  const TILL_ID = "till_fort_main";
+  const TILL_ID = DEMO_TILL_ID;
 
   /** `pay` comes from the sheet's Buy now: this sale is done, so land on the
    *  cart instead of going back to the grid for another item. */

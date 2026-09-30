@@ -14,6 +14,7 @@ import { DEMO_TODAY } from "@/lib/schedule";
 import { DEFAULT_SMS_TEMPLATE, renderSms } from "@/lib/sms";
 import { DEFAULT_EMAIL_BODY, DEFAULT_EMAIL_SUBJECT } from "@/lib/email";
 import type { CompleteInfo, CompleteTicket } from "../_lib/handover";
+import { takeReturnTo } from "../_lib/liveSale";
 
 /*
  * The moment a sale lands, for the person still standing at the counter.
@@ -266,7 +267,7 @@ export default function CompletePage() {
                 aria-describedby="sale-status"
                 icon={<Plus size={20} strokeWidth={2.2} />}
                 className="h-14 text-[1.0625rem] shadow-go-pop rail:shadow-none"
-                onClick={() => router.push("/pos")}
+                onClick={() => router.push(takeReturnTo() ?? "/pos")}
               >
                 {t("complete.newSale")}
               </Button>
