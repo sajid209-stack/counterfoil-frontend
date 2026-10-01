@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, FormField, Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
+import { formatClock } from "@/lib/format";
 import { getAccessPolicy, listStaff, type Staff } from "@/lib/api";
 import { Keypad } from "../_components/Keypad";
 
@@ -94,7 +95,7 @@ export default function GoLoginPage() {
   };
 
   const stateLine = (s: Staff) =>
-    s.id === OPEN_SHIFT.staffId ? t("login.onShiftSince", { time: OPEN_SHIFT.since }) : t("login.offShift");
+    s.id === OPEN_SHIFT.staffId ? t("login.onShiftSince", { time: formatClock(OPEN_SHIFT.since) }) : t("login.offShift");
 
   return (
     /* Full-bleed and quiet — this screen is a moment, not a form. It used to
@@ -111,7 +112,7 @@ export default function GoLoginPage() {
           {BUSINESS} · {COUNTER_NAME} · {DEVICE_NAME}
         </p>
         <p className="mt-inline text-[0.8125rem] text-muted">
-          {shiftOwner ? t("login.shiftOpenBy", { name: shiftOwner.name.split(" ")[0], time: OPEN_SHIFT.since }) : t("login.noShift")}
+          {shiftOwner ? t("login.shiftOpenBy", { name: shiftOwner.name.split(" ")[0], time: formatClock(OPEN_SHIFT.since) }) : t("login.noShift")}
           <span className="ml-tight text-muted">· {t("login.demoPin", { pin: DEMO_PIN })}</span>
         </p>
       </div>

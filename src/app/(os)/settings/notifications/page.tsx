@@ -20,7 +20,7 @@ import {
 import { DEFAULT_SMS_TEMPLATE, SMS_PLACEHOLDERS, renderSms } from "@/lib/sms";
 import { DEFAULT_EMAIL_BODY, DEFAULT_EMAIL_SUBJECT, EMAIL_PLACEHOLDERS, SUBJECT_VISIBLE } from "@/lib/email";
 import { DEMO_TODAY } from "@/lib/schedule";
-import { formatDay, formatMoney } from "@/lib/format";
+import { formatClock, formatDay, formatMoney } from "@/lib/format";
 import {
   SaveBar,
   SectionSkeleton,
@@ -349,7 +349,7 @@ export default function NotificationsPage() {
           </SettingRow>
           <SettingRow
             label={t("notifications.quiet")}
-            description={form.quietHours.enabled ? t("notifications.quietOn", { to: form.quietHours.to }) : t("notifications.quietOff")}
+            description={form.quietHours.enabled ? t("notifications.quietOn", { to: formatClock(form.quietHours.to) }) : t("notifications.quietOff")}
             labelFor={false}
             error={errors.quiet}
           >

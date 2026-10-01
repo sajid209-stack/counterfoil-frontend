@@ -31,7 +31,7 @@ import { useTemplateLabels } from "@/lib/events/useTemplateLabels";
 import { templateFontVars } from "@/lib/events/fonts";
 import { EventTemplate } from "@/components/events/EventTemplate";
 import { PreviewFrame } from "@/components/events/PreviewFrame";
-import { formatDay, formatPriceShort } from "@/lib/format";
+import { formatClock, formatClockRange, formatDay, formatPriceShort } from "@/lib/format";
 import { demoNow } from "@/lib/schedule";
 
 const TONE: Record<CatalogState, PillTone> = { onSale: "success", needsSetup: "warning", soldOut: "info", offSale: "neutral", ended: "neutral", archived: "neutral" };
@@ -173,7 +173,7 @@ export default function EventDetailPage() {
     ? ""
     : multi
       ? `${formatDay(evDays[0].date, { weekday: true })} – ${formatDay(evDays[evDays.length - 1].date, { weekday: true })}`
-      : `${formatDay(e.startsAt.slice(0, 10), { weekday: true })} · ${e.startsAt.slice(11, 16)}${e.endsAt ? `–${e.endsAt.slice(11, 16)}` : ""}`;
+      : `${formatDay(e.startsAt.slice(0, 10), { weekday: true })} · ${e.endsAt ? formatClockRange(e.startsAt.slice(11, 16), e.endsAt.slice(11, 16)) : formatClock(e.startsAt.slice(11, 16))}`;
   const channels = e ? eventChannels(e) : [];
   const locs = (locationsQ.data?.data ?? []).filter((l) => e?.locationIds?.includes(l.id));
 

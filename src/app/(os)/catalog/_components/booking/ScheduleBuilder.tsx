@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AlertTriangle, Plus, X } from "lucide-react";
-import { formatDay } from "@/lib/format";
+import { formatClock, formatClockRange, formatDay } from "@/lib/format";
 import { useTranslations } from "next-intl";
 import { DateField, DurationInput, FormField, Select, TimeInput } from "@/components/ui";
 import type { BookingTypeCode, DayHours, ProductSchedule, Staff } from "@/lib/api";
@@ -67,7 +67,7 @@ export function ScheduleBuilder({
   const slots = isSlotBased(bookingType) ? slotTimes(value) : [];
   const openCount = value.openDays.length;
   const overrideSummary = Object.entries(overrides)
-    .map(([d, h]) => `${dayShort(Number(d))} ${h.startTime}–${h.endTime}`)
+    .map(([d, h]) => `${dayShort(Number(d))} ${formatClockRange(h.startTime, h.endTime)}`)
     .join(" · ");
 
   return (
@@ -191,7 +191,7 @@ export function ScheduleBuilder({
         <div className="rounded-sm border border-inverse bg-card p-section">
           <p className="type-label text-[12px] text-muted">{t("preview")}</p>
           <p className="mt-inline text-[13px] tabular-nums">
-            {slots.slice(0, 6).join(" · ")}{slots.length > 6 ? ` … ${slots[slots.length - 1]}` : ""}
+            {slots.slice(0, 6).map((s) => formatClock(s)).join(" · ")}{slots.length > 6 ? ` … ${formatClock(slots[slots.length - 1])}` : ""}
           </p>
           <p className="mt-tight text-[13px] text-muted">
             {t.rich("capacityWeek", {

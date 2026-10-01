@@ -37,10 +37,11 @@ import {
   type Booking,
   type WriteOffCategory,
 } from "@/lib/api";
-import { formatDateTime, formatDay, formatMoney } from "@/lib/format";
+import { formatClock, formatDateTime, formatDay, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { OrderLinesDetail } from "@/components/OrderLinesDetail";
 import { OrderFees } from "../../money/_components/OrderFees";
+import { RefundRequests } from "@/components/RefundRequests";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -189,14 +190,14 @@ export default function OrderDetailPage() {
     if (!moveFor || !moveProduct || !moveDate || !moveTime) return;
     const slot = moveSlots.find((s) => s.time === moveTime);
     if (slot && slot.remaining < moveFor.partySize) {
-      toast.error(t("moveTooTight", { count: slot.remaining, time: moveTime, size: moveFor.partySize }));
+      toast.error(t("moveTooTight", { count: slot.remaining, time: formatClock(moveTime), size: moveFor.partySize }));
       return;
     }
     const iso = `${moveDate}T${moveTime}:00+06:00`;
     const res = await rescheduleBooking(moveFor.id, iso);
     if (res.ok) {
-      await logOrderAction(params.id, `Moved ${moveProduct.name} to ${moveDate} ${moveTime}`);
-      toast.success(t("moved", { date: formatDay(moveDate, { weekday: true }), time: moveTime }));
+      await logOrderAction(params.id, `Moved ${moveProduct.name} to ${moveDate} ${formatClock(moveTime)}`);
+      toast.success(t("moved", { date: formatDay(moveDate, { weekday: true }), time: formatClock(moveTime) }));
       setMoveFor(null);
       bookingsQ.reload();
       order.reload();
@@ -272,6 +273,12 @@ export default function OrderDetailPage() {
         <ArrowLeft size={14} strokeWidth={1.5} /> {t("backOrders")}
       </Link>
 
+      {o && (
+        <div className="mb-section">
+          <RefundRequests orderId={o.id} onDecided={() => { order.reload(); bookingsQ.reload(); ticketsQ.reload(); }} />
+        </div>
+      )}
+
       {order.loading || !o ? (
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : (
@@ -339,7 +346,7 @@ export default function OrderDetailPage() {
                         page went to two, and "…Walking Tour of Ol…" names
                         nothing. */}
                     <span className="min-w-0 flex-1 break-words">{p?.name ?? b.productId}</span>
-                    <span className="font-mono text-[12px] text-muted">{formatDay(b.slotStart.slice(0, 10))} {b.slotStart.slice(11, 16)} · {t("party", { size: b.partySize })}</span>
+                    <span className="font-mono text-[12px] text-muted">{formatDay(b.slotStart.slice(0, 10))} {formatClock(b.slotStart.slice(11, 16))} · {t("party", { size: b.partySize })}</span>
                     {!edit.editable && (
                       <span className="flex min-w-0 items-center gap-inline rounded-sm bg-warning/10 px-tight py-0.5 text-[12px] text-warning">
                         <Lock size={12} strokeWidth={2} className="shrink-0" />
@@ -636,7 +643,7 @@ export default function OrderDetailPage() {
                       onClick={() => setMoveTime(s.time)}
                       className={`flex h-12 flex-col items-center justify-center rounded-sm border font-mono text-[13px] ${moveTime === s.time ? "border-inverse bg-inverse text-inverse-fg" : fits ? "border-line bg-card" : "border-line bg-subtle text-muted line-through"}`}
                     >
-                      {s.time}
+                      <span className="whitespace-nowrap">{formatClock(s.time)}</span>
                       <span className="text-[12px]">{fits ? t("slotLeft", { count: s.remaining }) : t("slotFull")}</span>
                     </button>
                   );

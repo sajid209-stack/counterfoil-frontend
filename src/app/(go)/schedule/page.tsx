@@ -6,7 +6,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Check, ChevronLeft, ChevronRight, LayoutGrid, List, Lock, ShoppingBag, TriangleAlert, X } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { formatMoney } from "@/lib/format";
+import { formatClockMin, formatClockRange, formatMoney } from "@/lib/format";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, slotISO } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
 import { LG, useMediaQuery } from "@/lib/useMedia";
@@ -34,7 +34,8 @@ import { taxRateFor } from "@/lib/tax";
 import { buildBoard, dayLoad, toTimeOfDay, type Block, type Column } from "./_lib/board";
 import { entriesFor, entryPrice, guideFor, holdEntries, needsWaiver, productsIn, sessionEntry, spansOf, type Pick } from "./_lib/toCart";
 import { Board } from "./_components/Board";
-import { BlockSheet, HoldSheet, SessionSheet, type HoldRequest } from "./_components/Sheets";
+import { BlockSheet, HoldSheet, RefundSheet, SessionSheet, type HoldRequest } from "./_components/Sheets";
+import { pendingRefundFor, refundableFor, refundRequestsForOrder, requestRefund, withdrawRefundRequest, type RefundReason } from "@/lib/api/refundRequests";
 import { ActionBar, BarSummary } from "../_components/ActionBar";
 
 type View = "grid" | "list";
@@ -118,6 +119,8 @@ export default function SchedulePage() {
   /* The mock store is synchronous and the board reads it directly, so a
      change is shown by asking again rather than by refetching. */
   const [version, setVersion] = useState(0);
+  /* The refund form, open over the booking it is for. */
+  const [refundOpen, setRefundOpen] = useState(false);
   const [oos, setOos] = useState<Resource | null>(null);
   const [oosReason, setOosReason] = useState("");
   const [oosSaving, setOosSaving] = useState(false);
@@ -195,10 +198,10 @@ export default function SchedulePage() {
   const chosenCount = chosenMinutes % 60 === 0 ? t("bar.hours", { count: chosenMinutes / 60 }) : t("bar.minutes", { count: chosenMinutes });
   const spans = useMemo(() => spansOf(picks, choice), [picks, choice]);
   const waiver = needsWaiver(spans.map((s) => s.product));
-  /* "Indoor Field 12:00–13:00, 15:00–16:00" — each place named once. */
+  /* "Indoor Field 12:00 – 1:00 PM, 3:00 – 4:00 PM" — each place named once. */
   const chosenLine = useMemo(() => {
     const byPlace = new Map<string, string[]>();
-    for (const s of spans) byPlace.set(s.column.name, [...(byPlace.get(s.column.name) ?? []), `${toTimeOfDay(s.start)}–${toTimeOfDay(s.end)}`]);
+    for (const s of spans) byPlace.set(s.column.name, [...(byPlace.get(s.column.name) ?? []), formatClockRange(s.start, s.end)]);
     return [...byPlace].map(([name, r]) => `${name} ${r.join(", ")}`).join(" · ");
   }, [spans]);
 
@@ -347,6 +350,49 @@ export default function SchedulePage() {
         setVersion((v) => v + 1);
       },
     });
+  };
+
+  /* Where the booking on the sheet stands on a refund. Read on every render
+     (version bumps after a request), from the mock's own store. */
+  const refundInfo = (() => {
+    if (!blockPick || blockPick.block.type !== "booking") return undefined;
+    const b = blockPick.block.booking;
+    void version;
+    const pending = pendingRefundFor(b.id);
+    const last = refundRequestsForOrder(b.orderId).find((r) => r.bookingId === b.id) ?? null;
+    const found = refundableFor(b.id);
+    return { pending, last, refundable: !!found && found.amount > 0, amount: found?.amount ?? 0 };
+  })();
+
+  const sendRefund = async (reason: RefundReason, note: string) => {
+    if (!blockPick || blockPick.block.type !== "booking") return;
+    const b = blockPick.block.booking;
+    setBusy(true);
+    const res = await requestRefund({
+      bookingId: b.id,
+      reason,
+      note,
+      requestedBy: me,
+      place: blockPick.column.kind === "resource" ? blockPick.column.name : null,
+    });
+    setBusy(false);
+    if (!res.ok) {
+      toast.error(t("refund.failed"));
+      return;
+    }
+    setRefundOpen(false);
+    setBlockPick(null);
+    setVersion((v) => v + 1);
+    toast.success(t("refund.sent"));
+  };
+
+  const withdrawRefund = async () => {
+    if (!refundInfo?.pending) return;
+    setBusy(true);
+    await withdrawRefundRequest(refundInfo.pending.id);
+    setBusy(false);
+    setVersion((v) => v + 1);
+    toast.success(t("refund.withdrawn"));
   };
 
   const release = async () => {
@@ -590,7 +636,7 @@ export default function SchedulePage() {
                 <span className="min-w-0 truncate">
                   <span className="font-semibold">{t("board.noPlaceShort")}</span>
                   {" · "}
-                  {block.guest ?? t("board.walkIn")} {toTimeOfDay(block.start)}
+                  {block.guest ?? t("board.walkIn")} {formatClockMin(block.start)}
                 </span>
               </button>
             ))}
@@ -620,7 +666,7 @@ export default function SchedulePage() {
                   onClick={() => setBlockPick({ column, block })}
                   className="flex min-h-16 w-full items-center gap-comfortable px-card py-tight text-left hover:bg-muted-wash"
                 >
-                  <span className="w-12 shrink-0 text-[0.9375rem] font-semibold tabular-nums text-fg">{toTimeOfDay(block.start)}</span>
+                  <span className="w-[4.75rem] shrink-0 text-[0.9375rem] font-semibold tabular-nums text-fg">{formatClockMin(block.start)}</span>
                   <span
                     aria-hidden
                     className={cn("h-10 w-1 shrink-0 rounded-full", isHold ? "bg-strong" : block.type === "booking" && block.arrived ? "bg-success" : "bg-ember-solid")}
@@ -742,7 +788,7 @@ export default function SchedulePage() {
           product={sessionPick.block.product}
           block={sessionPick.block}
           title={sessionPick.block.product.name}
-          when={`${sessionPick.block.time}–${toTimeOfDay(sessionPick.block.end)} · ${dayLabel}`}
+          when={`${formatClockRange(sessionPick.block.time, sessionPick.block.end)} · ${dayLabel}`}
           initialQty={sessionPick.presetQty}
           sellLabel={sessionPick.sellLabel}
           guideMissing={sessionGuideMissing}
@@ -753,7 +799,7 @@ export default function SchedulePage() {
       )}
 
       <BlockSheet
-        open={!!blockPick}
+        open={!!blockPick && !refundOpen}
         onClose={() => setBlockPick(null)}
         column={blockPick?.column ?? null}
         block={blockPick?.block ?? null}
@@ -761,8 +807,23 @@ export default function SchedulePage() {
         onCheckIn={checkIn}
         onRelease={release}
         onSellHold={sellHold}
+        refund={refundInfo}
+        onRefund={() => setRefundOpen(true)}
+        onWithdrawRefund={withdrawRefund}
         busy={busy}
       />
+
+      {blockPick?.block.type === "booking" && (
+        <RefundSheet
+          open={refundOpen}
+          onClose={() => setRefundOpen(false)}
+          title={blockPick.block.guest ?? t("board.walkIn")}
+          when={`${blockPick.column.kind === "unassigned" ? t("board.noPlace") : blockPick.column.name} · ${formatClockRange(blockPick.block.start, blockPick.block.end)}`}
+          amount={refundInfo?.amount ?? 0}
+          onSend={sendRefund}
+          busy={busy}
+        />
+      )}
 
       <Modal
         open={!!oos}

@@ -64,6 +64,8 @@ const store: Record<string, Row[]> = {
   // Minted on first read rather than seeded — see lib/api/credentials.
   ticketCredentials: [],
   ticketScans: [],
+  // Refund requests start empty — a counter makes them, a manager decides.
+  refundRequests: [],
   bookings: structuredClone(seed.bookings),
   paymentAccounts: structuredClone(seed.paymentAccounts),
   seatLayouts: structuredClone(seed.seatLayouts),
@@ -148,6 +150,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
   // A new business's tickets are new tickets; their credentials mint on read.
   (store as Record<string, unknown[]>).ticketCredentials = [];
   (store as Record<string, unknown[]>).ticketScans = [];
+  (store as Record<string, unknown[]>).refundRequests = [];
   (store as Record<string, unknown[]>).bookings = [...sales.bookings, ...keepBookings];
 }
 

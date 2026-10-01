@@ -2,7 +2,7 @@ import { peekTicketCodeSettings } from "@/lib/api";
 import { useTranslations } from "next-intl";
 import type { TicketCardData, TicketField } from "@/components/ui/TicketCard";
 import type { Order, Ticket } from "@/lib/api/types";
-import { formatDay } from "@/lib/format";
+import { formatClock, formatClockRange, formatDay } from "@/lib/format";
 
 export interface TicketLabels {
   date: string;
@@ -52,7 +52,7 @@ export function ticketCards(order: Order | undefined, tickets: Ticket[], busines
     // rather than asked of Intl, whose en-GB form with a year puts a comma after the weekday.
     const day = booking?.date ?? ticket.validFor;
     const fields: TicketField[] = [{ label: labels.date, value: `${formatDay(day, { weekday: true })} ${day.slice(0, 4)}` }];
-    if (booking?.startTime) fields.push({ label: labels.time, value: booking.endTime ? `${booking.startTime} – ${booking.endTime}` : booking.startTime });
+    if (booking?.startTime) fields.push({ label: labels.time, value: booking.endTime ? formatClockRange(booking.startTime, booking.endTime) : formatClock(booking.startTime) });
     const productName = line?.productName ?? ticket.tierName;
     // Nothing on a ticket says the same thing twice: a court booked as "Badminton Court" does not
     // also need "Where: Badminton Court", and "Day Pass Bundle" does not need the tier "Bundle".

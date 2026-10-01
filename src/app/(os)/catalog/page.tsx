@@ -73,7 +73,7 @@ import {
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { categoryById } from "@/lib/events/catalog";
 import { templateFontVars } from "@/lib/events/fonts";
-import { formatDay, formatPriceShort } from "@/lib/format";
+import { formatClockOf, formatClockRange, formatDay, formatPriceShort } from "@/lib/format";
 import { DEMO_TODAY, demoNow } from "@/lib/schedule";
 import type { Blocker, SellingWarning } from "@/lib/sellable";
 import {
@@ -498,7 +498,7 @@ function Catalog() {
   const warningLabel = (w: SellingWarning) => t(`warning.${w.kind}`, { date: formatDay(w.date) });
   const dateOf = (iso: string) =>
     new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
-  const timeOf = (iso: string) => new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  const timeOf = (iso: string) => formatClockOf(iso);
 
   /** When a booking can be had: its days over its hours — the same two lines
    *  an event's date and time take — or how it is used when it has none. */
@@ -506,7 +506,7 @@ function Catalog() {
     const s = p.schedule;
     if (s?.startTime && s.endTime) {
       const days = s.openDays?.length === 7 || !s.openDays ? t("everyDay") : [...s.openDays].sort().map((d) => t(`day.short.${d}`)).join(" ");
-      return [days, `${s.startTime}–${s.endTime}`];
+      return [days, formatClockRange(s.startTime, s.endTime)];
     }
     if (p.courseDates?.length) return [t("sessions", { count: p.courseDates.length }), formatDay([...p.courseDates].sort()[0])];
     return [t(`whenKind.${bookingKindOf(p.bookingType)}`), null];

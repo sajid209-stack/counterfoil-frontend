@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { formatMoney } from "@/lib/format";
+import { formatClock, formatMoney } from "@/lib/format";
 import type { Occurrence } from "@/lib/recurrence";
 
 /** Quick counts that FILL the stepper rather than limit it — the app's own
@@ -126,7 +126,7 @@ export function RepeatPicker({
                 </span>
                 <span className={cn("min-w-0 flex-1 truncate text-[0.8125rem] tabular-nums", !o.ok && "text-muted line-through")}>
                   {dayLabel(o.date)}
-                  {time ? ` · ${time}` : ""}
+                  {time ? ` · ${formatClock(time)}` : ""}
                 </span>
                 {!o.ok && (
                   <span className="shrink-0 whitespace-nowrap text-[0.8125rem] text-muted">

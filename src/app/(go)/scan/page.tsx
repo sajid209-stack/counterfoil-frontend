@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Camera, Check, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -18,7 +18,7 @@ import {
   tillMethods,
   type PaymentMethod,
 } from "@/lib/api";
-import { formatDateTime, formatDay, formatMoney } from "@/lib/format";
+import { formatClockOf, formatDateTime, formatDay, formatMoney } from "@/lib/format";
 import { resolveScan, type RefuseReason, type ScanOutcome } from "./_lib/outcome";
 import type { ScanRefusal } from "@/lib/api";
 
@@ -53,7 +53,6 @@ interface LogEntry {
 
 export default function ScanPage() {
   const t = useTranslations("scan");
-  const format = useFormatter();
   const input = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
   const [outcome, setOutcome] = useState<ScanOutcome | null>(null);
@@ -369,7 +368,7 @@ export default function ScanPage() {
                       <span className="block truncate font-mono text-[0.8125rem]">{e.code}</span>
                       <span className="block truncate text-[0.8125rem] text-muted">{e.title || t(`tally_${e.verdict === "refuse" ? "refuse" : e.verdict === "balance" ? "balance" : "admit"}`)}</span>
                     </span>
-                    <span className="shrink-0 text-[0.8125rem] text-muted">{format.dateTime(e.at, { hour: "numeric", minute: "numeric" })}</span>
+                    <span className="shrink-0 text-[0.8125rem] text-muted">{formatClockOf(e.at)}</span>
                   </li>
                 ))}
               </ul>

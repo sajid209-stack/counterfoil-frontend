@@ -28,7 +28,7 @@ import {
   unlockBooking,
 } from "@/lib/api";
 import { DEMO_TODAY, demoNow, isSlotBased, slotISO, toMinutes as toMinutesOf, toTime } from "@/lib/schedule";
-import { formatPriceShort } from "@/lib/format";
+import { formatClock, formatClockMin, formatPriceShort } from "@/lib/format";
 import { DayGrid, type DayLane } from "./_components/DayGrid";
 import { WeekGrid } from "./_components/WeekGrid";
 import { MonthGrid } from "./_components/MonthGrid";
@@ -401,7 +401,7 @@ export default function CalendarPage() {
     heading: t("book.openToBook"),
     label: (count: number) => t("book.openShort", { count }),
     name: (hour: number, count: number) =>
-      t("book.openChipLabel", { time: `${String(hour).padStart(2, "0")}:00`, count }),
+      t("book.openChipLabel", { time: formatClockMin(hour * 60), count }),
   };
 
   // ── day lanes ─────────────────────────────────────────────────────────────
@@ -728,6 +728,8 @@ export default function CalendarPage() {
     const from = toMinutesOf(b.slotStart.slice(11, 16));
     const length = Math.max(15, b.slotEnd ? toMinutesOf(b.slotEnd.slice(11, 16)) - from : 60);
     const time = toTime(start);
+    /** What a person reads; `time` stays the 24-hour slot key. */
+    const shown = formatClockMin(start);
     const product = products.find((x) => x.id === b.productId);
 
     /* The same two questions the till asks before it sells anything, asked of
@@ -735,17 +737,17 @@ export default function CalendarPage() {
        room for this party or it does not. */
     if (b.resourceId) {
       if (!isResourceFreeFor(b.resourceId, date, time, length, product?.bufferMinutes ?? 0, b.id)) {
-        toast.error(t("moveBusy", { time }));
+        toast.error(t("moveBusy", { time: shown }));
         return;
       }
     } else if (product && isSlotBased(product.bookingType)) {
       const slot = getSlots(product, date).find((sl) => sl.time === time);
       if (!slot) {
-        toast.error(t("moveNoSlot", { time }));
+        toast.error(t("moveNoSlot", { time: shown }));
         return;
       }
       if (slot.remaining < b.partySize) {
-        toast.error(t("moveFull", { time, count: slot.remaining }));
+        toast.error(t("moveFull", { time: shown, count: slot.remaining }));
         return;
       }
     }
@@ -759,7 +761,7 @@ export default function CalendarPage() {
     setDetail(null);
     bookingsQ.reload();
     setStamp((n) => n + 1);
-    toast.success(t("movedToast", { name: e.title, time }), {
+    toast.success(t("movedToast", { name: e.title, time: shown }), {
       label: t("undo"),
       run: async () => {
         const back = await rescheduleBooking(b.id, was.start, was.end);
@@ -1147,7 +1149,7 @@ export default function CalendarPage() {
                       tiny: String(slot.remaining ?? 0),
                       full: t("book.openTileLabel", {
                         lane: slot.laneName,
-                        time: slot.time,
+                        time: formatClock(slot.time),
                         what: t("book.seatsLeft", { count: slot.remaining ?? 0 }),
                       }),
                     }
@@ -1155,7 +1157,7 @@ export default function CalendarPage() {
                       // A field shared by two bookings is "from" its cheaper.
                       short: slot.options.length > 1 && new Set(slot.options.map((o) => o.price)).size > 1 ? t("book.fromPrice", { amount: price }) : price,
                       tiny: "+",
-                      full: t("book.openTileLabel", { lane: slot.laneName, time: slot.time, what: price }),
+                      full: t("book.openTileLabel", { lane: slot.laneName, time: formatClock(slot.time), what: price }),
                     };
               }}
             />
@@ -1202,8 +1204,8 @@ export default function CalendarPage() {
                 // "15:00, nothing open" read out alone does not say which.
                 full:
                   count > 0
-                    ? t("book.openCellLabel", { day: dayLong(d), time: `${String(h).padStart(2, "0")}:00`, count })
-                    : t("book.noneCellLabel", { day: dayLong(d), time: `${String(h).padStart(2, "0")}:00` }),
+                    ? t("book.openCellLabel", { day: dayLong(d), time: formatClockMin(h * 60), count })
+                    : t("book.noneCellLabel", { day: dayLong(d), time: formatClockMin(h * 60) }),
               })}
             />
           ) : (

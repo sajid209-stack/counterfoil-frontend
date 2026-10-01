@@ -19,7 +19,7 @@ import {
   type Resource,
   type Staff,
 } from "@/lib/api";
-import { formatPriceShort } from "@/lib/format";
+import { formatClockRange, formatPriceShort } from "@/lib/format";
 import { defaultSchedule, isDailyCapped, isSlotBased, needsSchedule, slotTimes } from "@/lib/schedule";
 import { defaultPolicies } from "@/lib/tax";
 import { bookingKindOf, type BookingKind } from "@/lib/catalog";
@@ -334,7 +334,7 @@ export function ProductWizard({
   const whenLine = (() => {
     if (!schedule || !booking) return null;
     const days = schedule.openDays.length === 7 ? t("everyDay") : [...schedule.openDays].sort().map((d) => dayShort(d)).join(" ");
-    const hours = schedule.startTime && schedule.endTime ? `${schedule.startTime}–${schedule.endTime}` : "";
+    const hours = schedule.startTime && schedule.endTime ? formatClockRange(schedule.startTime, schedule.endTime) : "";
     const amount = isSlotBased(booking.bookingType)
       ? t("sessionsPerDay", { count: slotTimes(schedule).length })
       : isDailyCapped(booking.bookingType)

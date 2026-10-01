@@ -55,3 +55,9 @@ export function createBooking(input: {
 }): Promise<ApiResult<Booking>> {
   return resource.create({ ...input, status: "confirmed" });
 }
+
+/** Cancel one booking, so its place goes back on sale. Used when a refund for
+ *  it is approved: a refunded booking that still held its lane would be a
+ *  lane nobody can sell and nobody is coming to. */
+export const cancelBooking = (id: string): Promise<ApiResult<Booking>> =>
+  resource.update(id, { status: "cancelled" });

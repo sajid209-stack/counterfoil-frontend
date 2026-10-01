@@ -8,8 +8,8 @@ import { ActionMenu, Button, ConfirmDialog, EmptyState, Modal, PageShell, Status
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listLocations, listResources, ownerBusyDetailed, updateResource, type Resource } from "@/lib/api";
-import { formatPriceShort } from "@/lib/format";
-import { DEMO_TODAY, toTime } from "@/lib/schedule";
+import { formatClockMin, formatPriceShort } from "@/lib/format";
+import { DEMO_TODAY } from "@/lib/schedule";
 import { IconTile, RecordList, RecordRow, SectionSkeleton, Switch, controlCls } from "../_components/SettingsKit";
 
 /** The demo's "now": the same noon the till and the dashboard read. */
@@ -82,9 +82,9 @@ export default function ResourcesPage() {
     }
     const spans = ownerBusyDetailed(r.id, DEMO_TODAY);
     const current = spans.find((s) => s.start <= NOW_MIN && NOW_MIN < s.end);
-    if (current) return { text: t("resources.inUseUntil", { time: toTime(current.end), label: current.label }), warn: false };
+    if (current) return { text: t("resources.inUseUntil", { time: formatClockMin(current.end), label: current.label }), warn: false };
     const next = spans.find((s) => s.start > NOW_MIN);
-    return { text: next ? t("resources.freeNext", { time: toTime(next.start) }) : t("resources.free"), warn: false };
+    return { text: next ? t("resources.freeNext", { time: formatClockMin(next.start) }) : t("resources.free"), warn: false };
   };
 
   const rate = (r: Resource) =>

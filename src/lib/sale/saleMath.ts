@@ -23,6 +23,7 @@
 import { buildOrderLines, type LineInput } from "@/lib/orderMath";
 import type { CreditPass, MemberBenefit, Operator, Product } from "@/lib/api";
 import { slotISO, toMinutes } from "@/lib/schedule";
+import { formatClock } from "@/lib/format";
 import { taxRateFor } from "@/lib/tax";
 
 /** One configured thing in the sale.
@@ -157,7 +158,10 @@ export function buildSaleLines(items: SaleItem[], ctx: SaleContext): LineInput[]
       out.push({
         productId: e.productId,
         productName: e.productName,
-        tierName: e.resourceLabel ?? e.providerLabel ?? e.slotTime ?? e.productName,
+        // The name a receipt prints for the line. A slot time standing in for
+        // a name is read by a person, so it is drawn 12-hour ("2:00 PM");
+        // the booking snapshot below keeps the stored "14:00".
+        tierName: e.resourceLabel ?? e.providerLabel ?? (e.slotTime ? formatClock(e.slotTime) : undefined) ?? e.productName,
         admits: seats,
         quantity: 1,
         unitPrice: e.fixedPrice,

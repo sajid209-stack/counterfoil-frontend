@@ -59,9 +59,13 @@ export function ActionBar({
   /**
    * `screen` — floats above the tab bar (a landscape tablet has a rail
    * instead, so it sits on the floor there).
+   * `dock` — a solid footer the full width of the screen, from the top of
+   *   the buttons to the bottom edge, with the tab bar sitting inside it. The
+   *   page scrolls away cleanly above it: nothing shows around the buttons or
+   *   between them and the tab bar. The sell screen's bar is this.
    * `panel` — the foot of a sheet or a side panel, in the flow.
    */
-  docked?: "screen" | "panel";
+  docked?: "screen" | "dock" | "panel";
   className?: string;
 }) {
   const buttons = (secondary || primary) && (
@@ -91,7 +95,12 @@ export function ActionBar({
                `rail:`, and on a landscape tablet (no tab bar) the bar floated
                85px up for a tab bar that is not there. */
             "fixed inset-x-tight bottom-[calc(84px+env(safe-area-inset-bottom))] z-40 rounded-go bg-card p-comfortable go-raised sm:left-1/2 sm:right-auto sm:w-[30rem] sm:-translate-x-1/2 rail:bottom-comfortable"
-          : "border-t border-line bg-sheet px-section pb-[calc(12px+env(safe-area-inset-bottom))] pt-comfortable",
+          : docked === "dock"
+            ? /* z-30: under the tab bar (z-40), which sits in the dock's
+                 bottom. The padding is the tab bar's clearance (12 + 62) plus
+                 12 between it and the buttons. */
+              "fixed inset-x-0 bottom-0 z-30 rounded-t-go-lg border-t border-line bg-card px-section pt-comfortable pb-[calc(86px+env(safe-area-inset-bottom))] shadow-[0_-10px_30px_-14px_rgb(0_0_0/0.28)] rail:pb-[calc(12px+env(safe-area-inset-bottom))] [&>*]:mx-auto [&>*]:w-full [&>*]:max-w-[32rem]"
+            : "border-t border-line bg-sheet px-section pb-[calc(12px+env(safe-area-inset-bottom))] pt-comfortable",
         className,
       )}
     >

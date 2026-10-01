@@ -28,8 +28,9 @@ import { availableSeats, explainUnavailable, type Product, type Resource, type S
 import { applyResourceRate } from "@/lib/api";
 import { productDurationPrice } from "@/lib/duration";
 import { resolveProductPrice } from "@/lib/pricing";
-import { DEMO_TODAY, demoDay, isGuided, slotISO, toMinutes, toTime } from "@/lib/schedule";
-import { formatDay, formatMoney } from "@/lib/format";
+import { DEMO_TODAY, demoDay, isGuided, slotISO, toMinutes } from "@/lib/schedule";
+import { formatClock, formatClockRange, formatDay, formatMoney } from "@/lib/format";
+import { ClockCell } from "../../_components/Clock";
 import { formatDuration } from "@/lib/duration";
 import {
   activeTiersOf,
@@ -323,7 +324,7 @@ export function SelectionInline({
                               : "border-line bg-subtle text-muted line-through"
                         }`}
                       >
-                        <span>{sl.time}</span>
+                        <ClockCell hhmm={sl.time} className={on || sl.available ? undefined : "line-through"} />
                         <span className={on ? "text-[0.75rem] text-white/80" : "text-[0.75rem] text-muted"}>
                           {formatMoney(price, currency)}
                         </span>
@@ -354,7 +355,7 @@ export function SelectionInline({
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[0.875rem] font-medium">
-                        {res?.name ?? x.resourceId} · {x.time}
+                        {res?.name ?? x.resourceId} · {formatClock(x.time)}
                       </span>
                       <span className="block text-[0.75rem] text-muted">
                         {formatDay(x.date, { weekday: true })}
@@ -362,7 +363,7 @@ export function SelectionInline({
                     </span>
                     <button
                       type="button"
-                      aria-label={t("slot.remove", { time: x.time })}
+                      aria-label={t("slot.remove", { time: formatClock(x.time) })}
                       onClick={() => set({ slots: picked.filter((y) => y !== x) })}
                       className="flex size-11 shrink-0 items-center justify-center rounded-full text-danger active:bg-ember/10"
                     >
@@ -502,7 +503,7 @@ export function SelectionInline({
                         : "border-line bg-card active:bg-ember/10"
                   }`}
                 >
-                  {time}
+                  <ClockCell hhmm={time} className={on || !blocked ? undefined : "line-through"} />
                 </button>
               );
             })}
@@ -511,10 +512,7 @@ export function SelectionInline({
               typed — it falls out of the start and the length. */}
           {draft.slotTime && (
             <p className="mt-tight text-[0.8125rem] text-muted">
-              {t("flex.window", {
-                from: draft.slotTime,
-                to: toTime(toMinutes(draft.slotTime) + minutes),
-              })}
+              {formatClockRange(draft.slotTime, toMinutes(draft.slotTime) + minutes)}
             </p>
           )}
         </Step>
@@ -544,7 +542,7 @@ export function SelectionInline({
                   onClick={() =>
                     anyFree
                       ? set({ slotTime: time, providerId: undefined })
-                      : setBlocked(t("provider.noneFree", { time }))
+                      : setBlocked(t("provider.noneFree", { time: formatClock(time) }))
                   }
                   className={`flex min-h-12 items-center justify-center rounded-go border px-inline text-[0.8125rem] transition-colors duration-quick ${
                     on
@@ -554,7 +552,7 @@ export function SelectionInline({
                         : "border-line bg-subtle text-muted line-through"
                   }`}
                 >
-                  {time}
+                  <ClockCell hhmm={time} className={on || anyFree ? undefined : "line-through"} />
                 </button>
               );
             })}

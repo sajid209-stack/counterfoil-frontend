@@ -1,0 +1,26 @@
+{
+  "title": "{count, plural, one {# refund request from the counter} other {# refund requests from the counter}}",
+  "lead": "Check each one. Refunding gives the money back and puts the slot back on sale.",
+  "walkIn": "Walk-in",
+  "reasons": {
+    "customer_cancelled": "Guest cancelled",
+    "weather": "Bad weather",
+    "venue_problem": "Problem at our venue",
+    "double_booked": "Booked twice",
+    "other": "Something else"
+  },
+  "askedBy": "Asked by {name} · {ago}",
+  "approve": "Refund {amount}",
+  "approveTitle": "Refund {amount}?",
+  "approveBody": "The money goes back to the guest the way they paid, and {what} on {when} goes back on sale. This can't be undone.",
+  "approved": "Refunded {amount}. The slot is back on sale.",
+  "decline": "Decline",
+  "declineTitle": "Decline this refund?",
+  "declineNote": "Why not?",
+  "declinePlaceholder": "e.g. They played the full hour",
+  "declineHelp": "The counter sees this, so they can tell the guest.",
+  "declineNoteRequired": "Say why, so the counter can tell the guest.",
+  "declined": "Refund declined. The counter can see why.",
+  "cancel": "Cancel",
+  "manager": "Manager"
+}

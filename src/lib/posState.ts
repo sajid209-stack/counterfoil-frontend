@@ -1,6 +1,7 @@
 import { getDailyRemaining, getResourceMatrix, getSlots } from "@/lib/api/slots";
 import { isOwnerFree } from "@/lib/api/slots";
-import { isResourceType, isSlotBased, needsSchedule, toMinutes } from "@/lib/schedule";
+import { isResourceType, isSlotBased, needsSchedule, toMinutes, toTime } from "@/lib/schedule";
+import { formatClock } from "@/lib/format";
 import type { Product } from "@/lib/api";
 
 /** What the till can say about a product WITHOUT being tapped.
@@ -27,7 +28,12 @@ export type PosLiveState = {
 };
 
 /** Words come from the caller so this stays translatable; it decides WHICH
- *  question to answer, not how to phrase it. */
+ *  question to answer, not how to phrase it.
+ *
+ *  `time` is handed over ALREADY FORMATTED for a person to read — "2:00 PM",
+ *  never the stored "14:00". It only ever lands in a sentence, so a caller
+ *  passes it straight into its message and must not run it through
+ *  `formatClock` again (which would read "2:00 PM" as 02:00). */
 export type PosStateWords = {
   soldOutToday: string;
   leftOfTotal: (left: number, total: number) => string;
@@ -68,13 +74,13 @@ export function posLiveState(
   }
 
   // A session product is run by its next departure. "12 left today" spread
-  // across eight shows is not actionable; "next 14:00 · 12 left" is.
+  // across eight shows is not actionable; "next 2:00 PM · 12 left" is.
   if (isSlotBased(product.bookingType)) {
     const slots = getSlots(product, date).filter((s) => toMinutes(s.time) >= nowMinutes);
     const open = slots.filter((s) => s.remaining > 0);
     if (open.length) {
       const next = open[0];
-      return { text: w.nextAt(next.time, next.remaining), tone: LOW(next.remaining, next.capacity) ? "low" : "ok" };
+      return { text: w.nextAt(formatClock(next.time), next.remaining), tone: LOW(next.remaining, next.capacity) ? "low" : "ok" };
     }
     // Runs today, but nothing left to sell.
     if (slots.length) return { text: w.soldOutToday, tone: "none" };
@@ -84,7 +90,7 @@ export function posLiveState(
     for (let i = 1; i <= 14; i += 1) {
       const ahead = new Date(Date.parse(`${date}T12:00:00Z`) + i * 86400000).toISOString().slice(0, 10);
       const upcoming = getSlots(product, ahead).filter((s) => s.remaining > 0);
-      if (upcoming.length) return { text: w.nextDay(ahead, upcoming[0].time), tone: "ok" };
+      if (upcoming.length) return { text: w.nextDay(ahead, formatClock(upcoming[0].time)), tone: "ok" };
     }
     return null;
   }
@@ -107,7 +113,7 @@ export function posLiveState(
     const minutes = product.schedule?.sessionMinutes || product.schedule?.slotMinutes || 60;
     const step = product.schedule?.slotMinutes || 30;
     const next = Math.ceil(nowMinutes / step) * step;
-    const free = providerIds.filter((id) => isOwnerFree(id, date, `${String(Math.floor(next / 60)).padStart(2, "0")}:${String(next % 60).padStart(2, "0")}`, minutes)).length;
+    const free = providerIds.filter((id) => isOwnerFree(id, date, toTime(next), minutes)).length;
     if (free === 0) return { text: w.busyNow, tone: "none" };
     return { text: w.providersFree(free, providerIds.length), tone: LOW(free, providerIds.length) ? "low" : "ok" };
   }

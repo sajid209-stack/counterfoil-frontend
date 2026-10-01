@@ -10,14 +10,15 @@ import {
   isDealDuration,
   resolveDurationPrice,
 } from "@/lib/duration";
-import { formatMoney, formatPriceShort } from "@/lib/format";
+import { formatClock, formatClockMin, formatMoney, formatPriceShort } from "@/lib/format";
 import { applyResourceRate } from "@/lib/api";
 import type { DurationConfig, PricingRule, Resource } from "@/lib/api";
 import { useCatalogFormat } from "../../_lib/useCatalogFormat";
 
 const majorToMinor = (s: string) => { const n = parseFloat(s); return Number.isFinite(n) ? Math.round(n * 100) : 0; };
 const minorToMajor = (m: number | undefined) => (m != null && m > 0 ? String(m / 100) : "");
-const hhmm = (min: number) => `${String(Math.floor(min / 60) % 24).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+/** Minutes after midnight as a person reads them: "5:15 PM". */
+const clock = (min: number) => formatClockMin(min);
 
 const MODELS = ["hourly", "list", "base_extension"] as const;
 
@@ -48,7 +49,7 @@ export function DurationEngineField({
   // Preview: every bookable duration with its resolved (unbanded) price, plus
   // one concrete banded example so the operator verifies real numbers.
   const EXAMPLE = { date: "2026-08-01", time: "19:00", dow: 6 }; // a Saturday
-  const exampleLabel = `${dayShort(EXAMPLE.dow)} ${EXAMPLE.time}`;
+  const exampleLabel = `${dayShort(EXAMPLE.dow)} ${formatClock(EXAMPLE.time)}`;
   const exampleMinutes = options.includes(120) ? 120 : options[options.length - 1] ?? 60;
   const previewPrice = (minutes: number) => resolveDurationPrice(value, [], EXAMPLE.date, "10:00", minutes);
   const bandedExample = resolveDurationPrice(value, pricingRules, EXAMPLE.date, EXAMPLE.time, exampleMinutes);
@@ -204,7 +205,7 @@ export function DurationEngineField({
           step={5}
           onChange={(n) => set("walkInRoundMinutes", n)}
           chips={[5, 10, 15]}
-          help={t("walkInHelp", { from: hhmm(walkFrom), to: hhmm(walkTo) })}
+          help={t("walkInHelp", { from: clock(walkFrom), to: clock(walkTo) })}
         />
         <DurationInput
           label={t("notice")}

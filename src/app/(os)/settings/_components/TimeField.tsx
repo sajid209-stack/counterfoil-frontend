@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { formatClock } from "@/lib/format";
 import { parseTimeOfDay } from "@/lib/duration";
 import { toMinutes, toTime } from "@/lib/schedule";
 import { controlCls } from "./SettingsKit";
@@ -16,6 +17,11 @@ import { controlCls } from "./SettingsKit";
  * forgiving parse ("930", "6:30p", "1830") in a 44px field, with the arrow keys
  * still nudging by a quarter hour. What was typed is kept, marked, until it
  * reads as a time — a field that silently snaps back hides the mistake.
+ *
+ * The value stays a 24-hour "HH:MM"; what the field SHOWS is 12-hour
+ * ("7:00 PM"), which the same parse reads straight back. Leaving the field
+ * without typing commits nothing, so a stored value is never rewritten by
+ * being looked at.
  */
 export function TimeField({
   value,
@@ -58,10 +64,12 @@ export function TimeField({
       inputMode="numeric"
       aria-label={label}
       aria-invalid={invalid || unread || undefined}
-      value={text ?? value}
+      value={text ?? (value ? formatClock(value) : "")}
       onChange={(e) => setText(e.target.value)}
       onFocus={(e) => e.target.select()}
-      onBlur={(e) => commit(e.target.value)}
+      onBlur={(e) => {
+        if (text !== null) commit(e.target.value);
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter") commit(e.currentTarget.value);
         if (e.key === "ArrowUp") {
@@ -76,7 +84,7 @@ export function TimeField({
       // controlCls carries w-full, and cn does not merge conflicting utilities —
       // left in, w-full won and every time stretched across its row, stacking a
       // day's two times three lines high. The field sizes to a time instead.
-      className={cn(controlCls(invalid || unread).replace("w-full", ""), "w-[5.5rem] px-tight text-center tabular-nums")}
+      className={cn(controlCls(invalid || unread).replace("w-full", ""), "w-[5.75rem] px-tight text-center tabular-nums")}
     />
   );
 }

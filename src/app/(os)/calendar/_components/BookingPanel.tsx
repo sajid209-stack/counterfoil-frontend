@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 import { DateField, Select } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useEnumLabels } from "@/lib/labels";
-import { formatMoney, formatPriceShort } from "@/lib/format";
+import { formatClock, formatClockMin, formatClockRange, formatMoney, formatPriceShort } from "@/lib/format";
 import {
   canTakeNonCash,
   checkout,
@@ -465,7 +465,7 @@ function Panel({
       .map((b) => toMinutes(b.slotStart.slice(11, 16)))
       .filter((m) => m + buffer > start && m < start + len + buffer)
       .sort((a, b) => a - b)[0];
-    return next != null ? t("book.busyFrom", { time: toTime(Math.max(start, next)) }) : t("book.busy");
+    return next != null ? t("book.busyFrom", { time: formatClockMin(Math.max(start, next)) }) : t("book.busy");
   };
 
   /* A field or a lane is priced per booking, so its size is a head count
@@ -808,7 +808,7 @@ function Panel({
 
   const cur = operator?.currency;
   const modKey = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl";
-  const whenText = ghost && !ghost.allDay ? `${toTime(ghost.start)} – ${toTime(ghost.end)}` : null;
+  const whenText = ghost && !ghost.allDay ? formatClockRange(ghost.start, ghost.end) : null;
   const where = ghost?.sub ?? null;
   /* "1.5 hrs" rather than "1 hr 30 min": five lengths in the short form fit
      one row of the panel, in the long form they wrapped to two. Quarter
@@ -940,7 +940,7 @@ function Panel({
                   { value: "", label: t("book.anyTime") },
                   ...hours.map((h) => ({
                     value: String(h.hour),
-                    label: h.hour === hour && whenText ? whenText : toTime(h.hour * 60),
+                    label: h.hour === hour && whenText ? whenText : formatClockMin(h.hour * 60),
                   })),
                 ]}
               />
@@ -1001,7 +1001,7 @@ function Panel({
                         : t("book.allDay")
                       : reqLane?.resourceId && here.length > 0
                         ? t("book.whatOn", { lane: laneNameOf(reqLane.resourceId, here) ?? "" })
-                        : t("book.whatAt", { count: timed.length, time: toTime(hour * 60) })}
+                        : t("book.whatAt", { count: timed.length, time: formatClockMin(hour * 60) })}
                   </h3>
                   {tried && missing === "what" && <Hint>{t("book.needWhat")}</Hint>}
 
@@ -1011,7 +1011,7 @@ function Panel({
                        booking page offers the next available time rather than
                        a refusal. */
                     <div className="rounded-sm border border-dashed border-line px-comfortable py-comfortable">
-                      <p className="text-[13px] text-fg">{t("book.nothingAt", { time: toTime(hour * 60) })}</p>
+                      <p className="text-[13px] text-fg">{t("book.nothingAt", { time: formatClockMin(hour * 60) })}</p>
                       {nearest(hours, hour).length > 0 && (
                         <div className="mt-tight flex flex-wrap gap-tight">
                           {nearest(hours, hour).map((h) => (
@@ -1021,7 +1021,7 @@ function Panel({
                               onClick={() => setHour(h.hour)}
                               className="flex h-11 items-center rounded-sm border border-line px-comfortable font-mono text-[13px] font-medium transition-colors duration-quick hover:border-ember hover:text-brand-foreground md:h-9"
                             >
-                              {toTime(h.hour * 60)}
+                              {formatClockMin(h.hour * 60, { short: true })}
                               <span className="ml-inline font-sans font-normal text-muted">· {t("book.openCount", { count: h.count })}</span>
                             </button>
                           ))}
@@ -1048,14 +1048,14 @@ function Panel({
                                 <button
                                   key={st.option.key}
                                   type="button"
-                                  aria-label={t("book.startAt", { what: r.product.name, time: st.option.time ?? "" })}
+                                  aria-label={t("book.startAt", { what: r.product.name, time: formatClock(st.option.time) })}
                                   onClick={() => {
                                     setHour(st.hour);
                                     choose(st.option);
                                   }}
                                   className="flex h-11 items-center rounded-sm border border-line px-tight font-mono text-[12px] font-medium tabular-nums transition-colors duration-quick hover:border-ember hover:bg-ember/5 hover:text-brand-foreground md:h-8"
                                 >
-                                  {st.option.time}
+                                  {formatClock(st.option.time, { short: true })}
                                 </button>
                               ))}
                               {r.starts.length > 4 && !open && (
@@ -1081,13 +1081,13 @@ function Panel({
                     (elsewhereOpen || elsewhere.some((o) => o.key === chosenKey) ? (
                       <div className="mt-section">
                         <h4 className="type-label mb-tight text-[12px] text-muted">
-                          {t("book.elsewhere", { time: toTime((hour ?? 0) * 60) })}
+                          {t("book.elsewhere", { time: formatClockMin((hour ?? 0) * 60) })}
                         </h4>
                         <OptionList options={elsewhere} chosenKey={chosenKey} onChoose={choose} cur={cur} t={t} durationOf={durationOf} lengthLabel={lengthText} />
                       </div>
                     ) : (
                       <MoreLine onClick={() => setElsewhereOpen(true)}>
-                        {t("book.alsoElsewhere", { count: elsewhere.length, time: toTime((hour ?? 0) * 60) })}
+                        {t("book.alsoElsewhere", { count: elsewhere.length, time: formatClockMin((hour ?? 0) * 60) })}
                       </MoreLine>
                     ))}
 
@@ -1151,7 +1151,7 @@ function Panel({
                         count: unassigned.length,
                         what: chosen.product.name,
                         noun: (resources.find((r) => placesOf(chosen).includes(r.id))?.nounSingular ?? t("book.lane")).toLowerCase(),
-                        time: unassigned[0].slotStart.slice(11, 16),
+                        time: formatClock(unassigned[0].slotStart.slice(11, 16)),
                       })}
                     </Hint>
                   )}
@@ -1647,7 +1647,7 @@ function OptionRow({
         <span className="block text-[12px] leading-snug text-muted">
           {/* A show at a quarter past, under an hour that was clicked on the
               hour, says so in colour as well as in digits. */}
-          {o.time && <span className={cn("tabular-nums", offHour && "font-medium text-brand-foreground")}>{o.time}</span>}
+          {o.time && <span className={cn("tabular-nums", offHour && "font-medium text-brand-foreground")}>{formatClock(o.time)}</span>}
           {[minutes ? lengthLabel?.(minutes) : null, where, left]
             .filter(Boolean)
             .map((x) => ` · ${x}`)

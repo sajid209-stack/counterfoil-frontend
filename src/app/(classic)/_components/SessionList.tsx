@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { formatMoney } from "@/lib/format";
+import { formatClock, formatMoney } from "@/lib/format";
 
 export interface SessionRowData {
   time: string;
@@ -109,7 +109,7 @@ export function SessionList({
                     full && !isSelected ? "text-muted" : "text-fg",
                   )}
                 >
-                  {s.time}
+                  {formatClock(s.time)}
                 </span>
                 {s.meta && (
                   <span className="min-w-0 flex-1 truncate text-[0.75rem] text-muted">{s.meta}</span>

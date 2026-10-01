@@ -141,8 +141,7 @@
     "outOfService": "Out of service",
     "past": "That start has already gone.",
     "closes": "That would end after closing.",
-    "taken": "Booked at that time.",
-    "window": "{from} – {to}"
+    "taken": "Booked at that time."
   },
   "provider": {
     "noneFree": "Nobody is free at {time}.",

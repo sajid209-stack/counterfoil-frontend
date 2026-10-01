@@ -40,7 +40,9 @@
     "open": "কার্ট",
     "vatIncluded": "ভ্যাট সহ",
     "openCount": "কার্ট · {count}",
-    "openAria": "কার্ট, {count}টি"
+    "openAria": "কার্ট, {count}টি",
+    "emptyLine": "এই বিক্রিতে এখনো কিছু নেই। কিছু যোগ করতে ট্যাপ করুন।",
+    "contentsAria": "এই বিক্রিতে আছে: {names}। কার্ট খুলুন"
   },
   "added": "{name} যোগ হয়েছে",
   "cartParked": "বিক্রি থামিয়ে রাখা হয়েছে।",

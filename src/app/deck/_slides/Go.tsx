@@ -46,7 +46,7 @@ const DIMMED = "#999894";
 
 /** Three tiles from the sell wall, each saying what is left in the till's own words. */
 const TILES: { name: string; price: string; status: string; tone: "open" | "limited" | "later" }[] = [
-  { name: "Grand Heritage Tour", price: "৳1,800", status: "Next 17:00 · 18 left", tone: "open" },
+  { name: "Grand Heritage Tour", price: "৳1,800", status: "Next 5 PM · 18 left", tone: "open" },
   { name: "Yoga Session", price: "৳500", status: "3 of 20 left today", tone: "limited" },
   { name: "Heritage Walking Tour", price: "৳800", status: "Next Fri 31 Jul", tone: "later" },
 ];
@@ -300,7 +300,7 @@ export function PosShiftSlide({ n }: { n: number }) {
         <div className={s.receiptPaper}>
           <p className="text-[15px] font-medium uppercase tracking-[0.16em]">Shift close</p>
           <p className="mt-2 text-[15px] text-[#57534c]">Fort Main Gate · Fort iPad 1</p>
-          <p className="text-[15px] text-[#57534c]">Nadia Islam · since 09:14</p>
+          <p className="text-[15px] text-[#57534c]">Nadia Islam · since 9:14 AM</p>
           <div aria-hidden className={cn(s.perforation, "my-6 text-[#141413]")} />
           <dl className="flex flex-col gap-3.5">
             {RECEIPT_LINES.map(([k, v]) => (
@@ -402,7 +402,7 @@ const CRAFT: { title: string; body: string; note: string; art: ReactNode }[] = [
           </span>
           <span className="text-[15px] font-bold uppercase tracking-[0.06em] text-[#a1302a]">Refused</span>
         </div>
-        <p className="px-3.5 py-2.5 text-[13px] leading-snug text-[#57534c]">Already admitted at 11:04</p>
+        <p className="px-3.5 py-2.5 text-[13px] leading-snug text-[#57534c]">Already admitted at 11:04 AM</p>
       </div>
     ),
   },

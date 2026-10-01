@@ -1,5 +1,5 @@
 {
-  "title": "Sell on other sites",
+  "title": "Marketplaces",
   "description": "Sell what you offer on big booking sites (marketplaces), and see what each one earns you.",
   "connect": "Connect a site",
   "connectOne": "Connect",
@@ -57,7 +57,7 @@
   },
   "connected": "{name} connected.",
   "oneDescription": "What {name} keeps, what you sell there, and what it has earned you.",
-  "backToList": "Other sites",
+  "backToList": "Marketplaces",
   "missing": "We can't find that site.",
   "terms": "Your deal",
   "save": "Save",

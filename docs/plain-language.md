@@ -97,6 +97,15 @@ Also:
 | customer, visitor, guest | customer | গ্রাহক (not কাস্টমার) |
 | Save (button), সংরক্ষণ | Save | সেভ করুন |
 | Edit (button), সম্পাদনা | Edit | বদলান |
+| 19:00 (any clock time a person reads) | 7:00 PM — always 12-hour with AM/PM, via `formatClock` | 7:00 PM |
+
+**Menu and page names are the exception (owner's call, 2026-10-01).** The
+sidebar, the settings rail and the page titles keep their established names —
+Catalog, Inventory, Marketplaces, Fee collections, Locations, Resources,
+Storefront, Notifications, Security, Preferences, Till design — because staff
+already know where things are by those names. The plain words in the table
+above still apply to everything else on the screen (sentences, labels,
+help lines, buttons).
 
 ## 3. Bangla
 

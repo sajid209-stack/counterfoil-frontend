@@ -51,7 +51,7 @@ import {
 import type { DiscountMode } from "@/components/ui";
 import { CustomerPicker, type AttachedCustomer } from "../pos/CustomerPicker";
 import { SaleRows, type RowKey } from "./_components/SaleRows";
-import { formatDay, formatMoney } from "@/lib/format";
+import { formatClock, formatDay, formatMoney } from "@/lib/format";
 import { useMediaQuery } from "@/lib/useMedia";
 import { Catalogue } from "./_components/Catalogue";
 import { SelectionInline } from "./_components/SelectionInline";
@@ -391,7 +391,7 @@ export default function SellPage() {
       item.items.map((i) => `${i.qty} ${i.tierName}`).join(" · "),
       item.resourceLabel,
       item.providerLabel,
-      item.slotTime,
+      item.slotTime ? formatClock(item.slotTime) : "",
       item.slotDate ? formatDay(item.slotDate, { weekday: true }) : "",
     ].filter(Boolean);
     return bits.join(" · ");

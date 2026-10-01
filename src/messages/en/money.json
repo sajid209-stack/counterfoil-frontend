@@ -4,7 +4,7 @@
     "transactions": "Transactions",
     "balances": "Fees & balances",
     "payouts": "Payouts",
-    "collections": "Fee bills"
+    "collections": "Fee collections"
   },
   "heldBy": {
     "platform": "Counterfoil",
@@ -164,7 +164,7 @@
     "notFound": "We can't find that payout"
   },
   "collections": {
-    "title": "Fee bills",
+    "title": "Fee collections",
     "description": "Bills for our fee on money you took yourself, and which ones you have paid.",
     "terms": "Every Sunday we send a bill for the week before. Pay it within {days} days by bKash, card or internet banking.",
     "colNumber": "Bill",

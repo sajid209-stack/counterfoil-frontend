@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Lock, Minus, Plus, ShoppingBag, Unlock, UserCheck } from "lucide-react";
+import { Check, ChevronLeft, Clock, Lock, Minus, Plus, RotateCcw, ShoppingBag, Unlock, UserCheck } from "lucide-react";
 import { Sheet } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { formatMoney, formatPriceShort } from "@/lib/format";
+import { formatClockOf, formatClockRange, formatMoney, formatPriceShort } from "@/lib/format";
 import type { Product } from "@/lib/api";
-import { toTimeOfDay, type Block, type Column } from "../_lib/board";
+import { REFUND_REASONS, type RefundReason, type RefundRequest } from "@/lib/api/refundRequests";
+import { type Block, type Column } from "../_lib/board";
 
 /* The two big buttons every sheet here ends on, always in the same places:
    Hold on the LEFT, Add to sale on the RIGHT. A cashier who cannot read the
@@ -318,6 +319,9 @@ export function BlockSheet({
   onCheckIn,
   onRelease,
   onSellHold,
+  refund,
+  onRefund,
+  onWithdrawRefund,
   busy,
 }: {
   open: boolean;
@@ -328,13 +332,18 @@ export function BlockSheet({
   onCheckIn: () => void;
   onRelease: () => void;
   onSellHold: () => void;
+  /** Where this booking stands on a refund: one waiting for a manager, the
+   *  last one decided, and whether there is any money on it to give back. */
+  refund?: { pending: RefundRequest | null; last: RefundRequest | null; refundable: boolean };
+  onRefund?: () => void;
+  onWithdrawRefund?: () => void;
   busy: boolean;
 }) {
   const t = useTranslations("schedule");
   const tc = useTranslations("common");
   if (!block || !column) return null;
   const place = column.kind === "unassigned" ? t("board.noPlace") : column.name;
-  const when = `${place} · ${toTimeOfDay(block.start)}–${toTimeOfDay(block.end)}`;
+  const when = `${place} · ${formatClockRange(block.start, block.end)}`;
 
   if (block.type === "hold") {
     const h = block.hold;
@@ -364,7 +373,7 @@ export function BlockSheet({
           <Fact label={t("sheet.what")} value={h.productName} />
           <Fact
             label={t("sheet.holdUntil")}
-            value={until ? `${String(until.getHours()).padStart(2, "0")}:${String(until.getMinutes()).padStart(2, "0")}` : t("sheet.holdNoEnd")}
+            value={until ? formatClockOf(until) : t("sheet.holdNoEnd")}
           />
           <Fact label={t("sheet.heldBy")} value={h.placedBy} />
         </dl>
@@ -382,17 +391,50 @@ export function BlockSheet({
       title={who}
       closeLabel={tc("close")}
       lead={<p className="text-[0.875rem] font-medium text-muted">{block.product?.name ?? ""}</p>}
-      footer={
-        isToday && !allIn && !block.noShow ? (
-          <div className="flex w-full">
-            <button type="button" className={PRIMARY} onClick={onCheckIn} disabled={busy}>
-              <UserCheck size={20} strokeWidth={2} aria-hidden />
-              {t("sheet.checkIn", { count: b.partySize })}
-            </button>
+      footer={(() => {
+        /* Refund is the left-hand, "not the usual thing" button; Check in
+           stays the orange one on the right. While a request is waiting,
+           Refund is not offered again — the sheet says what is waiting. */
+        const canRefund = !!onRefund && !!refund?.refundable && !refund.pending;
+        const canCheckIn = isToday && !allIn && !block.noShow;
+        if (!canRefund && !canCheckIn) return undefined;
+        return (
+          <div className="flex w-full gap-tight">
+            {canRefund && (
+              <button type="button" className={canCheckIn ? SECONDARY : secondary("h-14", "flex-1")} onClick={onRefund} disabled={busy}>
+                <RotateCcw size={20} strokeWidth={2} aria-hidden />
+                {t("refund.action")}
+              </button>
+            )}
+            {canCheckIn && (
+              <button type="button" className={canRefund ? PRIMARY_WIDE : PRIMARY} onClick={onCheckIn} disabled={busy}>
+                <UserCheck size={20} strokeWidth={2} aria-hidden />
+                <span className="truncate">{t("sheet.checkIn", { count: b.partySize })}</span>
+              </button>
+            )}
           </div>
-        ) : undefined
-      }
+        );
+      })()}
     >
+      {refund?.pending && (
+        <div className="mx-card mt-card flex items-start gap-tight rounded-go-sm border border-warning/40 bg-warning-wash p-comfortable">
+          <Clock size={18} strokeWidth={2} className="mt-0.5 shrink-0 text-warning" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.9375rem] font-semibold text-fg">{t("refund.pending", { amount: formatMoney(refund.pending.amount) })}</p>
+            <p className="text-[0.8125rem] text-fg/80">{t(`refund.reasons.${refund.pending.reason}`)}{refund.pending.note ? ` · ${refund.pending.note}` : ""}</p>
+            {onWithdrawRefund && (
+              <button type="button" onClick={onWithdrawRefund} disabled={busy} className="mt-tight min-h-11 text-[0.875rem] font-semibold text-fg underline underline-offset-4">
+                {t("refund.withdraw")}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      {!refund?.pending && refund?.last?.status === "declined" && refund.last.decisionNote && (
+        <p className="mx-card mt-card rounded-go-sm border border-line bg-surface p-comfortable text-[0.875rem] text-fg">
+          {t("refund.declined", { note: refund.last.decisionNote })}
+        </p>
+      )}
       <dl className="flex flex-col gap-tight p-card text-[1rem]">
         <Fact label={t("sheet.where")} value={when} />
         <Fact label={t("sheet.people")} value={t("sheet.peopleCount", { count: b.partySize })} />
@@ -401,6 +443,121 @@ export function BlockSheet({
           value={block.noShow ? t("board.didntCome") : allIn ? t("board.allIn") : (b.checkedIn ?? 0) > 0 ? t("board.someIn", { count: b.checkedIn ?? 0, total: b.partySize }) : t("board.notYet")}
         />
       </dl>
+      {refund && !refund.refundable && !refund.pending && (
+        <p className="px-card pb-card text-[0.8125rem] text-muted">{t("refund.nothingToRefund")}</p>
+      )}
+    </Sheet>
+  );
+}
+
+/**
+ * Ask for a refund on a booking.
+ *
+ * The cashier does not type an amount — it is what was paid for this booking,
+ * worked out from the sale — so the one thing they choose is why, as large
+ * cells a non-reader can learn by position. A manager decides; this only
+ * sends the request.
+ */
+export function RefundSheet({
+  open,
+  onClose,
+  title,
+  when,
+  amount,
+  onSend,
+  busy,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  when: string;
+  amount: number;
+  onSend: (reason: RefundReason, note: string) => void;
+  busy: boolean;
+}) {
+  const t = useTranslations("schedule");
+  const tc = useTranslations("common");
+  const [reason, setReason] = useState<RefundReason>("customer_cancelled");
+  const [note, setNote] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const send = () => {
+    if (reason === "other" && !note.trim()) {
+      setErr(t("refund.noteRequired"));
+      document.getElementById("refund-note")?.focus();
+      return;
+    }
+    setErr(null);
+    onSend(reason, note.trim());
+  };
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={t("refund.title")}
+      closeLabel={tc("close")}
+      lead={<p className="text-[0.875rem] font-medium text-muted">{title} · {when}</p>}
+      footer={
+        <div className="flex w-full gap-tight">
+          <button type="button" className={SECONDARY} onClick={onClose} disabled={busy}>
+            <ChevronLeft size={20} strokeWidth={2} aria-hidden />
+            {t("refund.back")}
+          </button>
+          <button type="button" className={PRIMARY_WIDE} onClick={send} disabled={busy}>
+            <RotateCcw size={20} strokeWidth={2} aria-hidden />
+            <span className="truncate">{t("refund.send")}</span>
+          </button>
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-section p-card">
+        <div className="rounded-go-sm border border-line bg-surface p-comfortable">
+          <p className="text-[0.875rem] text-muted">{t("refund.amountLabel")}</p>
+          <p className="text-[1.75rem] font-bold tabular-nums leading-tight text-fg">{formatMoney(amount)}</p>
+          <p className="text-[0.8125rem] text-muted">{t("refund.amountNote")}</p>
+        </div>
+        <fieldset>
+          <legend className="mb-tight text-[0.9375rem] font-semibold text-fg">{t("refund.reasonLabel")}</legend>
+          <div role="radiogroup" aria-label={t("refund.reasonLabel")} className="grid grid-cols-2 overflow-hidden rounded-go-sm border border-line">
+            {REFUND_REASONS.map((r, i) => {
+              const on = reason === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => { setReason(r); setErr(null); }}
+                  className={cn(
+                    "relative flex min-h-14 items-center justify-center px-tight text-center text-[0.9375rem] font-semibold",
+                    i % 2 === 1 && "border-l border-line",
+                    i >= 2 && "border-t border-line",
+                    i === REFUND_REASONS.length - 1 && REFUND_REASONS.length % 2 === 1 && "col-span-2",
+                    on ? "bg-ember-solid text-white" : "bg-card text-fg",
+                  )}
+                >
+                  {on && <Check size={16} strokeWidth={3} className="absolute right-2 top-2" aria-hidden />}
+                  {t(`refund.reasons.${r}`)}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+        <label data-focus-host className="flex flex-col gap-tight">
+          <span className="text-[0.9375rem] font-semibold text-fg">{reason === "other" ? t("refund.noteLabelRequired") : t("refund.noteLabel")}</span>
+          <textarea
+            id="refund-note"
+            value={note}
+            onChange={(e) => { setNote(e.target.value); setErr(null); }}
+            rows={2}
+            placeholder={t("refund.notePlaceholder")}
+            aria-invalid={!!err}
+            aria-describedby={err ? "refund-note-err" : undefined}
+            className="min-h-[5.5rem] rounded-go-sm border border-line bg-card px-comfortable py-tight text-[1rem] text-fg outline-none focus:border-ember focus:ring-2 focus:ring-ember/25"
+          />
+          {err && <span id="refund-note-err" className="text-[0.875rem] font-medium text-danger">{err}</span>}
+        </label>
+        <p className="text-[0.8125rem] text-muted">{t("refund.lead")}</p>
+      </div>
     </Sheet>
   );
 }

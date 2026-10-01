@@ -78,7 +78,7 @@
     "footerPlaceholder": "e.g. Thank you for coming! Tickets can't be returned."
   },
   "security": {
-    "title": "Password & security",
+    "title": "Security",
     "description": "Your password, two-step sign-in, and where you are signed in.",
     "password": "Password",
     "current": "Current password",
@@ -223,7 +223,7 @@
     "activeShort": "On. It can sell at its counter."
   },
   "locations": {
-    "title": "Venues",
+    "title": "Locations",
     "singular": "Venue",
     "description": "The places where you sell, with their address and opening hours.",
     "searchPlaceholder": "Search venues",
@@ -619,7 +619,7 @@
         "title": "Money"
       },
       "people": {
-        "title": "Team and sign-in"
+        "title": "Team and access"
       },
       "messages": {
         "title": "Messages"
@@ -635,7 +635,7 @@
         "keywords": "name company brand phone email website contact receipt footer currency money taka time zone timezone clock booking history lock"
       },
       "locations": {
-        "title": "Venues",
+        "title": "Locations",
         "desc": "The places you sell, with address and opening hours.",
         "keywords": "venue venues location locations site branch address opening hours open closed"
       },
@@ -645,7 +645,7 @@
         "keywords": "counter till point of sale pos cashier payment methods cash bkash card qr voucher"
       },
       "resources": {
-        "title": "Courts, lanes & rooms",
+        "title": "Resources",
         "desc": "What customers book by the hour.",
         "keywords": "court lane field room table studio bay resource resources out of service repair"
       },
@@ -665,7 +665,7 @@
         "keywords": "members plans tiers subscription pass"
       },
       "loyalty": {
-        "title": "Points",
+        "title": "Loyalty points",
         "desc": "How customers earn points, and what points are worth.",
         "keywords": "points rewards loyalty"
       },
@@ -685,17 +685,17 @@
         "keywords": "tablet ipad scanner pairing code pair"
       },
       "notifications": {
-        "title": "Messages & alerts",
+        "title": "Notifications",
         "desc": "SMS and email to customers, reminders, and alerts to staff.",
         "keywords": "notifications sms email text message ticket template wording reminder thank you follow-up quiet hours sender alerts daily summary"
       },
       "security": {
-        "title": "Password & security",
+        "title": "Security",
         "desc": "Your password, two-step sign-in, and where you're signed in.",
         "keywords": "password two-step 2fa backup codes sign-ins login email recovery sessions sign out devices"
       },
       "preferences": {
-        "title": "Display & language",
+        "title": "Preferences",
         "desc": "Light or dark, language and easier reading, on this browser.",
         "keywords": "preferences dark mode light mode theme appearance language bangla english motion animation contrast accessibility sidebar side menu keyboard shortcuts"
       },
@@ -705,7 +705,7 @@
         "keywords": "2fa mfa two-step session timeout sign out auto lock idle pin attempts lockout tablet"
       },
       "storefront": {
-        "title": "Web pages",
+        "title": "Storefront",
         "desc": "Each venue's public page: what's on it, what it says, and if it's online.",
         "keywords": "storefront web page public page website venue landing url address online"
       },
@@ -763,7 +763,7 @@
     "regPlaceholder": "e.g. 000123456-0101"
   },
   "notifications": {
-    "title": "Messages & alerts",
+    "title": "Notifications",
     "description": "What customers and your team are sent, and when.",
     "smsTitle": "Ticket SMS",
     "smsDesc": "The SMS a customer gets when they book. Staff can send it again from the order.",
@@ -890,7 +890,7 @@
     "replyToPlaceholder": "e.g. bookings@yourvenue.com"
   },
   "preferences": {
-    "title": "Display & language",
+    "title": "Preferences",
     "description": "How Counterfoil looks on this browser.",
     "displayTitle": "Display",
     "displayDesc": "Changes at once, on this browser only.",
@@ -1035,7 +1035,7 @@
     "saved": "Sign-in rules saved"
   },
   "storefront": {
-    "title": "Web pages",
+    "title": "Storefront",
     "description": "Each venue has a public web page: what's on, prices, and opening hours.",
     "listLabel": "Venues and their web pages",
     "draft": "Not online",

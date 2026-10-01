@@ -1,5 +1,7 @@
 "use client";
 
+import { formatClockMin } from "@/lib/format";
+
 export interface TimelineSpan {
   start: number; // minutes from midnight
   end: number;
@@ -27,8 +29,13 @@ export function ResourceTimeline({
 }) {
   const total = Math.max(1, closeMin - openMin);
   const pct = (m: number) => `${((m - openMin) / total) * 100}%`;
+  /* Hour ticks read 12-hour ("2 PM"), which is wider than the bare "14" they
+     replaced — so a long trading day labels every second or third hour rather
+     than letting the labels run into each other. */
+  const hours = Math.floor((closeMin - Math.ceil(openMin / 60) * 60) / 60) + 1;
+  const every = hours > 12 ? 3 : hours > 6 ? 2 : 1;
   const ticks: number[] = [];
-  for (let m = Math.ceil(openMin / 60) * 60; m <= closeMin; m += 60) ticks.push(m);
+  for (let m = Math.ceil(openMin / 60) * 60; m <= closeMin; m += 60 * every) ticks.push(m);
 
   return (
     <div>
@@ -51,9 +58,15 @@ export function ResourceTimeline({
         )}
       </div>
       <div className="relative mt-inline h-3">
-        {ticks.map((m) => (
-          <span key={m} className="absolute -translate-x-1/2 font-mono text-[0.75rem] text-muted" style={{ left: pct(m) }}>{Math.floor(m / 60)}</span>
-        ))}
+        {/* A label centred on a tick at either end of the strip hangs half off
+            it, so the end ones are anchored inward instead. */}
+        {ticks.map((m) => {
+          const at = (m - openMin) / total;
+          const shift = at < 0.04 ? "translate-x-0" : at > 0.96 ? "-translate-x-full" : "-translate-x-1/2";
+          return (
+            <span key={m} className={`absolute ${shift} whitespace-nowrap font-mono text-[0.75rem] text-muted`} style={{ left: pct(m) }}>{formatClockMin(m, { short: true })}</span>
+          );
+        })}
       </div>
     </div>
   );

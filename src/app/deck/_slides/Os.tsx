@@ -34,6 +34,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { formatClock } from "@/lib/format";
 import {
   Crop,
   Floor,
@@ -229,7 +230,7 @@ export function CalendarSlide({ n }: { n: number }) {
         <div className="overflow-hidden rounded-[22px] bg-[#f94a00] p-[4px] shadow-[0_16px_30px_-20px_rgb(20_20_19/0.45)]">
           <Crop src={calendar} alt="" x={0.645} y={0.548} w={0.13} h={0.1} width={456} />
         </div>
-        <p className={cn(s.mono, "mt-8 uppercase text-[#aa3000]")}>Held back · Fri 31 Jul, 14:00</p>
+        <p className={cn(s.mono, "mt-8 uppercase text-[#aa3000]")}>Held back · Fri 31 Jul, 2:00 PM</p>
         <p className={cn(s.body, "mt-2")}>Off sale, and hatched so it never reads as booked.</p>
       </div>
 
@@ -364,7 +365,7 @@ function SlotGrid() {
               t === "17:00" ? "text-[#6b675f] line-through" : t === "19:00" ? "bg-[#141413] text-[#f5f2eb]" : "bg-white ring-1 ring-inset ring-[#e2ddd2]",
             )}
           >
-            {t}
+            {formatClock(t, { short: true })}
           </span>
         ))}
       </div>
@@ -485,7 +486,7 @@ export function HoldsSlide({ n }: { n: number }) {
 
       <div className={cn(s.card, s.paperCard, "absolute left-[96px] top-[260px] h-[190px] w-[692px] px-7 py-6")}>
         <div className="flex items-baseline justify-between">
-          <h3 className={s.heading}>Planetarium Show · 1 Aug, 11:00</h3>
+          <h3 className={s.heading}>Planetarium Show · 1 Aug, 11:00 AM</h3>
           <span className={cn(s.mono, "text-[#6b675f]")}>40 places</span>
         </div>
         <div aria-hidden className="mt-4 grid grid-cols-[repeat(20,26px)] gap-1">

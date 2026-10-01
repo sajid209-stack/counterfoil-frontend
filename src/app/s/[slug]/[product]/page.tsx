@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getStorefrontPage, listResources, listStaff, type PriceTier } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
-import { formatMoney } from "@/lib/format";
+import { formatClockRange, formatMoney } from "@/lib/format";
 import { demoNow } from "@/lib/schedule";
 import { ACCENT_BG, ACCENT_WASH, StorefrontChrome, StorefrontMissing } from "../../_components/Chrome";
 
@@ -143,7 +143,7 @@ export default function StorefrontProductPage() {
               </p>
               <p className={cn("mt-tight text-[14px] font-medium", openToday ? "text-fg" : "text-muted")}>
                 {openToday
-                  ? t("openToday", { hours: today!.intervals.map((i) => `${i.opensAt}–${i.closesAt}`).join(", ") })
+                  ? t("openToday", { hours: today!.intervals.map((i) => formatClockRange(i.opensAt, i.closesAt)).join(", ") })
                   : t("closedToday")}
               </p>
             </div>

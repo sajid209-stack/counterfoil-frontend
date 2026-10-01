@@ -43,15 +43,29 @@ export function formatDuration(minutes: number): string {
 export const formatDurationShort = (minutes: number) =>
   `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`;
 
-/** "930" → "09:30" · "1830" → "18:30" · "6:30p" → "18:30" · "9" → "09:00".
- *  Returns null if unparseable or out of range. */
+/** What a person types for a time of day → the stored 24h "HH:MM".
+ *
+ *  12-hour, as every time field now displays it: "7:30 PM", "7:30 pm",
+ *  "7:30p", "7:30 p.m.", "7pm", "730p", "12 am" → "00:00", "noon", "midnight".
+ *  24-hour still reads, because people type it and the field used to show it:
+ *  "19:30", "1930", "930" → "09:30", "7" → "07:00", "7.30" → "07:30".
+ *  A bare hour with no AM/PM is read on the 24-hour clock — the one reading
+ *  that never turns "19" into anything else. Returns null if unparseable or
+ *  out of range ("13 am", "25:00", "7:75"). */
 export function parseTimeOfDay(raw: string): string | null {
-  const s = raw.trim().toLowerCase().replace(/\s+/g, "");
+  const s = raw
+    .trim()
+    .toLowerCase()
+    .replace(/([ap])\.?\s*m\.?$/, "$1m") // "p.m." / "p m" → "pm"
+    .replace(/([ap])\.$/, "$1") // "7p." → "7p"
+    .replace(/\s+/g, "");
   if (!s) return null;
-  const ampm = s.match(/(a|p)m?$/)?.[1];
-  const core = ampm ? s.replace(/(a|p)m?$/, "") : s;
+  if (s === "noon" || s === "midday") return "12:00";
+  if (s === "midnight") return "00:00";
+  const ampm = s.match(/([ap])m?$/)?.[1];
+  const core = ampm ? s.replace(/([ap])m?$/, "") : s;
   let h: number, mm: number;
-  let m = core.match(/^(\d{1,2}):(\d{2})$/);
+  let m = core.match(/^(\d{1,2})[:.](\d{2})$/);
   if (m) { h = parseInt(m[1], 10); mm = parseInt(m[2], 10); }
   else if ((m = core.match(/^(\d{3,4})$/))) {
     const digits = m[1];
@@ -59,8 +73,13 @@ export function parseTimeOfDay(raw: string): string | null {
     mm = parseInt(digits.slice(-2), 10);
   } else if ((m = core.match(/^(\d{1,2})$/))) { h = parseInt(m[1], 10); mm = 0; }
   else return null;
-  if (ampm === "p" && h < 12) h += 12;
-  if (ampm === "a" && h === 12) h = 0;
+  if (ampm) {
+    // "19:30 pm" is a 24-hour time with a redundant suffix; "13 am" is a typo
+    // there is no honest reading of. "0 am" is midnight as some people type it.
+    if (ampm === "a" && h > 12) return null;
+    if (ampm === "p" && h < 12) h += 12;
+    if (ampm === "a" && h === 12) h = 0;
+  }
   if (h > 23 || mm > 59) return null;
   return `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
 }

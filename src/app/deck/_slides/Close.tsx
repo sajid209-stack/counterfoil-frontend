@@ -57,7 +57,7 @@ function OneCapacity() {
         <div key={till} className="flex h-[76px] flex-col justify-center rounded-[14px] bg-[#f5f2eb] px-4">
           <p className="text-[13px] text-[#6b675f]">{till} · Field 1</p>
           <p className="mt-1 flex items-center justify-between gap-2">
-            <span className={cn("text-[18px] font-semibold tabular-nums", !sold && "text-[#6b675f] line-through")}>18:00</span>
+            <span className={cn("text-[18px] font-semibold tabular-nums", !sold && "text-[#6b675f] line-through")}>6:00 PM</span>
             <span className={cn("rounded-full px-2.5 py-1 text-[12px] font-semibold leading-none", sold ? "bg-[#141413] text-[#f5f2eb]" : "bg-[#e2ddd2] text-[#57534c]")}>{state}</span>
           </p>
         </div>

@@ -19,7 +19,7 @@ const INK_QUIET = "rgb(245 242 235 / 0.64)";
 /* ── What gets better ──────────────────────────────────────────────────── */
 
 const JOBS: { icon: LucideIcon; job: string; today: string; after: string }[] = [
-  { icon: CalendarClock, job: "Availability", today: "“Is 18:00 free?” — asked in a chat group.", after: "Every counter reads the same live count." },
+  { icon: CalendarClock, job: "Availability", today: "“Is 6 PM free?” — asked in a chat group.", after: "Every counter reads the same live count." },
   { icon: Shapes, job: "Selling time", today: "A retail till that knows products, not sessions.", after: "Sessions, courts, seats and tours — 14 ways to book." },
   { icon: Wallet, job: "Payment", today: "A bKash screenshot, checked by eye.", after: "bKash confirmed by transaction ID before the sale lands." },
   { icon: ScanLine, job: "The gate", today: "A paper stub passed from hand to hand.", after: "One scan admits. A used ticket is refused." },

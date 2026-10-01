@@ -16,7 +16,7 @@ import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { taxRateFor } from "@/lib/tax";
 import { FEATURES } from "@/lib/features";
-import { formatMoney } from "@/lib/format";
+import { formatClock, formatClockMin, formatDay, formatMoney } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
@@ -359,14 +359,14 @@ export default function PosPage() {
     const next = current + cfg.incrementMinutes;
     if (next > cfg.maxMinutes) { setCartNotice(t("maxBooking", { hours: cfg.maxMinutes / 60 })); return; }
     if (!isResourceFreeFor(e.resourceId, e.slotDate, endTime, cfg.incrementMinutes, p.bufferMinutes ?? 0)) {
-      setCartNotice(t("cantExtend", { lane: e.resourceLabel ?? t("theLane"), time: endTime }));
+      setCartNotice(t("cantExtend", { lane: e.resourceLabel ?? t("theLane"), time: formatClock(endTime) }));
       return;
     }
     const base = Math.min(...p.tiers.filter((t) => t.active).map((t) => t.price));
     const price = productDurationPrice(p, e.slotDate, e.slotTime, next, base);
     const newEnd = `${e.slotDate}T${toTime(toMinutes(e.slotTime) + next)}:00+06:00`;
     setCart((c) => c.map((x) => (x.id === e.id ? { ...x, slotEnd: newEnd, fixedPrice: price } : x)));
-    toast.success(t("extendedTo", { time: toTime(toMinutes(e.slotTime) + next), amount: formatMoney(price, currency) }));
+    toast.success(t("extendedTo", { time: formatClockMin(toMinutes(e.slotTime) + next), amount: formatMoney(price, currency) }));
   };
 
   const addCustom = () => {
@@ -721,7 +721,7 @@ export default function PosPage() {
     } else toast.error(res.error.message);
   };
 
-  const slotLabel = (e: CartEntry) => (!e.slotDate ? "" : e.slotTime ? ` · ${e.slotTime} ${e.slotDate === TODAY ? t("slotToday") : e.slotDate}` : ` · ${e.slotDate === TODAY ? t("slotToday") : e.slotDate}`);
+  const slotLabel = (e: CartEntry) => (!e.slotDate ? "" : e.slotTime ? ` · ${formatClock(e.slotTime)} ${e.slotDate === TODAY ? t("slotToday") : e.slotDate}` : ` · ${e.slotDate === TODAY ? t("slotToday") : e.slotDate}`);
 
   /** The till's clock, in minutes — the demo clock, same as everywhere else. */
   const nowMinutes = 12 * 60;
@@ -732,14 +732,14 @@ export default function PosPage() {
     noneLeftToday: t("live.noneLeftToday"),
     busyNow: t("live.busyNow"),
     leftOfTotal: (left: number, total: number) => t("live.leftOfTotal", { left, total }),
-    nextAt: (time: string, left: number) => t("live.nextAt", { time, left }),
+    nextAt: (time: string, left: number) => t("live.nextAt", { time: formatClock(time), left }),
     freeOfTotal: (free: number, total: number) => t("live.freeOfTotal", { free, total }),
     startsOn: (d: string) => t("live.startsOn", { date: d }),
     // The DESIGN here is restored from before the 6 September redesign; the
     // LOGIC layer is current, and posLiveState has gained a phrasing since.
     // Classic follows the logic — it is a visual variant, not a fork of the
     // engine.
-    nextDay: (d: string, time: string) => t("live.nextDay", { day: d, time }),
+    nextDay: (d: string, time: string) => t("live.nextDay", { day: formatDay(d, { weekday: true }), time: formatClock(time) }),
     providersFree: (free: number, total: number) => t("live.providersFree", { free, total }),
   }), [t]);
   const methodLabel = enumL.method(method);

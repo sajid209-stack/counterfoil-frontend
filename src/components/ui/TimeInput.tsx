@@ -5,12 +5,19 @@ import { createPortal } from "react-dom";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { parseTimeOfDay } from "@/lib/duration";
+import { formatClock } from "@/lib/format";
 import { toMinutes, toTime } from "@/lib/schedule";
 import { Field } from "./Field";
 
-/** A time-of-day field a human can type into: `930`, `9:30`, `1830`, `6:30p`
- *  all normalise to "HH:MM". Steppers adjust by `step` minutes; any minute is
- *  typable. Value is a 24h "HH:MM" string. */
+/** What the field draws for a stored "HH:MM": "7:30 PM". Empty stays empty —
+ *  `formatClock`'s dash is for a read-only cell, not for a box to type in. */
+const shown = (hhmm: string) => (hhmm ? formatClock(hhmm) : "");
+
+/** A time-of-day field a human can type into. It DRAWS 12-hour — "7:30 PM",
+ *  like every time a person reads in the product — and its value stays the
+ *  stored 24h "HH:MM". Typing reads either clock: `7:30 pm`, `7:30p`, `7pm`,
+ *  `730p`, `19:30`, `1930`, `930`, `7` (→ 7:00 AM). Steppers adjust by `step`
+ *  minutes; any minute is typable. */
 export function TimeInput({
   label,
   value,
@@ -40,7 +47,7 @@ export function TimeInput({
 }) {
   const id = useId();
   const listId = useId();
-  const [text, setText] = useState(value);
+  const [text, setText] = useState(() => shown(value));
   const [focused, setFocused] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -55,7 +62,7 @@ export function TimeInput({
   for (let m = 0; m < 1440; m += step) times.push(toTime(m));
 
   useEffect(() => {
-    if (!focused) setText(value);
+    if (!focused) setText(shown(value));
   }, [value, focused]);
 
   /* Placed in viewport coordinates and portalled to <body>, the same way the
@@ -111,6 +118,14 @@ export function TimeInput({
     /* Scroll the PANEL, not the page: `scrollIntoView` on a fixed, portalled
        list scrolls whatever ancestor it finds, which here is the document —
        so the list stayed at midnight and the page jumped instead. */
+    /* Centre it only when it is out of view. A row the pointer is resting on
+       is already in view, and recentring the list under the pointer moved the
+       row away between press and release — so the click landed on the list
+       itself and nothing was chosen. Arrow keys past an edge still bring the
+       next row into view. */
+    const above = row.offsetTop < el.scrollTop;
+    const below = row.offsetTop + row.offsetHeight > el.scrollTop + el.clientHeight;
+    if (!above && !below) return;
     const top = row.offsetTop - el.clientHeight / 2 + row.offsetHeight / 2;
     el.scrollTop = Math.max(0, top);
   }, [open, active]);
@@ -134,27 +149,27 @@ export function TimeInput({
   const choose = (t: string) => {
     setParseError(null);
     onChange(t);
-    setText(t);
+    setText(shown(t));
     setOpen(false);
   };
 
   const commit = (raw: string) => {
     const parsed = parseTimeOfDay(raw);
     if (parsed == null) {
-      setParseError(`Couldn't read "${raw}" — try "9:30", "1830" or "6:30p".`);
-      setText(value);
+      setParseError(`Couldn't read "${raw}" — try "9:30 AM", "6:30 PM" or "6:30p".`);
+      setText(shown(value));
       return;
     }
     setParseError(null);
     onChange(parsed);
-    setText(parsed);
+    setText(shown(parsed));
   };
 
   const nudge = (dir: 1 | -1) => {
     const next = toTime((toMinutes(value) + dir * step + 1440) % 1440);
     setParseError(null);
     onChange(next);
-    setText(next);
+    setText(shown(next));
   };
 
   /* An inset ring, not a border: a border takes two pixels out of the
@@ -167,12 +182,14 @@ export function TimeInput({
      vanished. min-width beats width, so a narrow caller reserves the room in
      the layout instead of overflowing it. */
   return (
-    <Field label={label} help={help} error={error ?? parseError ?? undefined} required={required} htmlFor={id} className={cn("min-w-[9.5rem] md:min-w-0", className)}>
+    <Field label={label} help={help} error={error ?? parseError ?? undefined} required={required} htmlFor={id} className={cn("min-w-[9.5rem] md:min-w-[7.75rem]", className)}>
       <div ref={box} className={cn("flex h-11 items-stretch overflow-hidden rounded-sm bg-card ring-1 ring-inset transition-colors duration-quick", border, disabled && "bg-subtle")}>
         <input
           id={id}
           type="text"
-          inputMode="numeric"
+          /* Not `numeric`: a phone's number pad has no letters, and "7:30 pm"
+             is now as much the way in as "1930". */
+          autoComplete="off"
           value={text}
           disabled={disabled}
           onChange={(e) => setText(e.target.value)}
@@ -271,7 +288,7 @@ export function TimeInput({
                   i === active ? "bg-muted-wash text-fg" : "text-fg",
                 )}
               >
-                {t}
+                {shown(t)}
                 {t === value && <Check size={14} strokeWidth={2} aria-hidden className="shrink-0 text-brand-foreground" />}
               </button>
             ))}

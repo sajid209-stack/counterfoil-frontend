@@ -28,6 +28,7 @@ import { formatDateTime, formatMoney, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { demoNow } from "@/lib/schedule";
+import { RefundRequests } from "@/components/RefundRequests";
 
 export default function OrdersPage() {
   return (
@@ -89,7 +90,7 @@ function OrdersPageInner() {
     [status, channel, locationId, bounds],
   );
 
-  const { data, loading } = useApiQuery(
+  const { data, loading, reload } = useApiQuery(
     () => listOrders({ page, pageSize: 12, search, sort: sort.key, order: sort.order, filters }),
     [search, filters, sort.key, sort.order, page],
   );
@@ -206,6 +207,9 @@ function OrdersPageInner() {
   return (
     <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
+        {/* Refunds the counter has asked for come first: each one is a guest
+            waiting on an answer. Nothing is drawn when none are waiting. */}
+        <RefundRequests onDecided={() => { reload(); summaryQ.reload(); }} />
         <StatStrip
           loading={summaryQ.loading}
           items={[

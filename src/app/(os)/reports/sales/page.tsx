@@ -24,7 +24,7 @@ import {
   type TransactionRow,
   type TxStatus,
 } from "@/lib/api";
-import { formatDay, formatMoney, formatMoneyCompact } from "@/lib/format";
+import { formatClock, formatClockMin, formatDay, formatMoney, formatMoneyCompact } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { OrderLinesDetail } from "@/components/OrderLinesDetail";
 
@@ -718,10 +718,10 @@ function SalesReportInner() {
                     >
                       <td className="pl-comfortable" onClick={(e) => e.stopPropagation()}>
                         <label className="flex h-11 w-8 cursor-pointer items-center md:h-9">
-                          <input type="checkbox" checked={picked.has(String(r.key))} onChange={() => togglePick(String(r.key), r)} aria-label={t("select.row", { ref: r.label })} className="h-4 w-4 accent-[var(--color-ember)]" />
+                          <input type="checkbox" checked={picked.has(String(r.key))} onChange={() => togglePick(String(r.key), r)} aria-label={t("select.row", { ref: groupBy === "hour" ? formatClock(r.label) : r.label })} className="h-4 w-4 accent-[var(--color-ember)]" />
                         </label>
                       </td>
-                      <td className="min-w-0 max-w-64 truncate px-comfortable font-medium">{r.label}</td>
+                      <td className="min-w-0 max-w-64 truncate px-comfortable font-medium">{groupBy === "hour" ? formatClock(r.label) : r.label}</td>
                       <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{r.ticketCount}</td>
                       <td className="px-comfortable text-right font-mono text-[13px] tabular-nums">{formatMoney(r.gross)}</td>
                       <td className="px-comfortable text-right font-mono text-[13px] tabular-nums text-danger">{r.refunds ? `−${formatMoney(r.refunds)}` : "—"}</td>
@@ -881,7 +881,7 @@ function SalesReportInner() {
                   dashboard and by nothing here. */}
               {anQ.loading ? chartSkeleton : hasData(a?.revenue) ? (
                 <AreaChart
-                  points={a!.revenue!}
+                  points={a!.revenue!.map(clockPoint)}
                   fmt={money}
                   fmtAxis={(v) => formatMoneyCompact(v)}
                   height={300}
@@ -894,7 +894,7 @@ function SalesReportInner() {
             <div className="grid gap-section lg:grid-cols-3">
               <div className={card}>
                 <p className="type-label mb-tight text-[12px] text-muted">{t("charts.salesByHour")}</p>
-                {anQ.loading ? chartSkeleton : hasData(a?.hour_of_day) ? <BarChart points={a!.hour_of_day!} fmt={money} /> : emptyChart}
+                {anQ.loading ? chartSkeleton : hasData(a?.hour_of_day) ? <BarChart points={a!.hour_of_day!.map(hourPoint)} fmt={money} /> : emptyChart}
               </div>
               <div className={card}>
                 <p className="type-label mb-tight text-[12px] text-muted">{t("charts.salesByDay")}</p>
@@ -957,10 +957,18 @@ function SalesReportInner() {
   );
 }
 
+/* Chart labels are drawn, not data: an hourly bucket the API names "13:00"
+   (or hour-of-day "13") reads "1 PM" on the axis and in the tooltip. Day and
+   week labels are not clock times and pass through untouched. */
+const clockPoint = <P extends { label: string }>(p: P): P =>
+  /^\d{1,2}:\d{2}$/.test(p.label) ? { ...p, label: formatClock(p.label, { short: true }) } : p;
+const hourPoint = <P extends { label: string }>(p: P): P =>
+  /^\d{1,2}$/.test(p.label) ? { ...p, label: formatClockMin(Number(p.label) * 60, { short: true }) } : p;
+
 function FragmentRow({ r, expanded, onToggle, onOpen, selected, onSelect }: { r: TransactionRow; expanded: boolean; onToggle: () => void; onOpen: () => void; selected: boolean; onSelect: () => void }) {
   const t = useTranslations("reports");
   const enumL = useEnumLabels();
-  const time = r.time.slice(11, 16);
+  const time = formatClock(r.time.slice(11, 16));
   const day = r.time.slice(0, 10);
   // "Mixed" is a visible bucket — split tender is never allocated across lines.
   const tone: Record<TxStatus, "success" | "danger" | "warning" | "neutral"> = {

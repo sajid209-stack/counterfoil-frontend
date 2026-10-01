@@ -9,7 +9,8 @@ import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
 import { useEnumLabels } from "@/lib/labels";
-import { formatDay, formatMoney } from "@/lib/format";
+import { formatClock, formatDay, formatMoney } from "@/lib/format";
+import { clockify } from "../../_components/Clock";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { DEFAULT_SMS_TEMPLATE, renderSms } from "@/lib/sms";
 import { DEFAULT_EMAIL_BODY, DEFAULT_EMAIL_SUBJECT } from "@/lib/email";
@@ -106,7 +107,7 @@ export default function CompletePage() {
       ticket.showTier ? ticket.tierName : null,
       ticket.admits > 1 ? tk("admits", { count: ticket.admits }) : null,
       ticket.place,
-      ticket.startTime,
+      ticket.startTime ? formatClock(ticket.startTime) : null,
       formatDay(ticket.date, { weekday: true }),
     ]
       .filter(Boolean)
@@ -332,7 +333,7 @@ export default function CompletePage() {
                   {info.receipt.lines.map((line, i) => (
                     <li key={i} className={cn("flex items-baseline justify-between gap-comfortable text-sm", line.child && "pl-section")}>
                       <span className="min-w-0 text-fg">
-                        <span className={cn(line.child && "text-muted")}>{line.name}</span>
+                        <span className={cn(line.child && "text-muted")}>{clockify(line.name)}</span>
                         <span className="text-muted"> × {line.qty}</span>
                       </span>
                       <span className="shrink-0 tabular-nums text-fg">{formatMoney(line.amount)}</span>

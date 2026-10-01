@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { formatDay, formatMoney } from "@/lib/format";
+import { formatClock, formatClockRange, formatDay, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import type { Order, OrderLine } from "@/lib/api";
 
@@ -21,7 +21,7 @@ export function OrderLinesDetail({ order, compact = false }: { order: Pick<Order
   const lineMeta = (l: OrderLine) => {
     const parts: string[] = [];
     if (l.booking) {
-      const when = [formatDay(l.booking.date, { weekday: true }), l.booking.startTime && l.booking.endTime ? `${l.booking.startTime}–${l.booking.endTime}` : l.booking.startTime].filter(Boolean).join(" · ");
+      const when = [formatDay(l.booking.date, { weekday: true }), l.booking.startTime && l.booking.endTime ? formatClockRange(l.booking.startTime, l.booking.endTime) : l.booking.startTime ? formatClock(l.booking.startTime) : null].filter(Boolean).join(" · ");
       if (when) parts.push(when);
     }
     parts.push(`${l.quantity} × ${formatMoney(l.unitPrice)}`);

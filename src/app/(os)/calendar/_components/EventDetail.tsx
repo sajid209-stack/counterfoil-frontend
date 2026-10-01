@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Lock, LockOpen, UserCheck } from "lucide-react";
 import { Button, Modal, StatusPill, type PillTone } from "@/components/ui";
-import { hhmm, type CalEvent, type EventTone } from "./model";
+import { clockRangeOf, type CalEvent, type EventTone } from "./model";
 
 /** Status is a word here, never only a colour — a block on the grid can get
  *  away with a coloured bar because this panel is what names it. */
@@ -79,7 +79,7 @@ export function EventDetail({
 
   if (!event) return null;
 
-  const when = event.allDay ? t("allDayLong") : `${hhmm(event.start)} – ${hhmm(event.end)}`;
+  const when = event.allDay ? t("allDayLong") : clockRangeOf(event.start, event.end);
   /* Only a booking can be locked or completed. A hold has one action of its
      own — release — and it is here rather than in a register of its own,
      because this is where a manager meets the hold: on the day it is blocking,

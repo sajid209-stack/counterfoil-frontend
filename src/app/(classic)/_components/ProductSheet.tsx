@@ -36,7 +36,7 @@ import { resolveProductPrice } from "@/lib/pricing";
 import { durationOptions, formatDuration, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
-import { formatMoney } from "@/lib/format";
+import { formatClock, formatClockMin, formatClockRange, formatMoney } from "@/lib/format";
 
 export interface CartEntry {
   id: string;
@@ -693,7 +693,7 @@ export function ProductSheet({
                   <div className="mt-tight flex flex-col gap-tight">{renderGroup()}{renderWaiver()}</div>
                   <SheetFooter
                     summary={<>
-                      <span className="font-medium">{row?.resource.name}</span> · <span>{slotTime}</span> · {formatDuration(minutes)}
+                      <span className="font-medium">{row?.resource.name}</span> · <span>{formatClock(slotTime)}</span> · {formatDuration(minutes)}
                       {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""}
                       {dates.length > 1 ? ` · ${t("repeat.datesCount", { count: dates.length })}` : ""}
                       {" · "}
@@ -705,7 +705,7 @@ export function ProductSheet({
                     label={
                       dates.length > 1
                         ? t("repeat.addDates", { count: dates.length, amount: formatMoney(price * dates.length, currency) })
-                        : t("sheet.addSelection", { name: row?.resource.name ?? "", time: slotTime, amount: formatMoney(price, currency) })
+                        : t("sheet.addSelection", { name: row?.resource.name ?? "", time: formatClock(slotTime), amount: formatMoney(price, currency) })
                     }
                   />
                 </>
@@ -746,7 +746,7 @@ export function ProductSheet({
             if (l.outOfService) return t("sheet.outOfService");
             if (date === TODAY) {
               const current = spans.find((s) => s.start <= NOW_MIN && NOW_MIN < s.end);
-              if (current) return t("sheet.inUseUntil", { time: toTime(current.end), label: current.label });
+              if (current) return t("sheet.inUseUntil", { time: formatClockMin(current.end), label: current.label });
             }
             return spans.length ? t("sheet.bookingsToday", { count: spans.length }) : t("sheet.free");
           };
@@ -770,7 +770,7 @@ export function ProductSheet({
             <div className="mb-section flex flex-col gap-tight">
               {date === TODAY && (
                 <button type="button" disabled={!nowLane || !waiverOk} onClick={() => nowLane && submitResource(nowLane.id, nowLane.name, nowTime, nowPrice, duration)} className={`flex h-12 items-center justify-between rounded-sm border px-comfortable text-sm ${nowLane && waiverOk ? "border-ember bg-ember/10 font-medium" : "border-line bg-subtle text-muted"}`}>
-                  <span>{t("sheet.startNow", { time: nowTime, duration: formatDuration(duration), lane: nowLane ? ` · ${nowLane.name}` : "" })}</span>
+                  <span>{t("sheet.startNow", { time: formatClock(nowTime), duration: formatDuration(duration), lane: nowLane ? ` · ${nowLane.name}` : "" })}</span>
                   <span>{!nowLane ? t("sheet.noLaneFree") : !waiverOk ? t("sheet.waiverFirst") : formatMoney(nowPrice, currency)}</span>
                 </button>
               )}
@@ -840,7 +840,7 @@ export function ProductSheet({
                   closeMin={closeMin}
                   sel={slotTime ? { start: toMinutes(slotTime), end: toMinutes(slotTime) + duration } : null}
                   hatched={laneOf(resourceId)?.outOfService}
-                  onBlockTap={(s) => setBlocked(t("sheet.blockedBooked", { start: toTime(s.start), end: toTime(s.end), label: s.label, noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))}
+                  onBlockTap={(s) => setBlocked(t("sheet.blockedBooked", { start: formatClockMin(s.start), end: formatClockMin(s.end), label: s.label, noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))}
                 />
               )}
 
@@ -851,7 +851,7 @@ export function ProductSheet({
                 {/* Chips for speed, the stepper for precision (walk-in rounding). */}
                 <div className="flex items-center gap-inline">
                   <button type="button" aria-label={t("sheet.earlier")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const next = Math.max(flexTimes.length ? toMinutes(flexTimes[0]) : 0, base - round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember/10">−</button>
-                  <span className="w-14 text-center text-[0.8125rem]">{slotTime ?? "—"}</span>
+                  <span className="min-w-16 whitespace-nowrap text-center text-[0.8125rem]">{slotTime ? formatClock(slotTime) : "—"}</span>
                   <button type="button" aria-label={t("sheet.later")} onClick={() => { const base = toMinutes(slotTime ?? flexTimes[0] ?? "12:00"); const cap = mustEnd ? closeMin - duration : 24 * 60 - round; const next = Math.min(cap, base + round); setSlotTime(toTime(next)); setBlocked(null); }} className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-lg active:bg-ember/10">+</button>
                 </div>
               </div>
@@ -859,9 +859,9 @@ export function ProductSheet({
                 {flexTimes.map((tt) => {
                   const st = startState(tt, duration, resourceId);
                   if (!st.ok) {
-                    return <button key={tt} type="button" onClick={() => setBlocked(t("sheet.unavailableStart", { time: tt, reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))} className="h-12 rounded-sm border border-line bg-subtle px-comfortable text-[0.8125rem] text-muted line-through" title={st.reason}>{tt}</button>;
+                    return <button key={tt} type="button" onClick={() => setBlocked(t("sheet.unavailableStart", { time: formatClock(tt), reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }))} className="h-12 rounded-sm border border-line bg-subtle px-comfortable text-[0.8125rem] text-muted line-through" title={st.reason}>{formatClock(tt)}</button>;
                   }
-                  return <button key={tt} type="button" onClick={() => { setSlotTime(tt); setBlocked(null); }} className={`h-12 rounded-sm border px-comfortable text-[0.8125rem] ${slotTime === tt ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{tt}</button>;
+                  return <button key={tt} type="button" onClick={() => { setSlotTime(tt); setBlocked(null); }} className={`h-12 rounded-sm border px-comfortable text-[0.8125rem] ${slotTime === tt ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(tt)}</button>;
                 })}
               </div>
 
@@ -899,7 +899,7 @@ export function ProductSheet({
                     {math && <p className="text-[0.75rem] text-muted">{math}{premium}</p>}
                     {/* The live selection summary — the CTA never enables without it. */}
                     <p className="text-[0.8125rem]">
-                      <span className="font-medium">{lane?.name ?? t("sheet.anyLane")}</span> · <span className="tabular-nums">{slotTime}–{endLabel}</span> · {formatDuration(duration)}
+                      <span className="font-medium">{lane?.name ?? t("sheet.anyLane")}</span> · <span className="tabular-nums">{formatClockRange(slotTime, toMinutes(slotTime) + duration)}</span> · {formatDuration(duration)}
                       {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""} · <span className="tabular-nums">{formatMoney(total, currency)}</span>
                       {!resourceId && lane ? <span className="text-muted">{t("sheet.bestFit")}</span> : null}
                     </p>
@@ -921,7 +921,7 @@ export function ProductSheet({
                     : undefined
                 }
                 label={slotTime && chosenLaneFree
-                  ? t("sheet.addFlexible", { duration: formatDuration(duration), start: slotTime, end: endLabel ?? "", amount: formatMoney(priceFor(slotTime, duration, laneOf(resourceId) ?? firstFreeResource(product, date, slotTime, duration)), currency) })
+                  ? t("sheet.addFlexible", { duration: formatDuration(duration), start: formatClock(slotTime), end: endLabel ? formatClock(endLabel) : "", amount: formatMoney(priceFor(slotTime, duration, laneOf(resourceId) ?? firstFreeResource(product, date, slotTime, duration)), currency) })
                   // Says what is missing rather than sitting dead — the spec's
                   // "always show why", applied to the button itself.
                   : !slotTime ? t("sheet.pickStart") : !chosenLaneFree ? t("sheet.pickFreeLane") : t("sheet.addToSale")}
@@ -944,7 +944,7 @@ export function ProductSheet({
                     <Avatar name={p.name} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{p.name}</span>
-                      <span className="block text-[0.75rem] text-muted">{nextFree ? t("sheet.nextFree", { time: nextFree }) : t("sheet.fullyBooked")}</span>
+                      <span className="block text-[0.75rem] text-muted">{nextFree ? t("sheet.nextFree", { time: formatClock(nextFree) }) : t("sheet.fullyBooked")}</span>
                     </span>
                     <span className={`shrink-0 whitespace-nowrap text-[0.75rem] ${premiumOf(p.id) > 0 ? "font-medium text-brand-foreground" : "text-muted"}`}>
                       {premiumOf(p.id) > 0 ? t("sheet.premiumAmount", { amount: formatMoney(premiumOf(p.id), currency) }) : t("sheet.standardRate")}
@@ -959,15 +959,15 @@ export function ProductSheet({
               {providerTimes.map((t) => {
                 const free = providerTimeFree(t);
                 return (
-                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable text-[0.8125rem] ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{t}</button>
+                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-sm border px-comfortable text-[0.8125rem] ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(t)}</button>
                 );
               })}
             </div>
             {slotTime && assignedProvider && !providerId && (
-              <p className="text-[0.75rem] text-muted">{t("sheet.firstAvailableAt", { time: slotTime, name: `${assignedProvider.name}${premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}` })}</p>
+              <p className="text-[0.75rem] text-muted">{t("sheet.firstAvailableAt", { time: formatClock(slotTime), name: `${assignedProvider.name}${premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}` })}</p>
             )}
             {slotTime && !providerTimeFree(slotTime) && (
-              <p className="text-[0.75rem] text-danger">{t("sheet.busyAtTime", { name: providers.find((p) => p.id === providerId)?.name ?? t("sheet.everyone"), time: slotTime })}</p>
+              <p className="text-[0.75rem] text-danger">{t("sheet.busyAtTime", { name: providers.find((p) => p.id === providerId)?.name ?? t("sheet.everyone"), time: formatClock(slotTime) })}</p>
             )}
           </div>
         )}
@@ -1201,7 +1201,7 @@ export function ProductSheet({
               const owner = guided ? guides.find((g) => g.id === guideId)?.name : provider ? assignedProvider?.name : undefined;
               const prem = provider && assignedProvider ? premiumOf(assignedProvider.id) : 0;
               const total = list.reduce((s, x) => s + (qty[x.id] ?? 0) * x.price, 0) + addOnItems().reduce((s, i) => s + i.unitPrice * i.qty, 0) + prem;
-              const when = slotTime ? `${slotTime} ${date === TODAY ? t("slotToday") : date}` : (needsSchedule(bt) || provider || course) ? (date === TODAY ? t("slotToday") : date) : null;
+              const when = slotTime ? `${formatClock(slotTime)} ${date === TODAY ? t("slotToday") : date}` : (needsSchedule(bt) || provider || course) ? (date === TODAY ? t("slotToday") : date) : null;
               return (
                 <div className="mt-tight flex items-baseline justify-between gap-comfortable border-t border-line pt-tight text-[0.8125rem]">
                   <span className="min-w-0 flex-1 text-muted">
@@ -1264,7 +1264,7 @@ export function ProductSheet({
         {/* Waitlist mini-form */}
         {wl && (
           <div className="mt-section rounded-sm border border-warning bg-warning/5 p-section">
-            <p className="text-sm font-medium">{t("sheet.joinWaitlistFor", { time: wl.time })}</p>
+            <p className="text-sm font-medium">{t("sheet.joinWaitlistFor", { time: formatClock(wl.time) })}</p>
             <div className="mt-tight grid grid-cols-1 gap-tight sm:grid-cols-2">
               <FormField label={t("sheet.name")} value={wlName} onChange={(e) => setWlName(e.target.value)} />
               <FormField label={t("sheet.phone")} value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} />

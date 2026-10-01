@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { formatClockMin } from "@/lib/format";
 
 /**
  * The day's open hours as chips, for a phone.
@@ -39,7 +40,7 @@ export function OpenHourChips({
               "transition-colors duration-quick active:border-ember active:bg-ember/10",
             )}
           >
-            <span className="font-mono text-[13px] font-medium leading-tight">{String(hour).padStart(2, "0")}:00</span>
+            <span className="font-mono text-[13px] font-medium leading-tight">{formatClockMin(hour * 60, { short: true })}</span>
             <span className="text-[12px] leading-tight text-muted">{chipLabel(count)}</span>
           </button>
         ))}

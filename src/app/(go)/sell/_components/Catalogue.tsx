@@ -22,7 +22,7 @@ import type { Product, Resource, Staff } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { DEMO_TODAY } from "@/lib/schedule";
-import { formatDay, formatPriceShort } from "@/lib/format";
+import { formatClock, formatDay, formatPriceShort } from "@/lib/format";
 
 export function Catalogue({
   products,
@@ -65,10 +65,10 @@ export function Catalogue({
       noneLeftToday: tp("live.noneLeftToday"),
       busyNow: tp("live.busyNow"),
       leftOfTotal: (left: number, total: number) => tp("live.leftOfTotal", { left, total }),
-      nextAt: (time: string, left: number) => tp("live.nextAt", { time, left }),
+      nextAt: (time: string, left: number) => tp("live.nextAt", { time: formatClock(time), left }),
       freeOfTotal: (free: number, total: number) => tp("live.freeOfTotal", { free, total }),
       startsOn: (d: string) => tp("live.startsOn", { date: formatDay(d) }),
-      nextDay: (d: string, time: string) => tp("live.nextDay", { day: formatDay(d, { weekday: true }), time }),
+      nextDay: (d: string, time: string) => tp("live.nextDay", { day: formatDay(d, { weekday: true }), time: formatClock(time) }),
       providersFree: (free: number, total: number) => tp("live.providersFree", { free, total }),
     }),
     [tp],

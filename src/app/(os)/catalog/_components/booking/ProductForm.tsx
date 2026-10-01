@@ -17,6 +17,7 @@ import {
   type Staff,
 } from "@/lib/api";
 import { defaultSchedule, isFlexibleResource, isResourceType, needsSchedule, slotTimes } from "@/lib/schedule";
+import { formatClock, formatDateTime } from "@/lib/format";
 import { defaultDurationConfig, durationOptions } from "@/lib/duration";
 import type { DurationConfig } from "@/lib/api";
 import { BookingSetup, type BookingSetupResult } from "./BookingSetup";
@@ -382,12 +383,12 @@ export function ProductForm({
                 <div className="grid gap-tight sm:grid-cols-3">
                   {slotTimes(state.schedule).map((time) => (
                     <div key={time} className="flex items-center gap-tight">
-                      <span className="w-14 text-[13px] tabular-nums text-muted">{time}</span>
+                      <span className="w-20 shrink-0 whitespace-nowrap text-[13px] tabular-nums text-muted">{formatClock(time)}</span>
                       <input
                         type="text"
                         value={state.sessionNames[time] ?? ""}
                         placeholder={t("showNamePlaceholder")}
-                        aria-label={t("showNameFor", { time })}
+                        aria-label={t("showNameFor", { time: formatClock(time) })}
                         onChange={(e) => set("sessionNames", { ...state.sessionNames, [time]: e.target.value })}
                         className="h-11 w-full rounded-sm border border-line px-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-10"
                       />
@@ -478,8 +479,8 @@ export function ProductForm({
             <p className="text-[13px] text-muted">{t("advancedHelp")}</p>
             <AdvancedRow label={t("advType")} value={state.booking.bookingType} />
             <AdvancedRow label={t("advId")} value={product.id} />
-            <AdvancedRow label={t("advCreated")} value={product.createdAt} />
-            <AdvancedRow label={t("advUpdated")} value={product.updatedAt} />
+            <AdvancedRow label={t("advCreated")} value={formatDateTime(product.createdAt)} />
+            <AdvancedRow label={t("advUpdated")} value={formatDateTime(product.updatedAt)} />
           </div>
         )}
       </div>

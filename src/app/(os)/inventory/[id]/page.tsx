@@ -16,7 +16,7 @@ import {
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatClock, formatDate, formatMoney } from "@/lib/format";
 import {
   archiveInventoryItem,
   getInventoryItem,
@@ -135,7 +135,7 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
       <span className="shrink-0 text-[12px] text-muted">
         {/* The time as well as the day: a delivery at nine and a write-off
             at five were indistinguishable, and unorderable on screen. */}
-        {formatDate(m.at.slice(0, 10))} {m.at.slice(11, 16)} · {m.by}
+        {formatDate(m.at.slice(0, 10))} {formatClock(m.at.slice(11, 16))} · {m.by}
       </span>
     </li>
   );

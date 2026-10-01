@@ -78,7 +78,7 @@
     "footerPlaceholder": "যেমন আসার জন্য ধন্যবাদ! টিকিট ফেরত নেওয়া হয় না।"
   },
   "security": {
-    "title": "পাসওয়ার্ড ও নিরাপত্তা",
+    "title": "নিরাপত্তা",
     "description": "আপনার পাসওয়ার্ড, দুই-ধাপে সাইন-ইন, আর কোথায় কোথায় সাইন-ইন করা আছে।",
     "password": "পাসওয়ার্ড",
     "current": "এখনকার পাসওয়ার্ড",
@@ -223,7 +223,7 @@
     "activeShort": "চালু। নিজের কাউন্টারে বিক্রি করতে পারে।"
   },
   "locations": {
-    "title": "ভেন্যু",
+    "title": "লোকেশন",
     "singular": "ভেন্যু",
     "description": "যেসব জায়গায় বিক্রি করেন, তাদের ঠিকানা আর খোলার সময়সহ।",
     "searchPlaceholder": "ভেন্যু খুঁজুন",
@@ -619,7 +619,7 @@
         "title": "টাকা"
       },
       "people": {
-        "title": "টিম ও সাইন-ইন"
+        "title": "টিম ও অ্যাক্সেস"
       },
       "messages": {
         "title": "বার্তা"
@@ -635,7 +635,7 @@
         "keywords": "নাম কোম্পানি ফোন ইমেইল ওয়েবসাইট যোগাযোগ রসিদ মুদ্রা টাকা টাইম জোন সময় বুকিং লক name phone email website receipt currency timezone"
       },
       "locations": {
-        "title": "ভেন্যু",
+        "title": "লোকেশন",
         "desc": "যেসব জায়গায় বিক্রি করেন, ঠিকানা আর খোলার সময়সহ।",
         "keywords": "ভেন্যু লোকেশন জায়গা শাখা ঠিকানা খোলার সময় বন্ধ venue location address opening hours"
       },
@@ -645,7 +645,7 @@
         "keywords": "কাউন্টার টিল ক্যাশিয়ার পেমেন্ট নগদ বিকাশ কার্ড counter till pos cash bkash card"
       },
       "resources": {
-        "title": "কোর্ট, লেন ও রুম",
+        "title": "রিসোর্স",
         "desc": "গ্রাহক ঘণ্টা ধরে যা বুক করেন।",
         "keywords": "কোর্ট লেন মাঠ রুম টেবিল রিসোর্স বন্ধ মেরামত court lane field room resource"
       },
@@ -665,7 +665,7 @@
         "keywords": "সদস্যপদ সদস্য প্ল্যান memberships members plans"
       },
       "loyalty": {
-        "title": "পয়েন্ট",
+        "title": "লয়্যালটি পয়েন্ট",
         "desc": "গ্রাহক কীভাবে পয়েন্ট পান, আর পয়েন্টের দাম কত।",
         "keywords": "পয়েন্ট পুরস্কার loyalty points"
       },
@@ -685,17 +685,17 @@
         "keywords": "ডিভাইস ট্যাবলেট স্ক্যানার যুক্ত কোড tablet ipad pairing"
       },
       "notifications": {
-        "title": "বার্তা ও সতর্কবার্তা",
+        "title": "নোটিফিকেশন",
         "desc": "গ্রাহকের কাছে SMS ও ইমেইল, রিমাইন্ডার, আর টিমের কাছে সতর্কবার্তা।",
         "keywords": "নোটিফিকেশন এসএমএস ইমেইল বার্তা টিকিট লেখা রিমাইন্ডার ধন্যবাদ নীরব সময় প্রেরক সতর্কবার্তা দিনের হিসাব sms email message template reminder quiet alerts summary"
       },
       "security": {
-        "title": "পাসওয়ার্ড ও নিরাপত্তা",
+        "title": "নিরাপত্তা",
         "desc": "আপনার পাসওয়ার্ড, দুই-ধাপে সাইন-ইন, আর কোথায় সাইন-ইন করা আছে।",
         "keywords": "নিরাপত্তা পাসওয়ার্ড দুই-ধাপ ব্যাকআপ কোড সাইন-ইন ইমেইল সাইন আউট security password 2fa login sessions"
       },
       "preferences": {
-        "title": "স্ক্রিন ও ভাষা",
+        "title": "পছন্দসমূহ",
         "desc": "হালকা বা গাঢ়, ভাষা, আর সহজে পড়া — এই ব্রাউজারে।",
         "keywords": "পছন্দ ডার্ক মোড থিম ভাষা বাংলা ইংরেজি নড়াচড়া কনট্রাস্ট সাইড মেনু শর্টকাট preferences dark mode theme language motion contrast sidebar shortcuts"
       },
@@ -705,7 +705,7 @@
         "keywords": "দুই-ধাপ সাইন আউট লক পিন ভুল চেষ্টা ট্যাবলেট 2fa mfa session timeout lock pin"
       },
       "storefront": {
-        "title": "ওয়েব পেজ",
+        "title": "স্টোরফ্রন্ট",
         "desc": "প্রতিটি ভেন্যুর পাবলিক পেজ: এতে কী আছে, কী লেখা, আর অনলাইনে আছে কি না।",
         "keywords": "ওয়েব পেজ স্টোরফ্রন্ট পাবলিক পেজ ওয়েবসাইট ভেন্যু ঠিকানা অনলাইন storefront web page website"
       },
@@ -763,7 +763,7 @@
     "regPlaceholder": "যেমন 000123456-0101"
   },
   "notifications": {
-    "title": "বার্তা ও সতর্কবার্তা",
+    "title": "নোটিফিকেশন",
     "description": "গ্রাহক আর আপনার টিম কী পান, আর কখন পান।",
     "smsTitle": "টিকিট SMS",
     "smsDesc": "বুকিং করলে গ্রাহক যে SMS পান। স্টাফ অর্ডার থেকে এটি আবার পাঠাতে পারেন।",
@@ -890,7 +890,7 @@
     "replyToPlaceholder": "যেমন bookings@yourvenue.com"
   },
   "preferences": {
-    "title": "স্ক্রিন ও ভাষা",
+    "title": "পছন্দসমূহ",
     "description": "এই ব্রাউজারে Counterfoil কেমন দেখায়।",
     "displayTitle": "স্ক্রিন",
     "displayDesc": "সাথে সাথে বদলায়, শুধু এই ব্রাউজারে।",
@@ -1035,7 +1035,7 @@
     "saved": "সাইন-ইন নিয়ম সেভ হয়েছে"
   },
   "storefront": {
-    "title": "ওয়েব পেজ",
+    "title": "স্টোরফ্রন্ট",
     "description": "প্রতিটি ভেন্যুর একটি পাবলিক ওয়েব পেজ: কী আছে, দাম কত, আর কখন খোলা।",
     "listLabel": "ভেন্যু ও তাদের ওয়েব পেজ",
     "draft": "অনলাইনে নেই",

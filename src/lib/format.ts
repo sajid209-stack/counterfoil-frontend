@@ -74,18 +74,13 @@ export function formatDate(iso: string | null | undefined): string {
   }).format(d);
 }
 
-/** ISO datetime → "29 Jul, 14:30". For recent-activity style stamps. */
+/** ISO datetime → "29 Jul, 2:30 PM". For recent-activity style stamps. */
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(d);
+  const day = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short" }).format(d);
+  return `${day}, ${formatClockOf(d)}`;
 }
 
 /**
@@ -112,4 +107,57 @@ export function formatRelative(iso: string | null | undefined, now: Date): strin
   const days = Math.round(hours / 24);
   if (days <= 7) return `${days}d ago`;
   return formatDateTime(iso);
+}
+
+/* ── Clock times, 12-hour with AM/PM ──────────────────────────────────────
+ * Every time a person reads — on the till, in OS, on a ticket — is 12-hour
+ * with AM/PM: "7:00 PM", never "19:00". Times are still STORED as 24-hour
+ * "HH:MM" strings (slots, schedules, keys); only what is drawn changes, so
+ * these take that string (or minutes, or a Date) and never feed back into data.
+ * Latin digits and Latin AM/PM in both languages, like prices. */
+
+const clockParts = (min: number) => {
+  const m = ((Math.round(min) % 1440) + 1440) % 1440;
+  const h24 = Math.floor(m / 60);
+  return { h: h24 % 12 === 0 ? 12 : h24 % 12, mm: m % 60, pm: h24 >= 12 };
+};
+
+const toMin = (hhmm: string): number | null => {
+  const m = /^(\d{1,2}):(\d{2})/.exec(hhmm.trim());
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+
+/** Minutes after midnight → "7:00 PM". 1440 (end of day) → "12:00 AM". */
+export function formatClockMin(min: number, opts: { short?: boolean } = {}): string {
+  const { h, mm, pm } = clockParts(min);
+  const ampm = pm ? "PM" : "AM";
+  if (opts.short && mm === 0) return `${h} ${ampm}`;
+  return `${h}:${String(mm).padStart(2, "0")} ${ampm}`;
+}
+
+/** "19:00" → "7:00 PM"; `short` gives "7 PM" on the hour (axes, grid cells).
+ *  Anything that is not a time is handed back untouched, and empty → "—". */
+export function formatClock(hhmm: string | null | undefined, opts: { short?: boolean } = {}): string {
+  if (!hhmm) return "—";
+  const min = toMin(hhmm);
+  return min == null ? hhmm : formatClockMin(min, opts);
+}
+
+/** A span: "7:00 – 9:00 PM" when both are on one side of noon, otherwise
+ *  "11:00 AM – 1:00 PM". Takes "HH:MM" strings or minutes. */
+export function formatClockRange(from: string | number, to: string | number): string {
+  const a = typeof from === "number" ? from : toMin(from);
+  const b = typeof to === "number" ? to : toMin(to);
+  if (a == null || b == null) return `${from} – ${to}`;
+  const pa = clockParts(a), pb = clockParts(b);
+  const left = `${pa.h}:${String(pa.mm).padStart(2, "0")}`;
+  return pa.pm === pb.pm ? `${left} – ${formatClockMin(b)}` : `${formatClockMin(a)} – ${formatClockMin(b)}`;
+}
+
+/** The clock time of an instant, in this browser's zone: "7:05 PM". */
+export function formatClockOf(at: string | Date | null | undefined): string {
+  if (!at) return "—";
+  const d = typeof at === "string" ? new Date(at) : at;
+  if (Number.isNaN(d.getTime())) return "—";
+  return formatClockMin(d.getHours() * 60 + d.getMinutes());
 }

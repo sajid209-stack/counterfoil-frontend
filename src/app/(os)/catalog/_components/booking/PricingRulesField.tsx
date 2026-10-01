@@ -3,9 +3,9 @@
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { Button, FormField } from "@/components/ui";
+import { Button, FormField, TimeInput } from "@/components/ui";
 import { resolveRulePrice } from "@/lib/pricing";
-import { formatPriceShort } from "@/lib/format";
+import { formatClock, formatClockMin, formatClockRange, formatPriceShort } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { useCatalogFormat } from "../../_lib/useCatalogFormat";
 
@@ -88,7 +88,7 @@ export function PricingRulesField({
   /* Every other tick and always the last — and when the last is odd, the
      one before it goes so the final two never touch. */
   const phoneTick = (i: number, n: number) => i === n - 1 || (i % 2 === 0 && !(i === n - 2 && (n - 1) % 2 === 1));
-  const fmtMin = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(Math.round(m % 60)).padStart(2, "0")}`;
+  const fmtMin = (m: number) => formatClockMin(m, { short: true });
 
   return (
     <div className="flex flex-col gap-section">
@@ -120,8 +120,8 @@ export function PricingRulesField({
                 type="button"
                 onClick={() => setSel(sel === i ? null : i)}
                 style={{ left: `${left}%`, width: `${width}%` }}
-                title={`${r.fromTime}–${r.toTime}`}
-                aria-label={`${r.fromTime}–${r.toTime} · ${r.price ? formatPriceShort(toMinor(r.price), currency) : t("bandNoPrice")}`}
+                title={formatClockRange(r.fromTime, r.toTime)}
+                aria-label={`${formatClockRange(r.fromTime, r.toTime)} · ${r.price ? formatPriceShort(toMinor(r.price), currency) : t("bandNoPrice")}`}
                 aria-pressed={sel === i}
                 className={cn(
                   "absolute inset-y-0 flex flex-col items-center justify-center overflow-hidden rounded-xs bg-ember/85 px-inline text-center text-paper transition-transform duration-quick active:scale-[0.98]",
@@ -129,7 +129,7 @@ export function PricingRulesField({
                 )}
               >
                 <span className="truncate text-[12px] font-medium tabular-nums">{r.price ? formatPriceShort(toMinor(r.price), currency) : t("bandNoPrice")}</span>
-                <span className="truncate text-[12px] opacity-80">{r.fromTime}</span>
+                <span className="truncate text-[12px] opacity-80">{formatClock(r.fromTime, { short: true })}</span>
               </button>
             );
           })}
@@ -154,7 +154,7 @@ export function PricingRulesField({
 
       {/* Time price editors — the selected one is highlighted; tap one above to jump to it. */}
       {rules.map((rule, i) => {
-        const span = `${rule.fromTime}–${rule.toTime}`;
+        const span = formatClockRange(rule.fromTime, rule.toTime);
         return (
           <div
             key={i}
@@ -178,8 +178,8 @@ export function PricingRulesField({
               {rule.days.length === 0 && <span className="ml-inline self-center text-[12px] text-muted">{t("anyDay")}</span>}
             </div>
             <div className="flex flex-wrap items-end gap-tight">
-              <FormField label={t("from")} value={rule.fromTime} onChange={(e) => update(i, { fromTime: e.target.value })} />
-              <FormField label={t("to")} value={rule.toTime} onChange={(e) => update(i, { toTime: e.target.value })} />
+              <TimeInput label={t("from")} value={rule.fromTime} onChange={(v) => update(i, { fromTime: v })} />
+              <TimeInput label={t("to")} value={rule.toTime} onChange={(v) => update(i, { toTime: v })} />
               <FormField label={`${t("price")} (${currency === "BDT" ? "৳" : currency})`} variant="number" placeholder={t("bandPricePlaceholder")} value={rule.price} onChange={(e) => update(i, { price: e.target.value })} />
               <div className="flex items-center gap-inline pb-inline">
                 <button type="button" aria-label={t("earlier", { time: span })} title={t("earlier", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, -1); }} disabled={i === 0} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line disabled:text-faint"><ChevronUp size={16} strokeWidth={1.5} aria-hidden /></button>
@@ -196,7 +196,7 @@ export function PricingRulesField({
           <p className="type-label text-[12px] text-muted">{t("preview")}</p>
           <p className="mt-inline flex flex-wrap gap-section text-[13px] tabular-nums">
             {EXAMPLES.map(([dow, time]) => (
-              <span key={`${dow}-${time}`}>{dayShort(dow)} {time} → <span className="font-medium">{formatPriceShort(resolveRulePrice(rulesMinor, dow, time, base), currency)}</span></span>
+              <span key={`${dow}-${time}`}>{dayShort(dow)} {formatClock(time)} → <span className="font-medium">{formatPriceShort(resolveRulePrice(rulesMinor, dow, time, base), currency)}</span></span>
             ))}
           </p>
         </div>

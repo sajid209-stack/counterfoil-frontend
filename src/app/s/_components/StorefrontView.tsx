@@ -7,7 +7,7 @@ import { ProductThumb } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import type { Location, Product, Resource, Staff, Storefront } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
-import { formatPriceShort } from "@/lib/format";
+import { formatClockRange, formatPriceShort } from "@/lib/format";
 import { ACCENT_WASH, StorefrontChrome } from "./Chrome";
 
 /** Monday first, the way the rest of the app reads a week. */
@@ -81,7 +81,7 @@ export function StorefrontView({
           <span className={cn("inline-flex items-center gap-inline font-medium", openToday ? "text-fg" : "text-muted")}>
             <span aria-hidden className={cn("h-2 w-2 rounded-full", openToday ? "bg-success" : "bg-muted")} />
             {openToday
-              ? t("openToday", { hours: today!.intervals.map((i) => `${i.opensAt}–${i.closesAt}`).join(", ") })
+              ? t("openToday", { hours: today!.intervals.map((i) => formatClockRange(i.opensAt, i.closesAt)).join(", ") })
               : t("closedToday")}
           </span>
         </p>
@@ -189,7 +189,7 @@ export function StorefrontView({
                   >
                     <dt className={isToday ? undefined : "text-muted"}>{dayName(d)}</dt>
                     <dd className={cn("text-right", !open && "text-muted")}>
-                      {open ? row!.intervals.map((i) => `${i.opensAt}–${i.closesAt}`).join(", ") : t("closed")}
+                      {open ? row!.intervals.map((i) => formatClockRange(i.opensAt, i.closesAt)).join(", ") : t("closed")}
                     </dd>
                   </div>
                 );

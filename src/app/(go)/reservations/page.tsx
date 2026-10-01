@@ -6,11 +6,9 @@ import { Search } from "lucide-react";
 import { EmptyState, StatusPill } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { listBookings, listProducts } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatClockOf, formatDate } from "@/lib/format";
 
 const TODAY = Date.parse("2026-07-29T00:00:00+06:00");
-const time = (iso: string) =>
-  new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
 
 export default function GoBookingsPage() {
   const t = useTranslations("schedule");
@@ -54,7 +52,7 @@ export default function GoBookingsPage() {
           {arrivals.slice(0, 40).map((b) => (
             <div key={b.id} className="flex items-center gap-section rounded-go border border-line bg-card p-comfortable">
               <div className="text-center">
-                <div className="font-mono text-lg">{time(b.slotStart)}</div>
+                <div className="whitespace-nowrap text-lg font-medium tabular-nums">{formatClockOf(b.slotStart)}</div>
                 <div className="font-mono text-[0.8125rem] text-muted">{formatDate(b.slotStart)}</div>
               </div>
               <div className="min-w-0 flex-1">

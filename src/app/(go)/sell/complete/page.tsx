@@ -22,6 +22,7 @@ import { Button, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
 import { formatDay, formatMoney } from "@/lib/format";
+import { clockify } from "../../_components/Clock";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { DEFAULT_SMS_TEMPLATE, renderSms } from "@/lib/sms";
 
@@ -139,7 +140,7 @@ export default function SellCompletePage() {
                 >
                   <span className="min-w-0 break-words">
                     {l.qty > 1 ? `${l.qty} × ` : ""}
-                    {l.name}
+                    {clockify(l.name)}
                   </span>
                   <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoney(l.amount, currency)}</span>
                 </div>

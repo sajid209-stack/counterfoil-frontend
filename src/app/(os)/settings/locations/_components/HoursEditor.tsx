@@ -5,6 +5,7 @@ import { Copy, Plus, X } from "lucide-react";
 import { useToast } from "@/components/ui";
 import type { OpeningHours } from "@/lib/api";
 import { toMinutes, toTime } from "@/lib/schedule";
+import { formatClock } from "@/lib/format";
 import { Switch } from "../../_components/SettingsKit";
 import { TimeField } from "../../_components/TimeField";
 import { DAY_KEY, WEEK, dayProblem } from "../_lib/hours";
@@ -84,8 +85,8 @@ export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChan
                       {day.intervals.length > 1 && (
                         <button
                           type="button"
-                          aria-label={t("locations.removeHours", { day: name, from: iv.opensAt, to: iv.closesAt })}
-                          title={t("locations.removeHours", { day: name, from: iv.opensAt, to: iv.closesAt })}
+                          aria-label={t("locations.removeHours", { day: name, from: formatClock(iv.opensAt), to: formatClock(iv.closesAt) })}
+                          title={t("locations.removeHours", { day: name, from: formatClock(iv.opensAt), to: formatClock(iv.closesAt) })}
                           onClick={() => setDay(d, day.intervals.filter((_, j) => j !== i))}
                           className={iconButton}
                         >

@@ -2,14 +2,20 @@
 
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Check, Lock, Plus, Wrench } from "lucide-react";
+import { Check, Lock, Plus, RotateCcw, Wrench } from "lucide-react";
+import { pendingRefundFor } from "@/lib/api/refundRequests";
 import { cn } from "@/lib/cn";
-import { formatPriceShort } from "@/lib/format";
-import { toTimeOfDay, type Block, type Column, type Group } from "../_lib/board";
+import { formatClock, formatClockMin, formatPriceShort } from "@/lib/format";
+import { type Block, type Column, type Group } from "../_lib/board";
 
 /** One hour. Tall enough that an hour is a thumb target on its own. */
 export const HOUR_PX = 64;
 const GUTTER = 48;
+/** An hour row's label: the number large, AM/PM under it. */
+const clockParts = (m: number) => {
+  const h24 = Math.floor(m / 60) % 24;
+  return { h: h24 % 12 === 0 ? 12 : h24 % 12, ampm: h24 >= 12 ? "PM" : "AM" };
+};
 /** Five columns fit a 390px phone at this width — four lanes and the
  *  "No place set" column beside them — with "Lane 4" still whole and every
  *  cell well over the 44px thumb floor. */
@@ -227,7 +233,14 @@ export function Board({
             <div className="sticky left-0 z-10 shrink-0 border-r border-line bg-card" style={{ width: GUTTER, backgroundImage: hourLines }}>
               {hours.map((m) => (
                 <div key={m} className="relative" style={{ height: HOUR_PX, scrollSnapAlign: "start" }}>
-                  <span className="absolute left-1.5 top-1.5 text-[0.8125rem] font-semibold tabular-nums text-muted">{toTimeOfDay(m)}</span>
+                  {/* The hour in ink, large, with its AM/PM under it: this column is
+                      what a cashier reads first to find a time, and the
+                      muted 13px it used to be was the faintest thing on
+                      the board. */}
+                  <span className="absolute inset-x-0 top-1 flex flex-col items-center leading-none text-fg">
+                    <span className="text-[1.0625rem] font-bold tabular-nums">{clockParts(m).h}</span>
+                    <span className="mt-0.5 text-[0.8125rem] font-semibold">{clockParts(m).ampm}</span>
+                  </span>
                 </div>
               ))}
             </div>
@@ -352,7 +365,7 @@ function FreeCell({
       data-key={b.key}
       aria-pressed={selected}
       onClick={() => onFree(column, b)}
-      aria-label={t("board.freeAria", { place, time: b.time, price: formatPriceShort(b.price) })}
+      aria-label={t("board.freeAria", { place, time: formatClock(b.time), price: formatPriceShort(b.price) })}
       data-focus-inset
       className={cn(
         "absolute inset-x-0 z-[1] flex flex-col items-center justify-center gap-0.5 transition-colors duration-quick",
@@ -399,11 +412,14 @@ function BlockView({
 
   if (b.type === "booking") {
     const who = b.guest ?? t("board.walkIn");
+    /* A refund waiting for a manager is marked on the block, so whoever is on
+       the counter next sees it before selling the hour on. */
+    const refunding = !!pendingRefundFor(b.booking.id);
     return (
       <button
         type="button"
         onClick={() => onBooking(column, b)}
-        aria-label={t("board.bookedAria", { place, time: toTimeOfDay(b.start), who })}
+        aria-label={`${t("board.bookedAria", { place, time: formatClockMin(b.start), who })}${refunding ? ` · ${t("refund.boardBadge")}` : ""}`}
         className={cn(
           frame,
           "border-l-[3px] px-tight py-1",
@@ -417,9 +433,14 @@ function BlockView({
       >
         <span className="flex items-center gap-1 text-[0.8125rem] font-semibold leading-tight">
           {b.arrived && <Check size={13} strokeWidth={2.5} className="shrink-0 text-success" aria-hidden />}
+          {refunding && <RotateCcw size={13} strokeWidth={2.5} className="shrink-0 text-warning" aria-hidden />}
           <span className="truncate">{who}</span>
         </span>
-        {tall && <span className="block truncate text-[0.8125rem] leading-tight opacity-80">{b.product?.name ?? ""}</span>}
+        {tall && (
+          refunding
+            ? <span className="block truncate text-[0.8125rem] font-semibold leading-tight text-warning">{t("refund.boardBadge")}</span>
+            : <span className="block truncate text-[0.8125rem] leading-tight opacity-80">{b.product?.name ?? ""}</span>
+        )}
       </button>
     );
   }
@@ -429,7 +450,7 @@ function BlockView({
       <button
         type="button"
         onClick={() => onHold(column, b)}
-        aria-label={t("board.heldAria", { place, time: toTimeOfDay(b.start), who: b.hold.heldFor })}
+        aria-label={t("board.heldAria", { place, time: formatClockMin(b.start), who: b.hold.heldFor })}
         className={cn(frame, "border border-dashed border-strong px-tight py-1 text-fg")}
         style={{
           ...style,
@@ -454,7 +475,7 @@ function BlockView({
       type="button"
       disabled={disabled}
       onClick={() => onSession(column, b)}
-      aria-label={t("board.sessionAria", { place, time: b.time, left: b.remaining })}
+      aria-label={t("board.sessionAria", { place, time: formatClock(b.time), left: b.remaining })}
       className={cn(
         frame,
         "flex flex-col justify-start gap-0.5 border px-tight py-1",
@@ -463,7 +484,7 @@ function BlockView({
       style={style}
     >
       <span className="flex items-baseline justify-between gap-1">
-        <span className="text-[0.8125rem] font-semibold tabular-nums">{b.time}</span>
+        <span className="text-[0.8125rem] font-semibold tabular-nums">{formatClock(b.time)}</span>
         {!full && !disabled && <Plus size={16} strokeWidth={2.5} className="shrink-0 text-muted" aria-hidden />}
       </span>
       {/* The number that decides a sale, in words and large enough to read

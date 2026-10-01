@@ -42,7 +42,8 @@ import { resolveProductPrice } from "@/lib/pricing";
 import { durationOptions, formatDuration, formulaPrice, isDealDuration, priceSegments, productDurationPrice } from "@/lib/duration";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { planWeekly, type OccurrenceBlock } from "@/lib/recurrence";
-import { formatDay, formatMoney, formatPriceShort } from "@/lib/format";
+import { formatClock, formatClockMin, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
+import { ClockCell } from "./Clock";
 import { ActionBar } from "./ActionBar";
 
 export interface CartEntry {
@@ -935,7 +936,7 @@ export function ProductSheet({
                     summary={
                       <span className="flex items-baseline justify-between gap-comfortable">
                         <span className="min-w-0 flex-1 text-muted">
-                          <span className="font-medium text-fg">{row?.resource.name}</span> · {slotTime} · {formatDuration(minutes)}
+                          <span className="font-medium text-fg">{row?.resource.name}</span> · {formatClock(slotTime)} · {formatDuration(minutes)}
                           {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""}
                           {dates.length > 1 ? ` · ${t("repeat.datesCount", { count: dates.length })}` : ""}
                         </span>
@@ -991,7 +992,7 @@ export function ProductSheet({
             if (l.outOfService) return t("sheet.outOfService");
             if (date === TODAY) {
               const current = spans.find((s) => s.start <= NOW_MIN && NOW_MIN < s.end);
-              if (current) return t("sheet.inUseUntil", { time: toTime(current.end), label: current.label });
+              if (current) return t("sheet.inUseUntil", { time: formatClockMin(current.end), label: current.label });
             }
             return spans.length ? t("sheet.bookingsToday", { count: spans.length }) : t("sheet.free");
           };
@@ -1093,7 +1094,7 @@ export function ProductSheet({
                   closeMin={closeMin}
                   sel={slotTime ? { start: toMinutes(slotTime), end: toMinutes(slotTime) + duration } : null}
                   hatched={laneOf(resourceId)?.outOfService}
-                  onBlockTap={(s) => setBlocked({ message: t("sheet.blockedBooked", { start: toTime(s.start), end: toTime(s.end), label: s.label, noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })}
+                  onBlockTap={(s) => setBlocked({ message: t("sheet.blockedBooked", { start: formatClockMin(s.start), end: formatClockMin(s.end), label: s.label, noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })}
                 />
               )}
 
@@ -1105,13 +1106,13 @@ export function ProductSheet({
                   {flexTimes.map((tt) => {
                     const st = startState(tt, duration, resourceId);
                     if (!st.ok) {
-                      return <button key={tt} type="button" data-focus-inset onClick={() => setBlocked({ message: t("sheet.unavailableStart", { time: tt, reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })} className="flex min-h-12 items-center justify-center border-b border-r border-line bg-surface text-[0.875rem] text-muted line-through" title={st.reason}>{tt}</button>;
+                      return <button key={tt} type="button" data-focus-inset onClick={() => setBlocked({ message: t("sheet.unavailableStart", { time: formatClock(tt), reason: st.reason?.toLowerCase() ?? "", noun: (lanes[0]?.nounSingular ?? t("sheet.laneWord")).toLowerCase() }) })} className="flex min-h-12 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-[0.875rem] text-muted line-through" title={st.reason}><ClockCell hhmm={tt} className="line-through" /></button>;
                     }
                     const on = slotTime === tt;
                     return (
-                      <button key={tt} type="button" aria-pressed={on} data-focus-inset onClick={() => { setSlotTime(tt); setBlocked(null); }} className={cn("flex min-h-12 items-center justify-center gap-1 border-b border-r border-line text-[0.9375rem] font-semibold tabular-nums transition-colors duration-quick", on ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10")}>
-                        {on && <Check size={13} strokeWidth={3} aria-hidden />}
-                        {tt}
+                      <button key={tt} type="button" aria-pressed={on} data-focus-inset onClick={() => { setSlotTime(tt); setBlocked(null); }} className={cn("relative flex min-h-12 items-center justify-center border-b border-r border-line px-1 py-1 text-[0.9375rem] font-semibold tabular-nums transition-colors duration-quick", on ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10")}>
+                        {on && <Check size={12} strokeWidth={3} className="absolute right-1 top-1" aria-hidden />}
+                        <ClockCell hhmm={tt} />
                       </button>
                     );
                   })}
@@ -1152,7 +1153,7 @@ export function ProductSheet({
                     {math && <p className="text-[0.8125rem] text-muted">{math}{premium}</p>}
                     {/* The live selection summary — the CTA never enables without it. */}
                     <p className="text-[0.8125rem]">
-                      <span className="font-medium">{lane?.name ?? t("sheet.anyLane")}</span> · <span className="tabular-nums">{slotTime}–{endLabel}</span> · {formatDuration(duration)}
+                      <span className="font-medium">{lane?.name ?? t("sheet.anyLane")}</span> · <span className="tabular-nums">{formatClockRange(slotTime, toMinutes(slotTime) + duration)}</span> · {formatDuration(duration)}
                       {flatBasis ? ` · ${t("cart.groupOf", { count: group })}` : ""} · <span className="tabular-nums">{formatMoney(total, currency)}</span>
                       {!resourceId && lane ? <span className="text-muted">{t("sheet.bestFit")}</span> : null}
                     </p>
@@ -1199,7 +1200,7 @@ export function ProductSheet({
                     <Avatar name={p.name} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{p.name}</span>
-                      <span className="block text-[0.8125rem] text-muted">{nextFree ? t("sheet.nextFree", { time: nextFree }) : t("sheet.fullyBooked")}</span>
+                      <span className="block text-[0.8125rem] text-muted">{nextFree ? t("sheet.nextFree", { time: formatClock(nextFree) }) : t("sheet.fullyBooked")}</span>
                     </span>
                     <span className={`shrink-0 whitespace-nowrap text-[0.8125rem] ${premiumOf(p.id) > 0 ? "font-medium text-brand-foreground" : "text-muted"}`}>
                       {premiumOf(p.id) > 0 ? t("sheet.premiumAmount", { amount: formatMoney(premiumOf(p.id), currency) }) : t("sheet.standardRate")}
@@ -1214,15 +1215,15 @@ export function ProductSheet({
               {providerTimes.map((t) => {
                 const free = providerTimeFree(t);
                 return (
-                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-full border px-comfortable text-[0.8125rem] ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{t}</button>
+                  <button key={t} type="button" disabled={!free} onClick={() => setSlotTime(t)} className={`h-12 rounded-full border px-comfortable text-[0.8125rem] ${!free ? "border-line bg-subtle text-muted line-through" : slotTime === t ? "border-ember bg-ember/10 font-medium text-brand-foreground" : "border-line bg-card"}`}>{formatClock(t)}</button>
                 );
               })}
             </div>
             {slotTime && assignedProvider && !providerId && (
-              <p className="text-[0.8125rem] text-muted">{t("sheet.firstAvailableAt", { time: slotTime, name: `${assignedProvider.name}${premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}` })}</p>
+              <p className="text-[0.8125rem] text-muted">{t("sheet.firstAvailableAt", { time: formatClock(slotTime), name: `${assignedProvider.name}${premiumOf(assignedProvider.id) > 0 ? ` (+${formatMoney(premiumOf(assignedProvider.id), currency)})` : ""}` })}</p>
             )}
             {slotTime && !providerTimeFree(slotTime) && (
-              <p className="text-[0.8125rem] text-danger">{t("sheet.busyAtTime", { name: providers.find((p) => p.id === providerId)?.name ?? t("sheet.everyone"), time: slotTime })}</p>
+              <p className="text-[0.8125rem] text-danger">{t("sheet.busyAtTime", { name: providers.find((p) => p.id === providerId)?.name ?? t("sheet.everyone"), time: formatClock(slotTime) })}</p>
             )}
           </div>
         )}
@@ -1558,7 +1559,7 @@ export function ProductSheet({
               const dayWords = date === TODAY
                 ? t("slotToday")
                 : formatDay(date, { weekday: true });
-              const when = slotTime ? `${slotTime} ${dayWords}` : course ? null : (needsSchedule(bt) || provider) ? dayWords : null;
+              const when = slotTime ? `${formatClock(slotTime)} ${dayWords}` : course ? null : (needsSchedule(bt) || provider) ? dayWords : null;
               return (
                 <div className="flex items-baseline justify-between gap-comfortable text-[0.8125rem]">
                   <span className="min-w-0 flex-1 text-muted">
@@ -1651,7 +1652,7 @@ export function ProductSheet({
         {/* Waitlist mini-form */}
         {wl && (
           <div className="mt-section rounded-go border border-warning bg-warning/5 p-section">
-            <p className="text-sm font-medium">{t("sheet.joinWaitlistFor", { time: wl.time })}</p>
+            <p className="text-sm font-medium">{t("sheet.joinWaitlistFor", { time: formatClock(wl.time) })}</p>
             <div className="mt-tight grid grid-cols-1 gap-tight sm:grid-cols-2">
               <FormField label={t("sheet.name")} value={wlName} onChange={(e) => setWlName(e.target.value)} />
               <FormField label={t("sheet.phone")} value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} />

@@ -6,7 +6,8 @@ import { useTranslations } from "next-intl";
 import { Button, ConfirmDialog, Select, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { createResourceRecord, ownerBusyDetailed, updateResource, type Location, type Resource } from "@/lib/api";
-import { DEMO_TODAY, toTime } from "@/lib/schedule";
+import { DEMO_TODAY } from "@/lib/schedule";
+import { formatClockRange } from "@/lib/format";
 import { CreateBar, SaveBar, SettingRow, SettingsSection, SuffixInput, Switch, controlCls } from "../../_components/SettingsKit";
 
 const NOUNS = ["Field", "Court", "Lane", "Room", "Table", "Studio", "Bay"];
@@ -276,8 +277,8 @@ export function ResourceEditor({
             <ul className="divide-y divide-hairline">
               {today.map((s) => (
                 <li key={`${s.start}-${s.end}`} className="flex flex-wrap items-baseline gap-x-section gap-y-inline px-card py-comfortable">
-                  <span className="w-28 shrink-0 text-sm font-medium tabular-nums text-fg">
-                    {toTime(s.start)}–{toTime(s.end)}
+                  <span className="w-44 shrink-0 whitespace-nowrap text-sm font-medium tabular-nums text-fg">
+                    {formatClockRange(s.start, s.end)}
                   </span>
                   <span className="min-w-0 text-sm text-muted">{s.label}</span>
                 </li>

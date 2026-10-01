@@ -2,6 +2,7 @@
 
 import { Modal, StatusPill } from "@/components/ui";
 import type { HoldView } from "@/lib/api";
+import { formatClock } from "@/lib/format";
 
 /**
  * Everything currently held, in one list.
@@ -74,7 +75,7 @@ export function HoldList({
                     {h.kind === "session" && <StatusPill tone="danger">{t("holdListWhole")}</StatusPill>}
                     <span className="min-w-0 truncate text-[12px] text-muted">
                       {h.kind === "session" ? h.productName : `${what(h)} · ${h.productName}`}
-                      {h.slotStart ? ` · ${h.slotStart.slice(11, 16)}` : ` · ${t("holdListAllDay")}`}
+                      {h.slotStart ? ` · ${formatClock(h.slotStart.slice(11, 16))}` : ` · ${t("holdListAllDay")}`}
                     </span>
                   </span>
                 </span>

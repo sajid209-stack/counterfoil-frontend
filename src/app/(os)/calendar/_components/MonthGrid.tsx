@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { Lock, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { toTime } from "@/lib/schedule";
+import { formatClockMin } from "@/lib/format";
 import {
-  hhmm,
+  clockOf,
   isoDate,
   monthMatrix,
   peekHandlers,
@@ -195,8 +195,8 @@ export function MonthGrid({
                       blockClass(e),
                     )}
                   >
-                    <span className="w-12 shrink-0 font-mono text-[12px] opacity-70">
-                      {e.allDay ? "—" : hhmm(e.start)}
+                    <span className="w-16 shrink-0 whitespace-nowrap font-mono text-[12px] opacity-70">
+                      {e.allDay ? "—" : clockOf(e.start, true)}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-0.5 text-[13px] font-medium leading-tight">
@@ -294,10 +294,10 @@ export function MonthGrid({
                         type="button"
                         onClick={onSelect ? () => onSelect(e) : undefined}
                         {...peekHandlers(e, onPeek)}
-                        title={`${e.title} · ${hhmm(e.start)}${e.subtitle ? ` · ${e.subtitle}` : ""}`}
+                        title={`${e.title} · ${clockOf(e.start)}${e.subtitle ? ` · ${e.subtitle}` : ""}`}
                         /* The chip truncates at this density; the accessible
                            name does not, and clicking opens the full detail. */
-                        aria-label={`${e.title}, ${e.allDay ? "" : hhmm(e.start)}${
+                        aria-label={`${e.title}, ${e.allDay ? "" : clockOf(e.start)}${
                           e.subtitle ? `, ${e.subtitle}` : ""
                         }`}
                         className={cn(
@@ -307,7 +307,7 @@ export function MonthGrid({
                       >
                         {e.locked && <Lock size={8} strokeWidth={2.5} className="shrink-0" />}
                         {!e.allDay && (
-                          <span className="shrink-0 font-mono opacity-70">{hhmm(e.start)}</span>
+                          <span className="shrink-0 font-mono opacity-70">{clockOf(e.start, true)}</span>
                         )}
                         <span className="truncate">{e.title}</span>
                       </button>
@@ -318,7 +318,7 @@ export function MonthGrid({
                         aria-hidden
                         className="flex w-full items-center gap-0.5 overflow-hidden rounded-sm bg-ember-solid px-1 py-0.5 text-[12px] font-semibold leading-tight text-white shadow-pop"
                       >
-                        {!draftHere.allDay && <span className="shrink-0 font-mono font-normal text-white/90">{toTime(draftHere.start)}</span>}
+                        {!draftHere.allDay && <span className="shrink-0 font-mono font-normal text-white/90">{formatClockMin(draftHere.start, { short: true })}</span>}
                         <span className="truncate">{draftHere.title ?? ghostLabel}</span>
                       </span>
                     )}

@@ -88,7 +88,7 @@ export function ProblemSlide({ n }: { n: number }) {
   return (
     <Slide tone="ink" n={n} section="Counterfoil" label="Venues sell time with tools built for shelves">
       <TextBlock eyebrow="The problem" title="Venues sell time with tools built for shelves." width={460}>
-        <p className={s.heading}>A retail till knows a product. It doesn’t know 18:00.</p>
+        <p className={s.heading}>A retail till knows a product. It doesn’t know 6 PM.</p>
         <ul className="mt-8 flex flex-col gap-5">
           {PAINS.map(({ icon: Icon, title, body }) => (
             <li key={title} className="flex gap-4">
@@ -109,7 +109,7 @@ export function ProblemSlide({ n }: { n: number }) {
           <Store size={28} strokeWidth={1.6} aria-hidden />
         </span>
         <div>
-          <p className="text-[74px] font-semibold leading-[0.95] tracking-[-0.045em]">“Is 18:00 still free?”</p>
+          <p className="text-[74px] font-semibold leading-[0.95] tracking-[-0.045em]">“Is 6 PM still free?”</p>
           <p className="mt-6 text-[19px] leading-[1.45] text-white">
             Asked at every counter, every day — and answered by a spreadsheet, a WhatsApp group and a guess.
           </p>

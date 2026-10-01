@@ -24,7 +24,7 @@ import {
   type PaymentMethod,
 } from "@/lib/api";
 import { toMinutes, toTime } from "@/lib/schedule";
-import { formatMoney } from "@/lib/format";
+import { formatClock, formatMoney } from "@/lib/format";
 
 /* The app's one date, not a private copy of it — the token's own doc
    comment warns that two components each holding their own is how a hold
@@ -163,7 +163,7 @@ export default function CheckInPage() {
     const newEnd = `${b.slotStart.slice(0, 10)}T${toTime(toMinutes(x.endTime) + x.cfg.incrementMinutes)}:00+06:00`;
     const res = await extendBooking(b.id, newEnd);
     setPending(null);
-    if (res.ok) { toast.success(t("extended", { time: newEnd.slice(11, 16) })); reload(); }
+    if (res.ok) { toast.success(t("extended", { time: formatClock(newEnd.slice(11, 16)) })); reload(); }
     else toast.error(res.error.message);
   };
 
@@ -320,7 +320,7 @@ export default function CheckInPage() {
                       {isOpen ? <ChevronDown size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" /> : <ChevronRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />}
                       <span className="min-w-0 flex-1">
                         <span className="flex items-baseline gap-tight">
-                          <span className="shrink-0 text-base font-semibold">{time(iso)}</span>
+                          <span className="shrink-0 whitespace-nowrap text-base font-semibold">{formatClock(time(iso))}</span>
                           <span className="min-w-0 truncate text-sm">{productName(pid)}</span>
                         </span>
                         <span className="mt-inline flex items-center gap-tight">

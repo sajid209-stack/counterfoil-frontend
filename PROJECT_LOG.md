@@ -14989,3 +14989,123 @@ Sources: [Square — set up the item grid](https://squareup.com/help/us/en/artic
 [Toast — the new POS experience, with Lou Orfanos](https://pos.toasttab.com/blog/on-the-line/new-toast-pos-experience-with-lou-orfanos) ·
 [interface-design.co.uk — POS software UX benchmarking 2026](https://interface-design.co.uk/blog/pos-software-ux-benchmarking-2026-the-coherence-gap/) ·
 [Shopify — POS UI](https://www.shopify.com/blog/pos-ui)
+
+## 12-hour times, the old menu names, the sell dock, and refunds from the counter (2026-10-01)
+
+Owner, with screenshots of the till Schedule, the sell screen and both menus:
+*"In POS Schedule the dates are not visible enough, and in Counterfoil OS and
+POS all time system will be 12 hours format and AM-PM. In POS Sell page the
+cart together looks very odd … the menu name u have changed, get back to
+previous names … and in POS there need to be a refund request option for
+already booked slots."*
+
+### Every clock time is 12-hour with AM/PM
+
+- **Times are still stored as 24-hour "HH:MM"** (slots, schedules, keys, form
+  values, CSV exports). Only what a person reads changed. One set of helpers
+  in `lib/format.ts` draws them: `formatClock("19:00")` → "7:00 PM" (`short`
+  gives "7 PM" for axes and dense cells), `formatClockMin`, `formatClockRange`
+  ("7:00 – 9:00 PM", or "11:00 AM – 1:30 PM" across noon) and `formatClockOf`
+  for an instant. `formatDateTime` now reads "29 Jul, 2:30 PM". Latin digits and
+  Latin AM/PM in both languages, like prices.
+- **`TimeInput` shows "7:30 PM"** while its value stays "19:30". It accepts
+  "7:30 pm", "7:30p", "7pm", "730p", "19:30", "1930", "noon", "midnight"; its
+  drop-down lists 12:00 AM … 11:45 PM. Settings' `TimeField` (opening and
+  quiet hours) does the same. A hover in the picker no longer re-centres the
+  list under the pointer, which had made a mouse choice miss.
+- Swept across the calendar (axes "1 PM", blocks, panels, toasts), the
+  catalogue (schedule previews, price-band rulers, the event wizard), orders,
+  reports (hour-of-day charts), settings, receipts and printed tickets, the
+  storefront and event pages, every till sheet, the scrolling and classic
+  tills, check-in, scan, login and the deck's text. The till's 4-across time
+  grids use the short form with AM/PM allowed onto a second line (`Clock.tsx`),
+  so nothing is cut at 390px.
+- **Not changed:** history lines already stored as text ("Moved … 14:00"),
+  durations ("1:30", "4:32 left"), and the deck's PDF, which needs
+  `npm run deck:pdf` to pick up its new text.
+
+### The Schedule's hours are readable
+
+The hour column was muted 13px text in the corner of each row — the faintest
+thing on the board. It is the number large and dark ("7") with AM/PM under it,
+centred in the column.
+
+### The menu names are the old ones again
+
+Catalog, Inventory, Marketplaces, Fee collections, Locations, Resources,
+Storefront, Notifications, Security, Preferences, Till design — and their page
+titles — are back, in English and Bangla (the Bangla names the menus had before
+the plain-language pass). Restored by script from the values before that pass,
+only where a value had been exactly one of those names.
+`docs/plain-language.md` records the exception: menu and page names keep their
+established names; the plain words still apply to everything else.
+
+### The sell screen's sale bar is docked
+
+The bar floated as a card over the item grid, with tiles showing round it and
+between it and the tab bar. It is now one solid footer from the top of the
+buttons to the bottom edge, with the tab bar inside it (`ActionBar`
+`docked="dock"`). Items scroll away cleanly above it. It opens with what is in
+the sale — a picture of each thing and their names ("Bottled water ×2,
+Souvenir tote bag"), which opens the cart — then Cart on the left and Take on
+the right. An empty sale says "Nothing in this sale yet. Tap something to add
+it." The bar's height does not change on the first tap.
+
+### Refund requests from the counter
+
+A cashier can see the guest and the booking; they usually cannot give money
+back on their own say-so. So a refund from the till is a **request** that a
+manager decides.
+
+- **At the till:** tap a booked slot on the Schedule → **Refund** sits left of
+  Check in → a short form: the amount that goes back (worked out from what was
+  paid for that booking, VAT included — never typed), why (Guest cancelled /
+  Bad weather / Problem at our venue / Booked twice / Something else, as large
+  cells; "Something else" needs a note), an optional note → **Send to a
+  manager**. The slot is marked "Refund asked" on the board; its sheet says a
+  refund is waiting and can be taken back. A declined request shows its reason
+  on the booking, so the counter can tell the guest.
+- **In the admin:** Orders leads with the waiting requests — who, what, when,
+  why, who asked and the amount — with **Refund ৳X** (asks first) and
+  **Decline** (asks why). The order's own page shows its requests at the top.
+  Approving refunds those order lines through the existing refund path and
+  **cancels the booking, so the slot goes back on sale**. Declining keeps the
+  booking.
+- `lib/api/refundRequests.ts` is the contract for the backend lane:
+  `RefundRequest`, `RefundReason`, `requestRefund`, `approveRefundRequest`,
+  `declineRefundRequest`, `withdrawRefundRequest`, `pendingRefundRequests`,
+  `refundableFor`. One open request per booking. `bookings.ts` gained
+  `cancelBooking`. Messages in a new `refunds` namespace and `schedule.refund`.
+- Hand-seeded fixture bookings with no order behind them say "No payment is
+  recorded for this booking, so there is nothing to refund" instead of
+  offering a refund.
+
+### Verified
+
+- Refund unit test **13/13** (request, duplicate refused, approve frees the
+  slot and records the refund, decline needs a reason and keeps the slot).
+  Refund at the till **16/16** at 390; till-to-admin approve and decline
+  **12/12** at 1280, including the refunded hour back on sale and the declined
+  reason shown at the counter.
+- Till harness **38/38**, round-3 checks **24/24**, Schedule **31/31** at 390
+  and 1440, **4/4**, new sale **2/2**, printing **4/4** (selectors moved from
+  "13:00" to "1 PM" where they read the screen).
+- Whole-product sweep **51/51 routes clean** at 390 English light, 390 Bangla
+  dark and 1440 English light; a scan for 24-hour times on screen finds
+  **0**. Phone audit: hidden 0, clipped 0, under-44 0, errors 0 (the 14
+  sub-12px items are the deck, as documented). Top cards **102/102**. POS
+  audit: only the declared white-on-ember rule.
+- `tsc` clean; `eslint` on every changed file reports only the documented
+  set (PosScreen 2 errors / 3 warnings, the dashboard's 2 warnings,
+  TimeInput's 1 error, `duration.ts`'s unused `_ignored`). i18n parity
+  0 missing / 0 extra.
+
+### Open
+
+- **`settings-nav` and `catalog-e2e` harnesses** time out on wording the
+  plain-language pass changed ("Search the catalog", a switch name) — the same
+  on the live site, so not from this change; they need their selectors
+  brought up to date.
+- The refund queue in Orders is not narrowed to the venue in the bar — a
+  request is an inbox item, not a report. Say if it should be.
+- The deck PDF is not rebuilt.

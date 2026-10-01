@@ -7,7 +7,7 @@ import type { TicketCardData } from "@/components/ui/TicketCard";
 import { OrderLinesDetail } from "@/components/OrderLinesDetail";
 import { ReceiptFooter, ReceiptHeader } from "@/components/ReceiptParts";
 import type { Order } from "@/lib/api/types";
-import { formatDate } from "@/lib/format";
+import { formatClockOf, formatDate } from "@/lib/format";
 
 type Header = ComponentProps<typeof ReceiptHeader>;
 
@@ -90,7 +90,7 @@ export function TicketReceipt({
   cards: { id: string; data: TicketCardData }[];
 }) {
   const t = useTranslations("ticket");
-  const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" }).format(new Date(order.createdAt));
+  const time = formatClockOf(order.createdAt);
   return (
     <article
       aria-label={t("printAllTitle")}

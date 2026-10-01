@@ -39,7 +39,7 @@ export function DateField({
   isDisabled?: (iso: string) => boolean;
   labels: DatePickerLabels & { open: string };
   /** `inline` reads as text until pointed at — for a sentence of controls,
-   *  such as the calendar panel's "Wed 29 Jul · 14:00 – 15:00", where a boxed
+   *  such as the calendar panel's "Wed 29 Jul · 2:00 – 3:00 PM", where a boxed
    *  field would make one line look like a form. */
   shape?: "default" | "go" | "inline";
   /** Icon only. For a toolbar that already states the date beside it — the

@@ -10,7 +10,7 @@ export const NAMESPACES = [
   "orders", "reports", "products", "resources",
   "settings", "profile", "pos", "sell", "scan", "checkin", "shift", "quickpass", "schedule",
   "moneysetup", "seatmaps", "promotions", "ticket", "tickets", "pricing", "bookingRules",
-  "memberships", "loyalty", "holds", "events", "eventPage", "storefront", "catalog", "inventory", "marketplaces", "behaviour", "transactions", "money",
+  "memberships", "loyalty", "holds", "events", "eventPage", "storefront", "catalog", "inventory", "marketplaces", "behaviour", "transactions", "money", "refunds",
 ] as const;
 
 export type Namespace = (typeof NAMESPACES)[number];

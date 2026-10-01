@@ -13,7 +13,7 @@ import { CATEGORIES, categoryById, type CategoryId } from "@/lib/events/catalog"
 import { templateFontVars } from "@/lib/events/fonts";
 import { EventTemplate } from "@/components/events/EventTemplate";
 import { PreviewFrame } from "@/components/events/PreviewFrame";
-import { formatDay, formatPriceShort } from "@/lib/format";
+import { formatClock, formatClockRange, formatDay, formatPriceShort } from "@/lib/format";
 import { DEMO_TODAY, demoNow } from "@/lib/schedule";
 import { emptyTier, TicketTiers, toTiers, type FormTier } from "./TicketTiers";
 import { EventCanvas } from "./EventCanvas";
@@ -376,7 +376,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
 
   // ── how it reads ──────────────────────────────────────────────────────────
   const whenText = content.date
-    ? [formatDay(content.date, { weekday: true }), content.endTime ? `${content.startTime}–${content.endTime}` : content.startTime].join(" · ") +
+    ? [formatDay(content.date, { weekday: true }), content.endTime ? formatClockRange(content.startTime, content.endTime) : formatClock(content.startTime)].join(" · ") +
       (content.endDate && content.endDate !== content.date ? ` → ${formatDay(content.endDate, { weekday: true })}` : "")
     : null;
   const liveTiers = toTiers(tiers).filter((x) => x.name);

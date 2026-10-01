@@ -29,7 +29,7 @@ import {
   Handshake,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { FormField, Select } from "@/components/ui";
+import { FormField, Select, TimeInput } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { EventTemplate } from "@/components/events/EventTemplate";
 import { PreviewFrame } from "@/components/events/PreviewFrame";
@@ -590,7 +590,10 @@ export function EventArchitect({
                             ]}
                           />
                         </label>
-                        <div className={cn("grid gap-tight", dayTabs.length > 1 ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
+                        {/* Two across, never three: the time field draws "9:30 PM"
+                            with its list button, which a third of this card
+                            cannot hold. */}
+                        <div className="grid gap-tight sm:grid-cols-2">
                           {/* The typed day field is only for an event with no
                               real days — where there are tabs, the tab IS the
                               answer and a second place to say it could only
@@ -599,7 +602,8 @@ export function EventArchitect({
                             <FormField label={t("architect.day")} placeholder={t("architect.dayPlaceholder")} value={l.day ?? ""} onChange={(e) => patchLineup(l.id, { day: e.target.value })} />
                           )}
                           <FormField label={t("architect.role")} placeholder={t("architect.rolePlaceholder")} value={l.role ?? ""} onChange={(e) => patchLineup(l.id, { role: e.target.value })} />
-                          <FormField label={t("architect.at")} placeholder="21:30" value={l.at ?? ""} onChange={(e) => patchLineup(l.id, { at: e.target.value })} />
+                          {/* Stored "HH:MM"; the field draws it 12-hour. */}
+                          <TimeInput picker label={t("architect.at")} value={l.at ?? ""} onChange={(v) => patchLineup(l.id, { at: v })} />
                         </div>
                       </div>
                     </div>

@@ -5,7 +5,8 @@ import { Check } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { formatPriceShort } from "@/lib/format";
+import { formatClock, formatPriceShort } from "@/lib/format";
+import { ClockCell } from "./Clock";
 
 export interface MatrixCell {
   time: string;
@@ -144,12 +145,12 @@ export function SlotMatrix({
                     onBlocked(
                       active.outOfService
                         ? t("sheet.outOfService")
-                        : t("sheet.slotTaken", { time: cell.time, name: active.name }),
+                        : t("sheet.slotTaken", { time: formatClock(cell.time), name: active.name }),
                     )
                   }
-                  className="flex min-h-14 items-center justify-center border-b border-r border-line bg-surface px-1 text-[0.875rem] text-muted line-through"
+                  className="flex min-h-14 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-[0.875rem] text-muted line-through"
                 >
-                  {cell.time}
+                  <ClockCell hhmm={cell.time} className="line-through" />
                 </button>
               );
             }
@@ -161,14 +162,12 @@ export function SlotMatrix({
                 data-focus-inset
                 onClick={() => onSelect(active.id, cell.time)}
                 className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-0.5 border-b border-r border-line px-1 transition-colors duration-quick",
+                  "relative flex min-h-14 flex-col items-center justify-center gap-0.5 border-b border-r border-line px-1 py-1 transition-colors duration-quick",
                   selected ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10",
                 )}
               >
-                <span className="flex items-center gap-1 text-[0.9375rem] font-semibold tabular-nums">
-                  {selected && <Check size={14} strokeWidth={3} aria-hidden />}
-                  {cell.time}
-                </span>
+                {selected && <Check size={12} strokeWidth={3} className="absolute right-1 top-1" aria-hidden />}
+                <ClockCell hhmm={cell.time} className="text-[0.9375rem] font-semibold tabular-nums" />
                 <span
                   className={cn(
                     "whitespace-nowrap text-[0.8125rem] tabular-nums",

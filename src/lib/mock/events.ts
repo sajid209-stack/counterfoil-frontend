@@ -66,7 +66,7 @@ export const events: EventRecord[] = [
     venueName: "Army Stadium",
     venueAddress: "Banani, Dhaka 1213",
     description:
-      "Thirty years of Bangla rock, played loud and in order. Gates at 18:30, first set at 19:30, and the main act closes the night.",
+      "Thirty years of Bangla rock, played loud and in order. Gates at 6:30 PM, first set at 7:30 PM, and the main act closes the night.",
     stats: [
       { id: "s1", value: "25,000+", label: "Fans across 3 cities" },
       { id: "s2", value: "12", label: "Shows completed" },
@@ -80,7 +80,7 @@ export const events: EventRecord[] = [
     ],
     info: [
       { id: "i1", label: "Venue", value: "Army Stadium, Dhaka — open-air, standing only" },
-      { id: "i2", label: "Doors open", value: "16:00. Show starts 18:00 sharp." },
+      { id: "i2", label: "Doors open", value: "4:00 PM. Show starts 6:00 PM sharp." },
       { id: "i3", label: "Capacity", value: "8,000 standing. No seats, no barriers." },
     ],
     lineup: [
@@ -133,7 +133,7 @@ export const events: EventRecord[] = [
     ],
     info: [
       { id: "i1", label: "Ground", value: "Chattogram Turf \u2014 floodlit, 7-a-side" },
-      { id: "i2", label: "First whistle", value: "09:00 daily. Final at 18:00 Sunday." },
+      { id: "i2", label: "First whistle", value: "9:00 AM daily. Final at 6:00 PM Sunday." },
       { id: "i3", label: "Format", value: "Group stage, then straight knockout" },
     ],
     /* Real fixtures, written the way a fixture is written on a board, so the
@@ -232,7 +232,7 @@ export const events: EventRecord[] = [
       { id: "h3", label: "Build what's next", description: "Leave with practical ways to scale what you have already built." },
     ],
     info: [
-      { id: "i1", label: "Doors", value: "08:30 registration. Keynote at 09:30." },
+      { id: "i1", label: "Doors", value: "8:30 AM registration. Keynote at 9:30 AM." },
       { id: "i2", label: "Included", value: "Lunch, coffee and every session recorded" },
       { id: "i3", label: "Getting there", value: "20 minutes from the airport. Parking on site." },
     ],
@@ -360,7 +360,7 @@ export const events: EventRecord[] = [
     ],
     info: [
       { id: "i1", label: "Gallery", value: "Bengal Arts Centre, ground floor" },
-      { id: "i2", label: "Open", value: "Tue\u2013Sun, 11:00\u201319:00. Closed Mondays." },
+      { id: "i2", label: "Open", value: "Tue\u2013Sun, 11:00 AM\u20137:00 PM. Closed Mondays." },
       { id: "i3", label: "Entry", value: "Timed entry every 30 minutes" },
     ],
     lineup: [
@@ -370,11 +370,11 @@ export const events: EventRecord[] = [
     ],
     faq: [
       { id: "f1", q: "Is photography allowed?", a: "Without flash, yes, except in the indigo room." },
-      { id: "f2", q: "Are there guided walks?", a: "Every Friday at 16:00, included with entry." },
+      { id: "f2", q: "Are there guided walks?", a: "Every Friday at 4:00 PM, included with entry." },
     ],
     tiers: [
       { id: "t1", name: "Entry", price: 30000, quantity: 3000, sold: 612 },
-      { id: "t2", name: "Entry + curator's walk", price: 75000, quantity: 240, sold: 96, description: "Fridays, 16:00, limited to 20 a walk." },
+      { id: "t2", name: "Entry + curator's walk", price: 75000, quantity: 240, sold: 96, description: "Fridays, 4:00 PM, limited to 20 a walk." },
       { id: "t3", name: "Members", price: 0, quantity: 500, sold: 173, description: "Free for Bengal Foundation members." },
     ],
   }),
@@ -401,7 +401,7 @@ export const events: EventRecord[] = [
       { id: "h4", label: "What to pack" },
     ],
     info: [
-      { id: "i1", label: "Departs", value: "Khulna launch ghat, 07:00" },
+      { id: "i1", label: "Departs", value: "Khulna launch ghat, 7:00 AM" },
       { id: "i2", label: "Duration", value: "3 days, 2 nights aboard" },
       { id: "i3", label: "Group", value: "18 travellers, 2 guides, 1 cook" },
     ],
@@ -461,7 +461,7 @@ export const events: EventRecord[] = [
     venueName: "Location released 6 hours before",
     venueAddress: "Tejgaon industrial area, Dhaka",
     description:
-      "Eight hours, two rooms, no phones on the floor. The address goes out to ticket holders at 16:00 on the day.",
+      "Eight hours, two rooms, no phones on the floor. The address goes out to ticket holders at 4:00 PM on the day.",
     stats: [
       { id: "s1", value: "2", label: "Rooms" },
       { id: "s2", value: "8", label: "Hours" },
@@ -475,7 +475,7 @@ export const events: EventRecord[] = [
     ],
     info: [
       { id: "i1", label: "Location", value: "Tejgaon. Address sent 6 hours before." },
-      { id: "i2", label: "Doors", value: "22:00 until sunrise" },
+      { id: "i2", label: "Doors", value: "10:00 PM until sunrise" },
       { id: "i3", label: "Age", value: "21+. Photo ID checked at the door." },
     ],
     lineup: [
@@ -486,7 +486,7 @@ export const events: EventRecord[] = [
     ],
     faq: [
       { id: "f1", q: "Age?", a: "21+. Photo ID checked at the door, no exceptions." },
-      { id: "f2", q: "Where is it?", a: "Ticket holders get the address by SMS at 16:00 on the day." },
+      { id: "f2", q: "Where is it?", a: "Ticket holders get the address by SMS at 4:00 PM on the day." },
     ],
     tiers: [
       { id: "t1", name: "First release", price: 150000, quantity: 200, sold: 200, salesEnd: iso("2026-10-10T23:59:00") },

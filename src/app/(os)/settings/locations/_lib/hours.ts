@@ -1,5 +1,6 @@
 import type { OpeningHours } from "@/lib/api";
 import { toMinutes } from "@/lib/schedule";
+import { formatClockRange } from "@/lib/format";
 
 type Day = OpeningHours["dayOfWeek"];
 type Interval = OpeningHours["intervals"][number];
@@ -22,8 +23,9 @@ export function normalizeHours(hours: OpeningHours[]): OpeningHours[] {
 
 export const openDays = (hours: OpeningHours[]): number => hours.filter((h) => h.intervals.length > 0).length;
 
-/** "10:00–18:00" or "10:00–13:00, 14:00–18:00". */
-export const spans = (intervals: Interval[]): string => intervals.map((i) => `${i.opensAt}–${i.closesAt}`).join(", ");
+/** "10:00 AM – 6:00 PM" or "10:00 AM – 1:00 PM, 2:00 – 6:00 PM". Drawn
+ *  12-hour; the intervals themselves stay 24-hour "HH:MM". */
+export const spans = (intervals: Interval[]): string => intervals.map((i) => formatClockRange(i.opensAt, i.closesAt)).join(", ");
 
 /**
  * What is wrong with a day's hours, if anything.

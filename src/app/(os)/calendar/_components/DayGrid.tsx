@@ -3,15 +3,16 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Check, Hourglass, Lock, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { toTime } from "@/lib/schedule";
+import { formatClock, formatClockMin } from "@/lib/format";
 import {
+  clockRangeOf,
   focusMinute,
-  hhmm,
   isoDate,
   minutesOf,
   packLanes,
   peekHandlers,
   sameDay,
+  shortClockRange,
   TONE_CLASS,
   type CalEvent,
   type Ghost,
@@ -462,14 +463,14 @@ function DayTrack({
               <span
                 key={h}
                 className={cn(
-                  "absolute top-1.5 font-mono text-[12px] text-muted",
+                  "absolute top-1.5 whitespace-nowrap font-mono text-[12px] text-muted",
                   // Centring the end labels would push them outside the track
                   // and clip them against the gutter.
                   i === 0 ? "translate-x-0" : i === hours.length - 1 ? "-translate-x-full" : "-translate-x-1/2",
                 )}
                 style={{ left: `${pct(h * 60)}%` }}
               >
-                {toTime(h * 60)}
+                {formatClockMin(h * 60, { short: true })}
               </span>
             ))}
           </div>
@@ -673,7 +674,7 @@ function DayTrack({
                         <span aria-hidden className="hidden min-w-0 flex-col leading-tight group-hover/open:flex">
                           <span className="flex items-center gap-0.5 font-mono font-medium text-brand-foreground">
                             <Plus size={10} strokeWidth={2.5} className="shrink-0" />
-                            {wide >= 56 ? slot.time : null}
+                            {wide >= 56 ? formatClock(slot.time, { short: true }) : null}
                           </span>
                           {wide >= 56 && <span className="truncate text-muted">{label?.short}</span>}
                         </span>
@@ -695,8 +696,8 @@ function DayTrack({
                       type="button"
                       onClick={onSelect ? () => onSelect(event) : undefined}
                     {...peekHandlers(event, onPeek)}
-                      title={`${event.title} · ${hhmm(event.start)}–${hhmm(event.end)}${event.subtitle ? ` · ${event.subtitle}` : ""}`}
-                      aria-label={`${event.title}, ${hhmm(event.start)}–${hhmm(event.end)}${
+                      title={`${event.title} · ${clockRangeOf(event.start, event.end)}${event.subtitle ? ` · ${event.subtitle}` : ""}`}
+                      aria-label={`${event.title}, ${clockRangeOf(event.start, event.end)}${
                         event.subtitle ? `, ${event.subtitle}` : ""
                       }`}
                       className={cn(
@@ -764,7 +765,7 @@ function DayTrack({
                       height: rowHeight - 10,
                     }}
                   >
-                    {toTime(dragHere.from)} – {toTime(dragHere.to)}
+                    {shortClockRange(dragHere.from, dragHere.to)}
                   </span>
                 )}
 
@@ -800,13 +801,13 @@ function DayTrack({
                         </span>
                         {!isSession && (
                           <span className="block truncate font-mono text-[12px] leading-tight text-white/90">
-                            {toTime(draftHere.start)} – {toTime(draftHere.end)}
+                            {shortClockRange(draftHere.start, draftHere.end)}
                           </span>
                         )}
                       </>
                     ) : (
                       <>
-                        <span className="block truncate font-mono text-[12px] font-semibold leading-tight">{toTime(draftHere.start)}</span>
+                        <span className="block truncate font-mono text-[12px] font-semibold leading-tight">{formatClockMin(draftHere.start, { short: true })}</span>
                         {draftHere.title && !isSession && (
                           <span className="block truncate text-[12px] leading-tight text-white/90">{draftHere.title}</span>
                         )}
@@ -888,17 +889,17 @@ function CompactDay({
         <div ref={scroller} className="max-h-[70vh] overflow-y-auto">
           <div className="flex" style={{ height: trackHeight }}>
             {/* Hours down the left, once. */}
-            <div className="relative w-11 shrink-0 border-r border-hairline">
+            <div className="relative w-14 shrink-0 border-r border-hairline">
               {hours.slice(0, -1).map((h, i) => (
                 <span
                   key={h}
                   className={cn(
-                    "absolute right-tight font-mono text-[12px] text-muted",
+                    "absolute right-tight whitespace-nowrap font-mono text-[12px] text-muted",
                     i === 0 ? "translate-y-0" : "-translate-y-1/2",
                   )}
                   style={{ top: `${pct(h * 60)}%` }}
                 >
-                  {String(h).padStart(2, "0")}
+                  {formatClockMin(h * 60, { short: true })}
                 </span>
               ))}
             </div>
@@ -937,7 +938,7 @@ function CompactDay({
                     type="button"
                     onClick={onSelect ? () => onSelect(event) : undefined}
                     {...peekHandlers(event, onPeek)}
-                    aria-label={`${event.title}, ${hhmm(event.start)}–${hhmm(event.end)}${
+                    aria-label={`${event.title}, ${clockRangeOf(event.start, event.end)}${
                       owner ? `, ${owner}` : ""
                     }`}
                     className={cn(

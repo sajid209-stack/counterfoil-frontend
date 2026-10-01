@@ -6,7 +6,7 @@ import { ArrowRight, Building2, CalendarDays, CalendarPlus, ChevronDown, Clock, 
 import type { EventRecord, EventTier } from "@/lib/api/events";
 import { bundleSaving, dayCountOf, eventDays, eventFromPrice, isBundleTier, runsOverDays, spansDays, tierDays } from "@/lib/api/events";
 import { dayName } from "@/lib/events/days";
-import { formatDay } from "@/lib/format";
+import { formatClock, formatClockOf, formatClockRange, formatDay } from "@/lib/format";
 import { categoryById, type EventTheme, type SectionId } from "@/lib/events/catalog";
 import { calendarUrl } from "@/lib/events/calendar";
 import { parseEventVideo } from "@/lib/events/video";
@@ -245,7 +245,7 @@ export function EventTemplate({
   const timeLine = overDays
     ? labels.runsDays.replace("{count}", String(dayCountOf(event)))
     : event.endsAt
-      ? `${time(start)} – ${time(new Date(event.endsAt))}`
+      ? formatClockRange(minOfDay(start), minOfDay(new Date(event.endsAt)))
       : `${labels.starts} ${time(start)}`;
   /* The head line of the hero. A buyer got the first date and nothing else
      while the operator's own record stated the range — the page a ticket is
@@ -2013,7 +2013,7 @@ function PosterBill({
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {[e.at, e.role].filter(Boolean).join(" · ")}
+                    {[atLabel(e.at), e.role].filter(Boolean).join(" · ")}
                   </p>
                 )}
               </div>
@@ -2149,7 +2149,7 @@ function LineupCards({
                   fontVariantNumeric: "tabular-nums",
                 }}
               >
-                {e.at}
+                {atLabel(e.at)}
               </span>
             )}
           </div>
@@ -2513,7 +2513,7 @@ function ScheduleList({ entries, narrow }: { entries: EventRecord["lineup"]; nar
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {e.at ?? "—"}
+            {e.at ? atLabel(e.at) : "—"}
           </p>
           <div style={{ minWidth: 0 }}>
             {(() => {
@@ -3503,7 +3503,7 @@ function routeStops(entries: EventRecord["lineup"]): { key: string; label: strin
       return { key: d, label: d, place: first ? first.name : "" };
     });
   }
-  return entries.slice(0, 5).map((e) => ({ key: e.id, label: e.at ?? "", place: e.name }));
+  return entries.slice(0, 5).map((e) => ({ key: e.id, label: atLabel(e.at), place: e.name }));
 }
 
 /**
@@ -3684,7 +3684,7 @@ function Journey({
                 )}
                 {e.at && (
                   <span style={{ font: "400 13px/1 var(--e-body)", color: "var(--e-muted)", fontVariantNumeric: "tabular-nums" }}>
-                    {e.at}
+                    {atLabel(e.at)}
                   </span>
                 )}
               </div>
@@ -3858,4 +3858,16 @@ function onAccent(accent: string, fallback: string): string {
 
 const longDate = (d: Date) =>
   d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-const time = (d: Date) => d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+/* Every clock a guest reads is 12-hour: "7:00 PM", never "19:00". */
+const time = (d: Date) => formatClockOf(d);
+const minOfDay = (d: Date) => d.getHours() * 60 + d.getMinutes();
+/* A lineup entry's `at` is "21:00" for a set time, or free text (a day label
+   on an itinerary). Only a bare clock time, or a clock span, is converted;
+   anything the operator wrote in words is shown as they wrote it. */
+const atLabel = (at: string | undefined): string => {
+  if (!at) return "";
+  const v = at.trim();
+  if (/^\d{1,2}:\d{2}$/.test(v)) return formatClock(v);
+  const span = /^(\d{1,2}:\d{2})\s*[–—-]\s*(\d{1,2}:\d{2})$/.exec(v);
+  return span ? formatClockRange(span[1], span[2]) : at;
+};

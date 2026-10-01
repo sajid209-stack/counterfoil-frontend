@@ -40,7 +40,9 @@
     "open": "Cart",
     "vatIncluded": "VAT included",
     "openCount": "Cart · {count}",
-    "openAria": "{count, plural, one {Cart, # item} other {Cart, # items}}"
+    "openAria": "{count, plural, one {Cart, # item} other {Cart, # items}}",
+    "emptyLine": "Nothing in this sale yet. Tap something to add it.",
+    "contentsAria": "In this sale: {names}. Open the cart"
   },
   "added": "Added {name}",
   "cartParked": "Sale paused.",

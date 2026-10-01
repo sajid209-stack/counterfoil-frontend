@@ -106,5 +106,34 @@
     "hours": "{count, plural, one {# hour} other {# hours}}",
     "minutes": "{count} min",
     "withVat": "VAT included"
+  },
+  "refund": {
+    "action": "Refund",
+    "title": "Ask for a refund",
+    "lead": "A manager checks this and gives the money back. You'll see the answer here.",
+    "amountLabel": "Goes back to the guest",
+    "amountNote": "What was paid for this booking, VAT included.",
+    "reasonLabel": "Why?",
+    "reasons": {
+      "customer_cancelled": "Guest cancelled",
+      "weather": "Bad weather",
+      "venue_problem": "Problem at our venue",
+      "double_booked": "Booked twice",
+      "other": "Something else"
+    },
+    "noteLabel": "Note for the manager (optional)",
+    "noteLabelRequired": "Note for the manager",
+    "notePlaceholder": "e.g. Rain stopped play after 20 minutes",
+    "noteRequired": "Say why, so the manager can decide.",
+    "back": "Back",
+    "send": "Send to a manager",
+    "sent": "Refund request sent to a manager",
+    "failed": "Couldn't send the request. Try again.",
+    "nothingToRefund": "No payment is recorded for this booking, so there is nothing to refund.",
+    "pending": "Refund asked · {amount} · waiting for a manager",
+    "withdraw": "Take back the request",
+    "withdrawn": "Refund request taken back",
+    "declined": "Refund refused: {note}",
+    "boardBadge": "Refund asked"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "title": "What you sell",
+  "title": "Catalog",
   "description": "Everything you sell: things people book, and events on a date.",
   "add": "Add something to sell",
   "kind": {
@@ -337,7 +337,7 @@
       "timeTitle": "How do people book time?",
       "fixed": {
         "title": "Set time slots",
-        "helper": "Set start times, like 10:00 and 11:00."
+        "helper": "Set start times, like 10:00 AM and 11:00 AM."
       },
       "flex": {
         "title": "They choose how long",
@@ -459,7 +459,7 @@
     "atCounter": "At the counter",
     "online": "Online",
     "nowhere": "Choose at least one. Otherwise nobody can buy it.",
-    "locations": "Venues",
+    "locations": "Locations",
     "noLocation": "You haven't added a venue yet.",
     "addLocationNow": "Add one now",
     "soldAt": "Sold at <b>{name}</b>.",
@@ -569,7 +569,7 @@
     "everyHelp": "You can type 45 or 1:30.",
     "lasts": "Each slot lasts",
     "first": "First slot starts at",
-    "firstHelp": "e.g. 9:30 or 18:30",
+    "firstHelp": "e.g. 9:30 AM or 6:30 PM",
     "last": "Last slot starts at",
     "holds": "Max people per slot",
     "perDay": "Max people per day",

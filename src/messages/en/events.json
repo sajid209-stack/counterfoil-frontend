@@ -383,7 +383,7 @@
       },
       "info1": {
         "label": "Doors open",
-        "value": "16:00. Show starts 18:00 sharp."
+        "value": "4:00 PM. Show starts 6:00 PM sharp."
       },
       "info2": {
         "label": "Max people",
@@ -413,7 +413,7 @@
       },
       "info1": {
         "label": "First match",
-        "value": "09:00 every day. Final at 18:00 on Sunday."
+        "value": "9:00 AM every day. Final at 6:00 PM on Sunday."
       },
       "info2": {
         "label": "Format",
@@ -443,7 +443,7 @@
       "highlight3": "Watch it again later",
       "info0": {
         "label": "Doors",
-        "value": "Sign-in from 08:30. First talk at 09:30."
+        "value": "Sign-in from 8:30 AM. First talk at 9:30 AM."
       },
       "info1": {
         "label": "Included",
@@ -485,7 +485,7 @@
       },
       "info1": {
         "label": "Open",
-        "value": "Tue–Sun, 11:00–19:00. Closed Mondays."
+        "value": "Tue–Sun, 11:00 AM – 7:00 PM. Closed Mondays."
       },
       "info2": {
         "label": "Entry",
@@ -549,7 +549,7 @@
       },
       "info1": {
         "label": "Doors",
-        "value": "22:00 until sunrise"
+        "value": "10:00 PM until sunrise"
       },
       "info2": {
         "label": "Age",

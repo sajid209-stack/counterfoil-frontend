@@ -18,7 +18,7 @@ import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { posLiveState } from "@/lib/posState";
 import { taxRateFor } from "@/lib/tax";
 import { FEATURES } from "@/lib/features";
-import { formatDay, formatMoney, formatPriceShort } from "@/lib/format";
+import { formatClock, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CustomerPicker, type AttachedCustomer } from "./CustomerPicker";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
@@ -671,14 +671,14 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     const next = current + cfg.incrementMinutes;
     if (next > cfg.maxMinutes) { setCartNotice(t("maxBooking", { hours: cfg.maxMinutes / 60 })); return; }
     if (!isResourceFreeFor(e.resourceId, e.slotDate, endTime, cfg.incrementMinutes, p.bufferMinutes ?? 0)) {
-      setCartNotice(t("cantExtend", { lane: e.resourceLabel ?? t("theLane"), time: endTime }));
+      setCartNotice(t("cantExtend", { lane: e.resourceLabel ?? t("theLane"), time: formatClock(endTime) }));
       return;
     }
     const base = Math.min(...p.tiers.filter((t) => t.active).map((t) => t.price));
     const price = productDurationPrice(p, e.slotDate, e.slotTime, next, base);
     const newEnd = `${e.slotDate}T${toTime(toMinutes(e.slotTime) + next)}:00+06:00`;
     setCart((c) => c.map((x) => (x.id === e.id ? { ...x, slotEnd: newEnd, fixedPrice: price } : x)));
-    toast.success(t("extendedTo", { time: toTime(toMinutes(e.slotTime) + next), amount: formatMoney(price, currency) }));
+    toast.success(t("extendedTo", { time: formatClock(toTime(toMinutes(e.slotTime) + next)), amount: formatMoney(price, currency) }));
   };
 
   const addCustom = () => {
@@ -762,7 +762,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         const dur = e.slotTime && e.slotEnd ? toMinutes(e.slotEnd.slice(11, 16)) - toMinutes(e.slotTime) : undefined;
         inputs.push({
           productId: e.productId, productName: e.productName,
-          tierName: e.resourceLabel ?? e.providerLabel ?? e.slotTime ?? t("bookingLine"),
+          tierName: e.resourceLabel ?? e.providerLabel ?? (e.slotTime ? formatClock(e.slotTime) : undefined) ?? t("bookingLine"),
           admits: entrySeats(e), quantity: 1, unitPrice: e.fixedPrice,
           lineDiscount: pctOf(e.fixedPrice),
           taxClass, taxRate: rate,
@@ -1142,7 +1142,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   const slotLabel = (e: CartEntry) => {
     if (!e.slotDate) return "";
     const day = e.slotDate === TODAY ? t("slotToday") : formatDay(e.slotDate, { weekday: true });
-    return e.slotTime ? ` · ${e.slotTime} ${day}` : ` · ${day}`;
+    return e.slotTime ? ` · ${formatClock(e.slotTime)} ${day}` : ` · ${day}`;
   };
 
   /** The till's clock, in minutes — the demo clock, same as everywhere else. */
@@ -1162,7 +1162,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   }), [t]);
 
   return (
-    <div className={cn("grid h-full grid-cols-1 gap-comfortable p-comfortable lg:grid-cols-[1fr_23rem] lg:pb-comfortable", "pb-[120px]")}>
+    <div className={cn("grid h-full grid-cols-1 gap-comfortable p-comfortable lg:grid-cols-[1fr_23rem] lg:pb-comfortable", "pb-[128px]")}>
       {/* The Go chrome names this screen visually; the heading exists so a
           screen reader lands on a named page rather than an unlabelled grid. */}
       <h1 className="sr-only">{t("posTitle")}</h1>
@@ -1757,15 +1757,53 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         )}
       </div>
 
-      {/* The phone's sale bar — Cart on the left, Take on the right, always
-          there. An empty sale shows "Cart · 0" and a Take that waits, so the
-          bar never appears under the finger on the first tap and the cart
-          (where a customer is attached before anything is rung up) is always
-          one tap away. */}
+      {/* The phone's sale dock — one solid footer from the top of the buttons
+          to the bottom edge, with the tab bar inside it, so the wall scrolls
+          away cleanly above it instead of showing round a floating card.
+
+          It opens with what is in the sale: a picture of each thing and their
+          names, so a cashier sees the cart without opening it (and somebody
+          who does not read matches the pictures). Tapping that line opens the
+          cart. Under it, Cart on the left and Take on the right, always there:
+          an empty sale says so and Take waits, so nothing appears under the
+          finger on the first tap. */}
       {!cartOpen && (
           <ActionBar
+            docked="dock"
             className="lg:hidden"
             label={t("cart.barLabel")}
+            summary={
+              <button
+                type="button"
+                onClick={openCart}
+                aria-label={cart.length ? t("cart.contentsAria", { names: cart.map((e) => e.productName).join(", ") }) : t("cart.emptyLine")}
+                className="-mx-tight flex min-h-11 items-center gap-tight rounded-go-sm px-tight text-left active:bg-muted-wash"
+              >
+                {cart.length > 0 ? (
+                  <>
+                    <span aria-hidden className="flex shrink-0 -space-x-2">
+                      {cart.slice(-3).reverse().map((e) => {
+                        const pr = productById(e.productId);
+                        return (
+                          <span key={e.id} className="rounded-go-sm ring-2 ring-card">
+                            <ProductThumb images={pr?.images} name={e.productName} bookingType={pr?.bookingType} size="chip" className="h-8 w-8" />
+                          </span>
+                        );
+                      })}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-medium text-fg">
+                      {cart.map((e) => {
+                        const q = e.items.reduce((n, i) => n + i.qty, 0);
+                        return q > 1 ? `${e.productName} ×${q}` : e.productName;
+                      }).join(", ")}
+                    </span>
+                    <ChevronRight size={18} strokeWidth={2} className="shrink-0 text-muted" aria-hidden />
+                  </>
+                ) : (
+                  <span className="flex-1 text-[0.9375rem] text-muted">{t("cart.emptyLine")}</span>
+                )}
+              </button>
+            }
             secondary={{ label: t("cart.openCount", { count: unitCount }), icon: <ShoppingBag size={20} strokeWidth={2} aria-hidden />, onClick: openCart, ariaLabel: t("cart.openAria", { count: unitCount }) }}
             primary={{ label: t("takeAmount", { amount: formatPriceShort(dueNow, currency) }), icon: <Banknote size={20} strokeWidth={2} aria-hidden />, onClick: startPayment, disabled: cart.length === 0 }}
           />

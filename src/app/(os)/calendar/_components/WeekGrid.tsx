@@ -3,17 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Lock, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { formatClockMin } from "@/lib/format";
 import { toTime } from "@/lib/schedule";
 import { OpenHourChips } from "./OpenHourChips";
 import {
   addDays,
+  clockOf,
+  clockRangeOf,
   focusMinute,
-  hhmm,
   isoDate,
   minutesOf,
   packLanes,
   peekHandlers,
   sameDay,
+  shortClockRange,
   TONE_CLASS,
   type CalEvent,
   type Ghost,
@@ -40,10 +43,9 @@ const SNAP_MIN = 15;
 /** The id the draft wears while it is laid out with real bookings. */
 const GHOST_ID = "__ghost__";
 
-/** "18–21" when both ends are on the hour, "16:15–17:00" otherwise — a range
- *  that fits a column a third of a day wide. */
-const shortRange = (a: number, b: number) =>
-  a % 60 === 0 && b % 60 === 0 ? `${String(a / 60).padStart(2, "0")}–${String(b / 60).padStart(2, "0")}` : `${toTime(a)}–${toTime(b)}`;
+/** "6 – 9 PM" when both ends are on the hour, "4:15 – 5 PM" otherwise — a
+ *  range that fits a column a third of a day wide. */
+const shortRange = (a: number, b: number) => shortClockRange(a, b);
 
 /** What the phone's open-hour chips say. */
 export interface ChipText {
@@ -552,21 +554,21 @@ export function WeekGrid({
           onPointerCancel={onCreate ? dragCancel : undefined}
           onClick={onCreate ? cellClick : undefined}
         >
-          {/* Hour gutter, once, on the left. "13:00" rather than "13": a bare
+          {/* Hour gutter, once, on the left. "1 PM" rather than "13": a bare
               number beside a column of times reads as a count. */}
           <div className={cn("relative shrink-0 border-r border-hairline", gutter)}>
             {hours.map((h, i) => (
               <span
                 key={h}
                 className={cn(
-                  "absolute right-tight font-mono text-[12px] text-muted",
+                  "absolute right-tight whitespace-nowrap font-mono text-[12px] text-muted",
                   // The first label centred on its own rule sits half above the
                   // track, where the sticky header cuts it in half.
                   i === 0 ? "translate-y-0" : "-translate-y-1/2",
                 )}
                 style={{ top: `${((h * 60 - openMin) / span) * 100}%` }}
               >
-                {compact ? String(h).padStart(2, "0") : toTime(h * 60)}
+                {formatClockMin(h * 60, { short: true })}
               </span>
             ))}
           </div>
@@ -702,7 +704,7 @@ export function WeekGrid({
                     const top = `${((h * 60 - openMin) / span) * 100}%`;
                     const height = `${(60 / span) * 100}%`;
                     const label = bookLabel?.(d, h, count);
-                    const time = toTime(h * 60);
+                    const time = formatClockMin(h * 60, { short: true });
                     return (
                       <button
                         key={`c${h}`}
@@ -796,7 +798,7 @@ export function WeekGrid({
                     }}
                   >
                     <span className="block truncate font-mono text-[12px] font-semibold leading-tight text-brand-foreground">
-                      {toTime(moving.start)} – {toTime(moving.end)}
+                      {shortClockRange(moving.start, moving.end)}
                     </span>
                     <span className="block truncate text-[12px] leading-tight text-fg">{moving.title}</span>
                   </span>
@@ -812,7 +814,7 @@ export function WeekGrid({
                       height: `calc(${((Math.abs(dragHere.to - dragHere.from) + SNAP_MIN) / span) * 100}% - 2px)`,
                     }}
                   >
-                    {toTime(Math.min(dragHere.from, dragHere.to))} – {toTime(Math.max(dragHere.from, dragHere.to) + SNAP_MIN)}
+                    {shortClockRange(Math.min(dragHere.from, dragHere.to), Math.max(dragHere.from, dragHere.to) + SNAP_MIN)}
                   </span>
                 )}
 
@@ -847,7 +849,9 @@ export function WeekGrid({
                      booking that exists. White on ember-solid is the declared
                      house exception, as on the today badge. */
                   if (event.id === GHOST_ID && draft) {
-                    const range = shortRange(draft.start, draft.end);
+                    /* Three abreast a column is ~37px: "5 – 6 PM" does not fit
+                       it, so the start alone leads and the panel says the rest. */
+                    const range = across >= 3 ? formatClockMin(draft.start, { short: true }) : shortRange(draft.start, draft.end);
                     return (
                       <div
                         key={GHOST_ID}
@@ -877,7 +881,7 @@ export function WeekGrid({
                             </span>
                             {tall >= 30 && (
                               <span className="block truncate font-mono text-[12px] leading-tight text-white/90">
-                                {toTime(draft.start)} – {toTime(draft.end)}
+                                {shortClockRange(draft.start, draft.end)}
                               </span>
                             )}
                           </>
@@ -892,8 +896,8 @@ export function WeekGrid({
                         key={event.id}
                         type="button"
                         onClick={onPickDay ? () => onPickDay(d) : undefined}
-                        title={`${event.title} · ${hhmm(event.start)}–${hhmm(event.end)} · ${event.subtitle ?? ""}`}
-                        aria-label={`${event.title}, ${hhmm(event.start)}–${hhmm(event.end)}, ${event.subtitle ?? ""}`}
+                        title={`${event.title} · ${clockRangeOf(event.start, event.end)} · ${event.subtitle ?? ""}`}
+                        aria-label={`${event.title}, ${clockRangeOf(event.start, event.end)}, ${event.subtitle ?? ""}`}
                         className={cn(
                           "absolute overflow-hidden rounded-sm border px-1 py-0.5 text-left shadow-[2px_2px_0_-1px_var(--color-card),2px_2px_0_0_var(--color-line)]",
                           blockClass(event),
@@ -935,10 +939,10 @@ export function WeekGrid({
                       onPointerUp={movable ? moveEnd : undefined}
                       onPointerCancel={movable ? moveCancel : undefined}
                     {...peekHandlers(event, moving ? undefined : onPeek)}
-                      title={`${event.title} · ${hhmm(event.start)}–${hhmm(event.end)}`}
+                      title={`${event.title} · ${clockRangeOf(event.start, event.end)}`}
                       /* The visible text truncates at this density; the
                          accessible name never does. */
-                      aria-label={`${event.title}, ${hhmm(event.start)}–${hhmm(event.end)}${
+                      aria-label={`${event.title}, ${clockRangeOf(event.start, event.end)}${
                         event.subtitle ? `, ${event.subtitle}` : ""
                       }`}
                       className={cn(
@@ -970,7 +974,7 @@ export function WeekGrid({
                       </span>
                       {roomForTwo && (
                         <span className="block truncate text-[12px] leading-tight opacity-70">
-                          {event.subtitle ?? hhmm(event.start)}
+                          {event.subtitle ?? clockOf(event.start)}
                         </span>
                       )}
                     </button>
@@ -1102,8 +1106,8 @@ function CompactWeek({
                   blockClass(e),
                 )}
               >
-                <span className="w-12 shrink-0 font-mono text-[12px] opacity-70">
-                  {e.allDay ? allDayLabel.slice(0, 3) : hhmm(e.start)}
+                <span className="w-16 shrink-0 whitespace-nowrap font-mono text-[12px] opacity-70">
+                  {e.allDay ? allDayLabel.slice(0, 3) : clockOf(e.start, true)}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-0.5 text-[13px] font-medium leading-tight">

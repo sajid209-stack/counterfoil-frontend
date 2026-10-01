@@ -374,7 +374,7 @@ export const products: Product[] = [
   {
     id: "prd_tour2",
     name: "Sculpture Garden Tour",
-    description: "A guided garden walk — same guides as the heritage tour, so 10:00 can only run one of them.",
+    description: "A guided garden walk — same guides as the heritage tour, so 10:00 AM can only run one of them.",
     images: [],
     bookingType: "BT-09",
     tiers: [{ id: "tier_t2_all", name: "Ticket", price: 90000, active: true }],

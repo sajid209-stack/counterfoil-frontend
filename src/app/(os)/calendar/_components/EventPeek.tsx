@@ -3,7 +3,7 @@
 import { Clock, Lock, Tag, Users } from "lucide-react";
 import { StatusPill, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { hhmm, type CalEvent, type EventTone } from "./model";
+import { clockRangeOf, type CalEvent, type EventTone } from "./model";
 
 const TONE_PILL: Record<EventTone, PillTone> = {
   booked: "info",
@@ -62,7 +62,7 @@ export function EventPeek({
     top: Math.min(Math.max(GAP, anchor.top + anchor.height / 2 - 70), window.innerHeight - 170),
   };
 
-  const when = event.allDay ? t("allDayLong") : `${hhmm(event.start)} – ${hhmm(event.end)}`;
+  const when = event.allDay ? t("allDayLong") : clockRangeOf(event.start, event.end);
 
   return (
     <div

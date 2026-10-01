@@ -23,7 +23,7 @@ import {
   type Order,
 } from "@/lib/api";
 import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
-import { formatDateTime, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
+import { formatClock, formatDateTime, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { useActiveLocation } from "@/lib/activeLocation";
 
@@ -368,7 +368,7 @@ export default function DashboardPage() {
           if (d === TODAY && toMinutes(s.time) < NOW_MIN) continue;
           if (s.capacity > 1 && s.sold / s.capacity < 0.3) {
             const price = Math.min(...p.tiers.filter((t) => t.active).map((t) => t.price));
-            out.push({ text: `${d === TODAY ? "" : t("tomorrow")}${s.time} ${p.name} · ${s.sold}/${s.capacity}`, value: s.remaining * price, href: `/catalog/bookings/${p.id}` });
+            out.push({ text: `${d === TODAY ? "" : t("tomorrow")}${formatClock(s.time)} ${p.name} · ${s.sold}/${s.capacity}`, value: s.remaining * price, href: `/catalog/bookings/${p.id}` });
           }
         }
       }

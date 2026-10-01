@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listCounters, listLocations, updateLocation, type Location } from "@/lib/api";
 import { DEMO_TODAY } from "@/lib/schedule";
+import { formatClock } from "@/lib/format";
 import { IconTile, RecordList, RecordRow, SearchField, SectionSkeleton, Switch } from "../_components/SettingsKit";
 import { DAY_KEY, normalizeHours, openDays, spans, weekdayOf } from "./_lib/hours";
 
@@ -66,7 +67,7 @@ export default function LocationsPage() {
       const d = (today + k) % 7;
       if (hours[d].intervals.length > 0) {
         return {
-          text: t("locations.closedTodayNext", { day: t(`common.${DAY_KEY[d]}`), time: hours[d].intervals[0].opensAt }),
+          text: t("locations.closedTodayNext", { day: t(`common.${DAY_KEY[d]}`), time: formatClock(hours[d].intervals[0].opensAt) }),
           warn: false,
         };
       }

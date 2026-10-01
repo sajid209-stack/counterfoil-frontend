@@ -5,6 +5,7 @@
    bookings, products or holds; they position rectangles. That is what keeps
    day, week and month from drifting apart. */
 import type { Booking, HoldView, Product, Resource, Staff } from "@/lib/api";
+import { formatClockMin, formatClockRange } from "@/lib/format";
 
 /** The visual language a slot can be in. These reuse patterns the app already
  *  established — hatching means "blocked", never a new colour to learn. */
@@ -96,10 +97,26 @@ export const sameDay = (a: Date, b: Date) => isoDate(a) === isoDate(b);
 /** Minutes from midnight, as a float so a 90-minute booking lands exactly. */
 export const minutesOf = (d: Date): number => d.getHours() * 60 + d.getMinutes();
 
+/** 24-hour "HH:MM" — DATA (keys, comparisons, slot times). Never draw it:
+ *  what a person reads goes through `clockOf` / `clockRangeOf`. */
 export const hhmm = (d: Date): string => {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${p(d.getHours())}:${p(d.getMinutes())}`;
 };
+
+/** The clock time of an instant as a person reads it: "7:00 PM" ("7 PM" short). */
+export const clockOf = (d: Date, short = false): string => formatClockMin(minutesOf(d), { short });
+
+/** A span between two instants as a person reads it: "7:00 – 9:00 PM". */
+export const clockRangeOf = (a: Date, b: Date): string => formatClockRange(minutesOf(a), minutesOf(b));
+
+/** A span for a tight cell, minutes from midnight: "6 – 9 PM", "4:15 – 5 PM",
+ *  "11 AM – 1 PM". The AM/PM is said once when both ends share it. */
+export function shortClockRange(a: number, b: number): string {
+  const x = formatClockMin(a, { short: true });
+  const y = formatClockMin(b, { short: true });
+  return x.slice(-2) === y.slice(-2) ? `${x.slice(0, -3)} – ${y}` : `${x} – ${y}`;
+}
 
 /** Monday-first week containing `d`. */
 export function weekStart(d: Date): Date {

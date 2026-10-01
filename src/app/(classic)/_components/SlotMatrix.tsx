@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { formatMoney } from "@/lib/format";
+import { formatClock, formatMoney } from "@/lib/format";
+import { ClockCell } from "@/app/(go)/_components/Clock";
 
 export interface MatrixCell {
   time: string;
@@ -127,12 +128,12 @@ export function SlotMatrix({
                   onBlocked(
                     active.outOfService
                       ? t("sheet.outOfService")
-                      : t("sheet.slotTaken", { time: cell.time, name: active.name }),
+                      : t("sheet.slotTaken", { time: formatClock(cell.time), name: active.name }),
                   )
                 }
                 className="flex min-h-12 items-center justify-center rounded-sm border border-line bg-subtle px-1 py-tight text-[0.8125rem] text-muted line-through"
               >
-                {cell.time}
+                <ClockCell hhmm={cell.time} className="line-through" ampmClassName="" />
               </button>
             );
           }
@@ -151,7 +152,7 @@ export function SlotMatrix({
                   : "border-line bg-card active:bg-ember/10",
               )}
             >
-              <span>{cell.time}</span>
+              <ClockCell hhmm={cell.time} ampmClassName="" />
               <span
                 className={cn(
                   "whitespace-nowrap text-[0.75rem]",
