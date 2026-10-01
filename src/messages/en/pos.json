@@ -238,7 +238,11 @@
     "emailToHelp": "The tickets and the receipt go to this address.",
     "emailInvalid": "Enter an email address, like name@example.com.",
     "emailSentTo": "Email sent to {email}.",
-    "bothSentTo": "Sent by SMS to {phone} and by email to {email}."
+    "bothSentTo": "Sent by SMS to {phone} and by email to {email}.",
+    "undoSale": "Undo sale",
+    "undoHint": "Wrong sale? Undo within {seconds} seconds.",
+    "saleUndone": "Sale undone. Nothing was charged.",
+    "saleUndoneCash": "Sale undone. Give the money back: {amount}"
   },
   "sheet": {
     "close": "Close",

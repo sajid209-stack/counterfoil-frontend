@@ -37,6 +37,13 @@ export const needsSchedule = (bt: BookingTypeCode) =>
   isSlotBased(bt) || isDailyCapped(bt) || isFlexibleResource(bt);
 export const isGuided = (bt: BookingTypeCode) => bt === "BT-09";
 
+/** Every kind sold as a time slot against something that has to be made
+ *  ready again before the next booking — a field, court or lane; a timed
+ *  session or show; a guided tour; an appointment with a person. NOT open
+ *  entry, a date pass, a daily cap, a course, a bundle or a credits pack —
+ *  none of those hold a span of time against one thing that needs clearing. */
+export const usesBuffer = (bt: BookingTypeCode) => isSlotBased(bt) || isFlexibleResource(bt) || bt === "BT-10";
+
 const pad = (n: number) => String(n).padStart(2, "0");
 export const toMinutes = (t: string) => {
   const [h, m] = t.split(":").map(Number);

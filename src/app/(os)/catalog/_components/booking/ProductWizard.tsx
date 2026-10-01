@@ -20,14 +20,15 @@ import {
   type Staff,
 } from "@/lib/api";
 import { formatClockRange, formatPriceShort } from "@/lib/format";
-import { defaultSchedule, isDailyCapped, isSlotBased, needsSchedule, slotTimes } from "@/lib/schedule";
+import { defaultSchedule, isDailyCapped, isSlotBased, needsSchedule, slotTimes, usesBuffer } from "@/lib/schedule";
 import { defaultPolicies } from "@/lib/tax";
 import { bookingKindOf, type BookingKind } from "@/lib/catalog";
-import { BookingSetup, type BookingSetupResult, type SetupStart } from "./BookingSetup";
+import { BookingSetup, effectiveBuffer, type BookingSetupResult, type SetupStart } from "./BookingSetup";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
 import { PricingRulesField, type FormPricingRule } from "./PricingRulesField";
 import { ImageUploadField, type FormImage } from "./ImageUploadField";
 import { ScheduleBuilder } from "./ScheduleBuilder";
+import { ScheduleBufferField } from "./ScheduleBufferField";
 import { WhereSold } from "../WhereSold";
 import { useCatalogFormat } from "../../_lib/useCatalogFormat";
 
@@ -288,7 +289,7 @@ export function ProductWizard({
       schedule: needsSchedule(booking.bookingType) ? schedule : null,
       resourceIds: booking.resource?.resourceIds,
       resourceExclusive: booking.resource?.exclusive,
-      bufferMinutes: booking.resource?.bufferMinutes,
+      bufferMinutes: usesBuffer(booking.bookingType) ? effectiveBuffer(booking) : undefined,
       flexibleDurations: booking.resource?.flexibleDurations,
       pricingBasis: booking.resource?.basis,
       // Flexible: seed the duration engine from the wizard's core; the editor
@@ -344,8 +345,13 @@ export function ProductWizard({
     const rhythm = isSlotBased(booking.bookingType)
       ? t(schedule.sessionMinutes > schedule.slotMinutes ? "everyEachOverlap" : "everyEach", { every: formatDuration(schedule.slotMinutes), each: formatDuration(schedule.sessionMinutes) })
       : "";
-    return [days, hours, rhythm, amount, each].filter(Boolean).join(" · ");
+    const buffer = usesBuffer(booking.bookingType) ? effectiveBuffer(booking) : 0;
+    const bufferLine = buffer > 0 ? t("bufferLine", { time: formatDuration(buffer) }) : "";
+    return [days, hours, rhythm, amount, each, bufferLine].filter(Boolean).join(" · ");
   })();
+  // Appointments (BT-10) have no "when" row at all — their buffer is shown
+  // beside the "how it's booked" summary instead, where it was set.
+  const bufferMinutes = booking ? effectiveBuffer(booking) : 0;
   const locationNames = locations.filter((l) => locationIds.includes(l.id)).map((l) => l.name);
   /* How far ahead it can be booked and when sales close — set by the
      booking's policies, which open once it is saved; stated here so nobody
@@ -455,7 +461,14 @@ export function ProductWizard({
 
           {stepKey === "when" && booking && schedule && (
             <div className="flex flex-col gap-major">
-              <ScheduleBuilder bookingType={booking.bookingType} value={schedule} onChange={setSchedule} team={team} />
+              <ScheduleBuilder
+                bookingType={booking.bookingType}
+                value={schedule}
+                onChange={setSchedule}
+                team={team}
+                bufferMinutes={effectiveBuffer(booking)}
+                bufferSlot={<ScheduleBufferField booking={booking} onChange={setBooking} resources={resources} />}
+              />
               <p className="text-[13px] text-muted">{t("windowWithLater", { window: bookingWindow })}</p>
               <FormField label={t("waitlist")} variant="toggle" checked={waitlist} onChange={(e) => setWaitlist((e.target as HTMLInputElement).checked)} />
             </div>
@@ -493,6 +506,9 @@ export function ProductWizard({
               <h3 className="mb-tight break-words text-[20px] font-semibold tracking-tight">{name || t("untitled")}</h3>
               <ReviewRow label={t("row.how")} onEdit={() => goTo("how")} editText={t("edit")} editLabel={t("editStep", { step: t("step.how") })}>
                 {booking?.summary ?? <Missing>{t("check.how")}</Missing>}
+                {/* A kind with no "when" step (an appointment) still shows its
+                    buffer — it was set here, so it reads here too. */}
+                {!needsWhen && bufferMinutes > 0 && <span className="block text-muted">{t("bufferLine", { time: formatDuration(bufferMinutes) })}</span>}
               </ReviewRow>
               <ReviewRow label={t("row.details")} onEdit={() => goTo("details")} editText={t("edit")} editLabel={t("editStep", { step: t("step.details") })}>
                 {name.trim() ? (
@@ -589,6 +605,7 @@ export function ProductWizard({
             <p className={cn("mt-inline break-words text-[16px] font-semibold leading-snug", !name.trim() && "text-muted")}>{name.trim() || t("untitled")}</p>
             {kindNow && <p className="mt-0.5 text-[12px] text-muted">{tc(`type.${kindNow}`)}</p>}
             {booking && <p className="mt-tight text-[13px] leading-snug">{booking.summary}</p>}
+            {bufferMinutes > 0 && <p className="mt-tight text-[13px] text-muted">{t("bufferLine", { time: formatDuration(bufferMinutes) })}</p>}
             {priceLine && <p className="mt-tight text-[13px] tabular-nums">{priceLine}</p>}
           </div>
           <div className="p-card">

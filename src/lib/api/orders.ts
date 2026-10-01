@@ -1,4 +1,4 @@
-import { createBooking } from "./bookings";
+import { cancelBooking, createBooking, peekBookings } from "./bookings";
 import { itemForAddOn, recordMovement, recordSale } from "./inventory";
 import { conflictError, createResource, fail } from "./client";
 import { seatsTaken } from "./layouts";
@@ -354,4 +354,80 @@ export async function checkout(
      a line that was charged for but could not leave a shelf is something the
      counter has to be told while the guest is still standing there. */
   return { ok: true, data: { order, firstTicketCode, tickets, stockRefused: stock.refused } };
+}
+
+/** How long a sale can be undone from the till once it is complete. */
+export const UNDO_SALE_SECONDS = 5;
+
+/**
+ * Undo a sale the till has just completed — the "oops, wrong item" a cashier
+ * needs within a few seconds, before the guest has walked away.
+ *
+ * Everything the sale did is taken back: the money (a reversing payment), the
+ * tickets and their codes, the bookings (so the slot goes back on sale) and
+ * the stock. The order stays on the record as CANCELLED, with who undid it —
+ * a sale that vanished without trace is a sale nobody can account for.
+ *
+ * The window is checked here as well as on screen, so a late tap cannot undo
+ * a sale whose guest is already through the gate. Two seconds of grace cover
+ * the time between the tap and this call.
+ */
+export async function cancelSale(orderId: string, who = "Counter", windowSeconds = UNDO_SALE_SECONDS + 2): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  if (o.status === "cancelled") return fail(conflictError("This sale is already cancelled."));
+  const age = (Date.now() - Date.parse(o.createdAt)) / 1000;
+  if (age > windowSeconds) return fail(conflictError("Too late to undo this sale. Refund it instead."));
+  await voidOrderTickets(orderId);
+  for (const b of peekBookings().filter((x) => x.orderId === orderId && x.status === "confirmed")) await cancelBooking(b.id);
+  for (const l of o.lines) {
+    const item = itemForAddOn(l.productId);
+    if (!item || !item.tracked || l.quantity <= 0) continue;
+    await recordMovement({ itemId: item.id, locationId: o.locationId, kind: "returned", quantity: l.quantity, reason: `Sale undone on ${o.reference}`, orderId, by: who });
+  }
+  const paid = orderPaid(o);
+  return resource.update(orderId, {
+    status: "cancelled",
+    payments: paid > 0
+      ? [...o.payments, { id: `${o.reference}-U`, method: o.payments[0]?.method ?? "cash", amount: -paid, status: "confirmed", createdAt: new Date().toISOString() }]
+      : o.payments,
+    history: withHistory(o, who, "Sale undone at the till"),
+  });
+}
+
+/**
+ * Take a discount off what a guest still owes — the after-the-match discount
+ * a counter gives when the lights went out for twenty minutes, or the game
+ * ran short.
+ *
+ * It is a LINE, not an edit to the old ones: a negative adjustment line at the
+ * tax rate of the booking it is given against, so the VAT owed falls with the
+ * price and every report that sums lines sees it. The original lines stay as
+ * they were sold. It can never be more than is still owed.
+ */
+export async function discountOrderBalance(orderId: string, amount: Minor, reason: string, who = "Counter"): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  const owed = orderOutstanding(o);
+  if (amount <= 0) return fail(conflictError("Enter a discount above zero."));
+  if (amount > owed) return fail(conflictError("A discount cannot be more than what is still owed."));
+  if (!reason.trim()) return fail(conflictError("Say why the discount was given."));
+  const base = o.lines.find((l) => !l.parentLineId && l.total > 0) ?? o.lines[0];
+  const rate = base?.taxRate ?? 0;
+  const net = Math.round(amount / (1 + rate));
+  const { lines: added, totals } = buildOrderLines(
+    [{ productId: "adj_discount", productName: "Discount", tierName: reason.trim(), admits: 0, quantity: 1, unitPrice: -net, taxClass: base?.taxClass, taxRate: rate }],
+    0,
+    `${o.reference}-D${o.lines.length}`,
+  );
+  const total = o.total + totals.total;
+  const paid = orderPaid(o);
+  return resource.update(orderId, {
+    lines: [...o.lines, ...added],
+    subtotal: o.subtotal + totals.subtotal,
+    taxTotal: o.taxTotal + totals.taxTotal,
+    total,
+    status: paid >= total ? "paid" : "partial",
+    history: withHistory(o, who, `Discount of ${-totals.total / 100} on the balance — ${reason.trim()}`),
+  });
 }

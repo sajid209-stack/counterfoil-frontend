@@ -16,13 +16,14 @@ import {
   type Resource,
   type Staff,
 } from "@/lib/api";
-import { defaultSchedule, isFlexibleResource, isResourceType, needsSchedule, slotTimes } from "@/lib/schedule";
+import { defaultSchedule, isFlexibleResource, isResourceType, needsSchedule, slotTimes, usesBuffer } from "@/lib/schedule";
 import { formatClock, formatDateTime } from "@/lib/format";
 import { defaultDurationConfig, durationOptions } from "@/lib/duration";
 import type { DurationConfig } from "@/lib/api";
-import { BookingSetup, type BookingSetupResult } from "./BookingSetup";
+import { BookingSetup, effectiveBuffer, type BookingSetupResult } from "./BookingSetup";
 import { DurationEngineField } from "./DurationEngineField";
 import { ScheduleBuilder } from "./ScheduleBuilder";
+import { ScheduleBufferField } from "./ScheduleBufferField";
 import { emptyTier, PriceTiersField, type FormTier } from "./PriceTiersField";
 import { PricingRulesField, type FormPricingRule } from "./PricingRulesField";
 import { PoliciesField } from "./PoliciesField";
@@ -96,6 +97,13 @@ function fromProduct(p: Product, summaryOf: (code: BookingTypeCode) => string): 
       resource: isResourceType(p.bookingType)
         ? { resourceIds: p.resourceIds ?? [], exclusive: p.resourceExclusive !== false, bufferMinutes: p.bufferMinutes ?? 0, flexibleDurations: p.flexibleDurations }
         : undefined,
+      // Timed sessions, guided tours and appointments have no resource object
+      // of their own to carry "time between bookings" in the editor (an
+      // appointment's own provider object isn't reconstructed here, since
+      // `TypeSpecificFields` already edits it straight from the product) —
+      // so every kind reads/writes it here, and `ScheduleBufferField` checks
+      // `resource` first so this is simply unused where that applies.
+      bufferMinutes: p.bufferMinutes ?? 0,
     },
     schedule: p.schedule ?? (needsSchedule(p.bookingType) ? defaultSchedule(p.bookingType) : null),
     active: p.status !== "inactive",
@@ -232,7 +240,7 @@ export function ProductForm({
       schedule: needsSchedule(state.booking.bookingType) ? state.schedule : null,
       resourceIds: state.booking.resource?.resourceIds,
       resourceExclusive: state.booking.resource?.exclusive,
-      bufferMinutes: state.booking.resource?.bufferMinutes,
+      bufferMinutes: usesBuffer(bt) ? effectiveBuffer(state.booking) : undefined,
       pricingBasis: state.booking.resource?.basis ?? product.pricingBasis,
       durationConfig: isFlexibleResource(bt) ? state.durationConfig : null,
       flexibleDurations: isFlexibleResource(bt) && state.durationConfig
@@ -372,8 +380,34 @@ export function ProductForm({
             {needsSchedule(state.booking.bookingType) && state.schedule && (
               <div>
                 <p className="type-h2 mb-section text-base">{t("scheduleTitle")}</p>
-                <ScheduleBuilder bookingType={state.booking.bookingType} value={state.schedule} onChange={(sch) => set("schedule", sch)} team={team} />
+                <ScheduleBuilder
+                  bookingType={state.booking.bookingType}
+                  value={state.schedule}
+                  onChange={(sch) => set("schedule", sch)}
+                  team={team}
+                  bufferMinutes={effectiveBuffer(state.booking)}
+                  bufferSlot={
+                    <ScheduleBufferField
+                      booking={state.booking}
+                      onChange={(b) => set("booking", b)}
+                      resources={resources.filter((r) => (state.booking.resource?.resourceIds ?? product.resourceIds ?? []).includes(r.id))}
+                      fallbackNoun={product.providerNoun}
+                    />
+                  }
+                />
               </div>
+            )}
+            {/* An appointment has no schedule above at all (availability comes
+                from who is free, not a weekly pattern), so its buffer field —
+                still "same tab as the schedule" — stands alone here. Every
+                other kind gets it inside the schedule builder, above. */}
+            {!needsSchedule(state.booking.bookingType) && usesBuffer(state.booking.bookingType) && (
+              <ScheduleBufferField
+                booking={state.booking}
+                onChange={(b) => set("booking", b)}
+                resources={resources.filter((r) => (state.booking.resource?.resourceIds ?? product.resourceIds ?? []).includes(r.id))}
+                fallbackNoun={product.providerNoun}
+              />
             )}
             <TypeSpecificFields state={state} set={set} team={team} providerNoun={product.providerNoun} />
             {state.booking.bookingType === "BT-03" && state.schedule && (

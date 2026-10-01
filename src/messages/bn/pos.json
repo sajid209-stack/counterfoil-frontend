@@ -238,7 +238,11 @@
     "emailToHelp": "টিকিট ও রসিদ এই ঠিকানায় যাবে।",
     "emailInvalid": "name@example.com-এর মতো একটি ইমেইল ঠিকানা দিন।",
     "emailSentTo": "{email}-এ ইমেইল পাঠানো হয়েছে।",
-    "bothSentTo": "{phone}-এ SMS ও {email}-এ ইমেইল পাঠানো হয়েছে।"
+    "bothSentTo": "{phone}-এ SMS ও {email}-এ ইমেইল পাঠানো হয়েছে।",
+    "undoSale": "বিক্রি ফিরিয়ে নিন",
+    "undoHint": "ভুল বিক্রি হয়েছে? {seconds} সেকেন্ডের মধ্যে ফিরিয়ে নিন।",
+    "saleUndone": "বিক্রি ফিরিয়ে নেওয়া হয়েছে। কোনো টাকা কাটা হয়নি।",
+    "saleUndoneCash": "বিক্রি ফিরিয়ে নেওয়া হয়েছে। টাকা ফেরত দিন: {amount}"
   },
   "sheet": {
     "close": "বন্ধ করুন",

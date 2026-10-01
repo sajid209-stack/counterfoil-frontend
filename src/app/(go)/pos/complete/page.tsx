@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check, ChevronRight, Clock, Mail, MessageSquare, Plus, Printer, ReceiptText, Send, Ticket as TicketIcon } from "lucide-react";
+import { Check, ChevronRight, Clock, Mail, MessageSquare, Plus, Printer, ReceiptText, RotateCcw, Send, Ticket as TicketIcon } from "lucide-react";
 import { Button, Modal, Qr, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { getOperator } from "@/lib/api";
+import { cancelSale, getOperator, UNDO_SALE_SECONDS } from "@/lib/api";
 import { useEnumLabels } from "@/lib/labels";
 import { formatClock, formatDay, formatMoney } from "@/lib/format";
 import { clockify } from "../../_components/Clock";
@@ -15,7 +15,7 @@ import { DEMO_TODAY } from "@/lib/schedule";
 import { DEFAULT_SMS_TEMPLATE, renderSms } from "@/lib/sms";
 import { DEFAULT_EMAIL_BODY, DEFAULT_EMAIL_SUBJECT } from "@/lib/email";
 import type { CompleteInfo, CompleteTicket } from "../_lib/handover";
-import { takeReturnTo } from "../_lib/liveSale";
+import { takeReturnTo, takeUndoSnapshot, writeLiveSale } from "../_lib/liveSale";
 
 /*
  * The moment a sale lands, for the person still standing at the counter.
@@ -60,8 +60,15 @@ export default function CompletePage() {
   const hydrated = useSyncExternalStore(noSubscribe, () => true, () => false);
   const raw = useSyncExternalStore(noSubscribe, readComplete, () => null);
   const info = useMemo<CompleteInfo | null>(() => (raw ? (JSON.parse(raw) as CompleteInfo) : null), [raw]);
+  /* Undo clears this handover itself (so Back cannot show a cancelled sale as
+     complete) and then navigates away — but clearing it while this page is
+     still mounted makes `raw` go empty for a tick, which would otherwise race
+     the effect below to `/pos` instead of the cart Undo is heading to. Set
+     the instant Undo starts clearing up, read by the effect, never reset:
+     this page is about to unmount for good either way. */
+  const leavingOnPurpose = useRef(false);
   useEffect(() => {
-    if (hydrated && !raw) router.replace("/pos");
+    if (hydrated && !raw && !leavingOnPurpose.current) router.replace("/pos");
   }, [hydrated, raw, router]);
 
   const operatorQ = useApiQuery(() => getOperator(), []);
@@ -174,6 +181,13 @@ export default function CompletePage() {
 
   return (
     <main className="mx-auto w-full max-w-xl px-section pb-[160px] pt-major sm:max-w-3xl rail:max-w-6xl rail:px-major rail:pb-major">
+      {/* The 5-second Undo, above everything else: a cashier who has just
+          tapped the wrong sale needs it before "Sale complete" even, not
+          after reading past it. Gone entirely on a handover written before
+          Undo existed, or once the order itself is too old for one. */}
+      {info.completedAt && orderId && (
+        <UndoBar orderId={orderId} completedAt={info.completedAt} payment={payment} onUndoing={() => { leavingOnPurpose.current = true; }} />
+      )}
       <div className="flex flex-col gap-wide rail:grid rail:grid-cols-[minmax(0,1fr)_minmax(0,440px)] rail:items-start rail:gap-wide">
         {/* ── What just happened, and what to do now ── */}
         <div className="flex flex-col gap-major">
@@ -478,6 +492,142 @@ export default function CompletePage() {
         </div>
       </Modal>
     </main>
+  );
+}
+
+/**
+ * Gmail's "Undo send", at the till: act on the sale at once, and offer a
+ * timed way to take it back rather than a confirmation dialog in front of it.
+ * A visible countdown and a draining line say exactly how long the offer
+ * stands; past it, the bar collapses away (instantly under reduced motion —
+ * the global rule already turns the transition off, so no branch is needed
+ * here for that).
+ *
+ * Pressing Undo cancels the real order (`cancelSale`, which also refuses a
+ * sale that is genuinely too old), hands the sale's own lines, customer and
+ * discount back to the live sale so the cart reads exactly as it did before
+ * the mistake, and clears this handover so Back cannot show a cancelled sale
+ * as complete.
+ */
+function UndoBar({
+  orderId,
+  completedAt,
+  payment,
+  onUndoing,
+}: {
+  orderId: string;
+  completedAt: string;
+  payment?: { method: string; amount: number };
+  /** Called the instant a successful Undo starts clearing this page's own
+   *  handover, so the page's "no handover → back to /pos" effect does not
+   *  mistake that for a stale visit and race its own navigation to the cart. */
+  onUndoing: () => void;
+}) {
+  const router = useRouter();
+  const toast = useToast();
+  const t = useTranslations("pos");
+  const totalMs = UNDO_SALE_SECONDS * 1000;
+  const deadline = useMemo(() => Date.parse(completedAt) + totalMs, [completedAt, totalMs]);
+  const [remaining, setRemaining] = useState(() => Math.max(0, deadline - Date.now()));
+  const [draining, setDraining] = useState(false);
+  const [collapsing, setCollapsing] = useState(() => deadline - Date.now() <= 0);
+  const [gone, setGone] = useState(() => deadline - Date.now() <= 0);
+  const [undoing, setUndoing] = useState(false);
+  const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (gone) return;
+    // Draw at the full width first, THEN start the drain — so the browser has
+    // something to transition FROM rather than starting already at 0%.
+    const raf = requestAnimationFrame(() => setDraining(true));
+    const tick = setInterval(() => {
+      const left = deadline - Date.now();
+      setRemaining(Math.max(0, left));
+      if (left <= 0) {
+        clearInterval(tick);
+        setCollapsing(true);
+        collapseTimer.current = setTimeout(() => setGone(true), 320);
+      }
+    }, 200);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearInterval(tick);
+      if (collapseTimer.current) clearTimeout(collapseTimer.current);
+    };
+  }, [deadline, gone]);
+
+  if (gone) return null;
+
+  const seconds = Math.max(1, Math.ceil(remaining / 1000));
+
+  const undo = async () => {
+    setUndoing(true);
+    const res = await cancelSale(orderId);
+    setUndoing(false);
+    if (!res.ok) {
+      // "Too late to undo this sale" — the window closed between the tap and
+      // the call. The message names it; the screen itself does not move.
+      toast.error(res.error.message);
+      return;
+    }
+    onUndoing();
+    // Hand the sale back to the cart BEFORE clearing this handover, so a
+    // reload mid-navigation still has somewhere to land it.
+    const snapshot = takeUndoSnapshot();
+    if (snapshot) writeLiveSale(snapshot);
+    sessionStorage.removeItem("pos_complete");
+    toast.success(
+      payment?.method === "cash" && payment.amount > 0
+        ? t("complete.saleUndoneCash", { amount: formatMoney(payment.amount) })
+        : t("complete.saleUndone"),
+    );
+    router.push("/pos/cart");
+  };
+
+  return (
+    <div
+      className={cn(
+        "mb-wide grid transition-[grid-template-rows] duration-considered ease-counterfoil",
+        collapsing ? "grid-rows-[0fr]" : "grid-rows-[1fr]",
+      )}
+    >
+      <div className="overflow-hidden">
+        <div
+          className={cn(
+            "overflow-hidden rounded-go border border-warning/40 bg-warning-wash transition-opacity duration-considered ease-counterfoil",
+            collapsing && "opacity-0",
+          )}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-comfortable p-comfortable">
+            <p className="min-w-0 flex-1 text-[0.8125rem] font-medium text-fg">{t("complete.undoHint", { seconds: UNDO_SALE_SECONDS })}</p>
+            <Button
+              variant="secondary"
+              shape="pill"
+              size="lg"
+              icon={<RotateCcw size={18} strokeWidth={2} aria-hidden />}
+              loading={undoing}
+              onClick={undo}
+              className="shrink-0"
+            >
+              {t("complete.undoSale")}
+              <span aria-hidden className="tabular-nums text-muted">
+                {seconds}
+              </span>
+            </Button>
+          </div>
+          {/* The draining line: it empties over the window on its own, via a
+              CSS transition rather than a per-frame width calculation — smooth
+              with no extra JS, and instant under reduced motion like every
+              other transition in this app. */}
+          <div aria-hidden className="h-1 bg-line/60">
+            <div
+              className="h-full bg-ember-solid"
+              style={{ width: draining ? "0%" : "100%", transition: draining ? `width ${totalMs}ms linear` : "none" }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

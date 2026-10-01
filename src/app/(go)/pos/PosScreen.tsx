@@ -30,7 +30,7 @@ import { Keypad } from "../_components/Keypad";
 import { Pencil } from "lucide-react";
 import { usePrefs } from "@/lib/prefs";
 import { ticketSnapshot } from "./_lib/handover";
-import { clearLiveSale, readLiveSale, takeReturnTo, writeLiveSale } from "./_lib/liveSale";
+import { clearLiveSale, readLiveSale, takeReturnTo, writeLiveSale, writeUndoSnapshot, type LiveSale } from "./_lib/liveSale";
 
 const TODAY = DEMO_TODAY;
 // Payment methods this counter takes (would come from counter config).
@@ -962,6 +962,11 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     else toast.error(res.error.message);
   };
 
+  /** The sale exactly as it stands right now, in the shape the live sale is
+   *  held in — taken just before checkout, for the completion screen's
+   *  5-second Undo to hand back if the cashier changes their mind. */
+  const snapshotForUndo = (): LiveSale => ({ cart, discountMode, discountPct, discountAmt, discountReason, attached, pass, coupon: appliedCoupon, advance, pointsToSpend });
+
   const buildSale = () => {
     // The SAME inputs the live totals were computed from — no drift possible.
     const lines = saleInputs;
@@ -1075,7 +1080,11 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
       if (txnNote) await logOrderAction(res.data.order.id, txnNote);
       sayIfStockRefused(res.data.stockRefused);
       await settleMemberEffects(res.data.order.id, dueNow);
-      sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, reference: res.data.order.reference, code: res.data.firstTicketCode, tickets: ticketSnapshot(res.data.order, res.data.tickets), change: 0, balance, receipt, payments: [{ method, amount: dueNow }], customer: completedCustomer() }));
+      sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, reference: res.data.order.reference, code: res.data.firstTicketCode, tickets: ticketSnapshot(res.data.order, res.data.tickets), change: 0, balance, receipt, payments: [{ method, amount: dueNow }], customer: completedCustomer(), completedAt: new Date().toISOString() }));
+      /* The sale just before checkout, kept only for the completion screen's
+         5-second Undo — written before the live sale is cleared, so Undo has
+         something to hand back. */
+      writeUndoSnapshot(snapshotForUndo());
       /* Before navigating: the completion screen unmounts this component, and
          a sold sale that came back on the next mount would be a second charge
          waiting to happen. */
@@ -1100,7 +1109,8 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     if (res.ok) {
       sayIfStockRefused(res.data.stockRefused);
       await settleMemberEffects(res.data.order.id, dueNow);
-      sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, reference: res.data.order.reference, code: res.data.firstTicketCode, tickets: ticketSnapshot(res.data.order, res.data.tickets), change: changeMinor, balance, receipt, payments: [{ method: "cash", amount: dueNow, tendered: tenderedMinor, change: changeMinor }], customer: completedCustomer() }));
+      sessionStorage.setItem("pos_complete", JSON.stringify({ orderId: res.data.order.id, reference: res.data.order.reference, code: res.data.firstTicketCode, tickets: ticketSnapshot(res.data.order, res.data.tickets), change: changeMinor, balance, receipt, payments: [{ method: "cash", amount: dueNow, tendered: tenderedMinor, change: changeMinor }], customer: completedCustomer(), completedAt: new Date().toISOString() }));
+      writeUndoSnapshot(snapshotForUndo());
       clearLiveSale();
       setCashOpen(false);
       router.push("/pos/complete");

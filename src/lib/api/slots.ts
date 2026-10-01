@@ -160,20 +160,32 @@ export function applyResourceRate(price: Minor, minutes: number, resource?: Reso
   return Math.round((o.amount * minutes) / 60);
 }
 
-/** Is this owner free for [time, time + minutes) on the date? */
-export function isOwnerFree(ownerId: string, date: string, time: string, minutes: number): boolean {
+/** Is this owner free for [time, time + minutes) on the date?
+ *
+ *  `bufferMinutes` keeps the owner off the books for that long after a
+ *  booking it already has — the same "time between bookings" a resource
+ *  honours in `isResourceFreeFor` below, extended to a provider or a guide
+ *  (a person is a capacity owner too). Symmetric either side of an existing
+ *  booking, matching that function: a start that lands inside the buffer
+ *  before OR after one of this owner's bookings is refused, and a start
+ *  exactly at the buffer's edge is free. Defaults to 0, so every existing
+ *  caller that does not pass it sees exactly the old behaviour. */
+export function isOwnerFree(ownerId: string, date: string, time: string, minutes: number, bufferMinutes = 0): boolean {
   const start = toMinutes(time);
   const end = start + minutes;
-  return !ownerBusy(ownerId, date).some((b) => start < b.end && b.start < end);
+  return !ownerBusy(ownerId, date).some((b) => start < b.end + bufferMinutes && b.start < end + bufferMinutes);
 }
 
 /** Guides free to lead a product's session at this slot (BT-09). A guide on
- *  the 10:00 walking tour is unavailable to every other 10:00 departure. */
+ *  the 10:00 walking tour is unavailable to every other 10:00 departure —
+ *  and, once the product sets a buffer, for that long afterwards too, so a
+ *  guide walking back in from one tour is not immediately handed the next. */
 export function freeGuides(product: Product, date: string, time: string): string[] {
   const sch = product.schedule;
   if (!sch || sch.guideIds.length === 0) return [];
   const minutes = sch.sessionMinutes || sch.slotMinutes || 60;
-  return sch.guideIds.filter((g) => isOwnerFree(g, date, time, minutes));
+  const buffer = product.bufferMinutes ?? 0;
+  return sch.guideIds.filter((g) => isOwnerFree(g, date, time, minutes, buffer));
 }
 
 /** Is a resource free for [time, time + minutes), with buffer either side? */

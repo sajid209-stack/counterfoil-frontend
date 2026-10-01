@@ -8,6 +8,7 @@ import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDay } from "@/lib/format";
 import type { BookingTypeCode, Product, Resource, Staff } from "@/lib/api";
 import { useCatalogFormat } from "../../_lib/useCatalogFormat";
+import { BufferField } from "./BufferField";
 
 /* Plain questions → the BT code is DERIVED, never shown. Covers all 14 types. */
 
@@ -21,10 +22,26 @@ export interface BookingSetupResult {
     durationCore?: { minMinutes: number; maxMinutes: number; incrementMinutes: number };
     basis?: "per_booking" | "per_person";
   };
-  provider?: { providerIds: string[]; noun: string; pickable: boolean; durationMinutes: number };
+  provider?: { providerIds: string[]; noun: string; pickable: boolean; durationMinutes: number; bufferMinutes?: number };
   course?: { dates: string[]; capacity: number };
   bundle?: { componentIds: string[] };
   credits?: { count: number; expiryDays: number; productIds: string[] };
+  /** "Time between bookings" for a kind with no resource or provider object of
+   *  its own to carry it — a timed session (BT-03) or a guided tour (BT-09).
+   *  Read this (never `resource`/`provider`) through `effectiveBuffer` below,
+   *  which knows where each kind keeps it. */
+  bufferMinutes?: number;
+}
+
+/** The buffer value for whichever kind set it — resource and provider each
+ *  carry their own (asked in their own sub-flow), timed sessions and guided
+ *  tours carry it at the top (asked later, in the schedule step — see
+ *  `ScheduleBufferField`). One function so nobody has to remember which. */
+export function effectiveBuffer(b: BookingSetupResult | null | undefined): number {
+  if (!b) return 0;
+  if (b.resource) return b.resource.bufferMinutes ?? 0;
+  if (b.provider) return b.provider.bufferMinutes ?? 0;
+  return b.bufferMinutes ?? 0;
 }
 
 const NOUNS = ["Field", "Court", "Lane", "Room", "Table", "Studio", "Bay"];
@@ -71,7 +88,10 @@ export function BookingSetup({
   const [fixed, setFixed] = useState(!value?.resource?.flexibleDurations);
   const [exclusive, setExclusive] = useState(value?.resource?.exclusive ?? true);
   const [basis, setBasis] = useState<"per_booking" | "per_person">(value?.resource?.basis ?? "per_booking");
-  const [buffer, setBuffer] = useState(value?.resource?.bufferMinutes ?? 0);
+  // "Time between bookings" moved to the schedule step (ScheduleBufferField),
+  // which is where every other time-slot kind now asks it too — this is a
+  // pass-through of whatever is already stored, not an editable field here.
+  const buffer = value?.resource?.bufferMinutes ?? 0;
   const [durMin, setDurMin] = useState(60);
   const [durMax, setDurMax] = useState(180);
   const [durInc, setDurInc] = useState(30);
@@ -83,6 +103,10 @@ export function BookingSetup({
   const [provIds, setProvIds] = useState<string[]>([]);
   const [provDuration, setProvDuration] = useState("60");
   const [provPickable, setProvPickable] = useState(true);
+  // An appointment has no later "when" step to ask this in (no weekly
+  // schedule — availability comes from who is free), so it is asked here,
+  // beside "How long does it take?" — the only other timing question it has.
+  const [provBuffer, setProvBuffer] = useState(value?.provider?.bufferMinutes ?? 0);
   // course
   const [courseDates, setCourseDates] = useState<string[]>([]);
   const [courseDate, setCourseDate] = useState("");
@@ -144,7 +168,7 @@ export function BookingSetup({
     onChange({
       bookingType: "BT-10",
       summary: t("summary.provider", { noun: provNoun.toLowerCase(), duration: formatDuration(minutes), pick: provPickable ? "name" : "first", count: provIds.length }),
-      provider: { providerIds: provIds, noun: provNoun, pickable: provPickable, durationMinutes: minutes },
+      provider: { providerIds: provIds, noun: provNoun, pickable: provPickable, durationMinutes: minutes, bufferMinutes: provBuffer },
     });
   };
   const finishCourse = () => onChange({ bookingType: "BT-13", summary: t("summary.course", { count: courseDates.length, places: courseCap }), course: { dates: courseDates, capacity: parseInt(courseCap, 10) || 0 } });
@@ -266,7 +290,6 @@ export function BookingSetup({
           )}
           <Radio label={t("resource.exclusiveTitle")} value={exclusive ? "yes" : "no"} onChange={(v) => setExclusive(v === "yes")} options={[{ value: "yes", label: t("resource.exclusive.title"), helper: t("resource.exclusive.helper") }, { value: "no", label: t("resource.shared.title"), helper: t("resource.shared.helper") }]} />
           <Radio label={t("resource.basisTitle")} value={basis} onChange={(v) => setBasis(v as "per_booking" | "per_person")} options={[{ value: "per_booking", label: t("resource.perBooking.title"), helper: t("resource.perBooking.helper") }, { value: "per_person", label: t("resource.perPerson.title"), helper: t("resource.perPerson.helper") }]} />
-          <DurationInput label={t("resource.gap")} value={buffer} onChange={setBuffer} chips={[0, 10, 15, 30]} className="max-w-xs" />
           {footer(finishResource, picked.length === 0 ? t("missing.resource") : null)}
         </div>
       )}
@@ -282,6 +305,10 @@ export function BookingSetup({
           </div>
           <DurationInput label={t("provider.howLong")} value={parseInt(provDuration, 10) || 60} min={5} onChange={(n) => setProvDuration(String(n))} chips={[30, 45, 60, 90]} className="max-w-xs" />
           <FormField label={t("provider.pickable")} variant="toggle" checked={provPickable} onChange={(e) => setProvPickable((e.target as HTMLInputElement).checked)} help={t("provider.pickableHelp", { on: provPickable ? "yes" : "no" })} />
+          {/* An appointment has no later "when" step — availability comes
+              from who is free, not a weekly pattern — so this is the only
+              place to ask how long the {noun} is kept free afterwards. */}
+          <BufferField value={provBuffer} onChange={setProvBuffer} noun={provNoun} className="max-w-xs" />
           {footer(finishProvider, provIds.length === 0 ? t("missing.provider") : null)}
         </div>
       )}

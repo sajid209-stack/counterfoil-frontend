@@ -65,5 +65,12 @@
   "checkInCount": "Check in {count, number}",
   "plusOne": "+1",
   "rowMenu": "More options for {name}",
-  "plusOneLabel": "Check in 1 person"
+  "plusOneLabel": "Check in 1 person",
+  "moveBtn": "Move",
+  "moved": "Moved to {day} {time}",
+  "refundBtn": "Refund",
+  "refundFailed": "Couldn't send the request. Try again.",
+  "refundSent": "Refund request sent to a manager",
+  "refundedNow": "Refunded {amount}. Give it back by {method}.",
+  "discountApplied": "Discount of {amount} applied. Paid in full."
 }

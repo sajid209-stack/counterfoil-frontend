@@ -165,3 +165,34 @@ export function takeReturnTo(): string | null {
     return null;
   }
 }
+
+/**
+ * A snapshot of the sale as it stood the instant before checkout — held only
+ * long enough for the completion screen's 5-second Undo. The live sale is
+ * cleared the moment checkout succeeds ("a completed sale must never come
+ * back"), so Undo needs its own copy to hand back if the cashier changes
+ * their mind: the same lines, customer, discount and coupon, restored as the
+ * live sale so the cart reads exactly as it did before the mistake.
+ */
+const UNDO = "pos_undo";
+
+export function writeUndoSnapshot(sale: LiveSale): void {
+  try {
+    sessionStorage.setItem(UNDO, JSON.stringify(sale));
+  } catch {
+    /* Undo just won't restore the cart; the cancelled order is unaffected. */
+  }
+}
+
+/** Read it once and forget it — the same shape `takeReturnTo` uses. */
+export function takeUndoSnapshot(): LiveSale | null {
+  try {
+    const raw = sessionStorage.getItem(UNDO);
+    sessionStorage.removeItem(UNDO);
+    if (!raw) return null;
+    const v = JSON.parse(raw) as LiveSale;
+    return Array.isArray(v?.cart) ? v : null;
+  } catch {
+    return null;
+  }
+}

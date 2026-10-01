@@ -15109,3 +15109,162 @@ manager decides.
 - The refund queue in Orders is not narrowed to the venue in the bar — a
   request is an inbox item, not a report. Say if it should be.
 - The deck PDF is not rebuilt.
+
+## A storefront you can click through, a 5-second undo, refunds / moves / after-game discounts at the counter, and time between bookings (2026-10-02)
+
+Owner: *"need to work on storefront UI and UX more … show the full work flow
+that I can get by preview clicking and usable buttons, in mean full
+prototyping, and in POS payment checkout can be cancel within 5 seconds, so we
+need to show a undo 5 second option. and POS needs refund, reschedule and after
+game discount/post match discount option, while customers give the due pay / in
+catalog onboarding there should be a buffer time field … for those catalogs
+what uses timeslots system"* — researched against the best POS and booking
+products, and built.
+
+The same message asked for a standing rule on how work is split between
+models. It is in the global `~/.claude/CLAUDE.md` and in memory: plan, design
+and verify on Opus; build in small tasks with clear file ownership on Sonnet
+(normal tasks) or Haiku (mechanical ones); every sub-agent result is verified
+before it is reported or committed. This batch was split that way. Two of the
+Sonnet tasks (storefront, counter actions) stopped on the weekly rate limit and
+were finished and verified on Opus.
+
+### The storefront is a full prototype
+
+The venue page and the booking page existed and sold nothing — "Buy at the
+counter" was the end of the road. Now a guest can do the whole thing:
+
+- **Booking page** → choose a date (the next open days as chips), a time where
+  the booking has them (a departure list for shows and tours, an hour grid for
+  courts and fields — past times today cannot be chosen), and how many of each
+  ticket type; the total updates as they choose → **Add to basket**.
+- **A basket bar** follows them across the venue's pages ("2 items · ৳1,150 ·
+  View basket"); the basket lists each booking with its date and time, lets
+  them remove one, and totals subtotal, VAT and total.
+- **Checkout**: name, an 11-digit mobile number (where the ticket is texted),
+  an optional e-mail, how to pay (bKash, Card, Bangla QR), and the booking
+  terms — each refused in words beside the field. **Pay ৳X** runs a short
+  simulated payment step.
+- **Confirmation**: "Booking confirmed!", the reference, each ticket with its
+  QR, Add to calendar, and Download / print tickets.
+- **The live page makes a real order** in the demo's data (`checkout()`,
+  channel online), so it appears in Orders and Transactions. **The preview in
+  Settings → Storefront runs the same screens and writes nothing** — the
+  confirmation says "Preview — no real order was made".
+- Totals come from `buildOrderLines`, the engine every other order is built
+  with, so the basket and the receipt cannot disagree. The basket is kept per
+  venue in this browser (`sessionStorage`), so it survives moving between
+  pages.
+- `lib/storefront/` holds the basket, what each booking type asks
+  (`pattern.ts`) and the data hook; the screens are in
+  `app/s/_components/flow/`, routes `/s/[slug]/basket`, `/s/[slug]/checkout`
+  and `/s/[slug]/done/[orderId]`.
+
+Fixed in review: VAT was 100× too high (a percent passed where a fraction was
+expected); the print link opened a new tab, which loses the in-memory order;
+times already past today could be booked.
+
+### Undo a sale for 5 seconds
+
+The completion screen now opens with **"Wrong sale? Undo within 5 seconds."**
+and an **Undo sale** button with a bar that drains over 5 seconds. Gmail's and
+Material's pattern: the sale happens at once, and the mistake can be taken
+back — no "are you sure" in front of every sale.
+
+Undo calls `cancelSale` (`lib/api/orders.ts`), which takes back everything the
+sale did: the tickets are cancelled, its bookings are cancelled so the slot
+goes back on sale, stock goes back on the shelf, a reversing payment is
+written, and the order stays on the record as **Cancelled** with who undid it.
+The API checks the window too (5 seconds plus 2 of grace), so a late tap
+cannot undo a sale whose guest is already at the gate: "Too late to undo this
+sale. Refund it instead." A cash sale says how much to hand back.
+
+### Refund, move and after-game discount at the counter
+
+All three are on a booked slot's sheet in the Schedule and in Check-in's row
+menu.
+
+- **Refund** — the amount comes from what was paid for that booking (VAT
+  included), with a reason. **Who decides depends on the role**: if the
+  signed-in person can refund that amount on their own (the role's refund limit
+  — Nadia, a supervisor, can refund up to ৳5,000), the button reads **Refund
+  ৳X now** and the money and the slot come back at once, with the method to
+  give it back by. Over the limit it reads **Send to a manager**, and the
+  request waits in Orders as before.
+- **Move** — pick another day and time (7 open days, then More dates). The
+  hours that cannot be taken are struck through, the current one is marked
+  "Now", and hours already past today cannot be chosen. It checks the place is
+  free for the whole booking, including the time between bookings, and leaves
+  the booking itself out of that check. Same price, so nothing to pay or refund.
+- **Take the balance, with an after-game discount** — "Give a discount": ৳ or
+  %, a reason (Game ran short, Facility problem, Regular customer, Something
+  else), and the sum stated — "Owed ৳100.00 − discount ৳20.00 = Take ৳80.00".
+  Over the role's discount limit it says so in words rather than quietly
+  cutting the number down. The discount is added as its own order line at the
+  booking's VAT rate (`discountOrderBalance`), so VAT falls with the price and
+  reports see it. The sheet opens on Cash, so Take works at once.
+
+### Time between bookings
+
+The booking wizard and the booking editor now ask **"Time between bookings"**
+for anything sold in time slots (courts, fields, lanes, timed sessions, guided
+tours, appointments) — the gap kept free after each booking for cleaning and
+changeover, like Calendly's and Acuity's buffers. The help line follows the
+value ("The court is kept free for 15 min after each booking"), and a small
+timeline shows "6:00 – 7:00 PM | 15 min free | 7:15 PM next". If the gap makes
+slots overlap, the schedule says so and offers to space them out. The
+availability engine honours it (`isOwnerFree`, `freeGuides`).
+
+### Found in final review
+
+- **The Move button ran off a phone screen** ("Move to Wed 29 Jul 10:00 AM",
+  cut at the edge). The sheet buttons could not shrink below their text
+  (`min-w-0` added) and the label is short now: "Move: Today, 1 PM".
+- **Move offered hours already past today.**
+- **The balance sheet's Take button was greyed out** until a method was picked,
+  with nothing saying why. It opens on Cash.
+- **The till-to-manager refund test** could no longer reach the manager path
+  (one lane hour is inside Nadia's own limit). It now lowers the supervisor's
+  limit first, and the whole request → approve / decline path passes again.
+
+### Verified
+
+- **Storefront**: the live journey **31/31** (booking page → basket → checkout
+  → confirmation, the order then in Orders), the Settings preview **14/14**
+  (same screens, nothing written), dark and Bangla **6/6**.
+- **Undo**: **17/17** at 390 and at 1280 (undo within the window, the slot back
+  on sale, the order cancelled with a reversing payment, the cash sentence,
+  too late refused in words), and **5/5** on the edge cases.
+- **Counter actions**: refund at the till **16/16**; the till-to-manager path
+  **12/12** (request → approve frees the slot; decline keeps it and the counter
+  sees why); move **12/12** at 390 and 1280; after-game discount **9/9** at
+  both; Check-in's menu **7/7**.
+- **Time between bookings**: **15/15**, **7/7**, **7/7**, **20/20** and
+  **12/12** across courts, timed sessions, overlap, overflow and phone.
+- Standing: till **38/38** and **36/36**, round-3 **24/24**, Schedule **31/31**
+  at 390 and 1440 and **4/4**, new sale **2/2**, printing **4/4**, top cards
+  **102/102**.
+- Whole-product sweep: **51 routes clean** at 390 English, 390 Bangla dark and
+  1440 English; **0** 24-hour times on screen. Phone audit: hidden 0, clipped
+  0, under-44 0, errors 0 (the 14 sub-12px items are the deck, as documented).
+  POS audit: only the declared white-on-ember rule and the check-in search
+  field (42px inside its 44px pill), both documented.
+- `tsc` clean; `eslint` on every changed and new file reports only
+  `PosScreen`'s documented 2 errors / 3 warnings; i18n parity 0 missing /
+  0 extra.
+
+### Open
+
+- **`/sell` and `/classic` have no undo.** `/pos` is the till this followed.
+- **The storefront sells the common booking shapes only** — dated tickets,
+  departures, and hours on a court or field. Therapists, seat maps, courses,
+  credit packs and bundles still sell as a plain ticket there.
+- **On the storefront in Bangla**, the place name inside the line under a
+  booking ("court", "lane") stays in English.
+- **The till's own booking sheet does not yet keep the gap for a therapist
+  (provider) booking**; courts, fields, lanes and guides do.
+- **The refund queue in Orders is not narrowed to the venue in the bar.**
+- The deck PDF is not rebuilt.
+- The `settings-nav` and `catalog-e2e` harnesses still assert wording from
+  before the plain-language pass.
+

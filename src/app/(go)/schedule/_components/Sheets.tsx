@@ -1,21 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { Check, ChevronLeft, Clock, Lock, Minus, Plus, RotateCcw, ShoppingBag, Unlock, UserCheck } from "lucide-react";
-import { Sheet } from "@/components/ui";
+import {
+  Banknote,
+  CalendarClock,
+  Check,
+  ChevronLeft,
+  Clock,
+  CreditCard,
+  Lock,
+  Minus,
+  Percent,
+  Plus,
+  QrCode,
+  RotateCcw,
+  Send,
+  ShoppingBag,
+  Unlock,
+  UserCheck,
+  X,
+} from "lucide-react";
+import { DateStrip, Sheet } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { formatClockOf, formatClockRange, formatMoney, formatPriceShort } from "@/lib/format";
-import type { Product } from "@/lib/api";
+import { formatClock, formatClockOf, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
+import { useEnumLabels } from "@/lib/labels";
+import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay, toMinutes, toTime } from "@/lib/schedule";
+import { isOpenOn, type Minor, type PaymentMethod, type Product } from "@/lib/api";
 import { REFUND_REASONS, type RefundReason, type RefundRequest } from "@/lib/api/refundRequests";
+import { discountMinorFrom, withinDiscountLimit, type DiscountMode } from "../_lib/discount";
+import { resourceMoveTimes, sessionMoveTimes, type MoveTime } from "../_lib/moveOptions";
 import { type Block, type Column } from "../_lib/board";
+import { ClockCell } from "../../_components/Clock";
 
 /* The two big buttons every sheet here ends on, always in the same places:
    Hold on the LEFT, Add to sale on the RIGHT. A cashier who cannot read the
    words learns "orange on the right sells it" once and never has to look
    again — and it is the same pair, in the same order, as the bar under the
    board. */
-const BASE = "inline-flex items-center justify-center gap-tight rounded-full px-comfortable text-[1rem] font-semibold transition-transform duration-quick active:scale-[0.98] disabled:opacity-50";
+const BASE = "inline-flex min-w-0 items-center justify-center gap-tight rounded-full px-comfortable text-[1rem] font-semibold transition-transform duration-quick active:scale-[0.98] disabled:opacity-50";
 /** The two buttons, at a height. Built here rather than overridden at the
  *  call site: `cn` does not merge conflicting utilities, so "h-14 h-13" is
  *  decided by stylesheet order, not by intent. */
@@ -322,6 +345,16 @@ export function BlockSheet({
   refund,
   onRefund,
   onWithdrawRefund,
+  /** Offered whenever the booking can be moved — hidden rather than disabled,
+   *  the way a cashier under pressure expects a button that is not for now. */
+  canMove,
+  onMove,
+  /** What is still owed on this booking's order. Above zero, the orange
+   *  button takes it (and offers the after-game discount) instead of
+   *  checking the party in — the same order check-in already keeps: money
+   *  first, then the door. */
+  owed,
+  onTake,
   busy,
 }: {
   open: boolean;
@@ -337,6 +370,10 @@ export function BlockSheet({
   refund?: { pending: RefundRequest | null; last: RefundRequest | null; refundable: boolean };
   onRefund?: () => void;
   onWithdrawRefund?: () => void;
+  canMove?: boolean;
+  onMove?: () => void;
+  owed?: Minor;
+  onTake?: () => void;
   busy: boolean;
 }) {
   const t = useTranslations("schedule");
@@ -392,22 +429,37 @@ export function BlockSheet({
       closeLabel={tc("close")}
       lead={<p className="text-[0.875rem] font-medium text-muted">{block.product?.name ?? ""}</p>}
       footer={(() => {
-        /* Refund is the left-hand, "not the usual thing" button; Check in
-           stays the orange one on the right. While a request is waiting,
-           Refund is not offered again — the sheet says what is waiting. */
+        /* Refund and Move are the left-hand, "not the usual thing" buttons;
+           the orange one on the right is always the step that moves the
+           booking on — taking what is owed, or letting the party in. While a
+           refund is waiting, Refund is not offered again — the sheet says
+           what is waiting. Owing money comes before the door, the same order
+           Check-in itself keeps. */
         const canRefund = !!onRefund && !!refund?.refundable && !refund.pending;
-        const canCheckIn = isToday && !allIn && !block.noShow;
-        if (!canRefund && !canCheckIn) return undefined;
+        const move = !!onMove && !!canMove;
+        const take = !!onTake && (owed ?? 0) > 0;
+        const canCheckIn = !take && isToday && !allIn && !block.noShow;
+        const secondaries: { key: string; icon: ReactNode; label: string; onClick: () => void }[] = [
+          ...(canRefund ? [{ key: "refund", icon: <RotateCcw size={20} strokeWidth={2} aria-hidden />, label: t("refund.action"), onClick: onRefund as () => void }] : []),
+          ...(move ? [{ key: "move", icon: <CalendarClock size={20} strokeWidth={2} aria-hidden />, label: t("sheet.move"), onClick: onMove as () => void }] : []),
+        ];
+        if (!secondaries.length && !take && !canCheckIn) return undefined;
         return (
           <div className="flex w-full gap-tight">
-            {canRefund && (
-              <button type="button" className={canCheckIn ? SECONDARY : secondary("h-14", "flex-1")} onClick={onRefund} disabled={busy}>
-                <RotateCcw size={20} strokeWidth={2} aria-hidden />
-                {t("refund.action")}
+            {secondaries.map((s) => (
+              <button key={s.key} type="button" className={secondary("h-14", "flex-1")} onClick={s.onClick} disabled={busy}>
+                {s.icon}
+                <span className="truncate">{s.label}</span>
+              </button>
+            ))}
+            {take && (
+              <button type="button" className={secondaries.length ? primary("h-14", "flex-[1.3]") : PRIMARY} onClick={onTake} disabled={busy}>
+                <Banknote size={20} strokeWidth={2} aria-hidden />
+                <span className="truncate">{t("sheet.takeAmount", { amount: formatMoney(owed ?? 0) })}</span>
               </button>
             )}
-            {canCheckIn && (
-              <button type="button" className={canRefund ? PRIMARY_WIDE : PRIMARY} onClick={onCheckIn} disabled={busy}>
+            {!take && canCheckIn && (
+              <button type="button" className={secondaries.length ? primary("h-14", "flex-[1.3]") : PRIMARY} onClick={onCheckIn} disabled={busy}>
                 <UserCheck size={20} strokeWidth={2} aria-hidden />
                 <span className="truncate">{t("sheet.checkIn", { count: b.partySize })}</span>
               </button>
@@ -464,6 +516,9 @@ export function RefundSheet({
   title,
   when,
   amount,
+  /** This till's role can give the money back itself, within its limit — the
+   *  primary button does it on the spot instead of asking a manager. */
+  direct = false,
   onSend,
   busy,
 }: {
@@ -472,6 +527,7 @@ export function RefundSheet({
   title: string;
   when: string;
   amount: number;
+  direct?: boolean;
   onSend: (reason: RefundReason, note: string) => void;
   busy: boolean;
 }) {
@@ -504,7 +560,7 @@ export function RefundSheet({
           </button>
           <button type="button" className={PRIMARY_WIDE} onClick={send} disabled={busy}>
             <RotateCcw size={20} strokeWidth={2} aria-hidden />
-            <span className="truncate">{t("refund.send")}</span>
+            <span className="truncate">{direct ? t("refund.sendNow", { amount: formatMoney(amount) }) : t("refund.send")}</span>
           </button>
         </div>
       }
@@ -556,7 +612,444 @@ export function RefundSheet({
           />
           {err && <span id="refund-note-err" className="text-[0.875rem] font-medium text-danger">{err}</span>}
         </label>
-        <p className="text-[0.8125rem] text-muted">{t("refund.lead")}</p>
+        <p className="text-[0.8125rem] text-muted">{direct ? t("refund.leadDirect") : t("refund.lead")}</p>
+      </div>
+    </Sheet>
+  );
+}
+
+/**
+ * Move an already-booked slot to another day or hour — Square Appointments'
+ * and Fresha's reschedule, built from the same two questions the till asks
+ * when it first sells the time: which day, then which hour.
+ *
+ * The booking's own place stays the same (the API that moves a booking's
+ * time does not yet carry a place to move it to — see the report). Taken
+ * hours are struck through; the hour the booking already has is marked
+ * rather than offered, since choosing it again is not a move.
+ */
+export function MoveSheet({
+  open,
+  onClose,
+  title,
+  product,
+  resourceId,
+  placeName,
+  date,
+  time,
+  durationMinutes,
+  bufferMinutes,
+  partySize,
+  bookingId,
+  onConfirm,
+  busy,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  product: Product;
+  /** Null for a show or tour — a slot-based booking with no place of its own. */
+  resourceId: string | null;
+  placeName: string;
+  date: string;
+  time: string;
+  durationMinutes: number;
+  bufferMinutes: number;
+  partySize: number;
+  bookingId: string;
+  onConfirm: (date: string, time: string) => void;
+  busy: boolean;
+}) {
+  const t = useTranslations("schedule");
+  const tc = useTranslations("common");
+  const [selDate, setSelDate] = useState(date);
+  const [selTime, setSelTime] = useState<string | null>(null);
+
+  const dates = useMemo(() => {
+    const out: string[] = [];
+    for (let i = 0; out.length < 7 && i < 30; i++) {
+      const d = demoDay(i);
+      if (isOpenOn(product, d)) out.push(d);
+    }
+    return out;
+  }, [product]);
+
+  const times = useMemo<MoveTime[]>(() => {
+    const all = resourceId
+      ? resourceMoveTimes({ product, resourceId, date: selDate, durationMinutes, bufferMinutes, excludeBookingId: bookingId, nowDate: date, nowTime: time })
+      : sessionMoveTimes({ product, date: selDate, partySize, nowDate: date, nowTime: time });
+    // A booking cannot be moved to an hour that has already started today.
+    if (selDate !== DEMO_TODAY) return all;
+    return all.map((c) => (!c.isNow && toMinutes(c.time) < DEMO_NOW_MINUTES ? { ...c, free: false } : c));
+  }, [product, resourceId, selDate, durationMinutes, bufferMinutes, bookingId, date, time, partySize]);
+
+  const changed = !!selTime && (selDate !== date || selTime !== time);
+  // Short, so the button fits a phone: "Today", "Tomorrow", or "Fri 31 Jul".
+  const dayLabel = selDate === DEMO_TODAY ? tc("today") : selDate === demoDay(1) ? t("sheet.moveTomorrow") : formatDay(selDate, { weekday: true });
+
+  const confirm = () => {
+    if (!changed || !selTime) return;
+    onConfirm(selDate, selTime);
+  };
+
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={t("sheet.moveTitle")}
+      closeLabel={tc("close")}
+      lead={<p className="text-[0.875rem] font-medium text-muted">{title} · {placeName} · {formatClockRange(time, toTime(toMinutes(time) + durationMinutes))}</p>}
+      footer={
+        <div className="flex w-full gap-tight">
+          <button type="button" className={SECONDARY} onClick={onClose} disabled={busy}>
+            <ChevronLeft size={20} strokeWidth={2} aria-hidden />
+            {t("sheet.back")}
+          </button>
+          <button type="button" className={PRIMARY_WIDE} onClick={confirm} disabled={busy || !changed}>
+            <CalendarClock size={20} strokeWidth={2} aria-hidden />
+            <span className="truncate">{changed && selTime ? t("sheet.moveTo", { day: dayLabel, time: formatClock(selTime, { short: true }) }) : t("sheet.moveTitle")}</span>
+          </button>
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-section p-card">
+        <DateStrip
+          flat
+          dates={dates}
+          value={selDate}
+          onChange={(d) => { setSelDate(d); setSelTime(null); }}
+          today={DEMO_TODAY}
+          tomorrow={demoDay(1)}
+          min={DEMO_TODAY}
+          labels={{ today: tc("today"), tomorrow: t("sheet.moveTomorrow"), pick: t("sheet.movePick"), previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth") }}
+        />
+
+        {times.length === 0 ? (
+          <p className="text-[0.875rem] text-muted">{t("sheet.moveClosed")}</p>
+        ) : (
+          <div className="go-surface overflow-hidden rounded-go">
+            <div className="-mb-px -mr-px grid grid-cols-4">
+              {times.map((cell) => {
+                if (cell.isNow) {
+                  return (
+                    <div key={cell.time} className="flex min-h-14 flex-col items-center justify-center gap-0.5 border-b border-r border-line bg-surface px-1 py-1 text-muted">
+                      <ClockCell hhmm={cell.time} className="text-[0.9375rem] font-semibold tabular-nums" />
+                      <span className="text-[0.8125rem] font-medium">{t("sheet.moveNow")}</span>
+                    </div>
+                  );
+                }
+                if (!cell.free) {
+                  return (
+                    <span key={cell.time} className="flex min-h-14 items-center justify-center border-b border-r border-line bg-surface px-1 py-1 text-[0.875rem] text-muted line-through">
+                      <ClockCell hhmm={cell.time} className="line-through" />
+                    </span>
+                  );
+                }
+                const chosen = selTime === cell.time;
+                return (
+                  <button
+                    key={cell.time}
+                    type="button"
+                    aria-pressed={chosen}
+                    data-focus-inset
+                    onClick={() => setSelTime(cell.time)}
+                    className={cn(
+                      "relative flex min-h-14 items-center justify-center border-b border-r border-line px-1 py-1 text-[0.9375rem] font-semibold transition-colors duration-quick",
+                      chosen ? "bg-ember-solid text-white" : "bg-card text-fg active:bg-ember/10",
+                    )}
+                  >
+                    {chosen && <Check size={12} strokeWidth={3} className="absolute right-1 top-1" aria-hidden />}
+                    <ClockCell hhmm={cell.time} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <p className="text-[0.8125rem] text-muted">{t("sheet.movePriceNote")}</p>
+      </div>
+    </Sheet>
+  );
+}
+
+// ── the after-game discount, given while the till takes what is still owed ──
+
+export type DiscountReasonKey = "gameShort" | "facilityProblem" | "regularCustomer" | "other";
+export const DISCOUNT_REASONS: DiscountReasonKey[] = ["gameShort", "facilityProblem", "regularCustomer", "other"];
+
+export interface DiscountState {
+  open: boolean;
+  mode: DiscountMode;
+  raw: string;
+  reasonKey: DiscountReasonKey;
+  note: string;
+}
+
+export const emptyDiscount = (): DiscountState => ({ open: false, mode: "amount", raw: "", reasonKey: "gameShort", note: "" });
+
+export interface DiscountCalc {
+  /** Minor units to take off — zero when no discount is in play. */
+  minor: Minor;
+  /** Something was typed, so an error (if any) is worth showing. */
+  hasAmount: boolean;
+  overLimit: boolean;
+  overOwed: boolean;
+  needsNote: boolean;
+  valid: boolean;
+}
+
+/** What a discount's own fields add up to, checked against the role's cap and
+ *  what is actually owed — pure, so the sheet and the page agree on whether
+ *  Confirm is allowed without either of them recomputing it differently. */
+export function discountFromState(state: DiscountState, orderTotal: Minor, owed: Minor, limitPct: number | null): DiscountCalc {
+  if (!state.open) return { minor: 0, hasAmount: false, overLimit: false, overOwed: false, needsNote: false, valid: true };
+  const minor = discountMinorFrom(state.mode, parseFloat(state.raw) || 0, orderTotal);
+  const hasAmount = minor > 0;
+  const overLimit = hasAmount && !withinDiscountLimit(minor, orderTotal, limitPct);
+  const overOwed = hasAmount && minor > owed;
+  const needsNote = hasAmount && state.reasonKey === "other" && !state.note.trim();
+  return { minor: hasAmount ? minor : 0, hasAmount, overLimit, overOwed, needsNote, valid: !hasAmount || (!overLimit && !overOwed && !needsNote) };
+}
+
+/** The reason text `discountOrderBalance` records — the chip's own words, or
+ *  the note typed for "Something else". */
+export function discountReasonText(state: DiscountState, label: (key: DiscountReasonKey) => string): string {
+  return state.reasonKey === "other" ? state.note.trim() : label(state.reasonKey);
+}
+
+/**
+ * The discount row every balance-taking screen offers before the payment
+ * method: closed to a single "Give a discount" button until tapped, then an
+ * amount (taka or percent), a reason as four large chips, and the one sum a
+ * cashier needs to read back to the guest.
+ *
+ * Fully controlled — no state of its own — so Check-in's own balance dialog
+ * can hold exactly this inside its own `Modal` rather than a second copy of
+ * the same logic drifting from this one.
+ */
+export function DiscountFields({
+  state,
+  setState,
+  orderTotal,
+  owed,
+  limitPct,
+}: {
+  state: DiscountState;
+  setState: (next: DiscountState) => void;
+  orderTotal: Minor;
+  owed: Minor;
+  limitPct: number | null;
+}) {
+  const t = useTranslations("schedule");
+  const calc = discountFromState(state, orderTotal, owed, limitPct);
+
+  if (!state.open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setState({ ...state, open: true })}
+        className="flex min-h-11 w-full items-center justify-center gap-tight rounded-go border-2 border-dashed border-line text-[0.9375rem] font-semibold text-fg active:bg-ember/10"
+      >
+        <Percent size={18} strokeWidth={2} aria-hidden />
+        {t("discount.give")}
+      </button>
+    );
+  }
+
+  const take = Math.max(0, owed - calc.minor);
+
+  return (
+    <div className="flex flex-col gap-tight rounded-go border border-line bg-surface p-comfortable">
+      <div className="flex items-center justify-between gap-tight">
+        <span className="text-[0.9375rem] font-semibold text-fg">{t("discount.give")}</span>
+        <button type="button" aria-label={t("discount.remove")} onClick={() => setState(emptyDiscount())} className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted hover:bg-muted-wash">
+          <X size={16} strokeWidth={2} aria-hidden />
+        </button>
+      </div>
+
+      <div className="flex items-stretch gap-tight">
+        <div role="radiogroup" aria-label={t("discount.amountLabel")} className="flex shrink-0 overflow-hidden rounded-go-sm border border-line">
+          {(["amount", "percent"] as DiscountMode[]).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="radio"
+              aria-checked={state.mode === m}
+              onClick={() => setState({ ...state, mode: m })}
+              className={cn("flex h-11 w-11 items-center justify-center text-[1rem] font-semibold", state.mode === m ? "bg-ember-solid text-white" : "bg-card text-fg")}
+            >
+              {m === "amount" ? "৳" : "%"}
+            </button>
+          ))}
+        </div>
+        <input
+          inputMode="decimal"
+          aria-label={t("discount.amountLabel")}
+          value={state.raw}
+          onChange={(e) => setState({ ...state, raw: e.target.value })}
+          placeholder="0"
+          className="h-11 min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable text-[1rem] outline-none focus:border-ember"
+        />
+      </div>
+
+      <div role="radiogroup" aria-label={t("discount.reasonLabel")} className="grid grid-cols-2 gap-tight">
+        {DISCOUNT_REASONS.map((r) => {
+          const on = state.reasonKey === r;
+          return (
+            <button
+              key={r}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => setState({ ...state, reasonKey: r })}
+              className={cn(
+                "flex min-h-11 items-center justify-center rounded-go-sm border-2 px-tight text-center text-[0.875rem] font-semibold",
+                on ? "border-ember-solid bg-ember-solid text-white" : "border-line bg-card text-fg",
+              )}
+            >
+              {on && <Check size={14} strokeWidth={3} className="mr-1 shrink-0" aria-hidden />}
+              {t(`discount.reasons.${r}`)}
+            </button>
+          );
+        })}
+      </div>
+
+      {state.reasonKey === "other" && (
+        <input
+          aria-label={t("discount.noteLabelRequired")}
+          value={state.note}
+          onChange={(e) => setState({ ...state, note: e.target.value })}
+          placeholder={t("discount.notePlaceholder")}
+          className="h-11 rounded-go-sm border border-line bg-card px-comfortable text-[0.9375rem] outline-none focus:border-ember"
+        />
+      )}
+
+      {calc.overOwed && <p role="alert" className="text-[0.8125rem] font-medium text-danger">{t("discount.overOwed")}</p>}
+      {calc.overLimit && <p role="alert" className="text-[0.8125rem] font-medium text-danger">{t("discount.overLimit", { pct: limitPct ?? 0 })}</p>}
+      {calc.needsNote && <p role="alert" className="text-[0.8125rem] font-medium text-danger">{t("discount.noteRequired")}</p>}
+
+      {calc.valid && calc.hasAmount && (
+        <p className="text-[0.9375rem] font-semibold tabular-nums text-fg">
+          {t("discount.mathsLine", { owed: formatMoney(owed), discount: formatMoney(calc.minor), take: formatMoney(take) })}
+        </p>
+      )}
+    </div>
+  );
+}
+
+const METHOD_ICON: Partial<Record<PaymentMethod, typeof Banknote>> = {
+  cash: Banknote,
+  bkash: Send,
+  bangla_qr: QrCode,
+  card_terminal: CreditCard,
+};
+
+/**
+ * Take what a booking's order still owes — with the after-game discount
+ * folded in, so the cashier sees exactly one number by the end: what the
+ * guest hands over.
+ */
+export function TakeBalanceSheet({
+  open,
+  onClose,
+  title,
+  when,
+  orderTotal,
+  owed,
+  limitPct,
+  methods,
+  onConfirm,
+  busy,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  when: string;
+  orderTotal: Minor;
+  owed: Minor;
+  limitPct: number | null;
+  methods: PaymentMethod[];
+  onConfirm: (opts: { discountMinor: Minor; reasonText: string; method: PaymentMethod | null; payAmount: Minor }) => void;
+  busy: boolean;
+}) {
+  const t = useTranslations("schedule");
+  const tc = useTranslations("common");
+  const enumL = useEnumLabels();
+  const [discount, setDiscount] = useState<DiscountState>(emptyDiscount());
+  // Opens on the first method the till offers (cash), as the till's own
+  // payment sheet does — so Take works at once, and changing it is one tap.
+  const [picked, setMethod] = useState<PaymentMethod | null>(null);
+  const method = picked ?? methods[0] ?? null;
+
+  const calc = discountFromState(discount, orderTotal, owed, limitPct);
+  const take = Math.max(0, owed - calc.minor);
+  const ready = calc.valid && (take === 0 || !!method);
+
+  const confirm = () => {
+    if (!ready) return;
+    onConfirm({
+      discountMinor: calc.minor,
+      reasonText: discountReasonText(discount, (k) => t(`discount.reasons.${k}`)),
+      method,
+      payAmount: take,
+    });
+  };
+
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={t("sheet.takeTitle")}
+      closeLabel={tc("close")}
+      lead={<p className="text-[0.875rem] font-medium text-muted">{title} · {when}</p>}
+      footer={
+        <div className="flex w-full gap-tight">
+          <button type="button" className={SECONDARY} onClick={onClose} disabled={busy}>
+            <ChevronLeft size={20} strokeWidth={2} aria-hidden />
+            {t("sheet.back")}
+          </button>
+          <button type="button" className={PRIMARY_WIDE} onClick={confirm} disabled={busy || !ready}>
+            <Banknote size={20} strokeWidth={2} aria-hidden />
+            <span className="truncate">{take > 0 ? t("sheet.takeAmount", { amount: formatMoney(take) }) : t("discount.applyOnly")}</span>
+          </button>
+        </div>
+      }
+    >
+      <div className="flex flex-col gap-section p-card">
+        <div className="flex items-baseline justify-between gap-comfortable">
+          <span className="text-[0.875rem] text-muted">{t("sheet.owed")}</span>
+          <span className="text-[1.25rem] font-bold tabular-nums text-fg">{formatMoney(owed)}</span>
+        </div>
+
+        <DiscountFields state={discount} setState={setDiscount} orderTotal={orderTotal} owed={owed} limitPct={limitPct} />
+
+        {take > 0 && (
+          <div className="flex flex-col gap-tight">
+            <span className="text-[0.875rem] font-semibold text-fg">{t("sheet.payBy")}</span>
+            <div className="grid grid-cols-2 gap-tight">
+              {methods.map((m) => {
+                const Icon = METHOD_ICON[m] ?? Banknote;
+                const on = method === m;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setMethod(m)}
+                    className={cn(
+                      "flex min-h-14 items-center justify-center gap-tight rounded-go border-2 px-comfortable text-[0.9375rem] font-semibold",
+                      on ? "border-ember-solid bg-ember-solid text-white" : "border-line bg-card text-fg",
+                    )}
+                  >
+                    <Icon size={18} strokeWidth={2} aria-hidden />
+                    <span className="truncate">{enumL.method(m)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </Sheet>
   );

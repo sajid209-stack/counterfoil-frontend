@@ -23,11 +23,26 @@ export function ScheduleBuilder({
   value,
   onChange,
   team,
+  /** "Time between bookings", set beside this builder (ScheduleBufferField) —
+   *  passed in only so the overlap warning below can say so. Defaults to 0,
+   *  which reproduces the old warning exactly for every seeded product that
+   *  has no buffer set. */
+  bufferMinutes = 0,
+  /** The buffer field itself (`ScheduleBufferField`), rendered where it is
+   *  part of the same decision as the slot interval — directly under "A new
+   *  slot starts every / Each slot lasts" and before "First/Last slot" — so
+   *  cause (the buffer) and effect (the overlap warning right under it) are
+   *  never a screen apart. For a kind with no interval row (BT-05) it is the
+   *  first thing drawn, which is still the top of this form. `null`/`undefined`
+   *  draws nothing, which is what a kind that does not use a buffer passes. */
+  bufferSlot,
 }: {
   bookingType: BookingTypeCode;
   value: ProductSchedule;
   onChange: (schedule: ProductSchedule) => void;
   team: Staff[];
+  bufferMinutes?: number;
+  bufferSlot?: React.ReactNode;
 }) {
   const t = useTranslations("catalog.fields");
   const { dur, dayShort, dayLong } = useCatalogFormat();
@@ -76,18 +91,49 @@ export function ScheduleBuilder({
         <div className="grid gap-section sm:grid-cols-2">
           <DurationInput label={t("every")} value={value.slotMinutes} min={5} onChange={(n) => set("slotMinutes", n)} chips={DURATION_CHIPS} help={t("everyHelp")} />
           <DurationInput label={t("lasts")} value={value.sessionMinutes} min={5} onChange={(n) => set("sessionMinutes", n)} chips={DURATION_CHIPS} />
-          <TimeInput label={t("first")} value={value.startTime} onChange={(v) => set("startTime", v)} help={t("firstHelp")} />
-          <TimeInput label={t("last")} value={value.endTime} onChange={(v) => set("endTime", v)} />
-          <FormField label={t("holds")} variant="number" placeholder="20" value={String(value.capacityPerSession)} onChange={(e) => set("capacityPerSession", parseInt(e.target.value, 10) || 0)} />
-          {/* Allowed — a rotating group can overlap — but never silent: in one
-              room, a 45-minute show every 30 minutes cannot happen. */}
-          {value.sessionMinutes > value.slotMinutes && (
-            <p className="flex items-start gap-tight rounded-sm bg-warning-wash px-comfortable py-tight text-[13px] text-fg sm:col-span-2">
-              <AlertTriangle size={14} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-warning" />
-              {t("overlap", { lasts: dur(value.sessionMinutes), every: dur(value.slotMinutes) })}
-            </p>
-          )}
         </div>
+      )}
+
+      {/* "Time between bookings" sits right under the interval it is part of
+          the same decision as — for BT-05, which has no interval row above,
+          this is simply the first thing on the form. */}
+      {bufferSlot}
+
+      {isSlotBased(bookingType) && (
+        <>
+          {/* Allowed — a rotating group can overlap — but never silent: in one
+              room, a 45-minute show every 30 minutes cannot happen. Once a
+              buffer is set it counts too: the room is not free again the
+              instant the show ends. The fix button only appears when the
+              buffer is the (or a) cause, because only then is there a gap to
+              shorten or an interval to lengthen by exactly that much. */}
+          {value.sessionMinutes + bufferMinutes > value.slotMinutes && (
+            <div className="flex flex-col items-start gap-tight rounded-sm bg-warning-wash px-comfortable py-tight text-[13px] text-fg">
+              <p className="flex items-start gap-tight">
+                <AlertTriangle size={14} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0 text-warning" />
+                <span>
+                  {bufferMinutes > 0
+                    ? t("overlapWithBuffer", { lasts: dur(value.sessionMinutes), buffer: dur(bufferMinutes), every: dur(value.slotMinutes) })
+                    : t("overlap", { lasts: dur(value.sessionMinutes), every: dur(value.slotMinutes) })}
+                </span>
+              </p>
+              {bufferMinutes > 0 && (
+                <button
+                  type="button"
+                  onClick={() => set("slotMinutes", value.sessionMinutes + bufferMinutes)}
+                  className="ml-6 flex h-9 items-center rounded-sm border border-line bg-card px-comfortable text-[13px] font-medium hover:border-inverse"
+                >
+                  {t("bufferFixInterval", { time: dur(value.sessionMinutes + bufferMinutes) })}
+                </button>
+              )}
+            </div>
+          )}
+          <div className="grid gap-section sm:grid-cols-2">
+            <TimeInput label={t("first")} value={value.startTime} onChange={(v) => set("startTime", v)} help={t("firstHelp")} />
+            <TimeInput label={t("last")} value={value.endTime} onChange={(v) => set("endTime", v)} />
+            <FormField label={t("holds")} variant="number" placeholder="20" value={String(value.capacityPerSession)} onChange={(e) => set("capacityPerSession", parseInt(e.target.value, 10) || 0)} />
+          </div>
+        </>
       )}
 
       {isDailyCapped(bookingType) && (

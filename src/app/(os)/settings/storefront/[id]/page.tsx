@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { ArrowDown, ArrowUp, Copy, ExternalLink, Eye, Monitor, Plus, Smartphone, X } from "lucide-react";
 import { Button, EmptyState, PageShell, Sheet, StatusPill, useToast } from "@/components/ui";
 import { PreviewFrame } from "@/components/PreviewFrame";
-import { StorefrontView } from "@/app/s/_components/StorefrontView";
+import { StorefrontPreviewApp } from "@/app/s/_components/flow/StorefrontPreviewApp";
 import { cn } from "@/lib/cn";
 import { demoNow } from "@/lib/schedule";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -259,7 +259,7 @@ export default function StorefrontEditorPage() {
   };
   const preview = (d: Device) => (
     <PreviewFrame width={DEVICE[d].width} height={DEVICE[d].height} title={t("storefront.previewFrame", { name: location.name })}>
-      <StorefrontView
+      <StorefrontPreviewApp
         storefront={draftRecord}
         location={location}
         products={showing}
@@ -267,7 +267,6 @@ export default function StorefrontEditorPage() {
         resources={resourcesQ.data?.data ?? []}
         team={staffQ.data?.data ?? []}
         now={now}
-        preview
       />
     </PreviewFrame>
   );

@@ -364,8 +364,7 @@
       "perPerson": {
         "title": "A price for each person",
         "helper": "Price × number of people."
-      },
-      "gap": "Break between bookings"
+      }
     },
     "provider": {
       "callThem": "What do you call them?",
@@ -541,6 +540,7 @@
     "everyEach": "starts every {every} · lasts {each}",
     "everyEachOverlap": "starts every {every} · lasts {each} (slots overlap)",
     "windowWithLater": "{window}. You can change this under Rules after saving.",
+    "bufferLine": "{time} between bookings",
     "fullPreview": "Full page",
     "pane": {
       "make": "The event",
@@ -622,7 +622,15 @@
     "tierStandard": "Standard",
     "allDay": "Same price all day: {price}",
     "allDayEmpty": "Enter a ticket price above first",
-    "overlap": "Slots overlap. Each lasts {lasts}, but a new one starts every {every}. If you have only one room, start them {lasts} apart."
+    "overlap": "Slots overlap. Each lasts {lasts}, but a new one starts every {every}. If you have only one room, start them {lasts} apart.",
+    "overlapWithBuffer": "Slots overlap once the {buffer} gap is counted. Each lasts {lasts}, plus {buffer} to clear it, but a new one starts every {every}. If you have only one room, space them out more or shorten the gap.",
+    "bufferLabel": "Time between bookings",
+    "bufferHelpZero": "The next booking can start the moment one ends.",
+    "bufferHelpValue": "The {noun} is kept free for {time} after each booking — for cleaning and changeover.",
+    "bufferDefaultNoun": "place",
+    "bufferPreviewWithGap": "{range} | {gap} free | {next} next",
+    "bufferPreviewNoGap": "{range} | next booking can start right away",
+    "bufferFixInterval": "Start a new slot every {time}"
   },
   "day": {
     "short": {

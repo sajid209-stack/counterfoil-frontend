@@ -5,44 +5,32 @@ import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
 import { ProductThumb } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import type { Location, Product, Resource, Staff, Storefront } from "@/lib/api";
+import type { Product } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
 import { formatClockRange, formatPriceShort } from "@/lib/format";
+import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
 import { ACCENT_WASH, StorefrontChrome } from "./Chrome";
+import { StickyBasketBar } from "./flow/StickyBasketBar";
 
 /** Monday first, the way the rest of the app reads a week. */
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0] as const;
 
 /**
- * A venue's public page, drawn from whatever it is handed.
+ * A venue's public page, drawn from the flow's own data — the live route's
+ * saved record, or the editor's draft, so a preview always shows the page
+ * being typed rather than the one last saved.
  *
- * Split from the route so the editor can draw the page from its DRAFT — the
- * words being typed, the colour being tried, the bookings being reordered —
- * rather than from the saved record. A preview that shows the last save is a
- * preview of the wrong thing.
- *
- * `preview` turns navigation off: a draft's booking pages do not exist yet,
- * and a click inside a preview that leaves the editor loses the draft.
+ * Reads everything from `useStorefrontFlow()` rather than props: live and
+ * preview both provide the same shape through the one context, so this
+ * component cannot drift between the two the way two copies would.
  */
-export function StorefrontView({
-  storefront: sf,
-  location,
-  products,
-  slugs,
-  resources,
-  team,
-  now,
-  preview = false,
-}: {
-  storefront: Storefront;
-  location: Location;
-  products: Product[];
-  slugs: Record<string, string>;
-  resources: Resource[];
-  team: Staff[];
-  now: Date;
-  preview?: boolean;
-}) {
+export function StorefrontView() {
+  const flow = useStorefrontFlow();
+  const sf = flow.storefront;
+  const location = flow.location;
+  const products = flow.products;
+  const slugs = flow.slugs;
+  const now = flow.now;
   const t = useTranslations("storefront");
   const subtitle = useBehaviourSubtitle();
   const locale = useLocale();
@@ -62,7 +50,7 @@ export function StorefrontView({
   };
 
   return (
-    <StorefrontChrome storefront={sf} location={location} poweredBy={t("poweredBy")} preview={preview}>
+    <StorefrontChrome storefront={sf} location={location} poweredBy={t("poweredBy")} preview={flow.mode === "preview"}>
       {/* The venue, in its own words. The accent is a rule and a wash rather
           than a letterform: the hue is a ground here, never text, which is the
           rule ember has carried across this product since September. */}
@@ -87,28 +75,29 @@ export function StorefrontView({
         </p>
       </section>
 
-      {/* What's on. A card states what a booking IS and what it costs, and
-          nothing about availability — a public page that promised a specific
-          slot would be promising something only the till can hold. */}
+      {/* What's on. A card states what a booking IS and what it costs — and
+          now, because the owner reversed the decision, it is a door into
+          actually buying one. */}
       <section className="mt-major">
         <h2 className="text-base font-semibold tracking-[-0.4px]">{t("whatsOn")}</h2>
         {products.length === 0 ? (
           <p className="mt-comfortable text-[14px] text-muted">{t("nothingOn")}</p>
         ) : (
           <ul className="mt-section grid grid-cols-1 gap-section sm:grid-cols-2 lg:grid-cols-3">
-            {products.map((p) => {
+            {products.map((p: Product) => {
               const from = fromPrice(p.tiers);
               return (
                 <li key={p.id}>
-                  <CardLink
-                    href={preview ? null : `/s/${sf.slug}/${slugs[p.id]}`}
+                  <ProductCardLink
+                    productId={p.id}
+                    slug={slugs[p.id]}
                     className="card-surface flex h-full flex-col gap-tight p-card transition-transform duration-quick hover:-translate-y-0.5"
                   >
                     <div className="flex items-start gap-comfortable">
                       <ProductThumb images={p.images} name={p.name} bookingType={p.bookingType} size="card" />
                       <div className="min-w-0 flex-1">
                         <p className="break-words text-[15px] font-semibold leading-snug">{p.name}</p>
-                        <p className="mt-inline text-[13px] text-muted">{subtitle(p, { resources, team })}</p>
+                        <p className="mt-inline text-[13px] text-muted">{subtitle(p, { resources: flow.resources, team: flow.team })}</p>
                       </div>
                     </div>
                     <p className="mt-auto flex items-baseline justify-between gap-tight pt-tight">
@@ -117,7 +106,7 @@ export function StorefrontView({
                       </span>
                       <ArrowRight size={16} strokeWidth={1.5} className="shrink-0 text-muted" aria-hidden />
                     </p>
-                  </CardLink>
+                  </ProductCardLink>
                 </li>
               );
             })}
@@ -127,7 +116,7 @@ export function StorefrontView({
 
       {/* Getting here, and the week. Two columns on a desktop because they are
           read together and neither is long enough to earn a section. */}
-      <section className="mt-major grid grid-cols-1 gap-section lg:grid-cols-2">
+      <section className="mt-major grid grid-cols-1 gap-section pb-20 lg:grid-cols-2">
         <div className="card-surface p-card">
           <h2 className="text-base font-semibold tracking-[-0.4px]">{t("gettingHere")}</h2>
           <p className="mt-comfortable flex items-start gap-tight text-[14px]">
@@ -198,15 +187,35 @@ export function StorefrontView({
           )}
         </div>
       </section>
+      <StickyBasketBar />
     </StorefrontChrome>
   );
 }
 
-/** A card that is a link on the live page and a plain block in a preview. */
-function CardLink({ href, className, children }: { href: string | null; className: string; children: React.ReactNode }) {
-  if (href === null) return <div className={className}>{children}</div>;
+/** A card that is a real link on the live page (so it is a URL somebody can
+ *  share and the back button works) and a flow-navigated button in preview,
+ *  where a `<Link>` would escape the iframe and navigate the EDITOR away. */
+function ProductCardLink({
+  productId,
+  slug,
+  className,
+  children,
+}: {
+  productId: string;
+  slug: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const flow = useStorefrontFlow();
+  if (flow.mode === "preview") {
+    return (
+      <button type="button" onClick={() => flow.goProduct(productId)} className={cn(className, "text-left")}>
+        {children}
+      </button>
+    );
+  }
   return (
-    <Link href={href} className={className}>
+    <Link href={`/s/${flow.storefront.slug}/${slug}`} className={className}>
       {children}
     </Link>
   );

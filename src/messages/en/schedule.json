@@ -87,13 +87,28 @@
     "seatsLeftNow": "{count, plural, =0 {No seats left} one {# seat left} other {# seats left}}",
     "pickTickets": "Choose at least one ticket.",
     "tooMany": "{count, plural, one {Only # seat is left. Take some tickets off.} other {Only # seats are left. Take some tickets off.}}",
-    "noGuide": "No guide is free at this time. Choose another time."
+    "noGuide": "No guide is free at this time. Choose another time.",
+    "move": "Move",
+    "moveTitle": "Move",
+    "moveTo": "Move: {day}, {time}",
+    "moveTomorrow": "Tomorrow",
+    "movePick": "More dates",
+    "moveClosed": "Closed this day. Pick another.",
+    "moveNow": "Now",
+    "movePriceNote": "Same price — nothing to pay or refund.",
+    "takeTitle": "Take payment",
+    "takeAmount": "Take {amount}",
+    "owed": "Owed",
+    "payBy": "Pay by"
   },
   "toast": {
     "held": "On hold for {name}",
     "undo": "Undo",
     "released": "Back on sale — was held for {name}",
-    "checkedIn": "{name} is checked in"
+    "checkedIn": "{name} is checked in",
+    "moved": "Moved to {day} {time}",
+    "balanceTaken": "{amount} taken by {method}",
+    "discountOnly": "Discount applied — paid in full"
   },
   "bar": {
     "label": "Chosen times",
@@ -127,6 +142,9 @@
     "noteRequired": "Say why, so the manager can decide.",
     "back": "Back",
     "send": "Send to a manager",
+    "sendNow": "Refund {amount} now",
+    "leadDirect": "This refund happens right away — no manager needed.",
+    "doneDirect": "Refunded {amount}. Give it back by {method}.",
     "sent": "Refund request sent to a manager",
     "failed": "Couldn't send the request. Try again.",
     "nothingToRefund": "No payment is recorded for this booking, so there is nothing to refund.",
@@ -135,5 +153,25 @@
     "withdrawn": "Refund request taken back",
     "declined": "Refund refused: {note}",
     "boardBadge": "Refund asked"
+  },
+  "discount": {
+    "give": "Give a discount",
+    "remove": "Remove the discount",
+    "amountLabel": "Discount",
+    "reasonLabel": "Why?",
+    "reasons": {
+      "gameShort": "Game ran short",
+      "facilityProblem": "Facility problem",
+      "regularCustomer": "Regular customer",
+      "other": "Something else"
+    },
+    "noteLabel": "Note (optional)",
+    "noteLabelRequired": "Note",
+    "notePlaceholder": "e.g. Rain stopped play after 20 minutes",
+    "noteRequired": "Say why, so there's a note on the order.",
+    "overLimit": "Over your limit of {pct}% — ask a manager",
+    "overOwed": "A discount cannot be more than what is still owed.",
+    "mathsLine": "Owed {owed} − discount {discount} = Take {take}",
+    "applyOnly": "Apply the discount"
   }
 }

@@ -38,6 +38,10 @@ export interface CompleteInfo {
   customer?: { name: string; phone: string | null; email?: string | null } | null;
   /** Absent on a handover written before tickets travelled with the sale. */
   tickets?: CompleteTicket[];
+  /** When the sale actually landed (ISO) — what the 5-second Undo window
+   *  counts down from. Absent on a handover written before Undo existed, in
+   *  which case the window has already closed and no bar is drawn. */
+  completedAt?: string;
 }
 
 /** The tickets a sale issued, in code order, with the names they were sold under. */

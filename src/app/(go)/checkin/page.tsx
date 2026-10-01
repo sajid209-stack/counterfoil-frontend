@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowUpCircle, Ban, ChevronDown, ChevronLeft, ChevronRight, PlusCircle, Search, Timer, UserPlus } from "lucide-react";
+import { ArrowUpCircle, Ban, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, PlusCircle, RotateCcw, Search, Timer, UserPlus } from "lucide-react";
 import { ActionMenu, Button, DateField, EmptyState, FormField, Modal, useToast, type ActionMenuItem } from "@/components/ui";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay } from "@/lib/schedule";
 import { cn } from "@/lib/cn";
@@ -11,20 +11,31 @@ import { useApiQuery } from "@/lib/useApi";
 import {
   addOrderLines,
   addOrderPayment,
+  bookingEditable,
   checkInBooking,
   checkout,
+  discountOrderBalance,
   extendBooking,
   isResourceFreeFor,
   listBookings,
   listOrders,
   listProducts,
+  listResources,
+  logOrderAction,
   markNoShow,
+  rescheduleBooking,
   type Booking,
   type Order,
   type PaymentMethod,
+  type Product,
 } from "@/lib/api";
 import { toMinutes, toTime } from "@/lib/schedule";
-import { formatClock, formatMoney } from "@/lib/format";
+import { formatClock, formatDay, formatMoney } from "@/lib/format";
+import { type RefundReason } from "@/lib/api/refundRequests";
+import { pendingRefundFor, refundableFor } from "@/lib/api/refundRequests";
+import { useActor, canRefundDirectly } from "../schedule/_lib/actor";
+import { sendOrApproveRefund } from "../schedule/_lib/refundFlow";
+import { DiscountFields, discountFromState, discountReasonText, emptyDiscount, MoveSheet, RefundSheet, type DiscountState } from "../schedule/_components/Sheets";
 
 /* The app's one date, not a private copy of it — the token's own doc
    comment warns that two components each holding their own is how a hold
@@ -34,21 +45,39 @@ const TOMORROW = demoDay(1);
 const time = (iso: string) => iso.slice(11, 16);
 const METHODS: PaymentMethod[] = ["cash", "bkash", "bangla_qr", "card_terminal"];
 
+/** How long a booking runs, in minutes — from its own end time if it has
+ *  one, else the product's default session length. Needed to keep a moved
+ *  booking the same length it was sold as. */
+const durationOf = (b: Booking, product?: Product): number => {
+  if (b.slotEnd) return Math.max(15, toMinutes(b.slotEnd.slice(11, 16)) - toMinutes(b.slotStart.slice(11, 16)));
+  return product?.schedule?.sessionMinutes || product?.schedule?.slotMinutes || 60;
+};
+
 export default function CheckInPage() {
   const t = useTranslations("checkin");
   const tc = useTranslations("common");
+  /* Refund, Move and the discount row are the same sheet and the same words
+     the Schedule board uses — a cashier reads the same screen whichever door
+     they came through. */
+  const ts = useTranslations("schedule");
   const enumL = useEnumLabels();
   const toast = useToast();
+  const actor = useActor();
   const [date, setDate] = useState(TODAY);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [pending, setPending] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
   const ordersQ = useApiQuery(() => listOrders({ pageSize: 1000 }), []);
+  const resourcesQ = useApiQuery(() => listResources({ pageSize: 200 }), []);
   const productName = (id: string) => productsQ.data?.data.find((p) => p.id === id)?.name ?? "—";
+  const resourceName = (id?: string | null) => (id ? resourcesQ.data?.data.find((r) => r.id === id)?.name ?? null : null);
   const orderOf = (b: Booking): Order | undefined => ordersQ.data?.data.find((o) => o.id === b.orderId);
   const outstanding = (o?: Order) => (o ? Math.max(0, o.total - o.payments.reduce((s, p) => s + p.amount, 0)) : 0);
+  const guestName = (b: Booking) => orderOf(b)?.customerName?.trim() || orderOf(b)?.reference || b.orderId;
+  const whenFor = (b: Booking) => `${resourceName(b.resourceId) ?? productName(b.productId)} · ${formatClock(time(b.slotStart))}`;
 
   // Counter workflows on an expanded booking.
   const [payFor, setPayFor] = useState<Booking | null>(null);
@@ -56,6 +85,9 @@ export default function CheckInPage() {
   const [upgradeFor, setUpgradeFor] = useState<Booking | null>(null);
   const [noShowFor, setNoShowFor] = useState<Booking | null>(null);
   const [noShowReason, setNoShowReason] = useState("");
+  const [refundFor, setRefundFor] = useState<Booking | null>(null);
+  const [moveFor, setMoveFor] = useState<Booking | null>(null);
+  const [discount, setDiscount] = useState<DiscountState>(emptyDiscount());
   const [walkInOpen, setWalkInOpen] = useState(false);
   const [walkInProduct, setWalkInProduct] = useState("");
   const [walkInParty, setWalkInParty] = useState(2);
@@ -167,31 +199,59 @@ export default function CheckInPage() {
     else toast.error(res.error.message);
   };
 
-  /** How much of the balance is being taken right now. Defaults to all of it,
-   *  because that is the common case — but a party settling ৳2,000 as ৳1,200
-   *  on one phone and ৳800 on another is just as normal, and each tender is
-   *  its own payment on the order rather than one rolled-up figure. */
+  /** How much of the balance is being taken right now. Defaults to all of it
+   *  (after any after-game discount), because that is the common case — but a
+   *  party settling ৳2,000 as ৳1,200 on one phone and ৳800 on another is just
+   *  as normal, and each tender is its own payment on the order rather than
+   *  one rolled-up figure. */
   const [payAmount, setPayAmount] = useState<number | null>(null);
-  const payDue = outstanding(orderOf(payFor ?? ({} as Booking)));
-  const payNow = payAmount == null ? payDue : Math.max(0, Math.min(payDue, payAmount));
+  const payOrder = payFor ? orderOf(payFor) : undefined;
+  const payDue = outstanding(payOrder);
+  const discountCalc = discountFromState(discount, payOrder?.total ?? 0, payDue, actor.discountLimitPct);
+  const payDiscounted = Math.max(0, payDue - discountCalc.minor);
+  const payNow = payAmount == null ? payDiscounted : Math.max(0, Math.min(payDiscounted, payAmount));
+  const closePay = () => { setPayFor(null); setPayAmount(null); setDiscount(emptyDiscount()); };
+
+  const giveDiscount = async (o: Order) => {
+    const res = await discountOrderBalance(o.id, discountCalc.minor, discountReasonText(discount, (k) => ts(`discount.reasons.${k}`)), actor.name);
+    if (!res.ok) toast.error(res.error.message);
+    return res.ok;
+  };
+
+  /** The discount alone settles the order — nothing left to tender. */
+  const applyDiscountOnly = async () => {
+    if (!payFor || !payOrder || !discountCalc.valid || !discountCalc.hasAmount) return;
+    setBusy(true);
+    const ok = await giveDiscount(payOrder);
+    setBusy(false);
+    if (!ok) return;
+    toast.success(t("discountApplied", { amount: formatMoney(discountCalc.minor) }));
+    closePay();
+    reload();
+  };
 
   const takeBalance = async (method: PaymentMethod) => {
-    if (!payFor || payNow <= 0) return;
-    const o = orderOf(payFor);
-    if (!o) return;
-    const res = await addOrderPayment(o.id, method, payNow);
+    if (!payFor || !payOrder || payNow <= 0 || !discountCalc.valid) return;
+    setBusy(true);
+    if (discountCalc.hasAmount) {
+      const ok = await giveDiscount(payOrder);
+      if (!ok) { setBusy(false); return; }
+    }
+    const res = await addOrderPayment(payOrder.id, method, payNow, actor.name);
+    setBusy(false);
     if (res.ok) {
-      const left = outstanding(o) - payNow;
+      const left = outstanding(payOrder) - discountCalc.minor - payNow;
       toast.success(
         left > 0
           ? t("partTaken", { amount: formatMoney(payNow), method: enumL.method(method), left: formatMoney(left) })
           : t("balanceTaken", { amount: formatMoney(payNow), method: enumL.method(method) }),
       );
+      // Stay open while money is still owed: the second tender is usually
+      // handed over in the same breath as the first.
+      if (left > 0) { setPayAmount(null); setDiscount(emptyDiscount()); } else closePay();
+    } else {
+      toast.error(res.error.message);
     }
-    // Stay open while money is still owed: the second tender is usually
-    // handed over in the same breath as the first.
-    if (outstanding(o) - payNow > 0) setPayAmount(null);
-    else setPayFor(null);
     reload();
   };
 
@@ -226,6 +286,52 @@ export default function CheckInPage() {
     await markNoShow(noShowFor.id, noShowReason.trim() || undefined);
     toast.success(t("noShowRecorded"));
     setNoShowFor(null); setNoShowReason("");
+    reload();
+  };
+
+  // ── refund and move, the same sheets the Schedule board offers ──────────
+  const refundInfoFor = (b: Booking) => {
+    const pending = pendingRefundFor(b.id);
+    const found = refundableFor(b.id);
+    return { pending, refundable: !!found && found.amount > 0, amount: found?.amount ?? 0, order: found?.order };
+  };
+
+  const sendRefund = async (reason: RefundReason, note: string) => {
+    if (!refundFor) return;
+    const info = refundInfoFor(refundFor);
+    const direct = canRefundDirectly(actor, info.amount);
+    setBusy(true);
+    const res = await sendOrApproveRefund({ bookingId: refundFor.id, reason, note, requestedBy: actor.name, place: resourceName(refundFor.resourceId), direct });
+    setBusy(false);
+    if (!res.ok) { toast.error(t("refundFailed")); return; }
+    setRefundFor(null);
+    if (res.data.status === "approved") {
+      const method = info.order?.payments[0]?.method ?? "cash";
+      toast.success(t("refundedNow", { amount: formatMoney(res.data.amount), method: enumL.method(method) }));
+    } else {
+      toast.success(t("refundSent"));
+    }
+    reload();
+  };
+
+  const openMove = (b: Booking) => {
+    const edit = bookingEditable(b.id, actor.name);
+    if (!edit.editable) { toast.error(edit.reason); return; }
+    setMoveFor(b);
+  };
+
+  const doMove = async (newDate: string, newTime: string) => {
+    if (!moveFor) return;
+    const product = productsQ.data?.data.find((p) => p.id === moveFor.productId);
+    if (!product) return;
+    const duration = durationOf(moveFor, product);
+    setBusy(true);
+    const res = await rescheduleBooking(moveFor.id, `${newDate}T${newTime}:00+06:00`, `${newDate}T${toTime(toMinutes(newTime) + duration)}:00+06:00`);
+    setBusy(false);
+    if (!res.ok) { toast.error(res.error.message); return; }
+    await logOrderAction(moveFor.orderId, `Moved ${product.name} from ${moveFor.slotStart.slice(0, 10)} ${time(moveFor.slotStart)} to ${newDate} ${newTime}`, actor.name);
+    setMoveFor(null);
+    toast.success(t("moved", { day: formatDay(newDate), time: formatClock(newTime) }));
     reload();
   };
 
@@ -355,6 +461,13 @@ export default function CheckInPage() {
                           if (!b.noShow && extendable) {
                             menu.push({ key: "extend", label: t("extendBtn", { minutes: extendable.cfg.incrementMinutes }), icon: <Timer size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, onSelect: () => extend(b) });
                           }
+                          if (!b.noShow && prod?.schedule) {
+                            menu.push({ key: "move", label: t("moveBtn"), icon: <CalendarClock size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, separated: menu.length > 0, onSelect: () => openMove(b) });
+                          }
+                          const refundInfo = b.noShow ? null : refundInfoFor(b);
+                          if (refundInfo?.refundable && !refundInfo.pending) {
+                            menu.push({ key: "refund", label: t("refundBtn"), icon: <RotateCcw size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, onSelect: () => setRefundFor(b) });
+                          }
                           if (!b.noShow && !done && (b.checkedIn ?? 0) === 0) {
                             menu.push({ key: "noshow", label: t("noShowBtn"), icon: <Ban size={16} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />, separated: menu.length > 0, onSelect: () => { setNoShowFor(b); setNoShowReason(""); } });
                           }
@@ -448,32 +561,51 @@ export default function CheckInPage() {
       </div>
 
       {/* Take the outstanding balance — any configured method works. */}
-      <Modal open={!!payFor} onClose={() => { setPayFor(null); setPayAmount(null); }} title={payFor ? t("takeAmount", { amount: formatMoney(payDue) }) : t("takeBalanceTitle")}>
-        <div className="mb-section flex flex-col gap-tight">
-          <label className="type-label text-[0.8125rem] text-muted" htmlFor="ci-amount">{t("amountLabel")}</label>
-          <div className="flex items-center gap-tight">
-            <input
-              id="ci-amount"
-              inputMode="decimal"
-              value={payAmount == null ? String(payDue / 100) : String(payAmount / 100)}
-              onChange={(e) => {
-                const n = parseFloat(e.target.value.trim());
-                setPayAmount(Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : 0);
-              }}
-              className="h-12 min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable text-right font-mono text-sm outline-none focus:border-ember"
-            />
-            <button type="button" onClick={() => setPayAmount(null)} className="h-12 shrink-0 rounded-full border border-line px-comfortable text-[0.8125rem]">
-              {t("amountAll")}
-            </button>
-          </div>
-          {payNow < payDue && payNow > 0 && (
-            <p className="text-[0.8125rem] text-muted">{t("partRemaining", { left: formatMoney(payDue - payNow) })}</p>
-          )}
+      <Modal open={!!payFor} onClose={closePay} title={payFor ? t("takeAmount", { amount: formatMoney(payDiscounted) }) : t("takeBalanceTitle")}>
+        <div className="mb-section flex items-baseline justify-between gap-comfortable">
+          <span className="text-[0.8125rem] text-muted">{ts("sheet.owed")}</span>
+          <span className="text-[1.125rem] font-semibold tabular-nums">{formatMoney(payDue)}</span>
         </div>
-        <p className="mb-section text-[0.8125rem] text-muted">{t("receiptNote")}</p>
-        <div className="grid grid-cols-2 gap-tight">
-          {METHODS.map((m) => <Button shape="pill" key={m} variant="secondary" className="h-12" disabled={payNow <= 0} onClick={() => takeBalance(m)}>{enumL.method(m)}</Button>)}
+
+        <div className="mb-section">
+          <DiscountFields state={discount} setState={setDiscount} orderTotal={payOrder?.total ?? 0} owed={payDue} limitPct={actor.discountLimitPct} />
         </div>
+
+        {payDiscounted > 0 && (
+          <>
+            <div className="mb-section flex flex-col gap-tight">
+              <label className="type-label text-[0.8125rem] text-muted" htmlFor="ci-amount">{t("amountLabel")}</label>
+              <div className="flex items-center gap-tight">
+                <input
+                  id="ci-amount"
+                  inputMode="decimal"
+                  value={payAmount == null ? String(payDiscounted / 100) : String(payAmount / 100)}
+                  onChange={(e) => {
+                    const n = parseFloat(e.target.value.trim());
+                    setPayAmount(Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : 0);
+                  }}
+                  className="h-12 min-w-0 flex-1 rounded-go-sm border border-line bg-card px-comfortable text-right font-mono text-sm outline-none focus:border-ember"
+                />
+                <button type="button" onClick={() => setPayAmount(null)} className="h-12 shrink-0 rounded-full border border-line px-comfortable text-[0.8125rem]">
+                  {t("amountAll")}
+                </button>
+              </div>
+              {payNow < payDiscounted && payNow > 0 && (
+                <p className="text-[0.8125rem] text-muted">{t("partRemaining", { left: formatMoney(payDiscounted - payNow) })}</p>
+              )}
+            </div>
+            <p className="mb-section text-[0.8125rem] text-muted">{t("receiptNote")}</p>
+            <div className="grid grid-cols-2 gap-tight">
+              {METHODS.map((m) => <Button shape="pill" key={m} variant="secondary" className="h-12" loading={busy} disabled={payNow <= 0 || !discountCalc.valid} onClick={() => takeBalance(m)}>{enumL.method(m)}</Button>)}
+            </div>
+          </>
+        )}
+
+        {payDiscounted <= 0 && discountCalc.hasAmount && (
+          <Button shape="pill" className="w-full" loading={busy} disabled={!discountCalc.valid} onClick={applyDiscountOnly}>
+            {ts("discount.applyOnly")}
+          </Button>
+        )}
       </Modal>
 
       <Modal open={!!extraFor} onClose={() => setExtraFor(null)} title={t("addExtraTitle")}>
@@ -516,6 +648,42 @@ export default function CheckInPage() {
           <p className="text-[0.8125rem] text-muted">{t("walkInHint")}</p>
         </div>
       </Modal>
+
+      {refundFor && (
+        <RefundSheet
+          open={!!refundFor}
+          onClose={() => setRefundFor(null)}
+          title={guestName(refundFor)}
+          when={whenFor(refundFor)}
+          amount={refundInfoFor(refundFor).amount}
+          direct={canRefundDirectly(actor, refundInfoFor(refundFor).amount)}
+          onSend={sendRefund}
+          busy={busy}
+        />
+      )}
+
+      {moveFor && (() => {
+        const product = productsQ.data?.data.find((p) => p.id === moveFor.productId);
+        if (!product) return null;
+        return (
+          <MoveSheet
+            open={!!moveFor}
+            onClose={() => setMoveFor(null)}
+            title={guestName(moveFor)}
+            product={product}
+            resourceId={moveFor.resourceId ?? null}
+            placeName={resourceName(moveFor.resourceId) ?? product.name}
+            date={moveFor.slotStart.slice(0, 10)}
+            time={time(moveFor.slotStart)}
+            durationMinutes={durationOf(moveFor, product)}
+            bufferMinutes={product.bufferMinutes ?? 0}
+            partySize={moveFor.partySize}
+            bookingId={moveFor.id}
+            onConfirm={doMove}
+            busy={busy}
+          />
+        );
+      })()}
     </main>
   );
 }

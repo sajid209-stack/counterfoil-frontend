@@ -65,5 +65,12 @@
   "checkInCount": "{count, number} জন চেক ইন",
   "plusOne": "+1",
   "rowMenu": "{name}-এর আরও অপশন",
-  "plusOneLabel": "১ জন চেক ইন"
+  "plusOneLabel": "১ জন চেক ইন",
+  "moveBtn": "সময় বদলান",
+  "moved": "{day} {time}-এ নেওয়া হয়েছে",
+  "refundBtn": "টাকা ফেরত",
+  "refundFailed": "অনুরোধ পাঠানো যায়নি। আবার চেষ্টা করুন।",
+  "refundSent": "টাকা ফেরতের অনুরোধ ম্যানেজারকে পাঠানো হয়েছে",
+  "refundedNow": "{amount} ফেরত দেওয়া হয়েছে। {method}-এ ফিরিয়ে দিন।",
+  "discountApplied": "{amount} ছাড় দেওয়া হয়েছে। পুরো টাকা মেটানো হয়েছে।"
 }

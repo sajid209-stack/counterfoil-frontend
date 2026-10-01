@@ -6,25 +6,36 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Check, ChevronLeft, ChevronRight, LayoutGrid, List, Lock, ShoppingBag, TriangleAlert, X } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { formatClockMin, formatClockRange, formatMoney } from "@/lib/format";
-import { DEMO_NOW_MINUTES, DEMO_TODAY, slotISO } from "@/lib/schedule";
+import { formatClockMin, formatClockRange, formatDay, formatMoney } from "@/lib/format";
+import { useEnumLabels } from "@/lib/labels";
+import { DEMO_NOW_MINUTES, DEMO_TODAY, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
 import { LG, useMediaQuery } from "@/lib/useMedia";
 import { DEMO_COUNTER_ID, DEMO_STAFF_ID, DEMO_TILL_ID } from "@/lib/session";
 import {
   activeHolds,
+  addOrderPayment,
+  bookingEditable,
+  canTakeNonCash,
   checkInBooking,
+  discountOrderBalance,
   getOperator,
   listProducts,
   listResources,
   listStaff,
+  logOrderAction,
+  orderOutstanding,
   peekBookings,
   peekCounters,
   peekOrders,
   placeCheckoutHold,
   placeHold,
   releaseHold,
+  rescheduleBooking,
+  tillMethods,
   updateResource,
+  type Order,
+  type PaymentMethod,
   type Resource,
 } from "@/lib/api";
 import { shiftDay } from "@/lib/dayModel";
@@ -33,9 +44,11 @@ import { buildOrderLines } from "@/lib/orderMath";
 import { taxRateFor } from "@/lib/tax";
 import { buildBoard, dayLoad, toTimeOfDay, type Block, type Column } from "./_lib/board";
 import { entriesFor, entryPrice, guideFor, holdEntries, needsWaiver, productsIn, sessionEntry, spansOf, type Pick } from "./_lib/toCart";
+import { useActor, canRefundDirectly } from "./_lib/actor";
+import { sendOrApproveRefund } from "./_lib/refundFlow";
 import { Board } from "./_components/Board";
-import { BlockSheet, HoldSheet, RefundSheet, SessionSheet, type HoldRequest } from "./_components/Sheets";
-import { pendingRefundFor, refundableFor, refundRequestsForOrder, requestRefund, withdrawRefundRequest, type RefundReason } from "@/lib/api/refundRequests";
+import { BlockSheet, HoldSheet, MoveSheet, RefundSheet, SessionSheet, TakeBalanceSheet, type HoldRequest } from "./_components/Sheets";
+import { pendingRefundFor, refundableFor, refundRequestsForOrder, withdrawRefundRequest, type RefundReason } from "@/lib/api/refundRequests";
 import { ActionBar, BarSummary } from "../_components/ActionBar";
 
 type View = "grid" | "list";
@@ -121,6 +134,9 @@ export default function SchedulePage() {
   const [version, setVersion] = useState(0);
   /* The refund form, open over the booking it is for. */
   const [refundOpen, setRefundOpen] = useState(false);
+  /* Move and Take ৳X, each open over the same booking sheet. */
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [takeOpen, setTakeOpen] = useState(false);
   const [oos, setOos] = useState<Resource | null>(null);
   const [oosReason, setOosReason] = useState("");
   const [oosSaving, setOosSaving] = useState(false);
@@ -130,6 +146,11 @@ export default function SchedulePage() {
   const staffQ = useApiQuery(() => listStaff({ pageSize: 200 }), []);
   const operatorQ = useApiQuery(() => getOperator(), []);
   const staff = staffQ.data?.data ?? [];
+  /* Who is signed in, and what their role lets them do without a manager —
+     the refund limit and the discount cap both read from here. */
+  const actor = useActor();
+  const enumL = useEnumLabels();
+  const payMethods = useMemo(() => tillMethods(canTakeNonCash()), []);
 
   const locationId = peekCounters().find((c) => c.id === DEMO_COUNTER_ID)?.locationId ?? "loc_fort";
   const isToday = date === DEMO_TODAY;
@@ -352,8 +373,9 @@ export default function SchedulePage() {
     });
   };
 
-  /* Where the booking on the sheet stands on a refund. Read on every render
-     (version bumps after a request), from the mock's own store. */
+  /* Where the booking on the sheet stands on a refund, and whether this till
+     can give the money back on its own say-so. Read on every render (version
+     bumps after a request), from the mock's own store. */
   const refundInfo = (() => {
     if (!blockPick || blockPick.block.type !== "booking") return undefined;
     const b = blockPick.block.booking;
@@ -361,19 +383,22 @@ export default function SchedulePage() {
     const pending = pendingRefundFor(b.id);
     const last = refundRequestsForOrder(b.orderId).find((r) => r.bookingId === b.id) ?? null;
     const found = refundableFor(b.id);
-    return { pending, last, refundable: !!found && found.amount > 0, amount: found?.amount ?? 0 };
+    const amount = found?.amount ?? 0;
+    return { pending, last, refundable: !!found && amount > 0, amount, order: found?.order };
   })();
+  const refundDirect = !actor.loading && refundInfo != null && canRefundDirectly(actor, refundInfo.amount);
 
   const sendRefund = async (reason: RefundReason, note: string) => {
     if (!blockPick || blockPick.block.type !== "booking") return;
     const b = blockPick.block.booking;
     setBusy(true);
-    const res = await requestRefund({
+    const res = await sendOrApproveRefund({
       bookingId: b.id,
       reason,
       note,
-      requestedBy: me,
+      requestedBy: actor.name,
       place: blockPick.column.kind === "resource" ? blockPick.column.name : null,
+      direct: refundDirect,
     });
     setBusy(false);
     if (!res.ok) {
@@ -383,7 +408,12 @@ export default function SchedulePage() {
     setRefundOpen(false);
     setBlockPick(null);
     setVersion((v) => v + 1);
-    toast.success(t("refund.sent"));
+    if (res.data.status === "approved") {
+      const method = refundInfo?.order?.payments[0]?.method ?? "cash";
+      toast.success(t("refund.doneDirect", { amount: formatMoney(res.data.amount), method: enumL.method(method) }));
+    } else {
+      toast.success(t("refund.sent"));
+    }
   };
 
   const withdrawRefund = async () => {
@@ -393,6 +423,79 @@ export default function SchedulePage() {
     setBusy(false);
     setVersion((v) => v + 1);
     toast.success(t("refund.withdrawn"));
+  };
+
+  /* Move: the booking's own place, a different day or hour, same price. */
+  const openMove = () => {
+    if (!blockPick || blockPick.block.type !== "booking") return;
+    const edit = bookingEditable(blockPick.block.booking.id, actor.name);
+    if (!edit.editable) {
+      toast.error(edit.reason);
+      return;
+    }
+    setMoveOpen(true);
+  };
+
+  const doMove = async (newDate: string, newTime: string) => {
+    if (!blockPick || blockPick.block.type !== "booking") return;
+    const b = blockPick.block.booking;
+    const product = blockPick.block.product;
+    if (!product) return;
+    const duration = blockPick.block.end - blockPick.block.start;
+    setBusy(true);
+    const res = await rescheduleBooking(b.id, slotISO(newDate, newTime), slotISO(newDate, toTime(toMinutes(newTime) + duration)));
+    setBusy(false);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    await logOrderAction(
+      b.orderId,
+      `Moved ${product.name} from ${b.slotStart.slice(0, 10)} ${b.slotStart.slice(11, 16)} to ${newDate} ${newTime}`,
+      actor.name,
+    );
+    setMoveOpen(false);
+    setBlockPick(null);
+    setVersion((v) => v + 1);
+    toast.success(t("toast.moved", { day: formatDay(newDate), time: formatClockMin(toMinutes(newTime)) }));
+  };
+
+  /* Take ৳X: what the booking's order still owes, with an optional discount. */
+  const takeOrder: Order | undefined = (() => {
+    if (!blockPick || blockPick.block.type !== "booking") return undefined;
+    const orderId = blockPick.block.booking.orderId;
+    return peekOrders().find((o) => o.id === orderId);
+  })();
+  const takeOwed = takeOrder ? orderOutstanding(takeOrder) : 0;
+
+  const doTake = async (opts: { discountMinor: number; reasonText: string; method: PaymentMethod | null; payAmount: number }) => {
+    if (!takeOrder) return;
+    setBusy(true);
+    if (opts.discountMinor > 0) {
+      const dres = await discountOrderBalance(takeOrder.id, opts.discountMinor, opts.reasonText, actor.name);
+      if (!dres.ok) {
+        setBusy(false);
+        toast.error(dres.error.message);
+        return;
+      }
+    }
+    if (opts.payAmount > 0 && opts.method) {
+      const pres = await addOrderPayment(takeOrder.id, opts.method, opts.payAmount, actor.name);
+      if (!pres.ok) {
+        setBusy(false);
+        toast.error(pres.error.message);
+        return;
+      }
+    }
+    setBusy(false);
+    setTakeOpen(false);
+    setBlockPick(null);
+    setVersion((v) => v + 1);
+    toast.success(
+      opts.payAmount > 0
+        ? t("toast.balanceTaken", { amount: formatMoney(opts.payAmount), method: enumL.method(opts.method ?? "cash") })
+        : t("toast.discountOnly"),
+    );
   };
 
   const release = async () => {
@@ -799,7 +902,7 @@ export default function SchedulePage() {
       )}
 
       <BlockSheet
-        open={!!blockPick && !refundOpen}
+        open={!!blockPick && !refundOpen && !moveOpen && !takeOpen}
         onClose={() => setBlockPick(null)}
         column={blockPick?.column ?? null}
         block={blockPick?.block ?? null}
@@ -810,6 +913,10 @@ export default function SchedulePage() {
         refund={refundInfo}
         onRefund={() => setRefundOpen(true)}
         onWithdrawRefund={withdrawRefund}
+        canMove={blockPick?.block.type === "booking" && !!blockPick.block.product?.schedule && !blockPick.block.noShow}
+        onMove={openMove}
+        owed={takeOwed}
+        onTake={() => setTakeOpen(true)}
         busy={busy}
       />
 
@@ -820,7 +927,42 @@ export default function SchedulePage() {
           title={blockPick.block.guest ?? t("board.walkIn")}
           when={`${blockPick.column.kind === "unassigned" ? t("board.noPlace") : blockPick.column.name} · ${formatClockRange(blockPick.block.start, blockPick.block.end)}`}
           amount={refundInfo?.amount ?? 0}
+          direct={refundDirect}
           onSend={sendRefund}
+          busy={busy}
+        />
+      )}
+
+      {blockPick?.block.type === "booking" && blockPick.block.product && (
+        <MoveSheet
+          open={moveOpen}
+          onClose={() => setMoveOpen(false)}
+          title={blockPick.block.guest ?? t("board.walkIn")}
+          product={blockPick.block.product}
+          resourceId={blockPick.block.booking.resourceId ?? null}
+          placeName={blockPick.column.kind === "unassigned" ? t("board.noPlace") : blockPick.column.name}
+          date={blockPick.block.booking.slotStart.slice(0, 10)}
+          time={blockPick.block.booking.slotStart.slice(11, 16)}
+          durationMinutes={blockPick.block.end - blockPick.block.start}
+          bufferMinutes={blockPick.block.product.bufferMinutes ?? 0}
+          partySize={blockPick.block.booking.partySize}
+          bookingId={blockPick.block.booking.id}
+          onConfirm={doMove}
+          busy={busy}
+        />
+      )}
+
+      {blockPick?.block.type === "booking" && takeOrder && (
+        <TakeBalanceSheet
+          open={takeOpen}
+          onClose={() => setTakeOpen(false)}
+          title={blockPick.block.guest ?? t("board.walkIn")}
+          when={`${blockPick.column.kind === "unassigned" ? t("board.noPlace") : blockPick.column.name} · ${formatClockRange(blockPick.block.start, blockPick.block.end)}`}
+          orderTotal={takeOrder.total}
+          owed={takeOwed}
+          limitPct={actor.discountLimitPct}
+          methods={payMethods}
+          onConfirm={doTake}
           busy={busy}
         />
       )}
