@@ -3,7 +3,6 @@
   "overview": "Overview",
   "calendar": "Calendar",
   "orders": "Orders",
-  "transactions": "Transactions",
   "customers": "Customers",
   "memberships": "Memberships",
   "reports": "Reports",
@@ -45,19 +44,13 @@
   "aliases": {
     "catalog": "catalog bookings events products tickets experiences what we sell",
     "inventory": "inventory stock merch items shop goods supplies",
-    "transactions": "payments refunds payouts money ledger bkash cash card",
-    "balances": "fees platform fee commission balance owe owed gateway",
-    "payouts": "payout bank settlement paid out",
-    "collections": "fee collections invoice bill fee due pay counterfoil",
-    "marketplaces": "marketplaces marketplace channel other sites resellers ota"
+    "marketplaces": "marketplaces marketplace channel other sites resellers ota",
+    "finances": "finances money transactions payments refunds payout payouts fees fee balance withdraw deposit bank ledger bkash cash card"
   },
   "inventory": "Inventory",
   "cartFab": "Cart — {count, plural, one {# item} other {# items}}",
   "marketplaces": "Marketplaces",
   "venue": "Venue",
   "venueNotSelling": "Not selling now",
-  "money": "Money",
-  "balances": "Fees & balances",
-  "payouts": "Payouts",
-  "collections": "Fee collections"
+  "finances": "Finances"
 }

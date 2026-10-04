@@ -7,7 +7,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getOrderFeeEntries, peekPlatformFeeRates } from "@/lib/api";
-import { CollectorBadge, FeeBreakdown, SettlementBadge, money, settlementHref, useHoldingLabel } from "./MoneyKit";
+import { CollectorBadge, FeeBreakdown, SettlementBadge, money, useHoldingLabel } from "./FeeParts";
 
 /**
  * An order's payments, as Counterfoil's fee sees them: who held each one, the
@@ -51,7 +51,7 @@ export function OrderFees({ orderId }: { orderId: string }) {
                 <div className="flex flex-col gap-comfortable border-t border-hairline p-comfortable">
                   <FeeBreakdown entry={e} rates={peekPlatformFeeRates()} />
                   {e.settlementId && (
-                    <Link href={settlementHref(e.settlementId)} className="inline-flex min-h-11 items-center gap-tight self-start text-[13px] md:min-h-0">
+                    <Link href="/finances" className="inline-flex min-h-11 items-center gap-tight self-start text-[13px] md:min-h-0">
                       <span className="text-muted">{t("breakdown.settledBy")}</span>
                       <SettlementBadge status={e.settlementStatus} />
                     </Link>

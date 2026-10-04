@@ -1,0 +1,151 @@
+{
+  "title": "ফাইন্যান্স",
+  "more": "আরও কাজ",
+  "menu": {
+    "statement": "স্টেটমেন্ট ডাউনলোড (CSV)",
+    "bank": "পেআউটের ব্যাংক ও সময়সূচি"
+  },
+  "available": {
+    "label": "ব্যবহারযোগ্য ব্যালেন্স",
+    "next": "পরের পেআউট {date} তারিখে {bank}-এ",
+    "nextNoBank": "পরের পেআউট {date} তারিখে",
+    "none": "প্রতি সোমবার পেআউট যায়",
+    "owe": "এই টাকা আপনি কাউন্টারফয়েলকে দেবেন। টাকা জমা দিয়ে মিটিয়ে দিন।",
+    "withdraw": "তুলুন",
+    "deposit": "জমা দিন",
+    "nothingToWithdraw": "তোলার মতো টাকা এখনো নেই",
+    "noBank": "তুলতে আগে পেআউটের ব্যাংক যোগ করুন",
+    "nextAbout": "প্রায় {amount}, এর মধ্যে {clearing} এখনো জমা হচ্ছে",
+    "nextAboutPlain": "প্রায় {amount}"
+  },
+  "unsettled": {
+    "label": "জমা হতে বাকি",
+    "info": "অনলাইন পেমেন্ট জমা হতে ২ দিন লাগে। তারপর টাকা ব্যবহারযোগ্য ব্যালেন্সে যায়।",
+    "infoLabel": "জমা হতে বাকি টাকা কী",
+    "clearsBy": "{date} তারিখের মধ্যে জমা হবে",
+    "none": "জমা হতে বাকি কিছু নেই"
+  },
+  "period": {
+    "today": "আজ",
+    "yesterday": "গতকাল",
+    "7d": "গত ৭ দিন",
+    "30d": "গত ৩০ দিন",
+    "month": "এই মাস",
+    "lastmonth": "গত মাস"
+  },
+  "summary": {
+    "in": "<b>{amount}</b> এসেছে",
+    "fees": "<b>{amount}</b> ফি",
+    "refunds": "<b>{amount}</b> ফেরত",
+    "paidOut": "<b>{amount}</b> পাঠানো হয়েছে"
+  },
+  "activity": {
+    "title": "লেনদেন",
+    "filterLabel": "দেখান",
+    "search": "অর্ডার, রেফারেন্স বা গ্রাহক",
+    "showMore": "আরও দিন দেখান",
+    "showing": "{total} দিনের মধ্যে {shown} দিন দেখানো হচ্ছে",
+    "loading": "লেনদেন আসছে"
+  },
+  "filter": {
+    "all": "সব",
+    "sales": "বিক্রি",
+    "fees": "ফি",
+    "refunds": "ফেরত",
+    "payouts": "পেআউট",
+    "deposits": "জমা"
+  },
+  "range": {
+    "choose": "তারিখ বাছুন",
+    "custom": "নিজে বাছুন",
+    "from": "শুরু",
+    "to": "শেষ",
+    "apply": "ঠিক আছে",
+    "cancel": "বাতিল",
+    "days": "{count, plural, one {# দিন} other {# দিন}}",
+    "pickEnd": "শেষ দিনটি বাছুন"
+  },
+  "day": {
+    "today": "আজ",
+    "yesterday": "গতকাল",
+    "in": "এসেছে {amount}",
+    "out": "গেছে {amount}",
+    "sales": "{count, plural, one {#টি অনলাইন পেমেন্ট} other {#টি অনলাইন পেমেন্ট}}",
+    "refunds": "{count, plural, one {#টি ফেরত} other {#টি ফেরত}}",
+    "payouts": "{count, plural, one {#টি পেআউট} other {#টি পেআউট}}",
+    "deposits": "{count, plural, one {#টি জমা} other {#টি জমা}}",
+    "fees": "ফি",
+    "clearing": "জমা হচ্ছে",
+    "onItsWay": "পথে আছে",
+    "counterFees": "কাউন্টারের ফি"
+  },
+  "line": {
+    "sale": "অনলাইন পেমেন্ট",
+    "refund": "ফেরত",
+    "platformFee": "কাউন্টারফয়েল ফি · {base}-এর {rate}",
+    "processingFee": "পেমেন্ট প্রসেসিং ফি · {base}-এর {rate}",
+    "payout": "{bank}-এ পেআউট",
+    "payoutNoBank": "আপনার ব্যাংকে পেআউট",
+    "withdrawal": "{bank}-এ তুলে নেওয়া",
+    "withdrawalNoBank": "আপনার ব্যাংকে তুলে নেওয়া",
+    "deposit": "{method} দিয়ে জমা",
+    "onlineFees": "অনলাইন পেমেন্টের ফি",
+    "counterFees": "{count, plural, one {#টি কাউন্টার বিক্রির} other {#টি কাউন্টার বিক্রির}} কাউন্টারফয়েল ফি",
+    "paidFees": "{paid} দেওয়া · {fees} ফি"
+  },
+  "by": {
+    "bkash": "বিকাশ",
+    "card_terminal": "কার্ড",
+    "bank_transfer": "ব্যাংক ট্রান্সফার"
+  },
+  "status": {
+    "pending": "জমা হচ্ছে",
+    "cleared": "জমা হয়েছে",
+    "billed": "কাটা হয়েছে",
+    "processing": "পথে আছে",
+    "paid": "পাঠানো হয়েছে",
+    "received": "পাওয়া গেছে"
+  },
+  "detail": {
+    "status": "অবস্থা",
+    "when": "কখন",
+    "order": "অর্ডার",
+    "method": "যেভাবে দেওয়া",
+    "reference": "রেফারেন্স",
+    "copy": "কপি",
+    "copied": "কপি হয়েছে",
+    "to": "যেখানে গেছে",
+    "by": "যিনি করেছেন",
+    "bankTransfer": "ব্যাংক ট্রান্সফার",
+    "close": "বন্ধ করুন"
+  },
+  "empty": {
+    "title": "কিছু মেলেনি",
+    "text": "অন্য ফিল্টার, অন্য খোঁজ বা অন্য তারিখ দিয়ে দেখুন।",
+    "clear": "ফিল্টার মুছুন",
+    "none": "এই তারিখগুলোতে কোনো লেনদেন নেই।"
+  },
+  "withdraw": {
+    "title": "টাকা তুলুন",
+    "amount": "টাকার পরিমাণ",
+    "all": "সব {amount}",
+    "half": "অর্ধেক",
+    "goesTo": "টাকা যাবে",
+    "change": "সেটিংসে বদলান",
+    "arrives": "১–২ কর্মদিবসে পৌঁছাবে।",
+    "submit": "{amount} তুলুন",
+    "done": "{amount} {bank}-এ যাচ্ছে",
+    "enter": "টাকার পরিমাণ লিখুন।"
+  },
+  "deposit": {
+    "title": "টাকা জমা দিন",
+    "amount": "টাকার পরিমাণ",
+    "card": "কার্ড",
+    "owed": "আপনি {amount} দেবেন। এতে মিটে যাবে।",
+    "method": "কীভাবে দেবেন?",
+    "note": "আপনার জমা দেওয়া টাকা আগে কাউন্টারফয়েলের ফি মেটায়। বাকিটা ব্যালেন্সে থাকে।",
+    "submit": "{amount} জমা দিন",
+    "done": "{amount} আপনার ব্যালেন্সে যোগ হয়েছে",
+    "enter": "টাকার পরিমাণ লিখুন।"
+  }
+}

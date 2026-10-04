@@ -2,7 +2,6 @@
   "dashboard": "ড্যাশবোর্ড",
   "overview": "সারসংক্ষেপ",
   "calendar": "ক্যালেন্ডার",
-  "transactions": "লেনদেন",
   "orders": "অর্ডার",
   "customers": "গ্রাহক",
   "memberships": "সদস্যপদ",
@@ -45,19 +44,13 @@
   "aliases": {
     "catalog": "ক্যাটালগ বুকিং ইভেন্ট পণ্য টিকিট catalog bookings events products",
     "inventory": "ইনভেন্টরি স্টক মজুত পণ্য মার্চেন্ডাইজ সরবরাহ inventory",
-    "transactions": "পেমেন্ট রিফান্ড পেআউট টাকা বিকাশ নগদ payments refunds payouts",
-    "balances": "ফি প্ল্যাটফর্ম ফি ব্যালান্স পাওনা গেটওয়ে fees balance",
-    "payouts": "পেআউট ব্যাংক নিষ্পত্তি payout bank",
-    "collections": "ফি আদায় ইনভয়েস বিল ফি বকেয়া পরিশোধ invoice",
-    "marketplaces": "মার্কেটপ্লেস অন্য সাইট marketplaces"
+    "marketplaces": "মার্কেটপ্লেস অন্য সাইট marketplaces",
+    "finances": "ফাইন্যান্স অর্থ টাকা লেনদেন পেমেন্ট রিফান্ড পেআউট ফি ব্যালান্স তোলা জমা ব্যাংক বিকাশ নগদ transactions payout fees balance withdraw deposit"
   },
   "inventory": "ইনভেন্টরি",
   "cartFab": "কার্ট — {count, plural, one {#টি আইটেম} other {#টি আইটেম}}",
   "marketplaces": "মার্কেটপ্লেস",
   "venue": "ভেন্যু",
   "venueNotSelling": "এখন বিক্রি বন্ধ",
-  "money": "অর্থ",
-  "balances": "ফি ও ব্যালান্স",
-  "payouts": "পেআউট",
-  "collections": "ফি আদায়"
+  "finances": "ফাইন্যান্স"
 }

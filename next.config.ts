@@ -38,6 +38,18 @@ const nextConfig: NextConfig = {
       // would be cached by browsers long after it changed.
       { source: "/settings", destination: "/settings/business", permanent: false },
       { source: "/catalog/events", destination: "/catalog?kind=events", permanent: false },
+      // Finances is one page now: the venue's money with Counterfoil as a
+      // single balance, with Withdraw, Deposit and an activity list. It
+      // replaced Transactions, Fees & balances, Payouts and Fee collections —
+      // four views of the same money. Not permanent: where the money lives is
+      // still being settled. Next keeps the query string on a redirect.
+      { source: "/transactions", destination: "/finances", permanent: false },
+      { source: "/money", destination: "/finances", permanent: false },
+      { source: "/money/balances", destination: "/finances", permanent: false },
+      { source: "/money/payouts", destination: "/finances", permanent: false },
+      { source: "/money/payouts/:id", destination: "/finances", permanent: false },
+      { source: "/money/collections", destination: "/finances", permanent: false },
+      { source: "/money/collections/:id", destination: "/finances", permanent: false },
     ];
   },
 };

@@ -22,8 +22,10 @@ const seed: PaymentSettings = {
     { method: "bangla_qr", enabled: true },
     { method: "card_terminal", enabled: true },
   ],
-  payoutSchedule: "daily",
-  payoutDay: 0,
+  // Weekly, on Mondays: money builds up between payouts, which is what makes
+  // the Finances balance (and its Withdraw button) mean something in the demo.
+  payoutSchedule: "weekly",
+  payoutDay: 1,
   defaultFloat: 200_000,
   countTolerance: 10_000,
 };

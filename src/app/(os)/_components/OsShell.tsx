@@ -4,10 +4,6 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ArrowLeftRight,
-  FileText,
-  Landmark,
-  Scale,
   Boxes,
   Globe,
   Store,
@@ -21,6 +17,7 @@ import {
   Settings,
   Ticket,
   UsersRound,
+  Wallet,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LogoMark, Sheet } from "@/components/ui";
@@ -75,10 +72,7 @@ const DESTINATIONS = [
   { href: "/inventory", key: "inventory", icon: Boxes },
   { href: "/marketplaces", key: "marketplaces", icon: Globe },
   { href: "/reports/sales", key: "reports", icon: ChartNoAxesColumn },
-  { href: "/transactions", key: "transactions", icon: ArrowLeftRight },
-  { href: "/money/balances", key: "balances", icon: Scale },
-  { href: "/money/payouts", key: "payouts", icon: Landmark },
-  { href: "/money/collections", key: "collections", icon: FileText },
+  { href: "/finances", key: "finances", icon: Wallet },
   { href: "/pos", key: "pos", icon: Store },
   { href: "/deck", key: "deck", icon: SquareStack },
   // One Settings entry, opening on the first section. Settings has no index
@@ -103,10 +97,7 @@ const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
   { prefix: "/dashboard", key: "dashboard" },
   { prefix: "/calendar", key: "calendar" },
   { prefix: "/orders", key: "orders" },
-  { prefix: "/transactions", key: "transactions" },
-  { prefix: "/money/balances", key: "balances" },
-  { prefix: "/money/payouts", key: "payouts" },
-  { prefix: "/money/collections", key: "collections" },
+  { prefix: "/finances", key: "finances" },
   { prefix: "/customers", key: "customers" },
   { prefix: "/catalog", key: "catalog" },
   { prefix: "/inventory", key: "inventory" },

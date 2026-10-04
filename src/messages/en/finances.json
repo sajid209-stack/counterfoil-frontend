@@ -1,0 +1,151 @@
+{
+  "title": "Finances",
+  "more": "More actions",
+  "menu": {
+    "statement": "Download statement (CSV)",
+    "bank": "Payout bank and schedule"
+  },
+  "available": {
+    "label": "Available balance",
+    "next": "Next payout {date} to {bank}",
+    "nextNoBank": "Next payout {date}",
+    "none": "Payouts go out every Monday",
+    "owe": "You owe Counterfoil this. Add money to cover it.",
+    "withdraw": "Withdraw",
+    "deposit": "Deposit",
+    "nothingToWithdraw": "Nothing to withdraw yet",
+    "noBank": "Add a payout bank to withdraw",
+    "nextAbout": "About {amount}, including {clearing} still clearing",
+    "nextAboutPlain": "About {amount}"
+  },
+  "unsettled": {
+    "label": "Unsettled funds",
+    "info": "Online payments take 2 days to clear. Then they move to your available balance.",
+    "infoLabel": "About unsettled funds",
+    "clearsBy": "Clears by {date}",
+    "none": "Nothing is clearing"
+  },
+  "period": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "7d": "Last 7 days",
+    "30d": "Last 30 days",
+    "month": "This month",
+    "lastmonth": "Last month"
+  },
+  "summary": {
+    "in": "<b>{amount}</b> in",
+    "fees": "<b>{amount}</b> fees",
+    "refunds": "<b>{amount}</b> refunds",
+    "paidOut": "<b>{amount}</b> paid out"
+  },
+  "activity": {
+    "title": "Activity",
+    "filterLabel": "Show",
+    "search": "Order, reference or customer",
+    "showMore": "Show more days",
+    "showing": "Showing {shown} of {total} days",
+    "loading": "Loading activity"
+  },
+  "filter": {
+    "all": "All",
+    "sales": "Sales",
+    "fees": "Fees",
+    "refunds": "Refunds",
+    "payouts": "Payouts",
+    "deposits": "Deposits"
+  },
+  "range": {
+    "choose": "Choose dates",
+    "custom": "Custom",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "pickEnd": "Pick the last day"
+  },
+  "day": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "in": "in {amount}",
+    "out": "out {amount}",
+    "sales": "{count, plural, one {# online payment} other {# online payments}}",
+    "refunds": "{count, plural, one {# refund} other {# refunds}}",
+    "payouts": "{count, plural, one {# payout} other {# payouts}}",
+    "deposits": "{count, plural, one {# deposit} other {# deposits}}",
+    "fees": "fees",
+    "clearing": "Clearing",
+    "onItsWay": "On its way",
+    "counterFees": "counter fees"
+  },
+  "line": {
+    "sale": "Online payment",
+    "refund": "Refund",
+    "platformFee": "Counterfoil fee · {rate} of {base}",
+    "processingFee": "Payment processing fee · {rate} of {base}",
+    "payout": "Payout to {bank}",
+    "payoutNoBank": "Payout to your bank",
+    "withdrawal": "Withdrawal to {bank}",
+    "withdrawalNoBank": "Withdrawal to your bank",
+    "deposit": "Deposit by {method}",
+    "onlineFees": "Fees on online payment",
+    "counterFees": "Counterfoil fees on {count, plural, one {# counter sale} other {# counter sales}}",
+    "paidFees": "{paid} paid · {fees} fees"
+  },
+  "by": {
+    "bkash": "bKash",
+    "card_terminal": "card",
+    "bank_transfer": "bank transfer"
+  },
+  "status": {
+    "pending": "Clearing",
+    "cleared": "Cleared",
+    "billed": "Charged",
+    "processing": "On its way",
+    "paid": "Paid",
+    "received": "Received"
+  },
+  "detail": {
+    "status": "Status",
+    "when": "When",
+    "order": "Order",
+    "method": "Paid with",
+    "reference": "Reference",
+    "copy": "Copy",
+    "copied": "Copied",
+    "to": "Sent to",
+    "by": "Asked by",
+    "bankTransfer": "Bank transfer",
+    "close": "Close"
+  },
+  "empty": {
+    "title": "Nothing matches",
+    "text": "Try another filter, another search or other dates.",
+    "clear": "Clear filters",
+    "none": "No activity in these dates."
+  },
+  "withdraw": {
+    "title": "Withdraw",
+    "amount": "Amount",
+    "all": "All {amount}",
+    "half": "Half",
+    "goesTo": "It goes to",
+    "change": "Change in Settings",
+    "arrives": "Arrives in 1–2 working days.",
+    "submit": "Withdraw {amount}",
+    "done": "{amount} on its way to {bank}",
+    "enter": "Enter an amount."
+  },
+  "deposit": {
+    "title": "Deposit",
+    "amount": "Amount",
+    "card": "Card",
+    "owed": "You owe {amount}. This covers it.",
+    "method": "How are you paying?",
+    "note": "Money you add pays Counterfoil fees first. The rest stays in your balance.",
+    "submit": "Add {amount}",
+    "done": "{amount} added to your balance",
+    "enter": "Enter an amount."
+  }
+}

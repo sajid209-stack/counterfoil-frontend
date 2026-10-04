@@ -15472,3 +15472,116 @@ the wall is dated.
 - A manual discount and a percentage code each take their share of the list
   price, not one after the other — the quote engine's existing rule.
 - `/sell` and `/classic` keep their old cart rows.
+
+## Finances — one balance instead of four money pages (2026-10-05)
+
+Owner, with a screenshot of the Money group (Transactions, Fees & balances,
+Payouts, Fee collections) and of the backend team's transaction history: *"don't
+need different 4 pages for those, name one page Finances and keep 2 boxes —
+Unsettled funds and Available balance — and 2 buttons, Withdraw and Deposit.
+Don't overload the transactions table with data, keep it a simple dropdown …
+existing pages look like an HTML/Excel file."* Contract and design on Opus; the
+ledger and the page were built by two Sonnet sub-agents and reviewed twice.
+
+### The model, and a decision that reverses an earlier one
+
+Stripe's Balances, Shopify Payments, Square, Mercury and Wise all show money as
+**one balance**: payments come in, fees come off, payouts go out; an
+"incoming / pending" figure beside an "available" one; a button to take money
+out and one to add it. The money pages here had been built on the backend
+guide's rule that "we will pay you" and "you owe us" are settled separately and
+never set against each other. **A balance with Withdraw and Deposit is
+netting**, so that rule is now reversed by the owner's decision and recorded in
+`lib/api/finances.ts`: Counterfoil's fees come off the balance, and when they
+outweigh what Counterfoil holds the balance goes below zero and says what is
+owed, which a Deposit covers. How a fee is worked out (`platformFees.ts`) did
+not change; the order page's fee block still reads it.
+
+`lib/api/finances.ts` (contract written first, then implemented):
+- From each fee entry: a Counterfoil-held payment → a sale (+), its Counterfoil
+  fee and processing fee (−); a payment the venue took itself → only its
+  Counterfoil fee (−); a refund of Counterfoil-held money → a refund (−).
+- A sale is **unsettled** for `CLEARING_DAYS` (2) after its day, then available.
+  Fees and refunds come off available at once.
+- **Automatic payouts** on the venue's payout schedule pay out whatever is
+  available that morning; the next one is stated with its estimate.
+- **Withdraw** (to the payout bank; refuses more than available, nothing
+  available, or no bank — in words) and **Deposit** (bKash, card, bank
+  transfer) are session lines in the mock store.
+- Everything is derived from the ledger, and one invariant holds at every venue:
+  `available + unsettled = the sum of every line`.
+- **Seed change**: payouts were daily, which swept the balance to zero each
+  morning and left Withdraw with nothing to do. The demo now pays out weekly on
+  Mondays. Lalbagh Fort: ৳1,276.74 available, ৳13,253.75 clearing. Ahsan Manzil:
+  ৳2,298.00. Baldha Garden: −৳493.85 — it only takes cash at its own counter, so
+  it owes its fees, which is the state Deposit exists for.
+
+### The page — /finances
+
+- **Available balance** (the hero, a thin orange top rule): the figure, "Next
+  payout Mon 3 Aug to BRAC Bank ••4821" with "About ৳14,530.49, including
+  ৳13,253.75 still clearing" when clearing money lands first, then **Withdraw**
+  (primary) and **Deposit**. Below zero it says "You owe Counterfoil this. Add
+  money to cover it", Deposit becomes the primary, and Withdraw is disabled with
+  a reason.
+- **Unsettled funds**: the figure, "Clears by Fri 31 Jul", and a short
+  explanation behind an info button.
+- **Activity**: one quiet line for the period ("Last 30 days · ৳X in · ৳Y fees ·
+  ৳Z refunds · ৳W paid out"), a filter (All · Sales · Fees · Refunds · Payouts ·
+  Deposits), the date range and a search. **One row per day** — the day, what
+  happened ("2 online payments · 1 payout · counter fees"), a Clearing tag while
+  money is clearing, and the day's net with in/out — opening to its lines. An
+  online payment is **one** line showing what the venue keeps, with "৳1,983.75
+  paid · ৳112.13 fees" under it; the fees on that day's counter sales are **one**
+  line; refunds, payouts, withdrawals and deposits are one line each. A line
+  opens a side panel with the amount, status, order link, reference (copy) and
+  the fee breakdown. "Show more days" pages; an empty search says so.
+- **Withdraw** dialog: the full amount filled in, All / Half, where it goes, and
+  "Arrives in 1–2 working days". **Deposit** dialog: the amount (what is owed,
+  when the balance is below zero), how it is paid, and "Money you add pays
+  Counterfoil fees first; the rest stays in your balance."
+- The ⋯ menu: download the statement (CSV, every line, with a BOM for Bangla) and
+  a link to the payout bank and schedule in Settings → Payments.
+
+### Navigation
+
+The Money group's four entries became one **Finances** item (wallet icon) in
+the sidebar, the phone's More grid and the command palette (still found by
+"transactions", "payout", "fees", "balance", "withdraw", "deposit").
+`/transactions`, `/money`, `/money/balances`, `/money/payouts(/:id)` and
+`/money/collections(/:id)` redirect to `/finances` (307). The old route folders
+are deleted. Their "Why this amount?" breakdown and the order page's fee block
+moved to `components/FeeParts.tsx` and `components/OrderFees.tsx`. The
+`transactions` messages namespace is removed, and so are the `money` keys
+nothing reads any more.
+
+### Verified
+
+- Ledger unit test **77/77**: the invariant at every venue; the line shapes of
+  every fee entry; the clearing boundary; payouts never taking the balance below
+  zero; withdraw and deposit arithmetic and refusals; filters, search, day
+  grouping and paging; the reset with the mock store.
+- Page harness **80/80** at 1440 and **79/79** at 390, plus audits in dark and
+  Bangla: the boxes equal the API; withdrawing ৳500 lowers available by exactly
+  ৳500 and shows "On its way" under Today; a deposit at Baldha Garden of what is
+  owed brings it to ৳0.00; days open and close; a line opens its panel; filter,
+  search, date range and Show more days; the CSV's rows sum to the days; no page
+  x-scroll, nothing under 12px, no target under 44px on a phone, contrast clean,
+  no console errors or missing messages.
+- Navigation and redirects **46/46**; the order page's fee block still renders.
+- Full regression green (till, schedule, refunds, undo, storefront, buffer,
+  calendar marketplace colour, customer page, checkout, top cards, 51-route
+  sweep ×3, phone audit). `tsc` clean, `eslint` clean apart from `OsShell`'s
+  documented pre-existing error, i18n 0 / 0. Settings → Payments shows the new
+  weekly-Monday default.
+
+### Open
+
+- `lib/api/transactions.ts` and the payout-run and collection parts of
+  `platformFees.ts` no longer have a page. They are left in place, because the
+  backend contract may still want them.
+- A deposit is recorded, not taken: there is no payment to Counterfoil behind it
+  in the mock.
+- Withdrawals and deposits are signed "You"; there is no signed-in user record.
+- The netting decision should be confirmed with the backend team: their guide
+  left it open (question 3).

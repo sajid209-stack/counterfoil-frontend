@@ -459,6 +459,10 @@ let destination: PayoutDestination | null = {
   updatedAt: "2026-06-01T09:00:00.000Z",
 };
 
+/** The payout bank as stored (masked already), without the simulated latency —
+ *  for derivations that need it synchronously (lib/api/finances). */
+export const peekPayoutDestination = (): PayoutDestination | null => destination;
+
 export const describeDestination = (d: PayoutDestination | null): string | null =>
   d ? (d.kind === "bank" ? `${d.bankName} ••${d.accountLast4}` : `bKash ••${d.accountLast4}`) : null;
 

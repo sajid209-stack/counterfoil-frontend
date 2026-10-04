@@ -66,6 +66,9 @@ const store: Record<string, Row[]> = {
   ticketScans: [],
   // Refund requests start empty — a counter makes them, a manager decides.
   refundRequests: [],
+  // Withdrawals and deposits made this session (see lib/api/finances) — the
+  // only finance lines that are written; every other line is derived.
+  financeLines: [],
   bookings: structuredClone(seed.bookings),
   paymentAccounts: structuredClone(seed.paymentAccounts),
   seatLayouts: structuredClone(seed.seatLayouts),
@@ -151,13 +154,14 @@ export function loadBusiness(name: string, currency: string, productIds: string[
   (store as Record<string, unknown[]>).ticketCredentials = [];
   (store as Record<string, unknown[]>).ticketScans = [];
   (store as Record<string, unknown[]>).refundRequests = [];
+  (store as Record<string, unknown[]>).financeLines = [];
   (store as Record<string, unknown[]>).bookings = [...sales.bookings, ...keepBookings];
 }
 
 /** Empty the operator's data for the golden path ("Start fresh"). */
 export function startFresh(): void {
   operatorState = { ...structuredClone(seed.operator), name: "" };
-  for (const k of ["products", "orders", "tickets", "ticketCredentials", "ticketScans", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds", "inventoryItems", "stockMovements"]) {
+  for (const k of ["products", "orders", "tickets", "ticketCredentials", "ticketScans", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds", "inventoryItems", "stockMovements", "financeLines"]) {
     (store as Record<string, unknown[]>)[k] = [];
   }
 }

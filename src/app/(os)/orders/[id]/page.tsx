@@ -40,7 +40,7 @@ import {
 import { formatClock, formatDateTime, formatDay, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { OrderLinesDetail } from "@/components/OrderLinesDetail";
-import { OrderFees } from "../../money/_components/OrderFees";
+import { OrderFees } from "@/components/OrderFees";
 import { RefundRequests } from "@/components/RefundRequests";
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
