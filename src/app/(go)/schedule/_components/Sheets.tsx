@@ -21,7 +21,7 @@ import {
   UserCheck,
   X,
 } from "lucide-react";
-import { DateStrip, Sheet } from "@/components/ui";
+import { DateStrip, MarketBadge, Sheet } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClock, formatClockOf, formatClockRange, formatDay, formatMoney, formatPriceShort } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
@@ -427,7 +427,23 @@ export function BlockSheet({
       onClose={onClose}
       title={who}
       closeLabel={tc("close")}
-      lead={<p className="text-[0.875rem] font-medium text-muted">{block.product?.name ?? ""}</p>}
+      lead={
+        <>
+          <p className="text-[0.875rem] font-medium text-muted">{block.product?.name ?? ""}</p>
+          {/* Sold through a marketplace: say which, with the reference a
+              guest will quote and a voucher can be checked against. */}
+          {block.source && (
+            <p className="mt-1 flex items-center gap-1.5 text-[0.875rem] font-semibold text-fg">
+              <MarketBadge id={block.source.marketplaceId} size="go" />
+              <span className="min-w-0 break-words">
+                {block.source.reference
+                  ? t("board.bookedOnRef", { name: block.source.marketplaceName, reference: block.source.reference })
+                  : t("board.bookedOn", { name: block.source.marketplaceName })}
+              </span>
+            </p>
+          )}
+        </>
+      }
       footer={(() => {
         /* Refund and Move are the left-hand, "not the usual thing" buttons;
            the orange one on the right is always the step that moves the

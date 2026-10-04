@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Search } from "lucide-react";
 import {
+  Button,
   DataTable,
   EmptyState,
   FilterBar,
@@ -50,8 +51,14 @@ function OrdersPageInner() {
      calendar use, so "2h ago" here and "today" in the calendar agree. */
   const now = useMemo(() => demoNow(), []);
 
-  // Deep-link from Customers: /orders?customer=Anika pre-filters the search.
-  const [search, setSearch] = useState(params.get("customer") ?? "");
+  /* Deep-links from a customer's page. `?customerId=` is exact — two people can
+     share a name — and shows every order they made at EVERY venue, which the
+     venue in the bar would otherwise hide (the customer page says "See all 7
+     orders" and must mean it). `?customer=Anika` alone just pre-fills the
+     search. */
+  const [forCustomer, setForCustomer] = useState(params.get("customerId") ?? "");
+  const forName = params.get("customer") ?? "";
+  const [search, setSearch] = useState(params.get("customerId") ? "" : forName);
   const [status, setStatus] = useState("");
   const [channel, setChannel] = useState("");
   const [range, setRange] = useState<Range>("all");
@@ -86,8 +93,15 @@ function OrdersPageInner() {
      nothing saying so. */
   const { id: locationId } = useActiveLocation(locationsQ.data?.data ?? []);
   const filters = useMemo(
-    () => ({ status: status || undefined, channel: channel || undefined, locationId: locationId || undefined, ...bounds }),
-    [status, channel, locationId, bounds],
+    () => ({
+      status: status || undefined,
+      channel: channel || undefined,
+      customerId: forCustomer || undefined,
+      // One person's orders are all of them, not just this venue's.
+      locationId: forCustomer ? undefined : locationId || undefined,
+      ...bounds,
+    }),
+    [status, channel, locationId, bounds, forCustomer],
   );
 
   const { data, loading, reload } = useApiQuery(
@@ -210,6 +224,24 @@ function OrdersPageInner() {
         {/* Refunds the counter has asked for come first: each one is a guest
             waiting on an answer. Nothing is drawn when none are waiting. */}
         <RefundRequests onDecided={() => { reload(); summaryQ.reload(); }} />
+        {forCustomer && (
+          <div role="status" className="flex flex-wrap items-center justify-between gap-x-section gap-y-tight rounded-md border border-line bg-card px-section py-tight">
+            <p className="min-w-0 break-words text-sm text-fg">
+              {forName ? t("forCustomer", { name: forName }) : t("forCustomerAnon")}
+            </p>
+            <Button
+              variant="tertiary"
+              size="sm"
+              onClick={() => {
+                setForCustomer("");
+                resetPage();
+                router.replace("/orders", { scroll: false });
+              }}
+            >
+              {t("forCustomerClear")}
+            </Button>
+          </div>
+        )}
         <StatStrip
           loading={summaryQ.loading}
           items={[

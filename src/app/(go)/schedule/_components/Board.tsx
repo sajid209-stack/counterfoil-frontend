@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Lock, Plus, RotateCcw, Wrench } from "lucide-react";
+import { MarketBadge } from "@/components/ui";
 import { pendingRefundFor } from "@/lib/api/refundRequests";
 import { cn } from "@/lib/cn";
 import { formatClock, formatClockMin, formatPriceShort } from "@/lib/format";
@@ -314,6 +315,7 @@ export function Board({
           {t("board.keyFree")}
         </li>
         <li className="flex items-center gap-1.5"><span aria-hidden className="h-4 w-5 border-l-[3px] border-l-ember-solid bg-ember/20" />{t("board.keyBooked")}</li>
+        <li className="flex items-center gap-1.5"><span aria-hidden className="h-4 w-5 border-l-[3px] border-l-market bg-market-wash" />{t("board.keyMarket")}</li>
         <li className="flex items-center gap-1.5">
           <span aria-hidden className="flex h-4 w-5 items-center justify-center border border-dashed border-strong" style={{ background: "repeating-linear-gradient(135deg, var(--color-muted-wash) 0 3px, var(--color-card) 3px 6px)" }}>
             <Lock size={9} />
@@ -415,23 +417,40 @@ function BlockView({
     /* A refund waiting for a manager is marked on the block, so whoever is on
        the counter next sees it before selling the hour on. */
     const refunding = !!pendingRefundFor(b.booking.id);
+    const src = b.source;
+    const sold = src ? (src.reference ? t("board.bookedOnRef", { name: src.marketplaceName, reference: src.reference }) : t("board.bookedOn", { name: src.marketplaceName })) : "";
     return (
       <button
         type="button"
         onClick={() => onBooking(column, b)}
-        aria-label={`${t("board.bookedAria", { place, time: formatClockMin(b.start), who })}${refunding ? ` · ${t("refund.boardBadge")}` : ""}`}
+        aria-label={`${t("board.bookedAria", { place, time: formatClockMin(b.start), who })}${src ? `, ${t("board.bookedOn", { name: src.marketplaceName })}` : ""}${refunding ? ` · ${t("refund.boardBadge")}` : ""}`}
+        title={sold || undefined}
         className={cn(
+          /* The frame is its own container, so the badge can ask how wide the
+             block actually is. A container query measures the CONTENT box:
+             four lanes on a phone leave ~53px of it, five leave ~35, and a
+             badge that crowds out the guest's name is worse than none. */
+          "@container",
           frame,
           "border-l-[3px] px-tight py-1",
+          /* Status wins once something has happened; a plain booking sold on
+             a marketplace is violet INSTEAD of orange. */
           b.noShow
             ? "border-l-muted bg-muted-wash text-muted line-through"
             : b.arrived
               ? "border-l-success bg-success-wash text-fg"
-              : "border-l-ember-solid bg-ember/20 text-fg",
+              : src
+                ? "border-l-market bg-market-wash text-fg"
+                : "border-l-ember-solid bg-ember/20 text-fg",
         )}
         style={style}
       >
         <span className="flex items-center gap-1 text-[0.8125rem] font-semibold leading-tight">
+          {src && (
+            <span className="hidden shrink-0 @min-[3rem]:inline-flex">
+              <MarketBadge id={src.marketplaceId} size="go" />
+            </span>
+          )}
           {b.arrived && <Check size={13} strokeWidth={2.5} className="shrink-0 text-success" aria-hidden />}
           {refunding && <RotateCcw size={13} strokeWidth={2.5} className="shrink-0 text-warning" aria-hidden />}
           <span className="truncate">{who}</span>

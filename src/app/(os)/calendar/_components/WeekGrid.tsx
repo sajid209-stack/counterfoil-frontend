@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, Lock, Plus } from "lucide-react";
+import { MarketBadge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClockMin } from "@/lib/format";
 import { toTime } from "@/lib/schedule";
@@ -607,6 +608,11 @@ export function WeekGrid({
                 id,
                 subtitle: stackLabel?.(list.length, list.reduce((n, e) => n + (e.partySize ?? 0), 0)),
                 tone: list.every((e) => e.tone === list[0].tone) ? list[0].tone : "booked",
+                /* A stack is several bookings in one block: it carries a
+                   channel only when they all share it. Two Viator bookings are
+                   a Viator block; a Viator and a direct one are neither. */
+                source: list.every((e) => e.source?.id === list[0].source?.id) ? list[0].source : undefined,
+                sourceLabel: list.every((e) => e.source?.id === list[0].source?.id) ? list[0].sourceLabel : undefined,
                 locked: false,
               });
             }
@@ -897,7 +903,7 @@ export function WeekGrid({
                         type="button"
                         onClick={onPickDay ? () => onPickDay(d) : undefined}
                         title={`${event.title} · ${clockRangeOf(event.start, event.end)} · ${event.subtitle ?? ""}`}
-                        aria-label={`${event.title}, ${clockRangeOf(event.start, event.end)}, ${event.subtitle ?? ""}`}
+                        aria-label={`${event.title}, ${clockRangeOf(event.start, event.end)}, ${event.subtitle ?? ""}${event.sourceLabel ? `, ${event.sourceLabel}` : ""}`}
                         className={cn(
                           "absolute overflow-hidden rounded-sm border px-1 py-0.5 text-left shadow-[2px_2px_0_-1px_var(--color-card),2px_2px_0_0_var(--color-line)]",
                           blockClass(event),
@@ -905,6 +911,7 @@ export function WeekGrid({
                         style={place}
                       >
                         <span className="flex items-start gap-0.5 text-[12px] font-medium leading-tight">
+                          {roomForIcon && event.source && <MarketBadge id={event.source.id} />}
                           <span className="shrink-0 rounded-xs bg-fg/10 px-0.5 font-mono">{stack.length}</span>
                           <span className={cn("min-w-0", canWrap ? "line-clamp-2" : "truncate")}>{event.title}</span>
                         </span>
@@ -944,7 +951,7 @@ export function WeekGrid({
                          accessible name never does. */
                       aria-label={`${event.title}, ${clockRangeOf(event.start, event.end)}${
                         event.subtitle ? `, ${event.subtitle}` : ""
-                      }`}
+                      }${event.sourceLabel ? `, ${event.sourceLabel}` : ""}`}
                       className={cn(
                         "absolute overflow-hidden rounded-sm border px-1 py-0.5 text-left",
                         movable && "cursor-grab active:cursor-grabbing",
@@ -955,6 +962,10 @@ export function WeekGrid({
                       style={place}
                     >
                       <span className="flex items-start gap-0.5 text-[12px] font-medium leading-tight">
+                        {/* The channel, in a shape and letters as well as in
+                            violet. Dropped where the block has no room for an
+                            icon — the accessible name still says it. */}
+                        {roomForIcon && event.source && <MarketBadge id={event.source.id} />}
                         {roomForIcon && event.locked && (
                           <Lock size={9} strokeWidth={2.5} className="mt-0.5 shrink-0" />
                         )}
@@ -1111,6 +1122,7 @@ function CompactWeek({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-0.5 text-[13px] font-medium leading-tight">
+                    {e.source && <MarketBadge id={e.source.id} />}
                     {e.locked && <Lock size={11} strokeWidth={2.5} className="shrink-0" />}
                     {e.tone === "arrived" && (
                       <Check size={11} strokeWidth={3} className="shrink-0 text-success" />
@@ -1118,6 +1130,7 @@ function CompactWeek({
                     {/* break-words, not truncate: this is the list that exists
                         so the name does not have to be guessed. */}
                     <span className="min-w-0 break-words">{e.title}</span>
+                    {e.sourceLabel && <span className="sr-only">, {e.sourceLabel}</span>}
                   </span>
                   {e.subtitle && (
                     <span className="mt-0.5 block break-words text-[12px] leading-tight opacity-70">

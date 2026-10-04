@@ -53,7 +53,10 @@
     "listEmptyMessage": "Switch to Grid to sell or hold a free time.",
     "groupAria": "{name}, {count} free",
     "noPlaceShort": "No place set",
-    "noPlaceMore": "+{count} more"
+    "noPlaceMore": "+{count} more",
+    "keyMarket": "Marketplace",
+    "bookedOn": "Booked on {name}",
+    "bookedOnRef": "Booked on {name} · {reference}"
   },
   "sheet": {
     "hold": "Hold",

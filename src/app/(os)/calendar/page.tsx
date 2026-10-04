@@ -52,8 +52,8 @@ import {
   type CalEvent,
   type EventWords,
   type Ghost,
-  TONE_CLASS,
-  TONE_DOT,
+  toneClass,
+  toneDotClass,
   type EventTone,
 } from "./_components/model";
 
@@ -84,6 +84,12 @@ const TONE_SWATCH: Record<EventTone, string> = {
   held: "bg-warning-wash border-warning/40",
   locked: "bg-danger-wash border-danger/40",
 };
+
+/** Which sales the grid shows. Source is a second axis beside status, so it is
+ *  its own control rather than a sixth state chip: "arrived AND on Viator" is a
+ *  real booking, and a state toggle cannot say that. */
+type Source = "all" | "direct" | "marketplace";
+const SOURCES: Source[] = ["all", "direct", "marketplace"];
 
 /** Whose name the lock record carries. The order page uses the same one. */
 const ACTOR = "Nadia Islam";
@@ -188,11 +194,18 @@ export default function CalendarPage() {
   /* Who each order is for, read from the store when the bookings arrive —
      an order and its bookings are written together, so a new booking's
      guest is there by the time its block is. */
-  const guestOf = useMemo(() => {
-    const m = new Map<string, string | null>();
-    for (const o of bookingsQ.data ? peekOrders() : []) m.set(o.id, o.customerName);
-    return m;
+  const orderLookup = useMemo(() => {
+    const guests = new Map<string, string | null>();
+    const sources = new Map<string, NonNullable<ReturnType<typeof peekOrders>[number]["source"]>>();
+    for (const o of bookingsQ.data ? peekOrders() : []) {
+      guests.set(o.id, o.customerName);
+      /* Where it was sold is on the order, as the guest is. No source is a
+         direct sale — what every order was before marketplaces. */
+      if (o.source) sources.set(o.id, o.source);
+    }
+    return { guests, sources };
   }, [bookingsQ.data]);
+  const guestOf = orderLookup.guests;
 
   /* The words a block carries — "2 people", "Sales stopped" — from the
      messages, so a Bangla screen does not draw English on every block. */
@@ -203,13 +216,22 @@ export default function CalendarPage() {
       holdPlace: t("holdPlace"),
       holdSeats: (count) => t("holdSeatsHeld", { count }),
       holdSpaces: (count) => t("holdSpacesHeld", { count }),
+      bookedOn: (name) => t("bookedOn", { name }),
     }),
     [t],
   );
 
   const events = useMemo<CalEvent[]>(
     () => [
-      ...bookingsToEvents(bookingsQ.data?.data ?? [], products, resources, staff, (id) => guestOf.get(id) ?? null, words).map((e) =>
+      ...bookingsToEvents(
+        bookingsQ.data?.data ?? [],
+        products,
+        resources,
+        staff,
+        (id) => guestOf.get(id) ?? null,
+        words,
+        (id) => orderLookup.sources.get(id) ?? null,
+      ).map((e) =>
         /* A booking of a lane or a field that is on none of them is using
            one the availability engine cannot see. Named on its block, so a
            "4 free" that is really three has a visible reason. */
@@ -219,7 +241,7 @@ export default function CalendarPage() {
       ),
       ...holdsToEvents(holdsQ.data?.data ?? [], words),
     ],
-    [bookingsQ.data, holdsQ.data, products, resources, staff, guestOf, t, words],
+    [bookingsQ.data, holdsQ.data, products, resources, staff, guestOf, orderLookup, t, words],
   );
 
   /* The skeleton is for the first load only. A reload after a booking, a lock
@@ -262,6 +284,7 @@ export default function CalendarPage() {
   const [bookingFilter, setBookingFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [tones, setTones] = useState<EventTone[]>(TONES);
+  const [sourceFilter, setSourceFilter] = useState<Source>("all");
   /* What a block's colour MEANS. Status is the default and always has been —
      the five-state key doubles as the filter, which is most of why this
      calendar reads as a working tool rather than a wall of pastels. Category
@@ -283,7 +306,7 @@ export default function CalendarPage() {
   /** Only the folded-away selects count towards the badge — the tone toggles
    *  are on screen saying their own state, so counting them would report a
    *  filter as hidden while the user is looking straight at it. */
-  const selectFilters = [bookingFilter, ownerFilter].filter(
+  const selectFilters = [bookingFilter, ownerFilter, sourceFilter].filter(
     (v) => v !== "all",
   ).length;
   /* What can be sold from the calendar as it is filtered. Filtered to the
@@ -298,10 +321,11 @@ export default function CalendarPage() {
     [products, bookingFilter],
   );
   const filtered =
-    bookingFilter !== "all" || ownerFilter !== "all" || tones.length !== TONES.length;
+    bookingFilter !== "all" || ownerFilter !== "all" || sourceFilter !== "all" || tones.length !== TONES.length;
   const resetFilters = () => {
     setBookingFilter("all");
     setOwnerFilter("all");
+    setSourceFilter("all");
     setTones(TONES);
   };
   const toggleTone = (tone: EventTone) =>
@@ -315,9 +339,16 @@ export default function CalendarPage() {
       events.filter((e) => {
         if (bookingFilter !== "all" && e.productId !== bookingFilter) return false;
         if (ownerFilter !== "all" && e.ownerId !== ownerFilter) return false;
+        /* Only a booking has a channel. A hold is capacity somebody took off
+           sale, whoever it was for, so it stays on the grid whichever source
+           is being looked at. */
+        if (e.kind === "booking") {
+          if (sourceFilter === "marketplace" && !e.source) return false;
+          if (sourceFilter === "direct" && e.source) return false;
+        }
         return true;
       }),
-    [events, bookingFilter, ownerFilter],
+    [events, bookingFilter, ownerFilter, sourceFilter],
   );
   const visible = useMemo(() => scoped.filter((e) => tones.includes(e.tone)), [scoped, tones]);
 
@@ -354,7 +385,10 @@ export default function CalendarPage() {
     const out = {} as Record<EventTone, number>;
     for (const t of TONES) out[t] = 0;
     for (const e of inWindow) out[e.tone] += 1;
-    return out;
+    /* Counted before the state toggles, like the rest: a marketplace booking
+       that has arrived is still a marketplace booking. */
+    const market = inWindow.filter((e) => e.kind === "booking" && e.source).length;
+    return { tones: out, market };
   }, [scoped, view, cursor, wkStart]);
 
   // ── what is still open ────────────────────────────────────────────────────
@@ -570,7 +604,7 @@ export default function CalendarPage() {
     (e: CalEvent) => {
       /* Colour means STATUS. A no-show keeps its strike-through as well, so
          "nobody came" is carried by shape and not by colour alone. */
-      const base = TONE_CLASS[e.tone];
+      const base = toneClass(e);
       const paint = e.tone === "noshow" ? `${base} line-through` : base;
       /* The booking just made, ringed for a moment where the draft stood —
          the answer to "did that work?" is on the grid, not only in a toast
@@ -618,7 +652,7 @@ export default function CalendarPage() {
 
   const dotClass = useCallback(
     (e: CalEvent) => {
-      return TONE_DOT[e.tone];
+      return toneDotClass(e);
     },
     [],
   );
@@ -808,10 +842,24 @@ export default function CalendarPage() {
           className={cn("h-3.5 w-3.5 rounded-xs border", TONE_SWATCH[tone], !on && "opacity-40")}
         />
         {t(TONE_KEY[tone])}
-        <span className="font-mono text-[12px] text-muted">{toneCounts[tone]}</span>
+        <span className="font-mono text-[12px] text-muted">{toneCounts.tones[tone]}</span>
       </button>
     );
   });
+  /* The key's sixth entry is passive: it explains the violet and the badge, and
+     counts what is in view. Filtering by source lives in the Filters panel,
+     because source is a second axis and a state chip cannot express "arrived
+     AND on Viator". */
+  const marketKey = (
+    <span
+      key="market"
+      className="flex h-11 items-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[12px] text-fg md:h-9"
+    >
+      <span className="h-3.5 w-3.5 rounded-xs border border-l-[3px] border-market/40 border-l-market bg-market-wash" aria-hidden />
+      {t("keyMarketplace")}
+      <span className="font-mono text-[12px] text-muted">{toneCounts.market}</span>
+    </span>
+  );
 
   /* One button, rendered in one of two places: beside the date controls on a
      phone, and at the head of the key row on a desktop. Declaring it once is
@@ -844,9 +892,13 @@ export default function CalendarPage() {
     new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(new Date(2026, 6, 5 + d)),
   );
 
+  /** `t` for the panels that take a plain function and pass values through. */
+  const tt = (key: string, values?: Record<string, string | number>) =>
+    t(key as never, values as never);
+
   const filterBody = (
     <>
-            {compact && <div className="flex flex-wrap items-center gap-tight">{toneKey}</div>}
+            {compact && <div className="flex flex-wrap items-center gap-tight">{toneKey}{marketKey}</div>}
             <div className="flex flex-wrap items-center gap-tight">
             <Select
               value={bookingFilter}
@@ -881,6 +933,26 @@ export default function CalendarPage() {
                 ]}
               />
             )}
+            {/* Where it was sold. Three answers, all worth seeing at once, so a
+                segmented control rather than a select — and here, not among
+                the state chips, because it is a second axis: it cuts across
+                every state rather than being one of them. */}
+            <span role="group" aria-label={t("filterSource")} className="flex items-center gap-inline rounded-sm bg-muted-wash p-inline">
+              {SOURCES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  aria-pressed={sourceFilter === s}
+                  onClick={() => setSourceFilter(s)}
+                  className={cn(
+                    "h-9 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:h-7",
+                    sourceFilter === s ? "bg-card text-fg shadow-sm ring-1 ring-line" : "text-muted hover:text-fg",
+                  )}
+                >
+                  {t(s === "all" ? "sourceAll" : s === "direct" ? "sourceDirect" : "sourceMarket")}
+                </button>
+              ))}
+            </span>
             </div>
     </>
   );
@@ -1007,6 +1079,7 @@ export default function CalendarPage() {
             {!compact && filtersButton}
 
             {!compact && toneKey}
+            {!compact && marketKey}
 
             {/* How the day's rows are cut — a way of looking, like the view
                 switch, so it is drawn as one: a segmented pair. In ember it
@@ -1254,7 +1327,7 @@ export default function CalendarPage() {
               month: "long",
             }).format(d)
           }
-          t={t}
+          t={tt}
           onLock={doLock}
           onComplete={doComplete}
           onRelease={doRelease}
@@ -1332,7 +1405,7 @@ export default function CalendarPage() {
         <EventPeek
           event={detail || request ? null : peek}
           anchor={peekAt}
-          t={t}
+          t={tt}
           dayLabel={(d) =>
             new Intl.DateTimeFormat("en-GB", {
               weekday: "long",

@@ -131,5 +131,8 @@
     "total": "মোট",
     "paid": "দেওয়া হয়েছে",
     "refunded": "রিফান্ড {amount}"
-  }
+  },
+  "forCustomer": "{name}-এর সব অর্ডার, সব ভেন্যুর।",
+  "forCustomerAnon": "এই গ্রাহকের সব অর্ডার, সব ভেন্যুর।",
+  "forCustomerClear": "সব অর্ডার দেখুন"
 }

@@ -2,8 +2,10 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Check, Hourglass, Lock, Plus } from "lucide-react";
+import { MarketBadge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClock, formatClockMin } from "@/lib/format";
+import { marketInitials } from "@/lib/marketplaces";
 import {
   clockRangeOf,
   focusMinute,
@@ -699,7 +701,7 @@ function DayTrack({
                       title={`${event.title} · ${clockRangeOf(event.start, event.end)}${event.subtitle ? ` · ${event.subtitle}` : ""}`}
                       aria-label={`${event.title}, ${clockRangeOf(event.start, event.end)}${
                         event.subtitle ? `, ${event.subtitle}` : ""
-                      }`}
+                      }${event.sourceLabel ? `, ${event.sourceLabel}` : ""}`}
                       className={cn(
                         // A one-hour block is ~58px: 4px sides leave room for "1 guest".
                         "absolute overflow-hidden rounded-sm border text-left transition-shadow duration-quick",
@@ -720,6 +722,15 @@ function DayTrack({
                             the same block reading "Yog". The row already names
                             the field; the desk's question about it is WHO, so
                             a named booking leads with the guest. */}
+                        {/* The channel, as a shape and letters. An hour is ~58px
+                            here, so the badge has to be allowed in before the
+                            icons are — it is the one cue that survives a grey
+                            screenshot — and "GYG" is wider than "V", so it asks
+                            for a little more room. Below that the violet and
+                            the accessible name carry it. */}
+                        {event.source && wide >= 48 + (marketInitials(event.source.id).length - 1) * 14 && (
+                          <MarketBadge id={event.source.id} />
+                        )}
                         {wide > 60 && event.locked && (
                           <Lock size={9} strokeWidth={2.5} className="mt-0.5 shrink-0" />
                         )}
@@ -940,7 +951,7 @@ function CompactDay({
                     {...peekHandlers(event, onPeek)}
                     aria-label={`${event.title}, ${clockRangeOf(event.start, event.end)}${
                       owner ? `, ${owner}` : ""
-                    }`}
+                    }${event.sourceLabel ? `, ${event.sourceLabel}` : ""}`}
                     className={cn(
                       "absolute overflow-hidden rounded-sm border px-tight py-0.5 text-left",
                       blockClass(event),
@@ -953,6 +964,7 @@ function CompactDay({
                     }}
                   >
                     <span className="flex items-center gap-0.5 truncate text-[12px] font-medium leading-tight">
+                      {across < 3 && tall > 24 && event.source && <MarketBadge id={event.source.id} />}
                       {event.locked && <Lock size={9} strokeWidth={2.5} className="shrink-0" />}
                       {event.tone === "arrived" && (
                         <Check size={9} strokeWidth={3} className="shrink-0 text-success" />

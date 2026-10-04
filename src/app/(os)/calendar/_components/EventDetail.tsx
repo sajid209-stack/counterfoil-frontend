@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Lock, LockOpen, UserCheck } from "lucide-react";
-import { Button, Modal, StatusPill, type PillTone } from "@/components/ui";
+import { Button, MarketBadge, Modal, StatusPill, type PillTone } from "@/components/ui";
 import { clockRangeOf, type CalEvent, type EventTone } from "./model";
+import { commissionLine } from "./sourceText";
 
 /** Status is a word here, never only a colour — a block on the grid can get
  *  away with a coloured bar because this panel is what names it. */
@@ -58,7 +59,7 @@ export function EventDetail({
   canOpen: boolean;
   /** The page owns date formatting, as it does for the grids. */
   dayLabel: (d: Date) => string;
-  t: (key: string) => string;
+  t: (key: string, values?: Record<string, string | number>) => string;
   /** Lock and unlock are one call: which one it is follows from the booking.
    *  A reason is required either way — an unexplained lock is indistinguishable
    *  from a bug six weeks later, which is the rule holds already follow. */
@@ -139,6 +140,26 @@ export function EventDetail({
               <span className="text-muted"> · {dayLabel(event.start)}</span>
             </dd>
           </div>
+          {/* Who sold it. The marketplace prepaid it, has its own reference
+              to quote and a voucher to check, and keeps a cut — which is the
+              number a manager asks for next. Both come off the order's own
+              snapshot. */}
+          {event.source && (
+            <>
+              <div className="flex flex-wrap items-baseline gap-tight">
+                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailSource")}</dt>
+                <dd className="flex min-w-0 items-start gap-tight text-[13px]">
+                  <MarketBadge id={event.source.id} className="mt-0.5" />
+                  {/* The row is already labelled "Sold on", so the line is just who and their reference. */}
+                  <span className="min-w-0 break-words">{event.source.reference ? `${event.source.name} · ${event.source.reference}` : event.source.name}</span>
+                </dd>
+              </div>
+              <div className="flex flex-wrap items-baseline gap-tight">
+                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailCommission")}</dt>
+                <dd className="min-w-0 break-words text-[13px]">{commissionLine(t, event.source)}</dd>
+              </div>
+            </>
+          )}
           {event.hold && (
             <>
               <div className="flex flex-wrap items-baseline gap-tight">

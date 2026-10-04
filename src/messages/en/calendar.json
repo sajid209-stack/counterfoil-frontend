@@ -190,5 +190,15 @@
   "holdWhole": "Sales stopped",
   "holdPlace": "Place on hold",
   "holdSeatsHeld": "{count, plural, one {# seat on hold} other {# seats on hold}}",
-  "holdSpacesHeld": "{count, plural, one {# space on hold} other {# spaces on hold}}"
+  "holdSpacesHeld": "{count, plural, one {# space on hold} other {# spaces on hold}}",
+  "keyMarketplace": "Marketplace",
+  "bookedOn": "Booked on {name}",
+  "bookedOnRef": "Booked on {name} · {reference}",
+  "commission": "{name} takes {pct} · {amount}",
+  "filterSource": "Where it was sold",
+  "sourceAll": "All",
+  "sourceDirect": "Direct",
+  "sourceMarket": "Marketplace",
+  "detailSource": "Sold on",
+  "detailCommission": "Fee"
 }

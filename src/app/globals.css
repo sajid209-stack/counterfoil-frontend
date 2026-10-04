@@ -137,6 +137,12 @@
   --color-warning: #92400e; /* amber-800  */
   --color-danger:  #b91c1c; /* red-700    */
   --color-info:    #1d4ed8; /* blue-700   */
+  /* Where a sale came from. A second axis beside status: the five status colours
+     say what is happening to a booking, this says it was sold through a
+     marketplace (Viator, Klook…) and not at our own counter or website. It is
+     the brand's own violet, so no new hue enters the product. Text-weight step
+     here; the fill and the stripe use the pinned -solid token below. */
+  --color-market:  #7c3aed; /* violet-600 (= --color-bt-violet) */
 
   /* ── shadcn-style semantic aliases (additive, for new design work) ─────
      Existing components keep using surface/card/fg/muted/line etc. below;
@@ -565,6 +571,14 @@
      owner named. */
   --color-ember-solid: #f94a00;
 
+  /* Marketplace bookings. The wash is pale enough for body text and the solid
+     is pinned (same reasoning as ember-solid): violet-600 does not lighten in
+     dark, so the stripe and the badge that carry white text keep their
+     contrast on both themes, while `--color-market` itself lifts to violet-400
+     for use as text or a mark on ink. */
+  --color-market-wash: #ede5fd;
+  --color-market-solid: #7c3aed;
+
   /* Same reasoning for the destructive fill. `danger` brightens to red-400 on
      ink so danger-as-TEXT reads there; under white as a FILL that measured
      2.77:1. Held at red-700 in both themes it is ~7:1 either way, and still
@@ -618,6 +632,7 @@
   --color-warning: #fbbf24;             /* amber-400 */
   --color-danger:  #f87171;             /* red-400   */
   --color-info:    #60a5fa;             /* blue-400  */
+  --color-market:  #a78bfa;             /* violet-400 */
   --color-success-foreground: #4ade80;
   --color-warning-foreground: #fbbf24;
   --color-info-foreground: #60a5fa;
@@ -657,6 +672,8 @@
   --color-offtime: #1b1a18;
   --color-ember-solid: #f94a00;
   --color-danger-solid: #b91c1c;
+  --color-market-wash: #2e2447;
+  --color-market-solid: #7c3aed;
 }
 .dark body { background: var(--color-surface); color: var(--color-fg); }
 

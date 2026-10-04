@@ -1,6 +1,6 @@
 import { buildDay } from "@/lib/dayModel";
 import { isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
-import type { Booking, HoldView, Minor, Order, Product, Resource } from "@/lib/api";
+import type { Booking, HoldView, Minor, Order, OrderSource, Product, Resource } from "@/lib/api";
 import { bookingEnd } from "@/app/(os)/calendar/_components/model";
 import { openSlotsFor, type OpenOption } from "@/app/(os)/calendar/_components/openSlots";
 
@@ -49,6 +49,8 @@ export interface BookedBlock {
   product?: Product;
   /** Who it is for, when the order names them. */
   guest: string | null;
+  /** Where it was sold, from the order's own snapshot. Null is a direct sale. */
+  source: OrderSource | null;
   arrived: boolean;
   noShow: boolean;
 }
@@ -119,6 +121,7 @@ export function buildBoard(args: {
   const sessionProducts = here.filter((p) => isSlotBased(p.bookingType) && !isResourceType(p.bookingType));
 
   const guestOf = (orderId: string) => args.orders.find((o) => o.id === orderId)?.customerName ?? null;
+  const sourceOf = (orderId: string) => args.orders.find((o) => o.id === orderId)?.source ?? null;
   const dayBookings = args.bookings.filter((b) => b.status === "confirmed" && b.slotStart.slice(0, 10) === date);
   const dayHolds = args.holds.filter((h) => h.active && h.date === date);
   const free = openSlotsFor(here, date, today, nowMinutes);
@@ -172,7 +175,7 @@ export function buildBoard(args: {
         const product = here.find((p) => p.id === b.productId);
         const start = toMinutes(b.slotStart.slice(11, 16));
         const end = start + Math.max(15, Math.round((bookingEnd(b, product).getTime() - Date.parse(b.slotStart)) / 60000));
-        list.push({ type: "booking", key: `bk|${b.id}`, start, end, booking: b, product, guest: guestOf(b.orderId), arrived: (b.checkedIn ?? 0) > 0, noShow: !!b.noShow });
+        list.push({ type: "booking", key: `bk|${b.id}`, start, end, booking: b, product, guest: guestOf(b.orderId), source: sourceOf(b.orderId), arrived: (b.checkedIn ?? 0) > 0, noShow: !!b.noShow });
         lo = Math.min(lo, start);
         hi = Math.max(hi, end);
       }
@@ -198,7 +201,7 @@ export function buildBoard(args: {
           const product = here.find((p) => p.id === b.productId);
           const start = toMinutes(b.slotStart.slice(11, 16));
           const end = start + Math.max(15, Math.round((bookingEnd(b, product).getTime() - Date.parse(b.slotStart)) / 60000));
-          return { type: "booking" as const, key: `bk|${b.id}`, start, end, booking: b, product, guest: guestOf(b.orderId), arrived: (b.checkedIn ?? 0) > 0, noShow: !!b.noShow };
+          return { type: "booking" as const, key: `bk|${b.id}`, start, end, booking: b, product, guest: guestOf(b.orderId), source: sourceOf(b.orderId), arrived: (b.checkedIn ?? 0) > 0, noShow: !!b.noShow };
         }),
       );
     }

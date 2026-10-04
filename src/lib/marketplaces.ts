@@ -83,3 +83,18 @@ export const priceToNet = (target: Minor, commissionBps: number): Minor =>
 
 export const bpsToPct = (bps: number) => bps / 100;
 export const pctToBps = (pct: number) => Math.round(pct * 100);
+
+/**
+ * What a marketplace is called on a small badge: the letters a person would
+ * say, not the first of everything. "GYG" because nobody abbreviates
+ * GetYourGuide to a G, and "TA" so Tripadvisor does not read as Taxi.
+ */
+const INITIALS: Record<MarketplaceId, string> = {
+  viator: "V",
+  getyourguide: "GYG",
+  klook: "K",
+  tripadvisor: "TA",
+  expedia: "E",
+  airbnb: "A",
+};
+export const marketInitials = (id: MarketplaceId): string => INITIALS[id] ?? "M";

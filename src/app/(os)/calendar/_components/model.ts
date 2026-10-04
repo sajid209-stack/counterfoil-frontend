@@ -4,7 +4,7 @@
    already resolved to real start/end instants. The grids know nothing about
    bookings, products or holds; they position rectangles. That is what keeps
    day, week and month from drifting apart. */
-import type { Booking, HoldView, Product, Resource, Staff } from "@/lib/api";
+import type { Booking, HoldView, MarketplaceId, OrderSource, Product, Resource, Staff } from "@/lib/api";
 import { formatClockMin, formatClockRange } from "@/lib/format";
 
 /** The visual language a slot can be in. These reuse patterns the app already
@@ -34,6 +34,20 @@ export interface CalEvent {
   party?: string;
   checkedIn?: number;
   orderId?: string;
+  /** Bookings only: sold through a marketplace rather than direct, taken from
+   *  the order's own snapshot. Absent means a direct sale — which is what
+   *  every order written before marketplaces was. The commission is the
+   *  rate and amount AT THE TIME OF SALE, never recomputed. */
+  source?: {
+    id: MarketplaceId;
+    name: string;
+    reference?: string;
+    commissionBps: number;
+    commissionAmount: number;
+  };
+  /** "Booked on Viator" — appended to a block's accessible name, so the
+   *  channel is said in words and not only drawn in violet. */
+  sourceLabel?: string;
   /** Holds only: what the detail panel needs to answer "is this court still
    *  ours next Tuesday, and who blocked it?" without going back to the store.
    *  All three are on the record already; nothing was drawing them. */
@@ -164,6 +178,8 @@ export interface EventWords {
   holdPlace: string;
   holdSeats: (count: number) => string;
   holdSpaces: (count: number) => string;
+  /** "Booked on Viator" — the channel, in words. */
+  bookedOn: (name: string) => string;
 }
 
 const ENGLISH_WORDS: EventWords = {
@@ -172,6 +188,7 @@ const ENGLISH_WORDS: EventWords = {
   holdPlace: "Place on hold",
   holdSeats: (n) => `${n} ${n === 1 ? "seat" : "seats"} on hold`,
   holdSpaces: (n) => `${n} ${n === 1 ? "space" : "spaces"} on hold`,
+  bookedOn: (name) => `Booked on ${name}`,
 };
 
 export function bookingsToEvents(
@@ -183,6 +200,8 @@ export function bookingsToEvents(
    *  and the product name alone cannot answer it. */
   guestOf?: (orderId: string) => string | null,
   words: EventWords = ENGLISH_WORDS,
+  /** Where an order was sold, from the order itself. Null is a direct sale. */
+  sourceOf?: (orderId: string) => OrderSource | null,
 ): CalEvent[] {
   const productOf = (id: string) => products.find((p) => p.id === id);
   const ownerName = (id?: string | null) =>
@@ -196,6 +215,7 @@ export function bookingsToEvents(
       const guest = (b.orderId && guestOf?.(b.orderId)) || null;
       const party = words.people(b.partySize);
       const parts = [guest, party, owner].filter(Boolean);
+      const src = (b.orderId && sourceOf?.(b.orderId)) || null;
       return {
         id: b.id,
         kind: "booking" as const,
@@ -211,6 +231,18 @@ export function bookingsToEvents(
         party,
         checkedIn: b.checkedIn ?? 0,
         orderId: b.orderId,
+        ...(src
+          ? {
+              source: {
+                id: src.marketplaceId,
+                name: src.marketplaceName,
+                reference: src.reference,
+                commissionBps: src.commissionBps,
+                commissionAmount: src.commissionAmount,
+              },
+              sourceLabel: words.bookedOn(src.marketplaceName),
+            }
+          : {}),
         tone: toneOf(b),
         locked: !!b.lockedAt,
       };
@@ -414,6 +446,25 @@ export const TONE_CLASS: Record<EventTone, string> = {
 };
 
 
+/**
+ * A booking sold through a marketplace, in the second axis' colour.
+ *
+ * Colour on this calendar means STATUS, so source cannot take it over: a plain
+ * "booked" marketplace booking wears this INSTEAD of ember, and once something
+ * has happened — arrived, no-show, locked — the status colours win and source
+ * is carried by the badge alone. The stripe is `market` rather than
+ * `market-solid`: in dark the pinned solid measures 2.82:1 against the card,
+ * under the 3:1 a mark needs, and `market` is the lifted violet that clears it
+ * (5.9:1). The solid is for the badge, where white text sits on it.
+ */
+export const MARKET_CLASS =
+  "bg-market-wash border-market/25 border-l-[3px] border-l-market text-fg";
+
+/** What a block wears: its status, unless it is a plain booking sold on a
+ *  marketplace — then the marketplace's violet. */
+export const toneClass = (e: Pick<CalEvent, "tone" | "source">): string =>
+  e.source && e.tone === "booked" ? MARKET_CLASS : TONE_CLASS[e.tone];
+
 /** Tone → a single dot. The month view on a phone has no room for chips, so a
  *  day states how much is on and in what state with dots, the way every phone
  *  calendar does. Hatching cannot survive at 6px, so held and locked fall back
@@ -425,6 +476,10 @@ export const TONE_DOT: Record<EventTone, string> = {
   held: "bg-warning",
   locked: "bg-danger",
 };
+
+/** The same rule for the phone's dots. */
+export const toneDotClass = (e: Pick<CalEvent, "tone" | "source">): string =>
+  e.source && e.tone === "booked" ? "bg-market" : TONE_DOT[e.tone];
 
 /** What the cards above the grid count. */
 export interface WindowStats {

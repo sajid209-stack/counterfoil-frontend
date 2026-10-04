@@ -1168,7 +1168,73 @@ export const holds: Hold[] = [
   },
 ];
 
-export const orders = [...sales.orders, stressOrder];
+/* Marketplace bookings, hand-authored.
+
+   The generated sales carry a few Viator orders, but almost all of them sit
+   weeks in the past or at other venues, so the calendar's default week and the
+   till's board for Lalbagh Fort show two at most. A channel that is hard to see
+   is a channel nobody can judge the colour of. These are explicit fixtures,
+   not rand() draws — drawing from the generator would shift every seeded
+   order, price and booking.
+
+   Four are on the fort's own courts, fields and lanes for the demo day, one of
+   them already arrived (status wins over source, so it shows green with the
+   badge); one is on a timed session. Viator and Klook both. The commission is
+   the rate at the time of sale, snapshotted onto the order, as every
+   marketplace order is. */
+const marketOrder = (o: {
+  seq: number;
+  market: { id: "viator" | "klook"; name: string; bps: number };
+  mref: string;
+  guest: string;
+  placedAt: string;
+  line: Parameters<typeof buildOrderLines>[0][number];
+}): Order => {
+  const reference = `CF-2026-${String(9000 + o.seq).padStart(6, "0")}`;
+  const sale = buildOrderLines([o.line], 0, reference);
+  return {
+    id: `ord_mk_${o.seq}`, reference, status: "paid", channel: "online",
+    source: {
+      marketplaceId: o.market.id,
+      marketplaceName: o.market.name,
+      reference: o.mref,
+      commissionBps: o.market.bps,
+      commissionAmount: Math.round((sale.totals.total * o.market.bps) / 10000),
+    },
+    locationId: "loc_fort", counterId: null, staffId: null,
+    customerId: null, customerName: o.guest,
+    lines: sale.lines,
+    payments: [{ id: `${reference}-P0`, method: "card_terminal", amount: sale.totals.total, status: "confirmed", createdAt: o.placedAt }],
+    ...sale.totals,
+    createdAt: o.placedAt, updatedAt: o.placedAt,
+  };
+};
+const VIATOR = { id: "viator", name: "Viator", bps: 2500 } as const;
+const KLOOK = { id: "klook", name: "Klook", bps: 2000 } as const;
+const marketOrders: Order[] = [
+  marketOrder({
+    seq: 1, market: VIATOR, mref: "VT-482910", guest: "Tanvir Rahman", placedAt: "2026-07-26T20:14:00+06:00",
+    line: { productId: "prd_bowling", productName: "Bowling Lane", tierId: "tier_bw_hr", tierName: "Per hour", admits: 4, quantity: 1, unitPrice: 80000, taxClass: "standard", taxRate: 0.15, booking: { date: "2026-07-29", startTime: "11:00", endTime: "12:00", resourceId: "res_lane_2", resourceName: "Lane 2", guests: 4, durationMinutes: 60 } },
+  }),
+  marketOrder({
+    seq: 2, market: KLOOK, mref: "KL-317264", guest: "Maliha Chowdhury", placedAt: "2026-07-27T09:40:00+06:00",
+    line: { productId: "prd_futsal", productName: "Futsal", tierId: "tier_fb_slot", tierName: "Slot", admits: 10, quantity: 1, unitPrice: 150000, taxClass: "standard", taxRate: 0.15, booking: { date: "2026-07-29", startTime: "16:00", endTime: "17:00", resourceId: "res_field_2", resourceName: "Indoor Field", guests: 10, durationMinutes: 60 } },
+  }),
+  marketOrder({
+    seq: 3, market: VIATOR, mref: "VT-503177", guest: "Imtiaz Karim", placedAt: "2026-07-28T13:05:00+06:00",
+    line: { productId: "prd_badminton", productName: "Badminton Court", tierId: "tier_bd_hr", tierName: "Per hour", admits: 2, quantity: 1, unitPrice: 80000, taxClass: "standard", taxRate: 0.15, booking: { date: "2026-07-29", startTime: "14:00", endTime: "15:00", resourceId: "res_badminton", resourceName: "Badminton Court", guests: 2, durationMinutes: 60 } },
+  }),
+  marketOrder({
+    seq: 4, market: KLOOK, mref: "KL-318850", guest: "Sadia Afrin", placedAt: "2026-07-28T18:22:00+06:00",
+    line: { productId: "prd_bowling", productName: "Bowling Lane", tierId: "tier_bw_hr", tierName: "Per hour", admits: 6, quantity: 1, unitPrice: 80000, taxClass: "standard", taxRate: 0.15, booking: { date: "2026-07-29", startTime: "15:00", endTime: "16:00", resourceId: "res_lane_3", resourceName: "Lane 3", guests: 6, durationMinutes: 60 } },
+  }),
+  marketOrder({
+    seq: 5, market: VIATOR, mref: "VT-511396", guest: "Rafi Ahmed", placedAt: "2026-07-28T21:30:00+06:00",
+    line: { productId: "prd_stress", productName: "Grand Heritage Architectural Walking Tour of Old Dhaka with Rooftop Iftar Experience", tierId: "tier_st_adult", tierName: "Adult", admits: 1, quantity: 3, unitPrice: 250000, taxClass: "standard", taxRate: 0.15, booking: { date: "2026-07-30", startTime: "17:00", endTime: "18:30", guests: 3, durationMinutes: 90 } },
+  }),
+];
+
+export const orders = [...sales.orders, stressOrder, ...marketOrders];
 
 // A sold 10-Class Yoga Pack with 3 credits already spent — its code is the
 // pass a customer hands over at POS ("Redeem a pass" → 7 credits left).
@@ -1204,7 +1270,31 @@ const guidedBookings = [
     partySize: 6, status: "confirmed" as const,
   },
 ];
-export const bookings = [...sales.bookings, ...turfBookings, ...guidedBookings];
+/* The bookings behind the marketplace orders above. The first has already
+   arrived (all four through the door), so it reads green with its badge; the
+   rest are plain booked. */
+const marketBooking = (
+  n: number,
+  productId: string,
+  resourceId: string | undefined,
+  start: string,
+  end: string,
+  partySize: number,
+  extra: { checkedIn?: number } = {},
+) => ({
+  id: `bkg_mk_${n}`, orderId: `ord_mk_${n}`, productId, locationId: "loc_fort",
+  ...(resourceId ? { resourceId } : {}),
+  slotStart: `${start}:00+06:00`, slotEnd: `${end}:00+06:00`, partySize, status: "confirmed" as const,
+  ...extra,
+});
+const marketBookings = [
+  marketBooking(1, "prd_bowling", "res_lane_2", "2026-07-29T11:00", "2026-07-29T12:00", 4, { checkedIn: 4 }),
+  marketBooking(2, "prd_futsal", "res_field_2", "2026-07-29T16:00", "2026-07-29T17:00", 10),
+  marketBooking(3, "prd_badminton", "res_badminton", "2026-07-29T14:00", "2026-07-29T15:00", 2),
+  marketBooking(4, "prd_bowling", "res_lane_3", "2026-07-29T15:00", "2026-07-29T16:00", 6),
+  marketBooking(5, "prd_stress", undefined, "2026-07-30T17:00", "2026-07-30T18:30", 3),
+];
+export const bookings = [...sales.bookings, ...turfBookings, ...guidedBookings, ...marketBookings];
 
 /**
  * Public pages, one per venue.

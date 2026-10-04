@@ -15268,3 +15268,110 @@ availability engine honours it (`isOwnerFree`, `freeGuides`).
 - The `settings-nav` and `catalog-e2e` harnesses still assert wording from
   before the plain-language pass.
 
+
+## Marketplace bookings in their own colour, and a customer page about the customer (2026-10-04)
+
+Owner: *"calendar needs to show different color for the booking from
+marketplace … and individual customer details page UI needs to be more focused
+on customer rather than transaction and history."* Planned and verified on
+Opus; built by two Sonnet sub-agents with separate files.
+
+### Marketplace bookings on the calendars
+
+Channel managers (Rezdy, Bókun, FareHarbor, Peek) mark a booking's sales channel
+on the calendar with a colour and a badge: the desk treats it differently — it
+is prepaid by the marketplace, has a marketplace reference to quote, and the
+marketplace keeps a cut. Colour on these calendars already means **status**, so
+source is drawn as a second axis:
+
+- A **booked** marketplace booking is **violet** (wash and a 3px stripe) instead
+  of orange. Arrived, didn't-come and locked keep their status colours.
+- **Every** marketplace booking carries a small badge with the marketplace's
+  initials (V Viator, K Klook, GYG GetYourGuide…), and its accessible name ends
+  "…, booked on Viator" — colour is never the only carrier. The badge drops on
+  blocks too small for it.
+- New tokens `--color-market`, `--color-market-wash`, `--color-market-solid`
+  (light `#7c3aed` / wash `#ede5fd`; dark `#a78bfa` / wash `#2e2447`; the badge
+  fill pinned). Text on the wash measures 13.2:1 light and 12.2:1 dark; white on
+  the badge 5.70:1. The hue sits well apart from orange, green, amber and red
+  under normal and colour-blind vision (ΔE ≥ 25.9 in every pair, computed).
+- The calendar's key gains **Marketplace** with a count; a **Source** filter
+  (All / Direct / Marketplace) is in the Filters panel — a second axis, because
+  "arrived and on Viator" is one booking. The hover card says "Booked on Viator
+  · VT-…"; the detail panel adds "Viator takes 25% · ৳230.00" from the order's
+  own snapshot. Week, day, month and the phone views all show it.
+- The till's **Schedule board**: a marketplace booking is violet with the badge
+  beside the guest's name, the board's key has the item, and the booking sheet
+  and list view say where it was sold.
+- `CalEvent.source` is filled from the order (`Order.source`). Shared pieces:
+  `components/ui/MarketBadge`, `marketInitials` in `lib/marketplaces`.
+- **Fixtures**: five hand-authored marketplace orders at Lalbagh Fort on 29–30
+  Jul (`ord_mk_1`…`ord_mk_5`, Viator and Klook, one already arrived, one timed
+  session). No `rand()` was added, so the generated seed is unchanged; the order
+  count goes from 151 to 156.
+
+### The customer page
+
+Shopify's customer page, HubSpot's contact record and the Fresha / Mindbody /
+Square client profiles all lead with the **person** — who they are, how to
+reach them, notes about them, what is coming up — and keep orders as one card.
+The page was the reverse: six equal money tiles, then tabs with an orders table
+first.
+
+- **Profile header**: initials, a relationship chip and line — "Regular ·
+  Customer since Jan 2026 · 6 bookings · Last booked 5 days ago" — tags with
+  inline Add tag, and **Call / SMS / Email / Copy phone** (right of the header on
+  a desktop, under it on a phone; each omitted when there is no number or
+  address). New = one booking or a first booking under 30 days ago; Regular = 4+
+  bookings in 90 days; Lapsed = none in 90 days. Based on what they **booked**,
+  not on check-ins, which the demo seldom records.
+- **Main column**: **Coming up** (the next three bookings — what, when, where,
+  party, link to the order), **Notes** (add one inline; newest first; "Only staff
+  see notes"), **What they come for** (their top three bookings, the usual day,
+  time of day, party size and way to pay — stated only when a pattern exists;
+  `lib/customerProfile.ts`, pure and unit-tested), **Recent orders** (five rows
+  and "See all N orders").
+- **Side column**: **Contact** (copy buttons; Edit opens the details form),
+  **Agreed to messages** (SMS and Email switches with when each last changed),
+  **At a glance** (spent, orders, visits, didn't come, still owes — a small list,
+  not tiles; "still owes" links to the order).
+- The tabs are gone. `CustomerIdentity` was deleted (nothing else used it).
+- **Orders** gains `?customerId=`: "See all orders" shows every order for that
+  customer at **all** venues — the venue in the bar would otherwise hide some —
+  with a banner saying so and a way back to all orders.
+
+### Verified
+
+- Marketplace harness **50/50** at 1440 (light, dark, English, Bangla) and
+  **48/48** at 390: violet blocks differ from orange ones, badge and accessible
+  name, text contrast on the real background, hover card and detail panel, the
+  key and the Source filter in all three states, the Schedule board, list and
+  sheet; no page x-scroll, no console errors.
+- Customer harness **108/108** at 1440 and **102/102** at 390, plus layout runs
+  in dark and Bangla: header and quick-action links, no tabs, a note and a tag
+  added, consent switched, contact edited, At a glance equal to the API's
+  `customerStats`, See all orders showing exactly that customer's orders.
+  Derivation unit checks **32/32**.
+- Full regression: till **38/38** / **36/36**, round-3 **24/24**, Schedule
+  **31/31** ×2, **4/4**, new sale **2/2**, refunds **16/16** and **12/12**,
+  move **12/12**, discount **9/9**, check-in **7/7**, printing **4/4**, undo
+  **17/17** ×2 and **5/5**, storefront **31/31**, **14/14**, **6/6**, buffer
+  **15/15**, **7/7**, **7/7**, **20/20**, **12/12**, top cards **102/102**;
+  51-route sweep clean at 390 English, 390 Bangla dark and 1440; phone audit
+  hidden 0 · under-44 0 · clipped 0 · errors 0; POS audit only the declared
+  white-on-ember rule.
+- `tsc` clean, `eslint` clean on every changed file, i18n 0 missing / 0 extra.
+
+The till-to-manager refund test waited a fixed 1.2 s after approving; with the
+larger fixture set the mock's simulated latency can exceed that, so it now waits
+for the result.
+
+### Open
+
+- The demo seldom records check-ins, so **Visits** in At a glance is low for most
+  customers; the relationship line counts bookings for that reason.
+- Removing a tag is in the Edit dialog, not on the chips.
+- Month view caps chips at three a day; a marketplace booking can sit behind
+  "+N more" (the Source filter isolates them).
+- `/sell`, `/classic` and `/pos` do not colour marketplace bookings — they sell,
+  they do not show the day's bookings.

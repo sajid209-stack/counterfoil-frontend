@@ -48,3 +48,4 @@ export { AreaChart, BarChart, DonutChart, HBarChart, LineChart } from "./charts"
 export type { ChartPoint } from "./charts";
 export { PlanView, seatToElement } from "./PlanView";
 export type { PlanElement, PlanElementState, PlanViewProps } from "./PlanView";
+export { MarketBadge } from "./MarketBadge";

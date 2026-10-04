@@ -1,9 +1,10 @@
 "use client";
 
 import { Clock, Lock, Tag, Users } from "lucide-react";
-import { StatusPill, type PillTone } from "@/components/ui";
+import { MarketBadge, StatusPill, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { clockRangeOf, type CalEvent, type EventTone } from "./model";
+import { bookedOnLine } from "./sourceText";
 
 const TONE_PILL: Record<EventTone, PillTone> = {
   booked: "info",
@@ -45,7 +46,7 @@ export function EventPeek({
   event: CalEvent | null;
   /** Where the block is, in viewport coordinates. */
   anchor: DOMRect | null;
-  t: (key: string) => string;
+  t: (key: string, values?: Record<string, string | number>) => string;
   dayLabel: (d: Date) => string;
 }) {
   // Nothing to place until a pointer is actually over a block, and this
@@ -109,6 +110,15 @@ export function EventPeek({
               <Users size={13} strokeWidth={1.8} className="mt-0.5 shrink-0 text-muted" />
             )}
             <span className="min-w-0 break-words">{event.subtitle}</span>
+          </span>
+        )}
+
+        {/* Where it was sold, with the marketplace's own reference — the one
+            thing a desk is asked for when a guest quotes their voucher. */}
+        {event.source && (
+          <span className="flex items-start gap-tight text-[13px]">
+            <MarketBadge id={event.source.id} className="mt-0.5" />
+            <span className="min-w-0 break-words">{bookedOnLine(t, event.source)}</span>
           </span>
         )}
 

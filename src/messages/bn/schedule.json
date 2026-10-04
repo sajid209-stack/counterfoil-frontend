@@ -53,7 +53,10 @@
     "listEmptyMessage": "খালি সময় বিক্রি বা হোল্ড করতে গ্রিডে যান।",
     "groupAria": "{name}, {count}টি খালি",
     "noPlaceShort": "জায়গা ঠিক হয়নি",
-    "noPlaceMore": "আরও {count}টি"
+    "noPlaceMore": "আরও {count}টি",
+    "keyMarket": "মার্কেটপ্লেস",
+    "bookedOn": "{name}-এ বুক করা",
+    "bookedOnRef": "{name}-এ বুক করা · {reference}"
   },
   "sheet": {
     "hold": "হোল্ড",

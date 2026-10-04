@@ -1,53 +1,61 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, StickyNote } from "lucide-react";
-import {
-  Button,
-  DataTable,
-  EmptyState,
-  FormField,
-  PageShell,
-  StatusPill,
-  Tabs,
-  useToast,
-  type Column,
-} from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { ArrowLeft } from "lucide-react";
+import { Button, EmptyState, PageShell } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { CustomerIdentity } from "../_components/CustomerIdentity";
 import {
-  addCustomerNote,
   getCustomer,
   getCustomerStats,
-  hasConsent,
+  listOrders,
   loyaltyAccount,
   membershipsFor,
-  listOrders,
-  setCustomerConsent,
-  updateCustomer,
-  type ConsentChannel,
-  type Customer,
-  type Order,
+  peekBookings,
 } from "@/lib/api";
-import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
-import { MembershipTab } from "./MembershipTab";
 import { FEATURES } from "@/lib/features";
+import { DEMO_NOW_MINUTES, DEMO_TODAY } from "@/lib/schedule";
+import { buildCustomerProfile, upcomingBookings, type WallTime } from "@/lib/customerProfile";
+import { Panel } from "./_components/Panel";
+import { ProfileHeader } from "./_components/ProfileHeader";
+import { ComingUp } from "./_components/ComingUp";
+import { NotesCard } from "./_components/NotesCard";
+import { WhatTheyComeFor } from "./_components/WhatTheyComeFor";
+import { RecentVisits } from "./_components/RecentVisits";
+import { ContactCard } from "./_components/ContactCard";
+import { ConsentCard } from "./_components/ConsentCard";
+import { AtAGlance } from "./_components/AtAGlance";
+import { MembershipTab } from "./MembershipTab";
 
-// Who is acting. Real auth lands with the backend; until then the counter
-// manager is the actor, exactly as the rest of OS assumes.
-const ACTOR = "Nadia Islam";
+/** The demo's now as wall-clock text — the one clock the till and the calendar
+ *  also use, never `new Date()`. */
+const AS_OF: WallTime = `${DEMO_TODAY}T${String(Math.floor(DEMO_NOW_MINUTES / 60)).padStart(2, "0")}:${String(
+  DEMO_NOW_MINUTES % 60,
+).padStart(2, "0")}`;
 
-type Tab = "activity" | "membership" | "details" | "consent" | "notes";
+/** Orders whose money counts towards a customer's balance — the same set
+ *  `customerStats` sums, so the link behind "Owes" agrees with the figure. */
+const COUNTED = new Set(["paid", "partial", "partly_refunded"]);
 
+/**
+ * A customer, person first.
+ *
+ * The page used to read like a ledger about someone: an identity card, six
+ * equal money tiles, then tabs of orders. It now follows the order a person
+ * serving them wants it in — who they are, what they have booked next, what
+ * staff know, what they come for — and keeps the money and history last and
+ * small. Money lives in "At a glance" and the last five orders; the full list
+ * is one link away.
+ *
+ * Wide screens put the person's own facts (contact, consent, figures) in a side
+ * column; a phone gets one column in the same order.
+ */
 export default function CustomerDetailPage() {
   const t = useTranslations("customers");
   const params = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [tab, setTab] = useState<Tab>("activity");
   const customerQ = useApiQuery(() => getCustomer(params.id), [params.id]);
   const statsQ = useApiQuery(() => getCustomerStats(params.id), [params.id]);
   const ordersQ = useApiQuery(
@@ -58,6 +66,24 @@ export default function CustomerDetailPage() {
   const customer = customerQ.data;
   const stats = statsQ.data;
   const orders = useMemo(() => ordersQ.data?.data ?? [], [ordersQ.data]);
+
+  /* Bookings hang off orders (`orderId`), so this customer's are the ones
+     whose order is theirs. Read once the orders have arrived. */
+  const bookings = useMemo(() => {
+    const ids = new Set(orders.map((o) => o.id));
+    return peekBookings().filter((b) => ids.has(b.orderId));
+  }, [orders]);
+
+  const profile = useMemo(() => buildCustomerProfile({ orders, bookings, asOf: AS_OF }), [orders, bookings]);
+  const upcoming = useMemo(() => upcomingBookings(bookings, AS_OF, 3), [bookings]);
+  const owingOrderIds = useMemo(
+    () =>
+      orders
+        .filter((o) => COUNTED.has(o.status))
+        .filter((o) => o.total - o.payments.filter((p) => p.status === "confirmed").reduce((s, p) => s + p.amount, 0) > 0)
+        .map((o) => o.id),
+    [orders],
+  );
 
   const reloadAll = () => {
     customerQ.reload();
@@ -76,43 +102,33 @@ export default function CustomerDetailPage() {
       </PageShell>
     );
   }
-  if (!customer || !stats) {
+  /* Skeleton only until the first answers arrive. A reload after saving a note
+     keeps the data it already has on screen, so the page does not flash empty
+     and lose the reader's place. */
+  if (!customer || !stats || !ordersQ.data) {
     return (
       <PageShell title={t("title")}>
-        <div className="flex flex-col gap-section">
-          <div className="h-24 animate-pulse rounded-md bg-line" />
-          <div className="h-64 animate-pulse rounded-md bg-line" />
+        <div aria-busy="true" className="flex flex-col gap-section">
+          <div className="h-40 animate-pulse rounded-md bg-line" />
+          <div className="grid gap-section lg:grid-cols-[minmax(0,1fr)_21.25rem]">
+            <div className="flex flex-col gap-section">
+              <div className="h-32 animate-pulse rounded-md bg-line" />
+              <div className="h-56 animate-pulse rounded-md bg-line" />
+            </div>
+            <div className="h-72 animate-pulse rounded-md bg-line" />
+          </div>
         </div>
       </PageShell>
     );
   }
 
-  const memberships = membershipsFor(customer.id);
-  const points = loyaltyAccount(customer.id);
-
-  const tabs = [
-    { value: "activity", label: t("tabActivity"), count: orders.length },
-    // Membership & points is hidden while the backend has neither (lib/features).
-    ...(FEATURES.memberships || FEATURES.loyalty
-      ? [
-          {
-            value: "membership",
-            label: t("tabMembership"),
-            count: memberships.filter((m) => m.effectiveStatus === "active").length,
-          },
-        ]
-      : []),
-    { value: "details", label: t("tabDetails") },
-    { value: "consent", label: t("tabConsent") },
-    { value: "notes", label: t("tabNotes"), count: customer.notes.length },
-  ];
+  const showMembership = FEATURES.memberships || FEATURES.loyalty;
+  const memberships = showMembership ? membershipsFor(customer.id) : [];
+  const points = showMembership ? loyaltyAccount(customer.id) : null;
 
   return (
     <PageShell
       title={customer.name}
-      /* The identity card below says all of this properly, with the contact
-         details as links and the tags the record actually carries. Repeating
-         it as a subtitle string was the page's only statement of who this is. */
       description={t("description")}
       actions={
         <Button
@@ -125,359 +141,36 @@ export default function CustomerDetailPage() {
       }
     >
       <div className="flex flex-col gap-section">
-        <CustomerIdentity
-          customer={customer}
-          since={
-            stats.lastSeen
-              ? t("sinceAndSeen", {
-                  since: formatDate(customer.createdAt),
-                  last: formatDate(stats.lastSeen),
-                })
-              : t("customerSince", { when: formatDate(customer.createdAt) })
-          }
-          labels={{
-            noContact: t("noContact"),
-            archived: t("archivedLabel"),
-          }}
-        />
+        <ProfileHeader customer={customer} profile={profile} onChanged={reloadAll} />
 
-        {/* Six figures at equal weight, four of them usually zero, made the
-            page state "nothing happened" as loudly as it stated the money. The
-            two that carry the relationship lead; a count of nothing goes quiet
-            rather than shouting. */}
-        {/* Six across at `lg` gave each card 122px against a 240px sidebar, and a
-            five-figure sum needs about 134. Three until there is real room. */}
-        <div className="grid grid-cols-2 gap-section sm:grid-cols-3 xl:grid-cols-6">
-          <Stat label={t("statSpent")} value={formatMoney(stats.spent)} lead />
-          <Stat label={t("statOrders")} value={String(stats.orders)} lead={stats.orders > 0} />
-          <Stat label={t("statVisits")} value={String(stats.visits)} muted={stats.visits === 0} />
-          <Stat
-            label={t("statNoShows")}
-            value={String(stats.noShows)}
-            tone={stats.noShows > 0 ? "warning" : undefined}
-            muted={stats.noShows === 0}
-          />
-          <Stat
-            label={t("statOutstanding")}
-            value={formatMoney(stats.outstanding)}
-            tone={stats.outstanding > 0 ? "warning" : undefined}
-            muted={stats.outstanding === 0}
-          />
-          <Stat label={t("statUpcoming")} value={String(stats.upcoming)} muted={stats.upcoming === 0} />
+        <div className="grid gap-section lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start">
+          <div className="flex min-w-0 flex-col gap-section">
+            <ComingUp bookings={upcoming} />
+            <NotesCard customer={customer} onChanged={reloadAll} />
+            <WhatTheyComeFor profile={profile} />
+            <RecentVisits customer={customer} orders={orders} total={stats.orders} />
+          </div>
+
+          <div className="flex min-w-0 flex-col gap-section">
+            <ContactCard customer={customer} onChanged={reloadAll} />
+            <ConsentCard customer={customer} onChanged={reloadAll} />
+            <AtAGlance customer={customer} stats={stats} owingOrderIds={owingOrderIds} />
+            {/* Hidden while the backend has neither (lib/features); the card is
+                kept so lifting the flag restores it whole. */}
+            {showMembership && points && (
+              <Panel title={t("tabMembership")}>
+                <MembershipTab
+                  key={`${memberships.length}-${points.balance}`}
+                  customerId={customer.id}
+                  memberships={memberships}
+                  points={points}
+                  onChanged={reloadAll}
+                />
+              </Panel>
+            )}
+          </div>
         </div>
-
-        <Tabs items={tabs} value={tab} onChange={(v) => setTab(v as Tab)} />
-
-        {tab === "activity" && <ActivityTab orders={orders} loading={ordersQ.loading} />}
-        {tab === "membership" && (FEATURES.memberships || FEATURES.loyalty) && (
-          <MembershipTab
-            key={`${memberships.length}-${points.balance}`}
-            customerId={customer.id}
-            memberships={memberships}
-            points={points}
-            onChanged={reloadAll}
-          />
-        )}
-        {tab === "details" && (
-          <DetailsTab key={customer.updatedAt} customer={customer} onSaved={reloadAll} />
-        )}
-        {tab === "consent" && <ConsentTab customer={customer} onChanged={reloadAll} />}
-        {tab === "notes" && <NotesTab customer={customer} onChanged={reloadAll} />}
       </div>
     </PageShell>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-  lead = false,
-  muted = false,
-}: {
-  label: string;
-  value: string;
-  tone?: "warning";
-  /** The figures that describe the relationship rather than qualify it. */
-  lead?: boolean;
-  /** A count of nothing, stated without emphasis. */
-  muted?: boolean;
-}) {
-  return (
-    <div className="card-surface p-card">
-      <p className="type-label truncate text-[12px] text-muted">{label}</p>
-      <p
-        className={cn(
-          // Was text-lg for everything, which clipped a five-figure sum into
-          // its own card at tablet width.
-          "font-mono tabular-nums",
-          lead ? "text-lg" : "text-base",
-          tone === "warning" ? "text-warning" : muted ? "text-muted" : "text-fg",
-        )}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-// ── activity ────────────────────────────────────────────────────────────────
-/* The "first seen / last seen" line that used to sit here now lives on the
-   identity card, next to the tenure it belongs with. */
-function ActivityTab({ orders, loading }: { orders: Order[]; loading: boolean }) {
-  const t = useTranslations("customers");
-  const router = useRouter();
-
-  const columns: Column<Order>[] = [
-    {
-      key: "reference",
-      header: t("colReference"),
-      render: (o) => <span className="font-mono text-[12px] break-all">{o.reference}</span>,
-    },
-    {
-      key: "date",
-      header: t("colDate"),
-      render: (o) => (
-        <span className="whitespace-nowrap text-[13px]">{formatDate(o.createdAt)}</span>
-      ),
-    },
-    {
-      key: "items",
-      header: t("colItems"),
-      render: (o) => (
-        <span className="line-clamp-2 break-words text-[13px] text-muted">
-          {o.lines
-            .filter((l) => !l.parentLineId)
-            .map((l) => `${l.quantity} × ${l.productName}`)
-            .join(", ")}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      header: t("colStatus"),
-      // The pill names the status in the reader's language; the raw value
-      // printed here was English on every screen, underscores and all.
-      render: (o) => <StatusPill status={o.status} />,
-    },
-    {
-      key: "total",
-      header: t("colTotal"),
-      align: "right",
-      render: (o) => (
-        <span className="font-mono whitespace-nowrap">{formatMoney(o.total)}</span>
-      ),
-    },
-  ];
-
-  return (
-    <div className="flex flex-col gap-section">
-      <DataTable
-        columns={columns}
-        rows={orders}
-        getRowId={(o) => o.id}
-        loading={loading}
-        onRowClick={(o) => router.push(`/orders/${o.id}`)}
-        emptyState={<EmptyState title={t("noOrdersTitle")} message={t("noOrdersMessage")} />}
-      />
-    </div>
-  );
-}
-
-// ── details ─────────────────────────────────────────────────────────────────
-function DetailsTab({ customer, onSaved }: { customer: Customer; onSaved: () => void }) {
-  const t = useTranslations("customers");
-  const toast = useToast();
-  const [name, setName] = useState(customer.name);
-  const [phone, setPhone] = useState(customer.phone ?? "");
-  const [email, setEmail] = useState(customer.email ?? "");
-  const [tags, setTags] = useState(customer.tags.join(", "));
-  const [saving, setSaving] = useState(false);
-
-  const save = async () => {
-    setSaving(true);
-    const res = await updateCustomer(customer.id, {
-      name,
-      phone,
-      email,
-      tags: tags
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    });
-    setSaving(false);
-    if (!res.ok) {
-      toast.error(res.error.message);
-      return;
-    }
-    toast.success(t("detailsSaved"));
-    onSaved();
-  };
-
-  return (
-    <div className="max-w-3xl">
-      <div className="card-surface flex flex-col gap-section p-card">
-        <FormField label={t("fieldName")} value={name} onChange={(e) => setName(e.target.value)} />
-        <div className="grid grid-cols-1 gap-section sm:grid-cols-2">
-          <FormField
-            label={t("fieldPhone")}
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            help={t("phoneHelp")}
-          />
-          <FormField
-            label={t("fieldEmail")}
-            variant="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <FormField
-          label={t("fieldTags")}
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          help={t("tagsHelp")}
-        />
-        <div>
-          <Button onClick={save} loading={saving}>
-            {t("saveDetails")}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── consent ─────────────────────────────────────────────────────────────────
-function ConsentTab({ customer, onChanged }: { customer: Customer; onChanged: () => void }) {
-  const t = useTranslations("customers");
-  const toast = useToast();
-  const [busy, setBusy] = useState<ConsentChannel | null>(null);
-
-  const toggle = async (channel: ConsentChannel) => {
-    const next = !hasConsent(customer, channel);
-    setBusy(channel);
-    // Recorded by a manager on this screen — the source is part of the proof.
-    const res = await setCustomerConsent(customer.id, channel, next, "manager");
-    setBusy(null);
-    if (!res.ok) {
-      toast.error(res.error.message);
-      return;
-    }
-    toast.success(next ? t("consentGranted") : t("consentWithdrawn"));
-    onChanged();
-  };
-
-  const history = [...customer.consents].sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
-
-  return (
-    <div className="flex max-w-3xl flex-col gap-section">
-      <div className="card-surface flex flex-col gap-comfortable p-card">
-        <p className="text-[13px] text-muted">{t("consentExplain")}</p>
-        {(["email", "sms"] as ConsentChannel[]).map((channel) => (
-          <div
-            key={channel}
-            className="flex flex-wrap items-center justify-between gap-tight rounded-sm border border-line p-comfortable"
-          >
-            <div className="min-w-0">
-              <p className="text-sm font-medium">
-                {channel === "email" ? t("channelEmail") : t("channelSms")}
-              </p>
-              <p className="text-[12px] text-muted">
-                {hasConsent(customer, channel) ? t("consentYes") : t("consentNo")}
-              </p>
-            </div>
-            <Button
-              variant={hasConsent(customer, channel) ? "secondary" : "primary"}
-              size="sm"
-              loading={busy === channel}
-              onClick={() => toggle(channel)}
-            >
-              {hasConsent(customer, channel) ? t("withdraw") : t("grant")}
-            </Button>
-          </div>
-        ))}
-      </div>
-
-      <div className="card-surface p-card">
-        <p className="type-label mb-comfortable text-[12px] text-muted">{t("consentHistory")}</p>
-        {history.length === 0 && <p className="text-[13px] text-muted">{t("consentNoHistory")}</p>}
-        <ul className="flex flex-col gap-tight">
-          {history.map((c, i) => (
-            <li key={`${c.channel}-${c.capturedAt}-${i}`} className="flex flex-wrap items-baseline gap-tight text-[13px]">
-              <StatusPill tone={c.granted ? "success" : "neutral"}>
-                {c.granted ? t("granted") : t("withdrawn")}
-              </StatusPill>
-              <span>{c.channel === "email" ? t("channelEmail") : t("channelSms")}</span>
-              <span className="font-mono text-[12px] text-muted">
-                {formatDateTime(c.capturedAt)} · {t(`source_${c.source}` as "source_counter")}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
-
-// ── notes ───────────────────────────────────────────────────────────────────
-function NotesTab({ customer, onChanged }: { customer: Customer; onChanged: () => void }) {
-  const t = useTranslations("customers");
-  const toast = useToast();
-  const [text, setText] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const add = async () => {
-    setSaving(true);
-    const res = await addCustomerNote(customer.id, text, ACTOR);
-    setSaving(false);
-    if (!res.ok) {
-      toast.error(res.error.fieldErrors?.text ?? res.error.message);
-      return;
-    }
-    setText("");
-    toast.success(t("noteAdded"));
-    onChanged();
-  };
-
-  const notes = [...customer.notes].sort((a, b) => b.at.localeCompare(a.at));
-
-  return (
-    <div className="flex max-w-3xl flex-col gap-section">
-      <div className="card-surface flex flex-col gap-comfortable p-card">
-        <FormField
-          label={t("addNote")}
-          variant="textarea"
-          rows={3}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          help={t("noteHelp")}
-        />
-        <div>
-          <Button onClick={add} loading={saving} disabled={!text.trim()}>
-            {t("saveNote")}
-          </Button>
-        </div>
-      </div>
-
-      {notes.length === 0 ? (
-        <EmptyState
-          icon={<StickyNote size={20} strokeWidth={1.5} />}
-          title={t("noNotesTitle")}
-          message={t("noNotesMessage")}
-        />
-      ) : (
-        <ul className="flex flex-col gap-section">
-          {notes.map((n, i) => (
-            <li key={`${n.at}-${i}`} className="card-surface p-card">
-              <p className="break-words text-[13px]">{n.text}</p>
-              <p className="mt-inline font-mono text-[12px] text-muted">
-                {n.who} · {formatDateTime(n.at)}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
   );
 }

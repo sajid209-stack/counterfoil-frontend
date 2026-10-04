@@ -190,5 +190,15 @@
   "holdWhole": "বিক্রি বন্ধ",
   "holdPlace": "স্থান হোল্ড করা",
   "holdSeatsHeld": "{count}টি সিট হোল্ড করা",
-  "holdSpacesHeld": "{count}টি জায়গা হোল্ড করা"
+  "holdSpacesHeld": "{count}টি জায়গা হোল্ড করা",
+  "keyMarketplace": "মার্কেটপ্লেস",
+  "bookedOn": "{name}-এ বুক করা",
+  "bookedOnRef": "{name}-এ বুক করা · {reference}",
+  "commission": "{name} নেয় {pct} · {amount}",
+  "filterSource": "কোথায় বিক্রি হয়েছে",
+  "sourceAll": "সব",
+  "sourceDirect": "সরাসরি",
+  "sourceMarket": "মার্কেটপ্লেস",
+  "detailSource": "বিক্রি হয়েছে",
+  "detailCommission": "ফি"
 }

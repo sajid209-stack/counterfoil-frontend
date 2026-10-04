@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
 import { Check, ChevronLeft, ChevronRight, LayoutGrid, List, Lock, ShoppingBag, TriangleAlert, X } from "lucide-react";
-import { Button, EmptyState, FormField, Modal, ProductThumb, useToast } from "@/components/ui";
+import { Button, EmptyState, FormField, MarketBadge, Modal, ProductThumb, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClockMin, formatClockRange, formatDay, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
@@ -772,12 +772,23 @@ export default function SchedulePage() {
                   <span className="w-[4.75rem] shrink-0 text-[0.9375rem] font-semibold tabular-nums text-fg">{formatClockMin(block.start)}</span>
                   <span
                     aria-hidden
-                    className={cn("h-10 w-1 shrink-0 rounded-full", isHold ? "bg-strong" : block.type === "booking" && block.arrived ? "bg-success" : "bg-ember-solid")}
+                    className={cn(
+                      "h-10 w-1 shrink-0 rounded-full",
+                      isHold
+                        ? "bg-strong"
+                        : block.type === "booking" && block.arrived
+                          ? "bg-success"
+                          : block.type === "booking" && block.source
+                            ? "bg-market"
+                            : "bg-ember-solid",
+                    )}
                   />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1 text-[0.9375rem] font-semibold text-fg">
                       {isHold && <Lock size={14} className="shrink-0 text-muted" aria-hidden />}
+                      {block.type === "booking" && block.source && <MarketBadge id={block.source.marketplaceId} size="go" />}
                       <span className="truncate">{who}</span>
+                      {block.type === "booking" && block.source && <span className="sr-only">, {t("board.bookedOn", { name: block.source.marketplaceName })}</span>}
                     </span>
                     <span className="block truncate text-[0.875rem] text-muted">{[what, place].filter(Boolean).join(" · ")}</span>
                   </span>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Lock, Plus } from "lucide-react";
+import { MarketBadge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClockMin } from "@/lib/format";
 import {
@@ -200,8 +201,10 @@ export function MonthGrid({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-0.5 text-[13px] font-medium leading-tight">
+                        {e.source && <MarketBadge id={e.source.id} />}
                         {e.locked && <Lock size={11} strokeWidth={2.5} className="shrink-0" />}
                         <span className="min-w-0 break-words">{e.title}</span>
+                        {e.sourceLabel && <span className="sr-only">, {e.sourceLabel}</span>}
                       </span>
                       {e.subtitle && (
                         <span className="mt-0.5 block break-words text-[12px] leading-tight opacity-70">
@@ -299,12 +302,15 @@ export function MonthGrid({
                            name does not, and clicking opens the full detail. */
                         aria-label={`${e.title}, ${e.allDay ? "" : clockOf(e.start)}${
                           e.subtitle ? `, ${e.subtitle}` : ""
-                        }`}
+                        }${e.sourceLabel ? `, ${e.sourceLabel}` : ""}`}
                         className={cn(
                           "flex w-full items-center gap-0.5 overflow-hidden rounded-sm border px-1 py-0.5 text-left text-[12px] leading-tight",
                           blockClass(e),
                         )}
                       >
+                        {/* Cells between md and lg are ~80px: no room for a
+                            badge there, and the chip is violet anyway. */}
+                        {e.source && <MarketBadge id={e.source.id} className="max-lg:hidden" />}
                         {e.locked && <Lock size={8} strokeWidth={2.5} className="shrink-0" />}
                         {!e.allDay && (
                           <span className="shrink-0 font-mono opacity-70">{clockOf(e.start, true)}</span>

@@ -131,5 +131,8 @@
     "total": "Total",
     "paid": "Paid",
     "refunded": "Refunded {amount}"
-  }
+  },
+  "forCustomer": "Every order for {name}, at all venues.",
+  "forCustomerAnon": "Every order for this customer, at all venues.",
+  "forCustomerClear": "Show all orders"
 }
