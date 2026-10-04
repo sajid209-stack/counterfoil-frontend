@@ -33,7 +33,6 @@
     "title": "Current sale",
     "attachCustomer": "Add customer",
     "back": "Back",
-    "walkIn": "Walk-in customer",
     "extend": "Add time",
     "edit": "Change this item",
     "barLabel": "This sale",
@@ -84,12 +83,7 @@
     "passesMembership": "Passes & more",
     "add": "Add",
     "discountFlat": "Discount",
-    "noDiscount": "No discount applied",
-    "noPasses": "No pass used",
-    "advanceNot": "Not needed",
-    "advanceReq": "Advance needed",
     "paymentMethod": "Pay by",
-    "noCoupon": "No coupon applied",
     "vatRate": "VAT ({pct}%)"
   },
   "charge": "Take payment",
@@ -409,7 +403,8 @@
     "needCustomerTitle": "Add a customer first",
     "needCustomerBody": "A membership needs a customer. Tap Customer at the top of the cart.",
     "lineLabel": "Membership",
-    "issued": "Membership sold. Code {code}."
+    "issued": "Membership sold. Code {code}.",
+    "needCustomerBodyPay": "A membership needs a customer. Tap Add customer first."
   },
   "points": {
     "title": "Use points",
@@ -433,7 +428,11 @@
     "startsOn": "Starts {date}",
     "providersFree": "{free} of {total} free",
     "limited": "Limited",
-    "nextDay": "Next {day} {time}"
+    "nextDay": "Next {day} {time}",
+    "soldOutDay": "Sold out that day",
+    "noneLeftDay": "None left that day",
+    "busyDay": "All booked that day",
+    "leftOfTotalDay": "{left} of {total} left that day"
   },
   "repeat": {
     "title": "Repeat weekly",
@@ -576,6 +575,25 @@
     "method": "How are they paying?",
     "cardHint": "Take the card on the card machine, then press Complete sale.",
     "walletHint": "Press Next. The next screen shows what the customer does, and what you check.",
-    "next": "Next"
+    "next": "Next",
+    "removeCustomer": "Remove {name}",
+    "promoCode": "Promo code",
+    "promoPlaceholder": "Type a code",
+    "apply": "Apply",
+    "removeCode": "Remove code {code}",
+    "howMuch": "How much now",
+    "full": "Full",
+    "half": "Half",
+    "minimum": "Minimum",
+    "partSummary": "Pay {now} now · {later} at arrival"
+  },
+  "sellDate": {
+    "today": "Today",
+    "todayDay": "Today · {day}",
+    "sellingFor": "Selling for {day}",
+    "backToToday": "Back to today",
+    "choose": "Choose a day",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
   }
 }

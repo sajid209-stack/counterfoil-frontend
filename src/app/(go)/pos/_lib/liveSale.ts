@@ -1,6 +1,7 @@
 "use client";
 
-import type { AppliedPromotion, CreditPass } from "@/lib/api";
+import type { AppliedPromotion } from "@/lib/api";
+import { DEMO_TODAY } from "@/lib/schedule";
 import type { AttachedCustomer } from "../CustomerPicker";
 import type { CartEntry } from "../../_components/ProductSheet";
 
@@ -35,9 +36,15 @@ export type LiveSale = {
   discountAmt: number;
   discountReason: string;
   attached: AttachedCustomer | null;
-  pass: CreditPass | null;
   coupon: AppliedPromotion | null;
-  advance: number | null;
+  /** How much the customer pays now, chosen in the payment step. Absent means
+   *  the default: the whole amount, or the booking's own advance where one is
+   *  required. Held as the CHOICE, not the amount, so it follows the total when
+   *  a discount or a code changes it. */
+  payChoice?: "full" | "half" | "minimum";
+  /** The day the wall is selling for (an ISO date). Absent means today. Part of
+   *  the sale so a trip to the Schedule and back does not lose it. */
+  sellDate?: string;
   pointsToSpend: number;
 };
 
@@ -79,8 +86,10 @@ export function readLiveSale(): LiveSale | null {
 export function writeLiveSale(sale: LiveSale): void {
   try {
     /* An empty cart is not a sale worth holding, and leaving the key behind
-       would resurrect an empty one over a genuinely fresh till. */
-    if (sale.cart.length === 0) sessionStorage.removeItem(KEY);
+       would resurrect an empty one over a genuinely fresh till. The one
+       exception is a day chosen on the wall before anything is added: that is
+       the cashier's choice, and a trip to another tab must not lose it. */
+    if (sale.cart.length === 0 && (!sale.sellDate || sale.sellDate === DEMO_TODAY)) sessionStorage.removeItem(KEY);
     else sessionStorage.setItem(KEY, JSON.stringify(sale));
     announce();
   } catch {
@@ -127,9 +136,7 @@ export function appendToLiveSale(entries: CartEntry[]): void {
     discountAmt: 0,
     discountReason: "",
     attached: null,
-    pass: null,
     coupon: null,
-    advance: null,
     pointsToSpend: 0,
   };
   writeLiveSale({ ...sale, cart: [...sale.cart, ...entries] });

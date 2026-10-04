@@ -33,7 +33,6 @@
     "title": "এই বিক্রি",
     "attachCustomer": "গ্রাহক যোগ করুন",
     "back": "ফিরে যান",
-    "walkIn": "ওয়াক-ইন গ্রাহক",
     "extend": "সময় বাড়ান",
     "edit": "এই আইটেম বদলান",
     "barLabel": "এই বিক্রি",
@@ -84,12 +83,7 @@
     "passesMembership": "পাস ও আরও",
     "add": "যোগ করুন",
     "discountFlat": "ছাড়",
-    "noDiscount": "কোনো ছাড় নেই",
-    "noPasses": "কোনো পাস নেই",
-    "advanceNot": "লাগবে না",
-    "advanceReq": "অগ্রিম লাগবে",
     "paymentMethod": "কীভাবে দেবে",
-    "noCoupon": "কোনো কুপন নেই",
     "vatRate": "ভ্যাট ({pct}%)"
   },
   "charge": "পেমেন্ট নিন",
@@ -409,7 +403,8 @@
     "needCustomerTitle": "আগে একজন গ্রাহক যোগ করুন",
     "needCustomerBody": "সদস্যপদ কারও নামে হয়। কার্টের উপরে “গ্রাহক” বোতামে ট্যাপ করুন।",
     "lineLabel": "সদস্যপদ",
-    "issued": "সদস্যপদ বিক্রি হয়েছে। কোড {code}।"
+    "issued": "সদস্যপদ বিক্রি হয়েছে। কোড {code}।",
+    "needCustomerBodyPay": "সদস্যপদ কারও নামে হয়। আগে “গ্রাহক যোগ করুন” চাপুন।"
   },
   "points": {
     "title": "পয়েন্ট ব্যবহার করুন",
@@ -433,7 +428,11 @@
     "startsOn": "শুরু {date}",
     "providersFree": "{free}/{total} জন খালি",
     "limited": "সীমিত",
-    "nextDay": "পরের {day} {time}"
+    "nextDay": "পরের {day} {time}",
+    "soldOutDay": "ওই দিন শেষ",
+    "noneLeftDay": "ওই দিন আর নেই",
+    "busyDay": "ওই দিন সব বুক",
+    "leftOfTotalDay": "ওই দিন {left}/{total} বাকি"
   },
   "repeat": {
     "title": "প্রতি সপ্তাহে",
@@ -576,6 +575,25 @@
     "method": "কীভাবে টাকা দিচ্ছেন?",
     "cardHint": "কার্ড মেশিনে কার্ড নিন, তারপর বিক্রি শেষ করুন চাপুন।",
     "walletHint": "পরবর্তী চাপুন। পরের স্ক্রিনে গ্রাহক কী করবেন আর আপনি কী দেখবেন তা আছে।",
-    "next": "পরবর্তী"
+    "next": "পরবর্তী",
+    "removeCustomer": "{name} সরান",
+    "promoCode": "প্রোমো কোড",
+    "promoPlaceholder": "কোড লিখুন",
+    "apply": "প্রয়োগ করুন",
+    "removeCode": "{code} কোড সরান",
+    "howMuch": "এখন কত দেবেন",
+    "full": "পুরো",
+    "half": "অর্ধেক",
+    "minimum": "সর্বনিম্ন",
+    "partSummary": "এখন {now} দিন · আসার সময় {later}"
+  },
+  "sellDate": {
+    "today": "আজ",
+    "todayDay": "আজ · {day}",
+    "sellingFor": "{day}-এর জন্য বিক্রি",
+    "backToToday": "আজকে ফিরুন",
+    "choose": "দিন বেছে নিন",
+    "previousMonth": "আগের মাস",
+    "nextMonth": "পরের মাস"
   }
 }

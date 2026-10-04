@@ -15375,3 +15375,100 @@ for the result.
   "+N more" (the Source filter isolates them).
 - `/sell`, `/classic` and `/pos` do not colour marketplace bookings — they sell,
   they do not show the day's bookings.
+
+## The cart holds the sale; checkout asks the rest; a sell date (2026-10-04)
+
+Owner, with screenshots of the cart's Customer / Discount / Advance / Passes rows
+and the payment sheet's note buttons: *"cart doesn't need to show Add customer,
+discount (Advance and Passes will be removed) … in Checkout show Add customer,
+discount, and a section for promo code … the money amount will show exact,
+minimal or half … sell page needs to show today's date as the default sell date
+… see if the date is needed, check Shopify."* Planned and reviewed on Opus,
+built by a Sonnet sub-agent.
+
+### What the research settled
+
+- **Shopify POS and Square attach the customer and apply discounts and codes as
+  part of checking out**, not as standing rows in the cart. Square's tender
+  screen offers quick amounts.
+- **Shopify POS has no sale-date control** — it sells shop goods now. **Attraction
+  and venue tills (ROLLER, Gateway Galaxy, Clorian) do**: a date at the top of
+  the sell screen, defaulting to today, so a cashier can sell another day's
+  tickets; shop items ignore it. Counterfoil sells bookings, so it follows them.
+
+### The cart
+
+The lines (with their stepper, per-line discount and remove), the totals, and
+Pause / Take. The Customer, Discount, Advance and "Passes & more" rows are gone.
+Redeeming a credits pass and settling an existing booking went with "Passes &
+more"; settling stays on Check-in. The api functions are untouched, and the
+`/classic` till still has its own copies.
+
+### Checkout (the sheet Take opens)
+
+1. **To pay**, large — following discount and code as they change.
+2. One card: **Add customer** (the existing picker; name and phone once
+   attached), **Discount** (opens in place: % or ৳, the cashier's cap refused in
+   words, the reason when policy asks), **Promo code** (field and Apply; a wrong
+   code refused in words; an applied one a removable chip saying what it took
+   off). WELCOME10 works here although the Promotions screens stay hidden.
+3. **How are they paying** — Cash chosen.
+4. **How much now: Full · Half · Minimum**, each with its amount, and "Pay ৳X now
+   · ৳Y at arrival" under it; the order lands part paid. Shown only when the
+   business allows part payment **and** something in the sale starts later than
+   now — paying "the rest at arrival" means nothing for a ticket used now or a
+   bottle of water. Minimum is the advance minimum, or the booking's deposit if
+   higher; a deposit booking later today opens on Minimum.
+5. **Cash received** (cash only), defaulting to the amount now, with "No change
+   due" / "Give change ৳X", and Exact and the next round notes as small chips
+   inside the card — a cashier still needs them for change.
+
+New pieces: `pos/CheckoutParts.tsx` (`SaleRow`, `CustomerRow`, `PromoCodeRow`,
+`HowMuchNow`). `liveSale` carries `payChoice` and `sellDate` instead of `pass`
+and `advance`.
+
+Fixed on the way: the promo field took the first applied promotion, which could
+be an automatic offer rather than the typed code; a lane-only sale gave a code
+nothing to take off; a code applied before the cart changed kept a stale amount;
+a ৳-amount discount never showed its required reason field, which could leave
+Complete stuck.
+
+### Sell date
+
+"Today · Wed 29 Jul" at the top of the wall (`pos/SellDate.tsx`), opening the
+till's date picker; past days cannot be chosen. Another day turns it into an
+orange strip — "Selling for Fri 31 Jul · Back to today" — and the tiles' live
+lines and prices follow that day ("Next 11:00 AM", "that day"), and booking
+sheets open on it (or the first day after it the booking runs). Shop items,
+event tickets and other amounts ignore it. It survives a trip to another tab,
+and goes back to today after a sale, a pause or a clear. Hidden when nothing on
+the wall is dated.
+
+### Verified
+
+- Checkout harness **120/120** at 390 and at 1280: no rows left in the cart; the
+  four checkout sections; a customer attached; a 10% discount lowers the amount
+  and 15% is refused in words; WELCOME10 applies and a bad code is refused;
+  How much now absent for General Admission, a shop sale and a field starting
+  now, present for a 2 PM field and a Fri 31 Jul booking; Half and Minimum
+  complete as part paid with the balance on the completion screen; cash
+  defaults and chips; the sell date, its strip, a sheet opening on 31 Jul, Back
+  to today, and the reset after a sale. Dark and Bangla audits **36/36** at
+  each width.
+- Full regression green: till **38/38** / **36/36**, round-3 **24/24**,
+  Schedule **31/31** ×2, undo **17/17** ×2 and **5/5**, refunds **16/16** and
+  **12/12**, move, discount and check-in, printing, storefront, buffer, the
+  marketplace and customer harnesses, top cards **102/102**; 51-route sweep
+  clean ×3; phone audit hidden 0 · under-44 0 · errors 0.
+- `tsc` clean; `eslint` on the till no worse than HEAD (2 errors, 2 warnings —
+  one pre-existing warning gone); i18n 0 / 0.
+- One test assertion matched "Change" with a capital C; the label is now "Give
+  change", so the match is case-insensitive.
+
+### Open
+
+- An over-limit discount already shows in "To pay" while it is refused; Complete
+  stays disabled until it is reduced.
+- A manual discount and a percentage code each take their share of the list
+  price, not one after the other — the quote engine's existing rule.
+- `/sell` and `/classic` keep their old cart rows.

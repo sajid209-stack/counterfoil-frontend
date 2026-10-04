@@ -39,7 +39,7 @@ export function MembershipSheet({
       {!hasCustomer ? (
         <div className="rounded-go border-l-2 border-ember bg-ember/5 p-comfortable">
           <p className="text-sm font-medium">{t("membership.needCustomerTitle")}</p>
-          <p className="mt-inline text-[0.8125rem] text-muted">{t("membership.needCustomerBody")}</p>
+          <p className="mt-inline text-[0.8125rem] text-muted">{t("membership.needCustomerBodyPay")}</p>
         </div>
       ) : (
         <>
