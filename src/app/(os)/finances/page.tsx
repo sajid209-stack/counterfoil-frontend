@@ -68,9 +68,10 @@ const cell = (v: string | number) => {
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "venue";
 
 /**
- * Finances — the venue's money with Counterfoil as one balance. Two boxes
- * (what is still clearing, what is yours to withdraw), one place to act, and
- * the transaction history as a table of days that open to their lines. The
+ * Finances — the venue's money with Counterfoil as one balance. One row of
+ * four tiles (available, unsettled, withdrawn and deposited in the table's
+ * dates, with Withdraw and Deposit on the tiles they change), then the
+ * transaction history as a table of days that open to their lines. The
  * venue is the one in the bar; the filters live in the address, so a view can
  * be shared.
  */
@@ -235,7 +236,7 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
     : [];
 
   return (
-    <PageShell title={t("title")} actions={wide ? menu : undefined}>
+    <PageShell title={t("title")} actions={menu}>
       <div className="flex flex-col gap-section">
         <Balances
           summary={summary}
@@ -243,7 +244,7 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
           onWithdraw={() => setDialog("withdraw")}
           onDeposit={() => setDialog("deposit")}
           onViewPayouts={viewPayouts}
-          menu={wide ? undefined : menu}
+          periodLabel={periodLabel}
         />
 
         <section aria-labelledby="fin-activity-title" id="fin-activity" className="card-surface scroll-mt-24">

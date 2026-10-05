@@ -66,26 +66,41 @@ export interface BarRow {
   figure: React.ReactNode;
   /** A fold-everything-else row: its bar is neutral and it goes last. */
   muted?: boolean;
+  /** A small marker after the figure: the change against the comparison. */
+  change?: React.ReactNode;
+  /** The comparison's value, in the same units as `value`: drawn as a thin
+   *  tick across the bar. */
+  tick?: number;
 }
 
 /** Ranked horizontal bars: the name and the figures on one line, a thin bar
  *  under them. The name wraps rather than being cut — it is what tells two
  *  rows apart. */
 export function BarList({ rows }: { rows: BarRow[] }) {
-  const max = Math.max(...rows.map((r) => r.value), 0);
+  const max = Math.max(...rows.flatMap((r) => [r.value, r.tick ?? 0]), 0);
   return (
     <ul className="flex flex-col gap-comfortable">
       {rows.map((r) => (
         <li key={r.key}>
           <div className="flex items-baseline justify-between gap-tight text-[0.8125rem]">
             <span className={cn("min-w-0 flex-1 break-words", r.muted && "text-muted")}>{r.label}</span>
-            <span className="shrink-0 whitespace-nowrap text-right">{r.figure}</span>
+            <span className="shrink-0 whitespace-nowrap text-right">
+              {r.figure}
+              {r.change}
+            </span>
           </div>
-          <div className="mt-inline h-1.5 overflow-hidden rounded-full bg-line" aria-hidden>
+          <div className="relative mt-inline h-1.5 rounded-full bg-line" aria-hidden>
             <div
               className={cn("h-full rounded-full", r.muted ? "bg-muted" : "bg-ember")}
               style={{ width: `${max > 0 && r.value > 0 ? Math.max(2, (r.value / max) * 100) : 0}%` }}
             />
+            {r.tick !== undefined && max > 0 && (
+              <span
+                data-tick
+                className="absolute top-1/2 h-3 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-fg"
+                style={{ left: `${Math.min(100, Math.max(0, (r.tick / max) * 100))}%` }}
+              />
+            )}
           </div>
         </li>
       ))}
@@ -112,13 +127,16 @@ export interface ColumnItem {
   figure: string;
   /** The whole sentence, for a tooltip and a screen reader. */
   title: string;
+  /** The comparison's value, in the same units as `value`: a dashed outline. */
+  ghost?: number;
 }
 
 /** A handful of vertical bars, labelled underneath: the five lead-time
  *  buckets. Labels wrap, because "Over 30 days" is five characters wider than
  *  the column it sits in on a phone. */
 export function ColumnBars({ items }: { items: ColumnItem[] }) {
-  const max = Math.max(...items.map((i) => i.value), 0);
+  const max = Math.max(...items.flatMap((i) => [i.value, i.ghost ?? 0]), 0);
+  const pctOf = (v: number) => (max > 0 && v > 0 ? `${Math.max(2, (v / max) * 100)}%` : 2);
   return (
     <ul className="grid grid-cols-5 gap-tight">
       {items.map((i) => (
@@ -126,11 +144,17 @@ export function ColumnBars({ items }: { items: ColumnItem[] }) {
           <span className="text-[0.75rem] font-medium" aria-hidden>
             {i.figure}
           </span>
-          <span className="flex h-28 w-full items-end justify-center" aria-hidden>
-            <span
-              className="block w-full max-w-11 rounded-t-sm bg-ember"
-              style={{ height: max > 0 && i.value > 0 ? `${Math.max(2, (i.value / max) * 100)}%` : 2 }}
-            />
+          <span className="relative flex h-28 w-full items-end justify-center" aria-hidden>
+            <span className="block w-full max-w-11 rounded-t-sm bg-ember" style={{ height: pctOf(i.value) }} />
+            {/* Drawn over the bar, not behind it, so it still shows where the
+                comparison is the shorter of the two. */}
+            {i.ghost !== undefined && (
+              <span
+                data-ghost
+                className="absolute bottom-0 block w-full max-w-11 rounded-t-sm border-2 border-dashed border-fg"
+                style={{ height: pctOf(i.ghost) }}
+              />
+            )}
           </span>
           <span className="text-center text-[0.75rem] leading-tight text-muted" aria-hidden>
             {i.label}
@@ -138,6 +162,49 @@ export function ColumnBars({ items }: { items: ColumnItem[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** The change against the comparison, after a row's figure: "▲ 12%" in the
+ *  success ink, "▼ 8%" in the danger ink, "New" where there was nothing before,
+ *  and nothing where it did not move. The arrow is the meaning; the colour only
+ *  says whether that direction is welcome. */
+export function Change({
+  now,
+  then,
+  range,
+  goodWhen = "up",
+}: {
+  now: number;
+  /** Absent while not comparing: nothing is drawn. */
+  then: number | undefined;
+  /** The comparison range as text, for the sentence a screen reader hears. */
+  range: string;
+  goodWhen?: "up" | "down";
+}) {
+  const t = useTranslations("analytics");
+  if (then === undefined) return null;
+  if (then <= 0) {
+    if (now <= 0) return null;
+    return (
+      <span data-change="new" title={t("change.newTitle", { range })} className="ml-tight text-[0.75rem] font-medium text-muted">
+        <span aria-hidden>{t("change.new")}</span>
+        <span className="sr-only">{t("change.newTitle", { range })}</span>
+      </span>
+    );
+  }
+  const pct = Math.round(((now - then) / then) * 100);
+  if (pct === 0) return null;
+  const up = pct > 0;
+  const good = goodWhen === "up" ? up : !up;
+  const sentence = t(up ? "change.up" : "change.down", { pct: Math.abs(pct), range });
+  return (
+    <span data-change={up ? "up" : "down"} title={sentence} className={cn("ml-tight text-[0.75rem] font-medium", good ? "text-success" : "text-danger")}>
+      <span aria-hidden>
+        {up ? "▲" : "▼"} {Math.abs(pct)}%
+      </span>
+      <span className="sr-only">{sentence}</span>
+    </span>
   );
 }
 

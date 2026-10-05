@@ -97,6 +97,9 @@ export function DateRangePicker({
   max,
   labels,
   className,
+  defaultOpen = false,
+  hideTrigger = false,
+  onClose,
 }: {
   value: DateRangeValue;
   onChange: (next: DateRangeValue) => void;
@@ -108,8 +111,16 @@ export function DateRangePicker({
   max?: string;
   labels: DateRangeLabels;
   className?: string;
+  /** Opens on mount. With `hideTrigger` and `onClose`, lets another control
+   *  borrow the calendar (the Compare picker's custom range). */
+  defaultOpen?: boolean;
+  /** Draws the panel only; the caller owns the button that opens it. With no
+   *  `presets` the list of named ranges is left out too — the calendar alone. */
+  hideTrigger?: boolean;
+  /** Called when the panel closes by any route; `refocus` is false for an outside click. */
+  onClose?: (refocus: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [draft, setDraft] = useState<{ from: string; to: string | null }>({ from: value.from, to: value.to });
   const [hover, setHover] = useState<string | null>(null);
   const [cursor, setCursor] = useState<Date>(() => addMonths(parseIso(value.to) ?? new Date(), -1));
@@ -133,6 +144,7 @@ export function DateRangePicker({
   const close = (refocus = true) => {
     setOpen(false);
     if (refocus) trigger.current?.focus();
+    onClose?.(refocus);
   };
 
   // Outside click and Escape close without applying — nothing half-drawn is kept.
@@ -289,6 +301,7 @@ export function DateRangePicker({
     <div ref={wrap} className={cn("relative", className)}>
       <button
         ref={trigger}
+        hidden={hideTrigger}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -323,6 +336,7 @@ export function DateRangePicker({
         >
           <div className="flex min-h-0 flex-1 flex-col overflow-auto md:flex-row">
             {/* Named ranges — one click, applied at once. */}
+            {presets.length > 0 && (
             <ul className="flex shrink-0 flex-wrap gap-inline border-b border-hairline p-comfortable md:w-44 md:flex-col md:flex-nowrap md:gap-0.5 md:border-b-0 md:border-r md:p-tight">
               {presets.map((p) => {
                 const on = pressed === p.value;
@@ -355,6 +369,7 @@ export function DateRangePicker({
                 </span>
               </li>
             </ul>
+            )}
 
             <div className="flex flex-col gap-comfortable p-comfortable">
               {/* What is being drawn, end by end. */}

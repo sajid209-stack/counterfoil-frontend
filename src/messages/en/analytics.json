@@ -2,7 +2,6 @@
   "title": "Analytics",
   "description": "How the venue is doing: sales, what sells, when you are busy and how full you are.",
   "toolbar": {
-    "compare": "Compare to previous period",
     "download": "Download"
   },
   "presets": {
@@ -23,8 +22,7 @@
     "days": "{count, plural, one {# day} other {# days}}",
     "pickEnd": "Pick the last day"
   },
-  "noCompare": "No comparison. Your records do not go back far enough.",
-  "vsPrev": "vs previous period",
+  "noCompare": "No comparison. Your records start {date}, before that there is nothing to compare with.",
   "view": "View",
   "viewIn": "View in {where}",
   "error": "Could not load the numbers.",
@@ -41,7 +39,8 @@
     "average": "Average order",
     "guests": "Guests",
     "capacity": "Capacity filled",
-    "refunds": "Refunds"
+    "refunds": "Refunds",
+    "pts": "{value} pts"
   },
   "revenue": {
     "title": "Revenue over time",
@@ -71,14 +70,16 @@
     "caption": "Customers booked to come, by day and hour",
     "fewer": "Fewer",
     "more": "More",
-    "empty": "No bookings in this period."
+    "empty": "No bookings in this period.",
+    "periodOnly": "This period only"
   },
   "full": {
     "title": "How full you are",
     "of": "{sold} of {capacity}",
     "showAll": "Show all {n}",
     "showFewer": "Show fewer",
-    "empty": "No places on offer in this period."
+    "empty": "No places on offer in this period.",
+    "was": "was {pct}"
   },
   "pay": {
     "title": "How people pay",
@@ -92,7 +93,8 @@
     "8_30_days": "8–30 days",
     "over_30_days": "Over 30 days",
     "share": "{bucket}: {orders}, {pct}%",
-    "empty": "No orders in this period."
+    "empty": "No orders in this period.",
+    "was": "Before: {pct} in {range}."
   },
   "guests": {
     "title": "Guests",
@@ -116,5 +118,32 @@
     "total": "Total",
     "download": "Download VAT",
     "empty": "No sales in this period."
+  },
+  "compare": {
+    "label": "Compare:",
+    "aria": "Compare: {value}",
+    "menu": "Compare with",
+    "previous": "Previous period",
+    "year": "Same period last year",
+    "custom": "Custom range…",
+    "none": "No comparison",
+    "starts": "Your records start {date}",
+    "noRecords": "No sales recorded yet",
+    "pickDates": "Pick dates",
+    "chooseDates": "Choose dates to compare with"
+  },
+  "legend": {
+    "solid": "Solid line:",
+    "dashed": "Dashed line:"
+  },
+  "noCompareEmpty": "No comparison. There are no sales on record yet.",
+  "compareWithPrevious": "Compare with previous period",
+  "vs": "vs {range}",
+  "vsValue": "vs {value}",
+  "change": {
+    "up": "up {pct}% from {range}",
+    "down": "down {pct}% from {range}",
+    "new": "New",
+    "newTitle": "New, nothing in {range}"
   }
 }

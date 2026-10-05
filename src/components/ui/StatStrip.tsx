@@ -65,6 +65,7 @@ export function StatStrip({
   loading = false,
   variant = "band",
   columns,
+  wideColumns,
 }: {
   items: StatItem[];
   loading?: boolean;
@@ -74,6 +75,9 @@ export function StatStrip({
    *  money figure at 26px and a fifth and sixth cell would leave the band
    *  showing its hairline colour through two empty slots. */
   columns?: number;
+  /** Band only: how many sit across from 2xl (1536px), where six money figures
+   *  do fit in a row. Unset, the band keeps `columns` at every width. */
+  wideColumns?: number;
 }) {
   // Read here rather than inside the fold, so the grid and the disclosure
   // cannot disagree about which state they are in.
@@ -114,11 +118,12 @@ export function StatStrip({
         id={GRID_ID}
         className={cn(
           "grid gap-px bg-hairline sm:[grid-template-columns:repeat(2,minmax(0,1fr))] xl:[grid-template-columns:repeat(var(--stat-n),minmax(0,1fr))]",
+          !!wideColumns && "2xl:[grid-template-columns:repeat(var(--stat-wide),minmax(0,1fr))]",
           // Folded on a phone only; from sm there is room for two across and
           // the disclosure does not exist.
           items.length > 1 && !open && "max-sm:hidden",
         )}
-        style={{ "--stat-n": columns ?? Math.min(items.length, 4) } as React.CSSProperties}
+        style={{ "--stat-n": columns ?? Math.min(items.length, 4), "--stat-wide": wideColumns } as React.CSSProperties}
       >
         {items.map((item) => (
           <Cell key={item.key} item={item} loading={loading} />

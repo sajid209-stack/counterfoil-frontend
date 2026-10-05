@@ -15739,3 +15739,96 @@ place, so 0.3% does not read as "0%".
   ledger is in Finances.
 - Dates in Bangla still print English month names (the app-wide `en-GB`
   decision).
+
+## Finances gets compact cards, and Analytics gets a "Compare to" range (2026-10-05)
+
+Owner, on two screenshots: *"the boxes took too much space … the withdraw and
+deposit buttons need to be in different cards, and the cards need to show how
+much was deposited and how much withdrawn, with those buttons in them"* and
+*"Analytics needs a dates filter for comparisons."* The contract was written on
+Opus. Two Sonnet sub-agents built it in parallel, each owning separate files,
+and everything was reviewed by screenshot and reworked before shipping.
+
+### Finances — one row of four short cards
+
+Mercury, Stripe Balances, Wise Business, Revolut Business and Brex open on a
+row of small balance cards: a label, a figure and one line of context, with
+each money action on the card it changes. Detail sits behind a popover, not
+inside the card.
+
+1. **Available balance**: the figure and "Next payout Mon 3 Aug · ••4821".
+   - The bank's name made the line wrap, so only the masked number is shown.
+   - The info button holds the estimate and the last payout ("View payouts"
+     filters the table).
+   - Below zero, the figure turns red, the line reads "You owe Counterfoil",
+     and Deposit becomes the only primary button.
+2. **Unsettled funds**: the figure and "Clears by Thu 30 Jul". The day-by-day
+   schedule is in the info popover.
+3. **Withdrawn**: automatic payouts plus your own withdrawals over the table's
+   date range, with **Withdraw** in the card's bottom-right corner.
+   - The line never repeats the figure: "4 automatic payouts", or the split
+     when both kinds happened.
+   - When Withdraw cannot be used, its reason is stated.
+4. **Deposited**: the same period, with **Deposit** in the card.
+
+| | before | after |
+|---|---|---|
+| desktop (1440) | 231px | **134px** |
+| phone (390) | 453px | **298px** |
+
+The button first sat beside the figure, which cut "৳77,941.64" off at 1440; it
+now sits under the figure, beside the context lines. One row from 1280px up;
+two by two below that, with full-width buttons on a phone.
+
+`FinanceSummary.period` gains `withdrawn`, `payouts`, `deposited` and their
+counts. They are derived from the same lines as the table, so they and the
+table cannot disagree.
+
+### Analytics — compare against any range
+
+Shopify Analytics, GA4, Stripe and Amplitude all put a second **Compare to**
+control beside the date range. Each one offers the previous period, the same
+period last year, a custom range, or no comparison, names the two ranges once,
+draws the comparison as a dashed line, and marks changes on every row.
+
+- **The picker**: Previous period, Same period last year, Custom range… (a
+  two-month calendar), or No comparison.
+  - A choice that starts before the records begin is disabled, with the reason
+    ("Your records start 29 Jun").
+  - The calendar refuses days before the records begin and after today.
+  - The choice is kept in the address (`cmp`, `cfrom`, `cto`). Old `compare=0`
+    and `compare=1` links still work.
+- **A legend line names both ranges once**, solid for the current period and
+  dashed for the comparison. When a comparison is asked for but cannot be made,
+  one line says why and offers the previous period if it is in reach.
+- **Headline figures** show their change and the old value ("vs ৳38,818.00").
+  Capacity filled changes in percentage points. On screens 1536px and wider,
+  all six sit in one row.
+- **The revenue chart's tooltip** shows both dates, both amounts and the
+  change. Ranges of different lengths are matched day by day, in order.
+- **Card rows** carry ▲/▼ with a percentage, or "New". How full you are marks
+  the old fill on each bar ("was 3%"), and lead time draws the old share as a
+  dashed outline. The busy-times grid says "This period only".
+- **The default is now Last 7 days compared with the previous 7 days.** The
+  demo only holds 31 days of records, so Last 30 days can never be compared.
+  This is recorded in the code.
+- **Data**: `AnalyticsQuery.compare` is now `none | previous | year | custom`,
+  and the overview gains `ledgerStart`. Each card's rows carry their figure for
+  the comparison range, so the page needs one call. The comparison is still
+  dropped where the records do not reach its start.
+- **Also fixed**: the chart's last date ("29 Ju") was cut off on the dashboard
+  and Analytics; it now ends at the edge of the chart.
+
+### Verified
+
+- Analytics unit test **256/256**: every comparison mode; leap-day clamping;
+  ranges of different lengths matched in order; ranges before the records
+  refused; every comparison figure equal to a direct query of that range.
+- Analytics page harness **150/150**, at 1440, 1600, 390, in dark and in Bangla.
+- Navigation harness **29/29**.
+- Finances unit test **83/83**. Finances page harness **144/144** at 1440 and
+  **136/136** at 390, plus dark and Bangla. These cover: Withdrawn and
+  Deposited match the table; ৳500 withdrawn moves both cards; the negative
+  venue deposits back to ৳0.00; the popovers; no money cut off.
+- `tsc` clean. `eslint` clean apart from the existing `DonutChart` error and
+  one existing `exhaustive-deps` warning in `DateRangePicker`. i18n 0 / 0.

@@ -15,6 +15,9 @@ export interface ChartPoint {
   title?: string;
   value: number;
   compare?: number;
+  /** The comparison point's own name for the tooltip ("Mon 15 Jul"), so a
+   *  tooltip can say which day each figure belongs to. AreaChart only. */
+  compareTitle?: string;
 }
 
 const useTip = () => {
@@ -72,6 +75,8 @@ export function AreaChart({
   valueLabel,
   compareLabel,
   compareDashed = false,
+  tooltipDelta,
+  legend = true,
 }: {
   points: ChartPoint[];
   /** Exact value, for the tooltip. */
@@ -85,6 +90,11 @@ export function AreaChart({
   /** Draws the comparison dashed, so it reads as "the period before" even
    *  where the two lines run close. The dashboard keeps it solid. */
   compareDashed?: boolean;
+  /** A change to print last in the tooltip ("▲35%"), for points that carry a
+   *  `compareTitle`. Return null to print none. */
+  tooltipDelta?: (value: number, compare: number) => string | null;
+  /** False where the page already names both series once, above the chart. */
+  legend?: boolean;
 }) {
   const [box, w] = useWidth<HTMLDivElement>();
   const gradId = useId();
@@ -110,7 +120,9 @@ export function AreaChart({
   // between two points that the data does not contain. (A plain Catmull-Rom
   // would bulge past a local maximum and read as revenue nobody earned.)
   const curve = (get: (p: ChartPoint) => number | undefined) => {
-    const pts = points.map((p, i) => [x(i), y(get(p) ?? 0)] as const);
+    // A point the series has no value for (past the end of a shorter
+    // comparison) is left out, not drawn as zero.
+    const pts = points.flatMap((p, i) => (get(p) === undefined ? [] : [[x(i), y(get(p)!)] as const]));
     if (pts.length < 2) return pts.length ? `M${pts[0][0]},${pts[0][1]}` : "";
     const slope: number[] = [];
     const d: number[] = [];
@@ -160,9 +172,21 @@ export function AreaChart({
           }}
         >
           <p className="text-[0.75rem] text-muted">{active.title ?? active.label}</p>
-          <p className="whitespace-nowrap text-[0.8125rem] font-medium">{fmt(active.value)}</p>
-          {active.compare != null && (
-            <p className="whitespace-nowrap text-[0.75rem] text-muted">{fmt(active.compare)}</p>
+          {active.compare != null && active.compareTitle ? (
+            <>
+              <p className="whitespace-nowrap text-[0.8125rem] font-medium">{fmt(active.value)}</p>
+              <p className="whitespace-nowrap text-[0.75rem] text-muted">
+                {active.compareTitle} {fmt(active.compare)}
+                {tooltipDelta?.(active.value, active.compare) ? ` · ${tooltipDelta(active.value, active.compare)}` : ""}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="whitespace-nowrap text-[0.8125rem] font-medium">{fmt(active.value)}</p>
+              {active.compare != null && (
+                <p className="whitespace-nowrap text-[0.75rem] text-muted">{fmt(active.compare)}</p>
+              )}
+            </>
           )}
         </div>
       )}
@@ -213,8 +237,10 @@ export function AreaChart({
             // The forced last label collides when the previous tick is within
             // one step of the end; drop the tick, keep the end.
             if (isTick && !isLast && last - i < every) return null;
+            // The last label ends at the plot's right edge rather than centring on
+            // it, or half of it ("29 Jul") is cut off by the card.
             return (
-              <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor="middle" className="fill-[var(--color-muted)] text-[0.75rem]">
+              <text key={`x${i}`} x={x(i)} y={height - 8} textAnchor={isLast && i > 0 ? "end" : "middle"} className="fill-[var(--color-muted)] text-[0.75rem]">
                 {p.label}
               </text>
             );
@@ -252,7 +278,7 @@ export function AreaChart({
           the chart — so it appears only when a comparison is actually drawn.
           The series stays named for screen readers either way, via the svg's
           aria-label. */}
-      {hasCompare && compareLabel && (
+      {hasCompare && compareLabel && legend && (
         <div className="mt-tight flex items-center gap-section">
           <span className="flex items-center gap-inline text-[0.75rem] text-muted">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ember" />{valueLabel}

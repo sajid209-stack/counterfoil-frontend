@@ -13,10 +13,16 @@
  * after discounts and refunds, before VAT — the figure a manager compares
  * month to month, untouched by a tax-rate change. Money is minor units.
  *
- * The previous period is the same length immediately before `from`; `null`
- * where the ledger does not reach back that far (a +15663% delta against an
- * empty window is worse than no delta — see the Revenue chart entry in the
- * project log).
+ * A comparison range is chosen by the caller (`compare`): the previous period
+ * (same length, immediately before `from`), the same dates a year earlier, or
+ * a custom range of any length. Whatever is chosen, the comparison is `null`
+ * where the ledger does not reach back to its start — a +15663% delta against
+ * an empty window is worse than no delta (see the Revenue chart entry in the
+ * project log). `ledgerStart` says where the records begin, so a picker can
+ * refuse a range before it instead of offering one that will come back empty.
+ *
+ * Breakdowns carry their comparison figure only while comparing, so a card can
+ * say "▲ 12% vs 8–14 Jul" against each row without a second call.
  */
 import { dowOf } from "@/lib/schedule";
 import { delay, fail, getOperatorState, ok } from "./client";
@@ -28,15 +34,21 @@ import { getTaxReport, lineNet, productCapacityOn, settled } from "./reports";
 import type { TaxClassRow } from "./reports";
 import type { ApiResult, Booking, ID, ISODate, Minor, Order, OrderLine, PaymentMethod } from "./types";
 
+/** What a period is compared with. `custom` needs `compareFrom`/`compareTo`. */
+export type CompareMode = "none" | "previous" | "year" | "custom";
+
 export interface AnalyticsQuery {
   locationId: ID;
   from: ISODate;
   /** Inclusive. */
   to: ISODate;
-  compare: boolean;
+  compare: CompareMode;
+  /** Only for `compare: "custom"`. Inclusive. Any length; points align by position. */
+  compareFrom?: ISODate;
+  compareTo?: ISODate;
 }
 
-/** A headline figure and the same figure for the previous period. */
+/** A headline figure and the same figure for the comparison range. */
 export interface Kpi {
   value: number;
   previous: number | null;
@@ -48,8 +60,12 @@ export interface RevenuePoint {
   /** ISO date (day/week start) or "HH:00" for hourly. */
   key: string;
   value: Minor;
-  /** The aligned point of the previous period, when comparing. */
+  /** The aligned point of the comparison range, when comparing. */
   previous?: Minor;
+  /** That point's own key (a date, week start or "HH:00"), so a tooltip can
+   *  say "Mon 21 Jul ৳4,200 vs Mon 14 Jul ৳3,100". Absent past the end of a
+   *  shorter comparison range. */
+  previousKey?: string;
 }
 
 export interface TopBooking {
@@ -60,6 +76,8 @@ export interface TopBooking {
   /** 0..1 of the period's revenue. */
   share: number;
   orders: number;
+  /** Revenue of the same booking in the comparison range, when comparing. */
+  previousRevenue?: Minor;
 }
 
 export type SalesChannel = "counter" | "online" | "marketplace";
@@ -69,6 +87,7 @@ export interface ChannelSlice {
   revenue: Minor;
   orders: number;
   share: number;
+  previousRevenue?: Minor;
 }
 
 /** One cell of the weekday × hour grid. Monday = 0. */
@@ -88,6 +107,8 @@ export interface CapacityRow {
   capacity: number;
   /** sold / capacity, 0..1. */
   filled: number;
+  /** The same booking's fill in the comparison range, when comparing. */
+  previousFilled?: number;
 }
 
 export interface PaymentSlice {
@@ -95,6 +116,7 @@ export interface PaymentSlice {
   amount: Minor;
   count: number;
   share: number;
+  previousAmount?: Minor;
 }
 
 export type LeadBucket = "same_day" | "1_2_days" | "3_7_days" | "8_30_days" | "over_30_days";
@@ -103,6 +125,9 @@ export interface LeadSlice {
   bucket: LeadBucket;
   orders: number;
   share: number;
+  /** Share in the comparison range — shares, not counts, because two ranges of
+   *  different length are compared by their mix. */
+  previousShare?: number;
 }
 
 export interface GuestSummary {
@@ -119,8 +144,13 @@ export interface AnalyticsOverview {
   currency: string;
   from: ISODate;
   to: ISODate;
-  /** The previous period's range, or null when the ledger does not reach it. */
+  /** The comparison range actually used, or null when not comparing or when
+   *  the ledger does not reach its start. */
   previous: { from: ISODate; to: ISODate } | null;
+  /** What was asked for, so the page can explain a null comparison. */
+  compare: CompareMode;
+  /** The first day this venue has any order, or null with no orders at all. */
+  ledgerStart: ISODate | null;
   granularity: Granularity;
   kpis: {
     revenue: Kpi;
@@ -139,6 +169,8 @@ export interface AnalyticsOverview {
   payments: PaymentSlice[];
   leadTime: LeadSlice[];
   guests: GuestSummary;
+  /** The same summary for the comparison range, when comparing. */
+  guestsPrevious: GuestSummary | null;
   /** VAT by rate for the period — what the return is filed from. */
   tax: { rows: TaxClassRow[]; net: Minor; tax: Minor; gross: Minor };
 }
@@ -266,24 +298,53 @@ const LEAD_BUCKETS: LeadBucket[] = ["same_day", "1_2_days", "3_7_days", "8_30_da
 const leadBucket = (days: number): LeadBucket =>
   days <= 0 ? "same_day" : days <= 2 ? "1_2_days" : days <= 7 ? "3_7_days" : days <= 30 ? "8_30_days" : "over_30_days";
 
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+const isIso = (d: string | undefined): d is string =>
+  !!d && ISO_RE.test(d) && !Number.isNaN(Date.parse(d)) && new Date(Date.parse(d)).toISOString().slice(0, 10) === d;
+/** The same calendar date one year earlier; 29 Feb clamps to 28 Feb. */
+const yearBack = (d: string) => {
+  const y = parseInt(d.slice(0, 4), 10) - 1;
+  const md = d.slice(5);
+  const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  return `${String(y).padStart(4, "0")}-${md === "02-29" && !leap ? "02-28" : md}`;
+};
+
+/** The range a mode compares with, before any ledger check; null for "none"
+ *  (and for "custom" without both ends). Shared with the page, so the picker
+ *  can show each option's dates before any data has loaded. */
+export function comparisonRange(
+  mode: CompareMode,
+  from: ISODate,
+  to: ISODate,
+  customFrom?: ISODate,
+  customTo?: ISODate,
+): { from: ISODate; to: ISODate } | null {
+  if (mode === "previous") return { from: shiftDay(from, -daysBetween(from, to)), to: shiftDay(from, -1) };
+  if (mode === "year") return { from: yearBack(from), to: yearBack(to) };
+  if (mode === "custom" && customFrom && customTo) return { from: customFrom, to: customTo };
+  return null;
+}
+
 export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult<AnalyticsOverview>> {
   await delay();
   if (!q.locationId || q.from > q.to) {
     return fail<AnalyticsOverview>({ code: "validation", message: "Choose a venue and a valid date range." });
+  }
+  if (q.compare === "custom" && !(isIso(q.compareFrom) && isIso(q.compareTo) && q.compareFrom <= q.compareTo)) {
+    return fail<AnalyticsOverview>({ code: "validation", message: "Choose a valid range to compare with." });
   }
   const len = daysBetween(q.from, q.to);
   const granularity: Granularity = len <= 2 ? "hour" : len <= 62 ? "day" : "week";
 
   const cur = measure(q.locationId, q.from, q.to);
 
-  // Previous period — only where the ledger reaches back that far.
-  const prevTo = shiftDay(q.from, -1);
-  const prevFrom = shiftDay(q.from, -len);
-  const earliest = peekOrders()
+  // The comparison range asked for (null for "none"), then only where the ledger reaches back to its start.
+  const asked = comparisonRange(q.compare, q.from, q.to, q.compareFrom, q.compareTo);
+  const ledgerStart = peekOrders()
     .filter((o) => o.locationId === q.locationId)
     .reduce<string | null>((m, o) => (m === null || orderDay(o) < m ? orderDay(o) : m), null);
-  const hasPrev = q.compare && earliest !== null && earliest <= prevFrom;
-  const prev = hasPrev ? measure(q.locationId, prevFrom, prevTo) : null;
+  const range = asked && ledgerStart !== null && ledgerStart <= asked.from ? asked : null;
+  const prev = range ? measure(q.locationId, range.from, range.to) : null;
 
   const kpi = (f: (m: Measure) => number): Kpi => ({ value: f(cur), previous: prev ? f(prev) : null });
   const avg = (m: Measure) => (m.orders.length ? m.revenue / m.orders.length : 0);
@@ -301,7 +362,7 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     revenue = hours.map((h) => ({
       key: hourKey(h),
       value: sum(cur.orders, h),
-      ...(prev ? { previous: sum(prev.orders, h) } : {}),
+      ...(prev ? { previous: sum(prev.orders, h), previousKey: hourKey(h) } : {}),
     }));
   } else {
     const keyOf = granularity === "week" ? weekStart : (d: string) => d;
@@ -323,34 +384,40 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     };
     const keys = keysFor(q.from, q.to);
     const sums = bucketSums(cur.orders);
-    const prevKeys = prev ? keysFor(prevFrom, prevTo) : [];
+    const prevKeys = range ? keysFor(range.from, range.to) : [];
     const prevSums = prev ? bucketSums(prev.orders) : null;
+    // By position: point i against comparison point i; none past a shorter comparison's end.
     revenue = keys.map((k, i) => ({
       key: k,
       value: sums.get(k) ?? 0,
-      ...(prevSums ? { previous: prevKeys[i] ? (prevSums.get(prevKeys[i]) ?? 0) : 0 } : {}),
+      ...(prevSums && prevKeys[i] ? { previous: prevSums.get(prevKeys[i]) ?? 0, previousKey: prevKeys[i] } : {}),
     }));
   }
 
   // Top bookings ------------------------------------------------------------
-  const byProduct = new Map<string, { name: string; at: string; revenue: number; orders: Set<string> }>();
-  const otherOrders = new Set<string>();
-  for (const o of cur.orders) {
-    for (const l of o.lines) {
-      if (!isBookingLine(l)) {
-        otherOrders.add(o.id);
-        continue;
+  const productRevenue = (m: Measure) => {
+    const byProduct = new Map<string, { name: string; at: string; revenue: number; orders: Set<string> }>();
+    const otherOrders = new Set<string>();
+    for (const o of m.orders) {
+      for (const l of o.lines) {
+        if (!isBookingLine(l)) {
+          otherOrders.add(o.id);
+          continue;
+        }
+        const e = byProduct.get(l.productId) ?? { name: l.productName, at: o.createdAt, revenue: 0, orders: new Set<string>() };
+        e.revenue += lineRevenue(l);
+        e.orders.add(o.id);
+        if (o.createdAt > e.at) {
+          e.at = o.createdAt;
+          e.name = l.productName; // the name the line was last sold under
+        }
+        byProduct.set(l.productId, e);
       }
-      const e = byProduct.get(l.productId) ?? { name: l.productName, at: o.createdAt, revenue: 0, orders: new Set<string>() };
-      e.revenue += lineRevenue(l);
-      e.orders.add(o.id);
-      if (o.createdAt > e.at) {
-        e.at = o.createdAt;
-        e.name = l.productName; // the name the line was last sold under
-      }
-      byProduct.set(l.productId, e);
     }
-  }
+    return { byProduct, otherOrders };
+  };
+  const { byProduct, otherOrders } = productRevenue(cur);
+  const prevProducts = prev ? productRevenue(prev).byProduct : null;
   const ranked = [...byProduct.entries()].sort((a, b) => b[1].revenue - a[1].revenue);
   const top = ranked.slice(0, 7);
   const topBookings: TopBooking[] = top.map(([id, e]) => ({
@@ -359,19 +426,38 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     revenue: e.revenue,
     share: share(e.revenue, cur.revenue),
     orders: e.orders.size,
+    ...(prevProducts ? { previousRevenue: prevProducts.get(id)?.revenue ?? 0 } : {}),
   }));
   const topRevenue = top.reduce((s, [, e]) => s + e.revenue, 0);
   const rest = cur.revenue - topRevenue;
   if (rest !== 0 || ranked.length > 7) {
     for (const [, e] of ranked.slice(7)) e.orders.forEach((id) => otherOrders.add(id));
-    topBookings.push({ productId: "other", name: "Other", revenue: rest, share: share(rest, cur.revenue), orders: otherOrders.size });
+    topBookings.push({
+      productId: "other",
+      name: "Other",
+      revenue: rest,
+      share: share(rest, cur.revenue),
+      orders: otherOrders.size,
+      // Everything the comparison range sold that is not one of this period's listed bookings.
+      ...(prev && prevProducts
+        ? { previousRevenue: prev.revenue - top.reduce((s, [id]) => s + (prevProducts.get(id)?.revenue ?? 0), 0) }
+        : {}),
+    });
   }
 
   // Channels ----------------------------------------------------------------
+  const channelRevenue = (m: Measure, channel: SalesChannel) =>
+    m.orders.filter((o) => channelOf(o) === channel).reduce((s, o) => s + orderRevenue(o), 0);
   const channels: ChannelSlice[] = (["counter", "online", "marketplace"] as SalesChannel[]).map((channel) => {
     const os = cur.orders.filter((o) => channelOf(o) === channel);
     const rev = os.reduce((s, o) => s + orderRevenue(o), 0);
-    return { channel, revenue: rev, orders: os.length, share: share(rev, cur.revenue) };
+    return {
+      channel,
+      revenue: rev,
+      orders: os.length,
+      share: share(rev, cur.revenue),
+      ...(prev ? { previousRevenue: channelRevenue(prev, channel) } : {}),
+    };
   });
 
   // Heatmap -----------------------------------------------------------------
@@ -388,25 +474,35 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
   const heatHours = hourRange(window, bookingHours);
 
   // Payments ----------------------------------------------------------------
-  const payMap = new Map<PaymentMethod, { amount: number; count: number }>();
-  for (const o of peekOrders()) {
-    if (o.locationId !== q.locationId) continue;
-    for (const p of o.payments) {
-      const d = p.createdAt.slice(0, 10);
-      if (p.status !== "confirmed" || p.amount <= 0 || d < q.from || d > q.to) continue;
-      const e = payMap.get(p.method) ?? { amount: 0, count: 0 };
-      e.amount += p.amount;
-      e.count += 1;
-      payMap.set(p.method, e);
+  const paymentsIn = (from: string, to: string) => {
+    const payMap = new Map<PaymentMethod, { amount: number; count: number }>();
+    for (const o of peekOrders()) {
+      if (o.locationId !== q.locationId) continue;
+      for (const p of o.payments) {
+        const d = p.createdAt.slice(0, 10);
+        if (p.status !== "confirmed" || p.amount <= 0 || d < from || d > to) continue;
+        const e = payMap.get(p.method) ?? { amount: 0, count: 0 };
+        e.amount += p.amount;
+        e.count += 1;
+        payMap.set(p.method, e);
+      }
     }
-  }
+    return payMap;
+  };
+  const payMap = paymentsIn(q.from, q.to);
+  const prevPay = range ? paymentsIn(range.from, range.to) : null;
   const payTotal = [...payMap.values()].reduce((s, e) => s + e.amount, 0);
   const payments: PaymentSlice[] = [...payMap.entries()]
-    .map(([method, e]) => ({ method, amount: e.amount, count: e.count, share: share(e.amount, payTotal) }))
+    .map(([method, e]) => ({
+      method,
+      amount: e.amount,
+      count: e.count,
+      share: share(e.amount, payTotal),
+      ...(prevPay ? { previousAmount: prevPay.get(method)?.amount ?? 0 } : {}),
+    }))
     .sort((a, b) => b.amount - a.amount);
 
   // Lead time ---------------------------------------------------------------
-  const leadCounts = new Map<LeadBucket, number>(LEAD_BUCKETS.map((b) => [b, 0]));
   const slotsByOrder = new Map<string, string>();
   for (const b of peekBookings()) {
     if (b.status !== "confirmed") continue;
@@ -414,18 +510,25 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     const had = slotsByOrder.get(b.orderId);
     if (had === undefined || d < had) slotsByOrder.set(b.orderId, d);
   }
-  let leadTotal = 0;
-  for (const o of cur.orders) {
-    const slot = slotsByOrder.get(o.id);
-    if (slot === undefined) continue;
-    const bucket = leadBucket(Math.round((Date.parse(slot) - Date.parse(orderDay(o))) / DAY_MS));
-    leadCounts.set(bucket, (leadCounts.get(bucket) ?? 0) + 1);
-    leadTotal += 1;
-  }
+  const leadShares = (m: Measure) => {
+    const counts = new Map<LeadBucket, number>(LEAD_BUCKETS.map((b) => [b, 0]));
+    let total = 0;
+    for (const o of m.orders) {
+      const slot = slotsByOrder.get(o.id);
+      if (slot === undefined) continue;
+      const bucket = leadBucket(Math.round((Date.parse(slot) - Date.parse(orderDay(o))) / DAY_MS));
+      counts.set(bucket, (counts.get(bucket) ?? 0) + 1);
+      total += 1;
+    }
+    return { counts, total };
+  };
+  const leadCur = leadShares(cur);
+  const leadPrev = prev ? leadShares(prev) : null;
   const leadTime: LeadSlice[] = LEAD_BUCKETS.map((bucket) => ({
     bucket,
-    orders: leadCounts.get(bucket) ?? 0,
-    share: share(leadCounts.get(bucket) ?? 0, leadTotal),
+    orders: leadCur.counts.get(bucket) ?? 0,
+    share: share(leadCur.counts.get(bucket) ?? 0, leadCur.total),
+    ...(leadPrev ? { previousShare: share(leadPrev.counts.get(bucket) ?? 0, leadPrev.total) } : {}),
   }));
 
   // Guests ------------------------------------------------------------------
@@ -438,20 +541,31 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     const had = firstSeen.get(who);
     if (had === undefined || d < had) firstSeen.set(who, d);
   }
-  const inPeriod = new Set<string>();
-  for (const o of cur.orders) {
-    const who = o.customerId ?? o.customerName;
-    if (who) inPeriod.add(who);
-  }
-  let newCustomers = 0;
-  for (const who of inPeriod) if ((firstSeen.get(who) ?? "") >= q.from) newCustomers += 1;
-  const guests: GuestSummary = {
-    guests: cur.guests,
-    arrived: cur.bookings.reduce((s, b) => s + (b.checkedIn ?? 0), 0),
-    noShows: cur.bookings.filter((b) => b.noShow).reduce((s, b) => s + Math.max(0, b.partySize - (b.checkedIn ?? 0)), 0),
-    newCustomers,
-    returning: inPeriod.size - newCustomers,
+  const guestSummary = (m: Measure, from: string): GuestSummary => {
+    const inPeriod = new Set<string>();
+    for (const o of m.orders) {
+      const who = o.customerId ?? o.customerName;
+      if (who) inPeriod.add(who);
+    }
+    let newCustomers = 0;
+    for (const who of inPeriod) if ((firstSeen.get(who) ?? "") >= from) newCustomers += 1;
+    return {
+      guests: m.guests,
+      arrived: m.bookings.reduce((s, b) => s + (b.checkedIn ?? 0), 0),
+      noShows: m.bookings.filter((b) => b.noShow).reduce((s, b) => s + Math.max(0, b.partySize - (b.checkedIn ?? 0)), 0),
+      newCustomers,
+      returning: inPeriod.size - newCustomers,
+    };
   };
+  const guests = guestSummary(cur, q.from);
+  const guestsPrevious = prev && range ? guestSummary(prev, range.from) : null;
+
+  // Capacity ----------------------------------------------------------------
+  const prevCap = prev ? new Map(prev.capRows.map((r) => [r.productId, r.filled])) : null;
+  const capacity: CapacityRow[] = cur.capRows.map((r) => {
+    const f = prevCap?.get(r.productId);
+    return f === undefined ? r : { ...r, previousFilled: f };
+  });
 
   // Tax ---------------------------------------------------------------------
   const taxRes = await getTaxReport({ from: q.from, to: q.to, locationIds: [q.locationId] });
@@ -462,7 +576,9 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     currency: getOperatorState().currency,
     from: q.from,
     to: q.to,
-    previous: prev ? { from: prevFrom, to: prevTo } : null,
+    previous: range,
+    compare: q.compare,
+    ledgerStart,
     granularity,
     kpis: {
       revenue: kpi((m) => m.revenue),
@@ -476,10 +592,11 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     topBookings,
     channels,
     heatmap: { hours: heatHours, cells },
-    capacity: cur.capRows,
+    capacity,
     payments,
     leadTime,
     guests,
+    guestsPrevious,
     tax: { rows: taxRows, ...tax },
   });
 }
@@ -499,9 +616,11 @@ export function analyticsCsv(o: AnalyticsOverview): string {
   const kp = o.kpis;
   const prevMoney = (k: Kpi) => (k.previous === null ? "" : money(k.previous));
   const prevInt = (k: Kpi) => (k.previous === null ? "" : String(k.previous));
+  const opt = (v: number | undefined, f: (n: number) => string) => (v === undefined ? "" : f(v));
+  const cmp = (o.previous ? `Compared with ${o.previous.from} to ${o.previous.to}` : "No comparison");
   sections.push([
-    [`Analytics ${o.from} to ${o.to}`, o.previous ? `Previous ${o.previous.from} to ${o.previous.to}` : "No previous period"],
-    ["KPI", "Value", "Previous"],
+    [`Analytics ${o.from} to ${o.to}`, cmp],
+    ["KPI", "Value", "Comparison"],
     [`Revenue (${o.currency})`, money(kp.revenue.value), prevMoney(kp.revenue)],
     ["Orders", String(kp.orders.value), prevInt(kp.orders)],
     [`Average order (${o.currency})`, money(kp.averageOrder.value), prevMoney(kp.averageOrder)],
@@ -510,36 +629,38 @@ export function analyticsCsv(o: AnalyticsOverview): string {
     [`Refunds (${o.currency})`, money(kp.refunds.value), prevMoney(kp.refunds)],
   ]);
   sections.push([
-    ["Revenue by " + o.granularity, "Revenue", "Previous"],
-    ...o.revenue.map((p) => [p.key, money(p.value), p.previous === undefined ? "" : money(p.previous)]),
+    ["Revenue by " + o.granularity, "Revenue", "Comparison point", "Comparison revenue"],
+    ...o.revenue.map((p) => [p.key, money(p.value), p.previousKey ?? "", opt(p.previous, money)]),
   ]);
   sections.push([
-    ["Top bookings", "Revenue", "Share %", "Orders"],
-    ...o.topBookings.map((t) => [t.name, money(t.revenue), pct(t.share), String(t.orders)]),
+    ["Top bookings", "Revenue", "Share %", "Orders", "Comparison revenue"],
+    ...o.topBookings.map((t) => [t.name, money(t.revenue), pct(t.share), String(t.orders), opt(t.previousRevenue, money)]),
   ]);
   sections.push([
-    ["Channel", "Revenue", "Share %", "Orders"],
-    ...o.channels.map((c) => [c.channel, money(c.revenue), pct(c.share), String(c.orders)]),
+    ["Channel", "Revenue", "Share %", "Orders", "Comparison revenue"],
+    ...o.channels.map((c) => [c.channel, money(c.revenue), pct(c.share), String(c.orders), opt(c.previousRevenue, money)]),
   ]);
   sections.push([
-    ["Payment method", "Amount", "Share %", "Payments"],
-    ...o.payments.map((p) => [p.method, money(p.amount), pct(p.share), String(p.count)]),
+    ["Payment method", "Amount", "Share %", "Payments", "Comparison amount"],
+    ...o.payments.map((p) => [p.method, money(p.amount), pct(p.share), String(p.count), opt(p.previousAmount, money)]),
   ]);
   sections.push([
-    ["Booking lead time", "Orders", "Share %"],
-    ...o.leadTime.map((l) => [l.bucket, String(l.orders), pct(l.share)]),
+    ["Booking lead time", "Orders", "Share %", "Comparison share %"],
+    ...o.leadTime.map((l) => [l.bucket, String(l.orders), pct(l.share), opt(l.previousShare, pct)]),
+  ]);
+  const gp = o.guestsPrevious;
+  const g = (n: number | undefined) => (n === undefined ? "" : String(n));
+  sections.push([
+    ["Guests", "Count", "Comparison"],
+    ["Guests booked", String(o.guests.guests), g(gp?.guests)],
+    ["Arrived", String(o.guests.arrived), g(gp?.arrived)],
+    ["No-shows", String(o.guests.noShows), g(gp?.noShows)],
+    ["New customers", String(o.guests.newCustomers), g(gp?.newCustomers)],
+    ["Returning customers", String(o.guests.returning), g(gp?.returning)],
   ]);
   sections.push([
-    ["Guests", "Count"],
-    ["Guests booked", String(o.guests.guests)],
-    ["Arrived", String(o.guests.arrived)],
-    ["No-shows", String(o.guests.noShows)],
-    ["New customers", String(o.guests.newCustomers)],
-    ["Returning customers", String(o.guests.returning)],
-  ]);
-  sections.push([
-    ["Capacity", "Sold", "Capacity", "Filled %"],
-    ...o.capacity.map((c) => [c.name, String(c.sold), String(c.capacity), pct(c.filled)]),
+    ["Capacity", "Sold", "Capacity", "Filled %", "Comparison filled %"],
+    ...o.capacity.map((c) => [c.name, String(c.sold), String(c.capacity), pct(c.filled), opt(c.previousFilled, pct)]),
   ]);
   sections.push([
     ["Tax rate %", "Class", "Net", "Tax", "Gross"],

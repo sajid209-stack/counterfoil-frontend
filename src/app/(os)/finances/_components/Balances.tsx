@@ -8,126 +8,216 @@ import { cn } from "@/lib/cn";
 import { formatDay, formatMoney } from "@/lib/format";
 import type { FinanceExtras, FinanceSummary } from "@/lib/api";
 
-/** The two boxes. The balance is the hero: a bigger figure, the two buttons,
- *  and one quiet ember rule along its top so it reads as the primary. */
+/**
+ * The top of Finances: ONE row of four compact tiles, each a label, a figure
+ * and one line of context. A money action sits on the tile it changes
+ * (Withdraw on Withdrawn, Deposit on Deposited), the way Mercury, Stripe
+ * Balances, Wise and Brex lay it out; detail (the payout estimate, the
+ * clearing schedule) is behind an info button, never in the tile.
+ *
+ * 2 x 2 below 1280px, 1 x 4 from there. The two period tiles cover the
+ * activity table's date range, so they and the table cannot disagree.
+ */
 export function Balances({
   summary,
   extras,
+  periodLabel,
   onWithdraw,
   onDeposit,
   onViewPayouts,
-  menu,
 }: {
   summary: FinanceSummary | undefined;
   extras: FinanceExtras | undefined;
+  /** The table's range, in words: "Last 30 days" or "3 Jul – 12 Jul 2026". */
+  periodLabel: string;
   onViewPayouts: () => void;
   onWithdraw: () => void;
   onDeposit: () => void;
-  /** The overflow menu, drawn in the box on a phone (the bar holds it on a desktop). */
-  menu?: React.ReactNode;
 }) {
   const t = useTranslations("finances");
   const reasonId = useId();
   const available = summary?.available ?? 0;
   const owing = available < 0;
-  const empty = available <= 0;
   const noBank = !!summary && !summary.destination;
   // Why Withdraw is off, in words: it is the button's title and its description.
-  const reason = empty ? t("available.nothingToWithdraw") : noBank ? t("available.noBank") : "";
+  const reason = owing ? t("available.owingBlock") : available === 0 ? t("available.nothingToWithdraw") : noBank ? t("available.noBank") : "";
+  const canWithdraw = !!summary && !reason;
 
   const next = summary?.nextPayout;
   const nextLine = owing
     ? t("available.owe")
     : next
       ? summary?.destination
-        ? t("available.next", { date: formatDay(next.date, { weekday: true }), bank: summary.destination })
+        ? t("available.next", { date: formatDay(next.date, { weekday: true }), bank: shortBank(summary.destination) })
         : t("available.nextNoBank", { date: formatDay(next.date, { weekday: true }) })
       : t("available.none");
   // What clears before the payout, so the figure can be reconciled with the balance.
   const clearing = next && !owing ? next.amount - available : 0;
-  const aboutLine = next && !owing
-    ? clearing > 0
-      ? t("available.nextAbout", { amount: formatMoney(next.amount), clearing: formatMoney(clearing) })
-      : t("available.nextAboutPlain", { amount: formatMoney(next.amount) })
-    : "";
+  const aboutLine =
+    next && !owing
+      ? clearing > 0
+        ? t("available.nextAbout", { amount: formatMoney(next.amount), clearing: formatMoney(clearing) })
+        : t("available.nextAboutPlain", { amount: formatMoney(next.amount) })
+      : "";
+  const lastPayout = owing ? null : extras?.lastPayout;
+  const hasBalanceInfo = !!aboutLine || !!lastPayout;
 
-  const withdraw = (
-    <Button
-      variant={empty ? "secondary" : "primary"}
-      disabled={!summary || !!reason}
-      onClick={onWithdraw}
-      title={reason || undefined}
-      aria-describedby={reason ? reasonId : undefined}
-      className="max-md:flex-1 md:min-w-32"
-    >
-      {t("available.withdraw")}
-    </Button>
-  );
-  const deposit = (
-    <Button variant={empty ? "primary" : "secondary"} disabled={!summary} onClick={onDeposit} className="max-md:flex-1 md:min-w-32">
-      {t("available.deposit")}
-    </Button>
-  );
+  const p = summary?.period;
+  // Never restate the figure: when all of it went one way, say how many times.
+  const withdrawnLine = !p
+    ? ""
+    : p.paidOut === 0
+      ? t("withdrawn.none")
+      : p.withdrawn === 0
+        ? t("withdrawn.autoOnly", { count: p.payoutCount })
+        : p.payouts === 0
+          ? t("withdrawn.byYouOnly", { count: p.withdrawals })
+          : t("withdrawn.split", { auto: formatMoney(p.payouts), byYou: formatMoney(p.withdrawn) });
+  const depositedLine = !p ? "" : p.deposits === 0 ? t("deposited.none") : t("deposited.count", { count: p.deposits });
 
   return (
-    <div className="grid gap-section md:grid-cols-2">
-      <section aria-labelledby="fin-available" className="card-surface relative overflow-hidden p-card">
-        {/* The one ambient touch: a thin ember rule and a breath of tint. */}
-        <span aria-hidden className="absolute inset-x-0 top-0 h-[3px] bg-ember-solid" />
-        <span aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ember/[0.06] to-transparent" />
-        <div className="relative flex h-full flex-col">
-          <div className="flex items-start justify-between gap-tight">
-            <h2 id="fin-available" className="text-base font-semibold tracking-[-0.4px]">{t("available.label")}</h2>
-            {menu && <div className="-mr-2 -mt-3 md:hidden">{menu}</div>}
-          </div>
-          <p className="mt-tight text-[32px] font-semibold leading-tight tracking-[-0.5px]" aria-live="polite">
-            {summary ? formatMoney(available) : <span className="inline-block h-9 w-44 animate-pulse rounded-sm bg-line" aria-hidden />}
-          </p>
-          <p className={cn("mt-inline min-h-5 text-[14px]", owing ? "font-medium text-warning" : "text-muted")}>{summary ? nextLine : ""}</p>
-          {aboutLine && <p className="text-[13px] text-muted">{aboutLine}</p>}
-          {extras?.lastPayout && (
-            <p className="flex flex-wrap items-center gap-x-inline text-[13px] text-muted">
-              <span>{t("available.lastPayout", { amount: formatMoney(extras.lastPayout.amount), date: formatDay(extras.lastPayout.date, { weekday: true }) })}</span>
-              <button type="button" onClick={onViewPayouts} className="-my-2 inline-flex h-11 items-center px-tight text-[13px] font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80 md:h-9">
-                {t("available.view")}
-              </button>
-            </p>
-          )}
-          <div className="mt-section flex flex-wrap gap-tight pt-tight md:mt-auto">
-            {withdraw}
-            {deposit}
-          </div>
-          {reason && <span id={reasonId} className="sr-only">{reason}</span>}
-        </div>
-      </section>
+    <div className="grid grid-cols-2 gap-tight md:gap-section xl:grid-cols-4">
+      {/* Available balance: the one tile with an accent. */}
+      <Tile labelId="fin-available" label={t("available.label")} accent>
+        {hasBalanceInfo && (
+          <TileInfo label={t("available.infoLabel")} align="left">
+            <div className="flex flex-col gap-tight">
+                {aboutLine && <p>{aboutLine}</p>}
+                {lastPayout && (
+                  <p className="flex flex-wrap items-center gap-x-inline">
+                    <span>{t("available.lastPayout", { amount: formatMoney(lastPayout.amount), date: formatDay(lastPayout.date, { weekday: true }) })}</span>
+                    <button
+                      type="button"
+                      data-close
+                      onClick={onViewPayouts}
+                      className="-my-2 inline-flex h-11 items-center text-[13px] font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80 md:h-9"
+                    >
+                      {t("available.view")}
+                    </button>
+                  </p>
+                )}
+              </div>
+          </TileInfo>
+        )}
+        <Figure value={summary ? available : undefined} danger={owing} live />
+        <Line tone={owing ? "danger" : "muted"}>{summary ? nextLine : ""}</Line>
+      </Tile>
 
-      <section aria-labelledby="fin-unsettled" className="card-surface p-card">
-        <div className="flex items-center gap-inline">
-          <h2 id="fin-unsettled" className="text-base font-semibold tracking-[-0.4px]">{t("unsettled.label")}</h2>
-          <InfoTip label={t("unsettled.infoLabel")} text={t("unsettled.info")} />
+      {/* Unsettled funds */}
+      <Tile labelId="fin-unsettled" label={t("unsettled.label")}>
+        <TileInfo label={t("unsettled.infoLabel")} align="right">
+          <div className="flex flex-col gap-tight">
+            <p>{t("unsettled.info")}</p>
+            <ClearingSchedule extras={extras} />
+          </div>
+        </TileInfo>
+        <Figure value={summary?.unsettled} />
+        <Line>{summary ? (summary.clearsBy ? t("unsettled.clearsBy", { date: formatDay(summary.clearsBy, { weekday: true }) }) : t("unsettled.none")) : ""}</Line>
+      </Tile>
+
+      {/* Withdrawn: what went to the bank in the table's dates, and the button that sends more. */}
+      <Tile labelId="fin-withdrawn" label={t("withdrawn.label")}>
+        <div className="col-span-2 row-start-5 md:col-span-1 md:col-start-2 md:row-span-2 md:row-start-3 md:self-end md:justify-self-end md:pl-tight max-md:mt-2 max-md:self-end">
+          <Button
+            variant={canWithdraw ? "primary" : "secondary"}
+            size="sm"
+            disabled={!canWithdraw}
+            onClick={onWithdraw}
+            title={reason || undefined}
+            aria-describedby={reason ? reasonId : undefined}
+            className="max-md:w-full"
+          >
+            {t("available.withdraw")}
+          </Button>
+          {reason && (
+            <span id={reasonId} className="sr-only">
+              {reason}
+            </span>
+          )}
         </div>
-        <p className="mt-tight text-[32px] font-semibold leading-tight tracking-[-0.5px]">
-          {summary ? formatMoney(summary.unsettled) : <span className="inline-block h-9 w-44 animate-pulse rounded-sm bg-line" aria-hidden />}
-        </p>
-        <ClearingSchedule summary={summary} extras={extras} />
-      </section>
+        <Figure value={p?.paidOut} />
+        <Line action>{withdrawnLine}</Line>
+        <Period action>{summary ? periodLabel : ""}</Period>
+      </Tile>
+
+      {/* Deposited */}
+      <Tile labelId="fin-deposited" label={t("deposited.label")}>
+        <div className="col-span-2 row-start-5 md:col-span-1 md:col-start-2 md:row-span-2 md:row-start-3 md:self-end md:justify-self-end md:pl-tight max-md:mt-2 max-md:self-end">
+          <Button variant={owing ? "primary" : "secondary"} size="sm" disabled={!summary} onClick={onDeposit} className="max-md:w-full">
+            {t("available.deposit")}
+          </Button>
+        </div>
+        <Figure value={p?.deposited} />
+        <Line action>{depositedLine}</Line>
+        <Period action>{summary ? periodLabel : ""}</Period>
+      </Tile>
     </div>
   );
 }
 
-/** A small "i" that opens a short note. A button rather than a hover tip, so a
- *  phone can open it too; Escape or a click elsewhere closes it. */
-function InfoTip({ label, text }: { label: string; text: string }) {
+/** One tile: a grid so a button can sit beside the label on a wide tile and
+ *  under everything, full width, on a phone. Children place themselves. */
+function Tile({ labelId, label, accent, children }: { labelId: string; label: string; accent?: boolean; children: React.ReactNode }) {
+  return (
+    <section aria-labelledby={labelId} className="card-surface relative grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto_auto_1fr] items-center p-card">
+      {accent && (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[12px]">
+          <span className="absolute inset-x-0 top-0 h-[3px] bg-ember-solid" />
+        </span>
+      )}
+      <h2 id={labelId} className="col-start-1 row-start-1 text-[13px] font-medium leading-[18px] text-muted">
+        {label}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+/** The figure: 28px/600 on a wide tile, a step smaller on a phone so a seven-digit amount still fits. */
+function Figure({ value, danger, live }: { value: number | undefined; danger?: boolean; live?: boolean }) {
+  return (
+    <p
+      aria-live={live ? "polite" : undefined}
+      className={cn("col-span-2 row-start-2 mt-1.5 text-xl font-semibold leading-[1.15] tracking-[-0.4px] tabular-nums md:text-[28px] md:tracking-[-0.5px]", danger ? "text-danger" : "text-fg")}
+    >
+      {value === undefined ? <span className="inline-block h-6 w-28 animate-pulse rounded-sm bg-line md:h-8 md:w-40" aria-hidden /> : formatMoney(value)}
+    </p>
+  );
+}
+
+/** The one line of context under the figure. */
+function Line({ tone = "muted", action, children }: { tone?: "muted" | "danger"; action?: boolean; children: React.ReactNode }) {
+  return <p className={cn("col-span-2 row-start-3", action && "md:col-span-1", "mt-0.5 min-h-[18px] text-[13px] leading-[18px]", tone === "danger" ? "font-medium text-danger" : "text-muted")}>{children}</p>;
+}
+
+/** Which dates a period tile covers; quiet, because the table's picker owns the choice. */
+function Period({ action, children }: { action?: boolean; children: React.ReactNode }) {
+  return <p className={cn("col-span-2 row-start-4 mt-0.5 min-h-3.5 text-[12px] leading-[14px] text-muted", action && "md:col-span-1")}>{children}</p>;
+}
+
+/** A small "i" that opens a note. A button rather than a hover tip, so a phone
+ *  can open it too. Escape closes it and returns focus to the button; a click
+ *  elsewhere closes it. The note hangs from the tile (the nearest positioned
+ *  ancestor), not from the button, so it has room on a narrow tile. */
+function TileInfo({ label, align, children }: { label: string; align: "left" | "right"; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const id = useId();
+  const close = () => {
+    setOpen(false);
+    trigger.current?.focus({ preventScroll: true });
+  };
   useEffect(() => {
     if (!open) return;
     const away = (e: PointerEvent) => {
       if (!wrap.current?.contains(e.target as Node)) setOpen(false);
     };
     const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        trigger.current?.focus({ preventScroll: true });
+      }
     };
     document.addEventListener("pointerdown", away);
     document.addEventListener("keydown", key);
@@ -137,43 +227,50 @@ function InfoTip({ label, text }: { label: string; text: string }) {
     };
   }, [open]);
   return (
-    <span ref={wrap} className="relative">
+    <span ref={wrap} className="col-start-2 row-start-1 justify-self-end">
       <button
+        ref={trigger}
         type="button"
         aria-label={label}
         aria-expanded={open}
-        aria-controls={id}
+        aria-controls={open ? id : undefined}
         onClick={() => setOpen((o) => !o)}
-        className="-my-3 flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:text-fg md:-my-2 md:h-9 md:w-9"
+        className="-m-3 flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:text-fg md:-m-2 md:h-9 md:w-9"
       >
         <Info size={16} strokeWidth={1.5} aria-hidden />
       </button>
       {open && (
-        <span
+        <div
           id={id}
-          role="note"
-          className="absolute left-0 top-full z-20 mt-inline block w-64 rounded-md border border-line bg-card p-comfortable text-[13px] leading-snug text-fg shadow-lg"
+          role="group"
+          onClick={(e) => {
+            if ((e.target as HTMLElement).closest("[data-close]")) close();
+          }}
+          aria-label={label}
+          className={cn(
+            "absolute top-full z-30 mt-inline w-[min(20rem,calc(100vw-2rem))] rounded-md border border-line bg-card p-comfortable text-[13px] leading-snug text-fg shadow-lg",
+            align === "left" ? "left-0" : "right-0 xl:left-0 xl:right-auto",
+          )}
         >
-          {text}
-        </span>
+          {children}
+        </div>
       )}
     </span>
   );
 }
 
 /** When the clearing money lands: up to three days, the rest folded into "Later". */
-function ClearingSchedule({ summary, extras }: { summary: FinanceSummary | undefined; extras: FinanceExtras | undefined }) {
+function ClearingSchedule({ extras }: { extras: FinanceExtras | undefined }) {
   const t = useTranslations("finances");
-  if (!summary || !extras) return <p className="mt-inline min-h-5" />;
-  if (extras.clearing.length === 0) return <p className="mt-inline min-h-5 text-[14px] text-muted">{t("unsettled.none")}</p>;
+  if (!extras || extras.clearing.length === 0) return null;
   const rows: { key: string; label: string; amount: number }[] = extras.clearing.map((c) => ({ key: c.date, label: formatDay(c.date, { weekday: true }), amount: c.amount }));
   const shown = rows.length > 3 ? [...rows.slice(0, 2), { key: "later", label: t("unsettled.later"), amount: rows.slice(2).reduce((s, r) => s + r.amount, 0) }] : rows;
   return (
-    <div className="mt-section">
-      <p className="text-[13px] text-muted">{t("unsettled.availableOn")}</p>
+    <div>
+      <p className="text-[13px] font-medium">{t("unsettled.availableOn")}</p>
       <ul className="mt-inline divide-y divide-hairline" aria-label={t("unsettled.availableOn")}>
         {shown.map((r) => (
-          <li key={r.key} className="flex items-baseline justify-between gap-section py-tight text-[14px]">
+          <li key={r.key} className="flex items-baseline justify-between gap-section py-tight text-[13px]">
             <span>{r.label}</span>
             <span className="font-medium tabular-nums">{formatMoney(r.amount)}</span>
           </li>
@@ -181,4 +278,11 @@ function ClearingSchedule({ summary, extras }: { summary: FinanceSummary | undef
       </ul>
     </div>
   );
+}
+
+/** "BRAC Bank ••4821" → "••4821": the masked number is what tells one account
+ *  from another at a glance, and the bank's name made the line wrap. */
+function shortBank(destination: string): string {
+  const m = destination.match(/••\s*\d+/);
+  return m ? m[0].replace(/\s+/, "") : destination;
 }

@@ -6,10 +6,10 @@
   },
   "available": {
     "label": "Available balance",
-    "next": "Next payout {date} to {bank}",
+    "next": "Next payout {date} · {bank}",
     "nextNoBank": "Next payout {date}",
     "none": "Payouts go out every Monday",
-    "owe": "You owe Counterfoil this. Add money to cover it.",
+    "owe": "You owe Counterfoil",
     "withdraw": "Withdraw",
     "deposit": "Deposit",
     "nothingToWithdraw": "Nothing to withdraw yet",
@@ -17,14 +17,16 @@
     "nextAbout": "About {amount}, including {clearing} still clearing",
     "nextAboutPlain": "About {amount}",
     "lastPayout": "Last payout {amount} on {date}",
-    "view": "View"
+    "view": "View payouts",
+    "infoLabel": "About your balance",
+    "owingBlock": "Add money first. Your balance is below zero."
   },
   "unsettled": {
     "label": "Unsettled funds",
     "info": "Online payments take 2 days to clear. Then they move to your available balance.",
     "infoLabel": "About unsettled funds",
     "clearsBy": "Clears by {date}",
-    "none": "Nothing is clearing",
+    "none": "Nothing clearing",
     "availableOn": "Becomes available",
     "later": "Later"
   },
@@ -164,5 +166,17 @@
     "debit": "Debit",
     "net": "Net amount",
     "total": "Total · {count, plural, one {# day} other {# days}}"
+  },
+  "withdrawn": {
+    "label": "Withdrawn",
+    "split": "{auto} automatic · {byYou} by you",
+    "none": "No payouts yet",
+    "autoOnly": "{count, plural, one {# automatic payout} other {# automatic payouts}}",
+    "byYouOnly": "{count, plural, one {# withdrawal by you} other {# withdrawals by you}}"
+  },
+  "deposited": {
+    "label": "Deposited",
+    "count": "{count, plural, one {# deposit} other {# deposits}}",
+    "none": "None yet"
   }
 }

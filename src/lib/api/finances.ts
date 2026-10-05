@@ -116,7 +116,24 @@ export interface FinanceSummary {
   /** The payout bank, masked; null when none is set (Withdraw is refused). */
   destination: string | null;
   /** Totals for the period being looked at (the activity filter's range). */
-  period: { from: ISODate; to: ISODate; moneyIn: Minor; fees: Minor; refunds: Minor; paidOut: Minor };
+  period: {
+    from: ISODate;
+    to: ISODate;
+    moneyIn: Minor;
+    fees: Minor;
+    refunds: Minor;
+    /** Automatic payouts plus withdrawals: `payouts + withdrawn`. */
+    paidOut: Minor;
+    /** Withdrawals the venue asked for, and how many (positive). */
+    withdrawn: Minor;
+    withdrawals: number;
+    /** Automatic payouts on the schedule, and how many (positive). */
+    payouts: Minor;
+    payoutCount: number;
+    /** Money the venue added with Deposit, and how many. Part of `moneyIn`. */
+    deposited: Minor;
+    deposits: number;
+  };
 }
 
 export type FinanceFilter = "all" | "sales" | "fees" | "refunds" | "payouts" | "deposits";
@@ -281,6 +298,12 @@ function summaryOf(lines: FinanceLine[], from: ISODate, to: ISODate): FinanceSum
       fees: -sum(inRange, of("platform_fee", "processing_fee")),
       refunds: -sum(inRange, of("refund")),
       paidOut: -sum(inRange, of("payout", "withdrawal")),
+      withdrawn: -sum(inRange, of("withdrawal")),
+      withdrawals: inRange.filter(of("withdrawal")).length,
+      payouts: -sum(inRange, of("payout")),
+      payoutCount: inRange.filter(of("payout")).length,
+      deposited: sum(inRange, of("deposit")),
+      deposits: inRange.filter(of("deposit")).length,
     },
   };
 }

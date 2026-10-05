@@ -16,15 +16,16 @@ import {
   type ChartPoint,
   type StatItem,
 } from "@/components/ui";
-import { Switch } from "@/app/(os)/settings/_components/SettingsKit";
-import { analyticsCsv, getAnalyticsOverview, listLocations, type AnalyticsOverview } from "@/lib/api";
+import { analyticsCsv, comparisonRange, getAnalyticsOverview, listLocations, type AnalyticsOverview } from "@/lib/api";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { useApiQuery } from "@/lib/useApi";
 import { useEnumLabels } from "@/lib/labels";
 import { formatClock, formatDay, formatMoney, formatMoneyCompact } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
+import { cn } from "@/lib/cn";
 import { MD, useMediaQuery } from "@/lib/useMedia";
-import { BarList, CardSkeleton, ColumnBars, Empty, Figure, Pulse, Section, SplitBar } from "./_components/Parts";
+import { ComparePicker, type CompareValue } from "./_components/ComparePicker";
+import { BarList, CardSkeleton, Change, ColumnBars, Empty, Figure, Pulse, Section, SplitBar } from "./_components/Parts";
 
 /* ── The page, in the order a manager asks ─────────────────────────────────
  *
@@ -35,7 +36,15 @@ import { BarList, CardSkeleton, ColumnBars, Empty, Figure, Pulse, Section, Split
  * question, an answer and one small chart, and nothing in it is there because a
  * chart library could draw it.
  *
- * State (period, comparison) lives in the address, so a view is a link.
+ * State (period, comparison) lives in the address, so a view is a link:
+ * `preset` (and `from`/`to` for a drawn range), `cmp` = previous | year |
+ * custom | none (and `cfrom`/`cto` for a drawn comparison). The first
+ * version's `compare=0` and `compare=1` still open as none and previous.
+ *
+ * The default is Last 7 days against the 7 before. It is not Last 30 days,
+ * because the demo ledger is 31 days long: 30 days against the 30 before
+ * needs 60 days of records and could never compare, so the page would open on
+ * a "no comparison" line. A venue with a year of orders can change this.
  */
 
 const NOW = DEMO_TODAY;
@@ -101,15 +110,22 @@ function AnalyticsInner() {
 
   // Address → state, once: a shared link opens on the same view.
   const [range, setRange] = useState(() => {
-    const preset = params.get("preset") ?? "30d";
+    const preset = params.get("preset") ?? "7d";
     const from = params.get("from");
     const to = params.get("to");
     if (preset === "custom" && from && to && ISO.test(from) && ISO.test(to) && from <= to) return { preset, from, to };
-    const p = PRESETS.find((x) => x.value === preset) ?? PRESETS[3];
+    const p = PRESETS.find((x) => x.value === preset) ?? PRESETS[2];
     const [f, e] = p.range();
     return { preset: p.value, from: f, to: e };
   });
-  const [compare, setCompare] = useState(() => params.get("compare") !== "0");
+  const [cmp, setCmp] = useState<CompareValue>(() => {
+    const m = params.get("cmp");
+    const cf = params.get("cfrom");
+    const ct = params.get("cto");
+    if (m === "custom" && cf && ct && ISO.test(cf) && ISO.test(ct) && cf <= ct) return { mode: "custom", from: cf, to: ct };
+    if (m === "year" || m === "none" || m === "previous") return { mode: m };
+    return { mode: params.get("compare") === "0" ? "none" : "previous" };
+  });
 
   // State → address. replace, so the back button is not spammed.
   useEffect(() => {
@@ -119,9 +135,13 @@ function AnalyticsInner() {
       p.set("from", range.from);
       p.set("to", range.to);
     }
-    if (!compare) p.set("compare", "0");
+    p.set("cmp", cmp.mode);
+    if (cmp.mode === "custom" && cmp.from && cmp.to) {
+      p.set("cfrom", cmp.from);
+      p.set("cto", cmp.to);
+    }
     router.replace(`/analytics?${p.toString()}`, { scroll: false });
-  }, [range, compare, router]);
+  }, [range, cmp, router]);
 
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
   const { id: venueId, location } = useActiveLocation(locationsQ.data?.data ?? []);
@@ -129,9 +149,16 @@ function AnalyticsInner() {
   const q = useApiQuery(
     () =>
       venueId
-        ? getAnalyticsOverview({ locationId: venueId, from: range.from, to: range.to, compare })
+        ? getAnalyticsOverview({
+            locationId: venueId,
+            from: range.from,
+            to: range.to,
+            compare: cmp.mode,
+            compareFrom: cmp.from,
+            compareTo: cmp.to,
+          })
         : new Promise<Awaited<ReturnType<typeof getAnalyticsOverview>>>(() => {}),
-    [venueId, range.from, range.to, compare],
+    [venueId, range.from, range.to, cmp.mode, cmp.from, cmp.to],
   );
   // Content stays while a new period loads; a skeleton is for the first load.
   const o = q.data;
@@ -156,7 +183,7 @@ function AnalyticsInner() {
   };
 
   const toolbar = (
-    <div className="flex flex-wrap items-center gap-x-section gap-y-tight">
+    <div className="flex flex-wrap items-center gap-x-comfortable gap-y-tight">
       <DateRangePicker
         value={range}
         onChange={(r) => setRange({ preset: r.preset, from: r.from, to: r.to })}
@@ -166,13 +193,17 @@ function AnalyticsInner() {
         labels={rangeLabels}
         className="w-full shrink-0 md:w-auto"
       />
-      <div className="flex min-w-0 flex-1 items-center gap-section">
-        <div className="flex items-center gap-tight">
-          <Switch checked={compare} onChange={setCompare} labelledBy="an-compare" />
-          <span id="an-compare" onClick={() => setCompare(!compare)} className="cursor-pointer select-none text-[0.8125rem]">
-            {t("toolbar.compare")}
-          </span>
-        </div>
+      <div className="flex min-w-0 flex-1 items-center gap-tight md:gap-comfortable">
+        <ComparePicker
+          value={cmp}
+          from={range.from}
+          to={range.to}
+          ledgerStart={o?.ledgerStart}
+          today={NOW}
+          onChange={setCmp}
+          calendarLabels={rangeLabels}
+          className="min-w-0 flex-1 md:flex-none"
+        />
         <Button
           variant="secondary"
           size="sm"
@@ -185,6 +216,44 @@ function AnalyticsInner() {
         </Button>
       </div>
     </div>
+  );
+
+  // A comparison that was asked for but could not be drawn, and what to offer instead.
+  const asked = o !== undefined && o.compare !== "none";
+  const prevAsk = o ? comparisonRange("previous", o.from, o.to) : null;
+  const previousFits = !!(o && o.ledgerStart && prevAsk && prevAsk.from >= o.ledgerStart);
+
+  const notices = o && (
+    <>
+      {o.previous && (
+        <p data-legend className="flex flex-wrap items-center gap-x-section gap-y-inline text-[0.75rem] text-muted">
+          <span className="flex items-center gap-tight">
+            <svg width="20" height="4" aria-hidden className="shrink-0">
+              <line x1="0" x2="20" y1="2" y2="2" stroke="var(--color-ember)" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+            <span className="sr-only">{t("legend.solid")} </span>
+            <span className="font-medium tabular-nums text-fg">{formatRange(o.from, o.to)}</span>
+          </span>
+          <span className="flex items-center gap-tight">
+            <svg width="20" height="4" aria-hidden className="shrink-0">
+              <line x1="0" x2="20" y1="2" y2="2" stroke="var(--color-muted)" strokeWidth="2" strokeDasharray="4 3" />
+            </svg>
+            <span className="sr-only">{t("legend.dashed")} </span>
+            <span className="tabular-nums text-fg">{formatRange(o.previous.from, o.previous.to)}</span>
+          </span>
+        </p>
+      )}
+      {asked && o.previous === null && (
+        <p data-no-compare className="flex flex-wrap items-center gap-x-comfortable gap-y-tight text-[0.8125rem] text-muted">
+          <span>{o.ledgerStart ? t("noCompare", { date: formatDay(o.ledgerStart) }) : t("noCompareEmpty")}</span>
+          {previousFits && o.compare !== "previous" && (
+            <Button variant="secondary" size="sm" onClick={() => setCmp({ mode: "previous" })}>
+              {t("compareWithPrevious")}
+            </Button>
+          )}
+        </p>
+      )}
+    </>
   );
 
   if (q.error && !o) {
@@ -207,18 +276,18 @@ function AnalyticsInner() {
     <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
         {toolbar}
-        {o && compare && o.previous === null && <p className="text-[0.75rem] text-muted">{t("noCompare")}</p>}
+        {notices}
 
-        <StatStrip variant="band" columns={3} loading={first} items={o ? kpiItems(o, t, !compare) : placeholderItems(t)} />
+        <StatStrip variant="band" columns={3} wideColumns={6} loading={first} items={o ? kpiItems(o, t) : placeholderItems(t)} />
 
-        {first ? <Skeletons /> : o && <Cards o={o} compare={compare} venueName={venueName} />}
+        {first ? <Skeletons /> : o && <Cards o={o} venueName={venueName} />}
       </div>
     </PageShell>
   );
 
 }
 
-function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boolean; venueName: string }) {
+function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: string }) {
   const t = useTranslations("analytics");
   const tn = useTranslations("nav");
   const locale = useLocale();
@@ -227,7 +296,11 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
   const [showAllCap, setShowAllCap] = useState(false);
 
   const empty = o.kpis.orders.value === 0;
-  const showCompare = compare && o.previous !== null;
+  const showCompare = o.previous !== null;
+  const rangeText = o.previous ? formatRange(o.previous.from, o.previous.to) : "";
+  const change = (now: number, then: number | undefined, goodWhen: "up" | "down" = "up") => (
+    <Change now={now} then={showCompare ? then : undefined} range={rangeText} goodWhen={goodWhen} />
+  );
 
   // ── revenue over time ──
   const points: ChartPoint[] = o.revenue.map((p) => {
@@ -246,7 +319,15 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
         : o.granularity === "week"
           ? t("revenue.weekOf", { day: week(p.key) })
           : formatDay(p.key, { weekday: true });
-    return { label, title, value: p.value, compare: showCompare ? p.previous : undefined };
+    const compareTitle =
+      !showCompare || p.previousKey === undefined
+        ? undefined
+        : o.granularity === "hour"
+          ? formatClock(p.previousKey)
+          : o.granularity === "week"
+            ? t("revenue.weekOf", { day: week(p.previousKey) })
+            : formatDay(p.previousKey, { weekday: true });
+    return { label, title, value: p.value, compare: showCompare ? p.previous : undefined, compareTitle };
   });
 
   // ── what sells ──
@@ -255,6 +336,7 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
     label: b.productId === "other" ? t("sells.other") : b.name,
     value: b.revenue,
     figure: <Figure main={formatMoney(b.revenue)} share={percent(b.share)} />,
+    change: change(b.revenue, b.previousRevenue),
     muted: b.productId === "other",
   }));
 
@@ -274,6 +356,7 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
         </span>
       </>
     ),
+    change: change(c.revenue, c.previousRevenue),
   }));
 
   // ── when it's busy ──
@@ -299,6 +382,7 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
     label: enumL.method(p.method),
     value: p.amount,
     figure: <Figure main={formatMoney(p.amount)} share={percent(p.share)} />,
+    change: change(p.amount, p.previousAmount),
   }));
 
   // ── how far ahead ──
@@ -309,12 +393,16 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
       label,
       value: l.share,
       figure: percent(l.share),
-      title: t("lead.share", { bucket: label, orders: t("counts.orders", { n: l.orders, c: num(l.orders) }), pct: Math.round(l.share * 100) }),
+      ghost: showCompare ? l.previousShare : undefined,
+      title:
+        t("lead.share", { bucket: label, orders: t("counts.orders", { n: l.orders, c: num(l.orders) }), pct: Math.round(l.share * 100) }) +
+        (showCompare && l.previousShare !== undefined ? ` ${t("lead.was", { pct: percent(l.previousShare), range: rangeText })}` : ""),
     };
   });
 
   // ── guests ──
   const g = o.guests;
+  const gp = o.guestsPrevious;
 
   // ── VAT ──
   const rate = (r: number) => `${Math.round(r * 1000) / 10}%`;
@@ -339,9 +427,15 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
             fmt={(v) => formatMoney(v)}
             fmtAxis={(v) => formatMoneyCompact(v)}
             height={210}
-            valueLabel={t("revenue.series")}
-            compareLabel={t("revenue.previous")}
+            valueLabel={showCompare ? formatRange(o.from, o.to) : t("revenue.series")}
+            compareLabel={o.previous ? formatRange(o.previous.from, o.previous.to) : t("revenue.previous")}
             compareDashed
+            legend={false}
+            tooltipDelta={(v, c) => {
+              if (c <= 0) return v > 0 ? t("change.new") : null;
+              const d = Math.round(((v - c) / c) * 100);
+              return d === 0 ? null : `${d > 0 ? "▲" : "▼"}${Math.abs(d)}%`;
+            }}
           />
         )}
       </Section>
@@ -358,7 +452,16 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
         <Section
           id="busy"
           title={t("heat.title")}
-          sub={peak ? t("heat.busiest", { day: longDays[peak.row], time: hourText(hours[peak.col]) }) : undefined}
+          sub={
+            peak ? (
+              <>
+                {t("heat.busiest", { day: longDays[peak.row], time: hourText(hours[peak.col]) })}
+                {showCompare && ` · ${t("heat.periodOnly")}`}
+              </>
+            ) : showCompare ? (
+              t("heat.periodOnly")
+            ) : undefined
+          }
           view={{ href: "/calendar", where: tn("calendar") }}
           className="lg:col-span-2"
         >
@@ -389,6 +492,11 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
                   label: c.name,
                   value: c.filled,
                   figure: <Figure main={t("full.of", { sold: num(c.sold), capacity: num(c.capacity) })} share={percent(c.filled)} />,
+                  tick: showCompare ? c.previousFilled : undefined,
+                  change:
+                    showCompare && c.previousFilled !== undefined ? (
+                      <span className="ml-tight text-[0.75rem] text-muted">{t("full.was", { pct: percent(c.previousFilled) })}</span>
+                    ) : undefined,
                 }))}
               />
               {cap.length > 6 && (
@@ -420,15 +528,15 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
             <div className="flex flex-col gap-section">
               <div>
                 <dl className="grid grid-cols-2 gap-section">
-                  <Stat label={t("guests.arrived")} value={num(g.arrived)} />
-                  <Stat label={t("guests.noShows")} value={num(g.noShows)} />
+                  <Stat label={t("guests.arrived")} value={num(g.arrived)} change={change(g.arrived, gp?.arrived)} />
+                  <Stat label={t("guests.noShows")} value={num(g.noShows)} change={change(g.noShows, gp?.noShows, "down")} />
                 </dl>
                 <SplitBar a={g.arrived} b={g.noShows} label={t("guests.attendance")} />
               </div>
               <div>
                 <dl className="grid grid-cols-2 gap-section">
-                  <Stat label={t("guests.newCustomers")} value={num(g.newCustomers)} />
-                  <Stat label={t("guests.returning")} value={num(g.returning)} />
+                  <Stat label={t("guests.newCustomers")} value={num(g.newCustomers)} change={change(g.newCustomers, gp?.newCustomers)} />
+                  <Stat label={t("guests.returning")} value={num(g.returning)} change={change(g.returning, gp?.returning)} />
                 </dl>
                 <SplitBar a={g.newCustomers} b={g.returning} label={t("guests.loyalty")} />
               </div>
@@ -495,21 +603,39 @@ function Cards({ o, compare, venueName }: { o: AnalyticsOverview; compare: boole
 }
 
 /** A label over a figure, in a definition list. */
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, change }: { label: string; value: string; change?: React.ReactNode }) {
   return (
     <div>
       <dt className="text-[0.75rem] text-muted">{label}</dt>
-      <dd className="type-figure text-xl font-semibold">{value}</dd>
+      <dd className="type-figure text-xl font-semibold">
+        {value}
+        {change}
+      </dd>
     </div>
   );
 }
 
-/** Six figures, with a change against the period before where there is one. */
-function kpiItems(o: AnalyticsOverview, t: ReturnType<typeof useTranslations>, off: boolean): StatItem[] {
+/** Six figures; against the comparison, each carries its change and the figure it is measured against. */
+function kpiItems(o: AnalyticsOverview, t: ReturnType<typeof useTranslations>): StatItem[] {
   const k = o.kpis;
-  const since = t("vsPrev");
-  const delta = (kpi: { value: number; previous: number | null }, goodWhen: "up" | "down" = "up") =>
-    !off && kpi.previous !== null ? <DeltaPill now={kpi.value} then={kpi.previous} goodWhen={goodWhen} since={since} /> : undefined;
+  const since = o.previous ? t("vs", { range: formatRange(o.previous.from, o.previous.to) }) : undefined;
+  type K = { value: number; previous: number | null };
+  const delta = (kpi: K, goodWhen: "up" | "down" = "up") =>
+    kpi.previous !== null ? <DeltaPill now={kpi.value} then={kpi.previous} goodWhen={goodWhen} since={since} /> : undefined;
+  const was = (kpi: K, fmt: (n: number) => string) => (kpi.previous !== null ? t("vsValue", { value: fmt(kpi.previous) }) : undefined);
+  /** Capacity is already a share, so its change is in points of it, not a relative percent. */
+  const points = (kpi: K) => {
+    if (kpi.previous === null) return undefined;
+    const d = Math.round((kpi.value - kpi.previous) * 1000) / 10;
+    if (d === 0) return undefined;
+    const up = d > 0;
+    return (
+      <span title={since} className={cn("inline-flex shrink-0 items-center gap-inline rounded-full px-tight py-0.5 text-[0.75rem]", up ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+        {up ? "↗" : "↘"} {t("kpi.pts", { value: `${up ? "+" : "−"}${Math.abs(d)}` })}
+        {since && <span className="sr-only">{` ${since}`}</span>}
+      </span>
+    );
+  };
   return [
     {
       key: "revenue",
@@ -522,12 +648,13 @@ function kpiItems(o: AnalyticsOverview, t: ReturnType<typeof useTranslations>, o
         </>
       ),
       delta: delta(k.revenue),
+      context: was(k.revenue, formatMoney),
     },
-    { key: "orders", label: t("kpi.orders"), value: num(k.orders.value), delta: delta(k.orders) },
-    { key: "average", label: t("kpi.average"), value: formatMoney(k.averageOrder.value), delta: delta(k.averageOrder) },
-    { key: "guests", label: t("kpi.guests"), value: num(k.guests.value), delta: delta(k.guests) },
-    { key: "capacity", label: t("kpi.capacity"), value: percent(k.capacityFilled.value), delta: delta(k.capacityFilled) },
-    { key: "refunds", label: t("kpi.refunds"), value: formatMoney(k.refunds.value), delta: delta(k.refunds, "down") },
+    { key: "orders", label: t("kpi.orders"), value: num(k.orders.value), delta: delta(k.orders), context: was(k.orders, num) },
+    { key: "average", label: t("kpi.average"), value: formatMoney(k.averageOrder.value), delta: delta(k.averageOrder), context: was(k.averageOrder, formatMoney) },
+    { key: "guests", label: t("kpi.guests"), value: num(k.guests.value), delta: delta(k.guests), context: was(k.guests, num) },
+    { key: "capacity", label: t("kpi.capacity"), value: percent(k.capacityFilled.value), delta: points(k.capacityFilled), context: was(k.capacityFilled, percent) },
+    { key: "refunds", label: t("kpi.refunds"), value: formatMoney(k.refunds.value), delta: delta(k.refunds, "down"), context: was(k.refunds, formatMoney) },
   ];
 }
 
