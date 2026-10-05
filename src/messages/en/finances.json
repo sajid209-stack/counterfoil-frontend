@@ -2,7 +2,6 @@
   "title": "Finances",
   "more": "More actions",
   "menu": {
-    "statement": "Download statement (CSV)",
     "bank": "Payout bank and schedule"
   },
   "available": {
@@ -16,14 +15,18 @@
     "nothingToWithdraw": "Nothing to withdraw yet",
     "noBank": "Add a payout bank to withdraw",
     "nextAbout": "About {amount}, including {clearing} still clearing",
-    "nextAboutPlain": "About {amount}"
+    "nextAboutPlain": "About {amount}",
+    "lastPayout": "Last payout {amount} on {date}",
+    "view": "View"
   },
   "unsettled": {
     "label": "Unsettled funds",
     "info": "Online payments take 2 days to clear. Then they move to your available balance.",
     "infoLabel": "About unsettled funds",
     "clearsBy": "Clears by {date}",
-    "none": "Nothing is clearing"
+    "none": "Nothing is clearing",
+    "availableOn": "Becomes available",
+    "later": "Later"
   },
   "period": {
     "today": "Today",
@@ -40,12 +43,15 @@
     "paidOut": "<b>{amount}</b> paid out"
   },
   "activity": {
-    "title": "Activity",
+    "title": "Transaction history",
     "filterLabel": "Show",
     "search": "Order, reference or customer",
     "showMore": "Show more days",
     "showing": "Showing {shown} of {total} days",
-    "loading": "Loading activity"
+    "loading": "Loading activity",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "download": "Download statement"
   },
   "filter": {
     "all": "All",
@@ -68,16 +74,15 @@
   "day": {
     "today": "Today",
     "yesterday": "Yesterday",
-    "in": "in {amount}",
-    "out": "out {amount}",
     "sales": "{count, plural, one {# online payment} other {# online payments}}",
     "refunds": "{count, plural, one {# refund} other {# refunds}}",
     "payouts": "{count, plural, one {# payout} other {# payouts}}",
     "deposits": "{count, plural, one {# deposit} other {# deposits}}",
     "fees": "fees",
     "clearing": "Clearing",
-    "onItsWay": "On its way",
-    "counterFees": "counter fees"
+    "counterFees": "counter fees",
+    "transactions": "{count, plural, one {# transaction} other {# transactions}}",
+    "settled": "Settled"
   },
   "line": {
     "sale": "Online payment",
@@ -90,8 +95,7 @@
     "withdrawalNoBank": "Withdrawal to your bank",
     "deposit": "Deposit by {method}",
     "onlineFees": "Fees on online payment",
-    "counterFees": "Counterfoil fees on {count, plural, one {# counter sale} other {# counter sales}}",
-    "paidFees": "{paid} paid · {fees} fees"
+    "counterFees": "Counterfoil fees on {count, plural, one {# counter sale} other {# counter sales}}"
   },
   "by": {
     "bkash": "bKash",
@@ -101,10 +105,12 @@
   "status": {
     "pending": "Clearing",
     "cleared": "Cleared",
-    "billed": "Charged",
+    "billed": "Fee",
     "processing": "On its way",
     "paid": "Paid",
-    "received": "Received"
+    "received": "Received",
+    "fee": "Fee",
+    "refunded": "Refunded"
   },
   "detail": {
     "status": "Status",
@@ -135,7 +141,8 @@
     "arrives": "Arrives in 1–2 working days.",
     "submit": "Withdraw {amount}",
     "done": "{amount} on its way to {bank}",
-    "enter": "Enter an amount."
+    "enter": "Enter an amount.",
+    "leaves": "Leaves {amount} in your balance"
   },
   "deposit": {
     "title": "Deposit",
@@ -146,6 +153,16 @@
     "note": "Money you add pays Counterfoil fees first. The rest stays in your balance.",
     "submit": "Add {amount}",
     "done": "{amount} added to your balance",
-    "enter": "Enter an amount."
+    "enter": "Enter an amount.",
+    "willBe": "Your balance will be {amount}"
+  },
+  "table": {
+    "date": "Date",
+    "details": "Details",
+    "status": "Status",
+    "credit": "Credit",
+    "debit": "Debit",
+    "net": "Net amount",
+    "total": "Total · {count, plural, one {# day} other {# days}}"
   }
 }

@@ -141,3 +141,31 @@ export function groupDay(lines: FinanceLine[]): DisplayRow[] {
   }
   return rows;
 }
+
+export type RowStatus = { key: "pending" | "cleared" | "fee" | "processing" | "paid" | "received" | "refunded"; tone: "warning" | "info" | "success" | "neutral" };
+
+/** One vocabulary for a row's status, everywhere it is shown. */
+export function rowStatus(row: DisplayRow): RowStatus {
+  if (row.type === "onlineFees" || row.type === "counterFees") return { key: "fee", tone: "neutral" };
+  const l = row.line;
+  switch (l.kind) {
+    case "sale":
+      return l.status === "pending" ? { key: "pending", tone: "warning" } : { key: "cleared", tone: "neutral" };
+    case "refund":
+      return { key: "refunded", tone: "neutral" };
+    case "deposit":
+      return { key: "received", tone: "success" };
+    case "payout":
+    case "withdrawal":
+      return l.status === "processing" ? { key: "processing", tone: "info" } : { key: "paid", tone: "success" };
+    default:
+      return { key: "fee", tone: "neutral" };
+  }
+}
+
+/** The money the row brings in and sends out. An online payment brings in what
+ *  was paid and sends out its fees, so credit less debit is its net. */
+export function rowAmounts(row: DisplayRow): { credit: number; debit: number } {
+  if (row.type === "sale") return { credit: row.paid ?? row.amount, debit: row.fees ?? 0 };
+  return row.amount > 0 ? { credit: row.amount, debit: 0 } : { credit: 0, debit: -row.amount };
+}

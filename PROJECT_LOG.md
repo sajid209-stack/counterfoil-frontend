@@ -15585,3 +15585,54 @@ nothing reads any more.
 - Withdrawals and deposits are signed "You"; there is no signed-in user record.
 - The netting decision should be confirmed with the backend team: their guide
   left it open (question 3).
+
+## Finances, second pass — a transaction table, and the boxes answer "when" (2026-10-05)
+
+Owner, with the backend team's column header: *"transaction history in Finances
+will be this type of data listing — Date · Details · Status · Credit · Debit ·
+Net Amount. Finances needs more UX improvements."* Designed on Opus, built by the
+same Sonnet sub-agent, reviewed by screenshot.
+
+- **Transaction history is a table** (a real `<table>`, sticky header) with
+  exactly those six columns. A **day row** holds the full date with a chevron
+  (plus a Today / Yesterday tag), "N transactions", Clearing or Settled, and
+  the day's credit, debit and signed net. Its **child rows**, on a recessed
+  ground, hold the time, the description (order reference in DM Mono), the
+  line's status, and its own credit, debit and net. An online payment is credit
+  = paid, debit = its fees; the day's counter-sale fees are one debit row. A
+  row opens the detail panel. Money is right-aligned and tabular, and empty
+  cells read "—". One status vocabulary everywhere: Clearing, Cleared, Fee, On
+  its way, Paid, Received, Refunded, Settled.
+- Toolbar: the filters, date range and search, plus **Expand all / Collapse
+  all** and **Download statement**. The statement exports exactly what is
+  filtered on screen, as `finances-<venue>-<from>_<to>.csv`. A **Total · N
+  days** footer row sums what is shown.
+- Below 768px the same data is a card per day with the fields labelled — six
+  columns cannot fit a phone.
+- **Unsettled funds** now says *when* it becomes available: up to three rows
+  ("Thu 30 Jul · ৳10,465.00"), the rest folded into "Later" (`getFinanceExtras`
+  in `finances.ts`). **Available balance** adds "Last payout ৳6,473.35 on Mon
+  27 Jul · View", which filters the table to payouts.
+- **Withdraw** shows "Leaves ৳X in your balance" as you type; **Deposit** shows
+  "Your balance will be ৳X".
+- Filter, date range and search live in the address (`router.replace`), so a
+  view can be shared or bookmarked. Loading draws skeleton rows shaped like the
+  table.
+
+### Verified
+
+- Page harness **107/107** at 1440 and **96/96** at 390, plus dark and Bangla
+  audits:
+  - exactly the six headers, money right-aligned, sticky header;
+  - credit − debit = net on every day and child row, a day's net equal to its
+    children, the footer equal to the visible days;
+  - Expand all / Collapse all;
+  - with Fees selected every downloaded line is a fee and the file sums to the
+    footer;
+  - the clearing schedule sums to Unsettled; "View" filters to payouts;
+  - the withdraw and deposit preview lines are right; the address round-trips
+    through a reload;
+  - no page x-scroll, nothing under 12px, 44px targets on a phone, contrast
+    clean, no console errors or missing messages.
+- Full regression green. `tsc`, `eslint` on the finances files and i18n 0 / 0
+  clean.

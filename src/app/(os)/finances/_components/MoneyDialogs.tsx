@@ -84,6 +84,9 @@ export function WithdrawDialog({ locationId, summary, onClose, onDone }: { locat
     >
       <form onSubmit={(e) => { e.preventDefault(); void submit(); }} className="flex flex-col gap-section">
         <AmountField label={t("withdraw.amount")} value={text} onChange={(v) => { setText(v); setError(undefined); }} error={error} />
+        <p aria-live="polite" className="min-h-5 text-[13px] text-muted">
+          {Number.isFinite(minor) && minor > 0 && minor <= summary.available ? t("withdraw.leaves", { amount: formatMoney(summary.available - minor) }) : ""}
+        </p>
         <div className="flex flex-wrap gap-tight">
           <button type="button" className={chip} onClick={() => { setText(toText(summary.available)); setError(undefined); }}>
             {t("withdraw.all", { amount: formatMoney(summary.available) })}
@@ -156,6 +159,9 @@ export function DepositDialog({ locationId, summary, onClose, onDone }: { locati
     >
       <form onSubmit={(e) => { e.preventDefault(); void submit(); }} className="flex flex-col gap-section">
         <AmountField label={t("deposit.amount")} value={text} onChange={(v) => { setText(v); setError(undefined); }} error={error} />
+        <p aria-live="polite" className="min-h-5 text-[13px] text-muted">
+          {Number.isFinite(minor) && minor > 0 ? t("deposit.willBe", { amount: formatMoney(summary.available + minor) }) : ""}
+        </p>
         <fieldset className="flex flex-col gap-tight">
           <legend className="type-label mb-tight text-[0.75rem] text-muted">{t("deposit.method")}</legend>
           <div className="grid grid-cols-3 gap-tight">

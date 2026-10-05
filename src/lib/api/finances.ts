@@ -397,3 +397,25 @@ export async function deposit(locationId: ID, amount: Minor, method: DepositMeth
   });
   return ok(stripLocation(line));
 }
+
+// ── small reads for the Finances boxes ─────────────────────────────────────
+
+export interface FinanceExtras {
+  /** What is still clearing, by the day each part becomes available. Sums to `unsettled`. */
+  clearing: { date: ISODate; amount: Minor }[];
+  /** The newest automatic payout, or null when none has gone out yet. */
+  lastPayout: { date: ISODate; amount: Minor } | null;
+}
+
+export async function getFinanceExtras(locationId: ID): Promise<ApiResult<FinanceExtras>> {
+  await delay();
+  const lines = allLines(locationId);
+  const byDay = new Map<ISODate, Minor>();
+  for (const l of lines.filter((x) => x.status === "pending")) {
+    const d = clearDayOf(l);
+    byDay.set(d, (byDay.get(d) ?? 0) + l.amount);
+  }
+  const clearing = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([date, amount]) => ({ date, amount }));
+  const last = lines.find((l) => l.kind === "payout"); // newest first
+  return ok({ clearing, lastPayout: last ? { date: localDay(last.at), amount: -last.amount } : null });
+}

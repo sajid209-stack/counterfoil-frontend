@@ -6,17 +6,21 @@ import { Info } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatDay, formatMoney } from "@/lib/format";
-import type { FinanceSummary } from "@/lib/api";
+import type { FinanceExtras, FinanceSummary } from "@/lib/api";
 
 /** The two boxes. The balance is the hero: a bigger figure, the two buttons,
  *  and one quiet ember rule along its top so it reads as the primary. */
 export function Balances({
   summary,
+  extras,
   onWithdraw,
   onDeposit,
+  onViewPayouts,
   menu,
 }: {
   summary: FinanceSummary | undefined;
+  extras: FinanceExtras | undefined;
+  onViewPayouts: () => void;
   onWithdraw: () => void;
   onDeposit: () => void;
   /** The overflow menu, drawn in the box on a phone (the bar holds it on a desktop). */
@@ -81,7 +85,15 @@ export function Balances({
           </p>
           <p className={cn("mt-inline min-h-5 text-[14px]", owing ? "font-medium text-warning" : "text-muted")}>{summary ? nextLine : ""}</p>
           {aboutLine && <p className="text-[13px] text-muted">{aboutLine}</p>}
-          <div className="mt-section flex flex-wrap gap-tight pt-inline md:mt-auto">
+          {extras?.lastPayout && (
+            <p className="flex flex-wrap items-center gap-x-inline text-[13px] text-muted">
+              <span>{t("available.lastPayout", { amount: formatMoney(extras.lastPayout.amount), date: formatDay(extras.lastPayout.date, { weekday: true }) })}</span>
+              <button type="button" onClick={onViewPayouts} className="-my-2 inline-flex h-11 items-center px-tight text-[13px] font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80 md:h-9">
+                {t("available.view")}
+              </button>
+            </p>
+          )}
+          <div className="mt-section flex flex-wrap gap-tight pt-tight md:mt-auto">
             {withdraw}
             {deposit}
           </div>
@@ -97,9 +109,7 @@ export function Balances({
         <p className="mt-tight text-[32px] font-semibold leading-tight tracking-[-0.5px]">
           {summary ? formatMoney(summary.unsettled) : <span className="inline-block h-9 w-44 animate-pulse rounded-sm bg-line" aria-hidden />}
         </p>
-        <p className="mt-inline min-h-5 text-[14px] text-muted">
-          {summary ? (summary.clearsBy ? t("unsettled.clearsBy", { date: formatDay(summary.clearsBy, { weekday: true }) }) : t("unsettled.none")) : ""}
-        </p>
+        <ClearingSchedule summary={summary} extras={extras} />
       </section>
     </div>
   );
@@ -148,5 +158,27 @@ function InfoTip({ label, text }: { label: string; text: string }) {
         </span>
       )}
     </span>
+  );
+}
+
+/** When the clearing money lands: up to three days, the rest folded into "Later". */
+function ClearingSchedule({ summary, extras }: { summary: FinanceSummary | undefined; extras: FinanceExtras | undefined }) {
+  const t = useTranslations("finances");
+  if (!summary || !extras) return <p className="mt-inline min-h-5" />;
+  if (extras.clearing.length === 0) return <p className="mt-inline min-h-5 text-[14px] text-muted">{t("unsettled.none")}</p>;
+  const rows: { key: string; label: string; amount: number }[] = extras.clearing.map((c) => ({ key: c.date, label: formatDay(c.date, { weekday: true }), amount: c.amount }));
+  const shown = rows.length > 3 ? [...rows.slice(0, 2), { key: "later", label: t("unsettled.later"), amount: rows.slice(2).reduce((s, r) => s + r.amount, 0) }] : rows;
+  return (
+    <div className="mt-section">
+      <p className="text-[13px] text-muted">{t("unsettled.availableOn")}</p>
+      <ul className="mt-inline divide-y divide-hairline" aria-label={t("unsettled.availableOn")}>
+        {shown.map((r) => (
+          <li key={r.key} className="flex items-baseline justify-between gap-section py-tight text-[14px]">
+            <span>{r.label}</span>
+            <span className="font-medium tabular-nums">{formatMoney(r.amount)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

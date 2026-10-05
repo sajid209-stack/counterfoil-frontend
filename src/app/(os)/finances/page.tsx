@@ -1,25 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Download, Landmark } from "lucide-react";
-import { ActionMenu, DateRangePicker, PageShell, formatRange, type ActionMenuItem } from "@/components/ui";
+import { ActionMenu, Button, DateRangePicker, PageShell, formatRange, type ActionMenuItem } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { formatClockOf, formatMoney } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import {
+  getFinanceExtras,
   getFinanceSummary,
   listFinanceActivity,
   listLocations,
-  peekFinanceLines,
   type FinanceDay,
   type FinanceFilter,
 } from "@/lib/api";
 import { Balances } from "./_components/Balances";
-import { ActivityDays, FilterSegments, SearchBox } from "./_components/Activity";
+import { ActivityTable, FILTERS, FilterSegments, SearchBox } from "./_components/Activity";
 import { LineDrawer } from "./_components/LineDrawer";
 import { DepositDialog, WithdrawDialog } from "./_components/MoneyDialogs";
 import { useLineText, type DisplayRow } from "./_components/lineParts";
@@ -46,45 +46,86 @@ const PRESETS: { value: string; range: () => [string, string] }[] = [
   { value: "lastmonth", range: lastMonth },
 ];
 
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
+/** The range a link carries, named as a preset when it is one. */
+const rangeFrom = (from: string | null, to: string | null) => {
+  if (from && to && ISO.test(from) && ISO.test(to) && from <= to) {
+    const hit = PRESETS.find((p) => {
+      const [a, b] = p.range();
+      return a === from && b === to;
+    });
+    return { preset: hit?.value ?? "custom", from, to };
+  }
+  const [a, b] = PRESETS[3].range();
+  return { preset: "30d", from: a, to: b };
+};
+
 /** One CSV cell: quoted when it holds a comma, a quote or a line break. */
 const cell = (v: string | number) => {
   const s = String(v);
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "venue";
 
 /**
- * Finances — the venue's money with Counterfoil, as one balance. Two boxes
+ * Finances — the venue's money with Counterfoil as one balance. Two boxes
  * (what is still clearing, what is yours to withdraw), one place to act, and
- * the activity read like a bank statement. The venue is the one in the bar.
+ * the transaction history as a table of days that open to their lines. The
+ * venue is the one in the bar; the filters live in the address, so a view can
+ * be shared.
  */
 export default function FinancesPage() {
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
-  const { id, pending } = useActiveLocation(locationsQ.data?.data ?? []);
+  const locations = locationsQ.data?.data ?? [];
+  const { id, location, pending } = useActiveLocation(locations);
   // Keyed on the venue, so switching it starts every query and every open row afresh.
-  return <FinancesView key={id} locationId={id} pending={pending} />;
+  return (
+    <Suspense fallback={null}>
+      <FinancesView key={id} locationId={id} venueName={location?.name ?? ""} pending={pending} />
+    </Suspense>
+  );
 }
 
-function FinancesView({ locationId, pending }: { locationId: string; pending: boolean }) {
+function FinancesView({ locationId, venueName, pending }: { locationId: string; venueName: string; pending: boolean }) {
   const t = useTranslations("finances");
   const tc = useTranslations("common");
   const router = useRouter();
+  const sp = useSearchParams();
   const wide = useMediaQuery(MD);
   const describe = useLineText();
 
-  const [range, setRange] = useState({ preset: "30d", from: shift(DEMO_TODAY, -29), to: DEMO_TODAY });
-  const [filter, setFilter] = useState<FinanceFilter>("all");
-  const [search, setSearch] = useState("");
-  const [q, setQ] = useState("");
+  const [range, setRange] = useState(() => rangeFrom(sp.get("from"), sp.get("to")));
+  const [filter, setFilter] = useState<FinanceFilter>(() => {
+    const f = sp.get("filter");
+    return FILTERS.includes(f as FinanceFilter) ? (f as FinanceFilter) : "all";
+  });
+  const [search, setSearch] = useState(() => sp.get("q") ?? "");
+  const [q, setQ] = useState(() => (sp.get("q") ?? "").trim());
   useEffect(() => {
     const timer = setTimeout(() => setQ(search.trim()), 250);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // The view is the address: replace, never push, so Back is not a trail of keystrokes.
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (filter !== "all") p.set("filter", filter);
+    if (range.preset !== "30d") {
+      p.set("from", range.from);
+      p.set("to", range.to);
+    }
+    if (q) p.set("q", q);
+    const s = p.toString();
+    router.replace(s ? `/finances?${s}` : "/finances", { scroll: false });
+  }, [filter, range, q, router]);
 
   const [nonce, setNonce] = useState(0);
   const refresh = useCallback(() => setNonce((n) => n + 1), []);
 
   const summaryQ = useApiQuery(() => getFinanceSummary(locationId, range.from, range.to), [locationId, range.from, range.to, nonce]);
   const summary = pending ? undefined : summaryQ.data;
+  const extrasQ = useApiQuery(() => getFinanceExtras(locationId), [locationId, nonce]);
+  const extras = pending ? undefined : extrasQ.data;
 
   // Activity: days, newest first, loaded a page at a time.
   const [days, setDays] = useState<FinanceDay[]>([]);
@@ -132,6 +173,8 @@ function FinancesView({ locationId, pending }: { locationId: string; pending: bo
   // Today and the first day open; the rest closed, until someone chooses.
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
   const isOpen = (date: string, i: number) => openMap[date] ?? (date === DEMO_TODAY || i === 0);
+  const allOpen = days.length > 0 && days.every((d, i) => isOpen(d.date, i));
+  const toggleAll = () => setOpenMap(Object.fromEntries(days.map((d) => [d.date, !allOpen])));
 
   const [row, setRow] = useState<DisplayRow | null>(null);
   const [dialog, setDialog] = useState<"withdraw" | "deposit" | null>(null);
@@ -145,29 +188,35 @@ function FinancesView({ locationId, pending }: { locationId: string; pending: bo
     setRange({ preset: "30d", from, to });
   };
 
-  const downloadStatement = () => {
-    const rows = peekFinanceLines(locationId, range.from, range.to);
+  const viewPayouts = () => {
+    setFilter("payouts");
+    document.getElementById("fin-activity")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  /** Exactly what is on screen: the same filter, range and search, every day. */
+  const downloadStatement = async () => {
+    const res = await listFinanceActivity(locationId, { from: range.from, to: range.to, filter, search: q, page: 1, pageSize: 100000 });
+    if (!res.ok) return;
     const head = ["Date", "Time", "Type", "Description", "Reference", "Status", "Amount"];
-    const body = rows.map((l) => {
-      const d = describe(l);
-      const date = new Date(l.at);
-      const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      return [day, formatClockOf(l.at), l.kind, d.ref ? `${d.text} · ${d.ref}` : d.text, l.reference ?? l.orderReference ?? "", l.status, (l.amount / 100).toFixed(2)]
-        .map(cell)
-        .join(",");
-    });
+    const body = res.data.days.flatMap((d) =>
+      d.lines.map((l) => {
+        const x = describe(l);
+        return [d.date, formatClockOf(l.at), l.kind, x.ref ? `${x.text} · ${x.ref}` : x.text, l.reference ?? l.orderReference ?? "", l.status, (l.amount / 100).toFixed(2)]
+          .map(cell)
+          .join(",");
+      }),
+    );
     // A byte-order mark so a spreadsheet reads Bangla descriptions correctly.
     const blob = new Blob(["﻿" + [head.join(","), ...body].join("\r\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `finances-${range.from}_${range.to}.csv`;
+    a.download = `finances-${slug(venueName)}-${range.from}_${range.to}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const menuItems: ActionMenuItem[] = [
-    { key: "csv", label: t("menu.statement"), icon: <Download size={16} strokeWidth={1.5} />, onSelect: downloadStatement },
     { key: "bank", label: t("menu.bank"), icon: <Landmark size={16} strokeWidth={1.5} />, onSelect: () => router.push("/settings/payments") },
   ];
   const menu = <ActionMenu label={t("more")} items={menuItems} />;
@@ -188,11 +237,28 @@ function FinancesView({ locationId, pending }: { locationId: string; pending: bo
   return (
     <PageShell title={t("title")} actions={wide ? menu : undefined}>
       <div className="flex flex-col gap-section">
-        <Balances summary={summary} onWithdraw={() => setDialog("withdraw")} onDeposit={() => setDialog("deposit")} menu={wide ? undefined : menu} />
+        <Balances
+          summary={summary}
+          extras={extras}
+          onWithdraw={() => setDialog("withdraw")}
+          onDeposit={() => setDialog("deposit")}
+          onViewPayouts={viewPayouts}
+          menu={wide ? undefined : menu}
+        />
 
-        <section aria-labelledby="fin-activity" className="card-surface">
+        <section aria-labelledby="fin-activity-title" id="fin-activity" className="card-surface scroll-mt-24">
           <div className="p-card pb-0">
-            <h2 id="fin-activity" className="text-base font-semibold tracking-[-0.4px]">{t("activity.title")}</h2>
+            <div className="flex flex-wrap items-center justify-between gap-tight">
+              <h2 id="fin-activity-title" className="text-base font-semibold tracking-[-0.4px]">{t("activity.title")}</h2>
+              <div className="flex flex-wrap items-center gap-tight">
+                <Button variant="secondary" size="sm" onClick={toggleAll} disabled={days.length === 0}>
+                  {t(allOpen ? "activity.collapseAll" : "activity.expandAll")}
+                </Button>
+                <Button variant="secondary" size="sm" icon={<Download size={15} strokeWidth={1.5} />} onClick={() => void downloadStatement()}>
+                  {t("activity.download")}
+                </Button>
+              </div>
+            </div>
             <p className="mt-inline min-h-5 text-[14px] text-muted">
               {summary && (
                 <>
@@ -232,11 +298,12 @@ function FinancesView({ locationId, pending }: { locationId: string; pending: bo
             </div>
           </div>
           <div className="border-t border-hairline">
-            <ActivityDays
+            <ActivityTable
               days={days}
               total={total}
               loading={loading}
               loadingMore={loadingMore}
+              wide={wide}
               isOpen={isOpen}
               onToggle={(date, now) => setOpenMap((m) => ({ ...m, [date]: now }))}
               onPick={setRow}
