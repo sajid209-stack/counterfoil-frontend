@@ -71,7 +71,7 @@ const DESTINATIONS = [
   { href: "/catalog", key: "catalog", icon: Ticket },
   { href: "/inventory", key: "inventory", icon: Boxes },
   { href: "/marketplaces", key: "marketplaces", icon: Globe },
-  { href: "/reports/sales", key: "reports", icon: ChartNoAxesColumn },
+  { href: "/analytics", key: "analytics", icon: ChartNoAxesColumn },
   { href: "/finances", key: "finances", icon: Wallet },
   { href: "/pos", key: "pos", icon: Store },
   { href: "/deck", key: "deck", icon: SquareStack },
@@ -89,8 +89,8 @@ const DESTINATIONS = [
  * same word the tab bar and the rail use for it, so the bar answers "where am
  * I" with the word the person navigated by.
  *
- * Longest prefix wins, which is why /reports/sales resolves before /reports
- * would matter and why every settings section names itself rather than all
+ * Longest prefix wins, which is why /settings/profile resolves before /settings
+ * and why every settings section names itself rather than all
  * sixteen of them reading "Settings".
  */
 const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
@@ -106,7 +106,7 @@ const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
   { prefix: "/pricing", key: "pricing" },
   { prefix: "/memberships", key: "memberships" },
   { prefix: "/promotions", key: "promotions" },
-  { prefix: "/reports", key: "reports" },
+  { prefix: "/analytics", key: "analytics" },
   { prefix: "/settings/profile", key: "myProfile" },
   { prefix: "/settings", key: "settings" },
 ] as const;

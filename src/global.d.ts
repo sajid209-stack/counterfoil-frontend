@@ -11,7 +11,7 @@ type Messages = {
   calendar: typeof import("./messages/en/calendar.json");
   customers: typeof import("./messages/en/customers.json");
   orders: typeof import("./messages/en/orders.json");
-  reports: typeof import("./messages/en/reports.json");
+  analytics: typeof import("./messages/en/analytics.json");
   products: typeof import("./messages/en/products.json");
   resources: typeof import("./messages/en/resources.json");
   settings: typeof import("./messages/en/settings.json");

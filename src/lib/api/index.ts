@@ -38,3 +38,6 @@ export * from "./marketplaces";
 export * from "./transactions";
 export * from "./platformFees";
 export * from "./finances";
+export * from "./analytics";
+// reports.ts has an older, series-based AnalyticsQuery; the page contract wins here.
+export type { AnalyticsQuery } from "./analytics";

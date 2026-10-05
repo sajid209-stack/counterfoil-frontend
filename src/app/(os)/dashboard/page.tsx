@@ -457,7 +457,7 @@ export default function DashboardPage() {
       // coming in" is the question; the bar under it carries the rest.
       value: mixTotal > 0 ? `${mix[0].label} ${Math.round((mix[0].amount / mixTotal) * 100)}%` : "—",
       sub: null,
-      href: "/reports/sales",
+      href: "/analytics",
     },
     {
       key: "idle",
@@ -703,7 +703,7 @@ export default function DashboardPage() {
             <div className={`${card} p-card`}>
               <div className="mb-comfortable flex items-baseline justify-between gap-tight">
                 <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("topProducts")}</h2>
-                <button type="button" onClick={() => router.push("/reports/sales")} className="-my-tight flex min-h-11 shrink-0 items-center whitespace-nowrap px-tight text-[12px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-0 sm:px-0">{t("viewAll")}</button>
+                <button type="button" onClick={() => router.push("/analytics")} className="-my-tight flex min-h-11 shrink-0 items-center whitespace-nowrap px-tight text-[12px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-0 sm:px-0">{t("viewAll")}</button>
               </div>
               {/* The reference's "Top verticals" row: icon square, name and
                   money on the first line, then a full-width bar with the

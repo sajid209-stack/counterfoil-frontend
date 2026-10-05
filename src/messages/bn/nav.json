@@ -5,7 +5,6 @@
   "orders": "অর্ডার",
   "customers": "গ্রাহক",
   "memberships": "সদস্যপদ",
-  "reports": "রিপোর্ট",
   "analytics": "বিশ্লেষণ",
   "promotions": "প্রোমোশন",
   "pos": "পয়েন্ট অব সেল",
@@ -45,6 +44,7 @@
     "catalog": "ক্যাটালগ বুকিং ইভেন্ট পণ্য টিকিট catalog bookings events products",
     "inventory": "ইনভেন্টরি স্টক মজুত পণ্য মার্চেন্ডাইজ সরবরাহ inventory",
     "marketplaces": "মার্কেটপ্লেস অন্য সাইট marketplaces",
+    "analytics": "বিশ্লেষণ রিপোর্ট বিক্রি কর ভ্যাট আয় analytics reports sales tax vat revenue",
     "finances": "ফাইন্যান্স অর্থ টাকা লেনদেন পেমেন্ট রিফান্ড পেআউট ফি ব্যালান্স তোলা জমা ব্যাংক বিকাশ নগদ transactions payout fees balance withdraw deposit"
   },
   "inventory": "ইনভেন্টরি",

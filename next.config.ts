@@ -50,6 +50,11 @@ const nextConfig: NextConfig = {
       { source: "/money/payouts/:id", destination: "/finances", permanent: false },
       { source: "/money/collections", destination: "/finances", permanent: false },
       { source: "/money/collections/:id", destination: "/finances", permanent: false },
+      // Reports became Analytics: one dashboard-style page instead of a report with
+      // tabs. Transactions live in Finances and unpaid balances in Orders (Part
+      // paid). Not permanent, like the others; Next keeps the query string.
+      { source: "/reports", destination: "/analytics", permanent: false },
+      { source: "/reports/sales", destination: "/analytics", permanent: false },
     ];
   },
 };

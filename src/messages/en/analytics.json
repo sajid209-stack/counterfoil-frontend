@@ -1,0 +1,120 @@
+{
+  "title": "Analytics",
+  "description": "How the venue is doing: sales, what sells, when you are busy and how full you are.",
+  "toolbar": {
+    "compare": "Compare to previous period",
+    "download": "Download"
+  },
+  "presets": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "7d": "Last 7 days",
+    "30d": "Last 30 days",
+    "month": "This month",
+    "lastmonth": "Last month"
+  },
+  "range": {
+    "choose": "Choose dates",
+    "custom": "Pick dates",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "pickEnd": "Pick the last day"
+  },
+  "noCompare": "No comparison. Your records do not go back far enough.",
+  "vsPrev": "vs previous period",
+  "view": "View",
+  "viewIn": "View in {where}",
+  "error": "Could not load the numbers.",
+  "retry": "Try again",
+  "counts": {
+    "orders": "{n, plural, one {{c} order} other {{c} orders}}",
+    "guests": "{n, plural, one {{c} guest} other {{c} guests}}",
+    "lines": "{n, plural, one {{c} line} other {{c} lines}}"
+  },
+  "kpi": {
+    "revenue": "Revenue",
+    "revenueNote": "After discounts and refunds, before VAT.",
+    "orders": "Orders",
+    "average": "Average order",
+    "guests": "Guests",
+    "capacity": "Capacity filled",
+    "refunds": "Refunds"
+  },
+  "revenue": {
+    "title": "Revenue over time",
+    "series": "Revenue",
+    "previous": "Previous period",
+    "weekOf": "Week of {day}",
+    "empty": "No sales in this period."
+  },
+  "sells": {
+    "title": "What sells",
+    "other": "Other",
+    "empty": "Nothing sold in this period."
+  },
+  "channels": {
+    "title": "Where sales come from",
+    "counter": "At the counter",
+    "online": "Online",
+    "marketplace": "Marketplaces",
+    "empty": "No sales in this period."
+  },
+  "heat": {
+    "title": "When it's busy",
+    "busiest": "Busiest: {day} {time}",
+    "tip": "{day} {time} · {guests}",
+    "aria": "Busy times by day and hour",
+    "hint": "Use the arrow keys to move between hours.",
+    "caption": "Customers booked to come, by day and hour",
+    "fewer": "Fewer",
+    "more": "More",
+    "empty": "No bookings in this period."
+  },
+  "full": {
+    "title": "How full you are",
+    "of": "{sold} of {capacity}",
+    "showAll": "Show all {n}",
+    "showFewer": "Show fewer",
+    "empty": "No places on offer in this period."
+  },
+  "pay": {
+    "title": "How people pay",
+    "empty": "No payments in this period."
+  },
+  "lead": {
+    "title": "How far ahead people book",
+    "same_day": "Same day",
+    "1_2_days": "1–2 days",
+    "3_7_days": "3–7 days",
+    "8_30_days": "8–30 days",
+    "over_30_days": "Over 30 days",
+    "share": "{bucket}: {orders}, {pct}%",
+    "empty": "No orders in this period."
+  },
+  "guests": {
+    "title": "Guests",
+    "arrived": "Arrived",
+    "noShows": "Didn't come",
+    "newCustomers": "New customers",
+    "returning": "Returning",
+    "attendance": "Arrived and didn't come",
+    "loyalty": "New and returning customers",
+    "empty": "No guests in this period."
+  },
+  "vat": {
+    "title": "VAT for this period",
+    "note": "After discounts and refunds.",
+    "class": "VAT type",
+    "rate": "Rate",
+    "net": "Net",
+    "vat": "VAT",
+    "gross": "Total",
+    "lines": "Lines",
+    "total": "Total",
+    "download": "Download VAT",
+    "empty": "No sales in this period."
+  }
+}

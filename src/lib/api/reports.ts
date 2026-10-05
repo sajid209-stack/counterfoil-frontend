@@ -7,7 +7,7 @@ import { peekProducts } from "./products";
 import { getResourceMatrix, getSlots } from "./slots";
 import { peekStaff } from "./staff";
 import { isResourceType, isSlotBased } from "@/lib/schedule";
-import type { ApiResult, ID, ISODate, ISODateTime, Minor, Order, OrderLine, PaymentMethod, TaxClass } from "./types";
+import type { ApiResult, ID, ISODate, ISODateTime, Minor, Order, OrderLine, PaymentMethod, Product, TaxClass } from "./types";
 
 // The contract the backend builds to. Do not change shapes without updating both.
 export type SalesGroupBy =
@@ -154,10 +154,10 @@ export interface SeriesPoint {
 
 export type AnalyticsResponse = Partial<Record<AnalyticsSeries, SeriesPoint[]>>;
 
-const settled = (o: Order) => o.status === "paid" || o.status === "partial" || o.status === "partly_refunded";
+export const settled = (o: Order) => o.status === "paid" || o.status === "partial" || o.status === "partly_refunded";
 const orderTickets = (o: Order) => o.lines.filter((l) => !l.parentLineId && l.admits > 0).reduce((s, l) => s + l.quantity, 0);
 /** Net (pre-tax, post-discount) value of a line — the number reports attribute. */
-const lineNet = (l: Order["lines"][number]) => l.taxableAmount ?? l.unitPrice * l.quantity;
+export const lineNet = (l: Order["lines"][number]) => l.taxableAmount ?? l.unitPrice * l.quantity;
 /** Payment-method bucket for cross-tabs: several methods → an honest "Mixed"
  *  row, never a fictional pro-rata split of payments across lines. */
 const methodBucket = (o: Order): PaymentMethod | "mixed" => {
@@ -443,6 +443,17 @@ export async function getTaxReport(q: TaxReportQuery): Promise<ApiResult<TaxRepo
   });
 }
 
+/** Places a scheduled product offers on one day: its daily cap, else the
+ *  resource slots, else the sum of session capacities. 0 when unscheduled.
+ *  Shared by the capacity-utilisation series and the Analytics page. */
+export function productCapacityOn(p: Product, day: string): number {
+  if (!p.schedule) return 0;
+  if (p.schedule.dailyCapacity) return p.schedule.dailyCapacity;
+  if (isResourceType(p.bookingType)) return getResourceMatrix(p, day).reduce((s, r) => s + r.slots.length, 0);
+  if (isSlotBased(p.bookingType)) return getSlots(p, day).reduce((s, x) => s + x.capacity, 0);
+  return 0;
+}
+
 export async function getAnalytics(q: AnalyticsQuery): Promise<ApiResult<AnalyticsResponse>> {
   const orders = peekOrders().filter((o) => matches(o, q) && settled(o));
   const len = dayCount(q.from, q.to);
@@ -499,12 +510,7 @@ export async function getAnalytics(q: AnalyticsQuery): Promise<ApiResult<Analyti
     const noShow: SeriesPoint[] = [];
     for (const d of days) {
       let cap = 0;
-      for (const p of products) {
-        if (!p.schedule) continue;
-        if (p.schedule.dailyCapacity) cap += p.schedule.dailyCapacity;
-        else if (isResourceType(p.bookingType)) cap += getResourceMatrix(p, d).reduce((s, r) => s + r.slots.length, 0);
-        else if (isSlotBased(p.bookingType)) cap += getSlots(p, d).reduce((s, x) => s + x.capacity, 0);
-      }
+      for (const p of products) cap += productCapacityOn(p, d);
       const day = bookings.filter((b) => b.slotStart.slice(0, 10) === d);
       const sold = day.reduce((s, b) => s + b.partySize, 0);
       const inCount = day.reduce((s, b) => s + (b.checkedIn ?? 0), 0);

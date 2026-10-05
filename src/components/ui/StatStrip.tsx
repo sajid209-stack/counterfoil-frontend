@@ -64,10 +64,16 @@ export function StatStrip({
   items,
   loading = false,
   variant = "band",
+  columns,
 }: {
   items: StatItem[];
   loading?: boolean;
   variant?: "band" | "tiles";
+  /** Band only: how many figures sit across from xl. Defaults to up to four.
+   *  A page with six figures asks for three, because six across cannot hold a
+   *  money figure at 26px and a fifth and sixth cell would leave the band
+   *  showing its hairline colour through two empty slots. */
+  columns?: number;
 }) {
   // Read here rather than inside the fold, so the grid and the disclosure
   // cannot disagree about which state they are in.
@@ -112,7 +118,7 @@ export function StatStrip({
           // the disclosure does not exist.
           items.length > 1 && !open && "max-sm:hidden",
         )}
-        style={{ "--stat-n": Math.min(items.length, 4) } as React.CSSProperties}
+        style={{ "--stat-n": columns ?? Math.min(items.length, 4) } as React.CSSProperties}
       >
         {items.map((item) => (
           <Cell key={item.key} item={item} loading={loading} />

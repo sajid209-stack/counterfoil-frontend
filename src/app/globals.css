@@ -544,6 +544,16 @@
   --chart-3: #b45309;
   --chart-4: #16a34a;
 
+  /* The analytics heatmap: one hue, six steps by quantile of the non-zero
+     cells. Light is the brand ramp (50 to 500). */
+  --heat-1: #fff5ee;
+  --heat-2: #ffe6d5;
+  --heat-3: #ffc9a8;
+  --heat-4: #ffa572;
+  --heat-5: #ff7a3d;
+  --heat-6: #f94a00;
+  --heat-edge: rgb(0 0 0 / 0.06);
+
   --color-ember-wash: #ffe4d6;
   --color-success-wash: #d8efdf;
   --color-muted-wash: #eae8e3;
@@ -659,6 +669,19 @@
   --chart-2: #3b82f6;
   --chart-3: #d97706;
   --chart-4: #16a34a;
+
+  /* The analytics heatmap in dark takes its own steps, not the light ones
+     flipped: the light 50 to 200 would glow on the card, so these start as a
+     warm tint dropped into it and climb to the lifted ember. Each step is a
+     clear jump from its neighbour and from an empty cell, which is only a
+     hairline. */
+  --heat-1: #3a2a22;
+  --heat-2: #523223;
+  --heat-3: #733a21;
+  --heat-4: #9c451f;
+  --heat-5: #d0531f;
+  --heat-6: #ff7a3d;
+  --heat-edge: rgb(255 255 255 / 0.06);
 
   --color-ember-wash: #4a2a17;
   --color-success-wash: #17362a;

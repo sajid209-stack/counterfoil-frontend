@@ -5,7 +5,6 @@
   "orders": "Orders",
   "customers": "Customers",
   "memberships": "Memberships",
-  "reports": "Reports",
   "analytics": "Analytics",
   "promotions": "Promotions",
   "pos": "Point of Sale",
@@ -45,6 +44,7 @@
     "catalog": "catalog bookings events products tickets experiences what we sell",
     "inventory": "inventory stock merch items shop goods supplies",
     "marketplaces": "marketplaces marketplace channel other sites resellers ota",
+    "analytics": "analytics reports report sales tax vat revenue takings income dashboard charts insights busiest peak hours",
     "finances": "finances money transactions payments refunds payout payouts fees fee balance withdraw deposit bank ledger bkash cash card"
   },
   "inventory": "Inventory",

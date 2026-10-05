@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useRef, useState } from "react";
+import { cn } from "@/lib/cn";
 
 /* Lightweight SVG charts on the token palette — ember for the primary series,
    neutrals for comparison. Every chart: hover tooltip with exact figures in
@@ -70,6 +71,7 @@ export function AreaChart({
   ticks = 4,
   valueLabel,
   compareLabel,
+  compareDashed = false,
 }: {
   points: ChartPoint[];
   /** Exact value, for the tooltip. */
@@ -80,6 +82,9 @@ export function AreaChart({
   ticks?: number;
   valueLabel: string;
   compareLabel?: string;
+  /** Draws the comparison dashed, so it reads as "the period before" even
+   *  where the two lines run close. The dashboard keeps it solid. */
+  compareDashed?: boolean;
 }) {
   const [box, w] = useWidth<HTMLDivElement>();
   const gradId = useId();
@@ -191,7 +196,7 @@ export function AreaChart({
             </g>
           ))}
 
-          {hasCompare && <path d={line((p) => p.compare)} fill="none" stroke="var(--color-muted)" strokeWidth="1.5" />}
+          {hasCompare && <path d={line((p) => p.compare)} fill="none" stroke="var(--color-muted)" strokeWidth="1.5" strokeDasharray={compareDashed ? "5 4" : undefined} />}
           <path d={area} fill={`url(#${gradId})`} />
           <path d={line((p) => p.value)} fill="none" stroke="var(--color-ember)" strokeWidth="2" strokeLinejoin="round" />
 
@@ -396,6 +401,238 @@ export function DonutChart({
             <span className="whitespace-nowrap font-mono text-[0.75rem] tabular-nums">{fmt(p.value)} · {Math.round((p.value / total) * 100)}%</span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Heatmap ───────────────────────────────────────────────────────────────
+ *
+ * A weekday-by-hour grid, one hue in six steps. The step of a cell is its
+ * share rank among the NON-ZERO cells, not value over max: one very busy hour
+ * would otherwise turn every other hour the palest tint and the grid would
+ * answer only "where is the peak". Zero is not the first step; it is an
+ * outlined empty cell, so "nobody" and "a few people" never read alike.
+ *
+ * Reading and reaching it:
+ *  - Hovering a cell, or moving to it with the arrow keys, draws a tooltip.
+ *  - The picture itself is aria-hidden: a focusable wrapper carries the arrow
+ *    keys and an aria-live line says which cell is current, and a visually
+ *    hidden table below carries every figure, in order, for a screen reader
+ *    that browses rather than steps.
+ *  - On a narrow screen the grid scrolls inside its own card, with the weekday
+ *    column pinned. The pin only gets a solid ground once something has slid
+ *    under it: a solid label column against a translucent card is a pale
+ *    stripe, so it is earned, like the calendar's header rule.
+ */
+export interface HeatmapCell {
+  /** 0..rows-1, in the order of `rowLabels`. */
+  row: number;
+  /** Index into `colLabels`. */
+  col: number;
+  value: number;
+}
+
+/* Written out, not built as `--heat-${n}` at render: Tailwind drops a theme
+   variable whose full name never appears in the source, and a template literal
+   never contains it. */
+const HEAT = ["var(--heat-1)", "var(--heat-2)", "var(--heat-3)", "var(--heat-4)", "var(--heat-5)", "var(--heat-6)"];
+
+export function HeatmapChart({
+  rowLabels,
+  colLabels,
+  cells,
+  cellText,
+  labelEvery = 2,
+  ariaLabel,
+  caption,
+  hint,
+  legend,
+}: {
+  rowLabels: string[];
+  colLabels: string[];
+  cells: HeatmapCell[];
+  /** What a cell says, for the tooltip and the live line: "Sat 2 PM · 14 guests". */
+  cellText: (row: number, col: number, value: number) => string;
+  /** Show a column label every this many columns. */
+  labelEvery?: number;
+  ariaLabel: string;
+  caption: string;
+  /** Said to a keyboard user as they reach the grid. */
+  hint: string;
+  legend: { fewer: string; more: string };
+}) {
+  const rows = rowLabels.length;
+  const n = colLabels.length;
+  const wrap = useRef<HTMLDivElement>(null);
+  const hintId = useId();
+  const refs = useRef<(HTMLDivElement | null)[]>([]);
+  const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState<[number, number] | null>(null);
+  const [hovered, setHovered] = useState<[number, number] | null>(null);
+  const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null);
+
+  const values = new Map<number, number>();
+  for (const c of cells) values.set(c.row * n + c.col, c.value);
+  const nonZero = [...values.values()].filter((v) => v > 0).sort((a, b) => a - b);
+  const stepOf = (v: number) => {
+    if (!(v > 0)) return 0;
+    let less = 0;
+    let equal = 0;
+    for (const x of nonZero) {
+      if (x < v) less++;
+      else if (x === v) equal++;
+    }
+    const rank = (less + equal / 2) / nonZero.length;
+    return Math.min(6, Math.floor(rank * 6) + 1);
+  };
+  const busiest = (() => {
+    let best = -1;
+    let at: [number, number] = [0, 0];
+    for (const [k, v] of values) if (v > best) { best = v; at = [Math.floor(k / n), k % n]; }
+    return at;
+  })();
+
+  const showAt = (r: number, c: number) => {
+    const el = refs.current[r * n + c];
+    const box = wrap.current;
+    if (!el || !box) return;
+    const a = el.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    const x = Math.min(Math.max(a.left - b.left + a.width / 2, 70), Math.max(70, b.width - 70));
+    setTip({ x, y: a.top - b.top, text: cellText(r, c, values.get(r * n + c) ?? 0) });
+  };
+
+  const move = (r: number, c: number) => {
+    const nr = Math.min(rows - 1, Math.max(0, r));
+    const nc = Math.min(n - 1, Math.max(0, c));
+    setActive([nr, nc]);
+    refs.current[nr * n + nc]?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    showAt(nr, nc);
+  };
+
+  const onKey = (e: React.KeyboardEvent) => {
+    const [r, c] = active ?? busiest;
+    const go: Record<string, [number, number]> = {
+      ArrowLeft: [r, c - 1],
+      ArrowRight: [r, c + 1],
+      ArrowUp: [r - 1, c],
+      ArrowDown: [r + 1, c],
+      Home: [r, 0],
+      End: [r, n - 1],
+    };
+    const to = go[e.key];
+    if (!to) return;
+    e.preventDefault();
+    move(to[0], to[1]);
+  };
+
+  const current = hovered ?? active;
+  const minWidth = 44 + n * 26 + n * 2;
+
+  return (
+    <div ref={wrap} className="relative">
+      {tip && (
+        <div
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-xs border border-line bg-card px-tight py-inline text-[0.75rem] font-medium shadow-sm"
+          style={{ left: tip.x, top: tip.y - 4 }}
+        >
+          {tip.text}
+        </div>
+      )}
+      <div className="overflow-x-auto" onScroll={(e) => setScrolled(e.currentTarget.scrollLeft > 0)}>
+        <div
+          role="group"
+          tabIndex={0}
+          aria-label={ariaLabel}
+          aria-describedby={hintId}
+          onKeyDown={onKey}
+          onFocus={(e) => {
+            // Only a keyboard arrival picks a cell for the user; a click lands
+            // on the cell it hit.
+            if (e.target === e.currentTarget && e.currentTarget.matches(":focus-visible")) move(busiest[0], busiest[1]);
+          }}
+          onBlur={() => { setActive(null); if (!hovered) setTip(null); }}
+          onMouseLeave={() => { setHovered(null); setTip(null); }}
+          data-focus-host
+          className="rounded-xs focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ember"
+          style={{ minWidth }}
+        >
+          <div aria-hidden className="grid gap-[2px]" style={{ gridTemplateColumns: `44px repeat(${n}, minmax(24px, 1fr))` }}>
+            <span className={cn("sticky left-0 z-[1]", scrolled && "bg-card")} />
+            {colLabels.map((l, c) => (
+              <span key={c} className="relative h-5">
+                {c % labelEvery === 0 && (
+                  <span className="absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap text-[0.75rem] text-muted">{l}</span>
+                )}
+              </span>
+            ))}
+            {rowLabels.map((label, r) => (
+              <Fragment key={r}>
+                <span
+                  className={cn(
+                    "sticky left-0 z-[1] flex items-center pr-tight text-[0.75rem] text-muted",
+                    scrolled && "bg-card shadow-[2px_0_0_var(--color-hairline)]",
+                  )}
+                >
+                  {label}
+                </span>
+                {colLabels.map((_, c) => {
+                  const v = values.get(r * n + c) ?? 0;
+                  const step = stepOf(v);
+                  const isCurrent = current != null && current[0] === r && current[1] === c;
+                  const ring = isCurrent ? ", 0 0 0 2px var(--color-fg)" : "";
+                  return (
+                    <div
+                      key={c}
+                      ref={(el) => { refs.current[r * n + c] = el; }}
+                      onMouseEnter={() => { setHovered([r, c]); showAt(r, c); }}
+                      className="h-7 rounded-[3px]"
+                      style={{
+                        background: step ? HEAT[step - 1] : "transparent",
+                        boxShadow: step
+                          ? `inset 0 0 0 1px var(--heat-edge)${ring}`
+                          : `inset 0 0 0 1px var(--color-hairline)${ring}`,
+                      }}
+                    />
+                  );
+                })}
+              </Fragment>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <span id={hintId} className="sr-only">{hint}</span>
+      {/* The same figures, in order, for a screen reader that browses. */}
+      {/* In a box of its own: a table ignores the width and overflow of the
+          sr-only class, so on its own it stretches the page past the card. */}
+      <div className="sr-only"><table>
+        <caption>{caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col" />
+            {colLabels.map((l, c) => <th key={c} scope="col">{l}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {rowLabels.map((label, r) => (
+            <tr key={r}>
+              <th scope="row">{label}</th>
+              {colLabels.map((_, c) => <td key={c}>{values.get(r * n + c) ?? 0}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table></div>
+      <span className="sr-only" aria-live="polite">{active ? cellText(active[0], active[1], values.get(active[0] * n + active[1]) ?? 0) : ""}</span>
+
+      <div className="mt-comfortable flex items-center gap-tight text-[0.75rem] text-muted" aria-hidden>
+        <span>{legend.fewer}</span>
+        <span className="h-3 w-3 rounded-[3px]" style={{ boxShadow: "inset 0 0 0 1px var(--color-hairline)" }} />
+        {HEAT.map((h) => (
+          <span key={h} className="h-3 w-3 rounded-[3px]" style={{ background: h, boxShadow: "inset 0 0 0 1px var(--heat-edge)" }} />
+        ))}
+        <span>{legend.more}</span>
       </div>
     </div>
   );

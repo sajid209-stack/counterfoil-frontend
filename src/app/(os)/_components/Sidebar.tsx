@@ -42,7 +42,7 @@ export function Sidebar({
     /* Beside the catalogue, because that is what it lists: the marketplaces
        are where the same catalogue is sold by somebody else. */
     { label: t("marketplaces"), href: "/marketplaces", icon: Globe },
-    { label: t("reports"), href: "/reports/sales", icon: ChartNoAxesColumn },
+    { label: t("analytics"), href: "/analytics", icon: ChartNoAxesColumn },
     /* Finances is one item, not a group: the venue's money with Counterfoil is
        one balance (unsettled funds, available balance, Withdraw and Deposit and
        an activity list). It replaced Transactions, Fees & balances, Payouts and

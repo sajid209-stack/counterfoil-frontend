@@ -15636,3 +15636,106 @@ same Sonnet sub-agent, reviewed by screenshot.
     clean, no console errors or missing messages.
 - Full regression green. `tsc`, `eslint` on the finances files and i18n 0 / 0
   clean.
+
+## Reports becomes Analytics — one dashboard of the questions that matter (2026-10-05)
+
+Owner: *"reports page needs to be Analytics, and only show important types of
+analytics, and dashboard stuff, properly research about analytics, charts and
+build it."* Contract and design on Opus; data layer and page built by two
+Sonnet sub-agents, each verified before the next began.
+
+### What changed shape
+
+`/reports/sales` was five tabs: Summary, Transactions, Outstanding, Analytics
+and Tax, plus saved views. Transactions now live in **Finances**, and unpaid
+balances are the Orders **Part paid** filter, so the page kept only the
+questions a venue manager actually asks of a period. Stripe, Shopify and Square
+analytics all use the same shape: a period and a compare switch on one line, a
+band of headline figures with changes, one revenue chart, then small cards that
+each answer one question.
+
+- **`/analytics`**, one page, no tabs. The rail, the phone's More grid, the
+  phone bar and Ctrl+K all say Analytics. Ctrl+K still finds it by "reports",
+  "sales", "tax", "vat" and "revenue". `/reports` and `/reports/sales` redirect
+  to it (307, keeping the query). The old page and the `reports` namespace are
+  deleted, and the dashboard's two links point at it.
+- **The toolbar**: the date range (default: last 30 days), *Compare to previous
+  period*, and Download (one CSV with a section per card). The state lives in
+  the address. When the records do not reach back far enough, one line says so
+  ("No comparison — your records don't go back far enough"). It replaces a
+  "+15000%" against an empty window.
+- **The figures**:
+  - Revenue (after discounts and refunds, before VAT)
+  - Orders
+  - Average order
+  - Guests
+  - Capacity filled
+  - Refunds (shown as good when it falls)
+- **Revenue over time**: by hour for one or two days, by day up to 62 days, by
+  week beyond that. The previous period is a faint dashed line.
+- **The cards** — their titles are questions:
+  - *What sells* (top 7 bookings and event tickets, then Other)
+  - *Where sales come from* (counter, online, marketplaces)
+  - *When it's busy* (a heatmap of guests by weekday and hour; the busiest slot
+    is also stated in words, and each cell has a tooltip and a keyboard path)
+  - *How full you are* (each booking's sold of capacity)
+  - *How people pay*
+  - *How far ahead people book*
+  - *Guests* (arrived and didn't come; new and returning)
+  - *VAT for this period* (a rate table with a total and its own download)
+
+### Data
+
+`lib/api/analytics.ts` (`getAnalyticsOverview`, `analyticsCsv`) derives
+everything from orders, bookings and products for the venue in the bar, so
+nothing is stored. `reports.ts` exports the helpers it shares (`settled`,
+`lineNet`, `productCapacityOn`); its behaviour is unchanged. The VAT block's
+net equals the revenue figure exactly, because both are built from the same
+line net.
+
+### Colours, measured
+
+The palette check failed every candidate set for coloured channels: blue
+against the marketplace violet is ΔE 0.4 for the most common colour blindness,
+and the dark-mode sets fell outside the band. Every bar chart is therefore one
+brand hue, and the labels carry identity. The heatmap is a single-hue ramp,
+`--heat-1…6`, with its own dark steps. A share under 10% shows one decimal
+place, so 0.3% does not read as "0%".
+
+### Verified
+
+- **Data unit test: 136/136.** It covers three venues; ranges of 1, 2, 7, 30 and
+  90 days; and an inverted range. It checks these identities:
+  - the revenue series and the top bookings sum to revenue;
+  - the channels sum to revenue;
+  - the heatmap's guests equal the guest figure;
+  - the lead-time buckets sum to the orders that have a booking;
+  - nothing is NaN.
+- **Page harness: 86/86.** It ran at 1440 light and dark, at 390, and in
+  Bangla. It checks:
+  - the band equals the CSV;
+  - Last 7 days changes the figures and the address;
+  - the compare switch removes the deltas and the dashed line;
+  - the heatmap has seven rows and its tooltips;
+  - the VAT total equals the sum of its rows;
+  - no page x-scroll, nothing under 12px, 44px targets on a phone;
+  - contrast is clean against the real background;
+  - no console errors or missing messages.
+- **Navigation: 29/29.** The rail, Ctrl+K for all six words, both redirects,
+  the dashboard links, the phone's More sheet and Bangla all work.
+- **Regression**: the standing sweep, mobile audit and top-cards harnesses now
+  list `/analytics` in place of `/reports/sales`, and the full regression run is
+  green.
+- **Checks**: `tsc` is clean and i18n is 0 / 0. `eslint` is clean apart from the
+  pre-existing `DonutChart` error in `charts.tsx`.
+
+### Open
+
+- The demo seed is thin: capacity filled reads under 1%, because some bookings
+  offer hundreds of places a day, and the heatmap is mostly empty.
+- A refund counts against the day of the original sale (as the old reports
+  did), so a week can show more refunds than revenue.
+- Saved views and the per-transaction ledger view are gone by design. The
+  ledger is in Finances.
+- Dates in Bangla still print English month names (the app-wide `en-GB`
+  decision).
