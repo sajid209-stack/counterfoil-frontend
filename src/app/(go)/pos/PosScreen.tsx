@@ -4,12 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
-import { Archive, Banknote, Check, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, ChevronRight, CreditCard, QrCode, Send, Percent, Plus, Search, Ticket, Trash2, Wallet, X, type LucideIcon } from "lucide-react";
+import { Archive, Banknote, Check, CupSoda, Sparkles, ShoppingBag, Wrench, ChevronLeft, CreditCard, QrCode, Send, Percent, Plus, Search, Ticket, Trash2, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { counterEvents, counterItems, inventoryItem, inventoryLineId, levelOf, peekCounters, peekTicketCodeSettings, tillMethods, advanceMinimum, checkout, getAdvancePolicy, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
+import { counterEvents, counterItems, inventoryItem, inventoryLineId, levelOf, peekTicketCodeSettings, tillMethods, advanceMinimum, checkout, getAdvancePolicy, earnPoints, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isOpenOn, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type MembershipTier, type PaymentMethod, type Product, type QuoteLine, type InventoryItemView, type EventRecord } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
-import { DEMO_COUNTER_ID, DEMO_TILL_ID } from "@/lib/session";
+import { DEMO_TILL_ID } from "@/lib/session";
+import { useActiveCounterNow } from "@/lib/activeCounter";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, isFlexibleResource, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { flexDurations } from "@/lib/sale/selection";
 import { resolveProductPrice } from "@/lib/pricing";
@@ -25,7 +26,7 @@ import { CustomerRow, HowMuchNow, PromoCodeRow, SaleRow, type PayChoice } from "
 import { SellDateBar } from "./SellDate";
 import { MembershipSheet, PointsSheet } from "./MemberSheets";
 import { ProductSheet, type CartEntry } from "../_components/ProductSheet";
-import { WallHeading, WallTile } from "../_components/WallTile";
+import { WALL_CARD, WallHeading, WallTile } from "../_components/WallTile";
 import { ActionBar } from "../_components/ActionBar";
 import { EventSheet } from "../_components/EventSheet";
 import { Keypad } from "../_components/Keypad";
@@ -281,20 +282,26 @@ export default function PosScreen({ view }: { view: "grid" | "cart" }) {
 
   const operator = opQ.data;
   const currency = operator?.currency ?? "BDT";
-  const products = productsQ.data?.data ?? [];
+  /* The venue this counter stands in — not the first location by name, which
+     is what the till used and which filed every sale at the wrong museum. It
+     decides where the money is recorded AND which shelf the stock comes off,
+     and those two must be the same place. */
+  const activeCounter = useActiveCounterNow();
+  const tillLocationId = activeCounter.locationId || (locationsQ.data?.data[0]?.id ?? "loc_fort");
+  const allowedHere = activeCounter.counter?.allowedProductIds ?? "all";
+  /* The wall is this venue's catalogue, and what this counter is set up to
+     sell (Settings, Counters). A product kept at the fort is not on the
+     museum's wall. */
+  const products = useMemo(
+    () => (productsQ.data?.data ?? []).filter((p) => p.locationIds.includes(tillLocationId) && (allowedHere === "all" || allowedHere.includes(p.id))),
+    [productsQ.data, tillLocationId, allowedHere],
+  );
   const resources = resourcesQ.data?.data ?? [];
   const productById = (id: string) => products.find((p) => p.id === id);
 
   /** Everything this till can actually sell, before the cashier narrows it.
    *  The chip row is built from THIS rather than from the filtered grid, so
    *  chips do not disappear from under the finger as someone types. */
-  /* The venue this counter stands in — not the first location by name, which
-     is what the till used and which filed every sale at the wrong museum. It
-     decides where the money is recorded AND which shelf the stock comes off,
-     and those two must be the same place. */
-  const tillLocationId =
-    peekCounters().find((c) => c.id === DEMO_COUNTER_ID)?.locationId ?? locationsQ.data?.data[0]?.id ?? "loc_fort";
-
   const sellable = products.filter((p) => p.bookingType !== "BT-14");
   /** Whether anything on the wall has a day to choose. A shop-only venue has
    *  none, and a date control there would be furniture. */
@@ -367,7 +374,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
     return !q || e.title.toLowerCase().includes(q) || e.venueName.toLowerCase().includes(q);
   });
   const customTile = (
-    <button type="button" data-focus-inset onClick={() => setCustomOpen(true)} className="flex min-h-[9.25rem] flex-col items-center justify-center gap-tight border-b border-r border-line bg-card text-muted transition-colors duration-quick hover:bg-muted-wash/60 active:bg-ember/10">
+    <button type="button" data-wall-tile data-focus-inset onClick={() => setCustomOpen(true)} className={cn(WALL_CARD, "min-h-[9.5rem] items-center justify-center gap-tight text-center text-muted hover:bg-muted-wash/60 active:bg-ember/10 sm:min-h-[10.5rem]")}>
       <span className="flex size-11 items-center justify-center rounded-full border-2 border-dashed border-strong"><Plus size={20} strokeWidth={2} aria-hidden /></span>
       <span className="text-[0.875rem] font-medium">{t("customAmount")}</span>
     </button>
@@ -603,7 +610,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
         void placeCheckoutHold({
           productId: entry.productId,
           productName: entry.productName,
-          locationId: locationsQ.data?.data[0]?.id ?? null,
+          locationId: tillLocationId,
           date: entry.slotDate,
           slotStart: entrySlotISO(entry) ?? null,
           quantity: seats,
@@ -1038,7 +1045,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   // Non-cash settle: no change step; runs after the wallet flow confirms.
   const settleInline = async (txnNote?: string, txnRef?: string) => {
     const { lines, bookings, payload, receipt } = buildSale();
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow });
     if (res.ok) {
       if (txnNote) await logOrderAction(res.data.order.id, txnNote);
       sayIfStockRefused(res.data.stockRefused);
@@ -1067,7 +1074,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   const completeCash = async (tenderedMinor: number, changeMinor: number) => {
     const { lines, bookings, payload, receipt } = buildSale();
     setCashSaving(true);
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow });
     setCashSaving(false);
     if (res.ok) {
       sayIfStockRefused(res.data.stockRefused);
@@ -1141,7 +1148,7 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
   }), [t, onToday]);
 
   return (
-    <div className={cn("grid h-full grid-cols-1 gap-comfortable p-comfortable lg:grid-cols-[1fr_23rem] lg:pb-comfortable", "pb-[128px]")}>
+    <div className={cn("grid h-full grid-cols-1 gap-comfortable p-comfortable lg:grid-cols-[1fr_23rem] lg:pb-comfortable", "pb-[72px]")}>
       {/* The Go chrome names this screen visually; the heading exists so a
           screen reader lands on a named page rather than an unlabelled grid. */}
       <h1 className="sr-only">{t("posTitle")}</h1>
@@ -1167,13 +1174,13 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
               control, which is what it looked like. The container carries the
               same 2px ember indicator the rest of the app uses, and it follows
               the radius. */}
-          <div data-focus-host className="go-surface flex h-[52px] min-w-[12rem] flex-1 items-center gap-tight rounded-full px-section focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember">
+          <div data-focus-host className="go-surface flex h-11 min-w-[8rem] flex-1 items-center gap-tight rounded-full px-comfortable focus-within:ring-2 focus-within:ring-inset focus-within:ring-ember">
             <Search size={18} strokeWidth={1.75} aria-hidden className="shrink-0 text-muted" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label={t("search.placeholder")} placeholder={t("search.placeholder")} className="h-full w-full bg-transparent text-sm outline-none focus-visible:outline-none placeholder:text-faint" />
-            {query && <button type="button" onClick={() => setQuery("")} className="text-[0.8125rem] text-muted hover:text-fg">{t("search.clear")}</button>}
+            <input value={query} onChange={(e) => setQuery(e.target.value)} aria-label={t("search.placeholder")} placeholder={t("search.placeholder")} className="-my-px h-11 w-full min-w-0 text-ellipsis bg-transparent text-sm outline-none focus-visible:outline-none placeholder:text-muted" />
+            {query && <button type="button" onClick={() => setQuery("")} className="-mr-2 flex h-11 shrink-0 items-center px-tight text-[0.8125rem] text-muted hover:text-fg">{t("search.clear")}</button>}
           </div>
           {parked.length > 0 && (
-            <button type="button" onClick={() => setParkOpen(true)} className="flex h-[52px] shrink-0 items-center rounded-full bg-ember/15 px-section text-[0.8125rem] font-medium text-brand-foreground">
+            <button type="button" onClick={() => setParkOpen(true)} className="flex h-11 shrink-0 items-center rounded-full bg-ember/15 px-section text-[0.8125rem] font-medium text-brand-foreground">
               {t("parkedBadge", { count: parked.length })}
             </button>
           )}
@@ -1210,14 +1217,12 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           {productsQ.loading ? (
             <div aria-busy="true" className="go-surface flex animate-pulse flex-col gap-tight rounded-go p-section"><div className="h-4 w-1/3 rounded-go-sm bg-line" /><div className="h-4 w-2/3 rounded-go-sm bg-line" /><div className="h-4 w-1/2 rounded-go-sm bg-line" /></div>
           ) : (
-            /* One card, cells divided by hairlines: each tile draws its own
-               right and bottom rule, and the grid is pulled 1px out on those
-               two sides so the card's edge is not drawn twice. Grid rows
-               stretch, so a row of tiles matches height without clamping a
-               name to make it — a name that tells two bookings apart gets
-               three lines, and the sheet behind it carries the rest. */
-            <div className="go-surface overflow-hidden rounded-go">
-              <div className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
+            /* A card per item with a gap between. Grid rows stretch, so a row of
+               cards matches height; a name that tells two bookings apart gets
+               two lines, and the sheet behind the card carries the rest. Two
+               columns on a phone, more as the width allows. */
+            <div>
+              <div className="grid grid-cols-2 gap-tight sm:grid-cols-3 sm:gap-comfortable xl:grid-cols-4">
                 {shown.map((p) => {
                   const live = posLiveState(p, sellDate, nowMinutes, liveWords);
                   const n = inSale(p.id);
@@ -1543,49 +1548,18 @@ const GENERIC_UNITS = new Set(["each", "unit", "units", "item", "items", "pc", "
           to the bottom edge, with the tab bar inside it, so the wall scrolls
           away cleanly above it instead of showing round a floating card.
 
-          It opens with what is in the sale: a picture of each thing and their
-          names, so a cashier sees the cart without opening it (and somebody
-          who does not read matches the pictures). Tapping that line opens the
-          cart. Under it, Cart on the left and Take on the right, always there:
-          an empty sale says so and Take waits, so nothing appears under the
-          finger on the first tap. */}
+          Cart on the left, Take on the right, and nothing else. It used to open
+          with a line — "Nothing in this sale yet" — that turned into a row of
+          pictures and names on the first tap, which made the dock taller at
+          the moment a finger had just left the wall and moved every card
+          under it. The dock is now the same height for an empty sale and a
+          full one: the count is on the Cart button, the money on Take, and
+          each card on the wall carries its own count. */}
       {!cartOpen && (
           <ActionBar
             docked="dock"
             className="lg:hidden"
             label={t("cart.barLabel")}
-            summary={
-              <button
-                type="button"
-                onClick={openCart}
-                aria-label={cart.length ? t("cart.contentsAria", { names: cart.map((e) => e.productName).join(", ") }) : t("cart.emptyLine")}
-                className="-mx-tight flex min-h-11 items-center gap-tight rounded-go-sm px-tight text-left active:bg-muted-wash"
-              >
-                {cart.length > 0 ? (
-                  <>
-                    <span aria-hidden className="flex shrink-0 -space-x-2">
-                      {cart.slice(-3).reverse().map((e) => {
-                        const pr = productById(e.productId);
-                        return (
-                          <span key={e.id} className="rounded-go-sm ring-2 ring-card">
-                            <ProductThumb images={pr?.images} name={e.productName} bookingType={pr?.bookingType} size="chip" className="h-8 w-8" />
-                          </span>
-                        );
-                      })}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-medium text-fg">
-                      {cart.map((e) => {
-                        const q = e.items.reduce((n, i) => n + i.qty, 0);
-                        return q > 1 ? `${e.productName} ×${q}` : e.productName;
-                      }).join(", ")}
-                    </span>
-                    <ChevronRight size={18} strokeWidth={2} className="shrink-0 text-muted" aria-hidden />
-                  </>
-                ) : (
-                  <span className="flex-1 text-[0.9375rem] text-muted">{t("cart.emptyLine")}</span>
-                )}
-              </button>
-            }
             secondary={{ label: t("cart.openCount", { count: unitCount }), icon: <ShoppingBag size={20} strokeWidth={2} aria-hidden />, onClick: openCart, ariaLabel: t("cart.openAria", { count: unitCount }) }}
             primary={{ label: t("takeAmount", { amount: formatPriceShort(dueNow, currency) }), icon: <Banknote size={20} strokeWidth={2} aria-hidden />, onClick: () => void charge(), disabled: cart.length === 0 }}
           />

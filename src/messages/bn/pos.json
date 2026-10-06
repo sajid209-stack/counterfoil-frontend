@@ -39,9 +39,7 @@
     "open": "কার্ট",
     "vatIncluded": "ভ্যাট সহ",
     "openCount": "কার্ট · {count}",
-    "openAria": "কার্ট, {count}টি",
-    "emptyLine": "এই বিক্রিতে এখনো কিছু নেই। কিছু যোগ করতে ট্যাপ করুন।",
-    "contentsAria": "এই বিক্রিতে আছে: {names}। কার্ট খুলুন"
+    "openAria": "কার্ট, {count}টি"
   },
   "added": "{name} যোগ হয়েছে",
   "cartParked": "বিক্রি থামিয়ে রাখা হয়েছে।",
@@ -528,7 +526,15 @@
     "salesNote": "শিফট শেষ করলে পুরো হিসাব দেখবেন।",
     "helpTitle": "সহায়তা",
     "helpBody": "আটকে গেছেন? ডিউটি ম্যানেজারকে ফোন করুন: <phone>01711-000000</phone>",
-    "salesScreen": "বিক্রির স্ক্রিন"
+    "salesScreen": "বিক্রির স্ক্রিন",
+    "counterTitle": "এটা কোন কাউন্টার?",
+    "counterChipAria": "কাউন্টার: {name}, {venue}। কাউন্টার বদলান",
+    "counterNone": "কোনো কাউন্টার খোলা নেই",
+    "counterClosed": "বন্ধ",
+    "counterClosedHelp": "সেটিংস, কাউন্টারে গিয়ে খুলুন।",
+    "counterBusyTitle": "আগে এই বিক্রি শেষ করুন",
+    "counterBusyBody": "এই বিক্রি {name}-এর। টাকা নিন বা বিক্রি থামিয়ে রাখুন, তারপর {other}-এ যান।",
+    "counterBusyBack": "বিক্রিতে ফিরুন"
   },
   "login": {
     "whoTitle": "কে সাইন ইন করছেন?",
@@ -590,6 +596,7 @@
   "sellDate": {
     "today": "আজ",
     "todayDay": "আজ · {day}",
+    "todayAria": "আজকের জন্য বিক্রি, {day}। দিন বদলান",
     "sellingFor": "{day}-এর জন্য বিক্রি",
     "backToToday": "আজকে ফিরুন",
     "choose": "দিন বেছে নিন",

@@ -3,11 +3,14 @@
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { CalendarPlus, CheckCircle2, Download } from "lucide-react";
-import { Button, TicketCard } from "@/components/ui";
+import { TicketCard } from "@/components/ui";
 import { ticketCards, useTicketLabels } from "@/app/print/_lib/ticketCards";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
 import type { Order, Ticket } from "@/lib/api/types";
+import { formatClock, formatDay } from "@/lib/format";
+import { cn } from "@/lib/cn";
 import { StorefrontChrome } from "../Chrome";
+import { sfBtn } from "../sf";
 
 /** Add to calendar, as a Google template link — the same approach the event
  *  pages use and for the same reason: a downloaded .ics is blocked inside
@@ -42,60 +45,68 @@ export function ConfirmationScreen({ order, tickets, isPreview }: { order: Order
   const datedLines = order.lines.filter((l) => l.booking?.date && !l.parentLineId);
 
   return (
-    <StorefrontChrome storefront={flow.storefront} location={flow.location} poweredBy={t("poweredBy")} preview={flow.mode === "preview"}>
-      <div className="flex flex-col items-center gap-tight pb-section text-center">
-        <CheckCircle2 size={48} strokeWidth={1.5} className="text-success" aria-hidden />
-        <h1 className="type-h1 text-[26px] sm:text-[32px]">{t("confirm.title")}</h1>
-        <p className="text-[14px] text-muted">{t("confirm.reference", { reference: order.reference })}</p>
+    <StorefrontChrome storefront={flow.storefront} location={flow.location} poweredBy={t("poweredBy")}>
+      <div className="mx-auto flex max-w-[720px] flex-col items-center pb-section pt-wide text-center">
+        <span aria-hidden className="flex h-20 w-20 items-center justify-center rounded-full bg-success-wash text-success">
+          <CheckCircle2 size={44} strokeWidth={1.5} />
+        </span>
+        <h1 className="mt-section text-[32px] font-semibold tracking-[-0.03em] sm:text-[40px]">{t("confirm.title")}</h1>
+        <p className="tnum mt-tight text-[16px] text-muted">{t("confirm.reference", { reference: order.reference })}</p>
+        <p className="mt-inline text-[16px] text-muted">{t("confirm.smsNote")}</p>
         {isPreview && (
-          <p className="mt-tight rounded-full bg-warning/15 px-comfortable py-inline text-[12px] font-medium text-warning">
+          <p className="mt-section rounded-full bg-warning-wash px-section py-inline text-[14px] font-medium text-warning">
             {t("confirm.previewNote")}
           </p>
         )}
       </div>
 
       {datedLines.length > 0 && (
-        <div className="mb-section flex flex-wrap justify-center gap-tight">
+        <ul className="mx-auto mb-major flex max-w-[720px] flex-col divide-y divide-hairline rounded-[16px] border border-hairline">
           {datedLines.map((l) => (
-            <a
-              key={l.id}
-              href={calendarLink(l.productName, l.booking!.date, l.booking!.startTime, l.booking!.endTime)}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="flex min-h-11 items-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[13px] font-medium text-fg hover:border-strong"
-            >
-              <CalendarPlus size={15} strokeWidth={1.75} aria-hidden />
-              {t("confirm.addToCalendar")}
-            </a>
+            <li key={l.id} className="flex flex-col gap-comfortable p-section sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[16px] font-semibold">{l.productName}</p>
+                <p className="text-[14px] text-muted">
+                  {[formatDay(l.booking!.date, { weekday: true }), l.booking!.startTime ? formatClock(l.booking!.startTime) : null, l.booking!.resourceName]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </div>
+              <a
+                href={calendarLink(l.productName, l.booking!.date, l.booking!.startTime, l.booking!.endTime)}
+                target="_blank"
+                rel="noreferrer noopener"
+                className={cn(sfBtn.secondary, "shrink-0")}
+              >
+                <CalendarPlus size={18} strokeWidth={1.75} aria-hidden />
+                {t("confirm.addToCalendar")}
+              </a>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
-      <div className="mx-auto flex max-w-sm flex-col gap-section">
+      <div className="mx-auto grid max-w-[720px] grid-cols-1 gap-section sm:grid-cols-2">
         {cards.map((c) => (
           <TicketCard key={c.id} data={c.data} />
         ))}
       </div>
 
-      <div className="mt-major flex flex-col items-center gap-tight">
+      <div className="mt-major flex flex-col items-center gap-tight sm:flex-row sm:justify-center">
         {!isPreview && (
-          // Client-side navigation in the SAME tab — not a new one. The mock
+          // Client-side navigation in the SAME tab, not a new one. The mock
           // store lives in this tab's memory; a `target="_blank"` link (or any
           // hard navigation) opens a fresh, empty one that cannot find the
           // order just created, exactly the pattern `(go)/pos/complete`
           // already follows for its own print buttons.
-          <button
-            type="button"
-            onClick={() => router.push(`/print/order/${order.id}`)}
-            className="flex min-h-11 items-center gap-tight text-[14px] font-medium text-brand-foreground underline-offset-4 hover:underline"
-          >
-            <Download size={15} strokeWidth={1.75} aria-hidden />
+          <button type="button" onClick={() => router.push(`/print/order/${order.id}`)} className={sfBtn.secondary}>
+            <Download size={18} strokeWidth={1.75} aria-hidden />
             {t("confirm.downloadPrint")}
           </button>
         )}
-        <Button className="mt-tight" onClick={flow.goVenue}>
+        <button type="button" className={sfBtn.primary} onClick={flow.goVenue}>
           {t("confirm.bookSomethingElse")}
-        </Button>
+        </button>
       </div>
     </StorefrontChrome>
   );

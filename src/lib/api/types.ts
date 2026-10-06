@@ -426,6 +426,9 @@ export interface Storefront {
    *  category palette already validated — so a storefront cannot be given a
    *  hue that fails its own contrast checks. */
   accent?: AccentColor | null;
+  /** The cover photo: the address of one of this venue's own booking images.
+   *  Absent means the page draws its designed cover instead. */
+  heroImage?: string | null;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

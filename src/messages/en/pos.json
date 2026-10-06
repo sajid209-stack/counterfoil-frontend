@@ -39,9 +39,7 @@
     "open": "Cart",
     "vatIncluded": "VAT included",
     "openCount": "Cart · {count}",
-    "openAria": "{count, plural, one {Cart, # item} other {Cart, # items}}",
-    "emptyLine": "Nothing in this sale yet. Tap something to add it.",
-    "contentsAria": "In this sale: {names}. Open the cart"
+    "openAria": "{count, plural, one {Cart, # item} other {Cart, # items}}"
   },
   "added": "Added {name}",
   "cartParked": "Sale paused.",
@@ -528,7 +526,15 @@
     "salesNote": "See the full list when you end the shift.",
     "helpTitle": "Help",
     "helpBody": "Stuck? Call the duty manager: <phone>01711-000000</phone>",
-    "salesScreen": "Sales screen"
+    "salesScreen": "Sales screen",
+    "counterTitle": "Which counter is this?",
+    "counterChipAria": "Counter: {name}, {venue}. Change counter",
+    "counterNone": "No counter is open",
+    "counterClosed": "Closed",
+    "counterClosedHelp": "Open it in Settings, Counters.",
+    "counterBusyTitle": "Finish this sale first",
+    "counterBusyBody": "This sale belongs to {name}. Take payment or pause it, then switch to {other}.",
+    "counterBusyBack": "Back to the sale"
   },
   "login": {
     "whoTitle": "Who is signing in?",
@@ -590,6 +596,7 @@
   "sellDate": {
     "today": "Today",
     "todayDay": "Today · {day}",
+    "todayAria": "Selling for today, {day}. Change day",
     "sellingFor": "Selling for {day}",
     "backToToday": "Back to today",
     "choose": "Choose a day",

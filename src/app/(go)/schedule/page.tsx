@@ -11,7 +11,8 @@ import { useEnumLabels } from "@/lib/labels";
 import { DEMO_NOW_MINUTES, DEMO_TODAY, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
 import { LG, useMediaQuery } from "@/lib/useMedia";
-import { DEMO_COUNTER_ID, DEMO_STAFF_ID, DEMO_TILL_ID } from "@/lib/session";
+import { DEMO_STAFF_ID, DEMO_TILL_ID } from "@/lib/session";
+import { useActiveCounterNow } from "@/lib/activeCounter";
 import {
   activeHolds,
   addOrderPayment,
@@ -26,7 +27,6 @@ import {
   logOrderAction,
   orderOutstanding,
   peekBookings,
-  peekCounters,
   peekOrders,
   placeCheckoutHold,
   placeHold,
@@ -152,7 +152,7 @@ export default function SchedulePage() {
   const enumL = useEnumLabels();
   const payMethods = useMemo(() => tillMethods(canTakeNonCash()), []);
 
-  const locationId = peekCounters().find((c) => c.id === DEMO_COUNTER_ID)?.locationId ?? "loc_fort";
+  const locationId = useActiveCounterNow().locationId || "loc_fort";
   const isToday = date === DEMO_TODAY;
   const nowMinutes = isToday ? DEMO_NOW_MINUTES : null;
   const me = staff.find((s) => s.id === DEMO_STAFF_ID)?.name ?? t("sheet.counter");

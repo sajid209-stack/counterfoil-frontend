@@ -6,6 +6,7 @@ import { StorefrontFlowProvider, type StorefrontFlowData, type StorefrontFlowNav
 import { useLiveBasket } from "@/lib/storefront/basket";
 import { useStorefrontData } from "@/lib/storefront/useStorefrontData";
 import { StorefrontMissing } from "../Chrome";
+import { SfRoot } from "../sf";
 
 /**
  * The live surface's half of the flow: real routes (`router.push`), and the
@@ -23,13 +24,16 @@ export function LiveStorefrontShell({ slug, children }: { slug: string; children
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface px-gutter py-hero" aria-busy="true">
-        <div className="mx-auto max-w-5xl animate-pulse space-y-section">
-          <div className="h-8 w-2/3 rounded-sm bg-line" />
-          <div className="h-4 w-1/2 rounded-sm bg-line" />
-          <div className="h-44 rounded-md bg-line/60" />
+      <SfRoot accent={null} className="px-gutter py-hero">
+        <div aria-busy="true" className="mx-auto grid max-w-[1200px] animate-pulse grid-cols-1 gap-wide lg:grid-cols-2">
+          <div className="space-y-section">
+            <div className="h-6 w-1/3 rounded-full bg-subtle" />
+            <div className="h-14 w-5/6 rounded-[12px] bg-subtle" />
+            <div className="h-24 w-full rounded-[12px] bg-subtle" />
+          </div>
+          <div className="aspect-[4/3] rounded-[20px] bg-subtle" />
         </div>
-      </div>
+      </SfRoot>
     );
   }
   if (!page) return <StorefrontMissing title={t("missingTitle")} message={t("missingBody")} />;

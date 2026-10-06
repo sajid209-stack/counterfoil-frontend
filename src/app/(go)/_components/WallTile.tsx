@@ -3,25 +3,34 @@
 import { cn } from "@/lib/cn";
 
 /**
- * One thing on the sell screen.
+ * One thing on the sell screen: a card of its own.
  *
- * The wall is a grid of cells on ONE card, divided by hairlines — the same
- * drawing as the Schedule's board, where the owner's verdict was that it read
- * at a glance. Floating cards with gaps between them put the page colour
- * between every product, and a wall of twenty rounded cards is twenty shapes
- * to scan instead of one grid.
+ * The wall was one hairline grid of flat cells, the Schedule's drawing. On the
+ * Schedule that works because every cell is the same kind of thing — an hour.
+ * A wall of different things (a ticket, a lane, a bottle of water) read as one
+ * slab, and the owner asked for separate cards. Square, Shopify POS, Toast and
+ * Loyverse all draw the item grid the same way, and so does this: a card per
+ * item, a gap between, the name large and plain, the price the biggest figure,
+ * and one status line at the foot.
  *
- * Every tile answers in the same order, top to bottom, so a cashier's eye
- * learns where each answer sits: the picture, the name, the price, what it is,
- * and what it is doing right now. Two things change a tile's ground:
- *   · in the sale — a soft orange wash and a solid orange count in the corner,
- *     so a second tap can be seen to have landed;
- *   · nothing to sell — the page's own colour, the way closed time is drawn on
- *     the Schedule, so "not available" is a place on the wall and not a
- *     greyed button.
+ * Every card answers in the same order, top to bottom, so a cashier's eye
+ * learns where each answer sits: the picture (with the count or a flag beside
+ * it), the name, the price, what it is, and what it is doing right now. The
+ * status line sits on the card's floor, so a row of cards lines its statuses up
+ * even when the names run to different lengths. Two things change a card's
+ * ground:
+ *   · in the sale — a soft orange wash, an orange edge and a solid orange count
+ *     in the corner, so a second tap can be seen to have landed;
+ *   · nothing to sell — the page's own colour on a hairline, no shadow, the
+ *     way closed time is drawn on the Schedule, so "not available" is a place
+ *     on the wall and not a greyed button.
  * Orange as a FILL means "chosen" everywhere in the till, so the price is ink:
- * it is the loudest thing on the tile by size, not by colour.
+ * it is the loudest thing on the card by size, not by colour.
  */
+
+/** The card's own drawing, shared with the tiles that are not products. */
+export const WALL_CARD = "go-surface relative flex min-w-0 flex-col rounded-go text-left transition-colors duration-quick";
+
 export function WallTile({
   onClick,
   ariaLabel,
@@ -58,10 +67,16 @@ export function WallTile({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      data-focus-inset
+      data-wall-tile data-focus-inset
       className={cn(
-        "relative flex min-h-[7.5rem] min-w-0 flex-col gap-tight border-b border-r border-line p-comfortable text-left transition-colors duration-quick sm:min-h-[9.25rem]",
-        soldOut ? "bg-surface" : count > 0 ? "bg-ember/[0.06] active:bg-ember/15" : "bg-card hover:bg-muted-wash/60 active:bg-ember/10",
+        WALL_CARD,
+        "min-h-[9.5rem] gap-tight p-comfortable sm:min-h-[10.5rem]",
+        soldOut
+          ? "bg-surface shadow-none dark:bg-surface"
+          : count > 0
+            ? "bg-ember/[0.06] ring-2 ring-inset ring-ember active:bg-ember/15"
+            : "active:bg-ember/10 hover:bg-muted-wash/60",
+        soldOut && "border border-line",
       )}
     >
       <span className="flex w-full items-start justify-between gap-tight">
@@ -77,21 +92,21 @@ export function WallTile({
         ) : null}
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-inline">
-        <span className={cn("line-clamp-3 text-[0.9375rem] font-semibold leading-snug", soldOut && "text-muted")}>{name}</span>
-        {price != null && <span className={cn("text-[1.125rem] font-bold leading-tight tabular-nums", soldOut ? "text-muted" : "text-fg")}>{price}</span>}
-        {/* What it is: on a phone the sheet behind the tile says it, and the
+        <span className={cn("line-clamp-2 text-[1rem] font-semibold leading-snug", soldOut && "text-muted")}>{name}</span>
+        {price != null && <span className={cn("text-[1.375rem] font-bold leading-tight tabular-nums", soldOut ? "text-muted" : "text-fg")}>{price}</span>}
+        {/* What it is: on a phone the sheet behind the card says it, and the
             wall needs the rows. */}
         {meta && <span className="hidden text-[0.8125rem] leading-tight text-muted sm:line-clamp-2">{meta}</span>}
         {live && (
           <span
             className={cn(
-              "flex items-center gap-inline text-[0.8125rem] leading-tight",
+              "mt-auto flex items-center gap-inline pt-inline text-[0.8125rem] leading-tight",
               live.tone === "none" ? "text-danger" : live.tone === "low" ? "font-medium text-warning" : "text-success",
             )}
           >
             {/* A dot ahead of the words: across a wall the eye reads colour
                 first, and the words carry it anyway. */}
-            <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
+            <span className="size-2 shrink-0 rounded-full bg-current" aria-hidden />
             <span className="min-w-0 truncate">{live.text}</span>
           </span>
         )}
@@ -103,7 +118,7 @@ export function WallTile({
 /** A section heading across the whole wall — Event tickets, Shop. */
 export function WallHeading({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <p className="col-span-full flex min-h-11 items-center gap-tight border-b border-r border-line bg-surface px-comfortable text-[0.875rem] font-semibold text-muted">
+    <p className="col-span-full flex min-h-11 items-center gap-tight px-inline pt-tight text-[0.875rem] font-semibold text-muted">
       {icon}
       {children}
     </p>

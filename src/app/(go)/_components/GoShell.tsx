@@ -23,10 +23,12 @@ import {
 import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
-import { Logo, Modal } from "@/components/ui";
+import { Logo, LogoMark, Modal } from "@/components/ui";
 import { TillSwitcher } from "./TillSwitcher";
+import { CounterPicker } from "./CounterPicker";
+import { useActiveCounter } from "@/lib/activeCounter";
 import { useApiQuery } from "@/lib/useApi";
-import { listProducts } from "@/lib/api";
+import { listCounters, listProducts, peekCounters } from "@/lib/api";
 import { isSlotBased } from "@/lib/schedule";
 import { liveSaleCount, onLiveSaleChange } from "../pos/_lib/liveSale";
 import { applyTillText, usePrefs } from "@/lib/prefs";
@@ -115,6 +117,8 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   }, [prefs.tillText]);
   const t = useTranslations("nav");
   const tp = useTranslations("pos");
+  const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
+  const { counter: activeCounter } = useActiveCounter(countersQ.data?.data ?? peekCounters());
   const [moreOpen, setMoreOpen] = useState(false);
   const [salesOpen, setSalesOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -173,14 +177,19 @@ export function GoShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-full flex-col bg-surface">
       {/* Context bar — business · counter · shift state. Nav does NOT live here. */}
-      <header className="flex items-center justify-between gap-tight px-section py-tight">
-        <div className="flex min-w-0 items-center gap-tight">
-          <Link href="/login" aria-label={tp("shell.signIn")} className="flex h-12 shrink-0 items-center">
-            <Logo variant="go" size={30} />
-          </Link>
-          <span className="hidden shrink-0 rounded-full bg-subtle px-comfortable py-inline text-[0.8125rem] text-muted dark:border dark:border-line dark:bg-transparent sm:block">{tp("counter")}</span>
+      {/* One compact row, 56px: the mark (the whole logo from 480px up), the
+          counter this device sells at taking the room that is left, the theme
+          and the cashier. The counter chip truncates; nothing else flexes. */}
+      <header className="flex items-center gap-tight px-section py-1.5">
+        <Link href="/login" aria-label={tp("shell.signIn")} className="flex h-11 min-w-11 shrink-0 items-center justify-center">
+          <span className="hidden min-[480px]:inline-flex"><Logo variant="go" size={26} /></span>
+          <span className="inline-flex min-[480px]:hidden"><LogoMark size={32} /></span>
+        </Link>
+        {bare ? <span className="flex-1" /> : <CounterPicker saleCount={liveCount} />}
+        {!bare && (
           <span className="hidden shrink-0 text-[0.8125rem] tabular-nums text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>
-        </div>
+        )}
+        <span className="flex-1 max-sm:hidden" />
         {/* Only on a till, and only where there is room for it. */}
         <TillSwitcher />
         <span className="flex shrink-0 items-center gap-tight">
@@ -280,7 +289,7 @@ export function GoShell({ children }: { children: React.ReactNode }) {
             <div className="mb-section flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Lalbagh Heritage Attractions</p>
-                <p className="text-[0.8125rem] text-muted">{tp("shell.shiftLine", { counter: tp("counter"), time: "3:24" })}</p>
+                <p className="text-[0.8125rem] text-muted">{tp("shell.shiftLine", { counter: activeCounter?.name ?? tp("counter"), time: "3:24" })}</p>
               </div>
               <div className="flex items-center gap-tight">
                 <LocaleToggle />

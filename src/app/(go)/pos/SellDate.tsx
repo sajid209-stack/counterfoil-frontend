@@ -67,10 +67,14 @@ export function SellDateBar({
           onClick={() => setOpen(true)}
           aria-haspopup="dialog"
           data-sell-date="today"
-          className="go-surface flex h-[52px] shrink-0 items-center gap-tight rounded-full px-section text-[0.9375rem] font-semibold text-fg active:bg-muted-wash"
+          aria-label={t("sellDate.todayAria", { day })}
+          className="go-surface flex h-11 shrink-0 items-center gap-tight rounded-full px-comfortable text-[0.9375rem] font-semibold text-fg active:bg-muted-wash"
         >
           <CalendarDays size={18} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
-          <span className="whitespace-nowrap">{t("sellDate.todayDay", { day })}</span>
+          {/* One word on a phone, so the search beside it keeps the row; the
+              whole date where there is room, and always in the accessible name. */}
+          <span className="whitespace-nowrap sm:hidden">{t("sellDate.today")}</span>
+          <span className="hidden whitespace-nowrap sm:inline">{t("sellDate.todayDay", { day })}</span>
           <ChevronDown size={16} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
         </button>
       )}

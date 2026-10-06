@@ -7,7 +7,8 @@ import { Avatar } from "@/components/ui";
 import { LanguagePicker } from "@/components/LocaleProvider";
 import { useApiQuery } from "@/lib/useApi";
 import { getStaff, listCounters, listLocations, listRoles, peekCounters } from "@/lib/api";
-import { DEMO_COUNTER_ID, DEMO_STAFF_ID } from "@/lib/session";
+import { DEMO_STAFF_ID } from "@/lib/session";
+import { useActiveCounter } from "@/lib/activeCounter";
 
 /**
  * My profile, at the counter.
@@ -35,7 +36,7 @@ export default function GoProfilePage() {
   const role = rolesQ.data?.data.find((r) => r.id === me?.roleId);
   /* Where this device is, rather than everywhere this person may work: the
      counter is the fact a cashier is checking when they open this. */
-  const counter = (countersQ.data?.data ?? peekCounters()).find((c) => c.id === DEMO_COUNTER_ID);
+  const { counter } = useActiveCounter(countersQ.data?.data ?? peekCounters());
   const venue = locationsQ.data?.data.find((l) => l.id === counter?.locationId);
 
   const card = "go-surface p-comfortable";

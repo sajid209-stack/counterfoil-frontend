@@ -19,6 +19,7 @@ import { useApiQuery } from "@/lib/useApi";
 import {
   isVoidedOrder,
   listLocations,
+  peekCounters,
   listOrders,
   orderOutstanding,
   orderPaid,
@@ -68,6 +69,12 @@ function OrdersPageInner() {
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
 
   const channelLabel = (c: string) => (c === "counter" ? t("channelCounter") : c === "online" ? t("channelOnline") : c);
+  /* A counter sale names its counter, set in Settings, Counters; the channel
+     alone says only that it was a counter. */
+  const soldAt = (o: { channel: string; counterId: string | null }) => {
+    const name = o.channel === "counter" && o.counterId ? peekCounters().find((c) => c.id === o.counterId)?.name : null;
+    return name ? `${channelLabel(o.channel)} · ${name}` : channelLabel(o.channel);
+  };
   /* A set filter comes back as a chip naming its VALUE, so a narrowed list
      says what narrowed it rather than which field was touched. */
   const rangeLabel = (r: Range) =>
@@ -176,7 +183,7 @@ function OrdersPageInner() {
       /* The bar says which venue, so a column saying it on every row earns
          nothing — what it was really carrying was the channel. */
       header: t("colChannel"),
-      render: (o) => <span className="truncate">{channelLabel(o.channel)}</span>,
+      render: (o) => <span className="truncate">{soldAt(o)}</span>,
     },
     {
       key: "items",

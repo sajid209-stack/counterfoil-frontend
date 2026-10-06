@@ -32,6 +32,7 @@ import { useEnumLabels } from "@/lib/labels";
 import { Check, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { Button, EmptyState, FormField, Modal, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
+import { useActiveCounterNow } from "@/lib/activeCounter";
 import {
   tillMethods,
   advanceMinimum,
@@ -87,6 +88,7 @@ export default function SellPage() {
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   const opQ = useApiQuery(() => getOperator(), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 1, filters: { status: "active" } }), []);
+  const activeCounter = useActiveCounterNow();
   const teamQ = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
   const resourcesQ = useApiQuery(() => listResources({ pageSize: 100 }), []);
   const payAcctsQ = useApiQuery(() => listPaymentAccounts({ pageSize: 100 }), []);
@@ -311,8 +313,8 @@ export default function SellPage() {
       }));
     const res = await checkout({
       channel: "counter",
-      locationId: locationsQ.data?.data[0]?.id ?? "loc_fort",
-      counterId: null,
+      locationId: activeCounter.locationId || (locationsQ.data?.data[0]?.id ?? "loc_fort"),
+      counterId: activeCounter.counter?.id ?? null,
       staffId: null,
       customerName: attached?.name ?? null,
       customerId: attached?.id ?? null,

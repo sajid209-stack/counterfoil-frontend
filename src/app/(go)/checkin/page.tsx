@@ -8,6 +8,7 @@ import { DEMO_NOW_MINUTES, DEMO_TODAY, demoDay } from "@/lib/schedule";
 import { cn } from "@/lib/cn";
 import { useEnumLabels } from "@/lib/labels";
 import { useApiQuery } from "@/lib/useApi";
+import { useActiveCounterNow } from "@/lib/activeCounter";
 import {
   addOrderLines,
   addOrderPayment,
@@ -64,6 +65,9 @@ export default function CheckInPage() {
   const toast = useToast();
   const actor = useActor();
   const [date, setDate] = useState(TODAY);
+  /* Who is at the door is the venue this counter stands in. */
+  const activeCounter = useActiveCounterNow();
+  const venueId = activeCounter.locationId;
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [pending, setPending] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -100,6 +104,7 @@ export default function CheckInPage() {
     const orders = ordersQ.data?.data ?? [];
     const day = (bookingsQ.data?.data ?? []).filter((b) => {
       if (b.status !== "confirmed" || b.slotStart.slice(0, 10) !== date) return false;
+      if (venueId && b.locationId !== venueId) return false;
       if (!q) return true;
       const o = orders.find((x) => x.id === b.orderId);
       return (
@@ -114,7 +119,7 @@ export default function CheckInPage() {
       map.set(key, [...(map.get(key) ?? []), b]);
     });
     return [...map.entries()].sort((a, b) => a[0].split("|")[1].localeCompare(b[0].split("|")[1]));
-  }, [bookingsQ.data, ordersQ.data, date, search]);
+  }, [bookingsQ.data, ordersQ.data, date, search, venueId]);
 
   /* The day, and every session's progress, read from the WHOLE day rather
      than from whatever the search box has narrowed it to. Taken off the
@@ -122,8 +127,8 @@ export default function CheckInPage() {
      guest's own two tickets, and a session of three read "2 of 2 in". A search
      is a lookup, not a claim about the day. */
   const dayBookings = useMemo(
-    () => (bookingsQ.data?.data ?? []).filter((b) => b.status === "confirmed" && b.slotStart.slice(0, 10) === date),
-    [bookingsQ.data, date],
+    () => (bookingsQ.data?.data ?? []).filter((b) => b.status === "confirmed" && b.slotStart.slice(0, 10) === date && (!venueId || b.locationId === venueId)),
+    [bookingsQ.data, date, venueId],
   );
 
   const sessionTotals = useMemo(() => {
@@ -340,7 +345,7 @@ export default function CheckInPage() {
     const tier = p?.tiers.find((t) => t.active);
     if (!p || !tier) return;
     const res = await checkout({
-      channel: "counter", locationId: p.locationIds[0] ?? "loc_fort", counterId: null, staffId: null,
+      channel: "counter", locationId: venueId || (p.locationIds[0] ?? "loc_fort"), counterId: activeCounter.counter?.id ?? null, staffId: null,
       customerName: walkInName.trim() || t("walkInDefaultName"),
       lines: [{ productId: p.id, productName: p.name, tierId: tier.id, tierName: tier.name, admits: tier.admits ?? 1, quantity: walkInParty, unitPrice: tier.price }],
       bookings: [{ productId: p.id, slotStart: `${date}T12:00:00+06:00`, partySize: walkInParty }],

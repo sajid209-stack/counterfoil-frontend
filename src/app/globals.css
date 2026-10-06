@@ -885,3 +885,57 @@ html.dark[data-contrast="more"] {
   --color-strong: #736f67;
   --color-hairline: #48453f;
 }
+
+/* ── The public storefront's own theme ──────────────────────────────────
+   A clean, light page: white ground, ink text. Locked to light on purpose (a
+   public page is read in daylight and its photos and QR tickets are drawn for
+   white), so this block outranks `.dark` on <html> for its whole subtree.
+
+   The venue's accent is mapped onto the app's own brand tokens, so shared
+   components inside the page (the date picker, the ticket card, a focus ring)
+   follow the venue without knowing about it. The steps are computed in
+   lib/storefront/theme.ts and arrive as --sf-* inline properties:
+     --sf-fill     button colour        --sf-on-fill  text on that button
+     --sf-ink      accent as a letter   --sf-soft     10% tint (chips, today)
+     --sf-tint-a/b art plate gradient   --sf-deep     dark art stop            */
+.sf {
+  color-scheme: light;
+  --color-surface: #ffffff;
+  --color-card: #ffffff;
+  --color-sheet: #ffffff;
+  --color-fg: #161616;
+  --color-muted: #595959;
+  --color-faint: #a3a3a3;
+  --color-line: #dcdcd8;
+  --color-strong: #bdbdb8;
+  --color-subtle: #f6f6f3;
+  --color-inverse: #161616;
+  --color-inverse-fg: #ffffff;
+  --color-hairline: #ececec;
+  --color-success: #166534;
+  --color-warning: #92400e;
+  --color-danger: #b91c1c;
+  --color-info: #1d4ed8;
+  --color-success-foreground: #166534;
+  --color-warning-foreground: #92400e;
+  --color-success-wash: #dcf1e3;
+  --color-warning-wash: #fdf0d5;
+  --color-danger-wash: #fde4e4;
+  --color-ember: var(--sf-accent, #161616);
+  --color-ember-solid: var(--sf-fill, #161616);
+  --color-ember-wash: var(--sf-soft, #f0f0ee);
+  --color-primary: var(--sf-fill, #161616);
+  --color-primary-foreground: var(--sf-on-fill, #ffffff);
+  --color-ring: var(--sf-accent, #161616);
+  --color-brand-foreground: var(--sf-ink, #161616);
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+.sf :where(.tnum) { font-variant-numeric: tabular-nums; }
+.sf [id] { scroll-margin-top: 88px; }
+/* Prices and counts keep their figures aligned. */
+.sf .tnum, .sf .tnum * { font-variant-numeric: tabular-nums; }

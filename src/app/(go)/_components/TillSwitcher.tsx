@@ -29,7 +29,7 @@ export function TillSwitcher() {
   return (
     <nav
       aria-label={t("shell.salesScreen")}
-      className="hidden shrink-0 items-center gap-inline rounded-full bg-subtle p-inline sm:flex"
+      className="hidden shrink-0 items-center gap-inline rounded-full bg-subtle p-0.5 sm:flex"
     >
       {TILLS.filter((t) => t.ready).map((t) => {
         const active = t.id === current.id;
@@ -39,7 +39,7 @@ export function TillSwitcher() {
             href={t.href}
             aria-current={active ? "page" : undefined}
             title={t.name}
-            className={`flex h-9 items-center rounded-full px-comfortable text-[0.8125rem] transition-colors duration-quick ${
+            className={`flex h-11 items-center rounded-full px-comfortable text-[0.8125rem] transition-colors duration-quick ${
               active ? "bg-card font-medium text-fg shadow-go" : "text-muted hover:text-fg"
             }`}
           >

@@ -7,6 +7,7 @@ import { Button, FormField } from "@/components/ui";
 import { checkout, listProducts } from "@/lib/api";
 import { DEMO_TODAY as TODAY } from "@/lib/schedule";
 import { useApiQuery } from "@/lib/useApi";
+import { useActiveCounterNow } from "@/lib/activeCounter";
 import { durationOptions, formatDuration, isDealDuration, productDurationPrice } from "@/lib/duration";
 import { formatMoney } from "@/lib/format";
 
@@ -14,6 +15,7 @@ import { formatMoney } from "@/lib/format";
 // identifier the product's config asks for ("Plate number"). Not in the grid.
 export default function QuickPassPage() {
   const t = useTranslations("quickpass");
+  const activeCounter = useActiveCounterNow();
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100, filters: { status: "active" } }), []);
   const passProduct = useMemo(() => productsQ.data?.data.find((p) => p.bookingType === "BT-14"), [productsQ.data]);
   const idLabel = passProduct?.passIdentifierLabel || t("identifierFallback");
@@ -48,8 +50,8 @@ export default function QuickPassPage() {
     const minor = Math.round((parseFloat(price) || 0) * 100);
     const res = await checkout({
       channel: "counter",
-      locationId: passProduct?.locationIds[0] ?? "loc_fort",
-      counterId: null,
+      locationId: activeCounter.locationId || (passProduct?.locationIds[0] ?? "loc_fort"),
+      counterId: activeCounter.counter?.id ?? null,
       staffId: null,
       lines: [{ productId: passProduct?.id ?? "quick_pass", productName: `${passProduct?.name ?? t("passFallback")} · ${formatDuration(duration)}`, tierName: identifier || t("passFallback"), admits: 1, quantity: 1, unitPrice: minor, taxRate: 0 }],
       taxPct: 0,

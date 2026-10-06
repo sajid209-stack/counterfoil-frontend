@@ -1064,7 +1064,7 @@
     "introLabel": "About the place",
     "introDesc": "A short paragraph that tells customers why to come.",
     "accentLabel": "Colour",
-    "accentDesc": "Used for the page's background and lines, never for the text.",
+    "accentDesc": "Used for buttons, links and small details. The page itself stays white.",
     "contactTitle": "Contact",
     "contactDesc": "Shown on the page, so customers can reach you.",
     "phoneLabel": "Phone",

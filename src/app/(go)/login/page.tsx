@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, FormField, Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
+import { useActiveCounterNow } from "@/lib/activeCounter";
 import { formatClock } from "@/lib/format";
 import { getAccessPolicy, listStaff, type Staff } from "@/lib/api";
 import { Keypad } from "../_components/Keypad";
 
 // Mock session facts: this device is paired to the Fort Main Gate counter and
 // Nadia's shift has been open since 09:14. Demo PIN for everyone: 1234.
-const COUNTER_ID = "cnt_fort_main";
-const COUNTER_NAME = "Fort Main Gate";
 const DEVICE_NAME = "Fort iPad 1";
 const BUSINESS = "Lalbagh Heritage Attractions";
 const OPEN_SHIFT = { staffId: "stf_nadia", since: "09:14" };
@@ -65,7 +64,9 @@ export default function GoLoginPage() {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
 
-  const team = (staffQ.data?.data ?? []).filter((s) => s.counterIds.includes(COUNTER_ID));
+  /* The people who work the counter this device is set to (Go header). */
+  const activeCounter = useActiveCounterNow();
+  const team = (staffQ.data?.data ?? []).filter((s) => s.counterIds.includes(activeCounter.id));
   const colors = faceColors(team);
   const colorOf = (id: string): FaceColor => colors.get(id) ?? "orange";
   const shiftOwner = staffQ.data?.data.find((s) => s.id === OPEN_SHIFT.staffId);
@@ -109,7 +110,7 @@ export default function GoLoginPage() {
       {/* Context bar — confirm you're at the right counter before signing in. */}
       <div className="w-full max-w-lg text-center">
         <p className="text-[0.875rem] font-medium text-muted">
-          {BUSINESS} · {COUNTER_NAME} · {DEVICE_NAME}
+          {BUSINESS} · {activeCounter.counter?.name ?? ""} · {DEVICE_NAME}
         </p>
         <p className="mt-inline text-[0.8125rem] text-muted">
           {shiftOwner ? t("login.shiftOpenBy", { name: shiftOwner.name.split(" ")[0], time: formatClock(OPEN_SHIFT.since) }) : t("login.noShift")}

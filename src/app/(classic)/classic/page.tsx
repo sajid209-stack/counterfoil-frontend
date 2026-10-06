@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { DEMO_COUNTER_ID } from "@/lib/session";
+import { useActiveCounterNow } from "@/lib/activeCounter";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEnumLabels } from "@/lib/labels";
 import { Archive, ChevronRight, Pencil, Percent, Plus, Search, TicketPercent, Trash2, UserRound, Wallet, X, type LucideIcon } from "lucide-react";
 import { BlockedNotice, Button, DiscountInput, EmptyState, FormField, Modal, ProductThumb, useToast, type DiscountMode } from "../_ui";
 import { useApiQuery } from "@/lib/useApi";
-import { peekCounters, tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
+import { tillMethods, addOrderPayment, advanceMinimum, checkout, getAdvancePolicy, earnPoints, findCreditPass, findOrderByReference, getLoyaltyAccount, getLoyaltyProgram, getManualDiscountPolicy, getMemberBenefit, getOperator, isResourceFreeFor, listLocations, listPaymentAccounts, listProducts, listResources, listRoles, listStaff, logOrderAction, placeCheckoutHold, quoteCart, releaseCheckoutHolds, spendPoints, issueMembership, type AppliedPromotion, type CheckoutLine, type CreditPass, type MembershipTier, type Order, type PaymentMethod, type Product, type QuoteLine } from "@/lib/api";
 import { buildOrderLines } from "@/lib/orderMath";
 import { DEMO_TODAY, isResourceType, needsSchedule, slotISO, toMinutes, toTime } from "@/lib/schedule";
 import { productDurationPrice } from "@/lib/duration";
@@ -267,8 +267,9 @@ export default function PosPage() {
   /* Where this till stands. listLocations sorts by name, so locations[0] is
      whichever venue is alphabetically first — which filed a fort sale at the
      museum and had its stock movements refused in silence. */
+  const activeCounter = useActiveCounterNow();
   const tillLocationId =
-    peekCounters().find((c) => c.id === DEMO_COUNTER_ID)?.locationId ?? locationsQ.data?.data[0]?.id ?? "loc_fort";
+    activeCounter.locationId || (locationsQ.data?.data[0]?.id ?? "loc_fort");
   const productById = (id: string) => products.find((p) => p.id === id);
   /* Catalogue groups are gone, so the wall is everything sellable narrowed by
      the search box alone. */
@@ -698,7 +699,7 @@ export default function PosPage() {
   // Non-cash settle: no change step; runs after the wallet flow confirms.
   const settleInline = async (txnNote?: string, txnRef?: string) => {
     const { lines, bookings, credits, payload, receipt } = buildSale();
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow, credits });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method, amountTendered: dueNow, paymentReference: txnRef, payNow: dueNow, credits });
     if (res.ok) {
       if (txnNote) await logOrderAction(res.data.order.id, txnNote);
       await settleMemberEffects(res.data.order.id, dueNow);
@@ -711,7 +712,7 @@ export default function PosPage() {
   const completeCash = async (tenderedMinor: number, changeMinor: number) => {
     const { lines, bookings, credits, payload, receipt } = buildSale();
     setCashSaving(true);
-    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow, credits });
+    const res = await checkout({ channel: "counter", locationId: payload.locationId, counterId: activeCounter.counter?.id ?? null, staffId: null, customerName: customer || null, customerId: attached?.id ?? null, lines, orderDiscount, bookings, taxPct: payload.taxPct, method: "cash", amountTendered: tenderedMinor, payNow: dueNow, credits });
     setCashSaving(false);
     if (res.ok) {
       await settleMemberEffects(res.data.order.id, dueNow);

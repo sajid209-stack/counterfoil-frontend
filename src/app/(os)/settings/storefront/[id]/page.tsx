@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowDown, ArrowUp, Copy, ExternalLink, Eye, Monitor, Plus, Smartphone, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, ExternalLink, Eye, Monitor, Plus, Smartphone, Ticket, X } from "lucide-react";
 import { Button, EmptyState, PageShell, Sheet, StatusPill, useToast } from "@/components/ui";
 import { PreviewFrame } from "@/components/PreviewFrame";
 import { StorefrontPreviewApp } from "@/app/s/_components/flow/StorefrontPreviewApp";
@@ -37,6 +37,7 @@ interface Draft {
   contactPhone: string;
   contactEmail: string;
   accent: AccentColor | null;
+  heroImage: string | null;
   featured: string[];
   links: StorefrontLink[];
 }
@@ -61,6 +62,7 @@ const fromRecord = (s: Storefront): Draft => ({
   contactPhone: s.contactPhone ?? "",
   contactEmail: s.contactEmail ?? "",
   accent: s.accent ?? null,
+  heroImage: s.heroImage ?? null,
   featured: [...s.featured],
   links: s.links.map((l) => ({ ...l })),
 });
@@ -91,6 +93,7 @@ export default function StorefrontEditorPage() {
   const router = useRouter();
   const t = useTranslations("settings");
   const tc = useTranslations("common");
+  const ts = useTranslations("storefront");
   const toast = useToast();
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 200 }), []);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 500 }), []);
@@ -208,6 +211,7 @@ export default function StorefrontEditorPage() {
       contactPhone: form.contactPhone.trim() || undefined,
       contactEmail: form.contactEmail.trim() || undefined,
       accent: form.accent,
+      heroImage: form.heroImage,
       featured: form.featured,
       links: form.links.map((l) => ({ ...l, label: l.label.trim(), url: l.url.trim() })),
     });
@@ -240,6 +244,9 @@ export default function StorefrontEditorPage() {
     ? form.featured.map((id) => sellable.find((p) => p.id === id)).filter((p): p is Product => !!p)
     : sellable;
   const rest = sellable.filter((p) => !ordered.includes(p));
+  /** The cover can only be a photo this venue already has on one of its
+   *  bookings, so a page never points at an image nobody uploaded. */
+  const heroChoices = sellable.flatMap((p) => (p.images ?? []).map((img) => ({ url: img.url, name: p.name, alt: img.alt ?? p.name })));
 
   const setLink = (i: number, patch: Partial<StorefrontLink>) =>
     set({ links: form.links.map((l, j) => (j === i ? { ...l, ...patch } : l)) });
@@ -254,6 +261,7 @@ export default function StorefrontEditorPage() {
     contactPhone: form.contactPhone.trim() || undefined,
     contactEmail: form.contactEmail.trim() || undefined,
     accent: form.accent,
+    heroImage: form.heroImage,
     featured: form.featured,
     links: form.links.filter((_, i) => !linkErrors[i].label && !linkErrors[i].url),
   };
@@ -428,6 +436,40 @@ export default function StorefrontEditorPage() {
                       {c ? t(`storefront.colors.${c}`) : t("storefront.colors.none")}
                     </button>
                   ))}
+                </div>
+              )}
+            </SettingRow>
+            <SettingRow label={ts("editor.heroLabel")} description={ts("editor.heroDesc")} layout="stack" labelFor={false}>
+              {() => (
+                <div role="group" aria-label={ts("editor.heroLabel")} className="grid grid-cols-2 gap-tight sm:grid-cols-3">
+                  {[null, ...heroChoices].map((c) => {
+                    const on = (form.heroImage ?? null) === (c?.url ?? null);
+                    return (
+                      <button
+                        key={c?.url ?? "none"}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => set({ heroImage: c?.url ?? null })}
+                        className={cn(
+                          "flex flex-col overflow-hidden rounded-sm border text-left text-[13px] transition-colors duration-quick",
+                          on ? "border-ember ring-1 ring-ember" : "border-line hover:border-strong",
+                        )}
+                      >
+                        {c ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- bundled/local assets
+                          <img src={c.url} alt="" className="aspect-[16/10] w-full object-cover" />
+                        ) : (
+                          <span aria-hidden className="flex aspect-[16/10] w-full items-center justify-center bg-subtle text-muted">
+                            <Ticket size={20} strokeWidth={1.5} />
+                          </span>
+                        )}
+                        <span className="min-h-11 truncate px-comfortable py-tight font-medium leading-snug">
+                          {c ? c.name : ts("editor.heroNone")}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {heroChoices.length === 0 && <p className="col-span-full text-[13px] text-muted">{ts("editor.heroEmpty")}</p>}
                 </div>
               )}
             </SettingRow>

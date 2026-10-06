@@ -15832,3 +15832,115 @@ draws the comparison as a dashed line, and marks changes on every row.
   venue deposits back to ৳0.00; the popovers; no money cut off.
 - `tsc` clean. `eslint` clean apart from the existing `DonutChart` error and
   one existing `exhaustive-deps` warning in `DateRangePicker`. i18n 0 / 0.
+
+## The till picks its counter, its cards come apart, and the storefront is rebuilt (2026-10-06)
+
+Owner, with five screenshots:
+- the empty-sale line in the sell dock "takes extra space";
+- the item tiles should not be drawn together;
+- the top bar needs work and a counter dropdown "properly connected with OS";
+- the storefront needs a full review, and "is totally broken" — rebuild it from
+  the best storefronts (Shopify, Dribbble, Behance).
+
+Planned and reviewed on Opus; two Sonnet sub-agents built it in parallel, each
+owning separate files.
+
+### The till
+
+- **The dock is Cart · N and Take, nothing else.** The empty-sale sentence and
+  the picture row are gone. Each card already shows its own count and Cart
+  shows the total, so the dock is the same height (151px at 390 and 320) with
+  0, 1 or 2 things in the sale. The wall never moves under the finger.
+- **Items are separate cards.** Each is its own rounded card (18px radius), with
+  8px gaps on a phone and 12px from `sm`; two columns at 390 and four at 1280.
+  A card holds:
+  - a picture or glyph;
+  - a 16px name;
+  - the price as the largest figure;
+  - a status line with a dot (left, free, next start).
+
+  A card in the sale gets a count badge, a wash and an orange ring. A sold-out
+  card sits on the page colour with no shadow. This follows the Square, Shopify
+  POS, Toast and Loyverse item grids.
+- **One row for the date and the search.** On a phone the date chip says
+  "Today", with the full date in its name; the orange "Selling for…" strip
+  still takes its own row when another day is chosen. The first item starts at
+  **188px instead of 264** on a phone.
+- **A counter picker in the header** (`lib/activeCounter.ts`,
+  `CounterPicker.tsx`):
+  - The list is the counters set up in OS Settings → Counters, grouped by venue.
+    A closed counter is greyed out with "Open it in Settings, Counters".
+  - The choice is remembered on the device (`cf_counter`).
+  - Every place that used the fixed demo counter now follows it: the sell wall,
+    stock, the Schedule board, check-in, quick pass, profile, sign-in, the
+    scrolling and classic tills.
+  - The wall shows only what is sold at that counter's venue, and respects the
+    counter's own booking list.
+  - Sales carry `counterId`. OS Orders now names the counter ("Counter · Museum
+    Group Desk") in the list and on the order page.
+  - With a sale in progress the picker refuses to switch and says why. Moving
+    the lines to another venue would take stock that is not there; clearing
+    them would lose a customer's order.
+- On a phone the header is one 56px row, with the mark alone below 480px. The
+  links for switching between the three till designs are 44px.
+
+### The storefront
+
+The references: Airbnb Experiences, GetYourGuide, Tiqets, Fever and Shopify's
+Dawn and Sense themes.
+
+- **Its own light theme**, scoped under `.sf`. The page is white with ink text;
+  the venue's colour is used only for buttons, links, chips and today's row,
+  never as a wash behind content. Both the button fill and the accent as text
+  are computed per venue to reach 4.5:1. The page stays light in dark mode.
+- **Venue page**:
+  - a sticky header (mark, What's on, Visit, basket with its count);
+  - a hero with an honest open-now line, a headline, the intro, **Book
+    tickets** and **Plan your visit**, and a row of facts (address, today's
+    hours, lowest price);
+  - a strip of reassurances (instant confirmation, tickets by SMS, bKash, card
+    or QR);
+  - **What's on** as 16:10 image cards, filterable by kind;
+  - **Plan your visit**: the hours with today highlighted, and a Getting here
+    card with Get directions, contact and links;
+  - a footer.
+- **No photo still looks designed.** A booking without a photo gets a patterned
+  plate in the same 16:10 shape, with its icon and type. The venue's opening
+  picture can be any of its own booking photos (`Storefront.heroImage`,
+  chosen under Cover photo in the editor), or a designed plate.
+- **Booking page**:
+  - a photo, the title, fact chips, About, Good to know (taken from the
+    booking's own rules) and Where;
+  - on a computer, a booking panel that stays beside the page, with its total
+    and buttons always in view. Its list scrolls inside it and fades at the
+    edge rather than slicing a row;
+  - on a phone, the total and both buttons in a bar fixed at the bottom;
+  - every label sits on its control, so there is no stray "How many".
+- **Basket and checkout** follow Shopify's checkout: two columns with the order
+  summary held in view, one column on a phone. The confirmation lists the
+  tickets with Add to calendar.
+- The Settings colour row now says what the colour is used for.
+
+### Verified
+
+- Till harness **140/140**, at 390, 320, 1280, dark and Bangla. It covers the
+  dock height with 0, 1 and 2 items, the separate cards, the single top row,
+  the picker list and a counter switch moving the wall, schedule and check-in.
+  A sale at the museum counter appears in OS Orders. Switching is refused while
+  a sale is open.
+- Storefront design harness **178/178**, at 1440, 768, 390 and 320, Bangla, and
+  the Settings preview at 1600. It walks the whole journey from venue page to
+  confirmation. Standing storefront harnesses: **31/31, 14/14, 6/6**.
+- Standing till harnesses updated where the cards or the venue changed:
+  - `pos-v2` now expects separate cards.
+  - The Planetarium checks now run from the museum counter, because the fort
+    does not sell it.
+  - The sell-date checks use the museum.
+- `tsc`, `eslint` on every touched file and i18n 0 / 0.
+
+### Open
+
+- The shift timer in the till header is still a fixed 3:24.
+- Check-in's walk-in list is not narrowed to the venue.
+- The storefront has no dark mode, by decision.
+- With five bookings, the storefront's desktop grid leaves one empty cell.

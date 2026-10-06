@@ -37,6 +37,7 @@ import {
   type Booking,
   type WriteOffCategory,
 } from "@/lib/api";
+import { peekCounters } from "@/lib/api";
 import { formatClock, formatDateTime, formatDay, formatMoney } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { OrderLinesDetail } from "@/components/OrderLinesDetail";
@@ -116,6 +117,12 @@ export default function OrderDetailPage() {
   );
 
   const channelLabel = (c: string) => (c === "counter" ? t("channelCounter") : c === "online" ? t("channelOnline") : c);
+  /* A counter sale names its counter, set in Settings, Counters; the channel
+     alone says only that it was a counter. */
+  const soldAt = (o: { channel: string; counterId: string | null }) => {
+    const name = o.channel === "counter" && o.counterId ? peekCounters().find((c) => c.id === o.counterId)?.name : null;
+    return name ? `${channelLabel(o.channel)} · ${name}` : channelLabel(o.channel);
+  };
 
   const moveProduct = productsQ.data?.data.find((p) => p.id === moveFor?.productId);
   const moveSlots = moveFor && moveProduct && moveDate ? getSlots(moveProduct, moveDate) : [];
@@ -392,7 +399,7 @@ export default function OrderDetailPage() {
             <div className="flex min-w-0 flex-col gap-section">
             <Card title={t("cardPlaced")}>
               <p className="text-sm">{formatDateTime(o.createdAt)}</p>
-              <p className="mt-inline text-[13px] text-muted">{channelLabel(o.channel)}</p>
+              <p className="mt-inline text-[13px] text-muted">{soldAt(o)}</p>
               {/* A marketplace sale is not a direct one: somebody else took
                   the booking and keeps a cut, and without this the commission
                   is invisible on the one record that should carry it. */}

@@ -33,7 +33,10 @@
     "subtotal": "Subtotal",
     "vat": "VAT",
     "total": "Total",
-    "continue": "Continue to checkout"
+    "continue": "Continue to checkout",
+    "label": "Basket",
+    "ariaLabel": "{count, plural, =0 {Basket, empty} one {Basket, # item} other {Basket, # items}}",
+    "emptyHelp": "Pick something to do and add it here."
   },
   "booking": {
     "chooseTitle": "Choose your tickets",
@@ -50,7 +53,7 @@
     "noTimes": "Nothing is bookable on this date. Try another day.",
     "left": "{count} left",
     "dailyLeft": "{count} left today",
-    "ticketsLabel": "How many",
+    "ticketsLabel": "Tickets",
     "decreaseQty": "Fewer {name}",
     "increaseQty": "More {name}",
     "extrasLabel": "Extras",
@@ -60,7 +63,8 @@
     "bookNow": "Book now",
     "missingDate": "Pick a date first.",
     "missingTime": "Pick a time first.",
-    "missingTickets": "Choose at least one ticket."
+    "missingTickets": "Choose at least one ticket.",
+    "panelLabel": "Book this"
   },
   "checkout": {
     "title": "Checkout",
@@ -83,7 +87,13 @@
     "pay": "Pay {amount}",
     "nameRequired": "Enter your name.",
     "phoneInvalid": "Enter an 11-digit mobile number starting with 01.",
-    "emailInvalid": "Enter a valid email address."
+    "emailInvalid": "Enter a valid email address.",
+    "methodHint": {
+      "bkash": "Pay from your bKash app.",
+      "card_terminal": "Visa or Mastercard.",
+      "bangla_qr": "Scan with any bank app."
+    },
+    "secure": "You confirm your payment on the next step."
   },
   "pay": {
     "changeMethod": "Change payment method",
@@ -114,6 +124,70 @@
     "previewNote": "Preview — no real order was made",
     "addToCalendar": "Add to calendar",
     "downloadPrint": "Download / print tickets",
-    "bookSomethingElse": "Book something else"
+    "bookSomethingElse": "Book something else",
+    "smsNote": "We've texted your tickets. Show the QR code at the gate."
+  },
+  "from": "From",
+  "book": "Book",
+  "count": "{count, plural, one {# thing to book} other {# things to book}}",
+  "planVisit": "Plan your visit",
+  "today": "Today",
+  "phone": "Phone",
+  "email": "Email",
+  "directions": "Get directions",
+  "atTheGate": "At the gate, show the QR code from your text message.",
+  "about": "About",
+  "where": "Where",
+  "nav": {
+    "visit": "Visit"
+  },
+  "footer": {
+    "contact": "Contact",
+    "links": "Links",
+    "noContact": "No contact details yet."
+  },
+  "status": {
+    "open": "Open now · until {time}",
+    "opensLater": "Closed now · opens at {time}",
+    "opensTomorrow": "Closed now · opens tomorrow at {time}",
+    "opensDay": "Closed now · opens {day} at {time}"
+  },
+  "hero": {
+    "book": "Book tickets",
+    "plan": "Plan your visit",
+    "stub": "Admit one"
+  },
+  "trust": {
+    "label": "Why book here",
+    "instantTitle": "Instant confirmation",
+    "instantBody": "Your booking is confirmed as soon as you pay.",
+    "smsTitle": "Tickets by SMS",
+    "smsBody": "We text your ticket to your phone.",
+    "payTitle": "Pay your way",
+    "payBody": "bKash, card or Bangla QR."
+  },
+  "filter": {
+    "label": "Filter by kind",
+    "all": "All",
+    "entry": "Entry tickets",
+    "timed": "Tours, shows and classes",
+    "space": "Courts and fields",
+    "packs": "Passes and bundles"
+  },
+  "know": {
+    "title": "Good to know",
+    "instant": "Your booking is confirmed as soon as you pay.",
+    "sms": "Your ticket is texted to you. Show the QR code at the gate.",
+    "freeCancel": "Free cancellation up to {hours} hr before.",
+    "freeCancelAny": "Free cancellation until it starts.",
+    "feeCancel": "Cancel up to {hours} hr before for a {pct}% fee.",
+    "noCancel": "This booking can't be cancelled or refunded.",
+    "reschedule": "Change your time up to {hours} hr before."
+  },
+  "editor": {
+    "heroLabel": "Cover photo",
+    "heroDesc": "Shown at the top of your page. Pick a photo from your bookings.",
+    "heroNone": "Designed cover",
+    "heroEmpty": "No photos yet. Add a photo to a booking and it shows up here."
   }
 }
