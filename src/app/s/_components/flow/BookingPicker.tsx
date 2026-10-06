@@ -11,6 +11,10 @@ import { taxRateFor } from "@/lib/tax";
 import { formatClock, formatMoney, formatPriceShort } from "@/lib/format";
 import {
   cheapestFreeResourceId,
+  defaultDuration,
+  firstResourceTime,
+  firstSessionTime,
+  firstUsableDate,
   nextBookableDays,
   resourceTimeOptions,
   scheduleHoursOn,
@@ -45,21 +49,35 @@ const addMinutes = (time: string, minutes: number): string => {
  * a desktop, in the page on a phone with its total and buttons fixed to the
  * bottom of the screen. One copy of the controls, never two.
  */
-export function BookingPicker({ product }: { product: Product }) {
+export function BookingPicker({ product, sheet }: { product: Product; sheet?: SheetHooks }) {
   const flow = useStorefrontFlow();
   const pattern = storefrontPattern(product.bookingType);
   const dates = useMemo(() => nextBookableDays(product, flow.now, 10), [product, flow.now]);
-  const [date, setDate] = useState<string | null>(pattern === "open" ? null : (dates[0] ?? null));
+  /* In the quick-add sheet the picker opens on the first day that has
+     something to buy (today if it is open and not full); on the full page it
+     opens on the first open day and leaves the rest to the guest. */
+  const [date, setDate] = useState<string | null>(
+    pattern === "open" ? null : sheet ? firstUsableDate(product, dates) : (dates[0] ?? null),
+  );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className={cn("flex min-h-0 flex-1 flex-col", sheet && "h-full")}>
       {pattern === "resource" ? (
-        <ResourceBooking product={product} date={date} setDate={setDate} dates={dates} />
+        <ResourceBooking product={product} date={date} setDate={setDate} dates={dates} sheet={sheet} />
       ) : (
-        <TicketBooking product={product} pattern={pattern} date={date} setDate={setDate} dates={dates} />
+        <TicketBooking product={product} pattern={pattern} date={date} setDate={setDate} dates={dates} sheet={sheet} />
       )}
     </div>
   );
+}
+
+/** What the quick-add sheet hands the picker: it changes the picker's frame
+ *  (no heading, a footer that sits in the sheet rather than the page) and what
+ *  "Add" and "Book now" do (the sheet closes and confirms), never the
+ *  questions it asks. `null` for the full booking page. */
+export interface SheetHooks {
+  onAdd: (line: Omit<BasketLine, "id">) => void;
+  onBook: (line: Omit<BasketLine, "id">) => void;
 }
 
 /* ── Shared bits ─────────────────────────────────────────────────────────── */
@@ -169,19 +187,25 @@ function Footer({
   missing,
   onAdd,
   onBookNow,
+  inSheet,
 }: {
   total: number;
   from: number | null;
   missing: string | null;
   onAdd: () => void;
   onBookNow: () => void;
+  inSheet?: boolean;
 }) {
   const t = useTranslations("storefront");
   const chosen = total > 0;
   return (
     <div
       data-sf-bookbar
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-white/95 px-gutter pb-comfortable pt-comfortable shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur lg:static lg:mt-section lg:border-line lg:bg-transparent lg:p-0 lg:pt-section lg:shadow-none lg:backdrop-blur-none"
+      className={
+        inSheet
+          ? "shrink-0 border-t border-hairline bg-white px-section pb-section pt-comfortable"
+          : "fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-white/95 px-gutter pb-comfortable pt-comfortable shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur lg:static lg:mt-section lg:border-line lg:bg-transparent lg:p-0 lg:pt-section lg:shadow-none lg:backdrop-blur-none"
+      }
     >
       {missing && (
         <p className="mb-tight flex items-center gap-tight text-[14px] font-medium text-warning">
@@ -195,21 +219,39 @@ function Footer({
           {chosen ? formatMoney(total) : from === null ? "—" : from === 0 ? t("free") : formatPriceShort(from)}
         </p>
       </div>
-      <div className="mt-comfortable grid grid-cols-2 gap-tight lg:grid-cols-1">
-        <button type="button" onClick={onAdd} disabled={!!missing} className={sfBtn.secondary}>
-          {t("booking.addToBasket")}
-        </button>
-        <button type="button" onClick={onBookNow} disabled={!!missing} className={cn(sfBtn.primary, "lg:order-first")}>
-          {t("booking.bookNow")}
-        </button>
-      </div>
+      {inSheet ? (
+        /* In the sheet "Add to basket" is the primary: the guest chose to
+           quick-add, so staying on the list is the common case. */
+        <div className="mt-comfortable grid grid-cols-2 gap-tight">
+          <button type="button" onClick={onBookNow} disabled={!!missing} className={cn(sfBtn.secondary, "px-section")}>
+            {t("booking.bookNow")}
+          </button>
+          <button type="button" onClick={onAdd} disabled={!!missing} className={cn(sfBtn.primary, "px-section")}>
+            {t("booking.addToBasket")}
+          </button>
+        </div>
+      ) : (
+        <div className="mt-comfortable grid grid-cols-2 gap-tight lg:grid-cols-1">
+          <button type="button" onClick={onAdd} disabled={!!missing} className={sfBtn.secondary}>
+            {t("booking.addToBasket")}
+          </button>
+          <button type="button" onClick={onBookNow} disabled={!!missing} className={cn(sfBtn.primary, "lg:order-first")}>
+            {t("booking.bookNow")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 /** The panel's scrolling body. On a desktop the panel is as tall as the window
- *  at most, so this scrolls and the footer stays in view. */
-function Body({ title, children }: { title: string; children: React.ReactNode }) {
+ *  at most, so this scrolls and the footer stays in view. In the sheet the
+ *  sheet's own header names the booking, so there is no heading here, and the
+ *  body scrolls at every width. */
+function Body({ title, children, inSheet }: { title: string; children: React.ReactNode; inSheet?: boolean }) {
+  if (inSheet) {
+    return <div className="flex min-h-0 flex-1 flex-col gap-major overflow-y-auto px-section pb-major pt-section [mask-image:linear-gradient(to_bottom,black_calc(100%-20px),transparent)]">{children}</div>;
+  }
   return (
     <div className="flex flex-col gap-major lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-1 lg:pt-1 lg:pb-6 lg:[mask-image:linear-gradient(to_bottom,black_calc(100%-28px),transparent)]">
       <h2 className="text-[20px] font-semibold tracking-[-0.01em]">{title}</h2>
@@ -230,11 +272,13 @@ function ResourceBooking({
   date,
   setDate,
   dates,
+  sheet,
 }: {
   product: Product;
   date: string | null;
   setDate: (d: string) => void;
   dates: string[];
+  sheet?: SheetHooks;
 }) {
   const t = useTranslations("storefront");
   const flow = useStorefrontFlow();
@@ -245,10 +289,13 @@ function ResourceBooking({
   const nounPlural = resourceObjs[0]?.nounPlural ?? "Fields";
 
   const durationChoices = product.durationConfig ? durationOptions(product.durationConfig) : [];
-  const fallbackMinutes = product.schedule?.sessionMinutes || product.schedule?.slotMinutes || 60;
-  const [duration, setDuration] = useState<number>(durationChoices[0] ?? fallbackMinutes);
+  const [duration, setDuration] = useState<number>(defaultDuration(product));
   const [resourceChoice, setResourceChoice] = useState<string | null>(null); // null = "any"
-  const [time, setTime] = useState<string | null>(null);
+  /* The sheet opens on the first start that can be bought, so one tap can add;
+     the page leaves the choice to the guest. */
+  const firstStart = (d: string | null, dur: number, res: string | null): string | null =>
+    sheet && d ? (firstResourceTime(product, d, dur, res)?.time ?? null) : null;
+  const [time, setTime] = useState<string | null>(() => firstStart(date, defaultDuration(product), null));
   const [extras, setExtras] = useState<Record<string, boolean>>({});
 
   const timeOptions = useMemo(
@@ -311,18 +358,20 @@ function ResourceBooking({
     };
   };
   const addToBasket = () => {
+    if (sheet) return sheet.onAdd(buildLine());
     flow.addLine(buildLine());
     flow.goVenue();
   };
   const bookNow = () => {
+    if (sheet) return sheet.onBook(buildLine());
     flow.addLine(buildLine());
     flow.goCheckout();
   };
 
   return (
     <>
-      <Body title={t("booking.chooseTimeTitle")}>
-        <DateSection dates={dates} date={date} setDate={(d) => { setDate(d); setTime(null); }} />
+      <Body title={t("booking.chooseTimeTitle")} inSheet={!!sheet}>
+        <DateSection dates={dates} date={date} setDate={(d) => { setDate(d); setTime(firstStart(d, duration, resourceChoice)); }} />
 
         {resourceObjs.length > 1 && (
           <Step label={nounPlural}>
@@ -330,7 +379,7 @@ function ResourceBooking({
               <button
                 type="button"
                 aria-pressed={resourceChoice === null}
-                onClick={() => { setResourceChoice(null); setTime(null); }}
+                onClick={() => { setResourceChoice(null); setTime(firstStart(date, duration, null)); }}
                 className={choiceCls(resourceChoice === null)}
               >
                 {/* The resource's own name stays capitalised on its chip
@@ -344,7 +393,7 @@ function ResourceBooking({
                   key={r.id}
                   type="button"
                   aria-pressed={resourceChoice === r.id}
-                  onClick={() => { setResourceChoice(r.id); setTime(null); }}
+                  onClick={() => { setResourceChoice(r.id); setTime(firstStart(date, duration, r.id)); }}
                   className={choiceCls(resourceChoice === r.id)}
                 >
                   {r.name}
@@ -365,7 +414,7 @@ function ResourceBooking({
                     key={mins}
                     type="button"
                     aria-pressed={on}
-                    onClick={() => { setDuration(mins); setTime(null); }}
+                    onClick={() => { setDuration(mins); setTime(firstStart(date, mins, resourceChoice)); }}
                     className={cn(choiceCls(on), "min-h-14 flex-col gap-0.5 py-inline")}
                   >
                     <span>{formatDuration(mins)}</span>
@@ -409,7 +458,7 @@ function ResourceBooking({
 
         <ExtrasSection product={product} extras={extras} setExtras={setExtras} />
       </Body>
-      <Footer total={total} from={tier?.price ?? null} missing={missing} onAdd={addToBasket} onBookNow={bookNow} />
+      <Footer total={total} from={tier?.price ?? null} missing={missing} onAdd={addToBasket} onBookNow={bookNow} inSheet={!!sheet} />
     </>
   );
 }
@@ -421,12 +470,14 @@ function TicketBooking({
   date,
   setDate,
   dates,
+  sheet,
 }: {
   product: Product;
   pattern: "open" | "daily" | "sessions";
   date: string | null;
   setDate: (d: string) => void;
   dates: string[];
+  sheet?: SheetHooks;
 }) {
   const t = useTranslations("storefront");
   const flow = useStorefrontFlow();
@@ -435,9 +486,37 @@ function TicketBooking({
   const taxRate = taxRateFor(product, flow.operator) / 100;
   const tiers = product.tiers.filter((t2) => t2.active);
 
-  const [time, setTime] = useState<string | null>(null);
-  const [qty, setQty] = useState<Record<string, number>>({});
+  /* The sheet opens ready: the first time with room and one ticket of the
+     first type, so a guest whose defaults suit adds in one tap. Changing the
+     day moves to that day's first time and keeps what the day can still hold. */
+  const firstTime = (d: string | null): { time: string; remaining: number } | null =>
+    sheet && needsTime && d ? firstSessionTime(product, d) : null;
+  const startRoom = (d: string | null, t0: string | null): number => {
+    if (needsTime) return t0 ? (timeOptionsFor(product, d ?? "").find((o) => o.time === t0)?.remaining ?? 0) : 0;
+    if (pattern === "daily" && d) {
+      const left = getDailyRemaining(product, d);
+      return Number.isFinite(left) ? left : FALLBACK_CAP;
+    }
+    return FALLBACK_CAP;
+  };
+  const [time, setTime] = useState<string | null>(() => firstTime(date)?.time ?? null);
+  const [qty, setQty] = useState<Record<string, number>>(() => {
+    const first = tiers[0];
+    if (!sheet || !first) return {};
+    if (needsDate && !date) return {};
+    const room = startRoom(date, firstTime(date)?.time ?? null);
+    return room >= 1 ? { [first.id]: 1 } : {};
+  });
   const [extras, setExtras] = useState<Record<string, boolean>>({});
+  const changeDate = (d: string) => {
+    setDate(d);
+    const t0 = firstTime(d)?.time ?? null;
+    setTime(t0);
+    if (sheet) {
+      const room = startRoom(d, t0);
+      setQty((q) => Object.fromEntries(Object.entries(q).map(([k, v]) => [k, Math.min(v, room)])));
+    }
+  };
 
   const timeOptions = useMemo(() => (needsTime && date ? timeOptionsFor(product, date) : []), [needsTime, date, product]);
   const chosenTime = useMemo(() => timeOptions.find((o) => o.time === time) ?? null, [timeOptions, time]);
@@ -482,18 +561,20 @@ function TicketBooking({
     return { productId: product.id, productName: product.name, taxClass: product.taxClass, date, startTime: time, endTime: null, resourceId: null, resourceName: null, tiers: tierLines };
   };
   const addToBasket = () => {
+    if (sheet) return sheet.onAdd(buildLine());
     flow.addLine(buildLine());
     flow.goVenue();
   };
   const bookNow = () => {
+    if (sheet) return sheet.onBook(buildLine());
     flow.addLine(buildLine());
     flow.goCheckout();
   };
 
   return (
     <>
-      <Body title={t("booking.chooseTitle")}>
-        {needsDate && <DateSection dates={dates} date={date} setDate={(d) => { setDate(d); setTime(null); }} />}
+      <Body title={t("booking.chooseTitle")} inSheet={!!sheet}>
+        {needsDate && <DateSection dates={dates} date={date} setDate={changeDate} />}
 
         {needsTime && date && (
           <Step label={t("booking.timeLabel")}>
@@ -579,7 +660,7 @@ function TicketBooking({
 
         <ExtrasSection product={product} extras={extras} setExtras={setExtras} />
       </Body>
-      <Footer total={total} from={fromPrice(product.tiers)} missing={missing} onAdd={addToBasket} onBookNow={bookNow} />
+      <Footer total={total} from={fromPrice(product.tiers)} missing={missing} onAdd={addToBasket} onBookNow={bookNow} inSheet={!!sheet} />
     </>
   );
 }

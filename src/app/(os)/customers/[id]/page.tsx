@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
 import { Button, EmptyState, PageShell } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -130,15 +129,7 @@ export default function CustomerDetailPage() {
     <PageShell
       title={customer.name}
       description={t("description")}
-      actions={
-        <Button
-          variant="tertiary"
-          icon={<ArrowLeft size={16} strokeWidth={1.5} />}
-          onClick={() => router.push("/customers")}
-        >
-          {t("backToList")}
-        </Button>
-      }
+      back={{ href: "/customers", label: t("backToList") }}
     >
       <div className="flex flex-col gap-section">
         <ProfileHeader customer={customer} profile={profile} onChanged={reloadAll} />

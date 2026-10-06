@@ -484,7 +484,18 @@ export interface Staff {
   lastActiveAt: ISODateTime | null;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
-  // POS PIN is set/verified via a dedicated auth call; never on this shape.
+  /**
+   * What the person has set up to sign in with. Flags only: the password and
+   * the PIN themselves are never on this shape (the mock keeps a fake hash
+   * apart from the records, and a real backend keeps a real one).
+   */
+  hasPassword?: boolean;
+  /** True until they have changed a password somebody else chose for them. */
+  mustChangePassword?: boolean;
+  /** A till PIN has been set. Absent = the demo PIN still applies. */
+  hasPin?: boolean;
+  /** How many digits it has (4 to 6), so the till can draw the right dots. */
+  pinLength?: number;
 }
 
 // ── Input payloads (create/update) ─────────────────────────────────────────
@@ -517,12 +528,23 @@ export interface Device {
   name: string;
   counterId: ID | null;
   pairingCode: string; // shown once at registration
+  /**
+   * Who can pick their name on this tablet's PIN screen.
+   * "venue" (or absent) — everyone who works at its counter, which is how it
+   * always worked. "assigned" — only the people in `staffIds`.
+   */
+  access?: "venue" | "assigned";
+  /** The people allowed when `access` is "assigned". */
+  staffIds?: ID[];
+  /** Someone's own device ("Nadia's phone"): lists only them. */
+  ownerStaffId?: ID | null;
   status: Lifecycle;
   lastSeenAt: ISODateTime | null;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }
-export type DeviceInput = Pick<Device, "name" | "counterId" | "status">;
+export type DeviceInput = Pick<Device, "name" | "counterId" | "status"> &
+  Partial<Pick<Device, "access" | "staffIds" | "ownerStaffId">>;
 export type DevicePatch = Partial<DeviceInput>;
 
 // ── Orders / payments / tickets / bookings ─────────────────────────────────

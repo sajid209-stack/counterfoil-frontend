@@ -287,21 +287,14 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             the buttons it shares the bar with. */}
         <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-20 hidden items-center justify-between gap-major px-gutter py-tight md:flex">
           <div id="os-page-header" className="min-w-0 flex-1" />
-          {/* One right-aligned row: the page's own actions, then the account.
-              It was two rows because the chrome alone needed ~846px of a
-              1152px pane — a 256px search field, a language chip, a mode
-              button and an avatar — and the actions could not fit beside
-              them. With search moved to the rail and the two switchers moved
-              inside the account menu the chrome is one 44px target, so the
-              actions come up onto the same line and the bar loses a row. */}
+          {/* The bar is app chrome: the page name, the venue, the account.
+              A page's own buttons, status and back link render in the page
+              (PageShell), never up here. */}
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-tight">
             {/* The venue first: it qualifies everything to its left, so it
                 reads as part of where you are rather than as one more of the
                 page's controls. */}
             {venueScoped && wide && <LocationSwitcher />}
-            {/* Empty on pages that declare no actions — it collapses to
-                nothing and takes its gap with it. */}
-            <div id="os-page-actions" className="flex flex-wrap items-center justify-end gap-tight empty:hidden" />
             <AccountMenu name={operatorQ.data?.name} />
           </div>
         </div>

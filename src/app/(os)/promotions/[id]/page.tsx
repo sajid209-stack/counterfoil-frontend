@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, EmptyState, FormField, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -47,11 +46,7 @@ export default function PromotionEditorPage() {
   const isBxgy = p.kind === "buy_x_get_y" || p.kind === "bundle_price";
 
   return (
-    <PageShell title={p.name || t("editor.back")} actions={<Button loading={saving} onClick={save}>{t("editor.save")}</Button>}>
-      <button type="button" onClick={() => router.push("/promotions")} className="mb-section flex items-center gap-inline text-[13px] text-muted hover:text-fg">
-        <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {t("editor.back")}
-      </button>
-
+    <PageShell title={p.name || t("editor.back")} back={{ href: "/promotions", label: t("editor.back") }} actions={<Button loading={saving} onClick={save}>{t("editor.save")}</Button>}>
       <div className="grid max-w-2xl gap-section card-surface p-card sm:grid-cols-2">
         <FormField label={t("editor.name")} value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} />
         <FormField label={t("editor.kind")} variant="select" value={p.kind} onChange={(e) => setP({ ...p, kind: e.target.value as PromotionKind })} options={KINDS.map((k) => ({ value: k, label: t(`kind.${k}`) }))} />

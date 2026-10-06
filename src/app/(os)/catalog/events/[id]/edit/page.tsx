@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
 import { Button, EmptyState, PageShell, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -204,6 +203,7 @@ function Editor({ event }: { event: EventRecord }) {
     <PageShell
       title={tc("title", { title: event.title })}
       description={tc("description")}
+      back={{ href: `/catalog/events/${event.id}`, label: event.title }}
       actions={
         <div className="flex gap-tight">
           <Button variant="secondary" disabled={saving} onClick={() => router.push(`/catalog/events/${event.id}`)}>{tc("cancel")}</Button>
@@ -212,9 +212,6 @@ function Editor({ event }: { event: EventRecord }) {
       }
     >
       <div className={cn("flex flex-col gap-section pb-hero", templateFontVars)}>
-        <Link href={`/catalog/events/${event.id}`} className="inline-flex min-h-11 items-center gap-inline self-start text-[13px] text-muted hover:text-fg md:min-h-0">
-          <ArrowLeft size={14} strokeWidth={1.5} /> {event.title}
-        </Link>
         <Tabs
           items={[
             { value: "details", label: tc("tabDetails") },

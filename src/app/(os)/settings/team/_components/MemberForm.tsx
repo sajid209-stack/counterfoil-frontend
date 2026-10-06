@@ -1,12 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useToast } from "@/components/ui";
-import { createStaff, updateStaff, type Counter, type Location, type Role, type Staff, type StaffInput } from "@/lib/api";
+import { Button, useToast } from "@/components/ui";
+import {
+  createStaff,
+  generatePin,
+  passwordIssue,
+  pinIssue,
+  updateStaff,
+  type Counter,
+  type Location,
+  type Role,
+  type Staff,
+  type StaffInput,
+} from "@/lib/api";
+import { cn } from "@/lib/cn";
 import { CreateBar, SaveBar, SettingRow, SettingsSection, controlCls } from "../../_components/SettingsKit";
+import { SecretInput, StrengthMeter, usePasswordMessage, usePinMessage } from "./PasswordFields";
 import { RolePicker } from "./RolePicker";
 import { WorkplacePicker } from "./WorkplacePicker";
 
@@ -17,9 +30,19 @@ interface Draft {
   roleId: string;
   locationIds: string[];
   counterIds: string[];
+  /** How a new person gets in: an invite link, or a password set now. Create only. */
+  signIn: "link" | "password";
+  /** Held only while the form is open; sent to the api once and then dropped. */
+  password: string;
+  confirm: string;
+  mustChange: boolean;
+  pin: string;
 }
 
+const NO_SECRETS = { signIn: "link", password: "", confirm: "", mustChange: true, pin: "" } as const;
+
 const fromStaff = (s: Staff): Draft => ({
+  ...NO_SECRETS,
   name: s.name,
   email: s.email ?? "",
   phone: s.phone ?? "",
@@ -70,6 +93,7 @@ export function MemberForm({
       roleId: leastPowerful?.id ?? "",
       locationIds: places.length === 1 ? [places[0].id] : [],
       counterIds: [],
+      ...NO_SECRETS,
     };
   }, [staff, roles, locations]);
 
@@ -77,6 +101,12 @@ export function MemberForm({
   const [draft, setDraft] = useState<Draft | null>(null);
   const [blurred, setBlurred] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+  const sayPassword = usePasswordMessage();
+  const sayPin = usePinMessage();
+  const modeName = useId();
+  const mustId = useId();
   const saved = base ?? initial;
   const form = draft ?? saved;
   const dirty = !!draft && JSON.stringify(draft) !== JSON.stringify(saved);
@@ -96,9 +126,23 @@ export function MemberForm({
       : (judge || (blurred.email && blurred.phone)) && !hasContact
         ? t("team.contactRequired")
         : undefined;
-  const invalid = !form.name.trim() || !hasContact || emailBad;
+  /* How they sign in, create only. Each refusal says what is wrong beside the
+     field once it has been left, and the button waits until all of it is fine. */
+  const usingPassword = mode === "create" && form.signIn === "password";
+  const pwIssue = usingPassword ? passwordIssue(form.password, form) : null;
+  const pwErr = usingPassword && blurred.password ? sayPassword(pwIssue) : undefined;
+  const confirmErr =
+    usingPassword && (form.confirm ? form.confirm !== form.password : blurred.confirm)
+      ? t("team.pwMismatch")
+      : undefined;
+  const pinIss = mode === "create" && form.pin ? pinIssue(form.pin) : null;
+  const pinErr = blurred.pin ? sayPin(pinIss) : undefined;
+  const secretsBad = usingPassword ? !!pwIssue || form.confirm !== form.password || !!pinIss : !!pinIss;
+  const invalid = !form.name.trim() || !hasContact || emailBad || (mode === "create" && secretsBad);
 
   const submit = async () => {
+    setBlurred((b) => ({ ...b, password: true, confirm: true, pin: true }));
+    if (invalid) return;
     setSaving(true);
     const input: StaffInput = {
       name: form.name.trim(),
@@ -107,16 +151,30 @@ export function MemberForm({
       roleId: form.roleId,
       locationIds: form.locationIds,
       counterIds: form.counterIds,
-      status: staff?.status ?? "invited",
+      // Someone given a password now can sign in now; an invite waits to be accepted.
+      status: staff?.status ?? (usingPassword ? "active" : "invited"),
     };
-    const res = mode === "create" ? await createStaff(input) : await updateStaff(staff!.id, input);
+    const res =
+      mode === "create"
+        ? await createStaff(input, {
+            ...(usingPassword ? { password: form.password, mustChangePassword: form.mustChange } : {}),
+            ...(form.pin ? { pin: form.pin } : {}),
+          })
+        : await updateStaff(staff!.id, input);
     setSaving(false);
     if (!res.ok) {
-      toast.error(res.error.message);
+      const first = res.error.fieldErrors ? Object.values(res.error.fieldErrors)[0] : undefined;
+      toast.error(first ?? res.error.message);
       return;
     }
     if (mode === "create") {
-      toast.success(t("team.invitedToast", { name: res.data.name }));
+      // What happens next depends on what was chosen, and the message says it.
+      toast.success(
+        usingPassword
+          ? t(form.mustChange ? "team.addedPasswordToast" : "team.addedPasswordKeepToast", { name: res.data.name })
+          : t("team.invitedToast", { name: res.data.name }),
+      );
+      setDraft(null);
       router.push(`/settings/team/${res.data.id}`);
       return;
     }
@@ -180,6 +238,128 @@ export function MemberForm({
         </SettingRow>
       </SettingsSection>
 
+      {mode === "create" && (
+        <SettingsSection title={t("team.signInTitle")} description={t("team.signInDesc")}>
+          <div role="radiogroup" aria-label={t("team.signInGroup")} className="flex flex-col gap-tight px-card py-section">
+            {(["link", "password"] as const).map((v) => {
+              const checked = form.signIn === v;
+              return (
+                <label
+                  key={v}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
+                    checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name={modeName}
+                    value={v}
+                    checked={checked}
+                    onChange={() => set({ signIn: v })}
+                    className="mt-[3px] h-4 w-4 shrink-0 accent-ember"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium text-fg">{t(v === "link" ? "team.signInLink" : "team.signInPassword")}</span>
+                    <span className="mt-inline block text-[13px] leading-relaxed text-muted">
+                      {t(v === "link" ? "team.signInLinkNote" : "team.signInPasswordNote")}
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+
+          {usingPassword && (
+            <>
+              <SettingRow label={t("team.pwLabel")} description={t("team.pwHint")} error={pwErr}>
+                {({ id, describedBy }) => (
+                  <>
+                    <SecretInput
+                      id={id}
+                      value={form.password}
+                      onChange={(password) => set({ password })}
+                      onBlur={() => blur("password")}
+                      show={showPw}
+                      onToggleShow={() => setShowPw((s) => !s)}
+                      invalid={!!pwErr}
+                      describedBy={describedBy}
+                      showLabel={t("team.pwShow")}
+                      hideLabel={t("team.pwHide")}
+                    />
+                    <StrengthMeter password={form.password} />
+                  </>
+                )}
+              </SettingRow>
+              <SettingRow label={t("team.pwConfirmLabel")} error={confirmErr}>
+                {({ id, describedBy }) => (
+                  <input
+                    id={id}
+                    type={showPw ? "text" : "password"}
+                    value={form.confirm}
+                    onChange={(e) => set({ confirm: e.target.value })}
+                    onBlur={() => blur("confirm")}
+                    autoComplete="new-password"
+                    spellCheck={false}
+                    aria-invalid={!!confirmErr || undefined}
+                    aria-describedby={describedBy}
+                    className={controlCls(!!confirmErr)}
+                  />
+                )}
+              </SettingRow>
+              <div className="px-card py-section">
+                <label htmlFor={mustId} className="flex min-h-11 cursor-pointer items-start gap-comfortable text-sm text-fg">
+                  <input
+                    id={mustId}
+                    type="checkbox"
+                    checked={form.mustChange}
+                    onChange={(e) => set({ mustChange: e.target.checked })}
+                    className="mt-[3px] h-4 w-4 shrink-0 accent-ember"
+                  />
+                  <span>{t("team.pwMustChange")}</span>
+                </label>
+                <p className="mt-tight text-[13px] leading-relaxed text-muted">{t("team.pwSafe")}</p>
+              </div>
+            </>
+          )}
+
+          <SettingRow label={t("team.pinLabel")} description={t("team.pinHint")} error={pinErr}>
+            {({ id, describedBy }) => (
+              <div className="flex flex-col gap-tight sm:flex-row">
+                <div className="min-w-0 flex-1">
+                  <SecretInput
+                    id={id}
+                    value={form.pin}
+                    onChange={(v) => set({ pin: v.replace(/\D/g, "").slice(0, 6) })}
+                    onBlur={() => blur("pin")}
+                    show={showPin}
+                    onToggleShow={() => setShowPin((s) => !s)}
+                    invalid={!!pinErr}
+                    describedBy={describedBy}
+                    showLabel={t("team.pinShow")}
+                    hideLabel={t("team.pinHide")}
+                    autoComplete="off"
+                    inputMode="numeric"
+                    maxLength={6}
+                    mono
+                  />
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    set({ pin: generatePin(4) });
+                    setShowPin(true);
+                    setBlurred((b) => ({ ...b, pin: false }));
+                  }}
+                >
+                  {t("team.pinGenerate")}
+                </Button>
+              </div>
+            )}
+          </SettingRow>
+        </SettingsSection>
+      )}
+
       <SettingsSection
         title={t("common.role")}
         description={t("team.roleDesc")}
@@ -211,9 +391,9 @@ export function MemberForm({
           dirty={!!draft}
           invalid={invalid}
           saving={saving}
-          note={t("team.inviteNote")}
-          invalidNote={t("team.inviteInvalid")}
-          submitLabel={t("team.sendInvite")}
+          note={usingPassword ? t("team.addPasswordNote") : t("team.inviteNote")}
+          invalidNote={!form.name.trim() || !hasContact || emailBad ? t("team.inviteInvalid") : t("team.addInvalidSecrets")}
+          submitLabel={usingPassword ? t("team.addMember") : t("team.sendInvite")}
           onSubmit={submit}
           onCancel={() => router.push("/settings/team")}
         />

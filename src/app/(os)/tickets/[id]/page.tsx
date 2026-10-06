@@ -1,10 +1,9 @@
 "use client";
 
 import { use, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Check, KeyRound, ShieldOff, X } from "lucide-react";
+import { Check, KeyRound, ShieldOff, X } from "lucide-react";
 import {
   ActionMenu,
   Button,
@@ -229,6 +228,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     <PageShell
       title={ticket.code}
       description={`${bookingName} · ${ticket.tierName}`}
+      back={{ href: `/orders/${ticket.orderId}`, label: order?.reference ?? t("backToOrder") }}
       actions={
         <span className="flex items-center gap-tight">
           {!spent && (
@@ -244,14 +244,6 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       }
     >
       <div className="flex flex-col gap-section">
-        <Link
-          href={`/orders/${ticket.orderId}`}
-          className="flex min-h-11 w-fit items-center gap-inline text-[13px] font-medium text-muted hover:text-fg md:min-h-0"
-        >
-          <ArrowLeft size={14} strokeWidth={1.5} aria-hidden />
-          {order?.reference ?? t("backToOrder")}
-        </Link>
-
         {/* A terminated ticket says so before anything else on the page: every
             figure below it is still true and none of it can be used. */}
         {ticket.terminatedAt && (

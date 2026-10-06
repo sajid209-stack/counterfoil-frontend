@@ -7,11 +7,12 @@ import { MonitorSmartphone } from "lucide-react";
 import { Button, ConfirmDialog, EmptyState, PageShell, StatusPill, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { listCounters, listDevices, listLocations, updateDevice, type Device } from "@/lib/api";
+import { listCounters, listDevices, listLocations, listStaff, updateDevice, type Device } from "@/lib/api";
 import { isDeviceQuiet } from "@/lib/devices";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { IconTile, RecordList, RecordRow, SectionSkeleton, Switch } from "../_components/SettingsKit";
 import { useSince } from "../_lib/time";
+import { WhoStack } from "./_components/WhoStack";
 
 type Tab = "all" | "on" | "off" | "attention";
 const TABS: Tab[] = ["all", "on", "off", "attention"];
@@ -44,6 +45,7 @@ export default function DevicesPage() {
   const devicesQ = useApiQuery(() => listDevices({ pageSize: 500 }), []);
   const countersQ = useApiQuery(() => listCounters({ pageSize: 500 }), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 200 }), []);
+  const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
 
   const devices = [...(devicesQ.data?.data ?? [])]
     .map((d) => latest[d.id] ?? d)
@@ -51,7 +53,8 @@ export default function DevicesPage() {
     .sort((a, b) => a.name.localeCompare(b.name));
   const counters = countersQ.data?.data ?? [];
   const locations = locationsQ.data?.data ?? [];
-  const loading = !devicesQ.data || !countersQ.data || !locationsQ.data;
+  const staff = staffQ.data?.data ?? [];
+  const loading = !devicesQ.data || !countersQ.data || !locationsQ.data || !staffQ.data;
 
   const needsAttention = (d: Device) =>
     d.status === "active" && (!d.counterId || !d.lastSeenAt || isDeviceQuiet(d, DEMO_TODAY));
@@ -133,6 +136,9 @@ export default function DevicesPage() {
                       <>
                         <span className={cn("block", place.warn ? "text-warning" : undefined)}>{place.text}</span>
                         <span className={cn("block", last.warn ? "text-warning" : undefined)}>{last.text}</span>
+                        <span className="mt-inline block">
+                          <WhoStack device={d} staff={staff} counters={counters} locations={locations} />
+                        </span>
                       </>
                     }
                     control={

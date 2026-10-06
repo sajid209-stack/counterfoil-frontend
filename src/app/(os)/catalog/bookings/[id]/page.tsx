@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Archive } from "lucide-react";
+import { Archive } from "lucide-react";
 import {
   Button,
   ConfirmDialog,
@@ -86,6 +85,8 @@ export default function ProductDetailPage() {
     <PageShell
       title={product?.name ?? t("fallbackTitle")}
       description={product ? subtitle(product, { resources: resourcesQ.data?.data, team: team.data?.data }) : undefined}
+      back={{ href: "/catalog?kind=bookings", label: t("back") }}
+      status={product && archived ? <StatusPill status="archived" /> : undefined}
       actions={
         product && !archived ? (
           <Button
@@ -95,18 +96,9 @@ export default function ProductDetailPage() {
           >
             {t("archive")}
           </Button>
-        ) : product && archived ? (
-          <StatusPill status="archived" />
         ) : undefined
       }
     >
-      <Link
-        href="/catalog?kind=bookings"
-        className="mb-section inline-flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg md:min-h-0"
-      >
-        <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {t("back")}
-      </Link>
-
       {loading || !product ? (
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : (

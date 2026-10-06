@@ -8,6 +8,7 @@ import { useApiQuery } from "@/lib/useApi";
 import {
   getStaff,
   listCounters,
+  listDevices,
   listLocations,
   listRoles,
   listStaff,
@@ -20,7 +21,9 @@ import { DEMO_STAFF_ID } from "@/lib/session";
 import { SectionSkeleton } from "../../_components/SettingsKit";
 import { countByRole } from "../../_lib/roles";
 import { AccessSection } from "../_components/AccessSection";
+import { DevicesSection } from "../_components/DevicesSection";
 import { MemberForm } from "../_components/MemberForm";
+import { SetPasswordDialog, SetPinDialog } from "../_components/SecretDialogs";
 
 export default function MemberPage() {
   const params = useParams<{ id: string }>();
@@ -32,6 +35,8 @@ export default function MemberPage() {
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
   const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
   const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
+  const devicesQ = useApiQuery(() => listDevices({ pageSize: 500 }), []);
+  const [secret, setSecret] = useState<null | "password" | "pin">(null);
   // The record as last written from this page, so a status change shows at once
   // without reloading the form out from under an edit in progress.
   const [latest, setLatest] = useState<Staff | null>(null);
@@ -50,7 +55,7 @@ export default function MemberPage() {
   }
 
   const member = latest?.id === params.id ? latest : memberQ.data;
-  if (!member || rolesQ.loading || locationsQ.loading || countersQ.loading || staffQ.loading) {
+  if (!member || rolesQ.loading || locationsQ.loading || countersQ.loading || staffQ.loading || !devicesQ.data) {
     return (
       <PageShell title={t("team.fallbackTitle")}>
         <SectionSkeleton />
@@ -95,9 +100,22 @@ export default function MemberPage() {
           onResend={() => toast.success(t("team.inviteResent", { who: via }))}
           onRevoke={() => setConfirm("revoke")}
           onReset={() => toast.success(t("team.resetSent", { who: via }))}
+          onSetPassword={() => setSecret("password")}
+          onSetPin={() => setSecret("pin")}
           onSuspend={() => setConfirm("suspend")}
           onReactivate={() => setStatus("active")}
         />
+        {/* Only someone who can sign in has tablets to use. An invite has
+            nothing to assign yet, and a blocked person cannot be given one. */}
+        {member.status === "active" && (
+          <DevicesSection
+            member={member}
+            devices={devicesQ.data?.data ?? []}
+            counters={countersQ.data?.data ?? []}
+            locations={locationsQ.data?.data ?? []}
+            onChanged={devicesQ.reload}
+          />
+        )}
         <MemberForm
           mode="edit"
           staff={member}
@@ -108,6 +126,25 @@ export default function MemberPage() {
           onSaved={setLatest}
         />
       </div>
+
+      <SetPasswordDialog
+        member={member}
+        open={secret === "password"}
+        onClose={() => setSecret(null)}
+        onDone={(s) => {
+          setLatest(s);
+          setSecret(null);
+        }}
+      />
+      <SetPinDialog
+        member={member}
+        open={secret === "pin"}
+        onClose={() => setSecret(null)}
+        onDone={(s) => {
+          setLatest(s);
+          setSecret(null);
+        }}
+      />
 
       <ConfirmDialog
         open={confirm !== null}

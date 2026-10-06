@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, CalendarClock, ChevronRight, Lock, Printer, RotateCcw, Send, Unlock, Wallet } from "lucide-react";
+import { CalendarClock, ChevronRight, Lock, Printer, RotateCcw, Send, Unlock, Wallet } from "lucide-react";
 import {
   ActionMenu,
   Button,
@@ -221,6 +221,8 @@ export default function OrderDetailPage() {
   return (
     <PageShell
       title={o?.reference ?? t("order")}
+      back={{ href: "/orders", label: t("backOrders") }}
+      status={o ? <StatusPill status={o.status} /> : undefined}
       actions={
         o ? (
           /* One primary, one secondary, the rest behind a menu. Five equal
@@ -228,8 +230,7 @@ export default function OrderDetailPage() {
              put Refund and Write off — both of which move money — at the same
              weight as Print receipt. Taking the money owed is the only action
              that is ever urgent, so it is the only one that is ever primary. */
-          <div className="flex items-center gap-tight">
-            <StatusPill status={o.status} />
+          <div className="flex flex-wrap items-center gap-tight">
             {owed > 0 && o.status === "partial" && (
               <Button icon={<Wallet size={16} strokeWidth={1.5} />} onClick={openPay}>
                 {t("takePayment")}
@@ -276,10 +277,6 @@ export default function OrderDetailPage() {
         ) : undefined
       }
     >
-      <Link href="/orders" className="mb-section inline-flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg sm:min-h-0">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("backOrders")}
-      </Link>
-
       {o && (
         <div className="mb-section">
           <RefundRequests orderId={o.id} onDecided={() => { order.reload(); bookingsQ.reload(); ticketsQ.reload(); }} />

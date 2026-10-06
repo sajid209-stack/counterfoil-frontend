@@ -5,20 +5,43 @@ import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, ConfirmDialog, EmptyState, PageShell, StatusPill, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { archiveDevice, getDevice, listCounters, listLocations, updateDevice, type Device } from "@/lib/api";
+import {
+  archiveDevice,
+  deviceAccess,
+  getDevice,
+  listCounters,
+  listLocations,
+  listRoles,
+  listStaff,
+  updateDevice,
+  type Device,
+} from "@/lib/api";
 import { isDeviceQuiet } from "@/lib/devices";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { RecordFacts, SaveBar, SectionSkeleton, SettingRow, SettingsSection, controlCls } from "../../_components/SettingsKit";
 import { useSince } from "../../_lib/time";
 import { CounterSelect } from "../_components/CounterSelect";
+import { accessProblem, DeviceAccess } from "../_components/DeviceAccess";
+import { resolveWho, firstName } from "../_components/WhoStack";
 
 interface Draft {
   name: string;
   counterId: string;
+  /** Who can sign in on it: everyone at the counter, or only these people. */
+  access: "venue" | "assigned";
+  staffIds: string[];
+  /** "" when it is a shared tablet. */
+  ownerStaffId: string;
 }
 
-const fromDevice = (d: Device): Draft => ({ name: d.name, counterId: d.counterId ?? "" });
+const fromDevice = (d: Device): Draft => ({
+  name: d.name,
+  counterId: d.counterId ?? "",
+  access: deviceAccess(d),
+  staffIds: d.staffIds ?? [],
+  ownerStaffId: d.ownerStaffId ?? "",
+});
 
 /**
  * One tablet.
@@ -37,6 +60,8 @@ export default function DevicePage() {
   const deviceQ = useApiQuery(() => getDevice(params.id), [params.id]);
   const countersQ = useApiQuery(() => listCounters({ pageSize: 500 }), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 200 }), []);
+  const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
+  const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
   const [latest, setLatest] = useState<Device | null>(null);
   const [base, setBase] = useState<Draft | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -57,7 +82,7 @@ export default function DevicePage() {
       </PageShell>
     );
   }
-  if (!device || !initial || countersQ.loading || locationsQ.loading) {
+  if (!device || !initial || countersQ.loading || locationsQ.loading || !staffQ.data || !rolesQ.data) {
     return (
       <PageShell title={t("devices.fallbackTitle")}>
         <SectionSkeleton />
@@ -71,6 +96,16 @@ export default function DevicePage() {
   const nameErr = !form.name.trim() ? t("devices.nameRequired") : undefined;
   const counters = countersQ.data?.data ?? [];
   const locations = locationsQ.data?.data ?? [];
+  const staff = staffQ.data?.data ?? [];
+  const roles = rolesQ.data?.data ?? [];
+  const problem = accessProblem(form, staff);
+  const accessErr = problem ? (problem.key === "pickErr" ? t("devices.pickErr") : t("devices.pickBlocked", { name: problem.name })) : undefined;
+  // The counter the DRAFT points at, so the words under "Everyone who works at…"
+  // follow a change of counter before it is saved.
+  const draftCounter = counters.find((c) => c.id === form.counterId);
+  const draftPlace = locations.find((l) => l.id === draftCounter?.locationId)?.name ?? "";
+  // And who it is open to as SAVED, for the facts above the form.
+  const who = resolveWho(device, staff, counters, locations);
   const counter = counters.find((c) => c.id === device.counterId);
   const place = locations.find((l) => l.id === counter?.locationId);
   /* A tablet that has not checked in for a week is the one fact on this page
@@ -99,12 +134,33 @@ export default function DevicePage() {
       tone: counter ? undefined : ("warn" as const),
     },
     { key: "place", label: t("devices.factPlace"), value: place ? place.name : "—" },
+    {
+      key: "who",
+      label: t("devices.accessTitle"),
+      value:
+        who.kind === "own"
+          ? t("devices.whoOwn", { name: who.people[0] ? firstName(who.people[0]) : "—" })
+          : who.kind === "nobody"
+            ? t("devices.whoNobody")
+            : who.kind === "everyone"
+              ? counter
+                ? t("devices.whoEveryone", { place: who.place })
+                : t("devices.accessVenueNoCounter")
+              : who.people.map(firstName).join(", "),
+      tone: who.kind === "nobody" ? ("warn" as const) : undefined,
+    },
     { key: "added", label: t("devices.factAdded"), value: formatDate(device.createdAt.slice(0, 10)) },
   ];
 
   const save = async () => {
     setSaving(true);
-    const res = await updateDevice(device.id, { name: form.name.trim(), counterId: form.counterId || null });
+    const res = await updateDevice(device.id, {
+      name: form.name.trim(),
+      counterId: form.counterId || null,
+      access: form.ownerStaffId ? "assigned" : form.access,
+      staffIds: form.ownerStaffId ? [form.ownerStaffId] : form.access === "assigned" ? form.staffIds : [],
+      ownerStaffId: form.ownerStaffId || null,
+    });
     setSaving(false);
     if (!res.ok) {
       toast.error(res.error.message);
@@ -146,7 +202,7 @@ export default function DevicePage() {
     <PageShell
       title={device.name}
       description={counter ? [counter.name, place?.name].filter(Boolean).join(" · ") : t("devices.notPaired")}
-      actions={device.status !== "active" ? <StatusPill status={device.status} /> : undefined}
+      status={device.status !== "active" ? <StatusPill status={device.status} /> : undefined}
     >
       <div className="flex max-w-3xl flex-col gap-section pb-hero">
         {/* What this tablet IS, before anything you can change about it. The
@@ -182,6 +238,16 @@ export default function DevicePage() {
             )}
           </SettingRow>
         </SettingsSection>
+
+        <DeviceAccess
+          value={{ access: form.access, staffIds: form.staffIds, ownerStaffId: form.ownerStaffId }}
+          onChange={(a) => setDraft({ ...form, ...a })}
+          staff={staff}
+          roles={roles}
+          place={draftPlace}
+          counterName={draftCounter?.name ?? ""}
+          error={accessErr}
+        />
 
         <SettingsSection title={t("devices.connectionTitle")} description={t("devices.connectionDesc")}>
           <SettingRow
@@ -225,7 +291,7 @@ export default function DevicePage() {
           </SettingRow>
         </SettingsSection>
 
-        <SaveBar dirty={dirty} saving={saving} invalid={!!nameErr} onSave={save} onDiscard={() => setDraft(null)} />
+        <SaveBar dirty={dirty} saving={saving} invalid={!!nameErr || !!problem} onSave={save} onDiscard={() => setDraft(null)} />
       </div>
 
       <ConfirmDialog

@@ -28,7 +28,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Armchair,
   Copy,
   DoorOpen,
@@ -114,7 +113,6 @@ interface Plan {
 
 function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }) {
   const t = useTranslations("seatmaps");
-  const router = useRouter();
   const toast = useToast();
 
   const [name, setName] = useState(layout.name);
@@ -420,12 +418,9 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
     <PageShell
       title={name || t("editor.backToList")}
       description={t("editor.description")}
+      back={{ href: "/catalog/layouts", label: t("editor.backToList") }}
       actions={<Button loading={saving} onClick={save}>{t("editor.save")}</Button>}
     >
-      <button type="button" onClick={() => router.push("/catalog/layouts")} className="mb-section inline-flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg sm:min-h-0">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("editor.backToList")}
-      </button>
-
       <div className="flex flex-col gap-section">
         {/* What kind of room, and what it is called */}
         <div className="grid gap-section card-surface p-card sm:grid-cols-3">

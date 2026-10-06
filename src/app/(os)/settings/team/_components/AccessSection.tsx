@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { KeyRound, Mail, UserCheck, UserMinus, UserX } from "lucide-react";
+import { Hash, KeyRound, Lock, Mail, UserCheck, UserMinus, UserX } from "lucide-react";
 import { Button, StatusPill } from "@/components/ui";
 import type { Staff } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
@@ -29,6 +29,8 @@ export function AccessSection({
   onResend,
   onRevoke,
   onReset,
+  onSetPassword,
+  onSetPin,
   onSuspend,
   onReactivate,
 }: {
@@ -37,6 +39,8 @@ export function AccessSection({
   onResend: () => void;
   onRevoke: () => void;
   onReset: () => void;
+  onSetPassword: () => void;
+  onSetPin: () => void;
   onSuspend: () => void;
   onReactivate: () => void;
 }) {
@@ -92,6 +96,28 @@ export function AccessSection({
               <div className="flex sm:justify-end">
                 <Button variant="secondary" icon={<KeyRound size={16} strokeWidth={1.5} />} onClick={onReset}>
                   {t("team.sendReset")}
+                </Button>
+              </div>
+            )}
+          </SettingRow>
+          <SettingRow label={t("team.setPwLabel")} description={t("team.setPwDesc")} labelFor={false}>
+            {() => (
+              <div className="flex sm:justify-end">
+                <Button variant="secondary" icon={<Lock size={16} strokeWidth={1.5} />} onClick={onSetPassword}>
+                  {t("team.setPwButton")}
+                </Button>
+              </div>
+            )}
+          </SettingRow>
+          <SettingRow
+            label={t("team.pinRowLabel")}
+            description={member.hasPin ? t("team.pinRowSet", { count: member.pinLength ?? 4 }) : t("team.pinRowNotSet")}
+            labelFor={false}
+          >
+            {() => (
+              <div className="flex sm:justify-end">
+                <Button variant="secondary" icon={<Hash size={16} strokeWidth={1.5} />} onClick={onSetPin}>
+                  {member.hasPin ? t("team.pinRowChange") : t("team.pinRowButton")}
                 </Button>
               </div>
             )}

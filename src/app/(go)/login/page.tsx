@@ -7,15 +7,22 @@ import { Button, FormField, Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveCounterNow } from "@/lib/activeCounter";
 import { formatClock } from "@/lib/format";
-import { getAccessPolicy, listStaff, type Staff } from "@/lib/api";
+import {
+  DEMO_PIN,
+  checkStaffPin,
+  getAccessPolicy,
+  listDevices,
+  listStaff,
+  staffPinLength,
+  whoCanSignIn,
+  type Staff,
+} from "@/lib/api";
 import { Keypad } from "../_components/Keypad";
 
-// Mock session facts: this device is paired to the Fort Main Gate counter and
-// Nadia's shift has been open since 09:14. Demo PIN for everyone: 1234.
-const DEVICE_NAME = "Fort iPad 1";
+// Mock session facts: Nadia's shift has been open since 09:14. Until somebody
+// has a PIN of their own, the demo PIN for everyone is 1234.
 const BUSINESS = "Lalbagh Heritage Attractions";
 const OPEN_SHIFT = { staffId: "stf_nadia", since: "09:14" };
-const DEMO_PIN = "1234";
 
 /** Each person's face has a colour of its own, so somebody who cannot read the
  *  names finds themselves by colour. Handed out in the order people joined
@@ -49,12 +56,13 @@ export default function GoLoginPage() {
   const router = useRouter();
   const t = useTranslations("pos");
   const staffQ = useApiQuery(() => listStaff({ pageSize: 100, filters: { status: "active" } }), []);
+  const devicesQ = useApiQuery(() => listDevices({ pageSize: 500 }), []);
   // How many wrong PINs before the pause is the business's call, made in
   // Settings → Sign-in rules; three until that answer arrives.
   const policyQ = useApiQuery(() => getAccessPolicy(), []);
   const maxAttempts = policyQ.data?.pinAttempts ?? 3;
 
-  const [who, setWho] = useState<Staff | { id: "guest"; name: string } | null>(null);
+  const [picked, setPicked] = useState<Staff | { id: "guest"; name: string } | null>(null);
   const [pin, setPin] = useState("");
   const [attempts, setAttempts] = useState(0);
   const [shake, setShake] = useState(false);
@@ -64,9 +72,21 @@ export default function GoLoginPage() {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
 
-  /* The people who work the counter this device is set to (Go header). */
+  /* The people who can sign in on THIS tablet: the device paired to the counter
+     this till is set to (Go header) decides, and an open tablet means everyone
+     who works that counter, as it always did. Nothing is listed until both the
+     people and the devices are known, so a limited tablet never flashes the
+     whole venue before it narrows. */
   const activeCounter = useActiveCounterNow();
-  const team = (staffQ.data?.data ?? []).filter((s) => s.counterIds.includes(activeCounter.id));
+  const ready = !!staffQ.data && !!devicesQ.data;
+  const signIn = ready ? whoCanSignIn(devicesQ.data!.data, staffQ.data!.data, activeCounter.id) : null;
+  const team = signIn?.people ?? [];
+  const limited = !!signIn?.limited;
+  const owner = signIn?.device?.ownerStaffId ? team.find((s) => s.id === signIn.device!.ownerStaffId) : undefined;
+  // Somebody's own device goes straight to their PIN pad.
+  const who = picked ?? owner ?? null;
+  const setWho = (next: typeof picked) => setPicked(next);
+  const deviceName = signIn?.device?.name ?? "";
   const colors = faceColors(team);
   const colorOf = (id: string): FaceColor => colors.get(id) ?? "orange";
   const shiftOwner = staffQ.data?.data.find((s) => s.id === OPEN_SHIFT.staffId);
@@ -76,12 +96,15 @@ export default function GoLoginPage() {
     else router.push(person.id === OPEN_SHIFT.staffId ? "/pos" : "/shift/open");
   };
 
+  // A PIN is 4 to 6 digits; somebody who has not set one uses the demo PIN, 4 long.
+  const pinLen = who && who.id !== "guest" ? staffPinLength(who.id) : 4;
+
   const onKey = (d: string) => {
     if (locked || !who) return;
-    const next = (pin + d).slice(0, 4);
+    const next = (pin + d).slice(0, pinLen);
     setPin(next);
-    if (next.length === 4) {
-      if (next === DEMO_PIN) {
+    if (next.length === pinLen) {
+      if (who.id === "guest" ? next === DEMO_PIN : checkStaffPin(who.id, next)) {
         setAttempts(0);
         setTimeout(() => proceed(who), 150);
       } else {
@@ -110,16 +133,31 @@ export default function GoLoginPage() {
       {/* Context bar — confirm you're at the right counter before signing in. */}
       <div className="w-full max-w-lg text-center">
         <p className="text-[0.875rem] font-medium text-muted">
-          {BUSINESS} · {activeCounter.counter?.name ?? ""} · {DEVICE_NAME}
+          {[BUSINESS, activeCounter.counter?.name, deviceName].filter(Boolean).join(" · ")}
         </p>
         <p className="mt-inline text-[0.8125rem] text-muted">
           {shiftOwner ? t("login.shiftOpenBy", { name: shiftOwner.name.split(" ")[0], time: formatClock(OPEN_SHIFT.since) }) : t("login.noShift")}
-          <span className="ml-tight text-muted">· {t("login.demoPin", { pin: DEMO_PIN })}</span>
+          {!(who && "hasPin" in who && who.hasPin) && <span className="ml-tight text-muted">· {t("login.demoPin", { pin: DEMO_PIN })}</span>}
         </p>
+        {/* A limited tablet says so, quietly, and where to change it. Somebody
+            who is not on the list should learn why from the screen rather than
+            from a colleague. */}
+        {limited && (
+          <p className="mt-tight text-[0.8125rem] text-muted" data-testid="login-limited">
+            {owner ? t("login.ownDevice", { name: owner.name.split(" ")[0] }) : t("login.limitedNote")} {t("login.limitedHow")}
+          </p>
+        )}
       </div>
 
 
-      {!who ? (
+      {!ready ? (
+        <div aria-busy="true" className="go-surface mt-major h-64 w-full max-w-lg animate-pulse rounded-go" />
+      ) : !who && limited && team.length === 0 ? (
+        <div className="mt-major max-w-lg text-center">
+          <p className="text-[1rem] font-semibold text-fg">{t("login.emptyTitle")}</p>
+          <p className="mt-tight text-[0.8125rem] text-muted">{t("login.emptyHow")}</p>
+        </div>
+      ) : !who ? (
         <>
           {/* Step 1 — who are you. Faster than a PIN that must also identify. */}
           <p className="mt-major text-[1rem] font-semibold text-fg">{t("login.whoTitle")}</p>
@@ -140,15 +178,20 @@ export default function GoLoginPage() {
                 <span className={`text-[0.8125rem] ${s.id === OPEN_SHIFT.staffId ? "font-medium text-success" : "text-muted"}`}>{stateLine(s)}</span>
               </button>
             ))}
-            <button
-              type="button"
-              onClick={() => setSomeoneElse(true)}
-              data-focus-inset
-              className="flex min-h-32 flex-col items-center justify-center gap-tight border-b border-r border-line bg-card p-comfortable text-muted active:bg-ember/10"
-            >
-              <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-strong text-2xl leading-none">+</span>
-              <span className="text-[0.9375rem] font-medium">{t("login.someoneElse")}</span>
-            </button>
+            {/* A door for somebody not on this counter. Closed on a limited
+                tablet: signing in as someone who is not allowed must not be
+                possible from the screen. */}
+            {!limited && (
+              <button
+                type="button"
+                onClick={() => setSomeoneElse(true)}
+                data-focus-inset
+                className="flex min-h-32 flex-col items-center justify-center gap-tight border-b border-r border-line bg-card p-comfortable text-muted active:bg-ember/10"
+              >
+                <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-strong text-2xl leading-none">+</span>
+                <span className="text-[0.9375rem] font-medium">{t("login.someoneElse")}</span>
+              </button>
+            )}
           </div>
           </div>
         </>
@@ -158,13 +201,15 @@ export default function GoLoginPage() {
           <div className="mt-major flex items-center gap-tight">
             <Face color={colorOf(who.id)} name={who.name} size="md" />
             <span className="text-lg">{who.name}</span>
-            <button type="button" onClick={() => { setWho(null); setPin(""); setAttempts(0); setLocked(false); }} className="ml-tight text-[0.8125rem] text-muted underline-offset-4 active:underline">
-              {t("login.notYou")}
-            </button>
+            {!owner && (
+              <button type="button" onClick={() => { setWho(null); setPin(""); setAttempts(0); setLocked(false); }} className="ml-tight text-[0.8125rem] text-muted underline-offset-4 active:underline">
+                {t("login.notYou")}
+              </button>
+            )}
           </div>
 
-          <div className={`mt-section flex gap-comfortable ${shake ? "animate-[shake_0.12s_ease-in-out_0s_2]" : ""}`} role="img" aria-label={t("login.pinProgress", { count: pin.length })}>
-            {[0, 1, 2, 3].map((i) => (
+          <div className={`mt-section flex gap-comfortable ${shake ? "animate-[shake_0.12s_ease-in-out_0s_2]" : ""}`} role="img" aria-label={t("login.pinProgress", { count: pin.length, total: pinLen })}>
+            {Array.from({ length: pinLen }, (_, i) => i).map((i) => (
               <span key={i} className={`h-4 w-4 rounded-full border-2 border-fg ${i < pin.length ? "bg-fg" : "bg-transparent"}`} />
             ))}
           </div>

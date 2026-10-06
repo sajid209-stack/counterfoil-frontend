@@ -189,5 +189,28 @@
     "heroDesc": "Shown at the top of your page. Pick a photo from your bookings.",
     "heroNone": "Designed cover",
     "heroEmpty": "No photos yet. Add a photo to a booking and it shows up here."
+  },
+  "card": {
+    "add": "Add",
+    "addAria": "Add {name} to basket",
+    "details": "Details",
+    "detailsAria": "See details for {name}",
+    "added": "Added",
+    "moreOf": "One more {name}",
+    "lessOf": "One fewer {name}",
+    "inBasket": "{count} in basket",
+    "nextAt": "Next: {day}, {time}",
+    "nextDay": "Next: {day}",
+    "noneSoon": "Nothing open soon"
+  },
+  "sheet": {
+    "label": "Add {name}",
+    "close": "Close",
+    "seeDetails": "See full details"
+  },
+  "toast": {
+    "added": "Added to basket",
+    "checkout": "Checkout",
+    "dismiss": "Dismiss"
   }
 }

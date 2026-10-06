@@ -545,7 +545,7 @@
     "demoPin": "demo PIN {pin}",
     "someoneElse": "Someone else",
     "notYou": "Not you?",
-    "pinProgress": "{count} of 4 digits entered",
+    "pinProgress": "{count} of {total} digits entered",
     "locked": "Locked for 5 minutes. Ask a manager to unlock.",
     "managerUnlock": "Manager unlock",
     "wrongPin": "Wrong PIN. {left, plural, one {# try left.} other {# tries left.}}",
@@ -559,7 +559,12 @@
     "namePlaceholder": "Full name",
     "email": "Email",
     "emailHelp": "For staff from another counter.",
-    "continue": "Continue"
+    "continue": "Continue",
+    "limitedNote": "Only people assigned to this tablet can sign in here.",
+    "limitedHow": "A manager can change this in OS Settings, Devices.",
+    "emptyTitle": "Nobody is set up to sign in here yet.",
+    "emptyHow": "A manager can add people in OS Settings, Devices.",
+    "ownDevice": "This is {name}'s own device."
   },
   "tills": {
     "metaTitle": "Sales screens · Counterfoil",

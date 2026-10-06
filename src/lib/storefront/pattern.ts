@@ -10,6 +10,7 @@
  */
 import { DEMO_NOW_MINUTES, DEMO_TODAY, dowOf, toMinutes } from "@/lib/schedule";
 import { getDailyRemaining, getSlots, isOpenOn, isResourceFreeFor } from "@/lib/api/slots";
+import { durationOptions } from "@/lib/duration";
 import type { BookingTypeCode, Product, ProductSchedule } from "@/lib/api/types";
 
 export type StorefrontPattern = "open" | "daily" | "sessions" | "resource";
@@ -130,3 +131,74 @@ export function cheapestFreeResourceId(
 /** Re-exported so callers of this module get the daily-cap and single-resource
  *  questions from one place rather than a second import of `lib/api/slots`. */
 export { isResourceFreeFor, getDailyRemaining };
+
+/* ── Smart defaults and "next available", for the quick-add sheet and the card ─
+ *
+ * One definition of "the first thing a guest could buy", used by the sheet
+ * (to preselect it) and by the card (to say it), so the two cannot disagree. */
+
+/** The duration a field/lane booking opens on: the first the booking offers. */
+export function defaultDuration(product: Product): number {
+  const choices = product.durationConfig ? durationOptions(product.durationConfig) : [];
+  return choices[0] ?? (product.schedule?.sessionMinutes || product.schedule?.slotMinutes || 60);
+}
+
+/** The first departure on a date that still has room, for the session pattern. */
+export function firstSessionTime(product: Product, date: string): TimeOption | null {
+  return timeOptionsFor(product, date).find((o) => o.remaining > 0) ?? null;
+}
+
+/** The first start on a date with a field/lane free for the whole span. */
+export function firstResourceTime(product: Product, date: string, durationMinutes: number, resourceId?: string | null): ResourceTimeOption | null {
+  return resourceTimeOptions(product, date, durationMinutes, resourceId).find((o) => o.freeIds.length > 0) ?? null;
+}
+
+export interface NextAvailable {
+  date: string;
+  /** "HH:MM", or null when the booking has no time of day to choose. */
+  time: string | null;
+}
+
+/** The soonest day (and time) a booking can actually be bought. Open entry has
+ *  no day to choose, so it has no "next"; a day with nothing left is skipped. */
+export function nextAvailable(product: Product, now: Date): NextAvailable | null {
+  const pattern = storefrontPattern(product.bookingType);
+  if (pattern === "open") return null;
+  const days = nextBookableDays(product, now, 10);
+  for (const date of days) {
+    if (pattern === "daily") {
+      if (getDailyRemaining(product, date) > 0) return { date, time: null };
+    } else if (pattern === "sessions") {
+      const o = firstSessionTime(product, date);
+      if (o) return { date, time: o.time };
+    } else {
+      const o = firstResourceTime(product, date, defaultDuration(product));
+      if (o) return { date, time: o.time };
+    }
+  }
+  return null;
+}
+
+/** The first of the next bookable days that has something to buy on it, so a
+ *  sheet never opens on a day that is already full. Falls back to the first
+ *  bookable day. */
+export function firstUsableDate(product: Product, dates: string[]): string | null {
+  const pattern = storefrontPattern(product.bookingType);
+  if (pattern === "open") return null;
+  const usable = dates.find((d) =>
+    pattern === "daily"
+      ? getDailyRemaining(product, d) > 0
+      : pattern === "sessions"
+        ? !!firstSessionTime(product, d)
+        : !!firstResourceTime(product, d, defaultDuration(product)),
+  );
+  return usable ?? dates[0] ?? null;
+}
+
+/** Does this booking need no choice at all: one kind of ticket, no day, no
+ *  time, no extras? Then a single tap can put one in the basket. */
+export function isOneTap(product: Product): boolean {
+  if (storefrontPattern(product.bookingType) !== "open") return false;
+  if ((product.addOns ?? []).length > 0) return false;
+  return product.tiers.filter((t) => t.active).length === 1;
+}

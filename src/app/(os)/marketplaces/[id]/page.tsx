@@ -22,7 +22,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Plus, RefreshCw, Send } from "lucide-react";
+import { Plus, RefreshCw, Send } from "lucide-react";
 import {
   ActionMenu,
   Button,
@@ -197,6 +197,7 @@ export default function MarketplacePage() {
   return (
     <PageShell
       title={meta.name}
+      back={{ href: "/marketplaces", label: t("backToList") }}
       description={t("oneDescription", { name: meta.name })}
       actions={
         <div className="flex flex-wrap gap-tight">
@@ -211,10 +212,6 @@ export default function MarketplacePage() {
         </div>
       }
     >
-      <button type="button" onClick={() => router.push("/marketplaces")} className="mb-section inline-flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg sm:min-h-0">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("backToList")}
-      </button>
-
       <div className="mb-section">
         <StatStrip
           items={[

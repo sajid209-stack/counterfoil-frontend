@@ -7,7 +7,17 @@ import { KeyRound, Mail, UserCheck, UserMinus, UserX } from "lucide-react";
 import { ActionMenu, Avatar, ConfirmDialog, PageShell, Select, StatusPill, Tabs, useToast, type ActionMenuItem } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { listLocations, listRoles, listStaff, revokeInvite, updateStaff, type Staff, type StaffStatus } from "@/lib/api";
+import {
+  devicesForStaff,
+  listDevices,
+  listLocations,
+  listRoles,
+  listStaff,
+  revokeInvite,
+  updateStaff,
+  type Staff,
+  type StaffStatus,
+} from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
 import { RecordList, RecordRow, SearchField, SectionSkeleton } from "../_components/SettingsKit";
 import { useSince } from "../_lib/time";
@@ -54,6 +64,7 @@ export default function TeamPage() {
   const staffQ = useApiQuery(() => listStaff({ pageSize: 500 }), []);
   const rolesQ = useApiQuery(() => listRoles({ pageSize: 100 }), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
+  const devicesQ = useApiQuery(() => listDevices({ pageSize: 500 }), []);
 
   const staff = useMemo(() => staffQ.data?.data ?? [], [staffQ.data]);
   const roles = rolesQ.data?.data ?? [];
@@ -76,6 +87,9 @@ export default function TeamPage() {
     if (s.locationIds.length === 1) return locations.find((l) => l.id === s.locationIds[0])?.name ?? "—";
     return t("team.locationsCount", { count: s.locationIds.length });
   };
+  // How many tablets a person can sign in on, said only for people who can sign in.
+  const devices = devicesQ.data?.data ?? [];
+  const deviceCount = (s: Staff) => (s.status === "active" && devicesQ.data ? devicesForStaff(devices, s).count : null);
   // "Active 30 May" reads as a claim that a suspended person is active. The
   // pill already says suspended, so their line says when they last were.
   const activity = (s: Staff) =>
@@ -244,6 +258,7 @@ export default function TeamPage() {
                         <span className="block truncate">{s.email ?? s.phone}</span>
                         <span className="block md:hidden">
                           {roleName(s.roleId)} · <span className={cn(nowhere ? "text-warning" : undefined)}>{workplace(s)}</span> · {activity(s)}
+                          {deviceCount(s) !== null && <> · {t("team.deviceCount", { count: deviceCount(s)! })}</>}
                         </span>
                       </>
                     }
@@ -252,6 +267,9 @@ export default function TeamPage() {
                         <span className="w-28 truncate text-sm text-fg">{roleName(s.roleId)}</span>
                         <span className={cn("hidden w-40 truncate text-[13px] lg:block", nowhere ? "text-warning" : "text-muted")}>{workplace(s)}</span>
                         <span className="w-44 text-[13px] text-muted">{activity(s)}</span>
+                        <span className="hidden w-24 truncate text-[13px] text-muted xl:block">
+                          {deviceCount(s) !== null ? t("team.deviceCount", { count: deviceCount(s)! }) : ""}
+                        </span>
                       </>
                     }
                     menu={<ActionMenu label={t("team.actionsFor", { name: s.name })} items={actions(s)} />}

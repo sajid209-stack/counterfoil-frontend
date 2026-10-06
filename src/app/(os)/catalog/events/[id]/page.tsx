@@ -4,7 +4,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Archive, ArrowLeft, Check, ChevronDown, Circle, Copy, Download, Eye, EyeOff, Monitor, Pencil, Smartphone } from "lucide-react";
+import { Archive, Check, ChevronDown, Circle, Copy, Download, Eye, EyeOff, Monitor, Pencil, Smartphone } from "lucide-react";
 import { ActionMenu, Button, ConfirmDialog, EmptyState, PageShell, StatStrip, StatusPill, useToast, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -180,11 +180,12 @@ export default function EventDetailPage() {
   return (
     <PageShell
       title={e?.title ?? t("title")}
+      back={{ href: "/catalog?kind=events", label: tc("kind.events") }}
       description={e ? `${when} · ${e.venueName} · ${t(`category.${categoryById(e.categoryId).key}`)}` : undefined}
+      status={e && state && state !== "archived" ? <StatusPill tone={TONE[state]} shape={state === "offSale" ? "record" : "transaction"}>{tc(`state.${state}`)}</StatusPill> : undefined}
       actions={
         e && state !== "archived" ? (
-          <div className="flex items-center gap-tight">
-            {state && <StatusPill tone={TONE[state]} shape={state === "offSale" ? "record" : "transaction"}>{tc(`state.${state}`)}</StatusPill>}
+          <div className="flex flex-wrap items-center gap-tight">
             {state !== "ended" && (
               <Button variant="secondary" icon={e.published ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />} onClick={toggle}>
                 {tc(e.published ? "action.offSale" : "action.onSale")}
@@ -205,10 +206,6 @@ export default function EventDetailPage() {
       }
     >
       <div className={cn("flex flex-col gap-section pb-hero", templateFontVars)}>
-        <Link href="/catalog?kind=events" className="inline-flex min-h-11 items-center gap-inline self-start text-[13px] text-muted hover:text-fg md:hidden">
-          <ArrowLeft size={14} strokeWidth={1.5} /> {tc("kind.events")}
-        </Link>
-
 
         {e && (
           <StatStrip

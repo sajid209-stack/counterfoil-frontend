@@ -44,7 +44,7 @@ export default function LocationPage() {
     <PageShell
       title={location.name}
       description={[location.addressLine1, location.city].filter(Boolean).join(", ")}
-      actions={location.status !== "active" ? <StatusPill status={location.status} /> : undefined}
+      status={location.status !== "active" ? <StatusPill status={location.status} /> : undefined}
     >
       <LocationEditor
         mode="edit"

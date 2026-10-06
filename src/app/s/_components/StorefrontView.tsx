@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { ArrowRight, Clock, MapPin, MessageSquareText, Navigation, QrCode, ShieldCheck, Ticket, Wallet } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { ArrowRight, CalendarClock, Check, Clock, MapPin, MessageSquareText, Minus, Navigation, Plus, QrCode, ShieldCheck, Ticket, Wallet } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Product } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
-import { formatClockRange, formatPriceShort } from "@/lib/format";
+import { formatClock, formatClockRange, formatPriceShort } from "@/lib/format";
 import { formatDuration } from "@/lib/duration";
 import { fromPrice, productMinutes } from "@/lib/storefront/facts";
 import { useStorefrontFlow } from "@/lib/storefront/FlowProvider";
+import { isOneTap, nextAvailable, storefrontPattern } from "@/lib/storefront/pattern";
 import { StorefrontChrome, directionsHref } from "./Chrome";
+import { QuickAddSheet } from "./flow/QuickAddSheet";
+import { QuickAddToast } from "./flow/QuickAddToast";
 import { StickyBasketBar } from "./flow/StickyBasketBar";
 import { GROUP_ORDER, HeroArt, Media, sfBtn, typeGroup, type TypeGroup } from "./sf";
 import { WEEK_ORDER, useVenueHours } from "./useVenueHours";
@@ -44,6 +47,18 @@ export function StorefrontView() {
   const t = useTranslations("storefront");
   const hours = useVenueHours(location, flow.now);
   const [group, setGroup] = useState<TypeGroup | "all">("all");
+  const [quick, setQuick] = useState<{ product: Product; opener: HTMLElement } | null>(null);
+  const [toast, setToast] = useState<{ name: string; key: number } | null>(null);
+
+  /* Closing the sheet hands focus back to the button that opened it. */
+  const closeQuick = () => {
+    const opener = quick?.opener;
+    setQuick(null);
+    window.requestAnimationFrame(() => {
+      if (opener?.isConnected) opener.focus();
+    });
+  };
+  const confirmAdded = (p: Product) => setToast({ name: p.name, key: Date.now() });
 
   const groups = GROUP_ORDER.filter((g) => products.some((p) => typeGroup(p.bookingType) === g));
   const shown = group === "all" ? products : products.filter((p) => typeGroup(p.bookingType) === group);
@@ -161,7 +176,7 @@ export function StorefrontView() {
           <ul className="mt-major grid grid-cols-1 gap-major sm:grid-cols-2 lg:grid-cols-3">
             {shown.map((p) => (
               <li key={p.id}>
-                <ProductCard product={p} />
+                <ProductCard product={p} onQuickAdd={(prod, opener) => setQuick({ product: prod, opener })} onAdded={confirmAdded} />
               </li>
             ))}
           </ul>
@@ -258,47 +273,244 @@ export function StorefrontView() {
           </div>
         </div>
       </section>
+      {quick && (
+        <QuickAddSheet
+          product={quick.product}
+          onClose={closeQuick}
+          onAdded={(prod) => {
+            closeQuick();
+            confirmAdded(prod);
+          }}
+        />
+      )}
+      {toast && <QuickAddToast key={toast.key} name={toast.name} onDismiss={() => setToast(null)} />}
       <StickyBasketBar />
     </StorefrontChrome>
   );
 }
 
-/** A card is a real link on the live page (so it is a URL somebody can share
- *  and the back button works) and a flow-navigated button in preview, where a
- *  `<Link>` would escape the iframe and navigate the EDITOR away. */
-function ProductCard({ product: p }: { product: Product }) {
+/** One booking, as a card. The picture and the name open the full booking page
+ *  (a real link on the live site, so it is a URL somebody can share and the
+ *  back button works; a flow-navigated button in preview, where a `<Link>`
+ *  would escape the iframe and navigate the EDITOR away). The foot carries the
+ *  price and the two things a guest does with it: **Add** and **Details**.
+ *
+ *  Add is one tap for a booking that needs no choice (one kind of ticket, no
+ *  day, no time, no extras), and afterwards becomes a stepper. For anything
+ *  with options it opens the quick-add sheet. */
+function ProductCard({
+  product: p,
+  onQuickAdd,
+  onAdded,
+}: {
+  product: Product;
+  onQuickAdd: (p: Product, opener: HTMLElement) => void;
+  onAdded: (p: Product) => void;
+}) {
   const flow = useStorefrontFlow();
   const t = useTranslations("storefront");
+  const locale = useLocale();
   const subtitle = useBehaviourSubtitle();
   const from = fromPrice(p.tiers);
   const minutes = productMinutes(p);
-  const cls =
-    "group flex h-full w-full flex-col overflow-hidden rounded-[16px] border border-hairline bg-white text-left transition-[transform,box-shadow] duration-quick hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)] focus-visible:outline-2 focus-visible:outline-offset-2";
-  const body = (
-    <>
-      <div className="relative">
-        <Media
-          src={p.images?.[0]?.url}
-          alt={p.images?.[0]?.alt ?? p.name}
-          bookingType={p.bookingType}
-          seed={p.id}
-          className="aspect-[16/10] w-full"
-        />
-        <span className="absolute left-comfortable top-comfortable rounded-full bg-white px-comfortable py-inline text-[12px] font-semibold text-fg shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
-          {t(`filter.${typeGroup(p.bookingType)}`)}
+  const tier = p.tiers.find((x) => x.active);
+  const oneTap = isOneTap(p);
+  const canAdd = !!tier;
+  const [flash, setFlash] = useState(false);
+  const flashTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (flashTimer.current) window.clearTimeout(flashTimer.current);
+    },
+    [],
+  );
+
+  const next = useMemo(() => nextAvailable(p, flow.now), [p, flow.now]);
+  const todayRow = flow.location.openingHours.find((h) => h.dayOfWeek === flow.now.getDay());
+  const dayWord = (iso: string) => {
+    const d = new Date(`${iso}T12:00:00`);
+    const today = new Date(flow.now.getFullYear(), flow.now.getMonth(), flow.now.getDate());
+    const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
+    if (diff === 0) return t("booking.today");
+    if (diff === 1) return t("booking.tomorrow");
+    return d.toLocaleDateString(locale === "bn" ? "bn-BD" : "en-GB", { weekday: "short", day: "numeric", month: "short" });
+  };
+  let when: string;
+  if (storefrontPattern(p.bookingType) === "open") {
+    when =
+      todayRow && todayRow.intervals.length > 0
+        ? t("openToday", { hours: todayRow.intervals.map((i) => formatClockRange(i.opensAt, i.closesAt)).join(", ") })
+        : t("closedToday");
+  } else if (next) {
+    when = next.time ? t("card.nextAt", { day: dayWord(next.date), time: formatClock(next.time) }) : t("card.nextDay", { day: dayWord(next.date) });
+  } else {
+    when = t("card.noneSoon");
+  }
+
+  /* What of this booking is already in the basket (tickets only, not extras). */
+  const lines = flow.basket.filter((l) => l.productId === p.id);
+  const inBasket = lines.reduce((s, l) => s + l.tiers.filter((x) => !x.tierId.startsWith("addon_")).reduce((a, x) => a + x.qty, 0), 0);
+  const tierLine = oneTap && tier ? lines.find((l) => l.tiers.some((x) => x.tierId === tier.id)) : undefined;
+  const tierQty = tierLine?.tiers.find((x) => x.tierId === tier?.id)?.qty ?? 0;
+  const capQty = tier?.maxPerOrder ?? 10;
+
+  const addOne = () => {
+    if (!tier) return;
+    flow.addLine({
+      productId: p.id,
+      productName: p.name,
+      taxClass: p.taxClass,
+      date: null,
+      startTime: null,
+      endTime: null,
+      resourceId: null,
+      resourceName: null,
+      tiers: [{ tierId: tier.id, tierName: tier.name, price: tier.price, admits: tier.admits ?? 1, qty: 1, donation: tier.donation, ageNote: tier.ageNote }],
+    });
+    setFlash(true);
+    if (flashTimer.current) window.clearTimeout(flashTimer.current);
+    flashTimer.current = window.setTimeout(() => setFlash(false), 1400);
+    onAdded(p);
+  };
+  const setQty = (n: number) => {
+    if (!tierLine || !tier) return;
+    if (n <= 0) flow.removeLine(tierLine.id);
+    else flow.updateLine(tierLine.id, { tiers: tierLine.tiers.map((x) => (x.tierId === tier.id ? { ...x, qty: Math.min(n, capQty) } : x)) });
+  };
+
+  const openCls = "block focus-visible:outline-2 focus-visible:outline-offset-2";
+  const titleCls = "-my-2.5 block py-2.5 focus-visible:outline-2 focus-visible:outline-offset-2";
+  const openWith = (children: React.ReactNode, hidden?: boolean, cls: string = openCls) =>
+    flow.mode === "preview" ? (
+      <button
+        type="button"
+        onClick={() => flow.goProduct(p.id)}
+        aria-hidden={hidden || undefined}
+        tabIndex={hidden ? -1 : undefined}
+        className={cn(cls, "w-full text-left")}
+      >
+        {children}
+      </button>
+    ) : (
+      <Link
+        href={`/s/${flow.storefront.slug}/${flow.slugs[p.id]}`}
+        aria-hidden={hidden || undefined}
+        tabIndex={hidden ? -1 : undefined}
+        className={cls}
+      >
+        {children}
+      </Link>
+    );
+
+  const cardBtn =
+    "inline-flex min-h-11 shrink-0 items-center justify-center gap-inline rounded-[12px] px-comfortable text-[14px] font-semibold leading-none transition-[filter,background-color] duration-quick focus-visible:outline-2 focus-visible:outline-offset-2";
+  const fillCls = "bg-[var(--sf-fill)] text-[var(--sf-on-fill)] hover:brightness-90";
+  const ghostCls = "border border-strong bg-white text-fg hover:border-fg";
+  const detailsLabel = t("card.detailsAria", { name: p.name });
+  const detailsBtn =
+    flow.mode === "preview" ? (
+      <button type="button" onClick={() => flow.goProduct(p.id)} aria-label={detailsLabel} className={cn(cardBtn, ghostCls)}>
+        {t("card.details")}
+      </button>
+    ) : (
+      <Link href={`/s/${flow.storefront.slug}/${flow.slugs[p.id]}`} aria-label={detailsLabel} className={cn(cardBtn, ghostCls)}>
+        {t("card.details")}
+      </Link>
+    );
+
+  let addControl: React.ReactNode = null;
+  if (canAdd && oneTap && tierQty > 0 && !flash) {
+    addControl = (
+      <div role="group" aria-label={p.name} className="inline-flex min-h-11 shrink-0 items-center rounded-[12px] border border-[var(--sf-fill)] bg-[var(--sf-soft)]">
+        <button
+          type="button"
+          aria-label={t("card.lessOf", { name: p.name })}
+          onClick={() => setQty(tierQty - 1)}
+          className="flex h-11 w-11 items-center justify-center rounded-[12px] text-fg hover:bg-white/60 focus-visible:outline-2"
+        >
+          <Minus size={16} strokeWidth={2} aria-hidden />
+        </button>
+        <span className="tnum min-w-4 text-center text-[16px] font-semibold" aria-live="polite">
+          {tierQty}
         </span>
+        <button
+          type="button"
+          aria-label={t("card.moreOf", { name: p.name })}
+          disabled={tierQty >= capQty}
+          onClick={() => setQty(tierQty + 1)}
+          className="flex h-11 w-11 items-center justify-center rounded-[12px] text-fg hover:bg-white/60 focus-visible:outline-2 disabled:text-[#8a8a85]"
+        >
+          <Plus size={16} strokeWidth={2} aria-hidden />
+        </button>
       </div>
+    );
+  } else if (canAdd && oneTap) {
+    addControl = (
+      <button type="button" onClick={addOne} aria-label={flash ? t("card.added") : t("card.addAria", { name: p.name })} className={cn(cardBtn, fillCls, "min-w-[5.5rem]")}>
+        {flash ? (
+          <>
+            <Check size={16} strokeWidth={3} aria-hidden />
+            {t("card.added")}
+          </>
+        ) : (
+          <>
+            <Plus size={16} strokeWidth={2.5} aria-hidden />
+            {t("card.add")}
+          </>
+        )}
+      </button>
+    );
+  } else if (canAdd) {
+    addControl = (
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        onClick={(e) => onQuickAdd(p, e.currentTarget)}
+        aria-label={t("card.addAria", { name: p.name })}
+        className={cn(cardBtn, fillCls, "min-w-[5.5rem]")}
+      >
+        <Plus size={16} strokeWidth={2.5} aria-hidden />
+        {t("card.add")}
+      </button>
+    );
+  }
+
+  return (
+    <article className="group flex h-full w-full flex-col overflow-hidden rounded-[16px] border border-hairline bg-white transition-[transform,box-shadow] duration-quick hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)]">
+      {openWith(
+        <div className="relative">
+          <Media src={p.images?.[0]?.url} alt="" bookingType={p.bookingType} seed={p.id} className="aspect-[16/10] w-full" />
+          <span className="absolute left-comfortable top-comfortable rounded-full bg-white px-comfortable py-inline text-[12px] font-semibold text-fg shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+            {t(`filter.${typeGroup(p.bookingType)}`)}
+          </span>
+          {inBasket > 0 && (
+            <span className="tnum absolute right-comfortable top-comfortable inline-flex items-center gap-inline rounded-full bg-[var(--sf-fill)] px-comfortable py-inline text-[12px] font-semibold text-[var(--sf-on-fill)] shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+              <Check size={12} strokeWidth={3} aria-hidden />
+              {t("card.inBasket", { count: inBasket })}
+            </span>
+          )}
+        </div>,
+        true,
+      )}
       <div className="flex flex-1 flex-col gap-tight p-section">
-        <h3 className="break-words text-[18px] font-semibold leading-snug tracking-[-0.01em]">{p.name}</h3>
+        <h3 className="break-words text-[18px] font-semibold leading-snug tracking-[-0.01em]">
+          {openWith(<span className="hover:underline">{p.name}</span>, false, titleCls)}
+        </h3>
+        <p className="flex flex-wrap items-center gap-x-comfortable gap-y-inline text-[14px] text-fg">
+          <span className="inline-flex items-center gap-inline">
+            <CalendarClock size={14} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
+            {when}
+          </span>
+          {minutes !== null && (
+            <span className="inline-flex items-center gap-inline">
+              <Clock size={14} strokeWidth={1.75} className="shrink-0 text-muted" aria-hidden />
+              {formatDuration(minutes)}
+            </span>
+          )}
+        </p>
         <p className="text-[14px] text-muted">{subtitle(p, { resources: flow.resources, team: flow.team })}</p>
         {p.description && <p className="line-clamp-2 text-[14px] text-muted">{p.description}</p>}
-        {minutes !== null && (
-          <p className="flex items-center gap-inline text-[14px] text-fg">
-            <Clock size={14} strokeWidth={1.75} className="text-muted" aria-hidden />
-            {formatDuration(minutes)}
-          </p>
-        )}
-        <div className="mt-auto flex items-end justify-between gap-comfortable pt-comfortable">
+        <div className="mt-auto flex flex-wrap items-end justify-between gap-x-comfortable gap-y-tight pt-comfortable">
           <p className="tnum min-w-0">
             {from === null ? (
               <span className="text-[16px] font-semibold">{t("askAtTheDoor")}</span>
@@ -311,24 +523,12 @@ function ProductCard({ product: p }: { product: Product }) {
               </>
             )}
           </p>
-          <span className="inline-flex min-h-11 shrink-0 items-center gap-tight rounded-[12px] bg-[var(--sf-fill)] px-section text-[14px] font-semibold text-[var(--sf-on-fill)] transition-[filter] duration-quick group-hover:brightness-90">
-            {t("book")}
-            <ArrowRight size={16} strokeWidth={2} aria-hidden />
-          </span>
+          <div className="flex items-center gap-tight">
+            {detailsBtn}
+            {addControl}
+          </div>
         </div>
       </div>
-    </>
-  );
-  if (flow.mode === "preview") {
-    return (
-      <button type="button" onClick={() => flow.goProduct(p.id)} className={cls}>
-        {body}
-      </button>
-    );
-  }
-  return (
-    <Link href={`/s/${flow.storefront.slug}/${flow.slugs[p.id]}`} className={cls}>
-      {body}
-    </Link>
+    </article>
   );
 }

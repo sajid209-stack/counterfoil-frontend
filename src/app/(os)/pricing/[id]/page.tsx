@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, EmptyState, FormField, PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -63,12 +62,9 @@ export default function PriceRuleEditorPage() {
   return (
     <PageShell
       title={isNew ? t("newRule") : (form.name || t("editRule"))}
+      back={{ href: "/pricing", label: t("back") }}
       actions={<Button loading={saving} onClick={save}>{t("save")}</Button>}
     >
-      <button type="button" onClick={() => router.push("/pricing")} className="mb-section flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg md:min-h-0">
-        <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {t("back")}
-      </button>
-
       <div className="grid max-w-2xl gap-section card-surface p-card sm:grid-cols-2">
         <FormField label={t("fieldName")} value={form.name} onChange={(e) => set("name", e.target.value)} className="sm:col-span-2" />
         <FormField label={t("fieldProduct")} variant="select" value={form.productId ?? ""} onChange={(e) => set("productId", e.target.value || null)} options={[{ value: "", label: t("allProducts") }, ...products.map((p) => ({ value: p.id, label: p.name }))]} />

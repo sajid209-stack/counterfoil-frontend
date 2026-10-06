@@ -45,7 +45,7 @@ export default function ResourcePage() {
     <PageShell
       title={resource.name}
       description={[resource.nounSingular, place].filter(Boolean).join(" · ")}
-      actions={
+      status={
         resource.outOfService ? (
           <StatusPill tone="danger">{t("resources.outOfService")}</StatusPill>
         ) : resource.status !== "active" ? (

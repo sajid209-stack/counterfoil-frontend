@@ -15944,3 +15944,130 @@ Dawn and Sense themes.
 - Check-in's walk-in list is not narrowed to the venue.
 - The storefront has no dark mode, by decision.
 - With five bookings, the storefront's desktop grid leaves one empty cell.
+
+## Quick add on the storefront, devices assigned to people, a password at invite, and page actions out of the bar (2026-10-06)
+
+Owner, with two screenshots:
+1. storefront cards need a direct add to the basket, with a slide-in to pick
+   dates and ticket types;
+2. devices need assigning to team members — "build a story, plan it, execute it";
+3. inviting a team member needs a way to set their password;
+4. the order page (and others) shows page options in the top bar — "find where
+   else this happens and fix it".
+
+Planned and reviewed on Opus; three Sonnet sub-agents built it in parallel, each
+owning its own files.
+
+### 1. Quick add on the storefront
+
+Taken from Shopify's quick add and GetYourGuide's check-availability panel: a
+guest should never have to leave the list to buy the common thing.
+
+- **Cards** end in the price, **Details** and **+ Add**. The picture and the
+  title still open the full page. The empty gap above the price is replaced by a
+  facts line ("Open today · 10:00 AM – 6:00 PM", or "Next: Tomorrow, 12:00 PM"
+  and the duration). A card with something in the basket says so on its picture.
+- **No choices to make** (one ticket type, no day, no time, no extras): Add puts
+  one in the basket, says "Added ✓", and becomes a − 1 + stepper.
+- **Choices to make**: Add opens a sheet — from the bottom on a phone, from the
+  right on a computer.
+  - It asks the same questions as the full booking page, because it uses the
+    same picker, so the two cannot disagree.
+  - It opens ready: the first day and time with room, and one ticket of the
+    first type.
+  - Its buttons are **Add to basket** and **Book now**, with a link to the full
+    details.
+  - Escape, the backdrop or a swipe closes it, and focus goes back to the card.
+- After adding, a toast offers **View basket** and **Checkout**, and the
+  basket counts update. The Settings preview runs the same screens and writes
+  nothing.
+
+### 2. Devices assigned to team members
+
+The story (written at the top of `lib/api/devices.ts`):
+- A manager pairs a tablet to a counter.
+- Until now anyone at the venue could pick their name on it.
+- Now each device has **Who can use it**:
+  - **Everyone who works at the venue** (the default — what it did before), or
+  - **Only these people**.
+- A device can also be one person's **own device**, and it then opens on that
+  person's PIN.
+
+- **Contract** (additive): `Device.access`, `staffIds` and `ownerStaffId`; when
+  they are absent the device is open to the venue.
+- **Refused in words**:
+  - limiting a device to nobody;
+  - removing its last person (rather than quietly opening it to everyone);
+  - people who aren't active;
+  - assigning someone onto another person's own device.
+- **Device page**: two choice cards, a people checklist with search, and the
+  own-device picker, saved with the page's save bar. The **list** shows who can
+  use each device ("Nadia, Rahim" / "Everyone at Lalbagh Fort").
+- **Team member page**: a **Devices** section with Assign and Remove, each
+  taking effect at once with Undo. Assigning someone to an open device keeps
+  everyone who could already use it. The team list counts each person's devices.
+- **The till's sign-in screen** lists only the people allowed on that tablet,
+  which is the first active device on the counter, says why, and shows the
+  tablet's real name. Nothing is listed until it has loaded, so a limited
+  tablet never flashes the whole venue first.
+
+### 3. A password at invite
+
+"How will they sign in?" has two answers:
+- **Send an invite link** — they choose their own password; this is how it
+  worked before.
+- **Set a password now**:
+  - a password and its confirmation, with show/hide;
+  - strength in words (Too weak / Fair / Good / Strong);
+  - refusals beside the field: at least 8 characters, not their email or phone,
+    not too easy to guess;
+  - "Ask them to change it the first time they sign in", on by default;
+  - advice to hand it over in person, not by SMS.
+
+Both answers also set the **till PIN** (4–6 digits, with Make a PIN; 1111 and
+1234-style runs are refused), and the till's sign-in checks it. An existing
+member's page gains **Set a new password** and **Set a PIN**. Only flags are kept
+on the record (`hasPassword`, `mustChangePassword`, `hasPin`); the mock keeps a
+fake hash apart.
+
+### 4. Page actions out of the top bar
+
+The bar is app chrome: the page's name, the venue picker and the account.
+`PageShell` used to push each page's buttons into it, so an order's status pill,
+Take payment, Print receipt and ⋯ sat beside the venue picker. They now sit in a
+row at the top of the page. `back` and `status` are new props for its left side;
+the actions and the main button sit on the right.
+
+- **Moved onto the row**:
+  - the order page;
+  - a customer;
+  - a booking, an event and the event editor;
+  - an inventory item and a ticket;
+  - pricing, booking rules, promotions, seat maps and a marketplace;
+  - a counter, a venue, a court and a device.
+- **List pages needed no change**; their buttons simply land in the row.
+- **Unchanged**: the phone bar's **+** button, which was asked for earlier. The
+  sidebar, tab bar and More sheet were checked and carry only navigation.
+
+### Verified
+
+- Storefront quick-add harness **104/104**, at 1440, 390 and Bangla, including
+  the Settings preview writing nothing. Standing storefront harnesses: **31,
+  14, 6, 178**.
+- Devices and passwords: unit **56/56**; browser **154/154** at 1440 (light and
+  dark) and **123/123** at 390 (light, and dark in Bangla).
+- Top bar: **586 / 586 / 582** checks across about 43 routes at 1440, 1024 and
+  390, light and dark. No page control is left in the bar, and on the order,
+  customer and booking pages the back link, status and actions share one row.
+- Full regression run, then `tsc`, `eslint` (no worse than HEAD) and i18n 0 / 0.
+
+### Open
+
+- Nothing yet makes a person change their password at first sign-in; the flag is
+  stored only.
+- The demo data has no limited or owned device, so pick one in Settings →
+  Devices to see it.
+- The settings navigation harness still asserts wording from before the
+  plain-language pass.
+- The venue picker shows on every OS page except Settings, as asked on
+  2026-09-29, including pages it does not narrow (customers, marketplaces).

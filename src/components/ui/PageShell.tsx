@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { cn } from "@/lib/cn";
 import { useBarTitle } from "@/lib/barTitle";
@@ -56,12 +56,18 @@ export function PageShell({
   description,
   actions,
   primary,
+  back,
+  status,
   children,
 }: {
   title: string;
   description?: string;
   actions?: React.ReactNode;
   primary?: PagePrimary;
+  /** A way back to the list this page belongs to. Left of the header row. */
+  back?: { href: string; label: string };
+  /** The record's state (an order's pill). Beside the back link, left of the header row. */
+  status?: React.ReactNode;
   children: React.ReactNode;
 }) {
   // Resolved after mount: the slot lives in OsShell, above this in the tree,
@@ -89,9 +95,9 @@ export function PageShell({
   // snapshot is just the node. getElementById returns the same object on every
   // call, which is what keeps the snapshot stable enough for the hook.
   const slot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-header"), () => null);
-  const actionSlot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-actions"), () => null);
   const barSlot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-actions-mobile"), () => null);
 
+  const hasRow = !!(back || status || actions || (wide && primary));
   const icon = primary?.icon ?? <Plus size={16} strokeWidth={1.75} />;
   /* Desktop: the words, because there is room for them and a labelled button
      is always the better one. */
@@ -162,22 +168,41 @@ export function PageShell({
     /* The page edge is the gutter token — 16 on a phone, 20 from sm — and
        the desktop bar above uses the same token, so the title and the cards
        share one left edge. */
-    <div className="px-gutter pb-gutter pt-section md:pt-0">
-      {/* Desktop: both blocks portal into the sticky bar. Below md they render
+    <div className={cn("px-gutter pb-gutter pt-section", hasRow ? "md:pt-gutter" : "md:pt-0")}>
+      {/* Desktop: the title portals into the sticky bar. Below md they render
           here instead — one copy, either way. */}
       {wide && slot && createPortal(headerText, slot)}
-      {wide && (actions || widePrimary) && actionSlot && createPortal(<>{actions}{widePrimary}</>, actionSlot)}
       {/* The plus lives in the phone's bar, beside the account button. */}
       {!wide && narrowPrimary && barSlot && createPortal(narrowPrimary, barSlot)}
-      {!wide && (
-        /* The gap goes with the heading: a flex gap between an empty box and
-           the page's actions is 8px of stray space. */
-        <div className={cn("flex flex-col gap-tight", echoesBar && "max-sm:gap-0")}>
-          {headerText}
-          {actions && <div className="flex flex-wrap items-center gap-tight">{actions}</div>}
+      {/* Phone: the heading, unless the bar already said it. */}
+      {!wide && <div className={echoesBar ? "max-sm:sr-only" : undefined}>{headerText}</div>}
+      {/* The page header row. The bar above is app chrome (page name, venue,
+          account); everything that acts on THIS page — its back link, its
+          status, its buttons — sits here, at the top of the content, on one
+          row that wraps. Back and status on the left, actions and the page's
+          create button on the right. On a phone the create button is the bar's
+          plus instead, and the actions wrap onto their own line. */}
+      {hasRow && (
+        <div className={cn("flex flex-wrap items-center justify-between gap-x-major gap-y-tight", !wide && !echoesBar && "mt-tight")}>
+          {(back || status) && (
+            <div className="flex min-w-0 flex-wrap items-center gap-x-major gap-y-tight">
+              {back && (
+                <Link href={back.href} className="inline-flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg">
+                  <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {back.label}
+                </Link>
+              )}
+              {status}
+            </div>
+          )}
+          {(actions || (wide && widePrimary)) && (
+            <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-tight max-md:ml-0 max-md:w-full max-md:justify-start">
+              {actions}
+              {wide && widePrimary}
+            </div>
+          )}
         </div>
       )}
-      <div className="mt-section md:mt-gutter">{children}</div>
+      <div className={hasRow ? "mt-gutter" : "mt-section md:mt-gutter"}>{children}</div>
     </div>
   );
 }

@@ -56,7 +56,7 @@ export default function CounterPage() {
     <PageShell
       title={counter.name}
       description={place?.name}
-      actions={counter.status !== "active" ? <StatusPill status={counter.status} /> : undefined}
+      status={counter.status !== "active" ? <StatusPill status={counter.status} /> : undefined}
     >
       <CounterEditor
         mode="edit"

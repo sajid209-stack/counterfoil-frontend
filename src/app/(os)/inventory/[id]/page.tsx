@@ -4,7 +4,7 @@ import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, PackagePlus, ScanLine, TriangleAlert } from "lucide-react";
+import { PackagePlus, ScanLine, TriangleAlert } from "lucide-react";
 import {
   ActionMenu,
   Button,
@@ -144,6 +144,7 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
     <PageShell
       title={item.name}
       description={t("itemDescription")}
+      back={{ href: "/inventory", label: t("backToList") }}
       actions={
         <span className="flex items-center gap-tight">
           {item.tracked && item.status !== "archived" && (
@@ -156,14 +157,6 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
       }
     >
       <div className="flex flex-col gap-section">
-        <Link
-          href="/inventory"
-          className="flex min-h-11 w-fit items-center gap-inline text-[13px] font-medium text-muted hover:text-fg md:min-h-0"
-        >
-          <ArrowLeft size={14} strokeWidth={1.5} aria-hidden />
-          {t("backToList")}
-        </Link>
-
         {/* The facts, before any control: what it is, and what the shelves
             say. An archived item says so here rather than by looking normal. */}
         <section className="card-surface p-card">
