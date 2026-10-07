@@ -1,24 +1,9 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Boxes,
-  Globe,
-  Store,
-  CalendarDays,
-  ChartNoAxesColumn,
-  Check,
-  Ellipsis,
-  LayoutDashboard,
-  SquareStack,
-  ReceiptText,
-  Settings,
-  Ticket,
-  UsersRound,
-  Wallet,
-} from "lucide-react";
+import { ArrowUpRight, CalendarDays, Check, Ellipsis, LayoutDashboard, ReceiptText, Ticket } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LogoMark, Sheet } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
@@ -30,6 +15,7 @@ import { AccountMenu } from "./AccountMenu";
 import { LocationSwitcher } from "./LocationSwitcher";
 import { CommandPalette } from "./CommandPalette";
 import { Sidebar } from "./Sidebar";
+import { DESTINATIONS, NAV_MAIN, NAV_OPEN, NAV_SETTINGS, type NavDestination } from "./nav";
 import { SETTINGS_GROUPS } from "../settings/_lib/nav";
 
 // F10 — on mobile the hamburger drawer is gone: a bottom tab bar carries the
@@ -42,43 +28,15 @@ const MOBILE_TABS = [
   { href: "/catalog", key: "catalog", icon: Ticket },
 ] as const;
 
-/**
- * Everywhere a phone can go — the desktop rail's own list, in its own order.
+/*
+ * Everywhere a phone can go is the desktop rail's own list (`./nav`), in its
+ * own order and under its own names. The More grid below draws it in the same
+ * three groups the rail does — the daily destinations, the other apps, Settings.
  *
- * It is the rail rather than a list of its own, and that is the whole rule: the
- * two had drifted into different products. The grid was offering **Analytics**
- * (a tab of Reports, not a destination) and **Promotions** (a feature hidden
- * behind `FEATURES.promotions`, so it 404s in spirit if not in fact), and it
- * was missing **Customers**, which the rail has carried since it was built. So
- * a phone could not reach a customer and could reach two things a desktop does
- * not offer.
- *
- * Same grid, same order, every time — muscle memory is the point, and the order
- * is the rail's so that moving between the two surfaces teaches one layout.
- *
- * The four in MOBILE_TABS repeat here on purpose: `nav-hierarchy` separates
+ * The four in MOBILE_TABS repeat there on purpose: `nav-hierarchy` separates
  * primary from secondary navigation, and a person who opens More looking for
  * Orders should find it rather than be told to close the sheet.
  */
-const DESTINATIONS = [
-  // "dashboard", not "overview": the rail, the tab bar and the phone's own top
-  // bar all call this Dashboard, and the More grid was the one place calling it
-  // something else. The palette put the two names side by side.
-  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
-  { href: "/calendar", key: "calendar", icon: CalendarDays },
-  { href: "/orders", key: "orders", icon: ReceiptText },
-  { href: "/customers", key: "customers", icon: UsersRound },
-  { href: "/catalog", key: "catalog", icon: Ticket },
-  { href: "/inventory", key: "inventory", icon: Boxes },
-  { href: "/marketplaces", key: "marketplaces", icon: Globe },
-  { href: "/analytics", key: "analytics", icon: ChartNoAxesColumn },
-  { href: "/finances", key: "finances", icon: Wallet },
-  { href: "/pos", key: "pos", icon: Store },
-  { href: "/deck", key: "deck", icon: SquareStack },
-  // One Settings entry, opening on the first section. Settings has no index
-  // page; every section lists the rest in its own Settings menu.
-  { href: "/settings/business", key: "settings", icon: Settings },
-] as const;
 
 /**
  * What the phone's top bar is allowed to say.
@@ -98,6 +56,7 @@ const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
   { prefix: "/calendar", key: "calendar" },
   { prefix: "/orders", key: "orders" },
   { prefix: "/finances", key: "finances" },
+  { prefix: "/expenses", key: "expenses" },
   { prefix: "/customers", key: "customers" },
   { prefix: "/catalog", key: "catalog" },
   { prefix: "/inventory", key: "inventory" },
@@ -181,14 +140,31 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       window.removeEventListener("scroll", onScroll);
     };
   }, []);
-  const toggleCollapsed = () => {
+  const toggleCollapsed = useCallback(() => {
     setCollapsed((c) => {
       localStorage.setItem("os_sidebar_collapsed", c ? "0" : "1");
       // Tell Preferences, outside this updater so no listener sets state mid-render.
       queueMicrotask(() => window.dispatchEvent(new Event("cf-prefs")));
       return !c;
     });
-  };
+  }, []);
+
+  /* `[` folds the rail, as it does in Linear and Notion. Only where there IS a
+     rail (md and up), never while typing, and never with a modifier — Ctrl [ and
+     ⌘ [ are the browser's Back. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "[" || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.closest('[role="dialog"]'))) return;
+      if (!window.matchMedia(MD).matches) return;
+      e.preventDefault();
+      toggleCollapsed();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [toggleCollapsed]);
+
 
   const isActive = (href: string) => {
     // Settings is lit on every section, not only the one its door opens on.
@@ -219,13 +195,43 @@ export function OsShell({ children }: { children: React.ReactNode }) {
      the gate is the one PageShell already uses for the same reason. */
   const wide = useMediaQuery(MD);
 
+  /* One tile of the More grid. Same size and shape for every destination; the
+     current page carries a tick, and an app that leaves the console carries ↗. */
+  const moreTile = (d: NavDestination, leaves = false) => {
+    const active = isActive(d.href);
+    const Icon = d.icon;
+    return (
+      <li key={d.key} className="contents">
+        <Link
+          href={d.href}
+          data-more-tile={d.key}
+          aria-current={active ? "page" : undefined}
+          onClick={() => setMoreOpen(false)}
+          className={cn(
+            "relative flex h-[5.25rem] flex-col items-center justify-center gap-tight rounded-sm border transition-colors duration-quick active:bg-ember/10",
+            active ? "border-ember bg-ember/10 text-fg" : "border-line bg-card text-fg",
+          )}
+        >
+          {active && (
+            <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-ember-solid text-white">
+              <Check size={11} strokeWidth={3} />
+            </span>
+          )}
+          {leaves && <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden className="absolute right-1.5 top-1.5 text-muted" />}
+          <Icon size={22} strokeWidth={1.5} className={active ? "text-brand-foreground" : "text-muted"} />
+          <span className="px-inline text-center text-[12px] font-medium leading-tight">{t(d.key)}</span>
+        </Link>
+      </li>
+    );
+  };
+
   return (
     /* What the bar is calling this page, published so a page's own heading can
        stand down where it would only say it again — see `lib/barTitle`. */
     <BarTitleContext value={pageName}>
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen shrink-0 overflow-y-auto md:block">
-        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
+        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} workspaceName={operatorQ.data?.name} />
       </aside>
 
       {/* overflow-x-CLIP, not hidden. `overflow-x: hidden` forces overflow-y to
@@ -365,30 +371,18 @@ export function OsShell({ children }: { children: React.ReactNode }) {
         lead={<p className="truncate font-mono text-[12px] text-muted">{operatorQ.data?.name ?? "Counterfoil"}</p>}
         className="md:hidden"
       >
-        <div className="grid auto-rows-min grid-cols-3 gap-tight p-card">
-          {DESTINATIONS.map((d) => {
-            const active = isActive(d.href);
-            const Icon = d.icon;
-            return (
-              <Link
-                key={d.href}
-                href={d.href}
-                onClick={() => setMoreOpen(false)}
-                className={cn(
-                  "relative flex h-[5.25rem] flex-col items-center justify-center gap-tight rounded-sm border transition-colors duration-quick active:bg-ember/10",
-                  active ? "border-ember bg-ember/10 text-fg" : "border-line bg-card text-fg",
-                )}
-              >
-                {active && (
-                  <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-ember-solid text-white">
-                    <Check size={11} strokeWidth={3} />
-                  </span>
-                )}
-                <Icon size={22} strokeWidth={1.5} className={active ? "text-brand-foreground" : "text-muted"} />
-                <span className="px-inline text-center text-[12px] font-medium leading-tight">{t(d.key)}</span>
-              </Link>
-            );
-          })}
+        {/* The rail's order and its three groups: the daily destinations, the
+            other apps (↗ — they leave the console) and Settings. Hairlines and
+            spacing tell the groups apart; there are no labels. */}
+        <div className="flex flex-col gap-tight p-card">
+          <ul className="grid auto-rows-min grid-cols-3 gap-tight" data-more="main">
+            {NAV_MAIN.map((d) => moreTile(d))}
+          </ul>
+          <div aria-hidden className="my-inline border-t border-line" />
+          <ul className="grid auto-rows-min grid-cols-3 gap-tight" data-more="open">
+            {NAV_OPEN.map((d) => moreTile(d, true))}
+            {moreTile(NAV_SETTINGS)}
+          </ul>
         </div>
       </Sheet>
     </div>

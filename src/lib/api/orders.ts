@@ -1,10 +1,10 @@
 import { cancelBooking, createBooking, peekBookings } from "./bookings";
 import { itemForAddOn, recordMovement, recordSale } from "./inventory";
-import { conflictError, createResource, fail } from "./client";
+import { conflictError, createResource, delay, fail, ok } from "./client";
 import { seatsTaken } from "./layouts";
 import { issueTicket, redeemCredits, voidOrderTickets } from "./tickets";
 import { buildOrderLines, type LineInput } from "@/lib/orderMath";
-import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, PaymentMethod, Ticket, WriteOffCategory } from "./types";
+import type { ApiResult, Channel, ListParams, ListResponse, Minor, Order, OrderStatus, PaymentMethod, Ticket, WriteOffCategory } from "./types";
 
 const resource = createResource<Order>("orders", "Order", {
   search: (o, q) =>
@@ -87,7 +87,8 @@ export async function addOrderPayment(orderId: string, method: PaymentMethod, am
   const paid = payments.reduce((s, p) => s + p.amount, 0);
   return resource.update(orderId, {
     payments,
-    status: paid >= o.total ? "paid" : "partial",
+    // A forgiven balance is as settled as a paid one: paid + written off is what the order is held against.
+    status: paid + orderWrittenOff(o) >= o.total ? "paid" : "partial",
     history: withHistory(o, who, `Took ${method} payment of ${amount / 100}`),
   });
 }
@@ -167,8 +168,12 @@ export async function writeOffOrder(orderId: string, amount: Minor, category: Wr
   const o = resource.peek().find((x) => x.id === orderId);
   if (!o) return resource.get(orderId);
   const at = new Date().toISOString();
+  const writeOffs = [...(o.writeOffs ?? []), { at, who, amount, category, reason }];
+  // Forgiving what was left of a part-paid order settles it: nothing is owed, so it should not go on reading "Part paid".
+  const settled = o.status === "partial" && orderDue({ ...o, writeOffs }) === 0;
   return resource.update(orderId, {
-    writeOffs: [...(o.writeOffs ?? []), { at, who, amount, category, reason }],
+    writeOffs,
+    ...(settled ? { status: "paid" as const } : {}),
     history: withHistory(o, who, `Wrote off ${amount} (${category})${reason ? ` — ${reason}` : ""}`),
   });
 }
@@ -429,5 +434,283 @@ export async function discountOrderBalance(orderId: string, amount: Minor, reaso
     total,
     status: paid >= total ? "paid" : "partial",
     history: withHistory(o, who, `Discount of ${-totals.total / 100} on the balance — ${reason.trim()}`),
+  });
+}
+
+/* ═══ The sales report ═══════════════════════════════════════════════════════
+ *
+ * What the Orders list, its Summary, its CSV and its two print pages all read.
+ * One definition of "what a sale is worth", so the figure in the panel, the
+ * figure in the file and the figure on paper cannot disagree.
+ *
+ * **What counts.** A cancelled order never happened and a fully refunded one
+ * has gone back out, so neither is a sale: they stay in the list (and in the
+ * Transactions count, because somebody has to be able to find them) and add
+ * nothing to any money figure. A partly refunded order counts for what was
+ * kept. The identity the whole summary is built on, order by order:
+ *
+ *     sales = total − refunded lines
+ *     sales = paid (net of refunds) + still owed + written off
+ *
+ * **Why `orderPaid` is not enough here.** It adds the payments, which is right
+ * for an order refunded line by line (the refund lands as a negative payment)
+ * and wrong for one refunded through `refundOrder`, which only flips the status
+ * and leaves the full payment standing. The helpers below say what the venue is
+ * actually holding either way.
+ */
+
+/** Where a sale came from. A marketplace booking is still an online sale (it
+ *  is `channel: "online"` plus a `source`), so reports that bucket by channel
+ *  keep working — this is the three-way cut a person actually asks for. */
+export type OrderChannel = "counter" | "online" | "marketplace";
+/** How an order was paid: one method, "split" across several, or not at all. */
+export type OrderMethod = PaymentMethod | "split" | "none";
+
+/** The value the counter and staff filters use for "none recorded" — an online
+ *  sale has no counter, and most of them have nobody who rang them up. */
+export const NO_ONE = "none";
+
+export const orderChannelOf = (o: Order): OrderChannel => (o.source ? "marketplace" : o.channel === "online" ? "online" : "counter");
+
+export function orderMethodOf(o: Order): OrderMethod {
+  const used = [...new Set(o.payments.filter((p) => p.amount > 0).map((p) => p.method))];
+  return used.length === 0 ? "none" : used.length === 1 ? used[0] : "split";
+}
+
+/** Units sold: every line, add-ons included, as the table has always counted them. */
+export const orderItemCount = (o: Order): number => o.lines.reduce((s, l) => s + l.quantity, 0);
+
+/** Money that came in, before anything went back. */
+export const orderReceived = (o: Order): Minor => o.payments.reduce((s, p) => s + (p.amount > 0 ? p.amount : 0), 0);
+
+/** Money handed back: the refund payments, or — for an order refunded by status
+ *  alone — everything it was paid. */
+export function orderRefundedOut(o: Order): Minor {
+  const back = o.payments.reduce((s, p) => s + (p.amount < 0 ? -p.amount : 0), 0);
+  return back > 0 ? back : o.status === "refunded" ? orderReceived(o) : 0;
+}
+
+/** What the venue is holding against this order, net of refunds. */
+export const orderNetPaid = (o: Order): Minor => orderReceived(o) - orderRefundedOut(o);
+
+/** The value of the lines that were refunded one by one. */
+export const orderLineRefunds = (o: Order): Minor => o.lines.reduce((s, l) => s + (l.refundedAmount ?? 0), 0);
+
+export const orderWrittenOff = (o: Order): Minor => (o.writeOffs ?? []).reduce((s, w) => s + w.amount, 0);
+
+/** What the order is worth once voided orders and refunded lines are out. */
+export const orderSales = (o: Order): Minor => (isVoidedOrder(o) ? 0 : o.total - orderLineRefunds(o));
+
+/** What is still to be collected. Unlike `orderOutstanding` this knows about
+ *  refunded lines and written-off balances, so a part-refunded order does not
+ *  read as owing the refund. */
+export const orderDue = (o: Order): Minor => (isVoidedOrder(o) ? 0 : Math.max(0, orderSales(o) - orderNetPaid(o) - orderWrittenOff(o)));
+
+export interface SalesQuery {
+  /** Local calendar days, inclusive: "2026-07-29". */
+  from?: string;
+  to?: string;
+  locationId?: string;
+  customerId?: string;
+  /** Matches the reference, the customer's name and a marketplace's own reference. */
+  search?: string;
+  /** Counter ids; `NO_ONE` for orders with none. An empty list means everything. */
+  counters?: string[];
+  staff?: string[];
+  channels?: OrderChannel[];
+  methods?: OrderMethod[];
+  statuses?: OrderStatus[];
+}
+
+const startOfDay = (ymd: string) => Date.parse(`${ymd}T00:00:00`);
+const startOfNextDay = (ymd: string) => {
+  const d = new Date(`${ymd}T00:00:00`);
+  d.setDate(d.getDate() + 1);
+  return d.getTime();
+};
+
+/** The orders a report asks for. Pure, so a page that already holds the venue's
+ *  orders can narrow them in place — the same answer the API would give.
+ *  Compared as instants, never as text: the seed spells timestamps both with a
+ *  `Z` and with `+06:00`, and a string compare across the two is nonsense. */
+export function filterSalesOrders(all: Order[], q: SalesQuery = {}): Order[] {
+  const from = q.from ? startOfDay(q.from) : null;
+  const before = q.to ? startOfNextDay(q.to) : null;
+  const needle = q.search?.trim().toLowerCase();
+  return all.filter((o) => {
+    if (q.locationId && o.locationId !== q.locationId) return false;
+    if (q.customerId && o.customerId !== q.customerId) return false;
+    if (from !== null || before !== null) {
+      const at = Date.parse(o.createdAt);
+      if (from !== null && at < from) return false;
+      if (before !== null && at >= before) return false;
+    }
+    if (needle && !(o.reference.toLowerCase().includes(needle) || (o.customerName?.toLowerCase().includes(needle) ?? false) || (o.source?.reference?.toLowerCase().includes(needle) ?? false))) return false;
+    if (q.counters?.length && !q.counters.includes(o.counterId ?? NO_ONE)) return false;
+    if (q.staff?.length && !q.staff.includes(o.staffId ?? NO_ONE)) return false;
+    if (q.channels?.length && !q.channels.includes(orderChannelOf(o))) return false;
+    if (q.methods?.length && !q.methods.includes(orderMethodOf(o))) return false;
+    if (q.statuses?.length && !q.statuses.includes(o.status)) return false;
+    return true;
+  });
+}
+
+/** Every matching order, unpaged — the Export and the print pages need all of
+ *  them, not the twenty on screen. */
+export async function listSalesOrders(q: SalesQuery = {}): Promise<ApiResult<Order[]>> {
+  await delay();
+  return ok(filterSalesOrders(resource.peek(), q));
+}
+
+export type SalesSortKey =
+  | "reference" | "createdAt" | "customer" | "channel" | "counter" | "staff"
+  | "total" | "tax" | "paid" | "discount" | "method" | "status" | "items";
+
+/** Order a report. Names live outside this file (the staff and counter
+ *  records), so the caller says how to read one. */
+export function sortSalesOrders(
+  rows: Order[],
+  key: string,
+  dir: "asc" | "desc",
+  names: { staff?: (id: string | null) => string; counter?: (id: string | null) => string } = {},
+): Order[] {
+  const text = (f: (o: Order) => string) => (a: Order, b: Order) => f(a).localeCompare(f(b), undefined, { numeric: true, sensitivity: "base" });
+  const num = (f: (o: Order) => number) => (a: Order, b: Order) => f(a) - f(b);
+  const by: Record<string, (a: Order, b: Order) => number> = {
+    reference: text((o) => o.reference),
+    createdAt: num((o) => Date.parse(o.createdAt)),
+    customer: text((o) => o.customerName ?? ""),
+    channel: text((o) => orderChannelOf(o)),
+    counter: text((o) => names.counter?.(o.counterId) ?? o.counterId ?? ""),
+    staff: text((o) => names.staff?.(o.staffId) ?? o.staffId ?? ""),
+    total: num((o) => o.total),
+    tax: num((o) => o.taxTotal ?? 0),
+    paid: num(orderNetPaid),
+    discount: num((o) => o.discountTotal ?? 0),
+    method: text(orderMethodOf),
+    status: text((o) => o.status),
+    items: num(orderItemCount),
+  };
+  const cmp = by[key] ?? by.createdAt;
+  const sign = dir === "asc" ? 1 : -1;
+  return rows.slice().sort((a, b) => sign * cmp(a, b) || Date.parse(b.createdAt) - Date.parse(a.createdAt) || a.id.localeCompare(b.id));
+}
+
+/** One line of a breakdown: how many orders, and what they come to. A voided
+ *  order is counted but contributes nothing, so every breakdown's orders add up
+ *  to Transactions and its amounts add up to Sales. */
+export interface SalesRow {
+  key: string;
+  orders: number;
+  amount: Minor;
+}
+
+export interface SalesSummary {
+  /** Everything the filters match — the table's own total. */
+  orders: number;
+  /** Of those, the ones that are not cancelled or fully refunded. */
+  counted: number;
+  /** Units sold, on counted orders. */
+  items: number;
+  gross: Minor;
+  discounts: Minor;
+  /** Gross less discounts: what the sale came to before VAT. */
+  net: Minor;
+  vat: Minor;
+  total: Minor;
+  /** Lines refunded on orders that were otherwise kept. */
+  partRefunds: Minor;
+  /** What the sales are worth: total less part refunds. The headline. */
+  sales: Minor;
+  /** Taken, net of refunds. */
+  paid: Minor;
+  owed: Minor;
+  writtenOff: Minor;
+  /** Everything handed back across the matching orders, including those
+   *  refunded or undone in full — which are not in `sales`. */
+  refunds: Minor;
+  /** What came in, per method, net of refunds. With `owed` and `writtenOff` it adds up to `sales`. */
+  methods: { key: PaymentMethod; amount: Minor }[];
+  channels: SalesRow[];
+  counters: SalesRow[];
+  staff: SalesRow[];
+  statuses: SalesRow[];
+  /** The best sellers by value, and everything else rolled into one line so the list still adds up. */
+  topItems: { key: string; name: string; qty: number; amount: Minor }[];
+  otherItems: { count: number; qty: number; amount: Minor };
+}
+
+export function summariseSales(rows: Order[], topN = 10): SalesSummary {
+  const s: SalesSummary = {
+    orders: rows.length, counted: 0, items: 0,
+    gross: 0, discounts: 0, net: 0, vat: 0, total: 0, partRefunds: 0, sales: 0,
+    paid: 0, owed: 0, writtenOff: 0, refunds: 0,
+    methods: [], channels: [], counters: [], staff: [], statuses: [],
+    topItems: [], otherItems: { count: 0, qty: 0, amount: 0 },
+  };
+  const methods = new Map<PaymentMethod, number>();
+  const groups = { channels: new Map<string, SalesRow>(), counters: new Map<string, SalesRow>(), staff: new Map<string, SalesRow>(), statuses: new Map<string, SalesRow>() };
+  const bump = (g: Map<string, SalesRow>, key: string, amount: Minor) => {
+    const row = g.get(key) ?? { key, orders: 0, amount: 0 };
+    row.orders += 1;
+    row.amount += amount;
+    g.set(key, row);
+  };
+  const items = new Map<string, { key: string; name: string; qty: number; amount: Minor }>();
+
+  for (const o of rows) {
+    const worth = orderSales(o);
+    s.refunds += orderRefundedOut(o);
+    bump(groups.channels, orderChannelOf(o), worth);
+    bump(groups.counters, o.counterId ?? NO_ONE, worth);
+    bump(groups.staff, o.staffId ?? NO_ONE, worth);
+    bump(groups.statuses, o.status, worth);
+    if (isVoidedOrder(o)) continue;
+    s.counted += 1;
+    s.items += orderItemCount(o);
+    s.gross += o.subtotal;
+    s.discounts += o.discountTotal ?? 0;
+    s.vat += o.taxTotal ?? 0;
+    s.total += o.total;
+    s.partRefunds += orderLineRefunds(o);
+    s.sales += worth;
+    s.paid += orderNetPaid(o);
+    s.owed += orderDue(o);
+    s.writtenOff += orderWrittenOff(o);
+    for (const p of o.payments) methods.set(p.method, (methods.get(p.method) ?? 0) + p.amount);
+    for (const l of o.lines) {
+      const key = l.productName;
+      const row = items.get(key) ?? { key, name: l.productName, qty: 0, amount: 0 };
+      row.qty += l.quantity - (l.refundedQuantity ?? 0);
+      row.amount += l.total - (l.refundedAmount ?? 0);
+      items.set(key, row);
+    }
+  }
+  s.net = s.gross - s.discounts;
+  s.methods = [...methods].map(([key, amount]) => ({ key, amount })).filter((m) => m.amount !== 0).sort((a, b) => b.amount - a.amount);
+  const rowsOf = (g: Map<string, SalesRow>) => [...g.values()].sort((a, b) => b.amount - a.amount || b.orders - a.orders);
+  s.channels = rowsOf(groups.channels);
+  s.counters = rowsOf(groups.counters);
+  s.staff = rowsOf(groups.staff);
+  s.statuses = rowsOf(groups.statuses);
+  const ranked = [...items.values()].sort((a, b) => b.amount - a.amount || b.qty - a.qty || a.name.localeCompare(b.name));
+  s.topItems = ranked.slice(0, topN);
+  for (const r of ranked.slice(topN)) {
+    s.otherItems.count += 1;
+    s.otherItems.qty += r.qty;
+    s.otherItems.amount += r.amount;
+  }
+  return s;
+}
+
+/** Put a customer on a sale that was rung up without one (a walk-in, or an
+ *  online guest who was never matched to a record). */
+export async function attachOrderCustomer(orderId: string, customer: { id: string; name: string }, who = "Counter"): Promise<ApiResult<Order>> {
+  const o = resource.peek().find((x) => x.id === orderId);
+  if (!o) return resource.get(orderId);
+  return resource.update(orderId, {
+    customerId: customer.id,
+    customerName: customer.name,
+    history: withHistory(o, who, `Added customer ${customer.name}`),
   });
 }

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, CalendarClock, Check, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, type LucideIcon } from "lucide-react";
-import { AreaChart, Button, DeltaPill, PageShell, Select, StatStrip, StatusPill, type StatItem } from "@/components/ui";
+import { AreaChart, Button, DeltaPill, Select, StatStrip, StatusPill, type StatItem } from "@/components/ui";
+import { PageShell } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import {
   getOperator,
@@ -23,7 +24,7 @@ import {
   type Order,
 } from "@/lib/api";
 import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes } from "@/lib/schedule";
-import { formatClock, formatDateTime, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
+import { formatClock, formatDateTime, formatDay, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { useActiveLocation } from "@/lib/activeLocation";
 
@@ -505,25 +506,28 @@ export default function DashboardPage() {
   const card = "card-surface";
 
   return (
-    <PageShell
-      title={op.data?.name || t("title")}
-      actions={
-        <div className="flex items-center gap-tight">
-          {/* The venue chooser used to be here, with **All locations** as its
-              default — so the cockpit opened on a figure summed across every
-              attraction, which is a figure nobody can act on, and no other
-              screen said which venues it was showing. It is in the bar now and
-              governs the whole console; see lib/activeLocation. */}
-          {/* Scope, not actions — a dashboard is a place to look. */}
-          <div role="group" aria-label={t("scopeLabel")} className="relative grid h-[52px] grid-cols-2 rounded-sm bg-line/60 p-inline sm:h-11">
-            <span aria-hidden className="absolute inset-y-inline rounded-xs bg-ember-solid transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />
-            {(["today", "week"] as const).map((s) => (
-              <button key={s} type="button" aria-pressed={scope === s} onClick={() => setScope(s)} className={`relative z-10 h-full px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-white" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
-            ))}
-          </div>
+    <PageShell title={op.data?.name || t("title")}>
+      {/* The dashboard's first toolbar: what period the page is showing, and
+          the one control that changes it. It was the only occupant of a header
+          row under the bar — a control with nothing beside it — so it now says
+          which days it means, on the row it shares with the control, and the
+          tiles follow at the card gap. (A phone gets the control full width.)
+          The venue chooser used to be here, with **All locations** as its
+          default; it is in the bar now and governs the whole console. */}
+      <div className="mb-section flex items-center justify-between gap-section">
+        <p aria-live="polite" className="hidden min-w-0 truncate text-[13px] text-muted md:block">
+          {scope === "today"
+            ? `${t("today")} · ${formatDay(TODAY, { weekday: true })}`
+            : `${t("thisWeek")} · ${formatDay(dayShift(TODAY, -6), { weekday: true })} – ${formatDay(TODAY, { weekday: true })}`}
+        </p>
+        {/* Scope, not actions — a dashboard is a place to look. */}
+        <div role="group" aria-label={t("scopeLabel")} className="relative grid h-[52px] w-full grid-cols-2 rounded-sm bg-line/60 p-inline md:h-9 md:w-60">
+          <span aria-hidden className="absolute inset-y-inline rounded-xs bg-ember-solid transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />
+          {(["today", "week"] as const).map((s) => (
+            <button key={s} type="button" aria-pressed={scope === s} onClick={() => setScope(s)} className={`relative z-10 h-full px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-white" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
+          ))}
         </div>
-      }
-    >
+      </div>
       {loading ? (
         /* The labels are known before the figures are, so the strip states
            what it is about to say and pulses only the numbers. */

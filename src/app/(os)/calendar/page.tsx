@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
-import { Button, DateField, PageShell, Select, Tabs, useToast } from "@/components/ui";
+import { Button, DateField, Select, Tabs, useToast } from "@/components/ui";
+import { PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { LG, MD, XL, useMediaQuery } from "@/lib/useMedia";
@@ -35,7 +36,6 @@ import { MonthGrid } from "./_components/MonthGrid";
 import { EventDetail } from "./_components/EventDetail";
 import { HoldList } from "./_components/HoldList";
 import { EventPeek } from "./_components/EventPeek";
-import { CalendarStats } from "./_components/CalendarStats";
 import { BookingPanel, type BookingRequest, type Carry } from "./_components/BookingPanel";
 import { openHours, openSlotsFor, optionsInHour, sessionLaneId, type OpenSlot } from "./_components/openSlots";
 import {
@@ -48,7 +48,6 @@ import {
   startOfDay,
   tradingWindow,
   weekStart,
-  windowStats,
   type CalEvent,
   type EventWords,
   type Ghost,
@@ -530,28 +529,6 @@ export default function CalendarPage() {
     if (e.orderId) router.push(`/orders/${e.orderId}`);
   };
 
-  /* What the period on screen holds, and how it compares with the one before
-     it. Counted from `scoped` — the select filters apply, the state toggles do
-     not, because switching "no-show" off is a way of looking at the grid
-     rather than a claim that there were none. */
-  const [statsNow, statsPrev] = useMemo(() => {
-    const bounds = (offset: number): [Date, Date] => {
-      if (view === "day") {
-        const from = startOfDay(addDays(cursor, offset));
-        return [from, addDays(from, 1)];
-      }
-      if (view === "week") {
-        const from = addDays(wkStart, offset * 7);
-        return [from, addDays(from, 7)];
-      }
-      const from = new Date(cursor.getFullYear(), cursor.getMonth() + offset, 1);
-      return [from, new Date(cursor.getFullYear(), cursor.getMonth() + offset + 1, 1)];
-    };
-    const [a, b] = bounds(0);
-    const [pa, pb] = bounds(-1);
-    return [windowStats(scoped, a, b), windowStats(scoped, pa, pb)];
-  }, [scoped, view, cursor, wkStart]);
-
   /** The register's one surviving job: everything held, wherever it is. */
   const [holdList, setHoldList] = useState(false);
   const activeHolds = useMemo(
@@ -562,8 +539,9 @@ export default function CalendarPage() {
   /* Holds outside the window on screen.
      The register that listed every hold is gone, and a grid only shows the
      days somebody has navigated to — so a hold placed three months out would
-     sit there unseen until it was too late to matter. The held figure says
-     how many are elsewhere, and pressing it goes to the nearest one. */
+     sit there unseen until it was too late to matter. The Spaces on hold
+     button in the toolbar opens the list of all of them, and says in its
+     tooltip how many are on other days. */
   const heldElsewhere = useMemo(() => {
     const all = (holdsQ.data?.data ?? []).filter((h) => h.active);
     if (!all.length) return null;
@@ -957,42 +935,16 @@ export default function CalendarPage() {
     </>
   );
 
-  return (
-    <PageShell
-      title={t("title")}
-      description={t("description")}
-      primary={{
-        label: t("book.newBooking"),
-        onClick: () => openNewBooking(),
-        title: t("book.newBookingKey"),
-        keyShortcut: "C",
-      }}
-    >
-      <div className="flex flex-col gap-section">
-        <CalendarStats
-          now={statsNow}
-          previous={statsPrev}
-          comparisonLabel={t(view === "day" ? "vsDay" : view === "week" ? "vsWeek" : "vsMonth")}
-          labels={{
-            bookings: t("statBookings"),
-            arrived: t("statArrived"),
-            noshow: t("statNoShow"),
-            holds: t("statHolds"),
-          }}
-          /* The figure opens the list. Jumping straight to the nearest hold
-             was one target out of N: with four scattered across the year you
-             could reach one and had to guess the rest. */
-          elsewhere={
-            activeHolds.length > 0
-              ? {
-                  count: activeHolds.length,
-                  label: heldElsewhere ? t("heldElsewhere", { count: heldElsewhere.count }) : t("heldSeeAll"),
-                  onGo: () => setHoldList(true),
-                }
-              : undefined
-          }
-        />
+  const primary: PagePrimary = {
+    label: t("book.newBooking"),
+    onClick: () => openNewBooking(),
+    title: t("book.newBookingKey"),
+    keyShortcut: "C",
+  };
 
+  return (
+    <PageShell title={t("title")} description={t("description")} primary={primary}>
+      <div className="flex flex-col gap-section">
         {/* The range and the control that changes it, together. They were 60px
             apart — arrows in the page header, the label they move down beside
             the tabs — so you read where you are in one place and moved it in
@@ -1051,21 +1003,40 @@ export default function CalendarPage() {
             {/* Up here on a phone, beside the controls it belongs with, rather
                 than alone on a row of its own. */}
             {compact && filtersButton}
+            {/* What the stat band's "Spaces on hold" figure used to open: every
+                hold, wherever it is. Drawn only when there are any. */}
+            {activeHolds.length > 0 && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setHoldList(true)}
+                title={heldElsewhere ? t("heldElsewhere", { count: heldElsewhere.count }) : undefined}
+                className="max-md:px-comfortable"
+              >
+                {t("statHolds")}
+                <span className="tabular-nums text-muted">{activeHolds.length}</span>
+              </Button>
+            )}
           </div>
 
           {/* The view switch sits on the right, the date controls on the left —
               the owner's call: where you are in time is read first, and the
               grain you are looking at is the smaller decision. DOM order
               follows, so the tab order runs the same way the eye does. */}
-          <Tabs
-            items={[
-              { value: "day", label: t("tabDay") },
-              { value: "week", label: t("tabWeek") },
-              { value: "month", label: t("tabMonth") },
-            ]}
-            value={view}
-            onChange={(v) => setView(v as View)}
-          />
+          <div className="flex items-center gap-section">
+            <Tabs
+              items={[
+                { value: "day", label: t("tabDay") },
+                { value: "week", label: t("tabWeek") },
+                { value: "month", label: t("tabMonth") },
+              ]}
+              value={view}
+              onChange={(v) => setView(v as View)}
+            />
+            {/* New booking, on the calendar's own toolbar — the page has no
+                header row. On a phone it is the bar's plus. */}
+            <PagePrimaryButton primary={primary} />
+          </div>
         </div>
 
         {/* ── filters ─────────────────────────────────────────────────────── */}

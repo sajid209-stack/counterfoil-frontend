@@ -8,10 +8,10 @@ import {
   DataTable,
   EmptyState,
   Select,
-  PageShell,
   StatusPill,
   type Column,
 } from "@/components/ui";
+import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import { listBookingRules, listLocations, listProducts, type BookingRule } from "@/lib/api";
 
@@ -46,8 +46,10 @@ export default function BookingRulesPage() {
     { key: "status", header: t("colStatus"), render: (r) => <StatusPill status={r.status} /> },
   ];
 
+  const primary: PagePrimary = { label: t("newRule"), onClick: () => router.push("/booking-rules/new") };
+
   return (
-    <PageShell title={t("title")} description={t("description")} primary={{ label: t("newRule"), onClick: () => router.push("/booking-rules/new") }}>
+    <PageShell title={t("title")} description={t("description")} primary={primary}>
       <DataTable
         columns={columns}
         rows={data?.data ?? []}
@@ -57,6 +59,7 @@ export default function BookingRulesPage() {
         sort={sort}
         onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
         toolbar={
+          <PageToolbar primary={primary}>
           <div className="flex flex-wrap items-center gap-tight">
             <div className="relative">
               <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
@@ -79,6 +82,7 @@ export default function BookingRulesPage() {
               ]}
             />
           </div>
+          </PageToolbar>
         }
         emptyState={<EmptyState title={t("emptyTitle")} message={t("emptyMessage")} />}
         pagination={{ page, pageSize: 10, total: data?.page.total ?? 0, onPageChange: setPage }}

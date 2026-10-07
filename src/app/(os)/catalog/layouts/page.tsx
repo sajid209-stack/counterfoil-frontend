@@ -13,8 +13,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, EmptyState, Modal, PageShell, PlanView, useToast, seatToElement } from "@/components/ui";
+import { Plus } from "lucide-react";
+import { Button, EmptyState, Modal, PlanView, useToast, seatToElement } from "@/components/ui";
+import { PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 import { createSeatLayout, listSeatLayouts } from "@/lib/api";
 import type { LayoutExperience, SeatLayout } from "@/lib/api";
 import { EXPERIENCES, planCapacity } from "@/lib/layout";
@@ -27,6 +30,7 @@ export default function SeatLayoutsPage() {
   const [choosing, setChoosing] = useState(false);
   const [creating, setCreating] = useState<LayoutExperience | null>(null);
   const layouts = q.data?.data ?? [];
+  const wide = useMediaQuery(MD);
 
   const create = async (experience: LayoutExperience) => {
     setCreating(experience);
@@ -50,12 +54,10 @@ export default function SeatLayoutsPage() {
     } else toast.error(res.error.message);
   };
 
+  const primary: PagePrimary = { label: t("list.new"), onClick: () => setChoosing(true) };
+
   return (
-    <PageShell
-      title={t("list.title")}
-      description={t("list.description")}
-      primary={{ label: t("list.new"), onClick: () => setChoosing(true) }}
-    >
+    <PageShell title={t("list.title")} description={t("list.description")} primary={primary}>
       {q.loading ? (
         <div aria-busy="true" className="grid gap-section sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2].map((i) => <div key={i} className="h-52 animate-pulse rounded-md bg-subtle" />)}
@@ -64,6 +66,19 @@ export default function SeatLayoutsPage() {
         <EmptyState title={t("list.empty")} action={<Button onClick={() => setChoosing(true)}>{t("list.new")}</Button>} />
       ) : (
         <div className="grid gap-section sm:grid-cols-2 lg:grid-cols-3">
+          {/* A gallery's own way to make another: the first tile. It has no
+              toolbar to carry a button, and a strip above the grid would hold
+              only that. A phone has the bar's plus. */}
+          {wide && (
+            <button
+              type="button"
+              onClick={primary.onClick}
+              className="flex min-h-40 items-center justify-center gap-tight rounded-md border border-dashed border-strong p-card text-sm font-medium text-brand-foreground transition-colors duration-quick hover:bg-muted-wash"
+            >
+              <Plus size={16} strokeWidth={1.75} aria-hidden />
+              {primary.label}
+            </button>
+          )}
           {layouts.map((l) => (
             <LayoutCard key={l.id} layout={l} onOpen={() => router.push(`/catalog/layouts/${l.id}`)} />
           ))}

@@ -23,16 +23,24 @@
  *
  * Breakdowns carry their comparison figure only while comparing, so a card can
  * say "▲ 12% vs 8–14 Jul" against each row without a second call.
+ *
+ * Time series (revenue, visitors, check-ins, customers, channels, payments)
+ * share one bucketing: by hour for one or two days, by day up to 62 days, by
+ * week beyond, and the comparison range's point i sits against the main
+ * range's point i.
  */
-import { dowOf } from "@/lib/schedule";
+import { DEMO_NOW_MINUTES, DEMO_TODAY, dowOf, isResourceType, slotTimesOn, toMinutes, usesBuffer } from "@/lib/schedule";
 import { delay, fail, getOperatorState, ok } from "./client";
 import { peekBookings } from "./bookings";
+import { peekCounters } from "./counters";
 import { peekLocations } from "./locations";
 import { peekOrders } from "./orders";
 import { peekProducts } from "./products";
+import { peekResources } from "./resources";
 import { getTaxReport, lineNet, productCapacityOn, settled } from "./reports";
 import type { TaxClassRow } from "./reports";
-import type { ApiResult, Booking, ID, ISODate, Minor, Order, OrderLine, PaymentMethod } from "./types";
+import { getSlots, isOpenOn } from "./slots";
+import type { ApiResult, Booking, ID, ISODate, Minor, Order, OrderLine, PaymentMethod, Product } from "./types";
 
 /** What a period is compared with. `custom` needs `compareFrom`/`compareTo`. */
 export type CompareMode = "none" | "previous" | "year" | "custom";
@@ -56,17 +64,20 @@ export interface Kpi {
 
 export type Granularity = "hour" | "day" | "week";
 
-export interface RevenuePoint {
+/** One point of any time series: a count of guests, or money in minor units. */
+export interface TimePoint {
   /** ISO date (day/week start) or "HH:00" for hourly. */
   key: string;
-  value: Minor;
+  value: number;
   /** The aligned point of the comparison range, when comparing. */
-  previous?: Minor;
+  previous?: number;
   /** That point's own key (a date, week start or "HH:00"), so a tooltip can
    *  say "Mon 21 Jul ৳4,200 vs Mon 14 Jul ৳3,100". Absent past the end of a
    *  shorter comparison range. */
   previousKey?: string;
 }
+
+export type RevenuePoint = TimePoint;
 
 export interface TopBooking {
   /** "other" folds everything past the top 7. */
@@ -140,6 +151,100 @@ export interface GuestSummary {
   returning: number;
 }
 
+/**
+ * Guests over time. Placed by the booking's SLOT (the day and hour the guests
+ * were booked to come), not by when they bought: a check-in count is a fact
+ * about the visit. A booking only records how many of its party have checked
+ * in, not when, so the slot is the only honest place to put them.
+ */
+export interface GuestSeries {
+  series: TimePoint[];
+  /** Sum of the series. */
+  total: number;
+  /** The same total for the comparison range, when comparing. */
+  previousTotal: number | null;
+}
+
+/** Check-ins: checked-in guests per point, and what they are measured against. */
+export interface CheckinSeries extends GuestSeries {
+  /** Booked guests that were due: bookings whose slot has started by now, or
+   *  where someone has already arrived. "came of due" is the attendance rate;
+   *  it never counts a guest whose time has not come. */
+  due: number;
+  previousDue: number | null;
+}
+
+/** One ticket type (a booking's price tier) in the period. */
+export interface TicketTypeRow {
+  /** `${productId}|${tier}`, or "other". */
+  key: string;
+  productId: ID | "other";
+  /** The booking's name. */
+  name: string;
+  /** The tier's name as it was sold ("Adult"). */
+  tier: string;
+  revenue: Minor;
+  /** Units sold, less refunded units. */
+  quantity: number;
+  /** 0..1 of the period's revenue. */
+  share: number;
+  previousRevenue?: Minor;
+  previousQuantity?: number;
+}
+
+export type CounterKind = "counter" | "online" | "marketplace" | "unassigned" | "other";
+
+/** Sales by where they were rung up. Online and marketplace orders have no
+ *  counter, so they are rows of their own; a counter sale that never recorded
+ *  its counter is "unassigned" rather than guessed. */
+export interface CounterRow {
+  key: string;
+  kind: CounterKind;
+  counterId?: ID;
+  /** The counter's name for kind "counter"; empty for the others. */
+  name: string;
+  revenue: Minor;
+  orders: number;
+  share: number;
+  previousRevenue?: Minor;
+  previousOrders?: number;
+}
+
+/** Named customers per point, each counted once: on the point of the first
+ *  order they made in these dates. "New" means that order was their first ever
+ *  at this venue; "returning" means they had bought before these dates. So the
+ *  two series sum to the Guests card's new and returning totals. */
+export interface CustomerPoint {
+  key: string;
+  newCustomers: number;
+  returning: number;
+  previousKey?: string;
+  previousNew?: number;
+  previousReturning?: number;
+}
+
+/** One cell of the time-slot grid: a booking at one start time. */
+export interface TimeslotCell {
+  /** Index into `rows`. */
+  row: number;
+  /** Index into `times`. */
+  col: number;
+  /** Guests booked to start then, across the dates. */
+  guests: number;
+  bookings: number;
+  /** Places offered at that start time across the dates (0 when unknown). */
+  capacity: number;
+  /** 0..1 of those places taken, or null when the places are unknown. For a
+   *  field or lane the places are the courts themselves, one per start time. */
+  fill: number | null;
+}
+
+export interface TimeslotRow {
+  productId: ID;
+  name: string;
+  guests: number;
+}
+
 export interface AnalyticsOverview {
   currency: string;
   from: ISODate;
@@ -173,6 +278,26 @@ export interface AnalyticsOverview {
   guestsPrevious: GuestSummary | null;
   /** VAT by rate for the period — what the return is filed from. */
   tax: { rows: TaxClassRow[]; net: Minor; tax: Minor; gross: Minor };
+
+  /** Booked guests per point (the Guests figure, spread over time). */
+  visitors: GuestSeries;
+  /** Checked-in guests per point, against the guests that were due. */
+  checkins: CheckinSeries;
+  /** Ticket types by revenue: the top 10 and "Other", which together sum to revenue. */
+  ticketTypes: TicketTypeRow[];
+  /** Sales by counter, online and marketplace; the rows sum to revenue. */
+  counters: CounterRow[];
+  /** New and returning customers per point; sums to `guests`' new and returning. */
+  customers: CustomerPoint[];
+  /** Revenue per point for each channel, in the order of `channels`. At every
+   *  point the channels sum to that point of `revenue`. */
+  channelSeries: { channel: SalesChannel; series: TimePoint[] }[];
+  /** Confirmed payments per point for each method, in the order of `payments`. */
+  paymentSeries: { method: PaymentMethod; series: TimePoint[] }[];
+  /** Which start times fill: the bookings that sell time slots (sessions,
+   *  fields, lanes, tours) by their start times. Only times someone booked
+   *  have a column. The cells' guests sum to those bookings' guests. */
+  timeslots: { times: string[]; rows: TimeslotRow[]; cells: TimeslotCell[] };
 }
 
 // ── implementation ─────────────────────────────────────────────────────────
@@ -294,6 +419,93 @@ const hourRange = (window: [number, number], extra: number[]) => {
   return Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
 };
 
+/** The places a product offers at each start time on one day: a session's seats,
+ *  or one per field or lane at each time it can be booked. Nothing on a day it is
+ *  closed, and nothing for a product whose places are a daily cap rather than a
+ *  time's own (so such a booking has no fill figure). */
+function slotCapacityOn(p: Product, day: ISODate): Map<string, number> {
+  const out = new Map<string, number>();
+  const sch = p.schedule;
+  if (!sch || !isOpenOn(p, day)) return out;
+  if (isResourceType(p.bookingType)) {
+    const ids = p.resourceIds ?? [];
+    const count = peekResources().filter((r) => ids.includes(r.id) && r.status !== "archived").length;
+    const per = p.resourceExclusive !== false ? 1 : sch.capacityPerSession || 1;
+    for (const t of slotTimesOn(sch, day)) out.set(t, per * count);
+  } else {
+    for (const s of getSlots(p, day)) out.set(s.time, s.capacity);
+  }
+  return out;
+}
+
+/** A figure that happened on a day, in an hour (the venue's clock). */
+interface Datum {
+  day: ISODate;
+  hour: number;
+  v: number;
+}
+
+/**
+ * Bucket figures into the page's points: one per hour, day or week by
+ * `granularity`, with the comparison range's point i set against point i.
+ * A comparison shorter than the main range has no point past its end; a longer
+ * one is simply not drawn past the main range's. Hourly points cover the
+ * trading window, widened to any hour that has a figure (in either range), so
+ * a total can never lose a late sale.
+ */
+function bucketSeries(
+  g: Granularity,
+  main: { from: ISODate; to: ISODate },
+  cmp: { from: ISODate; to: ISODate } | null,
+  cur: Datum[],
+  prev: Datum[] | null,
+  window: [number, number],
+  hoursOf: number[] = [...cur, ...(prev ?? [])].map((r) => r.hour),
+): TimePoint[] {
+  if (g === "hour") {
+    const at = (rows: Datum[], h: number) => rows.reduce((s, r) => (r.hour === h ? s + r.v : s), 0);
+    return hourRange(window, hoursOf).map((h) => ({
+      key: hourKey(h),
+      value: at(cur, h),
+      ...(prev ? { previous: at(prev, h), previousKey: hourKey(h) } : {}),
+    }));
+  }
+  const keyOf = g === "week" ? weekStart : (d: string) => d;
+  const keysFor = (from: ISODate, to: ISODate) => {
+    const ks: string[] = [];
+    for (let d = from; d <= to; d = shiftDay(d, 1)) {
+      const k = keyOf(d);
+      if (ks[ks.length - 1] !== k) ks.push(k);
+    }
+    return ks;
+  };
+  const sumsOf = (rows: Datum[]) => {
+    const m = new Map<string, number>();
+    for (const r of rows) {
+      const k = keyOf(r.day);
+      m.set(k, (m.get(k) ?? 0) + r.v);
+    }
+    return m;
+  };
+  const keys = keysFor(main.from, main.to);
+  const sums = sumsOf(cur);
+  const prevKeys = cmp ? keysFor(cmp.from, cmp.to) : [];
+  const prevSums = prev ? sumsOf(prev) : null;
+  // By position: point i against comparison point i; none past a shorter comparison's end.
+  return keys.map((k, i) => ({
+    key: k,
+    value: sums.get(k) ?? 0,
+    ...(prevSums && prevKeys[i] ? { previous: prevSums.get(prevKeys[i]) ?? 0, previousKey: prevKeys[i] } : {}),
+  }));
+}
+
+/** Guests of a booking who have checked in: never more than the party. */
+const arrivedOf = (b: Booking) => Math.min(b.partySize, Math.max(0, b.checkedIn ?? 0));
+/** Whether a slot has started by the demo clock (DEMO_TODAY, noon), the way the
+ *  check-in screen decides which groups are due. */
+const hasStarted = (b: Booking) =>
+  slotDay(b) < DEMO_TODAY || (slotDay(b) === DEMO_TODAY && toMinutes(b.slotStart.slice(11, 16)) <= DEMO_NOW_MINUTES);
+
 const LEAD_BUCKETS: LeadBucket[] = ["same_day", "1_2_days", "3_7_days", "8_30_days", "over_30_days"];
 const leadBucket = (days: number): LeadBucket =>
   days <= 0 ? "same_day" : days <= 2 ? "1_2_days" : days <= 7 ? "3_7_days" : days <= 30 ? "8_30_days" : "over_30_days";
@@ -352,47 +564,15 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
 
   // Revenue series ----------------------------------------------------------
   const window = tradingHours(q.locationId);
-  const bookingHours = cur.bookings.map(slotHour);
   const orderHours = [...cur.orders, ...(prev?.orders ?? [])].map((o) => orderHour(o.createdAt));
-  let revenue: RevenuePoint[];
-  if (granularity === "hour") {
-    const hours = hourRange(window, orderHours);
-    const sum = (orders: Order[], h: number) =>
-      orders.filter((o) => orderHour(o.createdAt) === h).reduce((s, o) => s + orderRevenue(o), 0);
-    revenue = hours.map((h) => ({
-      key: hourKey(h),
-      value: sum(cur.orders, h),
-      ...(prev ? { previous: sum(prev.orders, h), previousKey: hourKey(h) } : {}),
-    }));
-  } else {
-    const keyOf = granularity === "week" ? weekStart : (d: string) => d;
-    const keysFor = (from: string, to: string) => {
-      const ks: string[] = [];
-      for (let d = from; d <= to; d = shiftDay(d, 1)) {
-        const k = keyOf(d);
-        if (ks[ks.length - 1] !== k) ks.push(k);
-      }
-      return ks;
-    };
-    const bucketSums = (orders: Order[]) => {
-      const m = new Map<string, number>();
-      for (const o of orders) {
-        const k = keyOf(orderDay(o));
-        m.set(k, (m.get(k) ?? 0) + orderRevenue(o));
-      }
-      return m;
-    };
-    const keys = keysFor(q.from, q.to);
-    const sums = bucketSums(cur.orders);
-    const prevKeys = range ? keysFor(range.from, range.to) : [];
-    const prevSums = prev ? bucketSums(prev.orders) : null;
-    // By position: point i against comparison point i; none past a shorter comparison's end.
-    revenue = keys.map((k, i) => ({
-      key: k,
-      value: sums.get(k) ?? 0,
-      ...(prevSums && prevKeys[i] ? { previous: prevSums.get(prevKeys[i]) ?? 0, previousKey: prevKeys[i] } : {}),
-    }));
-  }
+  const main = { from: q.from, to: q.to };
+  /** Orders as figures; `f` is what each one is worth to the series. */
+  const orderData = (orders: Order[], f: (o: Order) => number): Datum[] =>
+    orders.map((o) => ({ day: orderDay(o), hour: orderHour(o.createdAt), v: f(o) }));
+  /** Series over the venue's orders, on the revenue chart's own hours. */
+  const orderSeries = (pick: (m: Measure) => Order[], f: (o: Order) => number) =>
+    bucketSeries(granularity, main, range, orderData(pick(cur), f), prev ? orderData(pick(prev), f) : null, window, orderHours);
+  const revenue: RevenuePoint[] = orderSeries((m) => m.orders, orderRevenue);
 
   // Top bookings ------------------------------------------------------------
   const productRevenue = (m: Measure) => {
@@ -448,7 +628,15 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
   // Channels ----------------------------------------------------------------
   const channelRevenue = (m: Measure, channel: SalesChannel) =>
     m.orders.filter((o) => channelOf(o) === channel).reduce((s, o) => s + orderRevenue(o), 0);
-  const channels: ChannelSlice[] = (["counter", "online", "marketplace"] as SalesChannel[]).map((channel) => {
+  const CHANNELS: SalesChannel[] = ["counter", "online", "marketplace"];
+  const channelSeries = CHANNELS.map((channel) => ({
+    channel,
+    series: orderSeries(
+      (m) => m.orders.filter((o) => channelOf(o) === channel),
+      orderRevenue,
+    ),
+  }));
+  const channels: ChannelSlice[] = CHANNELS.map((channel) => {
     const os = cur.orders.filter((o) => channelOf(o) === channel);
     const rev = os.reduce((s, o) => s + orderRevenue(o), 0);
     return {
@@ -471,26 +659,36 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     cellMap.set(k, c);
   }
   const cells = [...cellMap.values()].sort((a, b) => a.weekday - b.weekday || a.hour - b.hour);
-  const heatHours = hourRange(window, bookingHours);
+  const heatHours = hourRange(window, cur.bookings.map(slotHour));
 
   // Payments ----------------------------------------------------------------
-  const paymentsIn = (from: string, to: string) => {
-    const payMap = new Map<PaymentMethod, { amount: number; count: number }>();
+  /** Every confirmed payment dated in the range, on the day and hour it was taken. */
+  const paymentRows = (from: string, to: string) => {
+    const rows: (Datum & { method: PaymentMethod })[] = [];
     for (const o of peekOrders()) {
       if (o.locationId !== q.locationId) continue;
       for (const p of o.payments) {
         const d = p.createdAt.slice(0, 10);
         if (p.status !== "confirmed" || p.amount <= 0 || d < from || d > to) continue;
-        const e = payMap.get(p.method) ?? { amount: 0, count: 0 };
-        e.amount += p.amount;
-        e.count += 1;
-        payMap.set(p.method, e);
+        rows.push({ method: p.method, day: d, hour: orderHour(p.createdAt), v: p.amount });
       }
+    }
+    return rows;
+  };
+  const paymentsIn = (rows: ReturnType<typeof paymentRows>) => {
+    const payMap = new Map<PaymentMethod, { amount: number; count: number }>();
+    for (const r of rows) {
+      const e = payMap.get(r.method) ?? { amount: 0, count: 0 };
+      e.amount += r.v;
+      e.count += 1;
+      payMap.set(r.method, e);
     }
     return payMap;
   };
-  const payMap = paymentsIn(q.from, q.to);
-  const prevPay = range ? paymentsIn(range.from, range.to) : null;
+  const curPayRows = paymentRows(q.from, q.to);
+  const prevPayRows = range ? paymentRows(range.from, range.to) : null;
+  const payMap = paymentsIn(curPayRows);
+  const prevPay = prevPayRows ? paymentsIn(prevPayRows) : null;
   const payTotal = [...payMap.values()].reduce((s, e) => s + e.amount, 0);
   const payments: PaymentSlice[] = [...payMap.entries()]
     .map(([method, e]) => ({
@@ -501,6 +699,19 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
       ...(prevPay ? { previousAmount: prevPay.get(method)?.amount ?? 0 } : {}),
     }))
     .sort((a, b) => b.amount - a.amount);
+  const payHours = [...curPayRows, ...(prevPayRows ?? [])].map((r) => r.hour);
+  const paymentSeries = payments.map((p) => ({
+    method: p.method,
+    series: bucketSeries(
+      granularity,
+      main,
+      range,
+      curPayRows.filter((r) => r.method === p.method),
+      prevPayRows ? prevPayRows.filter((r) => r.method === p.method) : null,
+      window,
+      payHours,
+    ),
+  }));
 
   // Lead time ---------------------------------------------------------------
   const slotsByOrder = new Map<string, string>();
@@ -551,7 +762,7 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     for (const who of inPeriod) if ((firstSeen.get(who) ?? "") >= from) newCustomers += 1;
     return {
       guests: m.guests,
-      arrived: m.bookings.reduce((s, b) => s + (b.checkedIn ?? 0), 0),
+      arrived: m.bookings.reduce((s, b) => s + arrivedOf(b), 0),
       noShows: m.bookings.filter((b) => b.noShow).reduce((s, b) => s + Math.max(0, b.partySize - (b.checkedIn ?? 0)), 0),
       newCustomers,
       returning: inPeriod.size - newCustomers,
@@ -560,11 +771,237 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
   const guests = guestSummary(cur, q.from);
   const guestsPrevious = prev && range ? guestSummary(prev, range.from) : null;
 
+  // Customers over time -----------------------------------------------------
+  // Each named customer once, on the point of their first order in the range;
+  // "new" when that order is their first ever at the venue (see CustomerPoint).
+  const customerData = (m: Measure, from: string) => {
+    const first = new Map<string, Order>();
+    for (const o of [...m.orders].sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0))) {
+      const who = o.customerId ?? o.customerName;
+      if (who && !first.has(who)) first.set(who, o);
+    }
+    const fresh: Datum[] = [];
+    const back: Datum[] = [];
+    for (const [who, o] of first) {
+      (((firstSeen.get(who) ?? "") >= from ? fresh : back)).push({ day: orderDay(o), hour: orderHour(o.createdAt), v: 1 });
+    }
+    return { fresh, back };
+  };
+  const custCur = customerData(cur, q.from);
+  const custPrev = prev && range ? customerData(prev, range.from) : null;
+  const seriesOf = (c: Datum[], p: Datum[] | undefined) => bucketSeries(granularity, main, range, c, p ?? null, window, orderHours);
+  const freshSeries = seriesOf(custCur.fresh, custPrev?.fresh);
+  const backSeries = seriesOf(custCur.back, custPrev?.back);
+  const customers: CustomerPoint[] = freshSeries.map((f, i) => ({
+    key: f.key,
+    newCustomers: f.value,
+    returning: backSeries[i].value,
+    ...(f.previousKey !== undefined
+      ? { previousKey: f.previousKey, previousNew: f.previous ?? 0, previousReturning: backSeries[i].previous ?? 0 }
+      : {}),
+  }));
+
+  // Visitors and check-ins --------------------------------------------------
+  const bookingData = (m: Measure, f: (b: Booking) => number): Datum[] =>
+    m.bookings.map((b) => ({ day: slotDay(b), hour: slotHour(b), v: f(b) }));
+  const bookingHours = [...cur.bookings, ...(prev?.bookings ?? [])].map(slotHour);
+  const guestSeries = (f: (b: Booking) => number) =>
+    bucketSeries(granularity, main, range, bookingData(cur, f), prev ? bookingData(prev, f) : null, window, bookingHours);
+  // Totals come from the bookings, not from adding up the points: a comparison
+  // longer than the main range has points the chart never draws.
+  const arrivedIn = (m: Measure) => m.bookings.reduce((s, b) => s + arrivedOf(b), 0);
+  const dueIn = (m: Measure) => m.bookings.reduce((s, b) => s + (hasStarted(b) || arrivedOf(b) > 0 ? b.partySize : 0), 0);
+  const visitors: GuestSeries = {
+    series: guestSeries((b) => b.partySize),
+    total: cur.guests,
+    previousTotal: prev ? prev.guests : null,
+  };
+  const checkins: CheckinSeries = {
+    series: guestSeries(arrivedOf),
+    total: arrivedIn(cur),
+    previousTotal: prev ? arrivedIn(prev) : null,
+    due: dueIn(cur),
+    previousDue: prev ? dueIn(prev) : null,
+  };
+
   // Capacity ----------------------------------------------------------------
   const prevCap = prev ? new Map(prev.capRows.map((r) => [r.productId, r.filled])) : null;
   const capacity: CapacityRow[] = cur.capRows.map((r) => {
     const f = prevCap?.get(r.productId);
     return f === undefined ? r : { ...r, previousFilled: f };
+  });
+
+  // Ticket types ------------------------------------------------------------
+  // A booking's price tier as it was sold ("Adult"), so renaming a tier later
+  // cannot rewrite last month. Booking lines only are ranked; shop items,
+  // add-ons and custom amounts fall into "Other", so the rows sum to revenue.
+  const tierSales = (m: Measure) => {
+    const by = new Map<string, { productId: string; name: string; tier: string; at: string; revenue: number; quantity: number }>();
+    let quantity = 0;
+    for (const o of m.orders) {
+      for (const l of o.lines) {
+        const units = Math.max(0, l.quantity - (l.refundedQuantity ?? 0));
+        quantity += units;
+        if (!isBookingLine(l)) continue;
+        const key = `${l.productId}|${l.tierName}`;
+        const e = by.get(key) ?? { productId: l.productId, name: l.productName, tier: l.tierName, at: o.createdAt, revenue: 0, quantity: 0 };
+        e.revenue += lineRevenue(l);
+        e.quantity += units;
+        if (o.createdAt > e.at) {
+          e.at = o.createdAt;
+          e.name = l.productName;
+        }
+        by.set(key, e);
+      }
+    }
+    return { by, quantity };
+  };
+  const tiersCur = tierSales(cur);
+  const tiersPrev = prev ? tierSales(prev) : null;
+  const tierRanked = [...new Set([...tiersCur.by.keys(), ...(tiersPrev?.by.keys() ?? [])])]
+    .map((key) => ({ key, c: tiersCur.by.get(key), p: tiersPrev?.by.get(key) }))
+    .filter((x) => (x.c?.revenue ?? 0) !== 0 || (x.c?.quantity ?? 0) > 0 || (x.p?.revenue ?? 0) !== 0 || (x.p?.quantity ?? 0) > 0)
+    // With a comparison, a ticket type that sold last time and nothing now is
+    // as much the story as one that sold well now, so it ranks by the larger.
+    .sort(
+      (a, b) =>
+        Math.max(b.c?.revenue ?? 0, b.p?.revenue ?? 0) - Math.max(a.c?.revenue ?? 0, a.p?.revenue ?? 0) ||
+        (b.c?.revenue ?? 0) - (a.c?.revenue ?? 0) ||
+        (b.c?.quantity ?? 0) - (a.c?.quantity ?? 0) ||
+        (a.c ?? a.p)!.name.localeCompare((b.c ?? b.p)!.name),
+    );
+  const tierTop = tierRanked.slice(0, 10);
+  const ticketTypes: TicketTypeRow[] = tierTop.map(({ key, c, p }) => {
+    const e = (c ?? p)!;
+    return {
+      key,
+      productId: e.productId,
+      name: e.name,
+      tier: e.tier,
+      revenue: c?.revenue ?? 0,
+      quantity: c?.quantity ?? 0,
+      share: share(c?.revenue ?? 0, cur.revenue),
+      ...(tiersPrev ? { previousRevenue: p?.revenue ?? 0, previousQuantity: p?.quantity ?? 0 } : {}),
+    };
+  });
+  {
+    const rest = {
+      revenue: cur.revenue - ticketTypes.reduce((s, r) => s + r.revenue, 0),
+      quantity: tiersCur.quantity - ticketTypes.reduce((s, r) => s + r.quantity, 0),
+      previousRevenue: tiersPrev ? prev!.revenue - ticketTypes.reduce((s, r) => s + (r.previousRevenue ?? 0), 0) : 0,
+      previousQuantity: tiersPrev ? tiersPrev.quantity - ticketTypes.reduce((s, r) => s + (r.previousQuantity ?? 0), 0) : 0,
+    };
+    if (rest.revenue !== 0 || rest.quantity > 0 || rest.previousRevenue !== 0 || rest.previousQuantity > 0) {
+      ticketTypes.push({
+        key: "other",
+        productId: "other",
+        name: "Other",
+        tier: "",
+        revenue: rest.revenue,
+        quantity: rest.quantity,
+        share: share(rest.revenue, cur.revenue),
+        ...(tiersPrev ? { previousRevenue: rest.previousRevenue, previousQuantity: rest.previousQuantity } : {}),
+      });
+    }
+  }
+
+  // Counters ----------------------------------------------------------------
+  // Where an order was rung up. Marketplace and online orders have no counter,
+  // so they are rows of their own; a counter sale that did not record its
+  // counter is "unassigned" rather than guessed at.
+  const counterNames = new Map(peekCounters().map((c) => [c.id, c.name]));
+  const counterKeyOf = (o: Order) =>
+    o.source ? "marketplace" : o.channel === "online" ? "online" : o.counterId ? `counter:${o.counterId}` : "unassigned";
+  const counterSales = (m: Measure) => {
+    const by = new Map<string, { revenue: number; orders: number }>();
+    for (const o of m.orders) {
+      const k = counterKeyOf(o);
+      const e = by.get(k) ?? { revenue: 0, orders: 0 };
+      e.revenue += orderRevenue(o);
+      e.orders += 1;
+      by.set(k, e);
+    }
+    return by;
+  };
+  const countersCur = counterSales(cur);
+  const countersPrev = prev ? counterSales(prev) : null;
+  const venueCounters = peekCounters().filter((c) => c.locationId === q.locationId && c.status === "active").map((c) => `counter:${c.id}`);
+  const counterRows: CounterRow[] = [...new Set([...venueCounters, ...countersCur.keys(), ...(countersPrev?.keys() ?? [])])]
+    .map((key) => {
+      const c = countersCur.get(key);
+      const p = countersPrev?.get(key);
+      const kind: CounterKind = key.startsWith("counter:") ? "counter" : (key as CounterKind);
+      const counterId = kind === "counter" ? key.slice("counter:".length) : undefined;
+      return {
+        key,
+        kind,
+        ...(counterId ? { counterId } : {}),
+        name: counterId ? (counterNames.get(counterId) ?? counterId) : "",
+        revenue: c?.revenue ?? 0,
+        orders: c?.orders ?? 0,
+        share: share(c?.revenue ?? 0, cur.revenue),
+        ...(countersPrev ? { previousRevenue: p?.revenue ?? 0, previousOrders: p?.orders ?? 0 } : {}),
+      };
+    })
+    .sort((a, b) => b.revenue - a.revenue || (b.previousRevenue ?? 0) - (a.previousRevenue ?? 0) || a.name.localeCompare(b.name) || a.key.localeCompare(b.key));
+  const counters = counterRows.slice(0, 10);
+  if (counterRows.length > 10) {
+    const rest = counterRows.slice(10);
+    counters.push({
+      key: "other",
+      kind: "other",
+      name: "",
+      revenue: rest.reduce((s, r) => s + r.revenue, 0),
+      orders: rest.reduce((s, r) => s + r.orders, 0),
+      share: share(rest.reduce((s, r) => s + r.revenue, 0), cur.revenue),
+      ...(countersPrev
+        ? { previousRevenue: rest.reduce((s, r) => s + (r.previousRevenue ?? 0), 0), previousOrders: rest.reduce((s, r) => s + (r.previousOrders ?? 0), 0) }
+        : {}),
+    });
+  }
+
+  // Time slots --------------------------------------------------------------
+  // Bookings that sell a time slot (sessions, fields, lanes, tours), by start
+  // time. Only the start times someone booked get a column, so no row or column
+  // is empty from end to end.
+  const productById = new Map(peekProducts().map((p) => [p.id, p]));
+  const slotted = cur.bookings.filter((b) => {
+    const p = productById.get(b.productId);
+    return !!p && usesBuffer(p.bookingType);
+  });
+  const slotTimes = [...new Set(slotted.map((b) => b.slotStart.slice(11, 16)))].sort();
+  const slotRows: TimeslotRow[] = [...new Set(slotted.map((b) => b.productId))]
+    .map((id) => ({
+      productId: id,
+      name: productById.get(id)!.name,
+      guests: slotted.filter((b) => b.productId === id).reduce((s, b) => s + b.partySize, 0),
+    }))
+    .sort((a, b) => b.guests - a.guests || a.name.localeCompare(b.name));
+  const slotDays: string[] = [];
+  for (let d = q.from; d <= q.to; d = shiftDay(d, 1)) slotDays.push(d);
+  const timeslotCells: TimeslotCell[] = [];
+  slotRows.forEach((row, ri) => {
+    const p = productById.get(row.productId)!;
+    const exclusive = isResourceType(p.bookingType) && p.resourceExclusive !== false;
+    const offered = new Map<string, number>();
+    for (const d of slotDays) for (const [t, n] of slotCapacityOn(p, d)) offered.set(t, (offered.get(t) ?? 0) + n);
+    slotTimes.forEach((t, ci) => {
+      const here = slotted.filter((b) => b.productId === row.productId && b.slotStart.slice(11, 16) === t);
+      if (here.length === 0) return;
+      const guestsHere = here.reduce((s, b) => s + b.partySize, 0);
+      const capacity = offered.get(t) ?? 0;
+      // A court or lane is one place per start time, taken or not; a session's
+      // places are its seats, taken by guests.
+      const taken = exclusive ? here.length : guestsHere;
+      timeslotCells.push({
+        row: ri,
+        col: ci,
+        guests: guestsHere,
+        bookings: here.length,
+        capacity,
+        fill: capacity > 0 ? Math.min(1, taken / capacity) : null,
+      });
+    });
   });
 
   // Tax ---------------------------------------------------------------------
@@ -598,6 +1035,14 @@ export async function getAnalyticsOverview(q: AnalyticsQuery): Promise<ApiResult
     guests,
     guestsPrevious,
     tax: { rows: taxRows, ...tax },
+    visitors,
+    checkins,
+    ticketTypes,
+    counters,
+    customers,
+    channelSeries,
+    paymentSeries,
+    timeslots: { times: slotTimes, rows: slotRows, cells: timeslotCells },
   });
 }
 
@@ -637,12 +1082,49 @@ export function analyticsCsv(o: AnalyticsOverview): string {
     ...o.topBookings.map((t) => [t.name, money(t.revenue), pct(t.share), String(t.orders), opt(t.previousRevenue, money)]),
   ]);
   sections.push([
+    ["Ticket type", "Booking", "Tier", "Revenue", "Share %", "Quantity", "Comparison revenue", "Comparison quantity"],
+    ...o.ticketTypes.map((t) => [
+      t.productId === "other" ? "Other" : `${t.name} · ${t.tier}`,
+      t.productId === "other" ? "" : t.name,
+      t.tier,
+      money(t.revenue),
+      pct(t.share),
+      String(t.quantity),
+      opt(t.previousRevenue, money),
+      opt(t.previousQuantity, String),
+    ]),
+  ]);
+  sections.push([
     ["Channel", "Revenue", "Share %", "Orders", "Comparison revenue"],
     ...o.channels.map((c) => [c.channel, money(c.revenue), pct(c.share), String(c.orders), opt(c.previousRevenue, money)]),
   ]);
   sections.push([
+    ["Revenue by channel by " + o.granularity, "Channel", "Revenue", "Comparison point", "Comparison revenue"],
+    ...o.channelSeries.flatMap((c) => c.series.map((p) => [p.key, c.channel, money(p.value), p.previousKey ?? "", opt(p.previous, money)])),
+  ]);
+  sections.push([
+    ["Counter", "Kind", "Revenue", "Share %", "Orders", "Comparison revenue", "Comparison orders"],
+    ...o.counters.map((c) => [c.name || c.kind, c.kind, money(c.revenue), pct(c.share), String(c.orders), opt(c.previousRevenue, money), opt(c.previousOrders, String)]),
+  ]);
+  sections.push([
     ["Payment method", "Amount", "Share %", "Payments", "Comparison amount"],
     ...o.payments.map((p) => [p.method, money(p.amount), pct(p.share), String(p.count), opt(p.previousAmount, money)]),
+  ]);
+  sections.push([
+    ["Payments by method by " + o.granularity, "Method", "Amount", "Comparison point", "Comparison amount"],
+    ...o.paymentSeries.flatMap((m) => m.series.map((p) => [p.key, m.method, money(p.value), p.previousKey ?? "", opt(p.previous, money)])),
+  ]);
+  sections.push([
+    ["Visitors by " + o.granularity, "Guests booked", "Comparison point", "Comparison guests booked"],
+    ...o.visitors.series.map((p) => [p.key, String(p.value), p.previousKey ?? "", opt(p.previous, String)]),
+  ]);
+  sections.push([
+    ["Check-ins by " + o.granularity, "Guests checked in", "Comparison point", "Comparison guests checked in"],
+    ...o.checkins.series.map((p) => [p.key, String(p.value), p.previousKey ?? "", opt(p.previous, String)]),
+  ]);
+  sections.push([
+    ["Customers by " + o.granularity, "New customers", "Returning customers", "Comparison point", "Comparison new", "Comparison returning"],
+    ...o.customers.map((p) => [p.key, String(p.newCustomers), String(p.returning), p.previousKey ?? "", opt(p.previousNew, String), opt(p.previousReturning, String)]),
   ]);
   sections.push([
     ["Booking lead time", "Orders", "Share %", "Comparison share %"],
@@ -657,6 +1139,13 @@ export function analyticsCsv(o: AnalyticsOverview): string {
     ["No-shows", String(o.guests.noShows), g(gp?.noShows)],
     ["New customers", String(o.guests.newCustomers), g(gp?.newCustomers)],
     ["Returning customers", String(o.guests.returning), g(gp?.returning)],
+    ["Checked in (by slot date)", String(o.checkins.total), g(o.checkins.previousTotal ?? undefined)],
+    ["Guests due (slot has started)", String(o.checkins.due), g(o.checkins.previousDue ?? undefined)],
+  ]);
+  const ts = o.timeslots;
+  sections.push([
+    ["Time slot", "Start time", "Guests", "Bookings", "Places offered", "Filled %"],
+    ...ts.cells.map((c) => [ts.rows[c.row].name, ts.times[c.col], String(c.guests), String(c.bookings), String(c.capacity), c.fill === null ? "" : pct(c.fill)]),
   ]);
   sections.push([
     ["Capacity", "Sold", "Capacity", "Filled %", "Comparison filled %"],

@@ -1,80 +1,102 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CalendarClock, ChevronRight, Lock, Printer, RotateCcw, Send, Unlock, Wallet } from "lucide-react";
+import { CalendarClock, Printer, RotateCcw, Send, Wallet } from "lucide-react";
 import {
   ActionMenu,
   Button,
   EmptyState,
   FormField,
+  MarketBadge,
   Modal,
   PageShell,
   StatusPill,
   useToast,
+  type ActionMenuItem,
 } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
+import { XL, useMediaQuery } from "@/lib/useMedia";
 import {
+  addOrderNote,
+  addOrderPayment,
+  attachOrderCustomer,
+  canTakeNonCash,
+  customerStats,
   getOrder,
   getSlots,
+  isVoidedOrder,
   listBookings,
   listProducts,
   listTickets,
-  logOrderAction,
-  orderPaid,
-  orderOutstanding,
-  addOrderNote,
-  addOrderPayment,
-  refundOrderLines,
-  type PaymentMethod,
-  bookingEditable,
   lockBooking,
+  logOrderAction,
+  matchOrCreateCustomer,
+  orderDue,
+  refundOrderLines,
   rescheduleBooking,
+  resolveCustomer,
+  tillMethods,
   unlockBooking,
   writeOffOrder,
   type Booking,
+  type PaymentMethod,
   type WriteOffCategory,
 } from "@/lib/api";
-import { peekCounters } from "@/lib/api";
-import { formatClock, formatDateTime, formatDay, formatMoney } from "@/lib/format";
-import { useEnumLabels } from "@/lib/labels";
+import { formatClock, formatDay, formatMoney } from "@/lib/format";
 import { OrderLinesDetail } from "@/components/OrderLinesDetail";
-import { OrderFees } from "@/components/OrderFees";
 import { RefundRequests } from "@/components/RefundRequests";
+import { useSalesLabels } from "../_lib/labels";
+import { useDirectory } from "../_lib/useReport";
+import { CustomerCard } from "./_components/CustomerCard";
+import { FactsCard } from "./_components/FactsCard";
+import { MoneyCard, parseTaka } from "./_components/MoneyCard";
+import { PaymentsCard } from "./_components/PaymentsCard";
+import { HistoryCard, NotesCard, TicketsCard, WriteOffsCard } from "./_components/RecordCards";
+import { ReservationsCard } from "./_components/ReservationsCard";
+import { Section } from "./_components/Section";
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="card-surface p-card">
-      <h2 className="type-label mb-section text-[12px] text-muted">{title}</h2>
-      {children}
-    </div>
-  );
-}
+/* Who is acting. Real auth arrives with the backend; the counter manager is
+   the actor everywhere else in OS. */
+const ACTOR = "Nadia Islam";
 
+/**
+ * One order, organised the way a person reads one: what it is (the facts), what
+ * is owed on it (Money, with the form to collect it), who it is for, what was
+ * bought, what has happened to the money, and the record around it.
+ *
+ * Two columns from `xl` — the sale on the left, the money and the people on the
+ * right — and one on a phone, where **Money follows the facts directly**,
+ * because "is anything owed?" is the first question anyone opens an order with.
+ * The two columns are laid out with `display: contents` and `order-*`, so the
+ * phone's reading order is its own and not the desktop's stacked.
+ *
+ * Nothing the old page showed is gone: the reservations with lock and move, the
+ * marketplace cut, the payments with Counterfoil's fee under them, the refund
+ * requests, tickets, history, notes — and now the write-offs it recorded and
+ * never showed.
+ */
 export default function OrderDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const t = useTranslations("orders");
-  const enumL = useEnumLabels();
   const toast = useToast();
   const order = useApiQuery(() => getOrder(params.id), [params.id]);
   const ticketsQ = useApiQuery(() => listTickets({ pageSize: 100, filters: { orderId: params.id } }), [params.id]);
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
   const productsQ = useApiQuery(() => listProducts({ pageSize: 100 }), []);
+  const dir = useDirectory();
+  const L = useSalesLabels(dir);
+  /* From xl the Money card is the right-hand column, in view beside the sale. */
+  const beside = useMediaQuery(XL);
+  const methods = useMemo(() => tillMethods(canTakeNonCash()) as PaymentMethod[], []);
 
   // Per-line refund
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundLines, setRefundLines] = useState<Record<string, boolean>>({});
   const [refundReason, setRefundReason] = useState("");
   const [refunding, setRefunding] = useState(false);
-
-  // Take payment — complete a partial balance (deposit → full, or any part of it)
-  const [payOpen, setPayOpen] = useState(false);
-  const [payTaka, setPayTaka] = useState("");
-  const [payMethod, setPayMethod] = useState<PaymentMethod>("cash");
-  const [paying, setPaying] = useState(false);
 
   // Resend ticket
   const [resendOpen, setResendOpen] = useState(false);
@@ -86,45 +108,41 @@ export default function OrderDetailPage() {
   const [woReason, setWoReason] = useState("");
   const [woSaving, setWoSaving] = useState(false);
 
-  // Change date/time
+  // Change date/time, lock/unlock
   const [moveFor, setMoveFor] = useState<Booking | null>(null);
-  // Who is acting. Real auth arrives with the backend; the counter manager is
-  // the actor everywhere else in OS.
-  const ACTOR = "Nadia Islam";
+  const [moveDate, setMoveDate] = useState("");
+  const [moveTime, setMoveTime] = useState("");
   const [lockFor, setLockFor] = useState<Booking | null>(null);
   const [lockReason, setLockReason] = useState("");
   const [locking, setLocking] = useState(false);
-  const [moveDate, setMoveDate] = useState("");
-  const [moveTime, setMoveTime] = useState("");
 
-  // Notes
-  const [noteDraft, setNoteDraft] = useState("");
+  // Add a customer to a sale that has none
+  const [custOpen, setCustOpen] = useState(false);
+  const [custName, setCustName] = useState("");
+  const [custPhone, setCustPhone] = useState("");
+  const [custEmail, setCustEmail] = useState("");
+  const [custError, setCustError] = useState("");
+  const [custSaving, setCustSaving] = useState(false);
 
   const o = order.data;
-  const canRefund = o && (o.status === "paid" || o.status === "partial");
-
-  /* The money, computed once. This page recomputed `total - sum(payments)` in
-     seven places, which is seven chances for one of them to drift from the
-     rest — and `api/orders` has exported the answer since the orders list was
-     built. `refunded` is read from the lines rather than from the negative
-     payment, because a line knows what was actually given back. */
-  const paid = o ? orderPaid(o) : 0;
-  const owed = o ? orderOutstanding(o) : 0;
-  const refunded = o ? o.lines.reduce((s, l) => s + (l.refundedAmount ?? 0), 0) : 0;
+  const voided = o ? isVoidedOrder(o) : false;
+  /* What is still due, computed once and read everywhere. It knows about
+     refunded lines and forgiven balances, which `orderOutstanding` does not — a
+     part-refunded order must not read as owing the refund. */
+  const due = o ? orderDue(o) : 0;
+  const canRefund = !!o && (o.status === "paid" || o.status === "partial" || o.status === "partly_refunded") && o.lines.some((l) => l.unitPrice > 0 && (l.refundedQuantity ?? 0) < l.quantity);
+  const canWriteOff = !!o && due > 0;
   const orderBookings = useMemo(
     () => (bookingsQ.data?.data ?? []).filter((b) => b.orderId === params.id && b.status === "confirmed"),
     [bookingsQ.data, params.id],
   );
+  const products = useMemo(() => productsQ.data?.data ?? [], [productsQ.data]);
+  const movable = orderBookings.filter((b) => (products.find((p) => p.id === b.productId)?.schedule?.capacityPerSession ?? 0) > 0);
 
-  const channelLabel = (c: string) => (c === "counter" ? t("channelCounter") : c === "online" ? t("channelOnline") : c);
-  /* A counter sale names its counter, set in Settings, Counters; the channel
-     alone says only that it was a counter. */
-  const soldAt = (o: { channel: string; counterId: string | null }) => {
-    const name = o.channel === "counter" && o.counterId ? peekCounters().find((c) => c.id === o.counterId)?.name : null;
-    return name ? `${channelLabel(o.channel)} · ${name}` : channelLabel(o.channel);
-  };
+  const customer = o?.customerId ? resolveCustomer(o.customerId) : undefined;
+  const stats = o?.customerId && customer ? customerStats(o.customerId) : undefined;
 
-  const moveProduct = productsQ.data?.data.find((p) => p.id === moveFor?.productId);
+  const moveProduct = products.find((p) => p.id === moveFor?.productId);
   const moveSlots = moveFor && moveProduct && moveDate ? getSlots(moveProduct, moveDate) : [];
 
   if (!order.loading && (order.error || !order.data)) {
@@ -136,6 +154,8 @@ export default function OrderDetailPage() {
   }
 
   const refundTotal = o ? o.lines.filter((l) => refundLines[l.id]).reduce((s, l) => s + (l.total ?? l.unitPrice * l.quantity) - (l.refundedAmount ?? 0), 0) : 0;
+  const woMinor = parseTaka(woAmount);
+  const woOver = woMinor !== null && woMinor > due;
 
   const doRefund = async () => {
     if (!o) return;
@@ -153,36 +173,37 @@ export default function OrderDetailPage() {
   };
 
   const doWriteOff = async () => {
-    if (!o) return;
-    const minor = Math.round((parseFloat(woAmount) || 0) * 100);
-    if (minor <= 0) return;
+    if (!o || woMinor === null || woMinor <= 0 || woOver) return;
     setWoSaving(true);
-    const res = await writeOffOrder(o.id, minor, woCategory, woReason.trim());
+    const res = await writeOffOrder(o.id, woMinor, woCategory, woReason.trim());
     setWoSaving(false);
     setWoOpen(false);
-    setWoAmount(""); setWoReason("");
-    if (res.ok) { toast.success(t("wroteOff", { amount: formatMoney(minor) })); order.reload(); }
-    else toast.error(res.error.message);
+    setWoAmount("");
+    setWoReason("");
+    if (res.ok) {
+      toast.success(t("wroteOff", { amount: formatMoney(woMinor) }));
+      order.reload();
+    } else toast.error(res.error.message);
   };
 
-  const openPay = () => {
-    if (!o) return;
-    setPayTaka(String(Math.ceil(owed / 100)));
-    setPayMethod("cash");
-    setPayOpen(true);
+  /* Collecting happens in the Money card, not in a dialog. It returns whether
+     the money was taken, so the card knows whether to stay as it is. */
+  const collect = async (method: PaymentMethod, amount: number): Promise<boolean> => {
+    if (!o) return false;
+    const res = await addOrderPayment(o.id, method, amount, ACTOR);
+    if (res.ok) {
+      toast.success(t("tookPayment", { amount: formatMoney(amount) }));
+      order.reload();
+      return true;
+    }
+    toast.error(res.error.message);
+    return false;
   };
 
-  const doTakePayment = async () => {
-    if (!o) return;
-    const amount = Math.min(owed, Math.round((parseFloat(payTaka) || 0) * 100));
-    if (amount <= 0) return;
-    setPaying(true);
-    const res = await addOrderPayment(o.id, payMethod, amount);
-    setPaying(false);
-    setPayOpen(false);
-    setPayTaka("");
-    if (res.ok) { toast.success(t("tookPayment", { amount: formatMoney(amount) })); order.reload(); }
-    else toast.error(res.error.message);
+  const jumpToCollect = () => {
+    const el = document.getElementById("collect-amount");
+    el?.scrollIntoView({ block: "center" });
+    el?.focus({ preventScroll: true });
   };
 
   const resend = async (how: "email" | "sms") => {
@@ -191,6 +212,12 @@ export default function OrderDetailPage() {
     setResendOpen(false);
     toast.success(how === "email" ? t("resendQueued") : t("resendQueuedSms"));
     order.reload();
+  };
+
+  const openMove = (b: Booking) => {
+    setMoveFor(b);
+    setMoveDate(b.slotStart.slice(0, 10));
+    setMoveTime("");
   };
 
   const doMove = async () => {
@@ -211,68 +238,100 @@ export default function OrderDetailPage() {
     } else toast.error(res.error.message);
   };
 
-  const addNote = async () => {
-    if (!o || !noteDraft.trim()) return;
-    await addOrderNote(o.id, noteDraft.trim());
-    setNoteDraft("");
+  const addNote = async (text: string) => {
+    if (!o) return;
+    await addOrderNote(o.id, text, ACTOR);
     order.reload();
   };
 
+  const openAddCustomer = () => {
+    setCustName(o?.customerName ?? "");
+    setCustPhone("");
+    setCustEmail("");
+    setCustError("");
+    setCustOpen(true);
+  };
+
+  const doAddCustomer = async () => {
+    if (!o) return;
+    if (!custName.trim()) {
+      setCustError(t("cust.nameRequired"));
+      return;
+    }
+    setCustSaving(true);
+    const found = await matchOrCreateCustomer({ name: custName.trim(), phone: custPhone.trim() || null, email: custEmail.trim() || null });
+    if (!found.ok) {
+      setCustSaving(false);
+      setCustError(found.error.fieldErrors?.name ?? found.error.message);
+      return;
+    }
+    const res = await attachOrderCustomer(o.id, { id: found.data.id, name: found.data.name }, ACTOR);
+    setCustSaving(false);
+    if (res.ok) {
+      toast.success(t("cust.added", { name: found.data.name }));
+      setCustOpen(false);
+      order.reload();
+    } else toast.error(res.error.message);
+  };
+
+  /* The menu: what you do to an order that is not the next thing to do. The
+     two that move money, and the one that forgives it, sit apart and in danger. */
+  const menu: ActionMenuItem[] = o
+    ? [
+        { key: "tickets", label: t("printTickets"), icon: <Printer size={14} strokeWidth={1.5} />, onSelect: () => router.push(`/print/tickets/${o.id}`) },
+        { key: "resend", label: t("resendTicket"), icon: <Send size={14} strokeWidth={1.5} />, onSelect: () => setResendOpen(true) },
+        ...(movable.length > 0
+          ? [
+              {
+                key: "move",
+                label: t("changeDateAction"),
+                icon: <CalendarClock size={14} strokeWidth={1.5} />,
+                onSelect: () => (movable.length === 1 ? openMove(movable[0]) : document.getElementById("order-reservations")?.scrollIntoView({ block: "start" })),
+              },
+            ]
+          : []),
+        ...(canRefund ? [{ key: "refund", label: t("refundAction"), icon: <RotateCcw size={14} strokeWidth={1.5} />, destructive: true, separated: true, onSelect: () => setRefundOpen(true) }] : []),
+        ...(canWriteOff ? [{ key: "writeoff", label: t("writeOffAction"), destructive: true, separated: !canRefund, onSelect: () => { setWoAmount((due / 100).toFixed(2)); setWoOpen(true); } }] : []),
+      ]
+    : [];
+
   return (
     <PageShell
-      title={o?.reference ?? t("order")}
+      title={o ? t("orderTitle", { reference: o.reference }) : t("order")}
       back={{ href: "/orders", label: t("backOrders") }}
-      status={o ? <StatusPill status={o.status} /> : undefined}
+      status={
+        o ? (
+          <span className="flex flex-wrap items-center gap-tight">
+            <StatusPill status={o.status} />
+            {o.source && (
+              <span className="inline-flex items-center gap-inline text-[13px] text-muted">
+                <MarketBadge id={o.source.marketplaceId} />
+                {o.source.marketplaceName}
+              </span>
+            )}
+          </span>
+        ) : undefined
+      }
       actions={
         o ? (
-          /* One primary, one secondary, the rest behind a menu. Five equal
-             buttons state no opinion about which one you came for, and they
-             put Refund and Write off — both of which move money — at the same
-             weight as Print receipt. Taking the money owed is the only action
-             that is ever urgent, so it is the only one that is ever primary. */
+          /* One primary per screen. Collecting what is owed is the only action
+             that is ever urgent, and its button — the only ember one — is in the
+             Money card. From xl that card is beside the content, so the header
+             does not say it twice. Below xl the card sits further down the page,
+             so the header offers a plain button that takes you to its amount
+             field; it is not a second primary. */
           <div className="flex flex-wrap items-center gap-tight">
-            {owed > 0 && o.status === "partial" && (
-              <Button icon={<Wallet size={16} strokeWidth={1.5} />} onClick={openPay}>
-                {t("takePayment")}
+            {due > 0 && !voided && !beside && (
+              <Button variant="secondary" icon={<Wallet size={16} strokeWidth={1.5} />} onClick={jumpToCollect}>
+                {t("collectPayment")}
               </Button>
             )}
-            <Button variant="secondary" icon={<Printer size={16} strokeWidth={1.5} />} onClick={() => router.push(`/print/receipt/${o.id}`)}>
-              {t("printReceipt")}
+            {/* Words from a tablet up; on a phone the printer alone, so the primary
+                and the menu fit on one line beside it. Named for a screen reader either way. */}
+            <Button variant="secondary" icon={<Printer size={16} strokeWidth={1.5} />} onClick={() => router.push(`/print/receipt/${o.id}`)} aria-label={t("printReceipt")} className="max-sm:w-11 max-sm:px-0">
+              <span className="max-sm:sr-only">{t("printReceipt")}</span>
             </Button>
-            <ActionMenu
-              label={t("moreActions")}
-              items={[
-                {
-                  key: "tickets",
-                  label: t("printTickets"),
-                  icon: <Printer size={14} strokeWidth={1.5} />,
-                  onSelect: () => router.push(`/print/tickets/${o.id}`),
-                },
-                {
-                  key: "resend",
-                  label: t("resendTicket"),
-                  icon: <Send size={14} strokeWidth={1.5} />,
-                  onSelect: () => setResendOpen(true),
-                },
-                ...(canRefund
-                  ? [
-                      {
-                        key: "refund",
-                        label: t("refundAction"),
-                        icon: <RotateCcw size={14} strokeWidth={1.5} />,
-                        destructive: true,
-                        onSelect: () => setRefundOpen(true),
-                      },
-                      {
-                        key: "writeoff",
-                        label: t("writeOffAction"),
-                        destructive: true,
-                        onSelect: () => setWoOpen(true),
-                      },
-                    ]
-                  : []),
-              ]}
-            />
+            <ActionMenu label={t("moreActions")} items={menu} />
           </div>
         ) : undefined
       }
@@ -283,238 +342,32 @@ export default function OrderDetailPage() {
         </div>
       )}
 
-      {order.loading || !o ? (
+      {!o ? (
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
       ) : (
-        <div className="flex flex-col gap-section pb-hero">
-          {/* Two columns: the sale on the left, the record on the right.
-              Stacked full-width, the short cards paired off against each other
-              and each stretched to its neighbour — Payments held one row and
-              was drawn the height of a three-ticket list beside it, and the
-              bottom half of the page was mostly empty card. The rail is where
-              the short, standing material belongs. */}
-          <div className="grid gap-section xl:grid-cols-3 xl:items-start">
-            <div className="flex min-w-0 flex-col gap-section xl:col-span-2">
-              {/* One money block, not three cards two of which print the same
-                  number. Total and Paid are identical on a settled order, so
-                  stating them as separate headline figures spent two thirds of
-                  the band saying one thing twice. The lead figure is the one
-                  that needs a decision — what is still owed — falling back to
-                  what was taken once nothing is. */}
-              <div className="card-surface p-card">
-              <h2 className="type-label mb-section text-[12px] text-muted">{t("cardMoney")}</h2>
-              <div className="flex flex-wrap items-end justify-between gap-section">
-                <div className="min-w-0">
-                  <p className="type-label text-[12px] text-muted">{owed > 0 ? t("outstandingLabel") : t("cardPaid")}</p>
-                  <p className={`mt-inline text-3xl font-semibold tabular-nums ${owed > 0 ? "text-warning" : ""}`}>
-                    {formatMoney(owed > 0 ? owed : paid)}
-                  </p>
-                  {owed === 0 && <p className="mt-inline text-[13px] text-muted">{t("settled")}</p>}
-                </div>
-                <dl className="flex flex-wrap items-end gap-x-section gap-y-tight text-[13px]">
-                  <div>
-                    <dt className="type-label text-[12px] text-muted">{t("cardTotal")}</dt>
-                    <dd className="mt-inline tabular-nums">{formatMoney(o.total)}</dd>
-                  </div>
-                  <div>
-                    <dt className="type-label text-[12px] text-muted">{t("cardPaid")}</dt>
-                    <dd className="mt-inline tabular-nums">{formatMoney(paid)}</dd>
-                  </div>
-                  {/* Only when there is one — a count of nothing goes quiet. */}
-                  {refunded > 0 && (
-                    <div>
-                      <dt className="type-label text-[12px] text-muted">{t("refundedLabel")}</dt>
-                      <dd className="mt-inline tabular-nums text-danger">−{formatMoney(refunded)}</dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-            </div>
+        <div className="flex flex-col gap-section pb-hero xl:grid xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
+          {/* The sale. `contents` below xl, so on a phone its cards join the
+              rail's in one column, in the order their `order-*` says. */}
+          <div className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-section">
+            <FactsCard o={o} dir={dir} labels={L} due={due} className="order-1" />
+            <Section title={t("cardItems")} className="order-4" id="order-items">
+              <OrderLinesDetail order={o} hidePayments />
+            </Section>
+            <ReservationsCard bookings={orderBookings} products={products} actor={ACTOR} onMove={openMove} onLock={(b) => setLockFor(b)} className="order-5" />
+            <PaymentsCard o={o} className="order-6" />
+            <HistoryCard o={o} className="order-9" />
+          </div>
 
-          <Card title={t("cardItems")}>
-            <OrderLinesDetail order={o} />
-          </Card>
-
-          {orderBookings.length > 0 && (
-            <Card title={t("cardBookings")}>
-              {orderBookings.map((b) => {
-                const p = productsQ.data?.data.find((x) => x.id === b.productId);
-                // ONE question decides whether this booking can be touched
-                // (§61.7/10/12) — locked, closed history, or someone else
-                // mid-edit. Every action below reads the same answer.
-                const edit = bookingEditable(b.id, ACTOR);
-                return (
-                  <div key={b.id} className="flex flex-wrap items-center gap-section border-b border-line py-tight text-sm last:border-0">
-                    {/* The name distinguishes one reservation from another, so it wraps
-                        rather than truncating — the column narrowed when the
-                        page went to two, and "…Walking Tour of Ol…" names
-                        nothing. */}
-                    <span className="min-w-0 flex-1 break-words">{p?.name ?? b.productId}</span>
-                    <span className="font-mono text-[12px] text-muted">{formatDay(b.slotStart.slice(0, 10))} {formatClock(b.slotStart.slice(11, 16))} · {t("party", { size: b.partySize })}</span>
-                    {!edit.editable && (
-                      <span className="flex min-w-0 items-center gap-inline rounded-sm bg-warning/10 px-tight py-0.5 text-[12px] text-warning">
-                        <Lock size={12} strokeWidth={2} className="shrink-0" />
-                        <span className="min-w-0 break-words">{edit.reason}</span>
-                      </span>
-                    )}
-                    {p?.schedule && (p.schedule.capacityPerSession ?? 0) > 0 && (
-                      <Button size="sm" variant="secondary" disabled={!edit.editable} icon={<CalendarClock size={14} strokeWidth={1.5} />} onClick={() => { setMoveFor(b); setMoveDate(b.slotStart.slice(0, 10)); setMoveTime(""); }}>
-                        {t("changeDateTime")}
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      icon={b.lockedAt ? <Unlock size={14} strokeWidth={1.5} /> : <Lock size={14} strokeWidth={1.5} />}
-                      onClick={() => setLockFor(b)}
-                    >
-                      {b.lockedAt ? t("unlockBooking") : t("lockBooking")}
-                    </Button>
-                  </div>
-                );
-              })}
-            </Card>
-          )}
-
-            <Card title={t("cardPayments")}>
-              {o.payments.length === 0 ? (
-                <p className="text-[13px] text-muted">{t("noPayments")}</p>
-              ) : (
-                o.payments.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between border-b border-line py-tight text-sm last:border-0">
-                    <span className="font-mono text-[12px] text-muted">{enumL.method(p.method)}{p.amount < 0 ? t("refundSuffix") : ""}</span>
-                    <span className={`font-mono text-[13px] ${p.amount < 0 ? "text-danger" : ""}`}>{formatMoney(p.amount)}</span>
-                  </div>
-                ))
-              )}
-              <OrderFees orderId={o.id} />
-            </Card>
-            </div>
-
-            {/* The rail: who bought it, what was issued, and what has happened
-                since. Short cards that never needed half the page each. */}
-            <div className="flex min-w-0 flex-col gap-section">
-            <Card title={t("cardPlaced")}>
-              <p className="text-sm">{formatDateTime(o.createdAt)}</p>
-              <p className="mt-inline text-[13px] text-muted">{soldAt(o)}</p>
-              {/* A marketplace sale is not a direct one: somebody else took
-                  the booking and keeps a cut, and without this the commission
-                  is invisible on the one record that should carry it. */}
-              {o.source && (
-                <p className="mt-inline text-[13px]">
-                  {t("viaMarketplace", { name: o.source.marketplaceName })}
-                  <span className="block text-muted">
-                    {t("marketplaceCut", {
-                      commission: formatMoney(o.source.commissionAmount),
-                      net: formatMoney(o.total - o.source.commissionAmount),
-                    })}
-                    {o.source.reference ? ` · ${o.source.reference}` : ""}
-                  </span>
-                </p>
-              )}
-              {o.customerName && (
-                /* The buyer was rendered at 12px in the disabled grey, below
-                   the channel, as if it were metadata about the sale. It is
-                   the person who owes or is owed the figure beside it. */
-                <p className="mt-tight text-sm">
-                  {o.customerId ? (
-                    <Link href={`/customers/${o.customerId}`} className="inline-flex min-h-11 items-center text-brand-foreground underline underline-offset-2 sm:min-h-0">
-                      {o.customerName}
-                    </Link>
-                  ) : (
-                    o.customerName
-                  )}
-                </p>
-              )}
-            </Card>
-            <Card title={t("cardTickets", { count: ticketsQ.data?.data.length ?? 0 })}>
-              {ticketsQ.loading ? (
-                <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /></div>
-              ) : (ticketsQ.data?.data.length ?? 0) === 0 ? (
-                <p className="text-[13px] text-muted">{t("noTickets")}</p>
-              ) : (
-                /* Each row opens the ticket. This card can say what was issued
-                   and nothing else about it — which code currently scans, what
-                   happened at the gate, whether it was replaced and why are all
-                   the ticket's own record, and re-issuing a lost one has to live
-                   somewhere. The whole row is the target, as a DataTable row
-                   is, so a phone is not aiming at a code. */
-                ticketsQ.data!.data.map((tk) => (
-                  <Link
-                    key={tk.id}
-                    href={`/tickets/${tk.id}`}
-                    className="-mx-inline flex min-h-11 items-center justify-between gap-tight rounded-sm border-b border-line px-inline py-tight text-sm last:border-0 hover:bg-muted-wash"
-                  >
-                    <span className="min-w-0 break-all font-mono text-[12px]">{tk.code}</span>
-                    <span className="flex shrink-0 items-center gap-inline">
-                      {/* A ticket has its own lifecycle, so it names its own tone rather
-                          than borrowing an order word: laundering "redeemed"
-                          through "active" also handed it the record-state
-                          outline, which is a booking's shape, not a ticket's.
-                          Issued = exists, not used yet. Redeemed = done. */}
-                      <StatusPill tone={tk.status === "issued" ? "info" : tk.status === "redeemed" ? "success" : "neutral"}>{enumL.status(tk.status)}</StatusPill>
-                      <ChevronRight size={15} strokeWidth={1.75} aria-hidden className="text-muted" />
-                    </span>
-                  </Link>
-                ))
-              )}
-            </Card>
-            <Card title={t("cardHistory")}>
-              {(o.history ?? []).length === 0 ? (
-                <p className="text-[13px] text-muted">{t("noHistory")}</p>
-              ) : (
-                [...(o.history ?? [])].reverse().map((h, i) => (
-                  <div key={i} className="border-b border-line py-tight text-[13px] last:border-0">
-                    <p>{h.text}</p>
-                    <p className="mt-inline font-mono text-[12px] text-muted">{formatDateTime(h.at)} · {h.who}</p>
-                  </div>
-                ))
-              )}
-            </Card>
-            <Card title={t("cardNotes")}>
-              {(o.notes ?? []).length === 0 ? (
-                <p className="mb-tight text-[13px] text-muted">{t("noNotes")}</p>
-              ) : (
-                [...(o.notes ?? [])].reverse().map((n, i) => (
-                  <div key={i} className="border-b border-line py-tight text-[13px] last:border-0">
-                    <p>{n.text}</p>
-                    <p className="mt-inline font-mono text-[12px] text-muted">{formatDateTime(n.at)} · {n.who}</p>
-                  </div>
-                ))
-              )}
-              <div className="mt-tight flex gap-tight">
-                <input value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addNote()} placeholder={t("addNotePlaceholder")} className="h-11 min-w-0 flex-1 rounded-sm border border-line bg-card px-comfortable text-sm outline-none focus:border-inverse md:h-9" />
-                <Button size="sm" variant="secondary" disabled={!noteDraft.trim()} onClick={addNote}>{t("add")}</Button>
-              </div>
-            </Card>
-            </div>
+          {/* The money and the people. */}
+          <div className="contents xl:flex xl:min-w-0 xl:flex-col xl:gap-section">
+            <MoneyCard o={o} due={due} methods={methods} onCollect={collect} className="order-2" />
+            <CustomerCard o={o} customer={customer} stats={stats} onAdd={openAddCustomer} className="order-3" />
+            <WriteOffsCard o={o} className="order-7" />
+            <TicketsCard tickets={ticketsQ.data?.data ?? []} loading={ticketsQ.loading && !ticketsQ.data} className="order-8" />
+            <NotesCard o={o} onAdd={addNote} className="order-10" />
           </div>
         </div>
       )}
-
-      {/* Take payment — complete a partial (deposit) balance, in any method. */}
-      <Modal
-        open={payOpen}
-        onClose={() => setPayOpen(false)}
-        title={t("takePaymentTitle")}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setPayOpen(false)} disabled={paying}>{t("cancel")}</Button>
-            <Button loading={paying} onClick={doTakePayment}>{t("takePaymentBtn")}</Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-section">
-          {o && (
-            <div className="flex items-center justify-between rounded-sm bg-subtle px-comfortable py-tight text-[13px]">
-              <span className="text-muted">{t("outstandingLabel")}</span>
-              <span className="font-mono tabular-nums">{formatMoney(owed)}</span>
-            </div>
-          )}
-          <FormField label={t("amountLabel")} variant="number" value={payTaka} onChange={(e) => setPayTaka(e.target.value)} help={t("amountHelp", { amount: formatMoney(owed) })} />
-          <FormField label={t("methodLabel")} variant="select" value={payMethod} onChange={(e) => setPayMethod(e.target.value as PaymentMethod)} options={(["cash", "bkash", "card_terminal", "bangla_qr"] as PaymentMethod[]).map((m) => ({ value: m, label: enumL.method(m) }))} />
-        </div>
-      </Modal>
 
       {/* Per-line refund with a reason. */}
       <Modal
@@ -532,10 +385,10 @@ export default function OrderDetailPage() {
       >
         <div className="flex flex-col gap-tight">
           {(o?.lines ?? []).filter((l) => l.unitPrice > 0 && (l.refundedQuantity ?? 0) < l.quantity).map((l) => (
-            <label key={l.id} className="flex cursor-pointer items-center gap-tight rounded-sm border border-line p-comfortable text-sm">
+            <label key={l.id} className="flex min-h-11 cursor-pointer items-center gap-tight rounded-sm border border-line p-comfortable text-sm">
               <input type="checkbox" checked={!!refundLines[l.id]} onChange={(e) => setRefundLines((r) => ({ ...r, [l.id]: e.target.checked }))} className="h-4 w-4 accent-[var(--color-ember)]" />
               <span className="min-w-0 flex-1 truncate">{l.parentLineId ? "↳ " : ""}{l.productName} · {l.tierName} ×{l.quantity}</span>
-              <span className="font-mono text-[13px]">{formatMoney(l.total ?? l.unitPrice * l.quantity)}</span>
+              <span className="tabular-nums text-[13px]">{formatMoney(l.total ?? l.unitPrice * l.quantity)}</span>
             </label>
           ))}
         </div>
@@ -543,7 +396,8 @@ export default function OrderDetailPage() {
         <p className="mt-tight text-[12px] text-muted">{t("refundNote")}</p>
       </Modal>
 
-      {/* Write off a balance — not a refund; clears what's owed with a reason. */}
+      {/* Write off a balance — not a refund; clears what's owed with a reason.
+          It cannot forgive more than is owed, and says so. */}
       <Modal
         open={woOpen}
         onClose={() => setWoOpen(false)}
@@ -551,12 +405,19 @@ export default function OrderDetailPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setWoOpen(false)}>{t("cancel")}</Button>
-            <Button variant="destructive" loading={woSaving} disabled={!(parseFloat(woAmount) > 0)} onClick={doWriteOff}>{t("writeOffConfirm")}</Button>
+            <Button variant="destructive" loading={woSaving} disabled={woMinor === null || woMinor <= 0 || woOver} onClick={doWriteOff}>{t("writeOffConfirm")}</Button>
           </>
         }
       >
         <div className="flex flex-col gap-section">
-          <FormField label={t("writeOffAmount")} variant="number" value={woAmount} onChange={(e) => setWoAmount(e.target.value)} help={owed > 0 ? t("writeOffAmountHelp", { amount: formatMoney(owed) }) : undefined} />
+          <FormField
+            label={t("writeOffAmount")}
+            inputMode="decimal"
+            value={woAmount}
+            onChange={(e) => setWoAmount(e.target.value)}
+            help={due > 0 ? t("writeOffAmountHelp", { amount: formatMoney(due) }) : undefined}
+            error={woOver ? t("writeOffOver", { due: formatMoney(due) }) : undefined}
+          />
           <FormField label={t("writeOffCategory")} variant="select" value={woCategory} onChange={(e) => setWoCategory(e.target.value as WriteOffCategory)} options={[
             { value: "uncollectible", label: t("woUncollectible") },
             { value: "customer_dispute", label: t("woCustomerDispute") },
@@ -573,6 +434,27 @@ export default function OrderDetailPage() {
         <div className="grid grid-cols-2 gap-tight">
           <Button variant="secondary" className="h-12" onClick={() => resend("email")}>{t("byEmail")}</Button>
           <Button variant="secondary" className="h-12" onClick={() => resend("sms")}>{t("bySms")}</Button>
+        </div>
+      </Modal>
+
+      {/* Add a customer to a sale that has none. If the phone or email is
+          already on file, that person is used rather than a duplicate made. */}
+      <Modal
+        open={custOpen}
+        onClose={() => setCustOpen(false)}
+        title={t("cust.modalTitle")}
+        description={t("cust.modalHelp")}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCustOpen(false)}>{t("cancel")}</Button>
+            <Button loading={custSaving} onClick={() => void doAddCustomer()}>{t("cust.save")}</Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-section">
+          <FormField label={t("cust.name")} value={custName} onChange={(e) => { setCustName(e.target.value); setCustError(""); }} error={custError || undefined} autoComplete="off" />
+          <FormField label={t("cust.phone")} value={custPhone} inputMode="tel" onChange={(e) => setCustPhone(e.target.value)} autoComplete="off" />
+          <FormField label={t("cust.email")} variant="email" value={custEmail} onChange={(e) => setCustEmail(e.target.value)} autoComplete="off" />
         </div>
       </Modal>
 
@@ -645,7 +527,7 @@ export default function OrderDetailPage() {
                       type="button"
                       disabled={!fits}
                       onClick={() => setMoveTime(s.time)}
-                      className={`flex h-12 flex-col items-center justify-center rounded-sm border font-mono text-[13px] ${moveTime === s.time ? "border-inverse bg-inverse text-inverse-fg" : fits ? "border-line bg-card" : "border-line bg-subtle text-muted line-through"}`}
+                      className={`flex h-12 flex-col items-center justify-center rounded-sm border text-[13px] tabular-nums ${moveTime === s.time ? "border-inverse bg-inverse text-inverse-fg" : fits ? "border-line bg-card" : "border-line bg-subtle text-muted line-through"}`}
                     >
                       <span className="whitespace-nowrap">{formatClock(s.time)}</span>
                       <span className="text-[12px]">{fits ? t("slotLeft", { count: s.remaining }) : t("slotFull")}</span>

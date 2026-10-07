@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { MapPin } from "lucide-react";
-import { Button, ConfirmDialog, EmptyState, PageShell, StatusPill, Tabs, useToast } from "@/components/ui";
+import { Button, ConfirmDialog, EmptyState, StatusPill, Tabs, useToast } from "@/components/ui";
+import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listCounters, listLocations, updateLocation, type Location } from "@/lib/api";
@@ -91,12 +92,10 @@ export default function LocationsPage() {
     });
   };
 
+  const primary: PagePrimary = { label: t("locations.add"), onClick: () => router.push("/settings/locations/new") };
+
   return (
-    <PageShell
-      title={t("locations.title")}
-      description={t("locations.description")}
-      primary={{ label: t("locations.add"), onClick: () => router.push("/settings/locations/new") }}
-    >
+    <PageShell title={t("locations.title")} description={t("locations.description")} primary={primary}>
       {!locationsQ.data || !countersQ.data ? (
         <SectionSkeleton />
       ) : locations.length === 0 ? (
@@ -109,11 +108,15 @@ export default function LocationsPage() {
         </div>
       ) : (
         <div className="flex max-w-4xl flex-col gap-section pb-hero">
-          <Tabs
-            items={TABS.map((v) => ({ value: v, label: t(`locations.tab.${v}`), count: counts[v] }))}
-            value={tab}
-            onChange={(v) => setTab(v as Tab)}
-          />
+          {/* The first toolbar: the views, with the create button at the right of the
+              same rule. A list has no header row above it for the button. */}
+          <PageToolbar underline primary={primary}>
+            <Tabs
+              items={TABS.map((v) => ({ value: v, label: t(`locations.tab.${v}`), count: counts[v] }))}
+              value={tab}
+              onChange={(v) => setTab(v as Tab)}
+            />
+          </PageToolbar>
           {rows.length === 0 && !q ? (
             <p className="py-section text-sm text-muted">{t("locations.emptyTab")}</p>
           ) : (

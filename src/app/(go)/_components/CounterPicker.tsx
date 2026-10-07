@@ -26,9 +26,11 @@ import { counterIsOpen, setActiveCounter, useActiveCounter } from "@/lib/activeC
  * customer's order away. Taking payment or pausing the sale are both one tap
  * from here, so refusing costs less than either alternative.
  *
- * The chip names the counter on the first line and its venue under it. On a
- * phone it is the one flexible thing in the header, so both lines truncate
- * with an ellipsis; the full names are in its accessible name.
+ * The chip names the counter on the first line and its venue under it. It is
+ * the first thing in the header, a white pill drawn like the date chip under
+ * it so the two read as one family and share a left edge. On a phone it is the
+ * one flexible thing in the header, so both lines truncate with an ellipsis;
+ * the full names are in its accessible name.
  */
 export function CounterPicker({ saleCount }: { saleCount: number }) {
   const t = useTranslations("pos.shell");
@@ -98,7 +100,7 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
         aria-expanded={open}
         aria-label={active ? t("counterChipAria", { name, venue }) : t("counterNone")}
         data-counter-chip
-        className="flex h-11 w-full min-w-0 items-center gap-inline rounded-full px-comfortable text-left transition-colors duration-quick hover:bg-subtle active:bg-muted-wash"
+        className="go-surface flex h-11 w-full min-w-0 items-center gap-inline rounded-full px-comfortable text-left active:bg-muted-wash"
       >
         <span className="flex min-w-0 flex-1 flex-col leading-tight">
           <span className="truncate text-[0.875rem] font-semibold text-fg">{name}</span>

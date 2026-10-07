@@ -36,11 +36,9 @@ import {
   ConfirmDialog,
   DataTable,
   EmptyState,
-  PageShell,
   ProductThumb,
   FilterBar,
   Select,
-  StatStrip,
   StatusPill,
   Tabs,
   useToast,
@@ -48,6 +46,7 @@ import {
   type Column,
   type PillTone,
 } from "@/components/ui";
+import { PageAction, PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -300,32 +299,6 @@ function Catalog() {
   useEffect(() => {
     if ((page - 1) * PAGE_SIZE >= rows.length && page > 1) setPage(1);
   }, [rows.length, page]);
-
-  const summary = useMemo(() => {
-    const live = items.filter((i) => i.state !== "archived");
-    const upcoming = live.filter((i) => i.event && i.state !== "ended");
-    /* What the catalog is doing, not what is in it — the chips below already
-       count that. One figure per question a manager opens this page with. */
-    const liveBookings = live.filter((i) => i.product);
-    const uses = liveBookings.map((i) => use.get(i.id)).filter((u): u is NonNullable<typeof u> => !!u);
-    const used = uses.reduce((n, u) => n + u.used, 0);
-    const capWeek = uses.reduce((n, u) => n + u.cap, 0);
-    const next = upcoming.filter((i) => i.state !== "offSale").sort((a, b) => (a.startsAt ?? "").localeCompare(b.startsAt ?? ""))[0];
-    return {
-      attention: live.filter(needsAttention).length,
-      bookedAhead: [...recent.values()].reduce((n, x) => n + x, 0),
-      ticketsSold: upcoming.reduce((n, i) => n + eventFill(i.event!).sold, 0),
-      ticketRevenue: upcoming.reduce((n, i) => n + eventRevenue(i.event!), 0),
-      weekUse: capWeek ? Math.round((used / capWeek) * 100) : null,
-      weekUsed: used,
-      weekCap: capWeek,
-      bookingsOnSale: liveBookings.filter((i) => i.state === "onSale").length,
-      bookingsTotal: liveBookings.length,
-      eventsOnSale: upcoming.filter((i) => i.state === "onSale" || i.state === "soldOut").length,
-      eventsTotal: live.filter((i) => i.event).length,
-      next,
-    };
-  }, [items, recent, use]);
 
   const toggleFacet = (f: Facet) => {
     setPage(1);
@@ -761,19 +734,10 @@ function Catalog() {
       on ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card text-fg hover:border-strong",
     );
 
+  const primary: PagePrimary = { label: t("add"), href: kind === "all" ? "/catalog/new" : `/catalog/new?kind=${kind}` };
+
   return (
-    <PageShell
-      title={t("title")}
-      description={t("description")}
-      primary={{ label: t("add"), href: kind === "all" ? "/catalog/new" : `/catalog/new?kind=${kind}` }}
-      actions={
-        !compact ? (
-          <Button variant="secondary" icon={<LayoutGrid size={16} strokeWidth={1.5} />} onClick={() => router.push("/catalog/layouts")}>
-            {tp("seatLayouts")}
-          </Button>
-        ) : undefined
-      }
-    >
+    <PageShell title={t("title")} description={t("description")} primary={primary}>
       {/* First run: nothing to list yet, so the page IS the way to add the
           first thing. An empty table with a lonely button teaches nothing; the
           chooser says what a catalog holds while it asks what to add. */}
@@ -814,81 +778,28 @@ function Catalog() {
             </div>
           )}
 
-          {/* On a phone the four figures are one line, not a row of cards that
-              scrolls off the edge: the list is what the page is for, and every
-              card above it pushes the first row further down. */}
-          {compact ? (
-            <p className="flex flex-wrap items-center gap-x-tight gap-y-inline text-[13px] text-muted">
-              <button
-                type="button"
-                onClick={() => toggleFacet("attention")}
-                aria-pressed={states.includes("attention")}
-                className={cn("min-h-11 font-medium underline-offset-2 hover:underline", summary.attention > 0 ? "text-warning" : "text-fg")}
-              >
-                {t("stat.attentionLine", { count: summary.attention })}
-              </button>
-              <span aria-hidden>·</span>
-              <span>{t("stat.bookedAheadLine", { count: summary.bookedAhead })}</span>
-              <span aria-hidden>·</span>
-              <span>{t("stat.ticketsSoldLine", { count: summary.ticketsSold })}</span>
-            </p>
-          ) : (
-            <StatStrip
-              loading={loading}
+          {/* The page's first toolbar: the views on the left, and what the page
+              does on the right — Add, and the seat layouts. There is no header
+              row for them; on a phone Add is the bar's plus. */}
+          <PageToolbar
+            underline
+            primary={primary}
+            actions={
+              !compact ? (
+                <PageAction label={tp("seatLayouts")} icon={<LayoutGrid size={16} strokeWidth={1.5} />} onClick={() => router.push("/catalog/layouts")} />
+              ) : undefined
+            }
+          >
+            <Tabs
               items={[
-                ...(kind !== "events"
-                  ? [
-                      {
-                        key: "attention",
-                        label: t("stat.attention"),
-                        value: String(summary.attention),
-                        tone: summary.attention > 0 ? ("warning" as const) : undefined,
-                        note: t("stat.attentionNote"),
-                        onClick: () => toggleFacet("attention"),
-                        pressed: states.includes("attention"),
-                      },
-                      { key: "bookedAhead", label: t("stat.bookedAhead"), value: summary.bookedAhead.toLocaleString(), note: t("stat.bookedAheadNote") },
-                    ]
-                  : []),
-                ...(kind === "bookings"
-                  ? [
-                      {
-                        key: "weekUse",
-                        label: t("stat.weekUse"),
-                        value: summary.weekUse === null ? "—" : `${summary.weekUse}%`,
-                        note: t("stat.weekUseNote", { used: summary.weekUsed.toLocaleString(), cap: summary.weekCap.toLocaleString() }),
-                      },
-                      { key: "onSale", label: t("stat.onSale"), value: `${summary.bookingsOnSale} / ${summary.bookingsTotal}`, note: t("stat.onSaleNote") },
-                    ]
-                  : [
-                      { key: "ticketsSold", label: t("stat.ticketsSold"), value: summary.ticketsSold.toLocaleString(), note: t("stat.ticketsSoldNote") },
-                      { key: "ticketRevenue", label: t("stat.ticketRevenue"), value: formatPriceShort(summary.ticketRevenue), note: t("stat.ticketRevenueNote") },
-                    ]),
-                ...(kind === "events"
-                  ? [
-                      {
-                        key: "next",
-                        label: t("stat.nextEvent"),
-                        value: summary.next?.startsAt ? formatDay(summary.next.startsAt.slice(0, 10), { weekday: true }) : "—",
-                        context: summary.next?.name ?? null,
-                        note: summary.next?.name ?? null,
-                      },
-                      { key: "onSale", label: t("stat.onSale"), value: `${summary.eventsOnSale} / ${summary.eventsTotal}`, note: t("stat.onSaleNote") },
-                    ]
-                  : []),
+                { value: "all", label: t("kind.all"), count: counts.all },
+                { value: "bookings", label: t("kind.bookings"), count: counts.bookings },
+                { value: "events", label: t("kind.events"), count: counts.events },
               ]}
+              value={kind}
+              onChange={(v) => setKind(v as Kind)}
             />
-          )}
-
-          <Tabs
-            items={[
-              { value: "all", label: t("kind.all"), count: counts.all },
-              { value: "bookings", label: t("kind.bookings"), count: counts.bookings },
-              { value: "events", label: t("kind.events"), count: counts.events },
-            ]}
-            value={kind}
-            onChange={(v) => setKind(v as Kind)}
-          />
+          </PageToolbar>
 
           <DataTable
             columns={columns}

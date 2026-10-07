@@ -43,7 +43,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     <div className="xl:flex">
       <SettingsRail pathname={pathname} noun={noun} attention={attention} />
       <div className="min-w-0 flex-1">
-        <div className={cn("px-gutter pt-section", !back && "xl:hidden")}>
+        <div className={cn("px-gutter pt-gutter", !back && "xl:hidden")}>
           {back ? <BackToList href={back.href} label={back.label} /> : <SettingsMenu pathname={pathname} noun={noun} attention={attention} />}
         </div>
         {children}

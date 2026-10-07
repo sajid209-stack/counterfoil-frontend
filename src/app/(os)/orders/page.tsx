@@ -1,36 +1,25 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Search } from "lucide-react";
-import {
-  Button,
-  DataTable,
-  EmptyState,
-  FilterBar,
-  Select,
-  PageShell,
-  StatStrip,
-  StatusPill,
-  type Column,
-} from "@/components/ui";
-import { useApiQuery } from "@/lib/useApi";
-import {
-  isVoidedOrder,
-  listLocations,
-  peekCounters,
-  listOrders,
-  orderOutstanding,
-  orderPaid,
-  type Order,
-} from "@/lib/api";
-import { cn } from "@/lib/cn";
-import { formatDateTime, formatMoney, formatRelative } from "@/lib/format";
-import { useEnumLabels } from "@/lib/labels";
-import { useActiveLocation } from "@/lib/activeLocation";
+import { RotateCcw, Search } from "lucide-react";
+import { Button, DataTable, EmptyState, PageShell, useToast } from "@/components/ui";
+import { NO_ONE, orderMethodOf } from "@/lib/api";
+import { formatDateTime } from "@/lib/format";
 import { demoNow } from "@/lib/schedule";
 import { RefundRequests } from "@/components/RefundRequests";
+import { OrderCard, firstDirection, useOrderColumns } from "./_components/columns";
+import { OrdersPager } from "./_components/OrdersPager";
+import { OrdersToolbar, type FacetOptions } from "./_components/OrdersToolbar";
+import { SalesFigures } from "./_components/SalesFigures";
+import { SummarySheet } from "./_components/SummarySheet";
+import type { ChipOption } from "./_components/FilterChip";
+import { downloadCsv, reportFileName, salesCsv, summaryCsv, type Tr } from "./_lib/csv";
+import { CHANNELS, METHODS, STATUSES, activeCount, cleared, parseFilters, toSearch, type SalesFilters } from "./_lib/filters";
+import { TOGGLEABLE, useHiddenColumns } from "./_lib/columns";
+import { useSalesLabels } from "./_lib/labels";
+import { useSalesReport } from "./_lib/useReport";
 
 export default function OrdersPage() {
   return (
@@ -40,367 +29,249 @@ export default function OrdersPage() {
   );
 }
 
-/** The ranges an orders list is actually asked for. */
-type Range = "all" | "today" | "7d" | "30d";
-
+/**
+ * Orders — a sales report you can read, filter, export and print.
+ *
+ * The page is its address: every filter, the sort, the page and its size are in
+ * the query string, so a filtered report is a link, and Reset, Back and a
+ * reload all do what they say. The venue is the console's lens, from the bar;
+ * the filters narrow within it. One person's orders (`?customerId=`, from the
+ * customer page) ignore the venue and say so in a banner.
+ *
+ * The figures beside the search, the Summary, the CSV and the printouts all
+ * come from `useSalesReport`, so they are one number said four ways.
+ */
 function OrdersPageInner() {
   const router = useRouter();
   const params = useSearchParams();
   const t = useTranslations("orders");
-  const enumL = useEnumLabels();
+  const toast = useToast();
   /* One clock, the app's own — the same pinned demo instant the till and the
      calendar use, so "2h ago" here and "today" in the calendar agree. */
   const now = useMemo(() => demoNow(), []);
 
-  /* Deep-links from a customer's page. `?customerId=` is exact — two people can
-     share a name — and shows every order they made at EVERY venue, which the
-     venue in the bar would otherwise hide (the customer page says "See all 7
-     orders" and must mean it). `?customer=Anika` alone just pre-fills the
-     search. */
-  const [forCustomer, setForCustomer] = useState(params.get("customerId") ?? "");
-  const forName = params.get("customer") ?? "";
-  const [search, setSearch] = useState(params.get("customerId") ? "" : forName);
-  const [status, setStatus] = useState("");
-  const [channel, setChannel] = useState("");
-  const [range, setRange] = useState<Range>("all");
-  const [sort, setSort] = useState<{ key: string; order: "asc" | "desc" }>({ key: "createdAt", order: "desc" });
-  const [page, setPage] = useState(1);
+  /* The filters, held here and mirrored to the address. The address is the
+     record — a link, Back, a reload all read it — but it is not what the screen
+     waits on: a tick that has to round-trip through the router before the chip
+     shows it is a tick that two quick clicks can lose, the second computed from
+     the page as it was before the first. So a change lands in state at once and
+     is written to the address after it; and an address that changes by some
+     other hand (Back, a link) is adopted, while one of our own landing is not. */
+  const urlString = params.toString();
+  const [f, setF] = useState<SalesFilters>(() => parseFilters(params));
+  const [seenUrl, setSeenUrl] = useState(urlString);
+  const [written, setWritten] = useState<string[]>([]);
+  if (urlString !== seenUrl) {
+    setSeenUrl(urlString);
+    const mine = written.indexOf(urlString);
+    if (mine >= 0) setWritten(written.slice(mine + 1));
+    else {
+      setF(parseFilters(params));
+      setWritten([]);
+    }
+  }
+  const latest = useRef(f);
+  useEffect(() => {
+    latest.current = f;
+  }, [f]);
 
-  const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
+  const report = useSalesReport(f);
+  const { dir, rows, summary } = report;
+  const L = useSalesLabels(dir);
+  const allColumns = useOrderColumns(dir, L);
+  const cols = useHiddenColumns();
+  const columns = useMemo(() => allColumns.filter((c) => !cols.hidden.includes(c.key)), [allColumns, cols.hidden]);
 
-  const channelLabel = (c: string) => (c === "counter" ? t("channelCounter") : c === "online" ? t("channelOnline") : c);
-  /* A counter sale names its counter, set in Settings, Counters; the channel
-     alone says only that it was a counter. */
-  const soldAt = (o: { channel: string; counterId: string | null }) => {
-    const name = o.channel === "counter" && o.counterId ? peekCounters().find((c) => c.id === o.counterId)?.name : null;
-    return name ? `${channelLabel(o.channel)} · ${name}` : channelLabel(o.channel);
+  const go = (next: SalesFilters) => {
+    latest.current = next;
+    setF(next);
+    const qs = toSearch(next);
+    setWritten((w) => [...w, qs]);
+    /* The native History API, which Next integrates with `useSearchParams`:
+       the address changes at once and without a trip to the server. `router.replace`
+       asks the server for the new URL's payload, which on a busy dev machine
+       took seconds to move an address the screen had already moved. */
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
   };
-  /* A set filter comes back as a chip naming its VALUE, so a narrowed list
-     says what narrowed it rather than which field was touched. */
-  const rangeLabel = (r: Range) =>
-    r === "today" ? t("rangeToday") : r === "7d" ? t("range7d") : r === "30d" ? t("range30d") : t("allRanges");
+  /* A change to a filter, the sort or the size starts again at page one; only
+     a move between pages keeps its place. It builds on the latest change, not
+     on what was last drawn. */
+  const set = (patch: Partial<SalesFilters>) => go({ ...latest.current, page: 1, ...patch });
 
-  /** Half-open [from, to) for the chosen range, in the API's own ISO shape. */
-  const bounds = useMemo(() => {
-    if (range === "all") return {};
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    if (range === "7d") start.setDate(start.getDate() - 6);
-    if (range === "30d") start.setDate(start.getDate() - 29);
-    const end = new Date(now);
-    end.setHours(0, 0, 0, 0);
-    end.setDate(end.getDate() + 1);
-    return { from: start.toISOString(), to: end.toISOString() };
-  }, [range, now]);
+  /* The search box types faster than the address should change, so it keeps its
+     own text and writes to the address after a pause. When the address changes
+     by some other route — Reset, Back — the box follows it, unless the change
+     is the one this box just made. */
+  const [draft, setDraft] = useState(f.q);
+  const [seen, setSeen] = useState(f.q);
+  const [pushed, setPushed] = useState(f.q);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  if (f.q !== seen) {
+    setSeen(f.q);
+    if (f.q !== pushed) setDraft(f.q);
+  }
+  const onSearch = (v: string) => {
+    setDraft(v);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      setPushed(v);
+      go({ ...latest.current, q: v, page: 1 });
+    }, 250);
+  };
+  const reset = () => {
+    clearTimeout(timer.current);
+    setDraft("");
+    go(cleared(latest.current));
+  };
 
-  /* The venue comes from the bar, not from this page: it is the console's
-     lens, and the page's own filters narrow within it. `listOrders` has taken
-     a `locationId` filter since the customer work; the list simply never used
-     it, so an operator with three venues read one list of all three with
-     nothing saying so. */
-  const { id: locationId } = useActiveLocation(locationsQ.data?.data ?? []);
-  const filters = useMemo(
-    () => ({
-      status: status || undefined,
-      channel: channel || undefined,
-      customerId: forCustomer || undefined,
-      // One person's orders are all of them, not just this venue's.
-      locationId: forCustomer ? undefined : locationId || undefined,
-      ...bounds,
-    }),
-    [status, channel, locationId, bounds, forCustomer],
-  );
-
-  const { data, loading, reload } = useApiQuery(
-    () => listOrders({ page, pageSize: 12, search, sort: sort.key, order: sort.order, filters }),
-    [search, filters, sort.key, sort.order, page],
-  );
-
-  /* The summary counts everything the filters match, not the page on screen.
-     A second read of the same query with the page cap lifted — cheap against
-     the mock, and the shape a real backend would serve as one aggregate
-     endpoint rather than by shipping every row. */
-  const summaryQ = useApiQuery(
-    () => listOrders({ page: 1, pageSize: 1000, search, filters }),
-    [search, filters],
-  );
-  const summary = useMemo(() => {
-    const all = summaryQ.data?.data ?? [];
-    const live = all.filter((o) => !isVoidedOrder(o));
-    const collected = live.reduce((s, o) => s + orderPaid(o), 0);
-    const outstanding = live.reduce((s, o) => s + orderOutstanding(o), 0);
-    const gross = live.reduce((s, o) => s + o.total, 0);
+  /* ── What each filter offers ─────────────────────────────────────────────
+     Taken from the venue's own orders, ignoring the other filters, so the
+     choices do not shrink as you choose. A value that is already in the
+     address stays on offer even if nothing matches it. */
+  const options = useMemo<FacetOptions>(() => {
+    const scope = report.scope;
+    const ensure = (list: ChipOption[], chosen: string[], name: (v: string) => string) => [
+      ...list,
+      ...chosen.filter((v) => !list.some((o) => o.value === v)).map((v) => ({ value: v, label: name(v) })),
+    ];
+    const venueCounters = dir.counters.filter((c) => f.customerId || c.locationId === report.venueId).map((c) => ({ value: c.id, label: c.name }));
+    const counters = [...venueCounters, ...(scope.some((o) => !o.counterId) ? [{ value: NO_ONE, label: L.counter(NO_ONE) }] : [])];
+    const staffIds = [...new Set(scope.map((o) => o.staffId).filter((x): x is string => !!x))];
+    const staff = [
+      ...staffIds.map((id) => ({ value: id, label: dir.staffName(id) })).sort((a, b) => a.label.localeCompare(b.label)),
+      ...(scope.some((o) => !o.staffId) ? [{ value: NO_ONE, label: L.staff(NO_ONE) }] : []),
+    ];
+    const used = new Set<string>(scope.map(orderMethodOf));
     return {
-      collected,
-      outstanding,
-      orders: all.length,
-      average: live.length === 0 ? 0 : Math.round(gross / live.length),
-      voided: all.length - live.length,
+      counters: ensure(counters, f.counters, L.counter),
+      staff: ensure(staff, f.staff, L.staff),
+      channels: CHANNELS.map((c) => ({ value: c, label: L.channel(c) })),
+      methods: ensure(METHODS.filter((m) => used.has(m) || f.methods.includes(m)).map((m) => ({ value: m, label: L.method(m) })), f.methods, L.method),
+      statuses: STATUSES.map((s) => ({ value: s, label: L.status(s) })),
     };
-  }, [summaryQ.data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [report.scope, report.venueId, dir.counters, dir.staffName, f.counters, f.staff, f.methods, f.customerId]);
 
-  const columns: Column<Order>[] = [
-    {
-      key: "reference",
-      header: t("colReference"),
-      sortable: true,
-      render: (o) => <span className="whitespace-nowrap font-mono text-[13px]">{o.reference}</span>,
-    },
-    {
-      // The column the page was missing. Every order carries a name snapshot
-      // and the search already matched it — the table just never showed it, so
-      // an orders list read as a column of receipt numbers.
-      key: "customer",
-      header: t("colCustomer"),
-      render: (o) => (
-        // Truncated, not wrapped: "Mohammad Abdur Rahman Chowdhury" stacked to
-        // four lines and set the height of every row beside it. The full name
-        // is on hover and on the order itself, one click away.
-        <span
-          className={cn("block max-w-[14rem] truncate", !o.customerName && "text-muted")}
-          title={o.customerName ?? undefined}
-        >
-          {o.customerName ?? t("walkIn")}
-        </span>
-      ),
-    },
-    {
-      key: "createdAt",
-      header: t("colDate"),
-      sortable: true,
-      render: (o) => (
-        // Relative while it still means something, absolute after that, and
-        // the exact stamp always one hover away.
-        <span className="whitespace-nowrap text-muted" title={formatDateTime(o.createdAt)}>
-          {formatRelative(o.createdAt, now)}
-        </span>
-      ),
-    },
-    {
-      // Where and how, as one answer. Two columns for one idea cost the width
-      // the customer column needed.
-      key: "channel",
-      /* The bar says which venue, so a column saying it on every row earns
-         nothing — what it was really carrying was the channel. */
-      header: t("colChannel"),
-      render: (o) => <span className="truncate">{soldAt(o)}</span>,
-    },
-    {
-      key: "items",
-      header: t("colItems"),
-      align: "center",
-      render: (o) => (
-        <span className="font-mono text-[13px]">{o.lines.reduce((s, l) => s + l.quantity, 0)}</span>
-      ),
-    },
-    {
-      key: "total",
-      header: t("colTotal"),
-      sortable: true,
-      align: "right",
-      render: (o) => {
-        const due = orderOutstanding(o);
-        return (
-          <span className="flex flex-col items-end">
-            <span className="font-mono text-[13px]">{formatMoney(o.total)}</span>
-            {/* A partial sale that says only its total is hiding the number
-                somebody has to go and collect. */}
-            {due > 0 && !isVoidedOrder(o) && (
-              <span className="whitespace-nowrap font-mono text-[12px] text-warning">
-                {t("dueLabel", { amount: formatMoney(due) })}
-              </span>
-            )}
-          </span>
-        );
-      },
-    },
-    {
-      key: "status",
-      header: t("colStatus"),
-      sortable: true,
-      className: "whitespace-nowrap",
-      render: (o) => <StatusPill status={o.status} />,
-    },
-  ];
+  /* ── The page of rows on screen ───────────────────────────────────────── */
+  const pages = Math.max(1, Math.ceil(rows.length / f.size));
+  const page = Math.min(f.page, pages);
+  const pageRows = useMemo(() => rows.slice((page - 1) * f.size, page * f.size), [rows, page, f.size]);
+  const firstLoad = report.loading && report.scope.length === 0;
 
-  const resetPage = () => setPage(1);
+  /* ── Summary, Export, Print ───────────────────────────────────────────── */
+  const [sheet, setSheet] = useState(false);
+  const venueName = report.venue?.name ?? "";
+  const filterText = L.describe(f, venueName).join(" · ");
+  const tr: Tr = (key, values) => t(key as never, values as never);
+  const context = () => ({ t: tr, L, dir, venueName, filterText, generated: formatDateTime(new Date().toISOString()) });
+  const printHref = (kind: "summary" | "list") => `/print/orders/${kind}?${toSearch({ ...f, page: 1 }, { venue: report.venueId })}`;
+
+  const onExport = () => {
+    downloadCsv(reportFileName("sales", venueName, f, rows), salesCsv(rows, summary, context()));
+    toast.success(t("exported", { count: rows.length }));
+  };
+  const onDownloadSummary = () => {
+    downloadCsv(reportFileName("sales-summary", venueName, f, rows), summaryCsv(summary, context()));
+    toast.success(t("summary.downloaded"));
+  };
+
+  const narrowed = activeCount(f) > 0;
 
   return (
     <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
         {/* Refunds the counter has asked for come first: each one is a guest
             waiting on an answer. Nothing is drawn when none are waiting. */}
-        <RefundRequests onDecided={() => { reload(); summaryQ.reload(); }} />
-        {forCustomer && (
+        <RefundRequests onDecided={() => report.reload()} />
+
+        {f.customerId && (
           <div role="status" className="flex flex-wrap items-center justify-between gap-x-section gap-y-tight rounded-md border border-line bg-card px-section py-tight">
-            <p className="min-w-0 break-words text-sm text-fg">
-              {forName ? t("forCustomer", { name: forName }) : t("forCustomerAnon")}
-            </p>
-            <Button
-              variant="tertiary"
-              size="sm"
-              onClick={() => {
-                setForCustomer("");
-                resetPage();
-                router.replace("/orders", { scroll: false });
-              }}
-            >
+            <p className="min-w-0 break-words text-sm text-fg">{f.customer ? t("forCustomer", { name: f.customer }) : t("forCustomerAnon")}</p>
+            <Button variant="tertiary" size="sm" onClick={() => go({ ...latest.current, customerId: "", customer: "", page: 1 })}>
               {t("forCustomerClear")}
             </Button>
           </div>
         )}
-        <StatStrip
-          loading={summaryQ.loading}
-          items={[
-            {
-              key: "collected",
-              label: t("statCollected"),
-              value: formatMoney(summary.collected),
-              // Cancelled and refunded orders are excluded from the money.
-              note: summary.voided > 0 ? t("statExcluded", { count: summary.voided }) : null,
-            },
-            { key: "orders", label: t("statOrders"), value: String(summary.orders) },
-            {
-              key: "average",
-              label: t("statAverage"),
-              value: summary.orders === 0 ? "—" : formatMoney(summary.average),
-            },
-            {
-              key: "outstanding",
-              label: t("statOutstanding"),
-              value: formatMoney(summary.outstanding),
-              tone: summary.outstanding > 0 ? "warning" : undefined,
-            },
-          ]}
+
+        <OrdersToolbar
+          f={f}
+          set={set}
+          options={options}
+          labels={L}
+          disabled={firstLoad}
+          onSummary={() => setSheet(true)}
+          onExport={onExport}
+          onPrint={() => router.push(printHref("list"))}
+          columns={{
+            options: allColumns.filter((c) => TOGGLEABLE.includes(c.key as never)).map((c) => ({ value: c.key, label: String(c.header) })),
+            value: TOGGLEABLE.filter((k) => !cols.hidden.includes(k)),
+            onChange: (shown) => cols.set(TOGGLEABLE.filter((k) => !shown.includes(k))),
+            onReset: () => cols.set(null),
+          }}
         />
+
+        {/* Search and Reset on the left, the figures for what is matched on the
+            right — one quiet panel, not a band of cards. */}
+        <section aria-label={t("figures.label")} className="card-surface flex flex-wrap items-center justify-between gap-x-major gap-y-section p-card">
+          <div className="flex min-w-0 max-md:w-full items-center gap-tight">
+            <div className="relative min-w-0 flex-1 md:w-64 md:flex-none">
+              <Search size={16} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                type="search"
+                value={draft}
+                onChange={(e) => onSearch(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+                aria-label={t("filterResults")}
+                className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-9"
+              />
+            </div>
+            <Button variant="secondary" size="sm" disabled={!narrowed} icon={<RotateCcw size={14} strokeWidth={1.5} />} onClick={reset} aria-label={t("reset")} className="max-md:w-11 max-md:px-0">
+              <span className="max-md:sr-only">{t("reset")}</span>
+            </Button>
+          </div>
+          <SalesFigures summary={summary} loading={firstLoad} />
+        </section>
 
         <DataTable
           columns={columns}
-          rows={data?.data ?? []}
+          rows={pageRows}
           getRowId={(o) => o.id}
-          loading={loading}
-          sort={sort}
-          onSortChange={(key) => setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }))}
+          loading={firstLoad}
+          sort={{ key: f.sort, order: f.dir }}
+          onSortChange={(key) => set(key === f.sort ? { dir: f.dir === "asc" ? "desc" : "asc" } : { sort: key, dir: firstDirection(key) })}
           onRowClick={(o) => router.push(`/orders/${o.id}`)}
-          toolbar={
-            /* Search stays out; the three selects fold into one button on a
-               phone, with whatever is set coming back as a chip. Measured
-               before: four stacked controls were 96px of a 735px screen, on
-               top of a 238px figures band. */
-            <FilterBar
-              search={
-                <div className="relative">
-                  <Search size={16} strokeWidth={1.5} className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-                  <input
-                    value={search}
-                    onChange={(e) => { setSearch(e.target.value); resetPage(); }}
-                    // The API has always matched the customer name too; the old
-                    // placeholder said "by reference" and hid half the feature.
-                    placeholder={t("searchPlaceholder")}
-                    aria-label={t("searchPlaceholder")}
-                    className="h-11 w-full min-w-0 rounded-sm border border-line pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:h-9 md:w-72"
-                  />
-                </div>
-              }
-              filters={[
-                {
-                  key: "range",
-                  label: t("filterDate"),
-                  active: range === "all" ? null : rangeLabel(range),
-                  onClear: () => { setRange("all"); resetPage(); },
-                  control: (
-                    <Select
-                      aria-label={t("filterDate")}
-                      value={range}
-                      onChange={(v) => { setRange(v as Range); resetPage(); }}
-                      options={[
-                        { value: "all", label: t("allRanges") },
-                        { value: "today", label: t("rangeToday") },
-                        { value: "7d", label: t("range7d") },
-                        { value: "30d", label: t("range30d") },
-                      ]}
-                    />
-                  ),
-                },
-                {
-                  key: "status",
-                  label: t("filterStatus"),
-                  active: status ? enumL.status(status) : null,
-                  onClear: () => { setStatus(""); resetPage(); },
-                  control: (
-                    <Select
-                      aria-label={t("filterStatus")}
-                      value={status}
-                      onChange={(v) => { setStatus(v); resetPage(); }}
-                      options={[
-                        { value: "", label: t("allStatuses") },
-                        ...(["paid", "pending", "partial", "refunded", "cancelled"] as const).map((k) => ({
-                          value: k,
-                          label: enumL.status(k),
-                        })),
-                      ]}
-                    />
-                  ),
-                },
-                {
-                  key: "channel",
-                  label: t("filterChannel"),
-                  active: channel ? channelLabel(channel) : null,
-                  onClear: () => { setChannel(""); resetPage(); },
-                  control: (
-                    <Select
-                      aria-label={t("filterChannel")}
-                      value={channel}
-                      onChange={(v) => { setChannel(v); resetPage(); }}
-                      options={[
-                        { value: "", label: t("allChannels") },
-                        { value: "counter", label: t("channelCounter") },
-                        { value: "online", label: t("channelOnline") },
-                      ]}
-                    />
-                  ),
-                },
-              ]}
+          minWidth="62rem"
+          height="page"
+          cardVariant="list"
+          renderCard={(o) => <OrderCard o={o} now={now} />}
+          emptyState={
+            <EmptyState
+              title={t("emptyTitle")}
+              message={t("emptyMessage")}
+              action={narrowed ? <Button variant="secondary" onClick={reset}>{t("reset")}</Button> : undefined}
             />
           }
-          minWidth="58rem"
-          cardVariant="list"
-          renderCard={(o) => {
-            const due = orderOutstanding(o);
-            return (
-              /* Two lines: who and how much, then which and when.
-                 It was six lines and 142px — five orders to a phone screen —
-                 and three of the six restated something the page can filter by
-                 (the venue and the channel) or nobody scans a list for (the
-                 item count). Both are on the order itself.
-                 Who leads rather than the reference, because that is what a
-                 person looking for an order remembers; the reference is beneath
-                 it, where it is still readable and still searchable. */
-              <div className="flex flex-col gap-inline">
-                <div className="flex items-baseline justify-between gap-tight">
-                  <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", !o.customerName && "text-muted")}>
-                    {o.customerName ?? t("walkIn")}
-                  </span>
-                  <span className="shrink-0 text-[13px] font-medium tabular-nums">{formatMoney(o.total)}</span>
-                </div>
-                <div className="flex items-baseline justify-between gap-tight">
-                  <span className="min-w-0 flex-1 truncate text-[12px] text-muted">
-                    <span className="font-mono">{o.reference}</span> · {formatRelative(o.createdAt, now)}
-                    {/* The one number somebody has to go and collect. In words
-                        as well as colour, and only when there is one. */}
-                    {due > 0 && !isVoidedOrder(o) && (
-                      <span className="text-warning"> · {t("dueLabel", { amount: formatMoney(due) })}</span>
-                    )}
-                  </span>
-                  <StatusPill status={o.status} />
-                </div>
-              </div>
-            );
-          }}
-          emptyState={<EmptyState title={t("emptyTitle")} message={t("emptyMessage")} />}
-          pagination={{ page, pageSize: 12, total: data?.page.total ?? 0, onPageChange: setPage }}
+        />
+
+        <OrdersPager
+          page={page}
+          size={f.size}
+          total={rows.length}
+          loading={firstLoad}
+          onPage={(p) => go({ ...latest.current, page: p })}
+          onSize={(size) => set({ size })}
         />
       </div>
+
+      <SummarySheet
+        open={sheet}
+        onClose={() => setSheet(false)}
+        summary={summary}
+        labels={L}
+        filterText={filterText}
+        onDownload={onDownloadSummary}
+        onPrint={() => router.push(printHref("summary"))}
+      />
     </PageShell>
   );
 }

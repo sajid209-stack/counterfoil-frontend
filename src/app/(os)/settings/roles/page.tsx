@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Copy, Trash2, UserCog } from "lucide-react";
-import { ActionMenu, ConfirmDialog, PageShell, useToast } from "@/components/ui";
+import { ActionMenu, ConfirmDialog, useToast } from "@/components/ui";
+import { PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import { createRole, deleteRole, listRoles, listStaff, type Role } from "@/lib/api";
-import { IconTile, RecordList, RecordRow, SectionSkeleton } from "../_components/SettingsKit";
+import { IconTile, ListAddRow, RecordList, RecordRow, SectionSkeleton } from "../_components/SettingsKit";
 import { countByRole, useRoleSummary } from "../_lib/roles";
 import { RoleMatrix } from "./_components/RoleMatrix";
 
@@ -68,17 +69,17 @@ export default function RolesPage() {
     rolesQ.reload();
   };
 
+  const primary: PagePrimary = { label: t("roles.newRole"), onClick: () => router.push("/settings/roles/new") };
+
   return (
-    <PageShell
-      title={t("roles.title")}
-      description={t("roles.description")}
-      primary={{ label: t("roles.newRole"), onClick: () => router.push("/settings/roles/new") }}
-    >
+    <PageShell title={t("roles.title")} description={t("roles.description")} primary={primary}>
       {!rolesQ.data || !staffQ.data ? (
         <SectionSkeleton />
       ) : (
         <div className="flex max-w-4xl flex-col gap-section pb-hero">
-          <RecordList label={t("roles.title")}>
+          {/* New role is the list's first row: no tabs or filters carry it, and
+              a row of its own above the card would hold only this button. */}
+          <RecordList label={t("roles.title")} header={<ListAddRow label={primary.label} onClick={() => router.push("/settings/roles/new")} />}>
             {roles.map((r) => {
               const held = counts[r.id] ?? 0;
               return (

@@ -9,10 +9,11 @@ import {
   EmptyState,
   FormField,
   Modal,
-  PageShell,
   StatusPill,
   useToast,
 } from "@/components/ui";
+import { PageShell } from "@/components/ui/PageShell";
+import { ListAddRow } from "../_components/SettingsKit";
 import { useApiQuery } from "@/lib/useApi";
 import {
   archiveMembershipTier,
@@ -130,6 +131,9 @@ export default function MembershipTiersPage() {
             </p>
           </div>
         ))}
+        {/* New tier, after the tiers it joins: no tabs or filters carry it, and
+            a strip above the cards would hold only this button. */}
+        {tiers.length > 0 && <ListAddRow variant="tile" label={t("newTier")} onClick={() => setEditing("new")} />}
       </div>
 
       {editing && (

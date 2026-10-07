@@ -74,10 +74,9 @@ export function ticketCards(order: Order | undefined, tickets: Ticket[], busines
         fields,
         indexLabel: sorted.length > 1 ? labels.indexOf(index + 1, sorted.length) : undefined,
         code: ticket.code,
-        /* What this venue's own scanner can read — see Settings, Ticket
+        /* Whether the code is also printed in letters — see Settings, Ticket
            codes. Read here rather than passed down from four print pages
            that would each have to remember. */
-        codeStyle: codes.print,
         showCode: codes.showText,
         gateHint: labels.gateHint,
         referenceLabel: labels.reference,

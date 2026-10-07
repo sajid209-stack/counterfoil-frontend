@@ -5,19 +5,17 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Archive, Check, ChevronDown, Circle, Copy, Download, Eye, EyeOff, Monitor, Pencil, Smartphone } from "lucide-react";
-import { ActionMenu, Button, ConfirmDialog, EmptyState, PageShell, StatStrip, StatusPill, useToast, type PillTone } from "@/components/ui";
+import { ActionMenu, Button, ConfirmDialog, EmptyState, PageShell, StatusPill, useToast, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import {
   archiveEvent,
   dayFill,
   duplicateEvent,
-  eventCapacity,
   eventDays,
   spansDays,
   tierDays,
   eventChannels,
-  eventRevenue,
   eventSettlement,
   eventSold,
   getEvent,
@@ -35,7 +33,6 @@ import { formatClock, formatClockRange, formatDay, formatPriceShort } from "@/li
 import { demoNow } from "@/lib/schedule";
 
 const TONE: Record<CatalogState, PillTone> = { onSale: "success", needsSetup: "warning", soldOut: "info", offSale: "neutral", ended: "neutral", archived: "neutral" };
-const DAY = 86_400_000;
 
 /* The preview is the longest thing on the page and the least often needed, so
    it starts folded; opening it is remembered for next time, per browser. */
@@ -160,10 +157,6 @@ export default function EventDetailPage() {
   };
 
   const sold = e ? eventSold(e) : 0;
-  const cap = e ? eventCapacity(e) : 0;
-  const pct = cap ? Math.min(100, Math.round((sold / cap) * 100)) : 0;
-  const start = e ? new Date(e.startsAt) : null;
-  const days = start ? Math.ceil((start.getTime() - now.getTime()) / DAY) : 0;
   /* A two-day event used to read "Sat 24 Oct · 16:00–22:00" — the end time of
      a day this line does not name. It states the range of DAYS instead, and
      leaves the clock to the per-day list below, where it is true. */
@@ -206,21 +199,6 @@ export default function EventDetailPage() {
       }
     >
       <div className={cn("flex flex-col gap-section pb-hero", templateFontVars)}>
-
-        {e && (
-          <StatStrip
-            items={[
-              { key: "sold", label: tr("sold"), value: `${sold.toLocaleString()} / ${cap.toLocaleString()}`, note: tr("soldNote", { pct }) },
-              { key: "revenue", label: t("stat.revenue"), value: formatPriceShort(eventRevenue(e)) },
-              {
-                key: "starts",
-                label: tr("starts"),
-                value: state === "ended" ? tr("ended") : days <= 0 ? tr("today") : tr("inDays", { count: days }),
-                note: when,
-              },
-            ]}
-          />
-        )}
 
         {/* Each day, and how full it is.
             The figure that matters here is NOT the ticket count: a weekend

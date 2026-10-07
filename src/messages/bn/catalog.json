@@ -85,24 +85,6 @@
     "archiveSoldOne": "{date}-এর জন্য {count}টি টিকিট বিক্রি হয়েছে। সরিয়ে রাখলে বিক্রি বন্ধ হবে, কিন্তু ওই টিকিটগুলো গেটে চলবে।",
     "archiveSoldMany": "{count, plural, one {এর মধ্যে #টির} other {এর মধ্যে #টির}} সামনের তারিখের টিকিট বিক্রি হয়েছে। সরিয়ে রাখলে বিক্রি বন্ধ হবে, কিন্তু ওই টিকিটগুলো গেটে চলবে।"
   },
-  "stat": {
-    "attention": "দেখা দরকার",
-    "bookedAhead": "সামনের বুকিং",
-    "bookedAheadNote": "আজ থেকে সামনে",
-    "ticketsSold": "ইভেন্টের টিকিট বিক্রি",
-    "ticketsSoldNote": "সামনের ইভেন্টগুলোর",
-    "attentionNote": "এখনো বিক্রি করা যায় না, বা শিগগির বিক্রি বন্ধ হবে",
-    "ticketRevenue": "ইভেন্ট টিকিটের টাকা",
-    "ticketRevenueNote": "সামনের ইভেন্টগুলোর",
-    "attentionLine": "{count, plural, =0 {কিছু দেখার দরকার নেই} other {#টি দেখা দরকার}}",
-    "bookedAheadLine": "সামনে {count, number}টি বুকিং",
-    "ticketsSoldLine": "{count, number}টি টিকিট বিক্রি",
-    "weekUse": "বুক হয়েছে, পরের ৭ দিন",
-    "weekUseNote": "{cap}টি জায়গার মধ্যে {used}টি বুক হয়েছে",
-    "onSale": "বিক্রি চলছে",
-    "onSaleNote": "এখন যা বিক্রি হচ্ছে",
-    "nextEvent": "পরের ইভেন্ট"
-  },
   "searchPlaceholder": "আপনার বিক্রির জিনিস খুঁজুন",
   "sortBy": "সাজান",
   "sort": {
@@ -986,12 +968,6 @@
   "select": "বাছুন",
   "selectDone": "হয়ে গেছে",
   "eventRecord": {
-    "sold": "টিকিট বিক্রি",
-    "soldNote": "সব টিকিটের {pct}%",
-    "starts": "শুরু",
-    "ended": "শেষ হয়েছে",
-    "today": "আজ",
-    "inDays": "{count, plural, one {# দিন পরে} other {# দিন পরে}}",
     "colTicket": "টিকিটের ধরন",
     "colPrice": "দাম",
     "colSold": "বিক্রি",

@@ -1,10 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
 import { PageShell } from "@/components/ui";
 import { CatalogChooser } from "../_components/CatalogChooser";
 
@@ -22,10 +20,13 @@ function NewItem() {
   const t = useTranslations("catalog");
   const kind = useSearchParams().get("kind");
   return (
-    <PageShell title={t("chooser.title")} description={t("chooser.description")}>
-      <Link href={kind ? `/catalog?kind=${kind}` : "/catalog"} className="mb-section inline-flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg md:min-h-0">
-        <ArrowLeft size={14} strokeWidth={1.5} /> {t("title")}
-      </Link>
+    /* The way back is the page's own back link, in the standard header row,
+       rather than a hand-placed anchor with its own line-height and margin. */
+    <PageShell
+      title={t("chooser.title")}
+      description={t("chooser.description")}
+      back={{ href: kind ? `/catalog?kind=${kind}` : "/catalog", label: t("title") }}
+    >
       <div className="pb-hero">
         <CatalogChooser lead={kind === "events" ? "events" : kind === "bookings" ? "bookings" : "all"} />
       </div>

@@ -407,8 +407,14 @@ export interface StorefrontLink {
 }
 
 export interface Storefront {
-  id: ID; // "sf_<locationId>"
+  /** "sf_<locationId>" for the first storefront a venue has; any later one has
+   *  its own id. A venue can have several — "Lalbagh Fort — Tours" and
+   *  "Lalbagh Fort — Courts" — each with its own address, words and bookings. */
+  id: ID;
   locationId: ID;
+  /** What the operator calls it in their own list. Absent means the venue's
+   *  name, which is what the first storefront at a venue has always been. */
+  name?: string;
   /** The public path segment: /s/<slug>. Unique across the business. */
   slug: string;
   /** Off until somebody decides the page is ready; the route 404s while off. */
@@ -1443,14 +1449,14 @@ export type PayoutSchedule = "daily" | "weekly" | "monthly";
 /**
  * What a ticket carries, and what the till listens for (ticketcodes.v1).
  *
- * `print` decides which code is drawn on a printed ticket. QR is right for a
- * phone camera and for a gate imager; a Code 39 barcode is what a cheap laser
- * handheld reads, and a venue that owns one could not scan its own tickets at
- * all. `showText` keeps the code readable so it can be typed when a scanner
- * fails, which is the reason it defaults on.
+ * `print` is the code drawn on a printed ticket, and it is always a QR: a
+ * barcode option (Code 39, for laser handhelds) was offered here until the
+ * owner asked for QR only on 2026-10-06. It stays a field so that a setting
+ * saved before then still reads, as a QR. `showText` keeps the code readable
+ * so it can be typed when a scanner fails, which is the reason it defaults on.
  */
 export interface TicketCodeSettings {
-  print: "qr" | "barcode" | "both";
+  print: "qr";
   showText: boolean;
   /** The till adds a shop item when its SKU is scanned. */
   scanToSell: boolean;

@@ -34,7 +34,7 @@ const useTip = () => {
  *  viewBox, which also scales their text — at 320px a 10px label renders at
  *  5px. A chart carrying an axis has to draw at 1:1 so the labels stay the
  *  size they were set in. */
-function useWidth<T extends HTMLElement>() {
+export function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -48,14 +48,49 @@ function useWidth<T extends HTMLElement>() {
   return [ref, w] as const;
 }
 
-/** Round the axis top up to a readable step so ticks land on 15k, not 14.7k. */
-function niceScale(max: number, ticks: number) {
+/** Round the axis top up to a readable step so ticks land on 15k, not 14.7k.
+ *  `integer` is for counts: whole-number steps only (1, 2, 5, 10, 20…), so an
+ *  axis never prints "2.5 guests". */
+export function niceScale(max: number, ticks: number, integer = false) {
   if (!(max > 0)) return { top: 1, step: 1 };
   const raw = max / ticks;
   const mag = 10 ** Math.floor(Math.log10(raw));
   const n = raw / mag;
-  const step = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
+  const step = integer
+    ? Math.max(1, (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag)
+    : (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
   return { top: step * ticks, step };
+}
+
+/** A monotone cubic through the points, as an svg path: it never overshoots
+ *  into inventing a peak between two points that the data does not contain. */
+export function smoothPath(pts: readonly (readonly [number, number])[]): string {
+  if (pts.length < 2) return pts.length ? `M${pts[0][0]},${pts[0][1]}` : "";
+  const slope: number[] = [];
+  const d: number[] = [];
+  for (let i = 0; i < pts.length - 1; i++) d.push((pts[i + 1][1] - pts[i][1]) / (pts[i + 1][0] - pts[i][0]));
+  slope[0] = d[0];
+  for (let i = 1; i < pts.length - 1; i++) {
+    // A sign change is a turning point: flatten it so the curve turns there
+    // rather than sailing through.
+    slope[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  }
+  slope[pts.length - 1] = d[d.length - 1];
+  for (let i = 0; i < d.length; i++) {
+    // Fritsch–Carlson limiter — keeps each segment monotone.
+    if (d[i] === 0) { slope[i] = 0; slope[i + 1] = 0; continue; }
+    const a = slope[i] / d[i], b = slope[i + 1] / d[i];
+    const s = a * a + b * b;
+    if (s > 9) { const tau = 3 / Math.sqrt(s); slope[i] = tau * a * d[i]; slope[i + 1] = tau * b * d[i]; }
+  }
+  let path = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const h = (pts[i + 1][0] - pts[i][0]) / 3;
+    path += ` C${(pts[i][0] + h).toFixed(1)},${(pts[i][1] + slope[i] * h).toFixed(1)}`
+          + ` ${(pts[i + 1][0] - h).toFixed(1)},${(pts[i + 1][1] - slope[i + 1] * h).toFixed(1)}`
+          + ` ${pts[i + 1][0].toFixed(1)},${pts[i + 1][1].toFixed(1)}`;
+  }
+  return path;
 }
 
 /**
@@ -77,6 +112,9 @@ export function AreaChart({
   compareDashed = false,
   tooltipDelta,
   legend = true,
+  integer = false,
+  grid = "dashed",
+  legendKeys = false,
 }: {
   points: ChartPoint[];
   /** Exact value, for the tooltip. */
@@ -95,6 +133,15 @@ export function AreaChart({
   tooltipDelta?: (value: number, compare: number) => string | null;
   /** False where the page already names both series once, above the chart. */
   legend?: boolean;
+  /** Counts, not money: the axis takes whole-number steps and no more of them
+   *  than there are to count. */
+  integer?: boolean;
+  /** Gridlines. The dashboard keeps its dashed ones; a hairline solid grid is
+   *  the quieter default for new charts. */
+  grid?: "dashed" | "solid";
+  /** The legend keys the series as lines (solid, dashed), which says "this is
+   *  the period before" where a dot cannot. */
+  legendKeys?: boolean;
 }) {
   const [box, w] = useWidth<HTMLDivElement>();
   const gradId = useId();
@@ -110,52 +157,29 @@ export function AreaChart({
   const padL = 58, padR = 10, padT = 10, padB = 28;
   const plotW = Math.max(0, w - padL - padR);
   const plotH = Math.max(0, height - padT - padB);
-  const { top, step } = niceScale(Math.max(...points.map((p) => Math.max(p.value, p.compare ?? 0)), 0), ticks);
+  const peak = Math.max(...points.map((p) => Math.max(p.value, p.compare ?? 0)), 0);
+  // With few things to count, fewer gridlines: a peak of 2 has no use for four.
+  const tk = integer ? Math.max(1, Math.min(ticks, Math.ceil(peak))) : ticks;
+  const { top, step } = niceScale(peak, tk, integer);
 
   const x = (i: number) => padL + (points.length === 1 ? plotW / 2 : (i / (points.length - 1)) * plotW);
   const y = (v: number) => padT + (1 - v / top) * plotH;
 
   // The reference draws its series as smooth curves, not straight segments —
-  // a monotone cubic, so the curve never overshoots into inventing a peak
-  // between two points that the data does not contain. (A plain Catmull-Rom
-  // would bulge past a local maximum and read as revenue nobody earned.)
-  const curve = (get: (p: ChartPoint) => number | undefined) => {
+  // a monotone cubic (see smoothPath), so the curve never overshoots into
+  // inventing a peak between two points that the data does not contain. (A
+  // plain Catmull-Rom would bulge past a local maximum and read as revenue
+  // nobody earned.)
+  const curve = (get: (p: ChartPoint) => number | undefined) =>
     // A point the series has no value for (past the end of a shorter
     // comparison) is left out, not drawn as zero.
-    const pts = points.flatMap((p, i) => (get(p) === undefined ? [] : [[x(i), y(get(p)!)] as const]));
-    if (pts.length < 2) return pts.length ? `M${pts[0][0]},${pts[0][1]}` : "";
-    const slope: number[] = [];
-    const d: number[] = [];
-    for (let i = 0; i < pts.length - 1; i++) d.push((pts[i + 1][1] - pts[i][1]) / (pts[i + 1][0] - pts[i][0]));
-    slope[0] = d[0];
-    for (let i = 1; i < pts.length - 1; i++) {
-      // A sign change is a turning point: flatten it so the curve turns there
-      // rather than sailing through.
-      slope[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
-    }
-    slope[pts.length - 1] = d[d.length - 1];
-    for (let i = 0; i < d.length; i++) {
-      // Fritsch–Carlson limiter — keeps each segment monotone.
-      if (d[i] === 0) { slope[i] = 0; slope[i + 1] = 0; continue; }
-      const a = slope[i] / d[i], b = slope[i + 1] / d[i];
-      const s = a * a + b * b;
-      if (s > 9) { const tau = 3 / Math.sqrt(s); slope[i] = tau * a * d[i]; slope[i + 1] = tau * b * d[i]; }
-    }
-    let path = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const h = (pts[i + 1][0] - pts[i][0]) / 3;
-      path += ` C${(pts[i][0] + h).toFixed(1)},${(pts[i][1] + slope[i] * h).toFixed(1)}`
-            + ` ${(pts[i + 1][0] - h).toFixed(1)},${(pts[i + 1][1] - slope[i + 1] * h).toFixed(1)}`
-            + ` ${pts[i + 1][0].toFixed(1)},${pts[i + 1][1].toFixed(1)}`;
-    }
-    return path;
-  };
+    smoothPath(points.flatMap((p, i) => (get(p) === undefined ? [] : [[x(i), y(get(p)!)] as const])));
   const line = curve;
   const area = `${line((p) => p.value)} L${x(points.length - 1).toFixed(1)},${(padT + plotH).toFixed(1)} L${x(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
 
   // Thin the x labels to what actually fits, so they never collide.
   const every = Math.max(1, Math.ceil(points.length / Math.max(2, Math.floor(plotW / 52))));
-  const gridline = Array.from({ length: ticks + 1 }, (_, i) => i * step);
+  const gridline = Array.from({ length: tk + 1 }, (_, i) => i * step);
   const active = hover != null ? points[hover] : null;
 
   return (
@@ -212,7 +236,7 @@ export function AreaChart({
             <g key={v}>
               <line
                 x1={padL} x2={padL + plotW} y1={y(v)} y2={y(v)}
-                stroke="var(--color-line)" strokeWidth="1" strokeDasharray="3 4"
+                stroke="var(--color-line)" strokeWidth="1" strokeDasharray={grid === "dashed" ? "3 4" : undefined}
               />
               <text x={padL - 10} y={y(v) + 4} textAnchor="end" className="fill-[var(--color-muted)] text-[0.75rem]">
                 {axis(v)}
@@ -278,7 +302,23 @@ export function AreaChart({
           the chart — so it appears only when a comparison is actually drawn.
           The series stays named for screen readers either way, via the svg's
           aria-label. */}
-      {hasCompare && compareLabel && legend && (
+      {hasCompare && compareLabel && legend && legendKeys && (
+        <div data-chart-legend className="mt-tight flex flex-wrap items-center gap-x-section gap-y-inline">
+          <span className="flex items-center gap-tight text-[0.75rem] text-muted">
+            <svg width="20" height="4" aria-hidden className="shrink-0">
+              <line x1="0" x2="20" y1="2" y2="2" stroke="var(--color-ember)" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+            <span className="tabular-nums text-fg">{valueLabel}</span>
+          </span>
+          <span className="flex items-center gap-tight text-[0.75rem] text-muted">
+            <svg width="20" height="4" aria-hidden className="shrink-0">
+              <line x1="0" x2="20" y1="2" y2="2" stroke="var(--color-muted)" strokeWidth="2" strokeDasharray="4 3" />
+            </svg>
+            <span className="tabular-nums text-fg">{compareLabel}</span>
+          </span>
+        </div>
+      )}
+      {hasCompare && compareLabel && legend && !legendKeys && (
         <div className="mt-tight flex items-center gap-section">
           <span className="flex items-center gap-inline text-[0.75rem] text-muted">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ember" />{valueLabel}
@@ -474,6 +514,11 @@ export function HeatmapChart({
   caption,
   hint,
   legend,
+  rowLabelWidth = 44,
+  colMinWidth = 24,
+  cellHeight,
+  longRowLabels = false,
+  colMaxWidth,
 }: {
   rowLabels: string[];
   colLabels: string[];
@@ -487,13 +532,26 @@ export function HeatmapChart({
   /** Said to a keyboard user as they reach the grid. */
   hint: string;
   legend: { fewer: string; more: string };
+  /** Width of the pinned label column, in px. Weekday names need 44; a list of
+   *  bookings needs room for their names. */
+  rowLabelWidth?: number;
+  /** Narrowest a column may be, in px. Labels that carry a minute ("11:45 AM")
+   *  need more than the 24 an hour column gets by with. */
+  colMinWidth?: number;
+  /** Cell height in px; 28 by default. Taller where a row label wraps to two lines. */
+  cellHeight?: number;
+  /** Row labels are names, not weekdays: they wrap to two lines, then end in an
+   *  ellipsis with the whole name on hover. */
+  longRowLabels?: boolean;
+  /** Widest a column may be, in px. A grid of two or three columns would
+   *  otherwise stretch each into a slab; unset, columns share the width. */
+  colMaxWidth?: number;
 }) {
   const rows = rowLabels.length;
   const n = colLabels.length;
   const wrap = useRef<HTMLDivElement>(null);
   const hintId = useId();
   const refs = useRef<(HTMLDivElement | null)[]>([]);
-  const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<[number, number] | null>(null);
   const [hovered, setHovered] = useState<[number, number] | null>(null);
   const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null);
@@ -554,7 +612,7 @@ export function HeatmapChart({
   };
 
   const current = hovered ?? active;
-  const minWidth = 44 + n * 26 + n * 2;
+  const minWidth = rowLabelWidth + n * (colMinWidth + 2) + n * 2;
 
   return (
     <div ref={wrap} className="relative">
@@ -566,7 +624,10 @@ export function HeatmapChart({
           {tip.text}
         </div>
       )}
-      <div className="overflow-x-auto" onScroll={(e) => setScrolled(e.currentTarget.scrollLeft > 0)}>
+      {/* The pinned labels take a solid ground once something has slid under them.
+          That is a data attribute set in the handler, not state: a state update
+          lands a frame late, and for that frame a label sat bare over a coloured cell. */}
+      <div className="group/heat overflow-x-auto" onScroll={(e) => { e.currentTarget.dataset.scrolled = String(e.currentTarget.scrollLeft > 0); }}>
         <div
           role="group"
           tabIndex={0}
@@ -584,8 +645,8 @@ export function HeatmapChart({
           className="rounded-xs focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ember"
           style={{ minWidth }}
         >
-          <div aria-hidden className="grid gap-[2px]" style={{ gridTemplateColumns: `44px repeat(${n}, minmax(24px, 1fr))` }}>
-            <span className={cn("sticky left-0 z-[1]", scrolled && "bg-card")} />
+          <div aria-hidden className="grid gap-[2px]" style={{ gridTemplateColumns: `${rowLabelWidth}px repeat(${n}, minmax(${colMinWidth}px, ${colMaxWidth ? `${colMaxWidth}px` : "1fr"}))` }}>
+            <span className="sticky left-0 z-[1] group-data-[scrolled=true]/heat:bg-card" />
             {colLabels.map((l, c) => (
               <span key={c} className="relative h-5">
                 {c % labelEvery === 0 && (
@@ -598,10 +659,10 @@ export function HeatmapChart({
                 <span
                   className={cn(
                     "sticky left-0 z-[1] flex items-center pr-tight text-[0.75rem] text-muted",
-                    scrolled && "bg-card shadow-[2px_0_0_var(--color-hairline)]",
+                    "group-data-[scrolled=true]/heat:bg-card group-data-[scrolled=true]/heat:shadow-[2px_0_0_var(--color-hairline)]",
                   )}
                 >
-                  {label}
+                  {longRowLabels ? <span className="line-clamp-2 break-words leading-tight" title={label}>{label}</span> : label}
                 </span>
                 {colLabels.map((_, c) => {
                   const v = values.get(r * n + c) ?? 0;
@@ -613,8 +674,9 @@ export function HeatmapChart({
                       key={c}
                       ref={(el) => { refs.current[r * n + c] = el; }}
                       onMouseEnter={() => { setHovered([r, c]); showAt(r, c); }}
-                      className="h-7 rounded-[3px]"
+                      className={cellHeight === undefined ? "h-7 rounded-[3px]" : "rounded-[3px]"}
                       style={{
+                        height: cellHeight,
                         background: step ? HEAT[step - 1] : "transparent",
                         boxShadow: step
                           ? `inset 0 0 0 1px var(--heat-edge)${ring}`

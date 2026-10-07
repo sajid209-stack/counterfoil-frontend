@@ -17,14 +17,6 @@
     "title": "No sites connected",
     "body": "Connect one to sell where people already look for things to do. You agree their cut with them. We keep your prices and places the same on their site."
   },
-  "stat": {
-    "live": "Listings on sale",
-    "orders": "Bookings",
-    "net": "After their cut",
-    "commission": "Their cut",
-    "listed": "On this site",
-    "liveOf": "{count} on sale"
-  },
   "status": {
     "disconnected": "Not connected",
     "connecting": "Connecting",
@@ -117,5 +109,7 @@
     "noChannel": "sold nowhere"
   },
   "sendHintSubmitted": "Already sent. Waiting for their answer.",
-  "sendHintRejected": "They turned it down. The reason is under its name."
+  "sendHintRejected": "They turned it down. The reason is under its name.",
+  "summary": "{live, plural, one {# listing} other {# listings}} on sale · {orders, plural, one {# booking} other {# bookings}} · {net} after their cut · their cut {commission}",
+  "summaryOne": "{listed, plural, one {# listing} other {# listings}} here, {live} on sale · {orders, plural, one {# booking} other {# bookings}} · {net} after their cut · their cut {commission}"
 }

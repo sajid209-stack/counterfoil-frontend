@@ -11,12 +11,11 @@ import {
   FilterBar,
   FormField,
   Modal,
-  PageShell,
-  StatStrip,
   StatusPill,
   useToast,
   type Column,
 } from "@/components/ui";
+import { PageAction, PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import {
   createCustomer,
@@ -61,9 +60,9 @@ export default function CustomersPage() {
   );
   const rows = useMemo(() => rowsQ.data?.data ?? [], [rowsQ.data]);
 
-  /* Export and the summary both describe the whole group the filters match,
-     not the page being looked at — an export of "this group" that stopped at
-     twenty-five rows would be quietly wrong. */
+  /* The export describes the whole group the filters match, not the page being
+     looked at — an export of "this group" that stopped at twenty-five rows
+     would be quietly wrong. */
   const groupQ = useApiQuery(
     () => listCustomerRows({ pageSize: 5000, search, filters }),
     [search, segment],
@@ -97,20 +96,6 @@ export default function CustomersPage() {
     URL.revokeObjectURL(url);
     toast.success(t("exported", { count: group.length }));
   }, [group, segment, t, toast]);
-
-  /* What the group is worth, and how much of it can actually be contacted —
-     the second number is the one that decides whether a campaign is worth
-     building, and it was nowhere on the page. */
-  const summary = useMemo(() => {
-    const spent = group.reduce((sum, c) => sum + c.stats.spent, 0);
-    const reachable = group.filter((c) => hasConsent(c, "email") || hasConsent(c, "sms")).length;
-    return {
-      customers: group.length,
-      spent,
-      average: group.length === 0 ? 0 : Math.round(spent / group.length),
-      reachable,
-    };
-  }, [group]);
 
   const columns: Column<CustomerWithStats>[] = [
     {
@@ -181,7 +166,7 @@ export default function CustomersPage() {
       header: t("colBookings"),
       align: "right",
       render: (c) => (
-        <span className={cn("font-mono", c.stats.orders === 0 && "text-muted")}>{c.stats.orders}</span>
+        <span className={cn("tabular-nums", c.stats.orders === 0 && "text-muted")}>{c.stats.orders}</span>
       ),
     },
     {
@@ -190,7 +175,7 @@ export default function CustomersPage() {
       header: t("colSpent"),
       align: "right",
       render: (c) => (
-        <span className={cn("font-mono whitespace-nowrap", c.stats.spent === 0 && "text-muted")}>
+        <span className={cn("whitespace-nowrap tabular-nums", c.stats.spent === 0 && "text-muted")}>
           {formatMoney(c.stats.spent)}
         </span>
       ),
@@ -201,7 +186,7 @@ export default function CustomersPage() {
       header: t("colLastVisit"),
       align: "right",
       render: (c) => (
-        <span className="font-mono whitespace-nowrap text-[12px] text-muted">
+        <span className="whitespace-nowrap text-[12px] tabular-nums text-muted">
           {c.stats.lastSeen ? formatDate(c.stats.lastSeen) : "—"}
         </span>
       ),
@@ -214,43 +199,14 @@ export default function CustomersPage() {
     { value: "sms", label: t("segSms") },
   ];
 
-  return (
-    <PageShell
-      title={t("title")}
-      description={t("listDescription")}
-      primary={{ label: t("addCustomer"), onClick: () => setAddOpen(true) }}
-      actions={
-        <div className="flex flex-wrap items-center gap-tight">
-          <Button
-            variant="secondary"
-            icon={<Download size={16} strokeWidth={1.5} />}
-            onClick={exportGroup}
-            disabled={group.length === 0}
-          >
-            {t("exportGroup")}
-          </Button>
-        </div>
-      }
-    >
-      <div className="flex flex-col gap-section">
-        <StatStrip
-          loading={groupQ.loading}
-          items={[
-            { key: "customers", label: t("statCustomers"), value: String(summary.customers) },
-            { key: "spent", label: t("statSpent"), value: formatMoney(summary.spent) },
-            {
-              key: "average",
-              label: t("statAverage"),
-              value: summary.customers === 0 ? "—" : formatMoney(summary.average),
-            },
-            {
-              key: "reachable",
-              label: t("statReachable"),
-              value: t("statReachableValue", { count: summary.reachable, total: summary.customers }),
-            },
-          ]}
-        />
+  /* The page's one create action: the bar's plus on a phone, and on a desktop
+     the button at the right of the toolbar below — Export beside it. There is
+     no header row for either. */
+  const primary: PagePrimary = { label: t("addCustomer"), onClick: () => setAddOpen(true) };
 
+  return (
+    <PageShell title={t("title")} description={t("listDescription")} primary={primary}>
+      <div className="flex flex-col gap-section">
       <DataTable
         columns={columns}
         rows={rows}
@@ -275,6 +231,17 @@ export default function CustomersPage() {
         }}
         onRowClick={(c) => router.push(`/customers/${c.id}`)}
         toolbar={
+          <PageToolbar
+            primary={primary}
+            actions={
+              <PageAction
+                label={t("exportGroup")}
+                icon={<Download size={16} strokeWidth={1.5} />}
+                onClick={exportGroup}
+                disabled={group.length === 0}
+              />
+            }
+          >
           <FilterBar
             search={
               <div className="relative">
@@ -323,6 +290,7 @@ export default function CustomersPage() {
               },
             ]}
           />
+          </PageToolbar>
         }
         cardVariant="list"
         renderCard={(c) => (

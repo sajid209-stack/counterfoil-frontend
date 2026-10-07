@@ -32,7 +32,6 @@ import {
   FormField,
   Modal,
   PageShell,
-  StatStrip,
   StatusPill,
   useToast,
   type Column,
@@ -198,6 +197,9 @@ export default function MarketplacePage() {
     <PageShell
       title={meta.name}
       back={{ href: "/marketplaces", label: t("backToList") }}
+      status={
+        <StatusPill tone={conn.status === "connected" ? "success" : conn.status === "attention" ? "warning" : "info"}>{t(`status.${conn.status}`)}</StatusPill>
+      }
       description={t("oneDescription", { name: meta.name })}
       actions={
         <div className="flex flex-wrap gap-tight">
@@ -212,23 +214,23 @@ export default function MarketplacePage() {
         </div>
       }
     >
-      <div className="mb-section">
-        <StatStrip
-          items={[
-            { key: "listed", label: t("stat.listed"), value: String(listings.length), context: t("stat.liveOf", { count: listings.filter((l) => l.status === "live").length }) },
-            { key: "orders", label: t("stat.orders"), value: String(perf.orders) },
-            { key: "net", label: t("stat.net"), value: formatMoney(perf.net) },
-            { key: "commission", label: t("stat.commission"), value: formatMoney(perf.commission) },
-          ]}
-        />
-      </div>
+      {/* Cards belong to the Dashboard, Finances and Analytics. The figures a
+          band would carry are one quiet line. */}
+      <p data-mk-summary className="mb-section text-[13px] text-muted">
+        {t("summaryOne", {
+          listed: listings.length,
+          live: listings.filter((l) => l.status === "live").length,
+          orders: perf.orders,
+          net: formatMoney(perf.net),
+          commission: formatMoney(perf.commission),
+        })}
+      </p>
 
       <div className="flex flex-col gap-section">
         {/* The contract. One card, because the commission is the whole deal. */}
         <section className="card-surface p-card" aria-labelledby="mk-terms">
           <div className="mb-section flex flex-wrap items-center gap-tight">
             <h2 id="mk-terms" className="mr-auto text-base font-semibold tracking-[-0.4px]">{t("terms")}</h2>
-            <StatusPill tone={conn.status === "connected" ? "success" : conn.status === "attention" ? "warning" : "info"}>{t(`status.${conn.status}`)}</StatusPill>
             <Button size="sm" variant="secondary" icon={<RefreshCw size={14} strokeWidth={1.5} />} onClick={async () => { await syncConnection(conn.id); toast.success(t("synced", { name: meta.name })); reload(); }}>
               {t("sync")}
             </Button>

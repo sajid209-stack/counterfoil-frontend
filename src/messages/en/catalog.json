@@ -85,24 +85,6 @@
     "archiveSoldOne": "{count} tickets are sold for {date}. If you archive it, sales stop, but those tickets still work at the gate.",
     "archiveSoldMany": "{count, plural, one {# of these has} other {# of these have}} tickets sold for future dates. If you archive them, sales stop, but those tickets still work at the gate."
   },
-  "stat": {
-    "attention": "Needs attention",
-    "bookedAhead": "Upcoming bookings",
-    "bookedAheadNote": "From today on",
-    "ticketsSold": "Event tickets sold",
-    "ticketsSoldNote": "For events still to come",
-    "attentionNote": "Can't be sold yet, or will stop selling soon",
-    "ticketRevenue": "Event ticket money",
-    "ticketRevenueNote": "For events still to come",
-    "attentionLine": "{count, plural, =0 {Nothing needs you} one {# needs attention} other {# need attention}}",
-    "bookedAheadLine": "{count, number} upcoming bookings",
-    "ticketsSoldLine": "{count, number} tickets sold",
-    "weekUse": "Booked, next 7 days",
-    "weekUseNote": "{used} of {cap} spaces booked",
-    "onSale": "On sale",
-    "onSaleNote": "Items on sale now",
-    "nextEvent": "Next event"
-  },
   "searchPlaceholder": "Search what you sell",
   "sortBy": "Sort",
   "sort": {
@@ -986,12 +968,6 @@
   "select": "Select",
   "selectDone": "Done",
   "eventRecord": {
-    "sold": "Tickets sold",
-    "soldNote": "{pct}% of all tickets",
-    "starts": "Starts",
-    "ended": "Ended",
-    "today": "Today",
-    "inDays": "{count, plural, one {in # day} other {in # days}}",
     "colTicket": "Ticket type",
     "colPrice": "Price",
     "colSold": "Sold",

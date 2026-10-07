@@ -10,13 +10,13 @@ import {
   EmptyState,
   FormField,
   Modal,
-  PageShell,
   StatusPill,
   Tabs,
   useToast,
   type Column,
   type PillTone,
 } from "@/components/ui";
+import { PageAction, PageShell, PageToolbar } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import {
   cancelMembership,
@@ -205,21 +205,22 @@ export default function MembershipsPage() {
   ];
 
   return (
-    <PageShell
-      title={t("title")}
-      description={t("description")}
-      actions={
-        <Button
-          variant="secondary"
-          icon={<Settings2 size={16} strokeWidth={1.5} />}
-          onClick={() => router.push("/settings/memberships")}
-        >
-          {t("manageTiers")}
-        </Button>
-      }
-    >
+    <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
-        <Tabs items={tabs} value={tab} onChange={(v) => setTab(v as Tab)} />
+        {/* The first toolbar: the tabs, with Manage tiers at the right of the
+            same rule. There is no header row for it. */}
+        <PageToolbar
+          underline
+          actions={
+            <PageAction
+              label={t("manageTiers")}
+              icon={<Settings2 size={16} strokeWidth={1.5} />}
+              onClick={() => router.push("/settings/memberships")}
+            />
+          }
+        >
+          <Tabs items={tabs} value={tab} onChange={(v) => setTab(v as Tab)} />
+        </PageToolbar>
         <DataTable
           columns={columns}
           rows={rows}

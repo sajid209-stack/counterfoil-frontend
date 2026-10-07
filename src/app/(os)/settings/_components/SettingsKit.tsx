@@ -3,9 +3,10 @@
 import { useEffect, useId } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ChevronRight, Search, type LucideIcon } from "lucide-react";
+import { ChevronRight, Plus, Search, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 
 /*
  * The settings screens' own anatomy, built once.
@@ -428,6 +429,35 @@ export function RecordRow({
         </div>
       ) : null}
     </li>
+  );
+}
+
+/**
+ * The create action of a settings list that has no tabs or filters to carry it.
+ *
+ * A list page has no header row for its button, so a list with nothing else on
+ * its first toolbar puts it where the list begins — the first row of the card
+ * (`header`), or the last tile after the cards (`tile`) — instead of on a
+ * strip of its own that holds nothing but one button. A phone has the bar's
+ * plus, so this draws nothing there.
+ */
+export function ListAddRow({ label, onClick, variant = "header" }: { label: string; onClick: () => void; variant?: "header" | "tile" }) {
+  const wide = useMediaQuery(MD);
+  if (!wide) return null;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center gap-comfortable text-left text-sm font-medium text-brand-foreground transition-colors duration-quick hover:bg-muted-wash",
+        variant === "header"
+          ? "border-b border-hairline px-card py-comfortable"
+          : "justify-center rounded-md border border-dashed border-strong px-card py-section",
+      )}
+    >
+      <Plus size={16} strokeWidth={1.75} aria-hidden />
+      {label}
+    </button>
   );
 }
 

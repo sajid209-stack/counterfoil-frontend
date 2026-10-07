@@ -69,6 +69,9 @@ const store: Record<string, Row[]> = {
   // Withdrawals and deposits made this session (see lib/api/finances) — the
   // only finance lines that are written; every other line is derived.
   financeLines: [],
+  // Expenses are seeded by lib/api/expenses when it loads (it holds the seed, so
+  // this module need not import it) and kept for the session like any other row.
+  expenses: [],
   bookings: structuredClone(seed.bookings),
   paymentAccounts: structuredClone(seed.paymentAccounts),
   seatLayouts: structuredClone(seed.seatLayouts),
@@ -161,7 +164,7 @@ export function loadBusiness(name: string, currency: string, productIds: string[
 /** Empty the operator's data for the golden path ("Start fresh"). */
 export function startFresh(): void {
   operatorState = { ...structuredClone(seed.operator), name: "" };
-  for (const k of ["products", "orders", "tickets", "ticketCredentials", "ticketScans", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds", "inventoryItems", "stockMovements", "financeLines"]) {
+  for (const k of ["products", "orders", "tickets", "ticketCredentials", "ticketScans", "bookings", "locations", "counters", "staff", "devices", "resources", "paymentAccounts", "customers", "membershipTiers", "memberships", "loyaltyEntries", "holds", "inventoryItems", "stockMovements", "financeLines", "expenses"]) {
     (store as Record<string, unknown[]>)[k] = [];
   }
 }

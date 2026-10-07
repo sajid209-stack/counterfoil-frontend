@@ -481,33 +481,6 @@ export const TONE_DOT: Record<EventTone, string> = {
 export const toneDotClass = (e: Pick<CalEvent, "tone" | "source">): string =>
   e.source && e.tone === "booked" ? "bg-market" : TONE_DOT[e.tone];
 
-/** What the cards above the grid count. */
-export interface WindowStats {
-  bookings: number;
-  arrived: number;
-  noshow: number;
-  holds: number;
-}
-
-/**
- * Totals for one window, so the cards above the grid can state what the period
- * on screen actually contains and how it compares with the one before it.
- *
- * Counted from the events the SELECT filters allow but before the state
- * toggles narrow them: switching "no-show" off is a way of looking at the
- * grid, not a claim that there were no no-shows, and a headline figure that
- * moved when you did that would be lying.
- */
-export function windowStats(events: CalEvent[], from: Date, to: Date): WindowStats {
-  const inRange = events.filter((e) => e.start >= from && e.start < to);
-  return {
-    bookings: inRange.filter((e) => e.kind === "booking").length,
-    arrived: inRange.filter((e) => e.tone === "arrived").length,
-    noshow: inRange.filter((e) => e.tone === "noshow").length,
-    holds: inRange.filter((e) => e.kind === "hold").length,
-  };
-}
-
 /** Percentage change, or null when the previous period had nothing to compare
  *  against — "+100%" against a week that did not trade is not a fact. */
 export function delta(current: number, previous: number): number | null {

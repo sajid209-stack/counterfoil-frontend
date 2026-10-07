@@ -4,7 +4,8 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Download, Landmark } from "lucide-react";
-import { ActionMenu, Button, DateRangePicker, PageShell, formatRange, type ActionMenuItem } from "@/components/ui";
+import { Button, DateRangePicker, formatRange } from "@/components/ui";
+import { PageAction, PageShell } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -217,11 +218,6 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
     URL.revokeObjectURL(url);
   };
 
-  const menuItems: ActionMenuItem[] = [
-    { key: "bank", label: t("menu.bank"), icon: <Landmark size={16} strokeWidth={1.5} />, onSelect: () => router.push("/settings/payments") },
-  ];
-  const menu = <ActionMenu label={t("more")} items={menuItems} />;
-
   const presets = PRESETS.map((p) => ({ value: p.value, label: t(`period.${p.value}`), range: p.range }));
   const periodLabel = PRESETS.some((p) => p.value === range.preset) ? t(`period.${range.preset}` as "period.30d") : formatRange(range.from, range.to);
   const bold = (chunks: React.ReactNode) => <span className="font-semibold text-fg">{chunks}</span>;
@@ -236,7 +232,7 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
     : [];
 
   return (
-    <PageShell title={t("title")} actions={menu}>
+    <PageShell title={t("title")}>
       <div className="flex flex-col gap-section">
         <Balances
           summary={summary}
@@ -258,6 +254,10 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
                 <Button variant="secondary" size="sm" icon={<Download size={15} strokeWidth={1.5} />} onClick={() => void downloadStatement()}>
                   {t("activity.download")}
                 </Button>
+                {/* The page's ⋯ menu held this one link, in a row of its own
+                    under the bar. It is a way to the bank this table's payouts
+                    go to, so it sits with the table. A phone keeps the glyph. */}
+                <PageAction label={t("menu.bank")} icon={<Landmark size={15} strokeWidth={1.5} />} onClick={() => router.push("/settings/payments")} />
               </div>
             </div>
             <p className="mt-inline min-h-5 text-[14px] text-muted">

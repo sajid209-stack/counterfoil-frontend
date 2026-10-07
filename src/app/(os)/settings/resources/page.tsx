@@ -4,7 +4,8 @@ import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Archive, LandPlot, RotateCcw } from "lucide-react";
-import { ActionMenu, Button, ConfirmDialog, EmptyState, Modal, PageShell, StatusPill, Tabs, useToast } from "@/components/ui";
+import { ActionMenu, Button, ConfirmDialog, EmptyState, Modal, StatusPill, Tabs, useToast } from "@/components/ui";
+import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listLocations, listResources, ownerBusyDetailed, updateResource, type Resource } from "@/lib/api";
@@ -135,12 +136,10 @@ export default function ResourcesPage() {
   const visible = resources.filter(inTab);
   const kinds = Array.from(new Set(visible.map((r) => r.nounPlural))).sort((a, b) => a.localeCompare(b));
 
+  const primary: PagePrimary = { label: addLabel, onClick: () => router.push("/settings/resources/new") };
+
   return (
-    <PageShell
-      title={title}
-      description={t("resources.descriptionList")}
-      primary={{ label: addLabel, onClick: () => router.push("/settings/resources/new") }}
-    >
+    <PageShell title={title} description={t("resources.descriptionList")} primary={primary}>
       {loading ? (
         <SectionSkeleton />
       ) : resources.length === 0 ? (
@@ -153,11 +152,15 @@ export default function ResourcesPage() {
         </div>
       ) : (
         <div className="flex max-w-4xl flex-col gap-section pb-hero">
-          <Tabs
-            items={TABS.map((v) => ({ value: v, label: t(`resources.tab.${v}`), count: counts[v] }))}
-            value={tab}
-            onChange={(v) => setTab(v as Tab)}
-          />
+          {/* The first toolbar: the views, with the create button at the right of the
+              same rule. A list has no header row above it for the button. */}
+          <PageToolbar underline primary={primary}>
+            <Tabs
+              items={TABS.map((v) => ({ value: v, label: t(`resources.tab.${v}`), count: counts[v] }))}
+              value={tab}
+              onChange={(v) => setTab(v as Tab)}
+            />
+          </PageToolbar>
           {visible.length === 0 ? (
             <p className="py-section text-sm text-muted">{t("resources.emptyTab")}</p>
           ) : (

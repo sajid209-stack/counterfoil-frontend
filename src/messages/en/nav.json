@@ -1,6 +1,5 @@
 {
   "dashboard": "Dashboard",
-  "overview": "Overview",
   "calendar": "Calendar",
   "orders": "Orders",
   "customers": "Customers",
@@ -45,12 +44,21 @@
     "inventory": "inventory stock merch items shop goods supplies",
     "marketplaces": "marketplaces marketplace channel other sites resellers ota",
     "analytics": "analytics reports report sales tax vat revenue takings income dashboard charts insights busiest peak hours",
-    "finances": "finances money transactions payments refunds payout payouts fees fee balance withdraw deposit bank ledger bkash cash card"
+    "finances": "finances money transactions payments refunds payout payouts fees fee balance withdraw deposit bank ledger bkash cash card",
+    "expenses": "expenses expense cost costs spending spend bill bills purchases supplier"
   },
   "inventory": "Inventory",
   "cartFab": "Cart — {count, plural, one {# item} other {# items}}",
   "marketplaces": "Marketplaces",
   "venue": "Venue",
   "venueNotSelling": "Not selling now",
-  "finances": "Finances"
+  "finances": "Finances",
+  "expenses": "Expenses",
+  "product": "Counterfoil OS",
+  "switchWorkspace": "Switch workspace",
+  "collapse": "Collapse",
+  "expand": "Expand",
+  "otherApps": "Other apps",
+  "main": "Main menu",
+  "version": "Version {version}"
 }

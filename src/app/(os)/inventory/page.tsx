@@ -11,17 +11,15 @@ import {
   EmptyState,
   FilterBar,
   Select,
-  PageShell,
-  StatStrip,
   StatusPill,
   Tabs,
   useToast,
   type ActionMenuItem,
   type Column,
 } from "@/components/ui";
+import { PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { MD, useMediaQuery } from "@/lib/useMedia";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { formatMoney, formatPriceShort } from "@/lib/format";
 import {
@@ -50,13 +48,12 @@ const actorName = (staff: { id: string; name: string }[]) =>
  * on-hand/committed/available split cannot be computed honestly here. What
  * the count is scoped TO is the thing that matters instead: a counter can only
  * sell what is kept at its own venue, so picking a venue scopes every figure
- * on this page, the figures above the table included.
+ * on this page, the counts on its tabs included.
  */
 export default function InventoryPage() {
   const t = useTranslations("inventory");
   const router = useRouter();
   const toast = useToast();
-  const compact = !useMediaQuery(MD);
 
   const [tab, setTab] = useState<"all" | "attention" | "archived">("all");
   const [query, setQuery] = useState("");
@@ -109,8 +106,6 @@ export default function InventoryPage() {
   const summary = useMemo(
     () => ({
       attention: live.filter((i) => i.outOfStock || i.low).length,
-      value: live.reduce((n, i) => n + i.value, 0),
-      tracked: live.filter((i) => i.tracked).length,
       unsold: live.filter((i) => i.soldWith.length === 0).length,
     }),
     [live],
@@ -232,64 +227,15 @@ export default function InventoryPage() {
           ? { title: t("empty.noMatchTitle"), body: t("empty.noMatchBody") }
           : { title: t("empty.title"), body: t("empty.body") };
 
-  return (
-    <PageShell
-      title={t("title")}
-      description={t("description")}
-      primary={{ label: t("add"), onClick: () => router.push("/inventory/new") }}
-    >
-      <div className="flex flex-col gap-section">
-        {/* The figures a stock room is run on. Attention leads because it is
-            the only one that asks for something to be done. */}
-        {compact ? (
-          <p className="flex flex-wrap items-center gap-x-tight gap-y-inline text-[13px] text-muted">
-            <button
-              type="button"
-              onClick={() => setTab(tab === "attention" ? "all" : "attention")}
-              aria-pressed={tab === "attention"}
-              className={cn("min-h-11 font-medium underline-offset-2 hover:underline", summary.attention > 0 ? "text-warning" : "text-fg")}
-            >
-              {t("stat.attentionLine", { count: summary.attention })}
-            </button>
-            <span aria-hidden>·</span>
-            <span>{t("stat.valueLine", { amount: formatPriceShort(summary.value) })}</span>
-          </p>
-        ) : (
-          <StatStrip
-            loading={itemsQ.loading}
-            items={[
-              {
-                key: "attention",
-                label: t("stat.attention"),
-                value: String(summary.attention),
-                tone: summary.attention > 0 ? ("warning" as const) : undefined,
-                /* Not clickable: the tab 30px below it is the same filter,
-                   and two controls for one thing is the duplication this app
-                   has already removed from a calendar header. */
-                note: t("stat.attentionNote"),
-              },
-              {
-                key: "value",
-                label: t("stat.value"),
-                value: formatPriceShort(summary.value),
-                note: t("stat.valueNote"),
-              },
-              { key: "items", label: t("stat.items"), value: String(summary.tracked), note: t("stat.itemsNote") },
-              {
-                /* The one figure naming a fixable problem, so it filters. */
-                key: "unsold",
-                label: t("stat.unsold"),
-                value: String(summary.unsold),
-                note: t("stat.unsoldNote"),
-                onClick: () => setUnsoldOnly((v) => !v),
-                pressed: unsoldOnly,
-              },
-            ]}
-          />
-        )}
+  const primary: PagePrimary = { label: t("add"), onClick: () => router.push("/inventory/new") };
 
-        {/* The tab strip IS the page's cut and stays visible; kind and venue
-            fold on a phone, where four controls stacked took 148px. */}
+  return (
+    <PageShell title={t("title")} description={t("description")} primary={primary}>
+      <div className="flex flex-col gap-section">
+        {/* The page's first toolbar. The tab strip IS the page's cut and stays
+            visible; kind and venue fold on a phone, where four controls stacked
+            took 148px. Add sits at the right end, on this row, not in a header
+            row of its own — on a phone it is the bar's plus. */}
         <div className="flex flex-col gap-tight sm:flex-row sm:flex-wrap sm:items-center">
           <Tabs
             items={[
@@ -314,6 +260,29 @@ export default function InventoryPage() {
             }
             filters={[
               {
+                /* The one figure that named a fixable problem, and it
+                   filtered — so it is a filter now. */
+                key: "unsold",
+                label: t("stat.unsold"),
+                active: unsoldOnly ? t("stat.unsold") : null,
+                onClear: () => setUnsoldOnly(false),
+                control: (
+                  <button
+                    type="button"
+                    aria-pressed={unsoldOnly}
+                    onClick={() => setUnsoldOnly((v) => !v)}
+                    title={t("stat.unsoldNote")}
+                    className={cn(
+                      "flex h-11 items-center gap-tight rounded-sm border px-comfortable text-[13px] transition-colors duration-quick md:h-9",
+                      unsoldOnly ? "border-ember bg-ember/10 text-brand-foreground" : "border-line text-muted hover:bg-muted-wash",
+                    )}
+                  >
+                    {t("stat.unsold")}
+                    <span className="tabular-nums">{summary.unsold}</span>
+                  </button>
+                ),
+              },
+              {
                 key: "kind",
                 label: t("filterKind"),
                 active: kind ? t(`kind.${kind}`) : null,
@@ -333,6 +302,7 @@ export default function InventoryPage() {
               },
             ]}
           />
+          <PagePrimaryButton primary={primary} />
         </div>
 
         {!itemsQ.loading && visible.length === 0 ? (

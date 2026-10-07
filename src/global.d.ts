@@ -30,6 +30,7 @@ type Messages = {
   ticket: typeof import("./messages/en/ticket.json");
   pricing: typeof import("./messages/en/pricing.json");
   bookingRules: typeof import("./messages/en/bookingRules.json");
+  expenses: typeof import("./messages/en/expenses.json");
 };
 
 declare global {

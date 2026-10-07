@@ -24,7 +24,7 @@ export function OrderFees({ orderId }: { orderId: string }) {
   if (!entries.length) return null;
   return (
     <div className="mt-comfortable border-t border-line pt-comfortable">
-      <p className="text-[12px] font-medium uppercase tracking-wider text-muted">{t("order.title")}</p>
+      <p className="text-base font-semibold text-fg">{t("order.title")}</p>
       <ul className="mt-tight flex flex-col gap-tight">
         {entries.map((e) => {
           const expanded = open === e.id;
@@ -38,7 +38,7 @@ export function OrderFees({ orderId }: { orderId: string }) {
               >
                 <CollectorBadge by={e.collectedBy} />
                 <span className="min-w-0 flex-1 truncate text-muted">{e.kind === "refund" ? `${t("kind.refund")} · ` : ""}{holding(e)}</span>
-                <span className="font-mono tabular-nums">
+                <span className="tabular-nums">
                   {e.owedToOperator !== 0
                     ? `${t("balances.colPayYou")} ${money(e.owedToOperator)}`
                     : e.owedByOperator !== 0

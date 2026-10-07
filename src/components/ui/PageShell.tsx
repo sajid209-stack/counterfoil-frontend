@@ -8,7 +8,7 @@ import { ArrowLeft, Plus } from "lucide-react";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { cn } from "@/lib/cn";
 import { useBarTitle } from "@/lib/barTitle";
-import { Button } from "./Button";
+import { Button, type ButtonProps } from "./Button";
 
 /**
  * A page's one create action.
@@ -22,6 +22,9 @@ import { Button } from "./Button";
  *
  * A page declares it rather than PageShell guessing which of its buttons is
  * the important one.
+ *
+ * On a desktop it is drawn by the page, in its first toolbar (`PageToolbar`),
+ * or in a record page's header row — never in a row of its own.
  */
 export interface PagePrimary {
   label: string;
@@ -35,21 +38,112 @@ export interface PagePrimary {
   keyShortcut?: string;
 }
 
-// Standard page frame for OS screens: breadcrumb (derived from the path),
-// title, optional description, actions slot.
+// Standard page frame for OS screens: title, optional description, and — on a
+// record page only — a header row with a way back and the record's state.
 //
-// On desktop the header block is PORTALLED into the sticky glass bar
+// On desktop the title is PORTALLED into the sticky glass bar
 // (#os-page-header, rendered by OsShell) rather than drawn under it. The Aura
 // reference puts the page title inside its sticky header, and Counterfoil was
 // spending 183px on a 56px bar whose left 737px were empty plus a separate
 // header beneath it. Same content, one bar.
 //
-// Below md the bar is a 40px logo strip with no room for a three-line header,
-// so the block renders inline there instead. Both branches render the SAME
-// JSX from the same props — the header has one definition, shown in one of two
+// Below md the bar is a logo strip with no room for a three-line header, so
+// the title renders inline there instead. Both branches render the SAME JSX
+// from the same props — the header has one definition, shown in one of two
 // places depending on how much room the viewport has.
 /** A store that never changes: subscribing to it is a no-op. */
 const noSubscribe = () => () => {};
+
+/**
+ * The desktop create button, for a page to place in its own toolbar.
+ *
+ * Mercury, Stripe, Linear, Notion and Shopify admin all keep a list's create
+ * button on the toolbar of the list — the row with its tabs, search and
+ * filters — because that row already exists and a row of its own to hold one
+ * or two buttons spends ~70px of every list on nothing. Nothing here on a
+ * phone: there it is the bar's plus, which `PageShell` portals.
+ */
+export function PagePrimaryButton({ primary, size = "sm" }: { primary: PagePrimary; size?: "sm" | "md" }) {
+  const wide = useMediaQuery(MD);
+  const router = useRouter();
+  if (!wide) return null;
+  return (
+    <Button
+      size={size}
+      icon={primary.icon ?? <Plus size={16} strokeWidth={1.75} />}
+      /* `Button` is a <button>; an anchor inside one is invalid markup, so a
+         destination is pushed. The phone's copy IS a Link, where a long-press
+         to open in a new tab is a thing people do. */
+      onClick={primary.onClick ?? (primary.href ? () => router.push(primary.href!) : undefined)}
+      disabled={primary.disabled}
+      title={primary.title}
+      aria-keyshortcuts={primary.keyShortcut}
+    >
+      {primary.label}
+    </Button>
+  );
+}
+
+/**
+ * A secondary page action that gives up its words on a phone.
+ *
+ * In a toolbar that also holds a search box and a filter button there is no
+ * room for a labelled button at 390px — nor at 768 to 1023, where the rail
+ * takes 240px and the content is under 800 — and a row of its own would put
+ * the wasted line straight back. The label stays as the button's name and its
+ * tooltip; from lg it is drawn.
+ */
+export function PageAction({ label, icon, variant = "secondary", className, ...rest }: Omit<ButtonProps, "children" | "size"> & { label: string }) {
+  return (
+    <Button size="sm" variant={variant} icon={icon} title={label} className={cn("max-md:w-11 max-md:px-0 md:max-lg:w-9 md:max-lg:px-0", className)} {...rest}>
+      <span className="max-lg:sr-only">{label}</span>
+    </Button>
+  );
+}
+
+/**
+ * The first toolbar of a page: what it filters on the left (tabs, search,
+ * filters), what it does on the right (its create button and any secondary
+ * actions).
+ *
+ * This is where page-level actions live. `PageShell` draws no header row of
+ * its own on a list or a dashboard — only a record page (a way back, a state)
+ * has one — so a page's buttons ride on the row it already has.
+ *
+ * `underline` is for a tab strip: the strip's own rule continues under the
+ * buttons so the row reads as one bar, not tabs with buttons floating beside.
+ */
+export function PageToolbar({
+  children,
+  actions,
+  primary,
+  underline = false,
+  className,
+}: {
+  children?: React.ReactNode;
+  actions?: React.ReactNode;
+  primary?: PagePrimary;
+  underline?: boolean;
+  className?: string;
+}) {
+  const wide = useMediaQuery(MD);
+  const hasEnd = !!actions || (wide && !!primary);
+  return (
+    /* A tab strip stays on one row (it scrolls). A filter row wraps: with the
+       rail beside it a tablet has under 500px, and a 256px search box plus a
+       create button does not fit — so the actions drop under it, at the right,
+       rather than the box running over them. */
+    <div className={cn("flex", underline ? "items-stretch" : "flex-wrap items-start gap-tight", className)}>
+      <div className={cn("min-w-0 flex-1", !underline && "basis-0 md:basis-[22rem]")}>{children}</div>
+      {hasEnd && (
+        <div className={cn("flex shrink-0 items-center gap-tight", underline ? "border-b border-line pb-px pl-section" : "ml-auto")}>
+          {actions}
+          {primary && <PagePrimaryButton primary={primary} />}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function PageShell({
   title,
@@ -62,6 +156,16 @@ export function PageShell({
 }: {
   title: string;
   description?: string;
+  /**
+   * The record's own buttons (Save, Print, ⋯) — drawn on the header row of a
+   * record page, the right-hand side of `back` and `status`.
+   *
+   * A list or dashboard does not use this: it puts its buttons in its own
+   * toolbar (`PageToolbar`). A page that still passes `actions` without a
+   * `back` or `status` keeps a row so nothing disappears while it is moved,
+   * but that row is exactly the empty strip under the bar this frame exists to
+   * avoid.
+   */
   actions?: React.ReactNode;
   primary?: PagePrimary;
   /** A way back to the list this page belongs to. Left of the header row. */
@@ -97,16 +201,17 @@ export function PageShell({
   const slot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-header"), () => null);
   const barSlot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-actions-mobile"), () => null);
 
-  const hasRow = !!(back || status || actions || (wide && primary));
+  /* A header row exists for a RECORD: a way back, a state. A list or a
+     dashboard has no row — its buttons are in its toolbar. (`actions` alone
+     still draws one, for pages not yet moved; see the prop's note.) */
+  const hasRow = !!(back || status || actions);
   const icon = primary?.icon ?? <Plus size={16} strokeWidth={1.75} />;
-  /* Desktop: the words, because there is room for them and a labelled button
-     is always the better one. */
-  const widePrimary = primary && (
+  /* Desktop, on a record page: the words, because there is room for them and a
+     labelled button is always the better one. A list's own copy is
+     `PagePrimaryButton`, in its toolbar. */
+  const widePrimary = primary && (back || status) && (
     <Button
       icon={icon}
-      /* `Button` is a <button>; an anchor inside one is invalid markup, so a
-         destination is pushed. The phone's copy IS a Link, where a long-press
-         to open in a new tab is a thing people do. */
       onClick={primary.onClick ?? (primary.href ? () => router.push(primary.href!) : undefined)}
       disabled={primary.disabled}
       title={primary.title}
@@ -164,11 +269,17 @@ export function PageShell({
     </div>
   );
 
+  /* What sits between the bar and the first thing on the page is ONE value —
+     the gutter token, 16 on a phone and 20 from sm, which is also the page's
+     side edge. It used to be 0 + 20 on a desktop without a row, 16 + 16 on a
+     phone whose heading stood down, and 20 + 20 below a row: three different
+     answers to the same question. The wrapper holds the gutter; nothing under
+     it may add to it. What follows a visible heading, or a header row, is the
+     smaller gap a heading and its content take. */
+  const afterHeading = !wide && (echoesBar ? "sm:mt-section" : "mt-section");
+
   return (
-    /* The page edge is the gutter token — 16 on a phone, 20 from sm — and
-       the desktop bar above uses the same token, so the title and the cards
-       share one left edge. */
-    <div className={cn("px-gutter pb-gutter pt-section", hasRow ? "md:pt-gutter" : "md:pt-0")}>
+    <div className="px-gutter pb-gutter pt-gutter">
       {/* Desktop: the title portals into the sticky bar. Below md they render
           here instead — one copy, either way. */}
       {wide && slot && createPortal(headerText, slot)}
@@ -176,18 +287,19 @@ export function PageShell({
       {!wide && narrowPrimary && barSlot && createPortal(narrowPrimary, barSlot)}
       {/* Phone: the heading, unless the bar already said it. */}
       {!wide && <div className={echoesBar ? "max-sm:sr-only" : undefined}>{headerText}</div>}
-      {/* The page header row. The bar above is app chrome (page name, venue,
-          account); everything that acts on THIS page — its back link, its
-          status, its buttons — sits here, at the top of the content, on one
-          row that wraps. Back and status on the left, actions and the page's
-          create button on the right. On a phone the create button is the bar's
-          plus instead, and the actions wrap onto their own line. */}
+      {/* The header row — a RECORD page only. A way back and the record's
+          state on the left, its own buttons and create button on the right,
+          on one row that wraps. A list or dashboard has none: its buttons are
+          in its toolbar, where the row already exists. */}
       {hasRow && (
-        <div className={cn("flex flex-wrap items-center justify-between gap-x-major gap-y-tight", !wide && !echoesBar && "mt-tight")}>
+        <div
+          data-page-row={back || status ? "record" : "legacy"}
+          className={cn("flex flex-wrap items-center justify-between gap-x-major gap-y-tight", afterHeading)}
+        >
           {(back || status) && (
             <div className="flex min-w-0 flex-wrap items-center gap-x-major gap-y-tight">
               {back && (
-                <Link href={back.href} className="inline-flex min-h-11 items-center gap-inline text-[13px] text-muted hover:text-fg">
+                <Link href={back.href} className="-ml-tight inline-flex min-h-11 items-center gap-inline rounded-sm px-tight text-[13px] text-muted hover:text-fg md:min-h-9">
                   <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {back.label}
                 </Link>
               )}
@@ -202,7 +314,7 @@ export function PageShell({
           )}
         </div>
       )}
-      <div className={hasRow ? "mt-gutter" : "mt-section md:mt-gutter"}>{children}</div>
+      <div className={hasRow ? "mt-tight" : afterHeading || undefined}>{children}</div>
     </div>
   );
 }

@@ -23,7 +23,7 @@ import {
 import { useTranslations } from "next-intl";
 import { ModeButton } from "@/components/ThemeProvider";
 import { LocaleToggle } from "@/components/LocaleProvider";
-import { Logo, LogoMark, Modal } from "@/components/ui";
+import { Modal } from "@/components/ui";
 import { TillSwitcher } from "./TillSwitcher";
 import { CounterPicker } from "./CounterPicker";
 import { useActiveCounter } from "@/lib/activeCounter";
@@ -176,15 +176,18 @@ export function GoShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-full flex-col bg-surface">
-      {/* Context bar — business · counter · shift state. Nav does NOT live here. */}
-      {/* One compact row, 56px: the mark (the whole logo from 480px up), the
-          counter this device sells at taking the room that is left, the theme
-          and the cashier. The counter chip truncates; nothing else flexes. */}
-      <header className="flex items-center gap-tight px-section py-1.5">
-        <Link href="/login" aria-label={tp("shell.signIn")} className="flex h-11 min-w-11 shrink-0 items-center justify-center">
-          <span className="hidden min-[480px]:inline-flex"><Logo variant="go" size={26} /></span>
-          <span className="inline-flex min-[480px]:hidden"><LogoMark size={32} /></span>
-        </Link>
+      {/* Context bar — counter · shift state. Nav does NOT live here. */}
+      {/* One compact row, 56px, and no logo at any width: the till is the
+          cashier's, and the counter they are selling at is what the top left
+          should say. The counter chip is the FIRST thing in the row and takes
+          the room that is left; the theme and the cashier sit on the right.
+          The chip truncates; nothing else flexes.
+
+          The row's inset is the page's, so the chip's edge is the edge of what
+          is under it: the till's wall is inset 12px, every other Go screen 16.
+          On the landscape rail the chip lines up with the rail's own tabs
+          (8px) instead, because that is the column it sits above. */}
+      <header className={cn("flex items-center gap-tight py-1.5 rail:px-2", onATill ? "px-3" : "px-section")}>
         {bare ? <span className="flex-1" /> : <CounterPicker saleCount={liveCount} />}
         {!bare && (
           <span className="hidden shrink-0 text-[0.8125rem] tabular-nums text-muted sm:block" title={tp("shell.shiftOpenFor", { time: "3:24" })}><span className="sr-only">{tp("shell.shiftOpenFor", { time: "3:24" })}</span><span aria-hidden>⏱ 3:24</span></span>

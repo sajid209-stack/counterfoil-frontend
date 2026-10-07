@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 import { Qr } from "./Qr";
-import { Barcode } from "./Barcode";
 
 export interface TicketField {
   label: string;
@@ -17,10 +16,6 @@ export interface TicketCardData {
   /** localized "1 of 3", when the order issued more than one ticket. */
   indexLabel?: string;
   code: string;
-  /** Which code the gate will be scanning. A QR needs a camera or an imager;
-   *  a barcode is what a laser handheld reads, which is the scanner most
-   *  counters here already own. Absent means the QR this has always drawn. */
-  codeStyle?: "qr" | "barcode" | "both";
   /** Print the code in letters too, so it can be typed when a scanner will
    *  not read. On unless the operator turns it off. */
   showCode?: boolean;
@@ -90,36 +85,16 @@ export function TicketCard({ data, className }: { data: TicketCardData; classNam
       {/* The stub: what the gate scans */}
       <div style={bite("top")} className={`@container relative rounded-b-[24px] bg-white px-6 pb-6 pt-6 ${PRINT_EDGE} print:border-t-0`}>
         <span aria-hidden className="absolute top-0 border-t-[1.5px] border-dashed border-neutral-300" style={{ left: NOTCH + 8, right: NOTCH + 8 }} />
-        {(() => {
-          const style = data.codeStyle ?? "qr";
-          const showCode = data.showCode !== false;
-          /* A barcode is wide and a QR is square, so they cannot share a row:
-             side by side, the barcode is squeezed to where it stops scanning.
-             With both, the QR keeps the row beside the words and the barcode
-             takes the full width underneath, which is also the order a gate
-             reaches for them. */
-          return (
-            <>
-              <div className="flex flex-col items-center gap-4 text-center @min-[19rem]:flex-row @min-[19rem]:text-left">
-                {style !== "barcode" && (
-                  <span className="shrink-0">
-                    <Qr value={data.code} size={112} />
-                  </span>
-                )}
-                <div className="min-w-0">
-                  <p className="text-[0.8125rem] text-neutral-600">{data.referenceLabel}</p>
-                  {showCode && <p className="mt-0.5 break-all font-mono text-[0.9375rem] font-medium">{data.code}</p>}
-                  <p className="mt-2 text-[0.8125rem] leading-snug text-neutral-600">{data.gateHint}</p>
-                </div>
-              </div>
-              {style !== "qr" && (
-                <div className="mt-4 flex justify-center">
-                  <Barcode value={data.code} height={52} unit={2} className="max-w-full" />
-                </div>
-              )}
-            </>
-          );
-        })()}
+        <div className="flex flex-col items-center gap-4 text-center @min-[19rem]:flex-row @min-[19rem]:text-left">
+          <span className="shrink-0">
+            <Qr value={data.code} size={112} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[0.8125rem] text-neutral-600">{data.referenceLabel}</p>
+            {data.showCode !== false && <p className="mt-0.5 break-all font-mono text-[0.9375rem] font-medium">{data.code}</p>}
+            <p className="mt-2 text-[0.8125rem] leading-snug text-neutral-600">{data.gateHint}</p>
+          </div>
+        </div>
       </div>
     </article>
   );

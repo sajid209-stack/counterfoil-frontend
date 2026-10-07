@@ -1,6 +1,5 @@
 {
   "dashboard": "ড্যাশবোর্ড",
-  "overview": "সারসংক্ষেপ",
   "calendar": "ক্যালেন্ডার",
   "orders": "অর্ডার",
   "customers": "গ্রাহক",
@@ -45,12 +44,21 @@
     "inventory": "ইনভেন্টরি স্টক মজুত পণ্য মার্চেন্ডাইজ সরবরাহ inventory",
     "marketplaces": "মার্কেটপ্লেস অন্য সাইট marketplaces",
     "analytics": "বিশ্লেষণ রিপোর্ট বিক্রি কর ভ্যাট আয় analytics reports sales tax vat revenue",
-    "finances": "ফাইন্যান্স অর্থ টাকা লেনদেন পেমেন্ট রিফান্ড পেআউট ফি ব্যালান্স তোলা জমা ব্যাংক বিকাশ নগদ transactions payout fees balance withdraw deposit"
+    "finances": "ফাইন্যান্স অর্থ টাকা লেনদেন পেমেন্ট রিফান্ড পেআউট ফি ব্যালান্স তোলা জমা ব্যাংক বিকাশ নগদ transactions payout fees balance withdraw deposit",
+    "expenses": "খরচ ব্যয় বিল কেনাকাটা সরবরাহকারী expenses expense cost spending bill"
   },
   "inventory": "ইনভেন্টরি",
   "cartFab": "কার্ট — {count, plural, one {#টি আইটেম} other {#টি আইটেম}}",
   "marketplaces": "মার্কেটপ্লেস",
   "venue": "ভেন্যু",
   "venueNotSelling": "এখন বিক্রি বন্ধ",
-  "finances": "ফাইন্যান্স"
+  "finances": "ফাইন্যান্স",
+  "expenses": "খরচ",
+  "product": "Counterfoil OS",
+  "switchWorkspace": "ওয়ার্কস্পেস বদলান",
+  "collapse": "ছোট করুন",
+  "expand": "বড় করুন",
+  "otherApps": "অন্যান্য অ্যাপ",
+  "main": "প্রধান মেনু",
+  "version": "সংস্করণ {version}"
 }

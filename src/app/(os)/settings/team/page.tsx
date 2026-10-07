@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { KeyRound, Mail, UserCheck, UserMinus, UserX } from "lucide-react";
-import { ActionMenu, Avatar, ConfirmDialog, PageShell, Select, StatusPill, Tabs, useToast, type ActionMenuItem } from "@/components/ui";
+import { ActionMenu, Avatar, ConfirmDialog, Select, StatusPill, Tabs, useToast, type ActionMenuItem } from "@/components/ui";
+import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -177,18 +178,20 @@ export default function TeamPage() {
   };
 
 
+  const primary: PagePrimary = { label: t("team.invite"), onClick: () => router.push("/settings/team/new") };
+
   return (
-    <PageShell
-      title={t("team.title")}
-      description={t("team.description")}
-      primary={{ label: t("team.invite"), onClick: () => router.push("/settings/team/new") }}
-    >
+    <PageShell title={t("team.title")} description={t("team.description")} primary={primary}>
       <div className="flex max-w-5xl flex-col gap-section pb-hero">
-        <Tabs
-          items={TABS.map((v) => ({ value: v, label: t(`team.tab.${v}`), count: counts[v] }))}
-          value={tab}
-          onChange={(v) => setTab(v as Tab)}
-        />
+        {/* The first toolbar: the views, with the create button at the right of the
+            same rule. A list has no header row above it for the button. */}
+        <PageToolbar underline primary={primary}>
+          <Tabs
+            items={TABS.map((v) => ({ value: v, label: t(`team.tab.${v}`), count: counts[v] }))}
+            value={tab}
+            onChange={(v) => setTab(v as Tab)}
+          />
+        </PageToolbar>
         {!staffQ.data ? (
           <SectionSkeleton />
         ) : (

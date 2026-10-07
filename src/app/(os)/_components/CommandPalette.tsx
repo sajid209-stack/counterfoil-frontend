@@ -92,8 +92,10 @@ export function CommandPalette({
     ? all.filter((r) => typed.every((w) => r.words.some((h) => h.startsWith(w)))).slice(0, 8)
     : // Nothing typed: the destinations, which is what a palette opened by
       // accident should show. Settings sections are held back until a word
-      // narrows them — thirty rows of them is a list, not a menu.
-      all.filter((r) => r.hint === tn("searchPage")).slice(0, 8);
+      // narrows them — thirty rows of them is a list, not a menu. Every
+      // destination, in the rail's order and not the first eight of them: a
+      // palette that stops at Analytics is one with no Finances or Expenses.
+      all.filter((r) => r.hint === tn("searchPage"));
   const current = Math.min(active, Math.max(results.length - 1, 0));
 
   /* The shell MOUNTS this when the palette opens and unmounts it when it

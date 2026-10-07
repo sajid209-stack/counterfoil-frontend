@@ -33,10 +33,12 @@ export function SettingsRail({ pathname, noun, attention }: ListProps) {
     /* The nav stretches to the page's height so the list inside it can stick;
        a rail that scrolls away with the content is no rail. */
     <nav aria-label={t("nav.label")} className="hidden w-60 shrink-0 xl:block xl:pl-gutter xl:pt-gutter">
-      {/* top-24 is the settings bar (74px, a title and a line of description)
-          plus a 22px gap, so the first group sits where it rests rather than
-          jumping when the page starts to scroll. */}
-      <div className="sticky top-24 flex flex-col gap-section pb-major">
+      {/* Sticks 61px (the sticky bar) plus the gutter down — exactly where it
+          rests at the top of the page, so the first group neither starts lower
+          than the content beside it nor jumps when the page begins to scroll.
+          It was top-24 for a taller bar and pushed the rail 15px below the
+          page's first card at scroll 0. */}
+      <div className="sticky top-[calc(61px+var(--spacing-gutter))] flex flex-col gap-section pb-major">
         {SETTINGS_GROUPS.map((group) => (
           <div key={group.key}>
             <p className="px-comfortable pb-inline font-mono text-[12px] uppercase tracking-wider text-muted">

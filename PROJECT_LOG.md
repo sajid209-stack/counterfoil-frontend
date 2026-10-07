@@ -16071,3 +16071,239 @@ the actions and the main button sit on the right.
   plain-language pass.
 - The venue picker shows on every OS page except Settings, as asked on
   2026-09-29, including pages it does not narrow (customers, marketplaces).
+
+## Eleven owner items: sales report Orders, Expenses, a quieter nav and fewer stat cards (2026-10-07)
+
+Owner, with eleven screenshots. In short:
+1. only the Dashboard, Finances and Analytics keep stat cards;
+2. Orders becomes a sales-transactions report with custom filters, an export and
+   a printed summary;
+3. tickets carry QR codes only;
+4. a + Add button for several storefronts per venue;
+5. the order page organised like the reference, and better;
+6. no site dropdown in a marketplace's connect dialog;
+7. no white band at the top of Finances, or of any other page;
+8. no logo at the top of the till, and the counter on the left;
+9. more analytics;
+10. a side nav like the best SaaS products;
+11. an Expenses page.
+
+Planned and reviewed on Opus. Five Sonnet sub-agents built it in parallel, each
+owning its own files, and one more removed the messages that nothing reads any
+more. Every result was checked by screenshot and harness before it was kept.
+
+### 1 and 7. Stat cards only where the figures are the point
+
+The figure bands came off Catalog, Customers, Calendar, Inventory, Memberships,
+Pricing, Booking rules, Promotions, an event's record and the Settings lists.
+The Dashboard, Finances and Analytics keep theirs. Calendar's `CalendarStats`
+and the window figures in its model are deleted. Every message only those bands
+used is removed from both languages.
+
+The white band at the top of each page was `PageShell` drawing an empty header
+row whenever a page had no back link or status. `PageShell` now draws that row
+only for a record page (`data-page-row="record"`, holding the back link, the
+status and the actions). A list page puts its buttons in `PageToolbar`, beside
+its own first controls. `PagePrimaryButton` and `PageAction` are the shared
+buttons. Finances' "⋯" went into the Transaction history header as "Payout bank
+and schedule". The phone bar's **+** is unchanged.
+
+### 2. Orders is a sales report
+
+The research covered Square's sales and transactions reports, Shopify's orders
+and finance reports, Toast, Lightspeed and Loyverse. Each one puts the filters
+that make a report above the table, the totals for those filters under them,
+and Export and Print on the same row.
+
+- **Filters**: Date, Counter, Staff, Sales method, Payment method and Sale
+  status.
+  - Each filter is a chip that opens a checklist with search, so several values
+    can be chosen.
+  - Every filter lives in the address, so a filtered report is a link that can
+    be shared or bookmarked.
+  - **Reset** clears them all. Search covers the reference, the customer's name
+    and a marketplace's own reference.
+- **The figures**: Sales, Transactions and Items sold for exactly what is
+  filtered, beside the search.
+- **The table**: # · Date · Customer · Channel · Counter · Staff · Total ·
+  Tax · Paid · Discount · Method · Status · Items.
+  - Columns can be hidden or shown, and the choice is remembered. Below 1536px,
+    where all thirteen do not fit, Counter, VAT and Discount start hidden. The
+    CSV always carries every column.
+  - The table is paginated, at 10, 20, 50 or 100 rows.
+  - A counter sale's channel names its counter ("Counter · Fort Main Gate").
+- **Sales summary**: a sheet for the current filters.
+  - It opens by saying what it is a summary of, for example "Lalbagh Fort ·
+    29 Jul 2026 · Fort Main Gate · Cash".
+  - Then the totals: gross, discounts, net, VAT, total, refunds, collected,
+    still owed and written off.
+  - Then breakdowns by payment method, sales method, counter, staff and status,
+    and the best sellers, with everything else on one line so the list still
+    adds up.
+  - **Download** writes the summary and the matching rows to one CSV file.
+  - **Print** opens `/print/orders/summary`, which reads the same address.
+- **Print sales** prints the filtered list (`/print/orders/list`).
+- **The API**: `summariseSales`, `orderSales`, `orderNetPaid`, `orderDue` and
+  `attachOrderCustomer` in `lib/api/orders.ts`.
+  - A balance written off counts as written off in the summary, not as still
+    owed.
+
+### 5. The order page
+
+The reference was the backend team's order page. The page now has:
+- an **Order information** grid: reference, date and time, channel and counter,
+  staff, status and payment method;
+- a **Customer** card that links to their record;
+- the **Lines**, set in Inter;
+- a **Money** card with total, paid, still owed and written off, and **Collect
+  payment** inline when something is owed (no modal);
+- **Payments and refunds** with their methods and references;
+- the **Tickets** and reservations;
+- the history and the notes.
+
+Every card heading is in sentence case. A field with no value reads "Not
+recorded". There is one primary action.
+
+### 3. QR codes only
+
+`Barcode.tsx`, `lib/barcode.ts` and the `jsbarcode` dependency are removed.
+Tickets and printed tickets carry a QR code. Settings → Tickets no longer offers
+a choice of code. A setting saved as barcode or both is read as QR
+(`TicketCodeSettings.print` is `"qr"`). The storefront's ticket plate is a QR
+code too.
+
+### 4. Several storefronts per venue
+
+Settings → Storefront groups the pages by venue. Where each row's toggle used to
+be, the venue has a **+ Add** button.
+- The new page opens as a draft, and the dialog asks for its name and address.
+- A page can be duplicated or deleted from its row menu.
+- `Storefront.name` is new on the contract.
+- The new API calls are `listStorefrontsFor`, `peekStorefrontsFor`,
+  `createStorefront`, `duplicateStorefront`, `deleteStorefront` and
+  `storefrontName`.
+
+### 6. The connect dialog
+
+A marketplace's own page opens the connect dialog with the site already chosen,
+so the dialog no longer shows the site dropdown. The Marketplaces list still
+asks.
+
+### 8. The till's header
+
+The logo is gone from the top of the till. The counter picker sits on the left,
+and the till-design links, the shift and the account are on the right.
+
+### 9. More analytics
+
+Six cards are new on `/analytics`, all derived from orders and bookings for the
+venue in the bar:
+- **Check-ins over time**: how many of the booked guests came ("12 of 20 booked
+  guests came"), by day.
+- **Visitors over time**: guests booked, by day.
+- **Which ticket types sell?**: each ticket type's sales, against the comparison
+  range.
+- **Which counters sell most?**: each counter, with online and marketplace sales
+  as their own rows.
+- **Customers over time**: new and returning.
+- **Which time slots fill up?**: a heatmap of guests booked by booking and start
+  time, with the busiest slot stated in words and an arrow-key path between
+  cells.
+
+Sales by channel and sales by payment method were already on the page, as
+**Where sales come from** and **How people pay**. The charts in `charts.tsx`
+gained optional props, and `smoothPath`, `niceScale` and `useWidth` are exported
+for the new cards to share.
+
+### 10. The side nav
+
+Researched against Linear, Vercel, Stripe, Notion, Attio, and the Dribbble and
+Behance work on SaaS sidebars.
+- **One list for every surface**: `_components/nav.ts` is read by the rail, the
+  collapsed rail, the phone's More grid and the command palette, so the four can
+  no longer drift apart.
+- **The top of the rail** names the workspace: the mark, the business name and
+  "Counterfoil OS".
+- **Destinations**: Dashboard, Calendar, Orders, Customers, Catalog, Inventory,
+  Marketplaces, Analytics, Finances and Expenses.
+- **No group labels**: the OVERVIEW and SETTINGS headings are gone. A hairline
+  separates the daily pages from the other apps (Point of Sale ↗ and
+  Counterfoil Deck ↗).
+- **The foot** holds Settings, Collapse (with its `[` shortcut shown) and the
+  version.
+- **Rows** are 36px tall. The current page has a tonal fill and a 2px ember bar.
+  The collapsed rail is 64px wide, with tooltips portalled outside it.
+- The Settings section menu and the "add a row" buttons in Settings lists use
+  the same language.
+
+### 11. Expenses
+
+The research covered Expensify, QuickBooks, Xero, Ramp, Square's expenses and
+Shopify POS's paid-out. All of them settle on a short record: an amount, a
+category, a day, who or what paid it, and optionally the bill's items.
+
+- **`/expenses`**, in the rail after Finances:
+  - a date range and **Create expense**;
+  - a summary of the period: total spent, how many expenses, and the biggest
+    categories with their share of the total;
+  - the table: ID · Date · Title · Description · Qty · Unit · Unit price ·
+    Total · Recorded by · Actions;
+  - filters by category and by how it was paid, with search;
+  - a CSV download.
+- **The drawer** that creates or edits an expense takes either one amount or a
+  list of items (quantity × unit × unit price), with:
+  - a category;
+  - how it was paid: cash from a drawer (which then asks which counter), bank,
+    bKash or card;
+  - who it was paid to, with suggestions of recent payees;
+  - a note.
+- Problems are refused in words beside the field. A delete can be undone.
+  References (EXP-0001) are never reused.
+- **The API**: `lib/api/expenses.ts`, scoped to the venue in the bar and
+  recorded by the signed-in staff member. `startFresh` clears it with the rest
+  of the mock store.
+
+### Verified
+
+- **Orders**: the list **181/181** at 1440 and **29/29** at 390; the order page
+  **91/91** at 1440 and **93/93** at 390. These cover every filter chip and
+  Reset, the address round trip, the figures equal to the summary, the summary's
+  breakdowns adding up to its totals, the CSV, both print pages, the columns,
+  inline Collect payment, and dark and Bangla.
+- **Expenses**: unit **181/181**; page **202/202** at 1440 and **188/188** at 390.
+  These cover creating one amount and an itemised bill, the drawer's refusals,
+  cash from a drawer asking which counter, edit, delete with Undo, filters,
+  search, the summary and the CSV.
+- **Analytics**: unit **1000/1000**, page **510/510**.
+- **QR, storefronts, marketplace and till header** (`c4`): **150/150** at 1440
+  and **154/154** at 390.
+- **No legacy header row** on any of about 43 routes: **750/750** at 1440 and
+  **746/746** at 390.
+- **The nav**: **201/201** at 1440 and **132/132** at 390, covering the rail,
+  the collapsed rail with its tooltips, the More grid, the palette, the `[`
+  shortcut and every destination.
+- **Stat cards**: the standing top-cards harness, rewritten for the rule,
+  **103/103**. Only the Dashboard, Finances and Analytics draw a band.
+- **Full regression green**:
+  - till **38/38** and **36/36**, round-3 **24/24**, Schedule **31/31** ×2;
+  - refunds, move, discount and check-in;
+  - undo, storefront (live, preview, design, quick add), buffer, the calendar's
+    marketplace colour, the customer page, checkout, finances, and devices and
+    passwords;
+  - the 59-route sweep clean at 390 English, 390 Bangla dark and 1440;
+  - no 24-hour times on screen;
+  - phone audit: hidden 0 · under-44 0 · clipped 0 · errors 0;
+  - POS audit: only the declared white-on-ember rule and the check-in field.
+- `tsc` clean; `eslint` on every changed file reports only the five documented
+  findings; i18n 0 missing / 0 extra.
+
+### Open
+
+- Cash taken from a drawer for an expense is not yet subtracted from that
+  shift's expected cash at close.
+- Below 1536px the orders table starts with Counter, VAT and Discount hidden.
+  They can be turned back on from Columns.
+- A storefront created in this session returns 404 when opened in a new tab,
+  because a new tab starts a new mock store. This needs the backend.
+- `/catalog/new/event` still logs React #418 on production. This is the
+  timezone hydration fault recorded on 2026-09-24.

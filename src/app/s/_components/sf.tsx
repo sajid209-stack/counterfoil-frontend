@@ -23,6 +23,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Qr } from "@/components/ui/Qr";
 import { storefrontVars } from "@/lib/storefront/theme";
 import type { AccentColor, BookingTypeCode } from "@/lib/api/types";
 
@@ -240,7 +241,6 @@ export function HeroArt({
     );
   }
   const h = hash(seed);
-  const bars = Array.from({ length: 28 }, (_, i) => 1 + ((h >> (i % 24)) & 3) + (i % 5 === 0 ? 1 : 0));
   return (
     <div
       aria-hidden
@@ -258,10 +258,16 @@ export function HeroArt({
         <p className="mt-tight break-words text-[22px] font-semibold leading-tight tracking-[-0.02em] text-[#161616] sm:text-[26px]">{name}</p>
         <p className="mt-inline text-[14px] text-[#595959]">{city}</p>
         <div className="my-comfortable border-t-2 border-dashed border-[#dcdcd8]" />
-        <div className="flex h-6 items-stretch sm:h-9 gap-[3px]">
-          {bars.map((w, i) => (
-            <span key={i} className="bg-[#161616]" style={{ width: w * 1.5 }} />
-          ))}
+        {/* The stub carries a QR, which is the only code a ticket has. It is the
+            plate's decoration, so what it encodes is the plate's own seed. */}
+        <div className="flex items-center gap-comfortable">
+          <span className="shrink-0 text-[#161616]">
+            <Qr value={seed} size={44} />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-[6px]">
+            <span className="block h-[6px] w-4/5 rounded-full bg-[#dcdcd8]" />
+            <span className="block h-[6px] w-3/5 rounded-full bg-[#dcdcd8]" />
+          </div>
         </div>
       </div>
     </div>

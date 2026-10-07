@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { MonitorSmartphone } from "lucide-react";
-import { Button, ConfirmDialog, EmptyState, PageShell, StatusPill, Tabs, useToast } from "@/components/ui";
+import { Button, ConfirmDialog, EmptyState, StatusPill, Tabs, useToast } from "@/components/ui";
+import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listCounters, listDevices, listLocations, listStaff, updateDevice, type Device } from "@/lib/api";
@@ -94,12 +95,10 @@ export default function DevicesPage() {
 
   const visible = devices.filter(inTab);
 
+  const primary: PagePrimary = { label: t("devices.register"), onClick: () => router.push("/settings/devices/new") };
+
   return (
-    <PageShell
-      title={t("devices.title")}
-      description={t("devices.description")}
-      primary={{ label: t("devices.register"), onClick: () => router.push("/settings/devices/new") }}
-    >
+    <PageShell title={t("devices.title")} description={t("devices.description")} primary={primary}>
       {loading ? (
         <SectionSkeleton />
       ) : devices.length === 0 ? (
@@ -112,11 +111,15 @@ export default function DevicesPage() {
         </div>
       ) : (
         <div className="flex max-w-4xl flex-col gap-section pb-hero">
-          <Tabs
-            items={TABS.map((v) => ({ value: v, label: t(`devices.tab.${v}`), count: counts[v] }))}
-            value={tab}
-            onChange={(v) => setTab(v as Tab)}
-          />
+          {/* The first toolbar: the views, with the create button at the right of the
+              same rule. A list has no header row above it for the button. */}
+          <PageToolbar underline primary={primary}>
+            <Tabs
+              items={TABS.map((v) => ({ value: v, label: t(`devices.tab.${v}`), count: counts[v] }))}
+              value={tab}
+              onChange={(v) => setTab(v as Tab)}
+            />
+          </PageToolbar>
           {visible.length === 0 ? (
             <p className="py-section text-sm text-muted">{t("devices.emptyTab")}</p>
           ) : (

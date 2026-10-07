@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Store } from "lucide-react";
-import { Button, EmptyState, PageShell, StatusPill, Tabs, useToast } from "@/components/ui";
+import { Button, EmptyState, StatusPill, Tabs, useToast } from "@/components/ui";
+import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { listCounters, listDevices, listLocations, listPaymentAccounts, updateCounter, type Counter } from "@/lib/api";
@@ -83,12 +84,10 @@ export default function CountersPage() {
 
   const visible = counters.filter(inTab);
 
+  const primary: PagePrimary = { label: t("counters.add"), onClick: () => router.push("/settings/counters/new") };
+
   return (
-    <PageShell
-      title={t("counters.title")}
-      description={t("counters.description")}
-      primary={{ label: t("counters.add"), onClick: () => router.push("/settings/counters/new") }}
-    >
+    <PageShell title={t("counters.title")} description={t("counters.description")} primary={primary}>
       {loading ? (
         <SectionSkeleton />
       ) : counters.length === 0 ? (
@@ -101,11 +100,15 @@ export default function CountersPage() {
         </div>
       ) : (
         <div className="flex max-w-4xl flex-col gap-section pb-hero">
-          <Tabs
-            items={TABS.map((v) => ({ value: v, label: t(`counters.tab.${v}`), count: counts[v] }))}
-            value={tab}
-            onChange={(v) => setTab(v as Tab)}
-          />
+          {/* The first toolbar: the views, with the create button at the right of the
+              same rule. A list has no header row above it for the button. */}
+          <PageToolbar underline primary={primary}>
+            <Tabs
+              items={TABS.map((v) => ({ value: v, label: t(`counters.tab.${v}`), count: counts[v] }))}
+              value={tab}
+              onChange={(v) => setTab(v as Tab)}
+            />
+          </PageToolbar>
           {visible.length === 0 ? (
             <p className="py-section text-sm text-muted">{t("counters.emptyTab")}</p>
           ) : (

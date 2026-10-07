@@ -13,6 +13,7 @@ import { demoNow } from "@/lib/schedule";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { useApiQuery } from "@/lib/useApi";
 import {
+  getStorefront,
   getStorefrontFor,
   listLocations,
   listProducts,
@@ -20,6 +21,7 @@ import {
   listStaff,
   productSlugs,
   setStorefrontPublished,
+  storefrontName,
   storefrontProducts,
   updateStorefront,
   type AccentColor,
@@ -31,6 +33,7 @@ import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, Switch, controlC
 import { ACCENT_COLORS, COLOR_DOT } from "../_components/ColorPicker";
 
 interface Draft {
+  name: string;
   slug: string;
   headline: string;
   intro: string;
@@ -56,6 +59,7 @@ const linkErr = (l: StorefrontLink) => ({
 });
 
 const fromRecord = (s: Storefront): Draft => ({
+  name: s.name ?? "",
   slug: s.slug,
   headline: s.headline ?? "",
   intro: s.intro ?? "",
@@ -68,7 +72,8 @@ const fromRecord = (s: Storefront): Draft => ({
 });
 
 /**
- * One venue's page, edited.
+ * One storefront, edited. It is reached by its own id; a venue's id still works
+ * and opens that venue's first storefront, so an old link keeps its meaning.
  *
  * The one thing worth explaining is **what appears on it**. An empty list is
  * not empty: it means everything sold online at this venue, in the catalogue's
@@ -125,26 +130,29 @@ export default function StorefrontEditorPage() {
 
   useEffect(() => {
     let alive = true;
-    getStorefrontFor(params.id).then((res) => {
+    (async () => {
+      const own = await getStorefront(params.id);
+      const res = own.ok ? own : await getStorefrontFor(params.id);
       if (!alive) return;
       if (res.ok) setRecord(res.data);
       else setLoadFailed(true);
-    });
+    })();
     return () => { alive = false; };
   }, [params.id]);
 
-  const location = (locationsQ.data?.data ?? []).find((l) => l.id === params.id);
+  const venueId = record?.locationId ?? "";
+  const location = (locationsQ.data?.data ?? []).find((l) => l.id === venueId);
   const products = useMemo(() => (productsQ.data?.data ?? []) as Product[], [productsQ.data]);
   /** Everything this venue COULD show, which is what the chooser offers. */
   const sellable = useMemo(
     () =>
       products.filter(
-        (p) => p.status === "active" && p.channels.includes("online") && p.locationIds.includes(params.id),
+        (p) => p.status === "active" && p.channels.includes("online") && p.locationIds.includes(venueId),
       ),
-    [products, params.id],
+    [products, venueId],
   );
 
-  if (loadFailed || (!locationsQ.loading && !location)) {
+  if (loadFailed || (record && !locationsQ.loading && !location)) {
     return (
       <PageShell title={t("storefront.title")}>
         <EmptyState
@@ -171,6 +179,11 @@ export default function StorefrontEditorPage() {
     : !/^[a-z0-9][a-z0-9-]*$/.test(form.slug.trim())
       ? t("storefront.slugShape")
       : undefined;
+  /* A storefront that already has a name keeps one: blank would make it
+     indistinguishable from the venue's other pages. The first storefront at a
+     venue has none and shows the venue's name, so blank is fine there. */
+  const nameErr = !form.name.trim() && saved.name ? t("storefront.nameRequired", { venue: location.name }) : undefined;
+  const label = storefrontName({ ...record, name: form.name.trim() || undefined }, location);
   const linkErrors = form.links.map(linkErr);
   const linksInvalid = linkErrors.some((e) => e.label || e.url);
 
@@ -205,6 +218,7 @@ export default function StorefrontEditorPage() {
   const save = async () => {
     setSaving(true);
     const res = await updateStorefront(record.id, {
+      ...(form.name.trim() || saved.name ? { name: form.name.trim() } : {}),
       slug: form.slug.trim(),
       headline: form.headline.trim() || undefined,
       intro: form.intro.trim() || undefined,
@@ -217,7 +231,7 @@ export default function StorefrontEditorPage() {
     });
     setSaving(false);
     if (!res.ok) {
-      toast.error(res.error.fieldErrors?.slug ?? res.error.message);
+      toast.error(res.error.fieldErrors?.name ?? res.error.fieldErrors?.slug ?? res.error.message);
       return;
     }
     setRecord(res.data);
@@ -237,7 +251,7 @@ export default function StorefrontEditorPage() {
       return;
     }
     setRecord(res.data);
-    toast.success(t(next ? "storefront.published" : "storefront.unpublished", { name: location.name }));
+    toast.success(t(next ? "storefront.published" : "storefront.unpublished", { name: storefrontName(res.data, location) }));
   };
 
   const ordered = form.featured.length
@@ -255,6 +269,7 @@ export default function StorefrontEditorPage() {
    *  that is half typed is left out rather than drawn broken. */
   const draftRecord: Storefront = {
     ...record,
+    name: form.name.trim() || undefined,
     slug: form.slug.trim() || record.slug,
     headline: form.headline.trim() || undefined,
     intro: form.intro.trim() || undefined,
@@ -266,7 +281,7 @@ export default function StorefrontEditorPage() {
     links: form.links.filter((_, i) => !linkErrors[i].label && !linkErrors[i].url),
   };
   const preview = (d: Device) => (
-    <PreviewFrame width={DEVICE[d].width} height={DEVICE[d].height} title={t("storefront.previewFrame", { name: location.name })}>
+    <PreviewFrame width={DEVICE[d].width} height={DEVICE[d].height} title={t("storefront.previewFrame", { name: label })}>
       <StorefrontPreviewApp
         storefront={draftRecord}
         location={location}
@@ -310,15 +325,8 @@ export default function StorefrontEditorPage() {
 
   return (
     <PageShell
-      title={location.name}
-      description={t("storefront.editorDescription")}
-      actions={
-        !wide ? (
-          <Button variant="secondary" icon={<Eye size={16} strokeWidth={1.5} />} onClick={() => setPreviewOpen(true)}>
-            {t("storefront.preview")}
-          </Button>
-        ) : undefined
-      }
+      title={label}
+      description={label === location.name ? t("storefront.editorDescription") : t("storefront.editorDescriptionAt", { venue: location.name })}
     >
       <div className="flex items-start gap-major">
         <div className={cn("flex min-w-0 flex-col gap-section pb-hero", wide ? "w-[36rem] shrink-0" : "max-w-3xl flex-1")}>
@@ -339,6 +347,14 @@ export default function StorefrontEditorPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-tight">
+              {/* Where the preview is not already beside the form, it is one press
+                  away from here — in the page's own first card, not in a row of
+                  its own under the bar. */}
+              {!wide && (
+                <Button variant="secondary" icon={<Eye size={16} strokeWidth={1.5} />} onClick={() => setPreviewOpen(true)}>
+                  {t("storefront.preview")}
+                </Button>
+              )}
               {record.published && (
                 <>
                   <Button
@@ -370,6 +386,20 @@ export default function StorefrontEditorPage() {
           </section>
 
           <SettingsSection title={t("storefront.addressTitle")} description={t("storefront.addressDesc")}>
+            <SettingRow label={t("storefront.nameLabel")} description={t("storefront.nameDesc")} error={nameErr}>
+              {({ id, describedBy }) => (
+                <input
+                  id={id}
+                  value={form.name}
+                  onChange={(e) => set({ name: e.target.value })}
+                  placeholder={location.name}
+                  autoComplete="off"
+                  aria-invalid={!!nameErr || undefined}
+                  aria-describedby={describedBy}
+                  className={controlCls(!!nameErr)}
+                />
+              )}
+            </SettingRow>
             <SettingRow label={t("storefront.slugLabel")} description={t("storefront.slugDesc")} error={slugErr}>
               {({ id, describedBy }) => (
                 <div className="flex items-center gap-inline">
@@ -597,7 +627,7 @@ export default function StorefrontEditorPage() {
             </p>
           </SettingsSection>
 
-          <SaveBar dirty={dirty} saving={saving} invalid={!!slugErr || linksInvalid} onSave={save} onDiscard={() => setDraft(null)} />
+          <SaveBar dirty={dirty} saving={saving} invalid={!!slugErr || !!nameErr || linksInvalid} onSave={save} onDiscard={() => setDraft(null)} />
         </div>
 
         {wide && (

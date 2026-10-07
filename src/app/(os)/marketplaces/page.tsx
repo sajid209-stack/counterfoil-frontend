@@ -17,6 +17,9 @@
  * mandatory-concrete-numbers rule the duration engine and the pricing preview
  * already follow.
  *
+ * Cards only on the Dashboard, Finances and Analytics (the owner's rule), so the
+ * figures a card band would have carried are one quiet line under the title.
+ *
  * Nothing here pretends to talk to Viator. The contract is real and every rule
  * that does not need the network is enforced; a button that claimed to have
  * pushed prices somewhere would be the worst kind of lie on this screen, so
@@ -25,11 +28,11 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowUpRight, Plus, RefreshCw } from "lucide-react";
-import { Button, EmptyState, FormField, Modal, PageShell, StatStrip, StatusPill, useToast } from "@/components/ui";
+import { ArrowUpRight, RefreshCw } from "lucide-react";
+import { Button, EmptyState, StatusPill, useToast } from "@/components/ui";
+import { PageShell, PageToolbar } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import {
-  connectMarketplace,
   connectionIssue,
   listConnections,
   listingCounts,
@@ -37,9 +40,9 @@ import {
   syncConnection,
 } from "@/lib/api";
 import type { MarketplaceConnection, MarketplaceId } from "@/lib/api";
-import { bpsToPct, MARKETPLACES, marketplaceById, pctToBps, split } from "@/lib/marketplaces";
+import { bpsToPct, MARKETPLACES, marketplaceById, split } from "@/lib/marketplaces";
 import { formatMoney } from "@/lib/format";
-import { cn } from "@/lib/cn";
+import { ConnectDialog } from "./_components/ConnectDialog";
 
 /** The worked example every commission field carries. A round number an
  *  operator recognises beats a real price they have to look up. */
@@ -50,7 +53,9 @@ export default function MarketplacesPage() {
   const router = useRouter();
   const toast = useToast();
   const q = useApiQuery(() => listConnections(), []);
-  const [connecting, setConnecting] = useState<MarketplaceId | null>(null);
+  /* `pick` is whether the operator is choosing the site. The general "Connect a
+     site" asks which; a site's own Connect already knows. */
+  const [connecting, setConnecting] = useState<{ id: MarketplaceId; pick: boolean } | null>(null);
   const [syncing, setSyncing] = useState<string | null>(null);
 
   /* Memoised so the totals below do not recompute on every render: a bare
@@ -84,30 +89,26 @@ export default function MarketplacesPage() {
     } else toast.error(res.error.message);
   };
 
+  /* The general Connect: the operator is choosing, so the dialog keeps its
+     dropdown. On a phone this is the plus in the top bar; from md it is the
+     button on the page's own toolbar, beside the summary line. */
+  const connectPrimary =
+    available.length > 0 ? { label: t("connect"), onClick: () => setConnecting({ id: available[0].id, pick: true }) } : undefined;
+
   return (
-    <PageShell
-      title={t("title")}
-      description={t("description")}
-      actions={
-        available.length > 0 ? (
-          <Button icon={<Plus size={16} strokeWidth={1.5} />} onClick={() => setConnecting(available[0].id)}>
-            {t("connect")}
-          </Button>
-        ) : undefined
-      }
-    >
-      {connections.length > 0 && (
-        <div className="mb-section">
-          <StatStrip
-            items={[
-              { key: "live", label: t("stat.live"), value: String(totals.live) },
-              { key: "orders", label: t("stat.orders"), value: String(totals.orders) },
-              { key: "net", label: t("stat.net"), value: formatMoney(totals.net) },
-              { key: "commission", label: t("stat.commission"), value: formatMoney(totals.commission) },
-            ]}
-          />
-        </div>
-      )}
+    <PageShell title={t("title")} description={t("description")} primary={connectPrimary}>
+      <PageToolbar primary={connectPrimary} className="mb-section">
+        {connections.length > 0 && (
+          <p data-mk-summary className="text-[13px] text-muted md:leading-9">
+            {t("summary", {
+              live: totals.live,
+              orders: totals.orders,
+              net: formatMoney(totals.net),
+              commission: formatMoney(totals.commission),
+            })}
+          </p>
+        )}
+      </PageToolbar>
 
       {q.loading ? (
         <div aria-busy="true" className="grid gap-section sm:grid-cols-2">
@@ -184,7 +185,7 @@ export default function MarketplacesPage() {
                       {t(`sells.${m.sells}`)} · {t("typically", { pct: bpsToPct(m.typicalBps) })}
                     </p>
                     <div className="mt-auto flex flex-wrap items-center gap-tight pt-tight">
-                      <Button size="sm" variant="secondary" onClick={() => setConnecting(m.id)}>{t("connectOne")}</Button>
+                      <Button size="sm" variant="secondary" onClick={() => setConnecting({ id: m.id, pick: false })}>{t("connectOne")}</Button>
                       <a
                         href={m.helpUrl}
                         target="_blank"
@@ -204,7 +205,8 @@ export default function MarketplacesPage() {
 
       {connecting && (
         <ConnectDialog
-          marketplaceId={connecting}
+          marketplaceId={connecting.id}
+          choices={connecting.pick ? available : undefined}
           onClose={() => setConnecting(null)}
           onDone={(id) => {
             setConnecting(null);
@@ -214,118 +216,5 @@ export default function MarketplacesPage() {
         />
       )}
     </PageShell>
-  );
-}
-
-/* ── Connecting ──────────────────────────────────────────────────────────── */
-
-/**
- * The onboarding, in one step rather than a wizard.
- *
- * The research describes a long real-world process — apply, be accepted,
- * agree a contract, then connect — but only the last part is Counterfoil's.
- * Pretending to own the application would be inventing a flow that ends at
- * somebody else's website, so the dialog says plainly what has to have
- * happened first and links there.
- */
-function ConnectDialog({
-  marketplaceId,
-  onClose,
-  onDone,
-}: {
-  marketplaceId: MarketplaceId;
-  onClose: () => void;
-  onDone: (connectionId: string) => void;
-}) {
-  const t = useTranslations("marketplaces");
-  const toast = useToast();
-  const [which, setWhich] = useState<MarketplaceId>(marketplaceId);
-  const meta = marketplaceById(which);
-  const [pct, setPct] = useState(String(bpsToPct(meta.typicalBps)));
-  const [account, setAccount] = useState("");
-  const [key, setKey] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const bps = pctToBps(parseFloat(pct) || 0);
-  const s = split(EXAMPLE, bps);
-  const valid = bps >= 0 && bps < 10000;
-
-  const go = async () => {
-    setBusy(true);
-    setError(null);
-    const res = await connectMarketplace({
-      marketplaceId: which,
-      commissionBps: bps,
-      accountRef: account.trim() || undefined,
-      apiKey: key.trim() || undefined,
-    });
-    setBusy(false);
-    if (res.ok) {
-      toast.success(t("connected", { name: meta.name }));
-      onDone(res.data.id);
-    } else setError(res.error.message);
-  };
-
-  return (
-    <Modal open onClose={onClose} title={t("dialog.title")} description={t("dialog.body")}>
-      <div className="flex flex-col gap-section">
-        <FormField
-          label={t("dialog.which")}
-          variant="select"
-          value={which}
-          options={MARKETPLACES.map((m) => ({ value: m.id, label: m.name }))}
-          onChange={(e) => {
-            const id = e.target.value as MarketplaceId;
-            setWhich(id);
-            setPct(String(bpsToPct(marketplaceById(id).typicalBps)));
-          }}
-        />
-
-        {/* What must already be true. Said before the fields, because finding
-            out afterwards is what makes an onboarding feel like a trap. */}
-        <div className="rounded-sm border border-line bg-subtle p-comfortable text-[13px]">
-          <p className="font-medium">{t("dialog.firstTitle", { name: meta.name })}</p>
-          <p className="mt-inline text-muted">{t("dialog.firstBody", { name: meta.name })}</p>
-          <a
-            href={meta.helpUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-tight inline-flex min-h-11 items-center gap-inline text-brand-foreground underline underline-offset-2 sm:min-h-0"
-          >
-            {t("dialog.open", { name: meta.name })} <ArrowUpRight size={13} strokeWidth={1.5} />
-          </a>
-        </div>
-
-        <FormField
-          label={t("dialog.commission")}
-          variant="number"
-          value={pct}
-          onChange={(e) => setPct(e.target.value)}
-          help={t("dialog.commissionHelp")}
-          error={valid ? undefined : t("dialog.commissionBad")}
-        />
-        {/* The worked example. A commission is a percentage until it is stated
-            as money, and then it is a decision. */}
-        {valid && (
-          <p className="-mt-tight text-[13px] text-muted">
-            {t("dialog.example", { price: formatMoney(s.price), commission: formatMoney(s.commission), net: formatMoney(s.net) })}
-          </p>
-        )}
-
-        {meta.needs === "apiKey" ? (
-          <FormField label={t("dialog.apiKey")} value={key} onChange={(e) => setKey(e.target.value)} help={t("dialog.apiKeyHelp")} />
-        ) : (
-          <FormField label={t("dialog.account")} value={account} onChange={(e) => setAccount(e.target.value)} help={t("dialog.accountHelp")} />
-        )}
-
-        {error && <p className="text-[13px] text-danger">{error}</p>}
-
-        <div className={cn("flex flex-wrap gap-tight")}>
-          <Button loading={busy} onClick={go}>{t("dialog.connect")}</Button>
-          <Button variant="secondary" onClick={onClose}>{t("dialog.cancel")}</Button>
-        </div>
-      </div>
-    </Modal>
   );
 }

@@ -100,10 +100,7 @@
     "title": "Guests",
     "arrived": "Arrived",
     "noShows": "Didn't come",
-    "newCustomers": "New customers",
-    "returning": "Returning",
     "attendance": "Arrived and didn't come",
-    "loyalty": "New and returning customers",
     "empty": "No guests in this period."
   },
   "vat": {
@@ -144,6 +141,93 @@
     "up": "up {pct}% from {range}",
     "down": "down {pct}% from {range}",
     "new": "New",
-    "newTitle": "New, nothing in {range}"
-  }
+    "newTitle": "New, nothing in {range}",
+    "upPts": "up {pts} points from {range}",
+    "downPts": "down {pts} points from {range}"
+  },
+  "sections": {
+    "sales": "Sales",
+    "visitors": "Visitors",
+    "timing": "Timing",
+    "vat": "VAT"
+  },
+  "info": {
+    "label": "What {title} counts",
+    "revenue": "Sales after discounts and refunds, before VAT, on the day each order was made.\nThe dashed line is the dates you compare with, matched day by day.",
+    "sells": "Revenue by booking or event ticket, after discounts and refunds.\nShop items, add-ons and custom amounts are in Other.",
+    "tickets": "Revenue by ticket type: the price tier a ticket was sold under, such as Adult or Child, shown as booking · tier. After discounts and refunds.\nThe top 10 are listed. Everything else, including shop items and add-ons, is in Other. Tickets sold are net of refunds.",
+    "channels": "Revenue by where the order came from: at the counter, online on your own site, or through a marketplace. After discounts and refunds.\nOver time shows each one on its own small chart, all on the same scale.",
+    "pay": "Money taken, by how the guest paid, on the day it was paid. Failed payments are not counted. This is money in, so it includes VAT and does not take refunds off; it can differ from revenue.\nOver time shows each method on its own small chart, all on the same scale.",
+    "counters": "Revenue by the counter that rang up the sale. Online and marketplace sales have no counter, so they get their own rows. A counter sale where no counter was recorded is shown as Counter, not recorded.",
+    "visitors": "Guests who were booked to come, by the day and hour of their time slot. Every guest in a booking's party counts. Tickets that need no booking are not counted. The total is the Guests figure at the top.",
+    "checkins": "Guests checked in, placed on the day and hour of the time slot they booked, because a booking records how many arrived, not when.\n\"Came\" is checked-in guests out of guests who were due: those whose time has started, or who have already arrived. A party of 4 with 3 checked in counts as 3.",
+    "customers": "Customers with a name on their order, each counted once, on the day of the first order they made in these dates. New means that was their first order here. Returning means they had ordered before these dates.\nSales with no name are not counted.",
+    "guests": "Booked guests whose time slot falls in these dates. Arrived is how many checked in. Didn't come is the guests of bookings marked as no-shows.",
+    "busy": "Guests booked to come, by weekday and hour of their time slot, added up over these dates. It shows this period only, not the comparison.",
+    "timeslots": "Each row is a booking that sells time slots, such as a show, tour, field or lane. Each column is a start time someone booked. The colour is guests booked, added up over these dates; empty means none.\nThe tooltip says how full that time was: places taken out of places offered. A field or lane counts as one place per start time. Times nobody booked have no column.",
+    "lead": "How many days before the visit the order was made, for orders that include a booking. The dashed outline is the same bucket in the comparison dates.",
+    "full": "Places sold out of places on offer, for each booking that has a schedule, over these dates. The tick is the same booking in the comparison dates."
+  },
+  "tickets": {
+    "title": "Which ticket types sell?",
+    "sold": "{c} sold",
+    "empty": "No tickets sold in these dates."
+  },
+  "counters": {
+    "title": "Which counters sell most?",
+    "online": "Online",
+    "marketplace": "Marketplaces",
+    "unassigned": "Counter, not recorded",
+    "noSales": "No sales",
+    "empty": "No sales in these dates."
+  },
+  "visitors": {
+    "title": "Visitors over time",
+    "label": "guests booked",
+    "series": "Guests booked",
+    "empty": "No guests booked in these dates."
+  },
+  "checkins": {
+    "title": "Check-ins over time",
+    "headline": "{came} of {due, plural, one {{dueC} booked guest} other {{dueC} booked guests}} came",
+    "label": "Checked in, by the time they booked",
+    "series": "Guests checked in",
+    "n": "{c} checked in",
+    "empty": "No check-ins in these dates.",
+    "dueNone": "{due, plural, one {{dueC} booked guest was due.} other {{dueC} booked guests were due.}}",
+    "was": "was {pct} ({came} of {due}) in {range}"
+  },
+  "customers": {
+    "title": "Customers over time",
+    "new": "New",
+    "returning": "Returning",
+    "all": "All named",
+    "newN": "{c} new",
+    "returningN": "{c} returning",
+    "n": "{n, plural, one {{c} customer} other {{c} customers}}",
+    "was": "{newCount} new, {returningCount} returning",
+    "aria": "New and returning customers over time",
+    "empty": "No named customers in these dates."
+  },
+  "slots": {
+    "title": "Which time slots fill up?",
+    "busiest": "Busiest: {name} · {time} · {guests}",
+    "none": "no guests booked",
+    "full": "{pct} full",
+    "aria": "Time slot popularity by booking and start time",
+    "hint": "Use the arrow keys to move between bookings and start times.",
+    "caption": "Guests booked, by booking and start time",
+    "empty": "No time slots were booked in these dates."
+  },
+  "mode": {
+    "label": "Show",
+    "share": "Share",
+    "time": "Over time",
+    "sameScale": "Every small chart uses the same scale: the top of each is {max}."
+  },
+  "table": {
+    "point": "When"
+  },
+  "was": "was {value} in {range}",
+  "earlier": "{range} had {value}."
 }

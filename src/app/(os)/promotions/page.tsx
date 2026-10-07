@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button, DataTable, EmptyState, FormField, PageShell, StatusPill, useToast, type Column } from "@/components/ui";
+import { Button, DataTable, EmptyState, FormField, StatusPill, useToast, type Column } from "@/components/ui";
+import { PageShell, PageToolbar } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import { createPromotion, getManualDiscountPolicy, listPromotions, updateManualDiscountPolicy } from "@/lib/api";
 import type { ManualDiscountPolicy, Promotion } from "@/lib/api";
@@ -50,11 +51,7 @@ export default function PromotionsPage() {
   ];
 
   return (
-    <PageShell
-      title={t("list.title")}
-      description={t("list.description")}
-      actions={<Button icon={<Plus size={16} strokeWidth={1.5} />} loading={creating} onClick={create}>{t("list.new")}</Button>}
-    >
+    <PageShell title={t("list.title")} description={t("list.description")}>
       <div className="flex flex-col gap-section">
         {/* Cashier discount policy */}
         <section className="card-surface p-card">
@@ -76,7 +73,26 @@ export default function PromotionsPage() {
 
         {/* Promotions list */}
         {q.loading || (q.data?.data.length ?? 0) > 0 ? (
-          <DataTable columns={columns} rows={q.data?.data ?? []} getRowId={(p) => p.id} loading={q.loading} onRowClick={(p) => router.push(`/promotions/${p.id}`)} />
+          <DataTable
+            columns={columns}
+            rows={q.data?.data ?? []}
+            getRowId={(p) => p.id}
+            loading={q.loading}
+            onRowClick={(p) => router.push(`/promotions/${p.id}`)}
+            /* The list's own header: its name, and New promotion at the right.
+               There is no header row above the page for the button. */
+            toolbar={
+              <PageToolbar
+                actions={
+                  <Button size="sm" icon={<Plus size={16} strokeWidth={1.5} />} loading={creating} onClick={create}>
+                    {t("list.new")}
+                  </Button>
+                }
+              >
+                <h2 className="type-h2 pt-inline text-base">{t("list.title")}</h2>
+              </PageToolbar>
+            }
+          />
         ) : (
           <EmptyState title={t("list.empty")} action={<Button onClick={create}>{t("list.new")}</Button>} />
         )}
