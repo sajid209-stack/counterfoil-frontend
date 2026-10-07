@@ -54,10 +54,8 @@
   "venueNotSelling": "Not selling now",
   "finances": "Finances",
   "expenses": "Expenses",
-  "product": "Counterfoil OS",
-  "switchWorkspace": "Switch workspace",
-  "collapse": "Collapse",
-  "expand": "Expand",
+  "collapse": "Collapse sidebar",
+  "expand": "Expand sidebar",
   "otherApps": "Other apps",
   "main": "Main menu",
   "version": "Version {version}"

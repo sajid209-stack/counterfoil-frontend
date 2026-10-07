@@ -40,30 +40,25 @@ export function useExpenseLabels() {
 /** "29 Jul", with the year once it is not this year's. */
 export const shortDate = (iso: string): string => (iso.slice(0, 4) === DEMO_TODAY.slice(0, 4) ? formatDay(iso) : `${formatDay(iso)} ${iso.slice(0, 4)}`);
 
-/** An icon in a quiet disc, then its name. */
-export function CategoryTag({ category, size = 28, className }: { category: ExpenseCategory; size?: number; className?: string }) {
+/** A small icon, then its name: the category, the way a row of the table says it. */
+export function CategoryTag({ category, className }: { category: ExpenseCategory; className?: string }) {
   const label = useExpenseLabels().category(category);
   const Icon = CATEGORY_ICON[category];
   return (
     <span className={cn("inline-flex min-w-0 items-center gap-tight", className)}>
-      <span aria-hidden style={{ width: size, height: size }} className="grid shrink-0 place-items-center rounded-full bg-muted-wash text-muted">
-        <Icon size={Math.round(size * 0.55)} strokeWidth={1.5} />
-      </span>
+      <Icon size={15} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
       <span className="min-w-0 truncate">{label}</span>
     </span>
   );
 }
 
+/** How it was paid, with the counter underneath when it came out of a cash drawer. */
 export function PaidTag({ paidFrom, counter, className }: { paidFrom: PaidFrom; counter?: string; className?: string }) {
   const label = useExpenseLabels().paidFrom(paidFrom);
-  const Icon = PAID_ICON[paidFrom];
   return (
-    <span className={cn("inline-flex min-w-0 items-start gap-tight", className)}>
-      <Icon size={16} strokeWidth={1.5} aria-hidden className="mt-[2px] shrink-0 text-muted" />
-      <span className="min-w-0">
-        <span className="block truncate">{label}</span>
-        {counter && <span className="block truncate text-[12px] text-muted">{counter}</span>}
-      </span>
+    <span className={cn("block min-w-0", className)}>
+      <span className="block truncate">{label}</span>
+      {counter && <span className="block truncate text-[12px] text-muted">{counter}</span>}
     </span>
   );
 }

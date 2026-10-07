@@ -26,11 +26,13 @@ import { counterIsOpen, setActiveCounter, useActiveCounter } from "@/lib/activeC
  * customer's order away. Taking payment or pausing the sale are both one tap
  * from here, so refusing costs less than either alternative.
  *
- * The chip names the counter on the first line and its venue under it. It is
- * the first thing in the header, a white pill drawn like the date chip under
- * it so the two read as one family and share a left edge. On a phone it is the
- * one flexible thing in the header, so both lines truncate with an ellipsis;
- * the full names are in its accessible name.
+ * The trigger is a ghost button, not a box: the counter's name and a small
+ * chevron, no border or fill at rest, a soft fill on hover and press. That is
+ * the switcher the best workspace tools draw (Square POS's location picker,
+ * Shopify POS, Linear, Vercel) — it reads as part of the header rather than
+ * as a form field sitting in it. The venue is not on the trigger: it is the
+ * group heading inside the list, and it is in the button's accessible name.
+ * 44px tall; the name truncates with an ellipsis and never wraps.
  */
 export function CounterPicker({ saleCount }: { saleCount: number }) {
   const t = useTranslations("pos.shell");
@@ -100,13 +102,10 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
         aria-expanded={open}
         aria-label={active ? t("counterChipAria", { name, venue }) : t("counterNone")}
         data-counter-chip
-        className="go-surface flex h-11 w-full min-w-0 items-center gap-inline rounded-full px-comfortable text-left active:bg-muted-wash"
+        className="flex h-11 max-w-full items-center gap-1 rounded-full px-3 text-left transition-colors duration-quick hover:bg-muted-wash active:bg-muted-wash"
       >
-        <span className="flex min-w-0 flex-1 flex-col leading-tight">
-          <span className="truncate text-[0.875rem] font-semibold text-fg">{name}</span>
-          {venue && <span className="truncate text-[0.8125rem] text-muted">{venue}</span>}
-        </span>
-        <ChevronDown size={16} strokeWidth={2} aria-hidden className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-180")} />
+        <span className="truncate text-[1rem] font-semibold leading-tight text-fg">{name}</span>
+        <ChevronDown size={14} strokeWidth={2.25} aria-hidden className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-180")} />
       </button>
 
       {open && (
@@ -116,13 +115,12 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
             ref={panel}
             role="dialog"
             aria-label={t("counterTitle")}
-            className="go-raised fixed inset-x-tight top-[60px] z-50 max-h-[calc(100dvh-76px)] overflow-y-auto p-tight sm:absolute sm:inset-x-auto sm:left-0 sm:top-[calc(100%+6px)] sm:w-[22rem]"
+            className="go-raised fixed inset-x-tight top-[60px] z-50 max-h-[calc(100dvh-76px)] overflow-y-auto rounded-md p-1.5 sm:absolute sm:inset-x-auto sm:left-0 sm:top-[calc(100%+4px)] sm:w-[20rem]"
           >
-            <p className="px-comfortable pb-inline pt-tight text-[0.875rem] font-semibold text-muted">{t("counterTitle")}</p>
-            {groups.length === 0 && <p className="px-comfortable py-comfortable text-[0.875rem] text-muted">{t("counterNone")}</p>}
+            {groups.length === 0 && <p className="px-3 py-3 text-[0.9375rem] text-muted">{t("counterNone")}</p>}
             {groups.map((g) => (
-              <div key={g.id} role="radiogroup" aria-label={g.name} className="pb-tight">
-                <p className="px-comfortable pb-inline pt-tight text-[0.8125rem] font-semibold text-muted">{g.name}</p>
+              <div key={g.id} role="radiogroup" aria-label={g.name} className="pb-1 last:pb-0">
+                <p className="truncate px-3 pb-1 pt-2 text-[0.8125rem] font-medium text-muted">{g.name}</p>
                 {g.list.map((c) => {
                   const isOpen = counterIsOpen(c);
                   const chosen = c.id === active?.id;
@@ -136,12 +134,12 @@ export function CounterPicker({ saleCount }: { saleCount: number }) {
                       data-counter={c.id}
                       onClick={() => choose(c)}
                       className={cn(
-                        "flex min-h-12 w-full items-center gap-tight rounded-go-sm px-comfortable py-tight text-left transition-colors duration-quick",
-                        !isOpen ? "cursor-not-allowed" : chosen ? "bg-ember/[0.08]" : "hover:bg-subtle active:bg-muted-wash",
+                        "flex min-h-11 w-full items-center gap-2 rounded-sm px-3 py-1.5 text-left transition-colors duration-quick",
+                        isOpen ? "hover:bg-muted-wash active:bg-muted-wash" : "cursor-not-allowed",
                       )}
                     >
                       <span className="flex min-w-0 flex-1 flex-col leading-snug">
-                        <span className={cn("text-[0.9375rem] font-semibold", isOpen ? "text-fg" : "text-muted")}>{c.name}</span>
+                        <span className={cn("truncate text-[0.9375rem]", isOpen ? "font-medium text-fg" : "text-muted", chosen && "font-semibold")}>{c.name}</span>
                         {!isOpen && (
                           <span className="text-[0.8125rem] text-muted">
                             <span className="font-semibold text-danger">{t("counterClosed")}</span> · {t("counterClosedHelp")}

@@ -78,9 +78,10 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
  * Expenses — what the venue spends, written down where it happened.
  *
  * A toolbar (dates, category, how it was paid, search, and the one create
- * button), one line of figures that add up exactly what the table lists, and
- * the table. A row opens its drawer to read or change it; the menu on a row
- * edits, copies (for a cost that comes round again) or deletes with an Undo.
+ * button), one summary card whose figures add up exactly what the table lists,
+ * and the table — `DataTable`, the same one Orders and Customers use. A row
+ * opens its drawer to read or change it; the menu on a row edits, copies (for
+ * a cost that comes round again) or deletes with an Undo.
  * The venue is the one in the bar, and the view lives in the address, so it can
  * be shared or bookmarked.
  */
@@ -171,6 +172,13 @@ function ExpensesView({ locationId, venueName, pending, locations }: { locationI
     setPaid([]);
     setSearch("");
     setQ("");
+    setPage(1);
+  };
+
+  /* A legend row in the summary narrows the list to that category; pressing the
+     only chosen one again clears it. */
+  const pickCategory = (c: ExpenseCategory) => {
+    setCats((cur) => (cur.length === 1 && cur[0] === c ? [] : [c]));
     setPage(1);
   };
 
@@ -335,7 +343,7 @@ function ExpensesView({ locationId, venueName, pending, locations }: { locationI
           </div>
         </div>
 
-        <Summary summary={summary} loading={pending || sumQ.loading} periodLabel={periodLabel} />
+        <Summary summary={summary} loading={pending || sumQ.loading} periodLabel={periodLabel} selected={cats} onSelect={pickCategory} />
 
         <ExpenseTable
           rows={rows}

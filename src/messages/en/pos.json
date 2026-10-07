@@ -564,7 +564,14 @@
     "limitedHow": "A manager can change this in OS Settings, Devices.",
     "emptyTitle": "Nobody is set up to sign in here yet.",
     "emptyHow": "A manager can add people in OS Settings, Devices.",
-    "ownDevice": "This is {name}'s own device."
+    "ownDevice": "This is {name}'s own device.",
+    "pairLink": "Pair this tablet",
+    "emptyDeviceTitle": "No one can sign in on {device} yet.",
+    "emptyDeviceHow": "Ask a manager to add you in Settings → Devices.",
+    "emptyNoPinTitle": "No one allowed on {device} has a PIN yet.",
+    "emptyNoPinHow": "Ask a manager to set your PIN in Settings → Team.",
+    "deviceOff": "{device} is turned off.",
+    "deviceOffHow": "Ask a manager to turn it on in Settings → Devices."
   },
   "tills": {
     "metaTitle": "Sales screens · Counterfoil",
@@ -607,5 +614,25 @@
     "choose": "Choose a day",
     "previousMonth": "Previous month",
     "nextMonth": "Next month"
+  },
+  "pair": {
+    "title": "Pair this tablet",
+    "intro": "Type the code from Settings → Devices in the back office.",
+    "hint": "The code works for 15 minutes.",
+    "codeLabel": "Pairing code",
+    "codePlaceholder": "000 000",
+    "button": "Pair",
+    "pairing": "Pairing…",
+    "successTitle": "Paired ✓",
+    "successLine": "{name} is ready.",
+    "counter": "Counter",
+    "venue": "Venue",
+    "who": "Who can sign in",
+    "whoNone": "No one can sign in yet. Ask a manager to add you in Settings → Devices.",
+    "noPin": "{count, plural, one {# person has} other {# people have}} no PIN yet and can't sign in.",
+    "goSignIn": "Go to sign in",
+    "alreadyAs": "This tablet is paired as {name}. Typing a new code pairs it again.",
+    "backToSignIn": "Back to sign in",
+    "more": "+{count} more"
   }
 }

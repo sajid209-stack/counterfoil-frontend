@@ -51,15 +51,16 @@
   "summary": {
     "label": "এই খরচগুলোর সারাংশ",
     "total": "মোট খরচ",
-    "count": "খরচের সংখ্যা",
-    "items": "{count, plural, one {#টি আইটেম} other {#টি আইটেম}} লেখা আছে",
-    "noItems": "কোনো আইটেম লেখা নেই",
-    "biggest": "সবচেয়ে বড় ক্যাটাগরি",
     "none": "এই তারিখগুলোতে কোনো খরচ নেই।",
-    "share": "{category}: মোটের {percent}"
+    "whereWent": "কোথায় খরচ হয়েছে",
+    "context": "{count, plural, one {#টি খরচ} other {#টি খরচ}} · {period}",
+    "other": "অন্যান্য ক্যাটাগরি",
+    "tiny": "<1%",
+    "barLabel": "{total} কোথায় গেছে: {parts}",
+    "filterBy": "শুধু {category} দেখান",
+    "clearFilter": "আবার সব ক্যাটাগরি দেখান"
   },
   "table": {
-    "label": "খরচের তালিকা",
     "ref": "রেফ",
     "date": "তারিখ",
     "title": "শিরোনাম",
@@ -69,7 +70,6 @@
     "total": "মোট",
     "by": "যোগ করেছেন",
     "actions": "কাজ",
-    "sortBy": "{column} অনুযায়ী সাজান",
     "itemsCount": "{count, plural, one {#টি আইটেম} other {#টি আইটেম}}",
     "oneAmount": "এক অঙ্ক, আইটেম নেই",
     "hasReceipt": "রসিদ আছে"
@@ -82,11 +82,11 @@
   },
   "page": {
     "showing": "{total}টির মধ্যে {from}–{to} দেখানো হচ্ছে",
-    "size": "{count}টি দেখান",
-    "sizeLabel": "প্রতি পাতায় কয়টি",
     "previous": "আগের",
     "next": "পরের",
-    "of": "পাতা {page}, মোট {total}"
+    "of": "পাতা {page}, মোট {total}",
+    "show": "দেখান",
+    "label": "পেজ"
   },
   "empty": {
     "title": "এখনো কোনো খরচ নেই",

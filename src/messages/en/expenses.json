@@ -51,15 +51,16 @@
   "summary": {
     "label": "Summary of these expenses",
     "total": "Total spent",
-    "count": "Expenses",
-    "items": "{count, plural, one {# item} other {# items}} listed",
-    "noItems": "No item lists",
-    "biggest": "Biggest categories",
     "none": "Nothing spent in these dates.",
-    "share": "{category}: {percent} of the total"
+    "whereWent": "Where it went",
+    "context": "{count, plural, one {# expense} other {# expenses}} · {period}",
+    "other": "Other categories",
+    "tiny": "<1%",
+    "barLabel": "Where {total} went: {parts}",
+    "filterBy": "Show only {category}",
+    "clearFilter": "Show all categories again"
   },
   "table": {
-    "label": "Expenses",
     "ref": "Ref",
     "date": "Date",
     "title": "Title",
@@ -69,7 +70,6 @@
     "total": "Total",
     "by": "Added by",
     "actions": "Actions",
-    "sortBy": "Sort by {column}",
     "itemsCount": "{count, plural, one {# item} other {# items}}",
     "oneAmount": "One amount, no items",
     "hasReceipt": "Has a receipt"
@@ -82,11 +82,11 @@
   },
   "page": {
     "showing": "Showing {from}–{to} of {total}",
-    "size": "Show {count}",
-    "sizeLabel": "Rows on each page",
     "previous": "Previous",
     "next": "Next",
-    "of": "Page {page} of {total}"
+    "of": "Page {page} of {total}",
+    "show": "Show",
+    "label": "Pages"
   },
   "empty": {
     "title": "No expenses yet",

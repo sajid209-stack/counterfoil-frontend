@@ -115,9 +115,8 @@ export function OsShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("cf-prefs", onPrefs);
   }, []);
 
-  // Search has no button any more — the owner took it off the rail and the
-  // bar. Ctrl/⌘ K still opens the palette: a shortcut costs no pixels, and it
-  // is the only way to jump to a settings section by keyword from anywhere.
+  // Search is the rail's field; Ctrl/⌘ K opens the same command palette,
+  // so a page or a settings section is one keyword away from anywhere.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "k") return;
@@ -231,7 +230,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
     <BarTitleContext value={pageName}>
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen shrink-0 overflow-y-auto md:block">
-        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} workspaceName={operatorQ.data?.name} />
+        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} onSearch={() => setSearchOpen(true)} shortcutKey={shortcutKey} />
       </aside>
 
       {/* overflow-x-CLIP, not hidden. `overflow-x: hidden` forces overflow-y to

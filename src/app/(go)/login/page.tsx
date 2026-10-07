@@ -1,20 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button, FormField, Modal } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveCounterNow } from "@/lib/activeCounter";
+import { resolveThisDevice, useThisDeviceId } from "@/lib/thisDevice";
 import { formatClock } from "@/lib/format";
 import {
   DEMO_PIN,
   checkStaffPin,
+  deviceAccess,
   getAccessPolicy,
   listDevices,
   listStaff,
+  peekCounters,
+  peopleAllowedOn,
   staffPinLength,
   whoCanSignIn,
+  whoCanSignInOn,
   type Staff,
 } from "@/lib/api";
 import { Keypad } from "../_components/Keypad";
@@ -79,14 +85,30 @@ export default function GoLoginPage() {
      whole venue before it narrows. */
   const activeCounter = useActiveCounterNow();
   const ready = !!staffQ.data && !!devicesQ.data;
+  /* A tablet that has been PAIRED (Pair this tablet, on /login/pair) knows which
+     device it is, and the people listed are the ones allowed on THAT device and
+     able to sign in — a person without a till PIN cannot, so they are not
+     listed. A tablet that has not been paired keeps the old behaviour: the
+     device on the counter this till is set to decides. */
+  const thisId = useThisDeviceId();
+  const pairedDevice = ready ? resolveThisDevice(devicesQ.data!.data, thisId) : undefined;
   const signIn = ready ? whoCanSignIn(devicesQ.data!.data, staffQ.data!.data, activeCounter.id) : null;
-  const team = signIn?.people ?? [];
-  const limited = !!signIn?.limited;
-  const owner = signIn?.device?.ownerStaffId ? team.find((s) => s.id === signIn.device!.ownerStaffId) : undefined;
+  const device = pairedDevice ?? signIn?.device;
+  const pairedOff = pairedDevice?.status === "inactive";
+  const team = pairedDevice ? (pairedOff ? [] : whoCanSignInOn(pairedDevice, staffQ.data!.data)) : (signIn?.people ?? []);
+  const withoutPin = pairedDevice ? peopleAllowedOn(pairedDevice, staffQ.data!.data).length - team.length : 0;
+  const limited = pairedDevice ? deviceAccess(pairedDevice) === "assigned" : !!signIn?.limited;
+  const cells = team.length + (limited ? 0 : 1);
+  const owner = device?.ownerStaffId ? team.find((s) => s.id === device.ownerStaffId) : undefined;
+  const counterName = pairedDevice
+    ? peekCounters().find((c) => c.id === pairedDevice.counterId)?.name
+    : activeCounter.counter?.name;
   // Somebody's own device goes straight to their PIN pad.
   const who = picked ?? owner ?? null;
   const setWho = (next: typeof picked) => setPicked(next);
-  const deviceName = signIn?.device?.name ?? "";
+  const deviceName = device?.name ?? "";
+  // The starting PIN still opens anyone who has not chosen their own.
+  const usesDemoPin = !who || who.id === "guest" || checkStaffPin(who.id, DEMO_PIN);
   const colors = faceColors(team);
   const colorOf = (id: string): FaceColor => colors.get(id) ?? "orange";
   const shiftOwner = staffQ.data?.data.find((s) => s.id === OPEN_SHIFT.staffId);
@@ -133,11 +155,11 @@ export default function GoLoginPage() {
       {/* Context bar — confirm you're at the right counter before signing in. */}
       <div className="w-full max-w-lg text-center">
         <p className="text-[0.875rem] font-medium text-muted">
-          {[BUSINESS, activeCounter.counter?.name, deviceName].filter(Boolean).join(" · ")}
+          {[BUSINESS, counterName, deviceName].filter(Boolean).join(" · ")}
         </p>
         <p className="mt-inline text-[0.8125rem] text-muted">
           {shiftOwner ? t("login.shiftOpenBy", { name: shiftOwner.name.split(" ")[0], time: formatClock(OPEN_SHIFT.since) }) : t("login.noShift")}
-          {!(who && "hasPin" in who && who.hasPin) && <span className="ml-tight text-muted">· {t("login.demoPin", { pin: DEMO_PIN })}</span>}
+          {usesDemoPin && <span className="ml-tight text-muted">· {t("login.demoPin", { pin: DEMO_PIN })}</span>}
         </p>
         {/* A limited tablet says so, quietly, and where to change it. Somebody
             who is not on the list should learn why from the screen rather than
@@ -152,10 +174,29 @@ export default function GoLoginPage() {
 
       {!ready ? (
         <div aria-busy="true" className="go-surface mt-major h-64 w-full max-w-lg animate-pulse rounded-go" />
-      ) : !who && limited && team.length === 0 ? (
-        <div className="mt-major max-w-lg text-center">
-          <p className="text-[1rem] font-semibold text-fg">{t("login.emptyTitle")}</p>
-          <p className="mt-tight text-[0.8125rem] text-muted">{t("login.emptyHow")}</p>
+      ) : !who && (pairedDevice || limited) && team.length === 0 ? (
+        <div className="mt-major max-w-lg text-center" data-testid="login-empty">
+          {pairedOff ? (
+            <>
+              <p className="text-[1rem] font-semibold text-fg">{t("login.deviceOff", { device: deviceName })}</p>
+              <p className="mt-tight text-[0.8125rem] text-muted">{t("login.deviceOffHow")}</p>
+            </>
+          ) : pairedDevice && withoutPin > 0 ? (
+            <>
+              <p className="text-[1rem] font-semibold text-fg">{t("login.emptyNoPinTitle", { device: deviceName })}</p>
+              <p className="mt-tight text-[0.8125rem] text-muted">{t("login.emptyNoPinHow")}</p>
+            </>
+          ) : pairedDevice ? (
+            <>
+              <p className="text-[1rem] font-semibold text-fg">{t("login.emptyDeviceTitle", { device: deviceName })}</p>
+              <p className="mt-tight text-[0.8125rem] text-muted">{t("login.emptyDeviceHow")}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-[1rem] font-semibold text-fg">{t("login.emptyTitle")}</p>
+              <p className="mt-tight text-[0.8125rem] text-muted">{t("login.emptyHow")}</p>
+            </>
+          )}
         </div>
       ) : !who ? (
         <>
@@ -163,8 +204,10 @@ export default function GoLoginPage() {
           <p className="mt-major text-[1rem] font-semibold text-fg">{t("login.whoTitle")}</p>
           {/* The people as cells on ONE card — the till's own drawing — each a
               face, a name and whether they are on shift. Tap yours. */}
-          <div className="go-surface mt-section w-full max-w-lg overflow-hidden rounded-go">
-          <div className="-mb-px -mr-px grid grid-cols-2 sm:grid-cols-3">
+          {/* As many columns as there are people, up to the grid: a tablet limited to
+              one person must not draw them beside an empty half-card. */}
+          <div className={`go-surface mt-section w-full overflow-hidden rounded-go ${cells === 1 ? "max-w-xs" : cells === 2 ? "max-w-sm" : "max-w-lg"}`}>
+          <div className={`-mb-px -mr-px grid ${cells === 1 ? "grid-cols-1" : cells === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"}`}>
             {team.map((s) => (
               <button
                 key={s.id}
@@ -231,6 +274,17 @@ export default function GoLoginPage() {
             <Keypad large onKey={onKey} onBackspace={() => setPin((p) => p.slice(0, -1))} />
           </div>
         </>
+      )}
+
+      {/* A tablet nobody has paired yet says how, quietly. */}
+      {ready && !pairedDevice && !who && (
+        <Link
+          href="/login/pair"
+          data-testid="login-pair-link"
+          className="mt-major inline-flex min-h-11 items-center px-section text-[0.875rem] font-medium text-muted underline underline-offset-4 active:text-fg"
+        >
+          {t("login.pairLink")}
+        </Link>
       )}
 
       {/* Take over an open shift — the drawer stays attributed until now. */}

@@ -1,79 +1,190 @@
 "use client";
 
+import { Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { ExpenseSummary } from "@/lib/api";
+import type { ExpenseCategory, ExpenseSummary } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { CATEGORY_ICON, useExpenseLabels } from "./parts";
 
-/** A share, with one decimal while it is under 10% so 0.3% never reads "0%". */
-const percent = (part: number, whole: number): string => {
-  if (whole <= 0) return "0%";
-  const p = (part / whole) * 100;
-  return `${p < 10 ? Math.round(p * 10) / 10 : Math.round(p)}%`;
-};
+/** How many categories get a colour of their own; everything after that is one
+ *  neutral "other categories" slice. The palette has four hues, in a fixed
+ *  order, validated as a set (see `--chart-cat-*` in globals.css). */
+const SERIES = 4;
+
+/** Written out whole, not built from the index: Tailwind only emits a theme
+ *  variable it can find in the source, and `var(--chart-cat-${i})` finds none. */
+const SERIES_COLORS = ["var(--chart-cat-1)", "var(--chart-cat-2)", "var(--chart-cat-3)", "var(--chart-cat-4)"];
+const OTHER_COLOR = "var(--chart-cat-other)";
+
+interface Slice {
+  key: string;
+  /** Absent on the "other categories" slice, which stands for several. */
+  category?: ExpenseCategory;
+  total: number;
+  /** Whole percent, worked out so the slices add up to exactly 100. */
+  percent: number;
+  /** Under half a percent: shown as "<1%" rather than a "0%" that reads as nothing. */
+  tiny: boolean;
+  color: string;
+}
 
 /**
- * What the dates and filters add up to, as one line of figures on the page
- * itself — no cards. The total, how many expenses, and where the money went:
- * the four biggest categories, each with a thin bar for its share.
+ * The biggest four categories, then everything else as one slice, with each
+ * share rounded by largest remainder so the figures beside the bar add up to
+ * 100 and not to 99 or 101.
+ */
+function slicesOf(summary: ExpenseSummary): Slice[] {
+  const top = summary.byCategory.slice(0, SERIES);
+  const rest = summary.byCategory.slice(SERIES);
+  const parts: Omit<Slice, "percent" | "tiny">[] = top.map((c, i) => ({ key: c.category, category: c.category, total: c.total, color: SERIES_COLORS[i] }));
+  if (rest.length > 0) parts.push({ key: "other", total: rest.reduce((n, c) => n + c.total, 0), color: OTHER_COLOR });
+
+  const whole = parts.reduce((n, p) => n + p.total, 0);
+  const raw = parts.map((p) => (whole > 0 ? (p.total / whole) * 100 : 0));
+  const floor = raw.map((r) => Math.floor(r));
+  let left = 100 - floor.reduce((n, f) => n + f, 0);
+  [...raw.keys()]
+    .sort((a, b) => raw[b] - Math.floor(raw[b]) - (raw[a] - Math.floor(raw[a])))
+    .forEach((i) => {
+      if (left > 0) {
+        floor[i] += 1;
+        left -= 1;
+      }
+    });
+  return parts.map((p, i) => ({ ...p, percent: floor[i], tiny: raw[i] < 0.5 }));
+}
+
+/**
+ * Where the money went, as one card.
+ *
+ * The total and what it covers on the left; on the right one 100% bar split
+ * into the four biggest categories and "other categories", and under it a
+ * legend that repeats every segment as a row — swatch, icon, name, amount,
+ * share. A colour is never the only way to tell a segment apart: each has its
+ * own row with its name and its figure, the bar carries a description that
+ * lists them all, and no text is set in a series colour.
  *
  * It is the same query as the table's, over every page, so it always equals the
- * rows in the table added together.
+ * rows in the table added together. A legend row narrows the table to that
+ * category (and a second press clears it); "other categories" stands for
+ * several, so it does not.
  */
-export function Summary({ summary, loading, periodLabel }: { summary: ExpenseSummary | undefined; loading: boolean; periodLabel: string }) {
+export function Summary({
+  summary,
+  loading,
+  periodLabel,
+  selected,
+  onSelect,
+}: {
+  summary: ExpenseSummary | undefined;
+  loading: boolean;
+  periodLabel: string;
+  selected: ExpenseCategory[];
+  onSelect: (category: ExpenseCategory) => void;
+}) {
   const t = useTranslations("expenses");
   const labels = useExpenseLabels();
-  const top = summary?.byCategory.slice(0, 4) ?? [];
+  const slices = summary ? slicesOf(summary) : [];
+  const empty = !!summary && (summary.count === 0 || summary.total <= 0);
+  const nameOf = (s: Slice) => (s.category ? labels.category(s.category) : t("summary.other"));
+  const pctOf = (s: Slice) => (s.tiny ? t("summary.tiny") : `${s.percent}%`);
 
   return (
-    <section aria-label={t("summary.label")} aria-busy={loading} className={cn("flex flex-col gap-section py-tight transition-opacity xl:flex-row xl:items-start xl:gap-major", loading && summary && "opacity-60")}>
-      <div className="flex gap-major xl:contents">
-        <dl className="min-w-0 md:w-52 md:shrink-0">
+    <section aria-label={t("summary.label")} aria-busy={loading} className={cn("card-surface p-card transition-opacity", loading && summary && "opacity-60")}>
+      <div className="grid gap-section lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-major">
+        {/* Left: the figure and what it covers. */}
+        <dl className="min-w-0 lg:border-r lg:border-hairline lg:pr-major">
           <dt className="text-[12px] font-medium text-muted">{t("summary.total")}</dt>
-          <dd className="mt-inline text-[26px] font-semibold leading-tight tracking-[-0.025em] tabular-nums">{summary ? formatMoney(summary.total) : <Bar className="h-7 w-32" />}</dd>
-          <dd className="mt-inline text-[12px] text-muted">{periodLabel}</dd>
+          {summary ? (
+            <>
+              <dd className="mt-inline text-[28px] font-semibold leading-tight tracking-[-0.025em] tabular-nums">{formatMoney(summary.total)}</dd>
+              <dd className="mt-inline text-[12px] text-muted">{t("summary.context", { count: summary.count, period: periodLabel })}</dd>
+            </>
+          ) : (
+            <>
+              <dd className="mt-inline"><Bar className="h-7 w-36 rounded-sm" /></dd>
+              <dd className="mt-inline"><Bar className="h-3 w-44 rounded-sm" /></dd>
+            </>
+          )}
         </dl>
-        <dl className="min-w-0 md:w-32 md:shrink-0 md:border-l md:border-hairline md:pl-major">
-          <dt className="text-[12px] font-medium text-muted">{t("summary.count")}</dt>
-          <dd className="mt-inline text-[26px] font-semibold leading-tight tracking-[-0.025em] tabular-nums">{summary ? summary.count : <Bar className="h-7 w-10" />}</dd>
-          <dd className="mt-inline text-[12px] text-muted">{summary ? (summary.items > 0 ? t("summary.items", { count: summary.items }) : t("summary.noItems")) : " "}</dd>
-        </dl>
-      </div>
 
-      <div className="min-w-0 flex-1 xl:border-l xl:border-hairline xl:pl-major">
-        <p className="text-[12px] font-medium text-muted">{t("summary.biggest")}</p>
-        {summary && top.length === 0 ? (
-          <p className="mt-tight text-[13px] text-muted">{t("summary.none")}</p>
-        ) : (
-          <ul className="mt-tight grid grid-cols-2 gap-x-section gap-y-comfortable sm:grid-cols-4">
-            {(summary ? top : [0, 1, 2, 3].map(() => null)).map((c, i) => {
-              if (!c || !summary) return <li key={i}><Bar className="h-10 w-full" /></li>;
-              const Icon = CATEGORY_ICON[c.category];
-              const share = summary.total > 0 ? (c.total / summary.total) * 100 : 0;
-              return (
-                <li key={c.category} className="min-w-0">
-                  <div className="flex items-center justify-between gap-tight text-[13px]">
-                    <span className={cn("flex min-w-0 items-center gap-inline", i === 0 ? "font-semibold text-fg" : "text-fg")}>
-                      <Icon size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
-                      <span className="truncate">{labels.category(c.category)}</span>
-                    </span>
-                    <span className="shrink-0 text-[12px] tabular-nums text-muted">{percent(c.total, summary.total)}</span>
+        {/* Right: where it went. */}
+        <div className="min-w-0 border-t border-hairline pt-section lg:border-t-0 lg:pt-0">
+          <p className="text-[12px] font-medium text-muted">{t("summary.whereWent")}</p>
+          {!summary ? (
+            <div className="mt-tight">
+              <span role="status" className="sr-only">{t("loading")}</span>
+              <Bar className="h-2.5 w-full rounded-full" />
+              {/* Rows the height of the real ones, so the card does not jump when the answer lands. */}
+              <div className="-mx-tight mt-comfortable grid gap-x-major gap-y-inline sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex min-h-[44px] items-center px-tight sm:min-h-9">
+                    <Bar className="h-4 w-full rounded-sm" />
                   </div>
-                  <p className={cn("mt-inline text-[13px] tabular-nums", i === 0 ? "font-semibold" : "")}>{formatMoney(c.total)}</p>
-                  <div role="img" aria-label={t("summary.share", { percent: percent(c.total, summary.total), category: labels.category(c.category) })} className="mt-tight h-1 overflow-hidden rounded-full bg-line">
-                    <div className="h-full rounded-full bg-ember-solid" style={{ width: `${Math.max(3, Math.min(100, share))}%` }} />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                ))}
+              </div>
+            </div>
+          ) : empty ? (
+            <p className="mt-tight text-[13px] text-muted">{t("summary.none")}</p>
+          ) : (
+            <>
+              <div
+                role="img"
+                aria-label={t("summary.barLabel", { total: formatMoney(summary.total), parts: slices.map((s) => `${nameOf(s)} ${formatMoney(s.total)} (${pctOf(s)})`).join(", ") })}
+                className="mt-tight flex h-2.5 w-full gap-[2px]"
+              >
+                {slices.map((s, i) => (
+                  <span
+                    key={s.key}
+                    style={{ flexGrow: s.total, flexShrink: 1, flexBasis: 0, minWidth: 4, backgroundColor: s.color }}
+                    className={cn("block h-full rounded-[2px]", i === 0 && "rounded-l-full", i === slices.length - 1 && "rounded-r-full")}
+                  />
+                ))}
+              </div>
+              <ul className="-mx-tight mt-comfortable grid gap-x-major gap-y-inline sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                {slices.map((s) => {
+                  const Icon = s.category ? CATEGORY_ICON[s.category] : Layers;
+                  const row = "grid min-h-[44px] w-full grid-cols-[10px_minmax(0,1fr)_auto_3rem] items-center gap-x-tight rounded-sm px-tight text-left sm:min-h-9";
+                  const cells = (
+                    <>
+                      <span aria-hidden style={{ backgroundColor: s.color }} className="h-2.5 w-2.5 rounded-[3px]" />
+                      <span className="flex min-w-0 items-center gap-inline text-[13px]">
+                        <Icon size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
+                        <span className="truncate">{nameOf(s)}</span>
+                      </span>
+                      <span className="whitespace-nowrap text-right text-[13px] font-medium tabular-nums">{formatMoney(s.total)}</span>
+                      <span className="text-right text-[12px] tabular-nums text-muted">{pctOf(s)}</span>
+                    </>
+                  );
+                  const only = s.category !== undefined && selected.length === 1 && selected[0] === s.category;
+                  return (
+                    <li key={s.key} className="min-w-0">
+                      {s.category ? (
+                        <button
+                          type="button"
+                          aria-pressed={only}
+                          title={only ? t("summary.clearFilter") : t("summary.filterBy", { category: nameOf(s) })}
+                          onClick={() => onSelect(s.category as ExpenseCategory)}
+                          className={cn(row, "transition-colors duration-quick hover:bg-muted-wash", only && "bg-muted-wash")}
+                        >
+                          {cells}
+                        </button>
+                      ) : (
+                        <div className={row}>{cells}</div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </div>
       </div>
     </section>
   );
 }
 
 function Bar({ className }: { className?: string }) {
-  return <span aria-hidden className={cn("block animate-pulse rounded-sm bg-line/60", className)} />;
+  return <span aria-hidden className={cn("block animate-pulse bg-line/60", className)} />;
 }

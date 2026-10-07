@@ -8,11 +8,12 @@ import { Button, ConfirmDialog, EmptyState, StatusPill, Tabs, useToast } from "@
 import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { listCounters, listDevices, listLocations, listStaff, updateDevice, type Device } from "@/lib/api";
+import { deviceReadiness, isPaired, listCounters, listDevices, listLocations, listStaff, updateDevice, type Device } from "@/lib/api";
 import { isDeviceQuiet } from "@/lib/devices";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { IconTile, RecordList, RecordRow, SectionSkeleton, Switch } from "../_components/SettingsKit";
 import { useSince } from "../_lib/time";
+import { ReadinessLines } from "./_components/Readiness";
 import { WhoStack } from "./_components/WhoStack";
 
 type Tab = "all" | "on" | "off" | "attention";
@@ -58,7 +59,8 @@ export default function DevicesPage() {
   const loading = !devicesQ.data || !countersQ.data || !locationsQ.data || !staffQ.data;
 
   const needsAttention = (d: Device) =>
-    d.status === "active" && (!d.counterId || !d.lastSeenAt || isDeviceQuiet(d, DEMO_TODAY));
+    d.status === "active" &&
+    (!d.counterId || !d.lastSeenAt || isDeviceQuiet(d, DEMO_TODAY) || !deviceReadiness(d, staff).ready);
   const counts: Record<Tab, number> = {
     all: devices.length,
     on: devices.filter((d) => d.status === "active").length,
@@ -138,10 +140,11 @@ export default function DevicesPage() {
                     meta={
                       <>
                         <span className={cn("block", place.warn ? "text-warning" : undefined)}>{place.text}</span>
-                        <span className={cn("block", last.warn ? "text-warning" : undefined)}>{last.text}</span>
+                        {isPaired(d) && <span className={cn("block", last.warn ? "text-warning" : undefined)}>{last.text}</span>}
                         <span className="mt-inline block">
                           <WhoStack device={d} staff={staff} counters={counters} locations={locations} />
                         </span>
+                        <ReadinessLines device={d} staff={staff} className="mt-inline" />
                       </>
                     }
                     control={

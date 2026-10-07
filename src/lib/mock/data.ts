@@ -657,6 +657,8 @@ export const staff: Staff[] = [
     locationIds: ["loc_fort", "loc_museum"],
     counterIds: [],
     status: "active",
+    hasPin: true,
+    pinLength: 4,
     lastActiveAt: "2026-07-29T08:40:00+06:00",
     createdAt: T,
     updatedAt: T,
@@ -670,6 +672,8 @@ export const staff: Staff[] = [
     locationIds: ["loc_fort"],
     counterIds: ["cnt_fort_main", "cnt_fort_group"],
     status: "active",
+    hasPin: true,
+    pinLength: 4,
     lastActiveAt: "2026-07-29T09:05:00+06:00",
     createdAt: T,
     updatedAt: T,
@@ -683,6 +687,8 @@ export const staff: Staff[] = [
     locationIds: ["loc_fort"],
     counterIds: ["cnt_fort_main"],
     status: "active",
+    hasPin: true,
+    pinLength: 4,
     lastActiveAt: "2026-07-28T18:20:00+06:00",
     createdAt: T,
     updatedAt: T,
@@ -713,14 +719,14 @@ export const staff: Staff[] = [
     createdAt: "2025-11-01T10:00:00+06:00",
     updatedAt: "2026-06-01T10:00:00+06:00",
   },
-  { id: "stf_sabbir", name: "Sabbir Ahmed", email: "sabbir@lalbagh.example", phone: "+8801711000006", roleId: "role_cashier", locationIds: ["loc_fort"], counterIds: ["cnt_fort_kiosk"], status: "active", lastActiveAt: "2026-07-29T07:55:00+06:00", createdAt: T, updatedAt: T },
-  { id: "stf_farhana", name: "Farhana Yasmin", email: "farhana@lalbagh.example", phone: null, roleId: "role_supervisor", locationIds: ["loc_museum"], counterIds: ["cnt_museum_lobby", "cnt_museum_group"], status: "active", lastActiveAt: "2026-07-28T16:10:00+06:00", createdAt: T, updatedAt: T },
-  { id: "stf_jamal", name: "Jamal Hossain", email: null, phone: "+8801711000007", roleId: "role_cashier", locationIds: ["loc_fort"], counterIds: ["cnt_fort_main"], status: "active", lastActiveAt: "2026-07-29T09:12:00+06:00", createdAt: T, updatedAt: T },
+  { id: "stf_sabbir", name: "Sabbir Ahmed", email: "sabbir@lalbagh.example", phone: "+8801711000006", roleId: "role_cashier", locationIds: ["loc_fort"], counterIds: ["cnt_fort_kiosk"], status: "active", hasPin: true, pinLength: 4, lastActiveAt: "2026-07-29T07:55:00+06:00", createdAt: T, updatedAt: T },
+  { id: "stf_farhana", name: "Farhana Yasmin", email: "farhana@lalbagh.example", phone: null, roleId: "role_supervisor", locationIds: ["loc_museum"], counterIds: ["cnt_museum_lobby", "cnt_museum_group"], status: "active", hasPin: true, pinLength: 4, lastActiveAt: "2026-07-28T16:10:00+06:00", createdAt: T, updatedAt: T },
+  { id: "stf_jamal", name: "Jamal Hossain", email: null, phone: "+8801711000007", roleId: "role_cashier", locationIds: ["loc_fort"], counterIds: ["cnt_fort_main"], status: "active", hasPin: true, pinLength: 4, lastActiveAt: "2026-07-29T09:12:00+06:00", createdAt: T, updatedAt: T },
   { id: "stf_ruma", name: "Ruma Begum", email: "ruma@lalbagh.example", phone: "+8801711000008", roleId: "role_cashier", locationIds: ["loc_museum"], counterIds: ["cnt_museum_group"], status: "invited", lastActiveAt: null, createdAt: T, updatedAt: T },
-  { id: "stf_arif", name: "Arif Rahman", email: "arif@lalbagh.example", phone: "+8801711000009", roleId: "role_manager", locationIds: ["loc_fort", "loc_museum", "loc_garden"], counterIds: [], status: "active", lastActiveAt: "2026-07-29T08:00:00+06:00", createdAt: T, updatedAt: T },
+  { id: "stf_arif", name: "Arif Rahman", email: "arif@lalbagh.example", phone: "+8801711000009", roleId: "role_manager", locationIds: ["loc_fort", "loc_museum", "loc_garden"], counterIds: [], status: "active", hasPin: true, pinLength: 4, lastActiveAt: "2026-07-29T08:00:00+06:00", createdAt: T, updatedAt: T },
   { id: "stf_shila", name: "Shila Akter", email: "shila@lalbagh.example", phone: null, roleId: "role_cashier", locationIds: ["loc_fort"], counterIds: ["cnt_fort_group"], status: "active", lastActiveAt: "2026-07-27T15:30:00+06:00", createdAt: T, updatedAt: T },
   { id: "stf_mizan", name: "Mizanur Rahman", email: "mizan@lalbagh.example", phone: "+8801711000011", roleId: "role_supervisor", locationIds: ["loc_fort"], counterIds: ["cnt_fort_main", "cnt_fort_kiosk"], status: "suspended", lastActiveAt: "2026-06-15T12:00:00+06:00", createdAt: "2025-12-01T10:00:00+06:00", updatedAt: "2026-06-16T10:00:00+06:00" },
-  { id: "stf_ayesha", name: "Ayesha Siddiqua", email: "ayesha@lalbagh.example", phone: "+8801711000012", roleId: "role_cashier", locationIds: ["loc_fort", "loc_museum"], counterIds: ["cnt_fort_group"], status: "active", lastActiveAt: "2026-07-29T09:20:00+06:00", createdAt: T, updatedAt: T },
+  { id: "stf_ayesha", name: "Ayesha Siddiqua", email: "ayesha@lalbagh.example", phone: "+8801711000012", roleId: "role_cashier", locationIds: ["loc_fort", "loc_museum"], counterIds: ["cnt_fort_group"], status: "active", hasPin: true, pinLength: 4, lastActiveAt: "2026-07-29T09:20:00+06:00", createdAt: T, updatedAt: T },
 ];
 
 export const bookingRules: BookingRule[] = [
@@ -738,9 +744,9 @@ export const priceRules: PriceRule[] = [
 ];
 
 export const devices: Device[] = [
-  { id: "dev_fort_ipad1", name: "Fort iPad 1", counterId: "cnt_fort_main", pairingCode: "PAIR-4821", status: "active", lastSeenAt: "2026-07-29T09:10:00+06:00", createdAt: T, updatedAt: T },
-  { id: "dev_fort_ipad2", name: "Fort iPad 2", counterId: "cnt_fort_kiosk", pairingCode: "PAIR-7734", status: "active", lastSeenAt: "2026-07-28T18:02:00+06:00", createdAt: T, updatedAt: T },
-  { id: "dev_museum_ipad", name: "Museum Tablet", counterId: "cnt_museum_lobby", pairingCode: "PAIR-1290", status: "inactive", lastSeenAt: null, createdAt: T, updatedAt: T },
+  { id: "dev_fort_ipad1", name: "Fort iPad 1", counterId: "cnt_fort_main", pairingCode: "PAIR-4821", status: "active", lastSeenAt: "2026-07-29T09:10:00+06:00", pairedAt: "2026-07-29T09:10:00+06:00", createdAt: T, updatedAt: T },
+  { id: "dev_fort_ipad2", name: "Fort iPad 2", counterId: "cnt_fort_kiosk", pairingCode: "PAIR-7734", status: "active", lastSeenAt: "2026-07-28T18:02:00+06:00", pairedAt: "2026-07-28T18:02:00+06:00", createdAt: T, updatedAt: T },
+  { id: "dev_museum_ipad", name: "Museum Tablet", counterId: "cnt_museum_lobby", pairingCode: "PAIR-1290", status: "inactive", lastSeenAt: null, pairedAt: T, createdAt: T, updatedAt: T },
 ];
 
 export const resources: Resource[] = [

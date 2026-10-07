@@ -9,10 +9,12 @@ import {
   archiveDevice,
   deviceAccess,
   getDevice,
+  isPaired,
   listCounters,
   listLocations,
   listRoles,
   listStaff,
+  newPairingCode,
   updateDevice,
   type Device,
 } from "@/lib/api";
@@ -22,7 +24,9 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { RecordFacts, SaveBar, SectionSkeleton, SettingRow, SettingsSection, controlCls } from "../../_components/SettingsKit";
 import { useSince } from "../../_lib/time";
 import { CounterSelect } from "../_components/CounterSelect";
-import { accessProblem, DeviceAccess } from "../_components/DeviceAccess";
+import { accessProblem, DeviceAccess, SignInSummary } from "../_components/DeviceAccess";
+import { PairingPanel } from "../_components/PairingPanel";
+import { ReadinessLines } from "../_components/Readiness";
 import { resolveWho, firstName } from "../_components/WhoStack";
 
 interface Draft {
@@ -66,7 +70,9 @@ export default function DevicePage() {
   const [base, setBase] = useState<Draft | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
-  const [confirm, setConfirm] = useState<null | "off" | "remove">(null);
+  const [confirm, setConfirm] = useState<null | "off" | "remove" | "repair">(null);
+  /** Keeps the pairing panel on screen once it has been shown, so "Paired ✓" is seen. */
+  const [panelKept, setPanelKept] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const device = latest?.id === params.id ? latest : deviceQ.data;
@@ -119,12 +125,29 @@ export default function DevicePage() {
       value: device.status === "active" ? t("devices.factOn") : t("devices.factOff"),
       tone: device.status === "active" ? undefined : ("warn" as const),
     },
+    ...(device.status === "active"
+      ? [{ key: "ready", label: t("devices.factReady"), value: <ReadinessLines device={device} staff={staff} /> }]
+      : []),
+    {
+      key: "paired",
+      label: t("devices.factPaired"),
+      value: !isPaired(device)
+        ? t("devices.waitingToPair")
+        : device.pairedAt
+          ? formatDateTime(device.pairedAt)
+          : "—",
+      tone: !isPaired(device) && device.status === "active" ? ("warn" as const) : undefined,
+    },
     {
       key: "seen",
       label: t("devices.factSeen"),
       // The exact moment as well as the relative one: "3 hours ago" is what
       // you read, and the timestamp is what you quote.
-      value: device.lastSeenAt ? `${since(device.lastSeenAt)} · ${formatDateTime(device.lastSeenAt)}` : t("devices.neverSeen"),
+      value: device.lastSeenAt
+        ? since(device.lastSeenAt) === formatDateTime(device.lastSeenAt)
+          ? formatDateTime(device.lastSeenAt)
+          : `${since(device.lastSeenAt)} · ${formatDateTime(device.lastSeenAt)}`
+        : t("devices.neverSeen"),
       tone: quiet ? ("warn" as const) : undefined,
     },
     {
@@ -185,6 +208,20 @@ export default function DevicePage() {
     toast.success(status === "inactive" ? t("devices.turnedOff", { name: device.name }) : t("devices.turnedOn", { name: device.name }));
   };
 
+  const rePair = async () => {
+    setBusy(true);
+    const res = await newPairingCode(device.id);
+    setBusy(false);
+    setConfirm(null);
+    if (!res.ok) {
+      toast.error(res.error.message);
+      return;
+    }
+    setLatest(res.data);
+    setPanelKept(true);
+    toast.success(t("devices.newCodeToast"));
+  };
+
   const remove = async () => {
     setBusy(true);
     const res = await archiveDevice(device.id);
@@ -210,6 +247,29 @@ export default function DevicePage() {
             description of a Turn-off button, the counter was in the page
             subtitle, and when it was registered was nowhere. */}
         <RecordFacts label={t("devices.factsLabel")} facts={facts} />
+
+        {/* A tablet still waiting for its code shows the code here, with the
+            steps and a live "paired" answer — the same panel the Add screen ends on. */}
+        {device.status === "active" && (!isPaired(device) || panelKept) && (
+          <div id="pairing" className="flex flex-col gap-tight">
+            <div>
+              <h2 className="text-base font-semibold text-fg">{t("devices.pairingTitle")}</h2>
+              <p className="mt-inline max-w-prose text-[13px] leading-relaxed text-muted">{t("devices.pairingDesc")}</p>
+            </div>
+            <PairingPanel
+              key={device.id}
+              device={device}
+              staff={staff}
+              counters={counters}
+              locations={locations}
+              onChange={(d) => {
+                setLatest(d);
+                setPanelKept(true);
+              }}
+              onDone={() => router.push("/settings/devices")}
+            />
+          </div>
+        )}
 
         <SettingsSection title={t("devices.detailsTitle")} description={t("devices.detailsDesc")}>
           <SettingRow label={t("devices.deviceName")} error={nameErr}>
@@ -247,6 +307,18 @@ export default function DevicePage() {
           place={draftPlace}
           counterName={draftCounter?.name ?? ""}
           error={accessErr}
+          summary={
+            <SignInSummary
+              staff={staff}
+              device={{
+                ...device,
+                counterId: form.counterId || null,
+                access: form.access,
+                staffIds: form.staffIds,
+                ownerStaffId: form.ownerStaffId || null,
+              }}
+            />
+          }
         />
 
         <SettingsSection title={t("devices.connectionTitle")} description={t("devices.connectionDesc")}>
@@ -271,15 +343,17 @@ export default function DevicePage() {
               </div>
             )}
           </SettingRow>
-          <SettingRow label={t("devices.replaceLabel")} description={t("devices.replaceDesc")} labelFor={false}>
-            {() => (
-              <div className="flex sm:justify-end">
-                <Button variant="secondary" onClick={() => router.push("/settings/devices/new")}>
-                  {t("devices.register")}
-                </Button>
-              </div>
-            )}
-          </SettingRow>
+          {isPaired(device) && (
+            <SettingRow label={t("devices.replaceLabel")} description={t("devices.replaceDesc")} labelFor={false}>
+              {() => (
+                <div className="flex sm:justify-end">
+                  <Button variant="secondary" onClick={() => setConfirm("repair")}>
+                    {t("devices.rePairButton")}
+                  </Button>
+                </div>
+              )}
+            </SettingRow>
+          )}
           <SettingRow label={t("devices.removeLabel")} description={t("devices.removeDesc")} labelFor={false}>
             {() => (
               <div className="flex sm:justify-end">
@@ -297,10 +371,22 @@ export default function DevicePage() {
       <ConfirmDialog
         open={confirm !== null}
         onClose={() => setConfirm(null)}
-        onConfirm={() => (confirm === "remove" ? remove() : setStatus("inactive"))}
-        title={confirm === "remove" ? t("devices.removeTitle", { name: device.name }) : t("devices.turnOffTitle", { name: device.name })}
-        message={confirm === "remove" ? t("devices.removeBody") : t("devices.turnOffBody")}
-        confirmLabel={confirm === "remove" ? t("devices.remove") : t("devices.turnOff")}
+        onConfirm={() => (confirm === "remove" ? remove() : confirm === "repair" ? rePair() : setStatus("inactive"))}
+        title={
+          confirm === "remove"
+            ? t("devices.removeTitle", { name: device.name })
+            : confirm === "repair"
+              ? t("devices.rePairTitle")
+              : t("devices.turnOffTitle", { name: device.name })
+        }
+        message={
+          confirm === "remove"
+            ? t("devices.removeBody")
+            : confirm === "repair"
+              ? t("devices.rePairBody", { name: device.name })
+              : t("devices.turnOffBody")
+        }
+        confirmLabel={confirm === "remove" ? t("devices.remove") : confirm === "repair" ? t("devices.rePairButton") : t("devices.turnOff")}
         loading={busy}
       />
     </PageShell>

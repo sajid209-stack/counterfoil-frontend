@@ -544,6 +544,26 @@
   --chart-3: #b45309;
   --chart-4: #16a34a;
 
+  /* ── Spending breakdown (Expenses) ────────────────────────────────────
+     The categories a venue spends on, biggest first: orange, blue, green,
+     rose, in that fixed order and never cycled, and "other categories" in a
+     neutral that reads as "the rest" rather than as a fifth hue.
+
+     Validated with the dataviz script, --pairs all, on white:
+       #f94a00 #2563eb #16a34a #be185d — lightness band, chroma floor and
+       normal-vision floor (worst ΔE 17.7) pass, every mark clears 3:1 on the
+       card. One WARN, green↔orange ΔE 7.7 under deuteranopia, in the 6–8 band
+       that is legal only with secondary encoding: every segment has a legend
+       row with its name, amount and share, and the bar names them all. Text is
+       never set in these colours. (Amber was tried and fails: #b45309 is ΔE 5.3
+       from orange under protanopia, #f59e0b is 2.15:1 on white.)
+     The neutral is neutral-500, 3.13:1 on white. */
+  --chart-cat-1: #f94a00;
+  --chart-cat-2: #2563eb;
+  --chart-cat-3: #16a34a;
+  --chart-cat-4: #be185d;
+  --chart-cat-other: #969188;
+
   /* The analytics heatmap: one hue, six steps by quantile of the non-zero
      cells. Light is the brand ramp (50 to 500). */
   --heat-1: #fff5ee;
@@ -669,6 +689,17 @@
   --chart-2: #3b82f6;
   --chart-3: #d97706;
   --chart-4: #16a34a;
+
+  /* The spending breakdown in dark: rose steps to pink-500 (rose-700 is 2.66:1
+     on the dark card, under the 3:1 floor) and blue to blue-500, the step the
+     app's other dark charts use. Checked against #22211f with --pairs all: all
+     pass, with the same deuteranopia WARN (green↔orange ΔE 7.7) and the same
+     answer — direct labels and a legend. The neutral is neutral-600, 3.08:1. */
+  --chart-cat-1: #f94a00;
+  --chart-cat-2: #3b82f6;
+  --chart-cat-3: #16a34a;
+  --chart-cat-4: #ec4899;
+  --chart-cat-other: #706c65;
 
   /* The analytics heatmap in dark takes its own steps, not the light ones
      flipped: the light 50 to 200 would glow on the card, so these start as a

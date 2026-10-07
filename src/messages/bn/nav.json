@@ -54,10 +54,8 @@
   "venueNotSelling": "এখন বিক্রি বন্ধ",
   "finances": "ফাইন্যান্স",
   "expenses": "খরচ",
-  "product": "Counterfoil OS",
-  "switchWorkspace": "ওয়ার্কস্পেস বদলান",
-  "collapse": "ছোট করুন",
-  "expand": "বড় করুন",
+  "collapse": "সাইডবার ছোট করুন",
+  "expand": "সাইডবার বড় করুন",
   "otherApps": "অন্যান্য অ্যাপ",
   "main": "প্রধান মেনু",
   "version": "সংস্করণ {version}"

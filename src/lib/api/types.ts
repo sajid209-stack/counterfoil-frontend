@@ -546,6 +546,14 @@ export interface Device {
   ownerStaffId?: ID | null;
   status: Lifecycle;
   lastSeenAt: ISODateTime | null;
+  /**
+   * When the tablet itself was paired by typing `pairingCode` on it. `null` =
+   * waiting to pair. ABSENT = an older record, which is treated as paired so
+   * nothing that worked before stops working.
+   */
+  pairedAt?: ISODateTime | null;
+  /** The code stops working at this time (15 minutes after it was issued). */
+  pairingExpiresAt?: ISODateTime | null;
   createdAt: ISODateTime;
   updatedAt: ISODateTime;
 }

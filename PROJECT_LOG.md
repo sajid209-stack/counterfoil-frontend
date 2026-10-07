@@ -16307,3 +16307,156 @@ category, a day, who or what paid it, and optionally the bill's items.
   because a new tab starts a new mock store. This needs the backend.
 - `/catalog/new/event` still logs React #418 on production. This is the
   timezone hydration fault recorded on 2026-09-24.
+
+## A minimal counter, an Overlay-style nav, an expenses card, and devices that pair to people (2026-10-07)
+
+Owner, with five screenshots:
+1. the POS counter looks weird; keep it minimal;
+2. redesign the side nav like the "Overlay" inspiration, with only the logo at
+   the top and a minimal collapse icon beside it;
+3. the expense summary looks odd;
+4. the expense table does not match Orders and Customers;
+5. a device needs to be connected to its assigned team members to work, and
+   that should happen when it is added.
+
+Planned and reviewed on Opus. Four Sonnet sub-agents built it in parallel, each
+owning its own files, and every result was checked by screenshot before it was
+kept.
+
+### 1. The till's counter
+
+The counter is a plain button with no box at rest: the counter name (16px/600)
+and a small chevron, 44px tall, with a fill only on hover or press.
+- The venue moved out of the visible text. It is still in the accessible name
+  ("Counter: Fort Main Gate, Lalbagh Fort") and is the group heading in the
+  dropdown.
+- The dropdown is one quiet card:
+  - venues as group headings;
+  - 44px rows;
+  - a check on the chosen counter;
+  - a closed counter greyed out, with its reason.
+- Switching is still refused while a sale is open.
+
+### 2. The side nav
+
+Rebuilt to the inspiration:
+- **Top row**: the Counterfoil logotype on the left, with no business or venue
+  name, and a 36px collapse chevron on the right ("Collapse sidebar [").
+- **Search**: a field that opens the command palette, showing Ctrl K, or ⌘K on
+  a Mac.
+- **Destinations**: 40px rows, 18px icons and 14px muted labels. The current
+  page is a white raised pill; the orange bar is gone.
+- **The rest**: a hairline before Point of Sale ↗ and Counterfoil Deck ↗, and
+  Settings and the version at the foot. The rail is on the page colour.
+- **Collapsed**: the mark, an expand chevron, a search icon and icon-only rows
+  with tooltips.
+- **Left out**: the inspiration's "Menu" heading, because the group labels were
+  removed earlier at the owner's request.
+- The logo links to `/dashboard`.
+
+### 3. The expense summary
+
+The summary is one white card:
+- **Left**: Total spent and "8 expenses · Last 30 days". "N items listed" is
+  gone.
+- **Right, "Where it went"**: one 10px bar split into the top four categories
+  and "Other categories". Under it, a legend gives each one's amount and share.
+  The shares use largest-remainder rounding, so they add up to 100%.
+- **Accessible**: the bar's accessible name lists every slice, and colour is
+  never the only label.
+- **Filter**: a legend row filters the table to that category, and pressing it
+  again clears it.
+- **Colours**: tokens `--chart-cat-1..4` and `--chart-cat-other` in
+  `globals.css`, validated with the dataviz checker `--pairs all` against the
+  real card colour in light and dark. One warning remains, which the rule
+  allows: green and orange are ΔE 7.7 apart for deuteranopia. It is acceptable
+  because every slice also has a legend row with its name and value. Amber was
+  rejected: it is too close to orange, or too light on white.
+
+### 4. The expense table
+
+The table is the shared `DataTable`, set up like Orders and Customers:
+- the card frame, sticky header, 48px rows and focusable rows;
+- DM Mono only on the reference;
+- on a phone, a two-line list row;
+- the same pager as Orders;
+- a row menu with Edit, Make a copy, and Delete with Undo.
+
+### 5. Devices pair to people
+
+The research was Square's device codes and team passcodes, Shopify POS staff
+PINs, and Toast's device setup. A till device is:
+1. registered with a name and the counter it sells for;
+2. told who may sign in on it;
+3. paired on the tablet with a short code;
+4. then signed in by each person with their own PIN.
+
+Before this, step 2 only came after creation, step 3 had no tablet side, and
+nothing checked that the people allowed on a device could actually sign in.
+
+- **Add device** is one page in three steps, and its button is never greyed out.
+  1. **Name and counter.** The counter is required.
+  2. **Who can sign in.** The people at that venue, each marked "No till PIN —
+     can't sign in" when they have no PIN, with a **Set PIN** link. A live line
+     says how many can sign in.
+  3. **Add device and get pairing code.** A six-digit code that lasts 15
+     minutes, the three steps to use it, and a status that changes from
+     "Waiting for the tablet…" to "Paired". **Pair on this browser** opens the
+     tablet screen with the code filled in, for the demo.
+- **Pair this tablet** (`/login/pair`; `/pair` redirects there): type the code.
+  Refusals are in words: unknown, used, expired, a switched-off tablet, or no
+  counter. On success the browser remembers its device (`lib/thisDevice.ts`),
+  and the counter is set to the device's counter.
+- **Sign-in on a paired tablet** lists only the people allowed on it who have a
+  PIN, and names the device. When nobody can sign in, it says why. An unpaired
+  browser shows a quiet "Pair this tablet" link. The grid now sizes itself to
+  the people, so one person is not drawn beside an empty half-card.
+- **The device list and page** say what each device is: "Ready · N people can
+  sign in", "Waiting to pair · Show code", "Code expired", "No counter chosen",
+  or "No one can sign in — N have no till PIN". "Pair a different tablet" asks
+  first, then issues a new code.
+- **Contract for the backend lane**:
+  - Device fields: `pairedAt` (null means waiting to pair; absent means an older
+    record, treated as paired) and `pairingExpiresAt`.
+  - New calls:
+    - `pairDevice(code)`, which ignores case, spaces and dashes;
+    - `newPairingCode(id)`.
+  - Create requires a counter, and at least one allowed person with a till PIN.
+  - A device's sign-in list is the people allowed on it who have a till PIN.
+- **Seed**: all active staff have a PIN except Shila Akter, so the warning has a
+  real case.
+
+### Verified
+
+- **Counter picker**: 124/124. Old pos5 checks of the venue in the button's text
+  and of the dropdown's visible title now read the accessible names; 140/140.
+- **Side nav**: 170/170, plus the adapted nav harness at 197/197. The old one
+  asserted the replaced design. Top cards checks that the logo starts on the
+  icon column; 103/103.
+- **Expenses**: unit 181/181; page 253/253 at 1440 and 221/221 at 390, plus dark
+  and Bangla runs. Checks include:
+  - the segments and legend adding up to the total;
+  - the swatches matching the tokens;
+  - the legend filter;
+  - the table matching the Orders table's computed style.
+- **Devices**: unit 40/40, the existing devices unit test 56/56, and the
+  end-to-end run in four configurations. It covers adding with one person
+  without a PIN, the code, pairing on this browser, sign-in showing only the
+  person who can sign in, the list reading Ready, and wrong, used and expired
+  codes.
+- **Analytics**: one check now looks for the date button inside `main`. The new
+  search button in the rail is also a dialog trigger.
+- **Full regression**: green. The POS audit shows only the declared
+  white-on-ember rule and the check-in field.
+- `tsc` is clean, eslint shows only OsShell's documented error, and i18n is
+  0 missing / 0 extra.
+
+### Open
+
+- The Bangla strings for pairing and devices are drafts and need a native
+  review.
+- `DataTable` headers have no `aria-sort`, so screen readers do not hear the
+  sort direction. This applies to Orders as well.
+- At 1024px the Expenses toolbar wraps, and Add expense moves to a second row.
+- The pairing status cannot flip across two real tabs, because the mock store
+  lives in one tab. The demo uses "Pair on this browser".
