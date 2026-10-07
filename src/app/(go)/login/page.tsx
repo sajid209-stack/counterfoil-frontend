@@ -18,6 +18,7 @@ import {
   listStaff,
   peekCounters,
   peopleAllowedOn,
+  recordActivity,
   staffPinLength,
   whoCanSignIn,
   whoCanSignInOn,
@@ -126,7 +127,12 @@ export default function GoLoginPage() {
     const next = (pin + d).slice(0, pinLen);
     setPin(next);
     if (next.length === pinLen) {
+      /* The activity log: who tried which till, and whether it opened. A guest
+         has no staff record, so only people are logged. */
+      const logAs = who.id === "guest" ? null : { staffId: who.id, name: who.name };
+      const logAt = { counterId: activeCounter.id, deviceId: device?.id ?? null };
       if (who.id === "guest" ? next === DEMO_PIN : checkStaffPin(who.id, next)) {
+        if (logAs) recordActivity({ kind: "staff.signed_in", actor: logAs, ...logAt });
         setAttempts(0);
         setTimeout(() => proceed(who), 150);
       } else {
@@ -135,7 +141,11 @@ export default function GoLoginPage() {
         setAttempts(n);
         setShake(true);
         setTimeout(() => { setShake(false); setPin(""); }, 200);
-        if (n >= maxAttempts) setLocked(true);
+        if (logAs) recordActivity({ kind: "staff.wrong_pin", actor: logAs, ...logAt, data: { attempt: n, max: maxAttempts } });
+        if (n >= maxAttempts) {
+          if (logAs) recordActivity({ kind: "staff.locked_out", actor: logAs, ...logAt, data: { max: maxAttempts } });
+          setLocked(true);
+        }
       }
     }
   };

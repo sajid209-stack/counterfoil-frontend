@@ -5,11 +5,14 @@ import { useTranslations } from "next-intl";
 import { Camera, Check, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { useActiveCounterNow } from "@/lib/activeCounter";
 import { useApiQuery } from "@/lib/useApi";
 import {
   addOrderPayment,
   admitTicket,
   recordScan,
+  recordScanActivity,
+  recordActivity,
   canTakeNonCash,
   getOperator,
   listTickets,
@@ -62,6 +65,8 @@ export default function ScanPage() {
      and minting it inside a state updater got the entry written twice, since
      React invokes an updater more than once on purpose. */
   const seq = useRef(0);
+  /* Where the gate is, for the activity log. */
+  const gateCounter = useActiveCounterNow().id;
   const [busy, setBusy] = useState(false);
   const [admitted, setAdmitted] = useState(0);
   const [method, setMethod] = useState<PaymentMethod>("cash");
@@ -98,13 +103,19 @@ export default function ScanPage() {
          up under the entitlement it belongs to rather than nowhere. */
       const refusal = result.reason ? REFUSAL[result.reason] : undefined;
       if (!showOnly && result.ticketId && (result.verdict !== "refuse" || refusal)) {
-        await recordScan({
+        const filed = await recordScan({
           ticketId: result.ticketId,
           credentialId: result.credentialId,
           outcome: result.verdict === "refuse" ? "refused" : "admitted",
           ...(refusal ? { refusal } : {}),
           ...(result.verdict === "admit" ? { admitted: 1 } : {}),
         });
+        if (filed.ok) recordScanActivity(filed.data, { counterId: gateCounter });
+      }
+      /* A code that is no ticket at all has nothing to file a scan against, but
+         the log still wants to know someone tried it. */
+      if (!showOnly && result.verdict === "refuse" && !result.ticketId) {
+        recordActivity({ kind: "ticket.refused", counterId: gateCounter, data: { reason: "unknown", code: result.code } });
       }
       setBusy(false);
       setPreview(showOnly);
@@ -116,7 +127,7 @@ export default function ScanPage() {
       setLogId(id);
       setLog((prev) => [{ id, code: result.code, title: result.title, verdict: result.verdict, at: new Date() }, ...prev].slice(0, 8));
     },
-    [busy],
+    [busy, gateCounter],
   );
 
   const close = useCallback(() => {
@@ -172,7 +183,10 @@ export default function ScanPage() {
       return;
     }
     if (!outcome.group) await redeemTicket(outcome.balance.ticketId);
-    if (!outcome.group) await recordScan({ ticketId: outcome.balance.ticketId, credentialId: outcome.credentialId, outcome: "admitted", admitted: 1 });
+    if (!outcome.group) {
+      const filed = await recordScan({ ticketId: outcome.balance.ticketId, credentialId: outcome.credentialId, outcome: "admitted", admitted: 1 });
+      if (filed.ok) recordScanActivity(filed.data, { counterId: gateCounter });
+    }
     setBusy(false);
     const next: ScanOutcome = { ...outcome, verdict: outcome.group ? "group" : "admit", balance: undefined };
     setOutcome(next);
@@ -191,7 +205,8 @@ export default function ScanPage() {
     setBusy(false);
     if (res.ok) {
       setAdmitted(res.data.admitted ?? 0);
-      await recordScan({ ticketId: outcome.group.ticketId, credentialId: outcome.credentialId, outcome: "admitted", admitted: count });
+      const filed = await recordScan({ ticketId: outcome.group.ticketId, credentialId: outcome.credentialId, outcome: "admitted", admitted: count });
+      if (filed.ok) recordScanActivity(filed.data, { counterId: gateCounter });
     }
   };
 

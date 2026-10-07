@@ -10,6 +10,7 @@ import {
   SquareStack,
   Store,
   Ticket,
+  TicketCheck,
   UsersRound,
   Wallet,
   type LucideIcon,
@@ -46,6 +47,9 @@ export const NAV_MAIN: readonly NavDestination[] = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
   { href: "/orders", key: "orders", icon: ReceiptText },
+  /* The same sales seen one ticket at a time: what was issued, and whether it
+     has been used. Right after Orders because it is that list, opened up. */
+  { href: "/issued-orders", key: "issuedOrders", icon: TicketCheck },
   { href: "/customers", key: "customers", icon: UsersRound },
   /* One door for everything sold. Bookings and Events were two rows that each
      held half the answer to "what do we sell?". */

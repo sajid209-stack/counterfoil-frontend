@@ -68,5 +68,93 @@
   "terminatePlaceholder": "e.g. The bank reversed the payment",
   "terminated": "Ticket cancelled.",
   "terminatedTitle": "This ticket was cancelled",
-  "cancel": "Go back"
+  "cancel": "Go back",
+  "issued": {
+    "title": "Issued orders",
+    "description": "Every ticket that has been issued, newest first.",
+    "search": "Code, order, customer or booking",
+    "reset": "Reset",
+    "export": "Export CSV",
+    "exported": "{count, plural, one {# ticket exported} other {# tickets exported}}",
+    "filters": {
+      "status": "Status",
+      "booking": "Booking",
+      "clear": "Clear"
+    },
+    "state": {
+      "unused": "Unused",
+      "part": "Part used",
+      "used": "Used",
+      "void": "Voided"
+    },
+    "col": {
+      "code": "Booking number",
+      "status": "Status",
+      "start": "Start time",
+      "booking": "Booking name",
+      "variant": "Variant name",
+      "issued": "Issued",
+      "order": "Order",
+      "actions": "Open"
+    },
+    "sum": {
+      "issued": "{count, number} issued",
+      "used": "{count, number} used",
+      "part": "{count, number} part used",
+      "void": "{count, number} voided",
+      "none": "No tickets match"
+    },
+    "walkIn": "Walk-in",
+    "partOf": "{used} of {total} in",
+    "open": "Open ticket {code}",
+    "period": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "7d": "Last 7 days",
+      "30d": "Last 30 days",
+      "month": "This month",
+      "lastmonth": "Last month"
+    },
+    "range": {
+      "choose": "Choose dates",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "pickEnd": "Pick the last day",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
+    },
+    "empty": {
+      "title": "No tickets here",
+      "text": "Tickets appear here when something is sold.",
+      "filteredTitle": "No tickets match",
+      "filteredText": "Try other dates or clear a filter."
+    },
+    "error": {
+      "title": "Could not load tickets",
+      "text": "Check your connection and try again.",
+      "retry": "Try again"
+    },
+    "page": {
+      "showing": "Showing {from}–{to} of {total}",
+      "previous": "Previous",
+      "next": "Next",
+      "of": "Page {page} of {total}",
+      "show": "Show",
+      "label": "Pages"
+    },
+    "csv": {
+      "code": "Booking number",
+      "status": "Status",
+      "start": "Start time",
+      "customer": "Customer",
+      "booking": "Booking name",
+      "variant": "Variant name",
+      "issued": "Issued",
+      "order": "Order"
+    }
+  }
 }

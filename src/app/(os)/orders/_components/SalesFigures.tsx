@@ -30,12 +30,12 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
     { key: "owed", label: t("owed"), value: formatMoney(s.owed), raw: s.owed, tone: s.owed > 0 ? "warning" : undefined, phone: "max-lg:order-2 max-lg:col-span-3" },
   ];
   return (
-    <dl data-sales-figures aria-busy={loading || undefined} className="grid min-w-0 grid-cols-6 gap-x-section gap-y-tight max-lg:w-full lg:flex lg:items-stretch lg:gap-0">
+    <dl data-sales-figures aria-busy={loading || undefined} className="grid w-full min-w-0 grid-cols-6 gap-x-section gap-y-tight lg:grid-cols-5 lg:gap-0">
       {items.map((i, n) => (
         <div
           key={i.key}
           title={i.hint}
-          className={cn("min-w-0", i.phone, n > 0 && "lg:border-l lg:border-line lg:pl-section", n < items.length - 1 && "lg:pr-section")}
+          className={cn("min-w-0", i.phone, "lg:col-span-1 lg:order-none lg:px-section", n === 0 ? "lg:pl-0" : "lg:border-l lg:border-line", n === items.length - 1 && "lg:pr-0")}
         >
           {/* Sentence case on a phone, where three counts share a row and "TRANSACTIONS" in capitals
               would run into "ITEMS SOLD"; the desktop keeps the page's small caps. */}
@@ -45,7 +45,7 @@ export function SalesFigures({ summary: s, loading }: { summary: SalesSummary; l
             data-amount={i.raw}
             className={cn(
               "mt-inline whitespace-nowrap font-semibold tabular-nums leading-tight",
-              i.key === "sales" || i.key === "owed" ? "text-xl lg:text-lg" : "text-base lg:text-lg",
+              i.key === "sales" || i.key === "owed" ? "text-xl lg:text-xl" : "text-base lg:text-xl",
               i.tone === "warning" && "text-warning",
               loading && "opacity-50",
             )}

@@ -68,5 +68,93 @@
   "terminatePlaceholder": "যেমন ব্যাংক পেমেন্ট ফেরত নিয়েছে",
   "terminated": "টিকিট বাতিল হয়েছে।",
   "terminatedTitle": "এই টিকিট বাতিল করা হয়েছে",
-  "cancel": "ফিরে যান"
+  "cancel": "ফিরে যান",
+  "issued": {
+    "title": "ইস্যু করা অর্ডার",
+    "description": "যত টিকিট ইস্যু হয়েছে, নতুনগুলো আগে।",
+    "search": "কোড, অর্ডার, গ্রাহক বা বুকিং",
+    "reset": "রিসেট",
+    "export": "CSV নামান",
+    "exported": "{count, plural, one {# টিকিট নামানো হয়েছে} other {# টিকিট নামানো হয়েছে}}",
+    "filters": {
+      "status": "অবস্থা",
+      "booking": "বুকিং",
+      "clear": "মুছুন"
+    },
+    "state": {
+      "unused": "ব্যবহার হয়নি",
+      "part": "আংশিক ব্যবহার",
+      "used": "ব্যবহার হয়েছে",
+      "void": "বাতিল"
+    },
+    "col": {
+      "code": "বুকিং নম্বর",
+      "status": "অবস্থা",
+      "start": "শুরুর সময়",
+      "booking": "বুকিংয়ের নাম",
+      "variant": "ধরনের নাম",
+      "issued": "ইস্যু",
+      "order": "অর্ডার",
+      "actions": "খুলুন"
+    },
+    "sum": {
+      "issued": "{count, number}টি ইস্যু",
+      "used": "{count, number}টি ব্যবহার হয়েছে",
+      "part": "{count, number}টি আংশিক ব্যবহার",
+      "void": "{count, number}টি বাতিল",
+      "none": "কোনো টিকিট মেলেনি"
+    },
+    "walkIn": "সরাসরি এসেছেন",
+    "partOf": "{total} জনের মধ্যে {used} জন ঢুকেছেন",
+    "open": "টিকিট {code} খুলুন",
+    "period": {
+      "today": "আজ",
+      "yesterday": "গতকাল",
+      "7d": "গত ৭ দিন",
+      "30d": "গত ৩০ দিন",
+      "month": "এই মাস",
+      "lastmonth": "গত মাস"
+    },
+    "range": {
+      "choose": "তারিখ বাছুন",
+      "custom": "নিজের মতো",
+      "from": "শুরু",
+      "to": "শেষ",
+      "apply": "প্রয়োগ করুন",
+      "cancel": "বাতিল",
+      "days": "{count, plural, one {# দিন} other {# দিন}}",
+      "pickEnd": "শেষ দিনটি বাছুন",
+      "previousMonth": "আগের মাস",
+      "nextMonth": "পরের মাস"
+    },
+    "empty": {
+      "title": "এখানে কোনো টিকিট নেই",
+      "text": "কিছু বিক্রি হলে টিকিট এখানে দেখা যাবে।",
+      "filteredTitle": "কোনো টিকিট মেলেনি",
+      "filteredText": "অন্য তারিখ দিন বা ফিল্টার মুছুন।"
+    },
+    "error": {
+      "title": "টিকিট খোলা যায়নি",
+      "text": "সংযোগ দেখে আবার চেষ্টা করুন।",
+      "retry": "আবার চেষ্টা করুন"
+    },
+    "page": {
+      "showing": "{total}টির মধ্যে {from}–{to} দেখাচ্ছে",
+      "previous": "আগের",
+      "next": "পরের",
+      "of": "পাতা {page} / {total}",
+      "show": "দেখান",
+      "label": "পাতা"
+    },
+    "csv": {
+      "code": "বুকিং নম্বর",
+      "status": "অবস্থা",
+      "start": "শুরুর সময়",
+      "customer": "গ্রাহক",
+      "booking": "বুকিংয়ের নাম",
+      "variant": "ধরনের নাম",
+      "issued": "ইস্যু",
+      "order": "অর্ডার"
+    }
+  }
 }

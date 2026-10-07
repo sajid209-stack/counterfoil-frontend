@@ -131,7 +131,7 @@ function RowTable({ days, isOpen, onToggle, onPick, totals }: ListProps) {
   const t = useTranslations("finances");
   const info = useDayInfo();
   const rowText = useRowText();
-  const th = "sticky top-[61px] z-10 border-b border-line bg-card py-comfortable text-[12px] font-medium text-muted";
+  const th = "sticky top-0 z-10 border-b border-line bg-card py-comfortable text-[12px] font-medium text-muted";
   const num = "text-right tabular-nums";
   return (
     <table className="table-inset w-full table-fixed border-collapse text-[14px]">

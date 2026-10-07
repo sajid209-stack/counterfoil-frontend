@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, CalendarDays, Check, Ellipsis, LayoutDashboard, ReceiptText, Ticket } from "lucide-react";
@@ -55,6 +55,8 @@ const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
   { prefix: "/dashboard", key: "dashboard" },
   { prefix: "/calendar", key: "calendar" },
   { prefix: "/orders", key: "orders" },
+  { prefix: "/issued-orders", key: "issuedOrders" },
+  { prefix: "/activity", key: "activityLog" },
   { prefix: "/finances", key: "finances" },
   { prefix: "/expenses", key: "expenses" },
   { prefix: "/customers", key: "customers" },
@@ -105,6 +107,10 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   // The bar firms up once anything has scrolled under it. Passive listener,
   // and it only ever flips a boolean — no layout is read on scroll.
   const [scrolled, setScrolled] = useState(false);
+  /* The frame's own scroller (md and up). `more` is true while there is content
+     below the fold of it, which is what draws the fade at its foot. */
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [more, setMore] = useState(false);
 
   useEffect(() => {
     setCollapsed(localStorage.getItem("os_sidebar_collapsed") === "1");
@@ -139,6 +145,27 @@ export function OsShell({ children }: { children: React.ReactNode }) {
       window.removeEventListener("scroll", onScroll);
     };
   }, []);
+  /* From md the page scrolls INSIDE the frame, never on the window. Two jobs:
+     keep `more` honest (scroll, resize, and content that grows after data
+     arrives) and, on a route change, return the frame to the top the way the
+     browser does for the window. */
+  useEffect(() => {
+    const el = frameRef.current;
+    if (!el) return;
+    const read = () => setMore(el.scrollHeight - el.scrollTop - el.clientHeight > 4);
+    el.addEventListener("scroll", read, { passive: true });
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    read();
+    return () => {
+      el.removeEventListener("scroll", read);
+      ro.disconnect();
+    };
+  }, []);
+  useEffect(() => {
+    frameRef.current?.scrollTo({ top: 0 });
+  }, [pathname]);
   const toggleCollapsed = useCallback(() => {
     setCollapsed((c) => {
       localStorage.setItem("os_sidebar_collapsed", c ? "0" : "1");
@@ -228,8 +255,8 @@ export function OsShell({ children }: { children: React.ReactNode }) {
     /* What the bar is calling this page, published so a page's own heading can
        stand down where it would only say it again — see `lib/barTitle`. */
     <BarTitleContext value={pageName}>
-    <div className="flex min-h-screen">
-      <aside className="sticky top-0 hidden h-screen shrink-0 overflow-y-auto md:block">
+    <div className="flex min-h-screen md:h-dvh md:overflow-hidden">
+      <aside className="sticky top-0 hidden h-screen shrink-0 overflow-y-auto md:block md:h-dvh">
         <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
       </aside>
 
@@ -240,7 +267,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           top:-688. `clip` clips on x exactly the same way but creates no scroll
           container, so overflow-y stays visible and sticky resolves against the
           viewport. The x-overflow guard (rule 5) is unchanged. */}
-      <main className="flex min-w-0 flex-1 flex-col overflow-x-clip">
+      <main className="flex min-w-0 flex-1 flex-col overflow-x-clip md:h-dvh md:overflow-hidden">
         {/* Mobile — where you are, then the two controls a phone needs.
             It used to be the wordmark and the language and mode switchers:
             no page name, no search at any width below lg, and 140px spent on
@@ -290,7 +317,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
             the single-word breadcrumb gone the title is one line beside 44px
             controls, and top-aligning them left the title riding 5px high of
             the buttons it shares the bar with. */}
-        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-20 hidden items-center justify-between gap-major px-gutter py-tight md:flex">
+        <div className="glass-navbar hidden shrink-0 items-center justify-between gap-major bg-surface px-gutter py-tight backdrop-blur-none md:flex">
           <div id="os-page-header" className="min-w-0 flex-1" />
           {/* The bar is app chrome: the page name, the venue, the account.
               A page's own buttons, status and back link render in the page
@@ -304,7 +331,19 @@ export function OsShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <div className={cn("min-w-0 flex-1 md:pb-0", focused ? "pb-0" : "pb-[calc(56px+env(safe-area-inset-bottom))]")}>{children}</div>
+        {/* The FRAME. The rail and the bar above are the chrome, on the page's
+            ground; the page is a separate rounded panel on its own, lighter
+            ground, and it is the thing that scrolls (md and up) — so the chrome
+            never moves and a sticky header sticks to the frame's top edge.
+            Below md there is no rail: the frame is the page, edge to edge, and
+            the window scrolls as it always did. The fade is a sibling of the
+            scroller, not a child, so it stays put while the content moves. */}
+        <div className="os-frame relative min-w-0 flex-1 bg-frame md:mb-2 md:mr-2 md:min-h-0 md:overflow-hidden md:rounded-2xl md:border md:border-line">
+          <div ref={frameRef} data-os-scroll className={cn("os-frame-scroll min-w-0 md:h-full md:overflow-y-auto md:overscroll-contain md:pb-0", focused ? "pb-0" : "pb-[calc(56px+env(safe-area-inset-bottom))]")}>
+            {children}
+          </div>
+          <div aria-hidden data-more={more} className="os-frame-fade" />
+        </div>
       </main>
 
       {/* Mounted only while open, so it comes up empty by construction. */}

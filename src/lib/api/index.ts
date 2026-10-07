@@ -39,6 +39,8 @@ export * from "./transactions";
 export * from "./platformFees";
 export * from "./finances";
 export * from "./expenses";
+export * from "./issuedTickets";
 export * from "./analytics";
+export * from "./activity";
 // reports.ts has an older, series-based AnalyticsQuery; the page contract wins here.
 export type { AnalyticsQuery } from "./analytics";

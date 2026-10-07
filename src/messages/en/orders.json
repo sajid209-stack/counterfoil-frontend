@@ -8,7 +8,7 @@
   "colItems": "Items",
   "colTotal": "Total",
   "colStatus": "Status",
-  "searchPlaceholder": "Search order number or customer…",
+  "searchPlaceholder": "Search orders…",
   "allStatuses": "All statuses",
   "allChannels": "Counter or online",
   "channelCounter": "Counter",
@@ -149,7 +149,7 @@
   "noCounter": "No counter",
   "noStaff": "Not recorded",
   "filterResults": "Filter results",
-  "reset": "Reset",
+  "reset": "Clear filters",
   "exported": "Exported {count, plural, one {# order} other {# orders}}.",
   "channel": {
     "counter": "Counter",
@@ -195,6 +195,7 @@
     "noOptions": "Nothing to choose from"
   },
   "toolbar": {
+    "filtersCount": "Filters, {count} set",
     "date": "Date",
     "summary": "Summary",
     "export": "Export sales",

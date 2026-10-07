@@ -178,7 +178,7 @@ export function Sidebar({
       data-rail
       data-collapsed={collapsed}
       style={{ width: collapsed ? 64 : 240 }}
-      className="relative flex h-full flex-col overflow-hidden border-r border-line bg-surface text-fg transition-[width] duration-standard ease-counterfoil"
+      className="relative flex h-full flex-col overflow-hidden bg-surface text-fg transition-[width] duration-standard ease-counterfoil"
     >
       {/* The top row is as tall as the page bar beside it (61px), so the logo
           sits on the bar's own centre line. Open: the lockup on the same left

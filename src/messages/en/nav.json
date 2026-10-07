@@ -2,6 +2,7 @@
   "dashboard": "Dashboard",
   "calendar": "Calendar",
   "orders": "Orders",
+  "issuedOrders": "Issued orders",
   "customers": "Customers",
   "memberships": "Memberships",
   "analytics": "Analytics",
@@ -45,7 +46,8 @@
     "marketplaces": "marketplaces marketplace channel other sites resellers ota",
     "analytics": "analytics reports report sales tax vat revenue takings income dashboard charts insights busiest peak hours",
     "finances": "finances money transactions payments refunds payout payouts fees fee balance withdraw deposit bank ledger bkash cash card",
-    "expenses": "expenses expense cost costs spending spend bill bills purchases supplier"
+    "expenses": "expenses expense cost costs spending spend bill bills purchases supplier",
+    "issuedOrders": "issued tickets codes booking number qr used unused voided"
   },
   "inventory": "Inventory",
   "cartFab": "Cart — {count, plural, one {# item} other {# items}}",
@@ -58,5 +60,6 @@
   "expand": "Expand sidebar",
   "otherApps": "Other apps",
   "main": "Main menu",
-  "version": "Version {version}"
+  "version": "Version {version}",
+  "activityLog": "Activity log"
 }

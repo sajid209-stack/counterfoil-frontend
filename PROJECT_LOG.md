@@ -16475,3 +16475,97 @@ needs to be modern and minimal."
   tint, and no border or shadow; Cmd+K on a Mac), the adapted nav harness
   197/197, and top cards 103/103. No console errors in light or dark. `tsc` and
   `eslint` are clean on the rail.
+
+## Orders toolbar, Issued orders, an activity log, and the page in its own frame (2026-10-08)
+
+Owner, with eight screenshots (Shopify admin and "Overla" as inspiration):
+1. Orders' search and Reset look odd inside the figures card;
+2. add Issued orders to the menu, with the backend team's "Issued Bookings"
+   columns;
+3. live activity should be an activity log (sign-ins, shift changes, second
+   scans, already-used QR codes…), with a full page;
+4. the activity filter's icon overlaps "All";
+5. like Shopify and Overla, the page sits in a rounded frame apart from the side
+   and top bars, with a fade showing there is more below, on every page.
+
+Planned and reviewed on Opus. Four Sonnet sub-agents built it in parallel, each
+owning its own files.
+
+### 1. Orders toolbar
+
+The page now has two fixed rows:
+- **Row 1**: search, Date and **Filters** on the left; Columns, Summary, Export
+  and Print on the right.
+  - Filters carries a count, and opens Counter, Staff, Channel, Payment method
+    and Status in one panel: a popover on a desktop, a sheet on a phone.
+  - Below 1280px, Export and Print are icons only.
+- **Row 2** appears only when something is set. It has a removable chip per
+  filter ("Status: Paid +1 ×") and then **Clear filters**.
+
+The figures card holds only the five figures. The placeholder reads "Search
+orders…".
+
+### 2. Issued orders (`/issued-orders`)
+
+- **In the menu** right after Orders; `/tickets` redirects to it.
+- **One row per issued ticket**: Booking number · Status (Unused, Part used,
+  Used, Voided) · Start time · Booking name · Variant name · Issued · Order.
+- **Toolbar**: a date range (the last 30 days by default), filters for status
+  and booking, search, and CSV export.
+- **Summary**: one quiet line, e.g. "130 issued · 47 used · 14 voided".
+- **Table and data**: the shared `DataTable`; a row opens the ticket's record.
+  The data is derived in `lib/api/issuedTickets.ts`, with no new stored state.
+
+### 3 and 4. Activity log
+
+- **The model** is `lib/api/activityLog.ts` and `activity.ts`. An `ActivityEvent`
+  has an actor, a venue, a counter and device, a subject and a severity. There
+  are 23 kinds in 6 groups.
+  - **Derived from what the records already hold**: gate scans and refusals,
+    replaced codes, terminated tickets, refund requests and decisions, undone
+    and refunded orders, holds, and paired devices.
+  - **Seeded** for things the mock does not record: a 21-day history of
+    sign-ins, wrong PINs, shifts opened and closed, settings changes and
+    invites.
+  - **Recorded live**: Go PIN sign-in, wrong PIN and lockout; every gate scan
+    result; and device pairing.
+- **The dashboard card** is now "Activity": a sentence per event ("Nadia Islam
+  signed in at Fort Main Gate", "Second scan refused: …"). Warnings are tinted
+  and carry a word. The filter puts its icon in `Select`'s icon slot, so it no
+  longer overlaps the label.
+- **`/activity`** has search, filters for type, person and importance, a date
+  range and CSV export. Rows are grouped by day under sticky headers, and each
+  can be opened to its details, with before and after for settings changes.
+
+### 5. The app frame
+
+- The side rail and the top bar are the chrome, on the page colour.
+- The page sits in a rounded frame (`.os-frame`, 16px radius, a 1px line, an 8px
+  inset on the right and bottom) on a new `--color-frame` (light `#fcfbf8`, dark
+  `#1a1a18`). It scrolls inside itself while the chrome stays still.
+- A 32px fade at the frame's foot shows there is more below, and goes once you
+  reach the bottom.
+- **Phone**: the frame goes edge to edge.
+- **Sticky elements**: the settings section menu and the finances table header
+  now stick to the top of the frame.
+- The phone bar now names Issued orders and Activity log.
+
+### Verified
+
+- Orders 193/193 (1440) and 31/31 (390). Issued orders: unit 19/19, page 49/49.
+  Activity: unit 62/62, browser checks 38 and 67.
+- Frame screenshots on 11 pages in light and dark at 1440, 768 and 390.
+- **Older tests updated to the new design**:
+  - 14 menu entries;
+  - the first content measured inside the frame;
+  - the analytics chart scrolled into view inside the frame before hovering;
+  - the activity card checked for a sign-in at the venue in the bar.
+- The full regression is green. `tsc` is clean, eslint shows only the
+  documented findings, and i18n is 0 / 0.
+
+### Open
+
+- Settings edits and shift open/close made on the real screens are not written
+  to the activity log yet; those are seeded.
+- The light frame is only a step lighter than the chrome. The line and the
+  radius carry the separation.

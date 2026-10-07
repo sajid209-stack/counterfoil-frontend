@@ -504,6 +504,7 @@
   /* ── Light mode surfaces & content (color-system §Semantic Tokens) ────── */
   --color-surface: #f5f2eb;    /* background   ← neutral-50  */
   --color-card: #ffffff;       /* card         ← white       */
+  --color-frame: #fcfbf8;      /* the page frame beside the chrome (rail + bar sit on --color-surface) */
   --color-sheet: #ffffff;      /* popover      ← white       */
   --color-fg: #22211f;         /* foreground   ← neutral-900 */
   --color-muted: #6b675f;      /* muted-fg   ← neutral-600, nudged darker: at #706c65 it fell to 4.43:1 on --color-subtle (AA needs 4.5) */
@@ -642,6 +643,7 @@
 .dark {
   --color-surface: #141413;    /* background   ← neutral-950 */
   --color-card: #22211f;       /* card         ← neutral-900 */
+  --color-frame: #1a1a18;      /* one step above the chrome, one below the cards */
   --color-sheet: #22211f;      /* popover      ← neutral-900 */
   --color-fg: #efece5;         /* foreground   ← neutral-100 */
   --color-muted: #969188;      /* muted-fg     ← neutral-500 */
@@ -878,6 +880,24 @@ html[data-motion="reduce"] *::after {
    (background-attachment: local for the cover, scroll for the shadow), so
    they appear only on the side that still has content and disappear as you
    reach each end. No JS, no scroll listener. */
+/* The page frame's foot. A soft wash of the frame's own colour over the last
+   32px of the scroller, drawn only while there is more below (OsShell sets
+   data-more from the scroll position) and gone at the end. pointer-events:none
+   so nothing underneath is blocked; it never covers a sticky footer's text
+   because those sit above it (z-10 vs this one's z-[5]). */
+.os-frame-fade {
+  pointer-events: none;
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2rem;
+  z-index: 5;
+  opacity: 0;
+  background: linear-gradient(to bottom, transparent, var(--color-frame));
+  transition: opacity var(--duration-standard) var(--ease-counterfoil);
+}
+.os-frame-fade[data-more="true"] { opacity: 1; }
+@media (max-width: 47.99rem) { .os-frame-fade { display: none; } }
+
 .scroll-x-hint {
   background:
     linear-gradient(to right, var(--color-card) 30%, transparent) 0 0 / 44px 100% no-repeat local,

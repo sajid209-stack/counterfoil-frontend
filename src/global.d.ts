@@ -8,6 +8,7 @@ type Messages = {
   errors: typeof import("./messages/en/errors.json");
   auth: typeof import("./messages/en/auth.json");
   dashboard: typeof import("./messages/en/dashboard.json");
+  activity: typeof import("./messages/en/activity.json");
   calendar: typeof import("./messages/en/calendar.json");
   customers: typeof import("./messages/en/customers.json");
   orders: typeof import("./messages/en/orders.json");

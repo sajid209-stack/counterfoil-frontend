@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { RotateCcw, Search } from "lucide-react";
 import { Button, DataTable, EmptyState, PageShell, useToast } from "@/components/ui";
 import { NO_ONE, orderMethodOf } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
@@ -38,7 +37,7 @@ export default function OrdersPage() {
  * the filters narrow within it. One person's orders (`?customerId=`, from the
  * customer page) ignore the venue and say so in a banner.
  *
- * The figures beside the search, the Summary, the CSV and the printouts all
+ * The figures under the filters, the Summary, the CSV and the printouts all
  * come from `useSalesReport`, so they are one number said four ways.
  */
 function OrdersPageInner() {
@@ -198,6 +197,10 @@ function OrdersPageInner() {
           set={set}
           options={options}
           labels={L}
+          query={draft}
+          onQuery={onSearch}
+          narrowed={narrowed}
+          onReset={reset}
           disabled={firstLoad}
           onSummary={() => setSheet(true)}
           onExport={onExport}
@@ -210,25 +213,8 @@ function OrdersPageInner() {
           }}
         />
 
-        {/* Search and Reset on the left, the figures for what is matched on the
-            right — one quiet panel, not a band of cards. */}
-        <section aria-label={t("figures.label")} className="card-surface flex flex-wrap items-center justify-between gap-x-major gap-y-section p-card">
-          <div className="flex min-w-0 max-md:w-full items-center gap-tight">
-            <div className="relative min-w-0 flex-1 md:w-64 md:flex-none">
-              <Search size={16} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                type="search"
-                value={draft}
-                onChange={(e) => onSearch(e.target.value)}
-                placeholder={t("searchPlaceholder")}
-                aria-label={t("filterResults")}
-                className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-9"
-              />
-            </div>
-            <Button variant="secondary" size="sm" disabled={!narrowed} icon={<RotateCcw size={14} strokeWidth={1.5} />} onClick={reset} aria-label={t("reset")} className="max-md:w-11 max-md:px-0">
-              <span className="max-md:sr-only">{t("reset")}</span>
-            </Button>
-          </div>
+        {/* Only the five figures, full width - the search and Reset live in the filter row above. */}
+        <section aria-label={t("figures.label")} className="card-surface p-card">
           <SalesFigures summary={summary} loading={firstLoad} />
         </section>
 

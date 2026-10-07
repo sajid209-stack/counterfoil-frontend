@@ -8,7 +8,7 @@
   "colItems": "আইটেম",
   "colTotal": "মোট",
   "colStatus": "অবস্থা",
-  "searchPlaceholder": "অর্ডার নম্বর বা গ্রাহক খুঁজুন…",
+  "searchPlaceholder": "অর্ডার খুঁজুন…",
   "allStatuses": "সব অবস্থা",
   "allChannels": "কাউন্টার বা অনলাইন",
   "channelCounter": "কাউন্টার",
@@ -149,7 +149,7 @@
   "noCounter": "কাউন্টার নেই",
   "noStaff": "লেখা নেই",
   "filterResults": "ফলাফল ছাঁকুন",
-  "reset": "রিসেট",
+  "reset": "ফিল্টার মুছুন",
   "exported": "{count, plural, one {#টি অর্ডার} other {#টি অর্ডার}} এক্সপোর্ট হয়েছে।",
   "channel": {
     "counter": "কাউন্টার",
@@ -195,6 +195,7 @@
     "noOptions": "বাছার মতো কিছু নেই"
   },
   "toolbar": {
+    "filtersCount": "ফিল্টার, {count}টি দেওয়া আছে",
     "date": "তারিখ",
     "summary": "সারসংক্ষেপ",
     "export": "বিক্রি এক্সপোর্ট",

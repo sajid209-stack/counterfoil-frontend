@@ -72,6 +72,7 @@
  * refused rather than quietly opening it to everyone.
  */
 import { demoNow } from "@/lib/schedule";
+import { recordActivity } from "./activityLog";
 import { createResource, delay, fail, validationError } from "./client";
 import { peekStaff } from "./staff";
 import type { ApiResult, Device, DeviceInput, DevicePatch, ListParams, ListResponse, Staff } from "./types";
@@ -346,7 +347,21 @@ export async function pairDevice(code: string): Promise<ApiResult<Device>> {
   if (device.status !== "active") return refuseCode(`${device.name} is turned off. Ask a manager to turn it on in Settings, Devices.`);
   if (!device.counterId) return refuseCode(`${device.name} is not on a counter yet. Ask a manager to choose one in Settings, Devices.`);
   const at = now.toISOString();
-  return resource.update(device.id, { pairedAt: at, lastSeenAt: at, pairingExpiresAt: null });
+  const paired = await resource.update(device.id, { pairedAt: at, lastSeenAt: at, pairingExpiresAt: null });
+  if (paired.ok) {
+    /* The log: a pairing is also a device's pairedAt, so the live event takes
+       that derived one's place. */
+    recordActivity({
+      kind: "device.paired",
+      at,
+      locationId: null,
+      counterId: device.counterId,
+      deviceId: device.id,
+      subject: { type: "device", id: device.id, label: device.name, href: `/settings/devices/${device.id}` },
+      replaces: `pair:${device.id}`,
+    });
+  }
+  return paired;
 }
 
 /**

@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, CalendarClock, Check, CircleCheck, ListFilter, Package, Receipt, RotateCcw, TrendingUp, UserCheck, UserRoundPlus, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight, CalendarClock, Check, ListFilter, Package, TrendingUp, UserCheck, Users } from "lucide-react";
 import { AreaChart, Button, DeltaPill, Select, StatStrip, StatusPill, type StatItem } from "@/components/ui";
 import { PageShell } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
@@ -13,7 +13,9 @@ import {
   getSlots,
   listBookings,
   listCounters,
-  listCustomers,
+  listActivity,
+  ACTIVITY_GROUPS,
+  type ActivityGroup,
   listDevices,
   listLocations,
   listOrders,
@@ -27,6 +29,8 @@ import { DEMO_TODAY, demoNow, isResourceType, isSlotBased, toMinutes } from "@/l
 import { formatClock, formatDateTime, formatDay, formatMoney, formatMoneyCompact, formatRelative } from "@/lib/format";
 import { useEnumLabels } from "@/lib/labels";
 import { useActiveLocation } from "@/lib/activeLocation";
+import { cn } from "@/lib/cn";
+import { KindBadge, SEVERITY_ROW_CLASS, SeverityChip, useActivityText } from "../activity/_components/parts";
 
 // The demo clock is shared, never copied: DEMO_TODAY's own comment warns
 // that two components each holding their own date is the bug.
@@ -54,38 +58,16 @@ function useCountUp(target: number, ms = 320) {
 
 const paidish = (o: Order) => o.status === "paid" || o.status === "partial";
 
-/** One row of the live-activity feed. `kind` is the row's own fact — the badge,
- *  its colour and the filter all read off it, so none of them has to infer a
- *  category from the rendered text. */
-type ActivityKind = "paid" | "sale" | "refund" | "customer";
-type ActivityItem = {
-  id: string;
-  kind: ActivityKind;
-  title: string;
-  subject: string;
-  amount: number | null;
-  at: string;
-};
-type ActivityFilter = "all" | "sales" | "refunds" | "customers";
-/** Filter → the kinds it admits. Sales keeps paid and unfinished sales
- *  together because both are the same event to someone scanning the feed:
- *  money came in, or was meant to. */
-const ACTIVITY_KINDS: Record<ActivityFilter, readonly ActivityKind[]> = {
-  all: ["paid", "sale", "refund", "customer"],
-  sales: ["paid", "sale"],
-  refunds: ["refund"],
-  customers: ["customer"],
-};
-/** Glyph and colour per kind. Money out is danger and money in is success —
- *  the semantics this codebase already uses — while an unfinished sale stays
- *  muted because it has not happened yet, and a new customer takes the brand
- *  ember. Four distinct glyphs, so the row never depends on colour alone. */
-const ACTIVITY_BADGE: Record<ActivityKind, { Icon: LucideIcon; className: string }> = {
-  paid: { Icon: CircleCheck, className: "text-success" },
-  sale: { Icon: Receipt, className: "text-muted" },
-  refund: { Icon: RotateCcw, className: "text-danger" },
-  customer: { Icon: UserRoundPlus, className: "text-brand-foreground" },
-};
+/** The card's filter: every group of the activity log, or all of it. The
+ *  groups are the log's own (sign-ins, gate, sales, bookings, devices,
+ *  settings), so the card and the /activity page cannot name them differently. */
+type ActivityFilter = "all" | ActivityGroup;
+/** How many events the card shows. It exists to balance the rail against the
+ *  column beside it - the reference's two columns finish level, which is most
+ *  of why its page reads as settled rather than ragged. An event is a sentence
+ *  that often wraps to two lines, so it is taller than the old one-line order
+ *  rows. Re-measure if this card's anatomy changes. */
+const ACTIVITY_ROWS = 11;
 
 
 /**
@@ -111,6 +93,7 @@ export default function DashboardPage() {
   // here would be two places for one word to drift.
   const to = useTranslations("orders");
   const enumL = useEnumLabels();
+  const ax = useActivityText();
   const op = useApiQuery(() => getOperator(), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100, filters: { status: "active" } }), []);
   const counters = useApiQuery(() => listCounters({ pageSize: 1 }), []);
@@ -119,9 +102,6 @@ export default function DashboardPage() {
   const devicesQ = useApiQuery(() => listDevices({ pageSize: 100 }), []);
   const ordersQ = useApiQuery(() => listOrders({ pageSize: 1000 }), []);
   const bookingsQ = useApiQuery(() => listBookings({ pageSize: 1000 }), []);
-  // Sorted newest-first at the source: the feed only ever shows a handful of
-  // rows, so there is no reason to pull the whole roster to find them.
-  const customersQ = useApiQuery(() => listCustomers({ pageSize: 50, sort: "createdAt", order: "desc" }), []);
 
   /* Read, not chosen here: the bar owns it. */
   const { id: locationId } = useActiveLocation(locationsQ.data?.data ?? []);
@@ -141,7 +121,6 @@ export default function DashboardPage() {
   // Memoised, unlike its neighbours above: the activity feed depends on it,
   // and a fresh array each render would rebuild and re-sort the whole feed
   // on every keystroke elsewhere on the page.
-  const customers = useMemo(() => customersQ.data?.data ?? [], [customersQ.data]);
 
   const scopeDays = useMemo(() => (scope === "today" ? [TODAY] : Array.from({ length: 7 }, (_, i) => dayShift(TODAY, i - 6))), [scope]);
 
@@ -285,75 +264,18 @@ export default function DashboardPage() {
     return free;
   }, [products]);
 
-  /** "12 min ago" / "3 hr ago" / "2 d ago", measured from the demo clock.
-   *  Shared by the activity feed and the rail so one notion of "ago" governs
-   *  the page. Parses the instant rather than comparing the string — the seed
-   *  spells timestamps two ways. */
-  const relTime = useCallback((iso: string) => {
-    const mins = Math.max(0, Math.round((Date.parse(`${TODAY}T12:00:00+06:00`) - Date.parse(iso)) / 60000));
-    return mins < 60 ? t("minAgo", { count: mins }) : mins < 1440 ? t("hrAgo", { count: Math.round(mins / 60) }) : t("dAgo", { count: Math.round(mins / 1440) });
-  }, [t]);
-
-  // ── Live activity ────────────────────────────────────────────────────────
-  // The feed is not an order log. What a manager wants from it is "what has
-  // happened here lately", and a customer record appearing is one of those
-  // things — so orders and customers are merged into one time-ordered stream
-  // rather than the card being a second, smaller Orders table. Each row
-  // carries its own kind, which is what the badge and the filter read off;
-  // nothing here guesses tone from wording.
-  const activity = useMemo(() => {
-    const events: ActivityItem[] = [];
-
-    for (const o of orders) {
-      const refunded = o.status === "refunded" || o.status === "partly_refunded";
-      // A partial refund's headline figure is what went back, not what the
-      // order was worth — reading o.total there would overstate it, often by
-      // an order of magnitude.
-      const amount = o.status === "partly_refunded"
-        ? o.lines.reduce((s, l) => s + l.refundedAmount, 0)
-        : o.total;
-      const kind: ActivityKind = refunded ? "refund" : o.status === "paid" ? "paid" : "sale";
-      const title = o.status === "refunded" ? t("refundIssued")
-        : o.status === "partly_refunded" ? t("refundPartial")
-        : o.status === "paid" ? t("orderPaid", { ref: o.reference })
-        : o.status === "partial" ? t("orderPartPaid", { ref: o.reference })
-        : o.status === "cancelled" ? t("orderCancelled", { ref: o.reference })
-        : t("orderPending", { ref: o.reference });
-      events.push({
-        id: `o:${o.id}`, kind, title, at: o.createdAt,
-        // The buyer leads the subtitle where there is one; a walk-up has no
-        // name, and the product it bought says more than "—".
-        subject: o.customerName ?? o.lines[0]?.productName ?? "—",
-        amount,
-      });
-    }
-
-    for (const c of customers) {
-      events.push({
-        id: `c:${c.id}`, kind: "customer", title: t("customerAdded"), at: c.createdAt,
-        subject: t("customerJoined", { name: c.name }), amount: null,
-      });
-    }
-
-    return events
-      .filter((e) => ACTIVITY_KINDS[activityFilter].includes(e.kind))
-      // Sorted on the parsed instant, NOT on the string. The two sources do
-      // not agree on how they spell a timestamp — generated records are
-      // .toISOString() ("…T05:05:00.000Z"), hand-authored seed records carry a
-      // local offset ("…T11:05:00+06:00") — and comparing those as text puts a
-      // 12-minute-old event below a 55-minute-old one. Ordering orders among
-      // themselves hid this; merging two sources exposes it.
-      .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
-      // This count exists to balance the rail against the column beside it —
-      // the reference's two columns finish level, which is most of why its
-      // page reads as settled rather than ragged. It was eight, then six once
-      // each notice gained a title and an action, then five when the revenue
-      // trend gave 90px back. With Notices gone the feed IS the rail, and five
-      // rows left a 489px hole beside a 949px column. Twelve is what measures
-      // level. Re-measure if this card's anatomy changes.
-      .slice(0, 12)
-      .map((e) => ({ ...e, rel: relTime(e.at) }));
-  }, [orders, customers, activityFilter, relTime, t]);
+  // ── Activity ─────────────────────────────────────────────────────────────
+  // The card is the activity LOG, not a sales feed: who did what, where, when -
+  // a staff member signing in on a counter, a second scan refused at the gate,
+  // a refund asked for, a device paired. The log (lib/api/activity) merges what
+  // the records already say with what the tills write down live, and the card
+  // shows its latest few for the venue in the bar. Loaded in the browser, so
+  // the clock times it prints are the reader's and never the server's.
+  const activityQ = useApiQuery(
+    () => listActivity({ locationId, groups: activityFilter === "all" ? undefined : [activityFilter], pageSize: ACTIVITY_ROWS }),
+    [locationId, activityFilter],
+  );
+  const activity = activityQ.data?.data ?? [];
 
 
   // Idle capacity — unsold places in the next 48h, priced.
@@ -757,73 +679,73 @@ export default function DashboardPage() {
                   get a heading rather than a small-caps field label. The filter
                   sits on the heading row, where the reference puts it. */}
               <div className="flex items-baseline justify-between gap-tight px-card pb-tight pt-card">
-                <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("liveActivity")}</h2>
-                {/* This was a native select on purpose — one control, naming
-                    its own filter, keyboard- and screen-reader-correct with no
-                    focus-trap code. `Select` is now that control: it carries
-                    the same combobox semantics, and it retires the workaround
-                    this header needed. card-surface is white at 72%, so an
-                    opaque control read as a white box floating in the header
-                    while a transparent one dropped the native popup to
-                    dark-on-dark; the options had to be painted one by one.
-                    `bare` draws no box, and the popover is a card of our own. */}
-                <div className="relative flex shrink-0 items-center text-muted focus-within:text-fg hover:text-fg">
-                  <ListFilter size={13} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-0 z-10" />
+                <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("activityTitle")}</h2>
+                {/* One compact control: the filter glyph is the Select's own
+                    icon slot, so glyph and label share a flex row with a real
+                    gap and cannot overlap. (They did: the glyph was absolutely
+                    positioned and the trigger's padding override lost to the
+                    default - `cn` does not merge conflicting utilities.) `bare`
+                    draws no box, and the popover is a card of our own. */}
+                <div className="flex shrink-0 items-center text-muted focus-within:text-fg hover:text-fg">
                   <Select
                     bare
+                    icon={<ListFilter size={13} strokeWidth={1.5} aria-hidden />}
                     aria-label={t("filterActivity")}
                     value={activityFilter}
                     onChange={(v) => setActivityFilter(v as ActivityFilter)}
                     align="end"
-                    triggerClassName="pl-[19px] text-[12px] font-normal text-current"
+                    triggerClassName="text-[12px] font-normal text-current"
                     options={[
                       { value: "all", label: t("filterAll") },
-                      { value: "sales", label: t("filterSales") },
-                      { value: "refunds", label: t("filterRefunds") },
-                      { value: "customers", label: t("filterCustomers") },
+                      ...ACTIVITY_GROUPS.map((g) => ({ value: g, label: ax.groupLabel(g) })),
                     ]}
                   />
                 </div>
               </div>
-              {/* The reference's activity row: an icon badge, then two stacked
-                  lines, with the timestamp held right. The badge is outlined,
-                  not filled — measured on the reference: 32px, 6px radius, card
-                  background, 1px hairline, with the colour in the glyph. A
-                  filled tint block per row reads as four coloured chips
-                  stacked up; an outlined badge stays quiet and lets the text
-                  lead. Colour is read off the row's own kind, never guessed
-                  from the wording, and it is never the only carrier: the glyph
-                  differs per kind and the title says which event it was. */}
-              {activity.length === 0 ? (
-                <p className="px-card pb-comfortable text-[13px] text-muted">{t("noActivity")}</p>
-              ) : activity.map((a) => {
-                const badge = ACTIVITY_BADGE[a.kind];
-                return (
-                  <div key={a.id} className="flex items-start gap-section px-card py-comfortable">
-                    <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-sm border border-line bg-card ${badge.className}`}>
-                      <badge.Icon size={15} strokeWidth={1.5} />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] break-words">{a.title}</p>
-                      <p className="mt-0.5 flex flex-wrap items-baseline gap-inline text-[12px] text-muted">
-                        <span className="min-w-0 truncate">{a.subject}</span>
-                        {/* A customer row has no money on it, and a zero would
-                            be a fact the event does not carry. */}
-                        {a.amount !== null && <span className="shrink-0 whitespace-nowrap">· {formatMoney(a.amount)}</span>}
-                      </p>
+              {/* Each event: an outlined glyph badge (32px, 6px radius,
+                  hairline - the reference's anatomy), the sentence, then the
+                  kind in words and, for a warning or a serious event, its
+                  importance in words too, with the time held right. Colour is
+                  never the only carrier: the glyph differs per kind, the kind
+                  is written out, and importance has a word. A warning or
+                  serious row is tinted very softly. */}
+              {activityQ.loading && activity.length === 0 ? (
+                <div aria-busy="true">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center gap-section px-card py-comfortable">
+                      <div className="h-8 w-8 animate-pulse rounded-sm bg-subtle" />
+                      <div className="h-4 flex-1 animate-pulse rounded-sm bg-subtle" />
                     </div>
-                    <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{a.rel}</span>
+                  ))}
+                </div>
+              ) : activity.length === 0 ? (
+                <p className="px-card pb-comfortable text-[13px] text-muted">{t("noActivity")}</p>
+              ) : activity.map((a) => (
+                <div key={a.id} className={cn("flex items-start gap-section px-card py-comfortable", SEVERITY_ROW_CLASS[a.severity])}>
+                  <KindBadge kind={a.kind} severity={a.severity} className="mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words text-[13px] leading-snug">{ax.sentence(a)}</p>
+                    {/* The sentence already says what happened, so an
+                        ordinary event carries no second line. A warning or a
+                        serious one adds the kind and its importance in words -
+                        the tint is never the only thing saying so. */}
+                    {a.severity !== "info" && (
+                      <p className="mt-0.5 flex flex-wrap items-center gap-x-inline gap-y-0.5 text-[12px] text-muted">
+                        <span>{ax.kindLabel(a)}</span>
+                        <SeverityChip severity={a.severity} label={ax.severityLabel(a.severity)} />
+                      </p>
+                    )}
                   </div>
-                );
-              })}
+                  <span className="shrink-0 whitespace-nowrap pt-0.5 text-[12px] text-muted">{ax.ago(a.at)}</span>
+                </div>
+              ))}
               {/* The reference closes this card with a full-width outlined
-                  button. Where it goes follows the filter, because that is the
-                  page the rows on screen actually came from — sending someone
-                  looking at customer events to Orders would be a dead end. */}
+                  button. It opens the whole log, which is where every row on
+                  this card came from. */}
               <div className="px-card pb-card pt-tight">
                 <button
                   type="button"
-                  onClick={() => router.push(activityFilter === "customers" ? "/customers" : "/orders")}
+                  onClick={() => router.push("/activity")}
                   className="min-h-11 w-full rounded-sm border border-line bg-card/60 text-sm font-medium transition-colors duration-quick hover:border-strong hover:bg-card sm:min-h-9"
                 >
                   {t("viewAllActivity")}
