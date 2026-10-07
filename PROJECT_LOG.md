@@ -16460,3 +16460,18 @@ nothing checked that the people allowed on a device could actually sign in.
 - At 1024px the Expenses toolbar wraps, and Add expense moves to a second row.
 - The pairing status cannot flip across two real tabs, because the mock store
   lives in one tab. The demo uses "Pair on this browser".
+
+## The rail loses its search field, and the current page becomes a tint (2026-10-07)
+
+Owner, on a screenshot of the rail: "remove search, and the active selected menu
+needs to be modern and minimal."
+- **Search**: the field is gone from the rail, open and collapsed. Ctrl/⌘ K
+  still opens the command palette from anywhere. The `nav.search` message stays,
+  because the palette uses it as its name.
+- **The current page** is now a soft tint of the ink with the label and icon in
+  full ink. That is 7% in light and 9% in dark, with no card, border or shadow.
+  Hover is a 4% tint, so the two never look the same.
+- **Verified**: nav checks 152/152 (rewritten to assert no search field, the
+  tint, and no border or shadow; Cmd+K on a Mac), the adapted nav harness
+  197/197, and top cards 103/103. No console errors in light or dark. `tsc` and
+  `eslint` are clean on the rail.

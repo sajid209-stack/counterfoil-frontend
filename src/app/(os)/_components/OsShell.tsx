@@ -230,7 +230,7 @@ export function OsShell({ children }: { children: React.ReactNode }) {
     <BarTitleContext value={pageName}>
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen shrink-0 overflow-y-auto md:block">
-        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} onSearch={() => setSearchOpen(true)} shortcutKey={shortcutKey} />
+        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
       </aside>
 
       {/* overflow-x-CLIP, not hidden. `overflow-x: hidden` forces overflow-y to

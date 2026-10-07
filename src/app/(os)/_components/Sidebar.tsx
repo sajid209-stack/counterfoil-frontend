@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
+import { ArrowUpRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Logo, LogoMark } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -75,38 +75,31 @@ function RailTip({
  *  - the logo, and beside it one small control that folds the rail — not the
  *    business, not the product, not a venue; the console says whose it is
  *    elsewhere;
- *  - a search field that is really a button: it opens the command palette, the
- *    same one Ctrl/⌘ K opens, and shows the key that does the same thing;
+ *  - no search field: the owner asked for it to go. Ctrl/⌘ K still opens the
+ *    command palette from anywhere (wired in OsShell);
  *  - the destinations as one list, one icon size and one row height. The page
- *    you are on is a white pill raised off the rail — a fill and a hairline,
- *    never a coloured bar;
+ *    you are on is a soft tint of the ink with the label and icon in full ink —
+ *    no card, no border, no shadow, no coloured bar;
  *  - the other apps under a hairline, marked ↗ because they leave the console;
  *  - Settings pinned at the foot, with the version in small print under it.
  *
- * The rail takes the PAGE's own ground, so a white pill reads as raised. In
- * dark it is a step lighter than the rail with a 1px line, which is the
- * project's elevation rule — a shadow on near-black reads as nothing.
+ * The rail takes the PAGE's own ground. The tint is a fraction of the ink, so
+ * it is the same quiet step in light and dark.
  *
  * Groups are told apart by spacing and a hairline, not by uppercase labels:
  * the owner asked for "Overview" and "Settings" to go, and a row's own icon
  * and name already say what it is.
  *
  * Collapsed, it is a 64px column of the same things in the same order, as
- * icons: the mark, an expand control beneath it, search, then the destinations,
+ * icons: the mark, an expand control beneath it, then the destinations,
  * each with a tooltip. `[` toggles it from the keyboard (wired in OsShell).
  */
 export function Sidebar({
   collapsed = false,
   onToggleCollapsed,
-  onSearch,
-  shortcutKey,
 }: {
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
-  /** Opens the command palette. */
-  onSearch?: () => void;
-  /** "Ctrl K" or "⌘K", whichever is true on this machine. */
-  shortcutKey?: string;
 }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
@@ -116,9 +109,9 @@ export function Sidebar({
 
   /* One row, for every destination. 40px (44 under a coarse pointer, since a
      tablet gets this rail too), an 18px / 1.5 icon on a fixed edge so every
-     label starts on one line, 14px/500 muted text. The page you are on is a
-     white pill — the fill and a hairline lift it off the rail; every row
-     carries a transparent border so the pill appears without anything moving. */
+     label starts on one line, 14px/500 muted text. The page you are on is a soft
+     tint of the ink with its label and icon in full ink — no card, border or
+     shadow. Hover is half that tint, so the two never read as the same thing. */
   const row = (d: NavDestination, opts: { leaves?: boolean } = {}) => {
     const label = t(d.key);
     const active = isActive(d);
@@ -132,11 +125,11 @@ export function Sidebar({
             aria-label={collapsed ? label : undefined}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "group relative flex h-10 items-center gap-comfortable rounded-sm border text-sm font-medium transition-colors duration-quick [@media(pointer:coarse)]:h-11",
+              "group relative flex h-10 items-center gap-comfortable rounded-sm text-sm font-medium transition-colors duration-quick [@media(pointer:coarse)]:h-11",
               collapsed ? "mx-auto w-10 justify-center [@media(pointer:coarse)]:w-11" : "px-comfortable",
               active
-                ? "border-line bg-card text-fg shadow-sm dark:shadow-none"
-                : "border-transparent text-muted hover:bg-muted-wash hover:text-fg",
+                ? "bg-fg/[0.07] text-fg dark:bg-fg/[0.09]"
+                : "text-muted hover:bg-fg/[0.04] hover:text-fg",
             )}
           >
             <Icon size={18} strokeWidth={1.5} aria-hidden className="shrink-0" />
@@ -208,41 +201,6 @@ export function Sidebar({
           {toggle}
         </div>
       )}
-
-      {/* Search. It looks like the field it stands in for and behaves like a
-          button: it opens the command palette, the same one the shortcut
-          opens. Collapsed it is a glyph with the key in its tooltip. */}
-      <div className={cn("shrink-0 pb-tight", gutter)}>
-        <RailTip label={t("search")} shortcut={shortcutKey} enabled={collapsed}>
-          <button
-            type="button"
-            onClick={onSearch}
-            data-nav="search"
-            aria-haspopup="dialog"
-            aria-keyshortcuts="Control+K Meta+K"
-            aria-label={collapsed ? t("search") : undefined}
-            className={cn(
-              "flex h-10 items-center gap-comfortable rounded-sm border border-line text-sm text-muted transition-colors duration-quick hover:border-strong hover:text-fg [@media(pointer:coarse)]:h-11",
-              /* Open, it is the input it stands in for. Collapsed it is an
-                 outline only: a filled white square there would read as a
-                 second "current page" beside the pill below it. */
-              collapsed ? "mx-auto w-10 justify-center hover:bg-card [@media(pointer:coarse)]:w-11" : "w-full bg-card px-comfortable",
-            )}
-          >
-            <Search size={collapsed ? 18 : 16} strokeWidth={1.5} aria-hidden className="shrink-0" />
-            {!collapsed && (
-              <>
-                <span className="min-w-0 flex-1 truncate text-left">{t("search")}</span>
-                {shortcutKey && (
-                  <kbd aria-hidden className="shrink-0 rounded-xs border border-line bg-surface px-1.5 font-mono text-[12px] leading-5 text-muted">
-                    {shortcutKey}
-                  </kbd>
-                )}
-              </>
-            )}
-          </button>
-        </RailTip>
-      </div>
 
       {/* The scrolling middle. Settings is outside it, so it is always on
           screen however short the window is. */}
