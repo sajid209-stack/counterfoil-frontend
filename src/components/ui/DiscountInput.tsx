@@ -80,7 +80,7 @@ export function DiscountInput({
     <div className={cn("flex flex-col", compact ? "gap-inline" : "gap-tight", className)}>
       {/* Compact opens under a button that already names it, so a label here
           would say the same thing twice in a cart line that cannot spare it. */}
-      {label && !compact && <span className="type-label text-[0.75rem] text-muted">{label}</span>}
+      {label && !compact && <span className="text-[0.8125rem] font-medium text-muted">{label}</span>}
 
       <div className="flex items-center gap-tight">
         <div className={cn("flex shrink-0 overflow-hidden border border-line", shape === "go" ? "rounded-full" : "rounded-sm")}>

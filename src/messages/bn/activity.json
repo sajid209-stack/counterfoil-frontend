@@ -3,7 +3,7 @@
   "description": "কে কী করেছেন, কোথায়। সাইন ইন, স্ক্যান, ফেরত, ডিভাইস আর সেটিংস।",
   "system": "কাউন্টারফয়েল",
   "somewhere": "একটি কাউন্টার",
-  "search": "মানুষ, টিকিট বা অর্ডার খুঁজুন",
+  "search": "লগ খুঁজুন…",
   "filter": {
     "type": "ধরন",
     "person": "ব্যক্তি",
@@ -12,7 +12,8 @@
     "everyone": "সবাই",
     "allImportance": "সবকিছু",
     "warnings": "সতর্কতা ও তার বেশি",
-    "serious": "শুধু গুরুতর"
+    "serious": "শুধু গুরুতর",
+    "date": "তারিখ"
   },
   "group": {
     "sessions": "সাইন ইন ও শিফট",
@@ -22,7 +23,11 @@
     "devices": "ডিভাইস",
     "settings": "সেটিংস ও টিম"
   },
-  "severity": { "info": "তথ্য", "warning": "সতর্কতা", "critical": "গুরুতর" },
+  "severity": {
+    "info": "তথ্য",
+    "warning": "সতর্কতা",
+    "critical": "গুরুতর"
+  },
   "kind": {
     "staffSignedIn": "সাইন ইন",
     "staffSignedOut": "সাইন আউট",
@@ -144,8 +149,10 @@
     "hr": "{count} ঘণ্টা আগে",
     "day": "{count} দিন আগে"
   },
-  "day": { "today": "আজ", "yesterday": "গতকাল" },
-  "venueAll": "পুরো ব্যবসা",
+  "day": {
+    "today": "আজ",
+    "yesterday": "গতকাল"
+  },
   "count": "{count, plural, one {# ঘটনা} other {# ঘটনা}}",
   "showMore": "আরও {count}টি দেখান",
   "empty": {

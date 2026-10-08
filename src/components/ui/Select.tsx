@@ -316,7 +316,7 @@ export function Select({
               cn(
                 "w-full justify-between gap-tight rounded-sm border bg-card pl-comfortable pr-tight text-sm",
                 "disabled:cursor-not-allowed disabled:bg-subtle disabled:text-faint",
-                ariaInvalid ? "border-danger" : "border-line hover:border-strong",
+                ariaInvalid ? "border-danger" : open ? "border-strong" : "border-line hover:border-strong",
               ),
           /* A fixed height is part of having a box, so `bare` does not take
               one — it sits in a chip or a card header that already has its own.
@@ -348,8 +348,9 @@ export function Select({
       {open && createPortal(
         <div
           ref={panel}
+          data-select-panel=""
           className={cn(
-            "fixed z-50 flex max-h-[18rem] min-w-[12rem] flex-col overflow-hidden rounded-md border border-line bg-card shadow-lg",
+            "fixed z-50 flex max-h-[18rem] min-w-[12rem] flex-col overflow-hidden rounded-md border border-hairline bg-card shadow-lg dark:border-line",
             bare && "w-max max-w-[18rem]",
           )}
         >

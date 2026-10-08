@@ -107,7 +107,7 @@ export function Sheet({
         aria-label={title}
         style={drag ? { transform: `translateY(${drag}px)` } : undefined}
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col overflow-hidden rounded-t-md border border-line bg-card shadow-xl",
+          "fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col overflow-hidden rounded-t-md border border-hairline bg-card shadow-xl dark:border-line",
           // Rises from the edge it belongs to. `backwards`, so no transform is
           // left behind to create a containing block; the global
           // reduced-motion block neutralises it.
@@ -125,7 +125,7 @@ export function Sheet({
           onPointerCancel={end}
           className={cn("flex cursor-grab touch-none justify-center pb-inline pt-tight active:cursor-grabbing", side && "md:invisible")}
         >
-          <span aria-hidden className="h-1 w-10 rounded-full bg-line" />
+          <span aria-hidden className="h-1 w-10 rounded-full bg-strong" />
         </div>
 
         <div className="flex items-start justify-between gap-tight border-b border-hairline pb-tight pl-card pr-tight">

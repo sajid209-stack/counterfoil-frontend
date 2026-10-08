@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, CalendarClock, Check, ListFilter, Package, TrendingUp, UserCheck, Users } from "lucide-react";
+import { ArrowRight, Check, ListFilter } from "lucide-react";
 import { AreaChart, Button, DeltaPill, Select, StatStrip, StatusPill, type StatItem } from "@/components/ui";
 import { PageShell } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
@@ -15,6 +15,7 @@ import {
   listCounters,
   listActivity,
   ACTIVITY_GROUPS,
+  type ActivityEvent,
   type ActivityGroup,
   listDevices,
   listLocations,
@@ -30,7 +31,10 @@ import { formatClock, formatDateTime, formatDay, formatMoney, formatMoneyCompact
 import { useEnumLabels } from "@/lib/labels";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { cn } from "@/lib/cn";
-import { KindBadge, SEVERITY_ROW_CLASS, SeverityChip, useActivityText } from "../activity/_components/parts";
+import { MD, useMediaQuery } from "@/lib/useMedia";
+import { ACTIVITY_ICON, SEVERITY_ICON_CLASS, useActivityText } from "../activity/_components/parts";
+import { MetricStrip, type Metric } from "./_components/MetricStrip";
+import { Segmented } from "./_components/Segmented";
 
 // The demo clock is shared, never copied: DEMO_TODAY's own comment warns
 // that two components each holding their own date is the bug.
@@ -62,30 +66,39 @@ const paidish = (o: Order) => o.status === "paid" || o.status === "partial";
  *  groups are the log's own (sign-ins, gate, sales, bookings, devices,
  *  settings), so the card and the /activity page cannot name them differently. */
 type ActivityFilter = "all" | ActivityGroup;
-/** How many events the card shows. It exists to balance the rail against the
- *  column beside it - the reference's two columns finish level, which is most
- *  of why its page reads as settled rather than ragged. An event is a sentence
- *  that often wraps to two lines, so it is taller than the old one-line order
- *  rows. Re-measure if this card's anatomy changes. */
+/** How many events the card shows on a desktop. It exists to balance the rail
+ *  against the column beside it - the reference's two columns finish level,
+ *  which is most of why its page reads as settled rather than ragged. An event
+ *  is a sentence that often wraps to two lines, so it is taller than the old
+ *  one-line order rows. Re-measure if this card's anatomy changes. A phone has
+ *  no column beside it and shows five: it is a glance, and the full log is one
+ *  press away. */
 const ACTIVITY_ROWS = 11;
+const ACTIVITY_ROWS_PHONE = 5;
+/** Recent orders on a phone: a short list, not a table. */
+const ORDER_ROWS_PHONE = 5;
 
+/** The soft disc an activity row leads with. One glyph per kind, so a row never
+ *  depends on colour alone — but no outline: the disc is a tint, not a box. */
+function Marker({ kind, severity }: { kind: ActivityEvent["kind"]; severity: ActivityEvent["severity"] }) {
+  const Icon = ACTIVITY_ICON[kind];
+  return (
+    <span aria-hidden className={cn("mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted-wash", SEVERITY_ICON_CLASS[severity])}>
+      <Icon size={15} strokeWidth={1.5} />
+    </span>
+  );
+}
 
-/**
- * The four headline metrics, stated once and drawn in two shapes.
- *
- * They were four near-identical blocks of markup, which is why their context
- * lines had already drifted into four different things once before. They are
- * one list now, rendered as the Aura stat tile from `sm` and as a row on a
- * phone, so the two shapes cannot disagree about what a metric is.
- *
- * The rows exist because at 390 the tiles were four full-width cards about
- * 200px tall — 800px of a 4,434px page spent on four numbers, before the
- * chart the page is actually about. **No figure shrinks to get that back.** A
- * previous pass measured two-up on a phone and rejected it precisely because
- * "৳41,653.00" cannot fit half a 390px screen at 28px, and shrinking the type
- * produced a band that clipped its own numbers. A row has the whole width;
- * only the context line moves, from under the figure to beside it.
- */
+/** "Warning" in words, for an event somebody should look at. Quiet otherwise. */
+function Importance({ severity, label }: { severity: ActivityEvent["severity"]; label: string }) {
+  if (severity === "info") return null;
+  return (
+    <span className={cn("inline-flex shrink-0 items-center rounded-full px-tight py-px text-[12px] font-medium", severity === "critical" ? "bg-danger/10 text-danger" : "bg-warning/15 text-warning")}>
+      {label}
+    </span>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const t = useTranslations("dashboard");
@@ -94,6 +107,11 @@ export default function DashboardPage() {
   const to = useTranslations("orders");
   const enumL = useEnumLabels();
   const ax = useActivityText();
+  /* Which shape of the page is drawn, rather than both with one hidden: a
+     hidden copy is a real node that comes first in document order, and this app
+     has been caught by that more than once. The phone gets a different PAGE,
+     not a squeezed desktop. */
+  const wide = useMediaQuery(MD);
   const op = useApiQuery(() => getOperator(), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100, filters: { status: "active" } }), []);
   const counters = useApiQuery(() => listCounters({ pageSize: 1 }), []);
@@ -108,6 +126,7 @@ export default function DashboardPage() {
   const [scope, setScope] = useState<"today" | "week">("today");
   const [trendDays, setTrendDays] = useState<7 | 14 | 30>(30);
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
+  const [more, setMore] = useState(false);
   const [skipped, setSkipped] = useState<Record<string, boolean>>({});
   const skip = (key: string) => setSkipped((s) => ({ ...s, [key]: true }));
   const has = (q: { data?: { page: { total: number } } }) => (q.data?.page.total ?? 0) > 0;
@@ -118,9 +137,6 @@ export default function DashboardPage() {
   const orders = locationId ? allOrders.filter((o) => o.locationId === locationId) : allOrders;
   const bookings = bookingsQ.data?.data ?? [];
   const products = productsQ.data?.data ?? [];
-  // Memoised, unlike its neighbours above: the activity feed depends on it,
-  // and a fresh array each render would rebuild and re-sort the whole feed
-  // on every keystroke elsewhere on the page.
 
   const scopeDays = useMemo(() => (scope === "today" ? [TODAY] : Array.from({ length: 7 }, (_, i) => dayShift(TODAY, i - 6))), [scope]);
 
@@ -144,7 +160,7 @@ export default function DashboardPage() {
         .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
     [orders, scopeDays],
   );
-  const recentOrders = scopeOrders.slice(0, 8);
+  const recentOrders = scopeOrders.slice(0, wide ? 8 : ORDER_ROWS_PHONE);
   // Cancelled and refunded orders are listed — they are part of what happened —
   // but they can never be owed.
   const owedOrders = scopeOrders.filter((o) => !isVoidedOrder(o) && orderOutstanding(o) > 0);
@@ -271,12 +287,12 @@ export default function DashboardPage() {
   // the records already say with what the tills write down live, and the card
   // shows its latest few for the venue in the bar. Loaded in the browser, so
   // the clock times it prints are the reader's and never the server's.
+  const activityRows = wide ? ACTIVITY_ROWS : ACTIVITY_ROWS_PHONE;
   const activityQ = useApiQuery(
-    () => listActivity({ locationId, groups: activityFilter === "all" ? undefined : [activityFilter], pageSize: ACTIVITY_ROWS }),
-    [locationId, activityFilter],
+    () => listActivity({ locationId, groups: activityFilter === "all" ? undefined : [activityFilter], pageSize: activityRows }),
+    [locationId, activityFilter, activityRows],
   );
   const activity = activityQ.data?.data ?? [];
-
 
   // Idle capacity — unsold places in the next 48h, priced.
   const idle = useMemo(() => {
@@ -307,26 +323,16 @@ export default function DashboardPage() {
   const mixTotal = mix.reduce((a, m) => a + m.amount, 0);
   const idleTotal = idle.reduce((a, x) => a + x.value, 0);
 
-  /** "Operations at a glance" — four readings of the same shape.
-   *
-   *  The card used to hold three different shapes side by side: a fact, a bar
-   *  chart and a list. They had nothing in common, so their heights did not
-   *  agree, the left column ended in a void while the right ran on, and the
-   *  list's four rows were the same product truncated to "17:00 Grand Heritage
-   *  Architect…" four times over. The reference's version is one shape —
-   *  label, figure, sub-line — repeated four times, with the sub-lines
-   *  bottom-aligned so the base is straight whatever the figures do. */
-  /** The four headline metrics, stated once. Drawn by the shared StatStrip,
-   *  which every other page's figures now use as well. */
-  const stats: StatItem[] = [
+  /** The four headline figures, stated once. A desktop draws them as the
+   *  shared tiles; a phone as a row of compact cards that scroll sideways.
+   *  They carry no icons: a tinted glyph above every figure said nothing the
+   *  label beside it did not, and four of them were the loudest thing on the
+   *  page after the chart. */
+  const figures: Metric[] = [
     {
       key: "revenue",
-      icon: <TrendingUp size={18} strokeWidth={1.5} />,
       label: scope === "today" ? t("revenueToday") : t("revenueThisWeek"),
       value: formatMoney(revenueAnimated),
-      // The sparkline went: it drew the same seven days the revenue trend
-      // chart draws in full immediately below it, and it was the reason this
-      // tile's context slot held a picture where the other three held words.
       // Says what the delta beside it is measured against, which depends on
       // the scope: a week is compared with the week before, not with a day.
       context: scope === "today" ? t("vsLastWeek") : t("vsWeekBefore"),
@@ -334,17 +340,15 @@ export default function DashboardPage() {
     },
     {
       key: "sold",
-      icon: <Users size={18} strokeWidth={1.5} />,
       label: t("capacitySold"),
       value: <>{sold} <span className="text-lg text-muted">/ {capacity}</span></>,
-      // The fill bar restated the figure directly above it — "5 / 772" already
-      // IS the ratio — and it was the only bar in the row.
+      // "5 / 772" already IS the ratio, so the line states it as a share of
+      // the whole rather than repeating the label ("of places sold").
       context: t("pctSold", { pct: soldPct }),
       delta: <DeltaPill now={sold} then={soldPrev} />,
     },
     {
       key: "arrived",
-      icon: <UserCheck size={18} strokeWidth={1.5} />,
       label: t("arrived"),
       value: <>{arrived} <span className="text-lg text-muted">{t("arrivedOf", { total: sold })}</span></>,
       context: t("noShow", { pct: noShowPct }),
@@ -352,15 +356,15 @@ export default function DashboardPage() {
     },
     {
       key: "ahead",
-      icon: <CalendarClock size={18} strokeWidth={1.5} />,
       label: t("bookedAhead"),
       value: formatMoney(ahead),
-      // "Booked ahead · next 7 days" was a label carrying its own window
-      // because there was no context line to put it on. Now there is.
       context: t("next7Days"),
       delta: <DeltaPill now={ahead} then={aheadPrev} />,
     },
   ];
+  /* The shared tiles take their own shape of item; `danger` and the strip's
+     action slot are not part of it. */
+  const stats: StatItem[] = figures.map((m) => ({ key: m.key, label: m.label, value: m.value, context: m.context, contextTone: m.contextTone, delta: m.delta, tone: m.tone === "warning" ? "warning" : undefined }));
 
   const ops = useMemo(() => [
     {
@@ -398,7 +402,6 @@ export default function DashboardPage() {
     },
   ], [mix, mixTotal, idle, idleTotal, freeSlots, t]);
 
-
   const top = useMemo(() => {
     const m = new Map<string, { qty: number; rev: number }>();
     orders.filter((o) => paidish(o) && o.createdAt.slice(0, 10) === TODAY).forEach((o) => o.lines.forEach((l) => {
@@ -426,485 +429,432 @@ export default function DashboardPage() {
   const allDone = complete === steps.length;
 
   const card = "card-surface";
+  const heading = "min-w-0 truncate text-base font-semibold tracking-[-0.4px]";
+  /** A quiet link row that ends a card: text, an arrow, no box. */
+  const linkRow =
+    "flex min-h-11 w-full items-center gap-tight px-card text-left text-[13px] font-medium text-muted transition-colors duration-quick hover:text-fg";
 
-  return (
-    <PageShell title={op.data?.name || t("title")}>
-      {/* The dashboard's first toolbar: what period the page is showing, and
-          the one control that changes it. It was the only occupant of a header
-          row under the bar — a control with nothing beside it — so it now says
-          which days it means, on the row it shares with the control, and the
-          tiles follow at the card gap. (A phone gets the control full width.)
-          The venue chooser used to be here, with **All locations** as its
-          default; it is in the bar now and governs the whole console. */}
-      <div className="mb-section flex items-center justify-between gap-section">
-        <p aria-live="polite" className="hidden min-w-0 truncate text-[13px] text-muted md:block">
-          {scope === "today"
-            ? `${t("today")} · ${formatDay(TODAY, { weekday: true })}`
-            : `${t("thisWeek")} · ${formatDay(dayShift(TODAY, -6), { weekday: true })} – ${formatDay(TODAY, { weekday: true })}`}
-        </p>
-        {/* Scope, not actions — a dashboard is a place to look. */}
-        <div role="group" aria-label={t("scopeLabel")} className="relative grid h-[52px] w-full grid-cols-2 rounded-sm bg-line/60 p-inline md:h-9 md:w-60">
-          <span aria-hidden className="absolute inset-y-inline rounded-xs bg-ember-solid transition-[left] duration-quick ease-counterfoil" style={{ width: "calc(50% - 8px)", left: scope === "today" ? 4 : "calc(50% + 4px)" }} />
-          {(["today", "week"] as const).map((s) => (
-            <button key={s} type="button" aria-pressed={scope === s} onClick={() => setScope(s)} className={`relative z-10 h-full px-comfortable text-[13px] font-medium transition-colors duration-quick ${scope === s ? "text-white" : "text-muted"}`}>{s === "today" ? t("today") : t("thisWeek")}</button>
+  // ── The cards, each drawn once and placed by the layout below ────────────
+  const trendCard = (
+    <div className={`${card} p-card`}>
+      <div className="flex flex-wrap items-start justify-between gap-tight">
+        <div className="min-w-0">
+          <h2 className={heading}>{t("revenueTrend")}</h2>
+          <div className="mt-tight flex flex-wrap items-baseline gap-tight">
+            <span className="whitespace-nowrap text-[28px] font-semibold">{formatMoney(trendTotal)}</span>
+            <DeltaPill now={trendTotal} then={trendPrev} />
+          </div>
+          {/* What the delta is measured against - and nothing when there is no
+              delta: "Last 30 days" restated the range control beside it. */}
+          {comparable && <p className="mt-inline text-[12px] text-muted">{t("vsPreviousDays", { count: trendDays })}</p>}
+        </div>
+        {/* Ranges the seed can actually fill — see the trend memo. */}
+        {wide && (
+          <Segmented
+            value={String(trendDays)}
+            onChange={(v) => setTrendDays(Number(v) as 7 | 14 | 30)}
+            label={t("revenueTrend")}
+            options={([7, 14, 30] as const).map((d) => ({ value: String(d), label: t("lastDays", { count: d }) }))}
+          />
+        )}
+      </div>
+      {!wide && (
+        <Segmented
+          fill
+          className="mt-comfortable"
+          value={String(trendDays)}
+          onChange={(v) => setTrendDays(Number(v) as 7 | 14 | 30)}
+          label={t("revenueTrend")}
+          options={([7, 14, 30] as const).map((d) => ({ value: String(d), label: t("lastDays", { count: d }) }))}
+        />
+      )}
+      <div className="mt-section">
+        <AreaChart
+          points={trend}
+          fmt={(v) => formatMoney(v)}
+          fmtAxis={(v) => formatMoneyCompact(v)}
+          /* 210 on a desktop, 150 on a phone with three axis figures instead of
+             five. The figure is stated above in full, so the line is there to
+             show the direction rather than to be read off. */
+          height={wide ? 210 : 150}
+          ticks={wide ? 4 : 2}
+          valueLabel={comparable ? t("thisPeriod") : t("revenueTrend")}
+          compareLabel={t("previousPeriod")}
+        />
+      </div>
+    </div>
+  );
+
+  const glanceCard = (
+    <div className={`${card} p-card`}>
+      <h2 className={cn(heading, "mb-section")}>{t("operations")}</h2>
+      {/* One shape, four times — label, figure, sub-line — with the sub-lines
+          pushed to the bottom of their cell so the base of the card is
+          straight however tall the figures run. Labels are sentence case: an
+          uppercase tracked label is the one thing a calm admin does not do. */}
+      <div className="grid gap-major sm:grid-cols-2 lg:grid-cols-4">
+        {ops.map((o) => {
+          const body = (
+            <>
+              <p className="text-[13px] font-medium text-muted">{o.label}</p>
+              <p className="mt-tight truncate text-[20px] font-semibold tracking-[-0.5px]">{o.value}</p>
+              <div className="mt-auto pt-tight">
+                {o.key === "mix" ? (
+                  // The mix is a proportion, so it keeps a picture of one.
+                  mixTotal > 0 ? (
+                    <span className="flex h-1.5 w-full overflow-hidden rounded-full bg-line" role="img" aria-label={mix.map((m) => `${m.label} ${formatMoney(m.amount)}`).join(", ")}>
+                      {mix.map((m, i) => (
+                        <span key={m.label} className="h-full bg-ember" style={{ width: `${(m.amount / mixTotal) * 100}%`, opacity: 1 - i * 0.35 }} />
+                      ))}
+                    </span>
+                  ) : (
+                    <span className="text-[12px] text-muted">{t("noPayments")}</span>
+                  )
+                ) : (
+                  <span className="block text-[12px] text-muted">{o.sub}</span>
+                )}
+              </div>
+            </>
+          );
+          return o.href ? (
+            <button key={o.key} type="button" onClick={() => router.push(o.href!)} className="group flex min-h-[84px] min-w-0 flex-col text-left">
+              {body}
+            </button>
+          ) : (
+            <div key={o.key} className="flex min-h-[84px] min-w-0 flex-col">{body}</div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const bestCard = (
+    <div className={`${card} p-card`}>
+      <div className="mb-comfortable flex items-baseline justify-between gap-tight">
+        <h2 className={heading}>{t("topProducts")}</h2>
+        <button type="button" onClick={() => router.push("/analytics")} className="-my-tight flex min-h-11 shrink-0 items-center whitespace-nowrap px-tight text-[12px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-0 sm:px-0">{t("viewAll")}</button>
+      </div>
+      {/* Name and money on the first line, then a full-width bar. The bar is
+          the point — a ranked list of numbers makes you compare digits; a bar
+          makes the ranking visible without reading any of them. No icon per
+          row: the same glyph on every line said nothing. */}
+      {top.length === 0 ? <p className="text-[13px] text-muted">{t("nothingSold")}</p> : (
+        <div className="flex flex-col gap-comfortable">
+          {top.map(([name, row]) => (
+            <div key={name} className="min-w-0">
+              <div className="flex items-baseline justify-between gap-tight text-[13px]">
+                <span className="min-w-0 truncate">{name}</span>
+                <span className="shrink-0 whitespace-nowrap text-[12px]">{formatMoney(row.rev)}</span>
+              </div>
+              <div className="mt-inline flex items-center gap-tight">
+                <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
+                  <span className="block h-full bg-ember" style={{ width: `${topMax > 0 ? Math.max(4, (row.rev / topMax) * 100) : 0}%` }} />
+                </span>
+                <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{t("qtyTimes", { qty: row.qty })}</span>
+              </div>
+            </div>
           ))}
         </div>
+      )}
+    </div>
+  );
+
+  const activityCard = (
+    <div className={card}>
+      <div className="flex items-baseline justify-between gap-tight px-card pb-tight pt-card">
+        <h2 className={heading}>{t("activityTitle")}</h2>
+        {/* One compact control: the filter glyph is the Select's own icon slot,
+            so glyph and label share a flex row with a real gap and cannot
+            overlap. `bare` draws no box, and the popover is a card of our own. */}
+        <div className="flex shrink-0 items-center text-muted focus-within:text-fg hover:text-fg">
+          <Select
+            bare
+            icon={<ListFilter size={13} strokeWidth={1.5} aria-hidden />}
+            aria-label={t("filterActivity")}
+            value={activityFilter}
+            onChange={(v) => setActivityFilter(v as ActivityFilter)}
+            align="end"
+            triggerClassName="text-[12px] font-normal text-current"
+            options={[
+              { value: "all", label: t("filterAll") },
+              ...ACTIVITY_GROUPS.map((g) => ({ value: g, label: ax.groupLabel(g) })),
+            ]}
+          />
+        </div>
       </div>
-      {loading ? (
-        /* The labels are known before the figures are, so the strip states
-           what it is about to say and pulses only the numbers. */
-        <div aria-busy="true"><StatStrip items={stats} loading variant="tiles" /></div>
-      ) : !allDone ? (
-        <div className={`${card} mb-section p-card`}>
-          <div className="mb-section flex items-center justify-between">
-            <h2 className="type-h2 text-base">{t("finishSetup")}</h2>
-            <span className="text-[12px] text-muted">{t("stepProgress", { complete, total: steps.length })}</span>
+      {/* Each event: a soft glyph disc, the sentence, the time. An ordinary
+          event is one sentence; a warning or a serious one adds its importance
+          in words - the colour is never the only thing saying so, and there is
+          no tinted row behind it. */}
+      {activityQ.loading && activity.length === 0 ? (
+        <div aria-busy="true">
+          {Array.from({ length: wide ? 5 : 3 }, (_, i) => (
+            <div key={i} className="flex items-center gap-section px-card py-comfortable">
+              <div className="h-8 w-8 animate-pulse rounded-full bg-subtle" />
+              <div className="h-4 flex-1 animate-pulse rounded-sm bg-subtle" />
+            </div>
+          ))}
+        </div>
+      ) : activity.length === 0 ? (
+        <p className="px-card pb-comfortable text-[13px] text-muted">{t("noActivity")}</p>
+      ) : activity.map((a) => (
+        <div key={a.id} className="flex items-start gap-section px-card py-comfortable">
+          <Marker kind={a.kind} severity={a.severity} />
+          <div className="min-w-0 flex-1">
+            <p className={cn("break-words text-[13px] leading-snug", !wide && "line-clamp-2")}>{ax.sentence(a)}</p>
+            {/* Time beside the sentence on a desktop, under it on a phone,
+                where a right-hand column would take a third of the width. */}
+            {(!wide || a.severity !== "info") && (
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-0.5 text-[12px] text-muted">
+                {!wide && <span className="whitespace-nowrap">{ax.ago(a.at)}</span>}
+                <Importance severity={a.severity} label={ax.severityLabel(a.severity)} />
+              </p>
+            )}
           </div>
-          <div className="mb-major h-1.5 w-full overflow-hidden rounded-full bg-line">
-            <div className="h-full bg-ember transition-all" style={{ width: `${(complete / steps.length) * 100}%` }} />
-          </div>
-          <div className="flex flex-col gap-tight">
-            {steps.map((s, i) => {
-              const done = s.done || skipped[s.key];
-              return (
-                <div key={s.key} className="flex items-center gap-section rounded-sm border border-line p-comfortable">
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] ${done ? "bg-success text-white" : "bg-line text-muted"}`}>
-                    {done ? <Check size={16} strokeWidth={2} /> : i + 1}
-                  </span>
-                  <span className="min-w-0 flex-1 text-sm font-medium">{s.label}</span>
-                  {done ? (
-                    <span className="text-[12px] text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
-                  ) : (
-                    <div className="flex items-center gap-tight">
-                      <button type="button" aria-label={t("skipStep", { step: s.label })} onClick={() => skip(s.key)} className="min-h-11 px-tight text-[12px] text-muted hover:text-fg sm:min-h-0">{t("skip")}</button>
-                      <Button size="sm" icon={<ArrowRight size={14} strokeWidth={1.5} />} onClick={() => router.push(s.href)}>{t("start")}</Button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          {wide && <span className="shrink-0 whitespace-nowrap pt-0.5 text-[12px] text-muted">{ax.ago(a.at)}</span>}
+        </div>
+      ))}
+      <button type="button" onClick={() => router.push("/activity")} className={linkRow}>
+        <span className="min-w-0 flex-1 truncate">{t("viewAllActivity")}</span>
+        <ArrowRight size={13} strokeWidth={1.75} className="shrink-0" aria-hidden />
+      </button>
+    </div>
+  );
+
+  const ordersCard = (
+    /* Built in the dashboard's own table anatomy — header, hairline rows, a
+       footer link — rather than with the shared DataTable, which draws its own
+       frame and would sit as a card inside a card. What DataTable gives for
+       free is carried over explicitly: rows are a keyboard tab stop with
+       Enter/Space, the phone gets a purpose-built list rather than five
+       labelled pairs, and the empty state says which window it is empty for. */
+    <div className={card}>
+      <div className="flex items-baseline justify-between gap-tight px-card pb-tight pt-card">
+        <h2 className={heading}>{t("recentOrders")}</h2>
+        {/* The count is the scope's, not the rows' — otherwise the header would
+            describe the slice rather than the day. */}
+        <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{t("orderCount", { count: scopeOrders.length })}</span>
+      </div>
+
+      {scopeOrders.length === 0 ? (
+        <p className="px-card pb-comfortable pt-tight text-[13px] text-muted">
+          {scope === "today" ? t("noOrdersToday") : t("noOrdersThisWeek")}
+        </p>
+      ) : wide ? (
+        /* A real table element, so each header cell is announced with its
+           column and the figures line up. It scrolls inside its own card rather
+           than out of the page: at 768, where `md` turns the table on and the
+           rail is also on, `main` is 528px and five columns need 724. */
+        <div className="scroll-x-hint min-w-0 overflow-x-auto">
+          <table className="table-inset w-full min-w-[640px]">
+            <thead>
+              <tr className="border-b border-hairline text-left">
+                <th scope="col" className="px-major py-tight text-[12px] font-medium text-muted">{to("colDate")}</th>
+                <th scope="col" className="px-major py-tight text-[12px] font-medium text-muted">{to("colReference")}</th>
+                <th scope="col" className="px-major py-tight text-center text-[12px] font-medium text-muted">{to("colItems")}</th>
+                <th scope="col" className="px-major py-tight text-right text-[12px] font-medium text-muted">{to("colTotal")}</th>
+                <th scope="col" className="px-major py-tight text-right text-[12px] font-medium text-muted">{to("colStatus")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentOrders.map((o) => {
+                const due = isVoidedOrder(o) ? 0 : orderOutstanding(o);
+                return (
+                  <tr
+                    key={o.id}
+                    tabIndex={0}
+                    onClick={() => router.push("/orders/" + o.id)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push("/orders/" + o.id); } }}
+                    className="cursor-pointer border-b border-hairline transition-colors duration-quick last:border-0 hover:bg-muted-wash focus-visible:bg-muted-wash"
+                  >
+                    <td className="whitespace-nowrap px-major py-tight text-[13px] text-muted" title={formatDateTime(o.createdAt)}>
+                      {formatRelative(o.createdAt, now)}
+                    </td>
+                    {/* Reference and buyer are ONE column here. The index can
+                        afford them apart; a cockpit table cannot, and they are
+                        read together anyway. */}
+                    <td className="px-major py-tight">
+                      <span className="block whitespace-nowrap font-mono text-[13px]">{o.reference}</span>
+                      <span className="block max-w-[16rem] truncate text-[12px] text-muted" title={o.customerName ?? undefined}>
+                        {o.customerName ?? to("walkIn")}
+                      </span>
+                    </td>
+                    <td className="px-major py-tight text-center text-[13px] tabular-nums">
+                      {o.lines.reduce((n, l) => n + l.quantity, 0)}
+                    </td>
+                    <td className="px-major py-tight text-right">
+                      <span className="block whitespace-nowrap text-[13px] tabular-nums">{formatMoney(o.total)}</span>
+                      {/* Only when something is owed — a count of nothing goes
+                          quiet, and this is the one number on the row a manager
+                          can act on. */}
+                      {due > 0 && (
+                        <span className="block whitespace-nowrap text-[12px] tabular-nums text-warning">
+                          {t("orderDue", { amount: formatMoney(due) })}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-major py-tight text-right"><StatusPill status={o.status} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       ) : (
-        <StatStrip items={stats} variant="tiles" />
+        /* A phone: two lines a row. Who and how much, then which order, when
+           and its state. */
+        <div>
+          {recentOrders.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => router.push("/orders/" + o.id)}
+              className="flex min-h-[64px] w-full flex-col justify-center gap-0.5 border-b border-hairline px-card py-comfortable text-left last:border-0 active:bg-muted-wash"
+            >
+              <span className="flex items-baseline justify-between gap-tight">
+                <span className="min-w-0 truncate text-[14px] font-medium">{o.customerName ?? to("walkIn")}</span>
+                <span className="shrink-0 whitespace-nowrap text-[14px] font-medium tabular-nums">{formatMoney(o.total)}</span>
+              </span>
+              <span className="flex items-center justify-between gap-tight">
+                <span className="min-w-0 truncate text-[12px] text-muted">
+                  <span className="font-mono">{o.reference}</span> · {formatRelative(o.createdAt, now)}
+                </span>
+                <StatusPill status={o.status} />
+              </span>
+            </button>
+          ))}
+        </div>
       )}
 
-      {!loading && (
-        <>
-        {/* 16px between every card, down from 32 between the body cards and
-            24 between the tiles — one gap, the same as every other page. */}
-        <div className="mt-section grid gap-section lg:grid-cols-3">
-          {/* Left ⅔ — the trend, then the operational strip, then the ranked
-              list. The reference's left column reads big picture → today's
-              state → detail, top to bottom. */}
-          <div className="flex min-w-0 flex-col gap-section lg:col-span-2">
-            <div className={`${card} p-card`}>
-              <div className="flex flex-wrap items-start justify-between gap-tight">
-                <div className="min-w-0">
-                  {/* A real heading, as every other card on the page now has —
-                      this was the last small-caps field label pretending to be
-                      a card title, which left the widest card as the only one
-                      without a title at reading size. */}
-                  <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("revenueTrend")}</h2>
-                  <div className="mt-tight flex flex-wrap items-baseline gap-tight">
-                    <span className="whitespace-nowrap text-[28px] font-semibold">{formatMoney(trendTotal)}</span>
-                    <DeltaPill now={trendTotal} then={trendPrev} />
-                  </div>
-                  <p className="mt-inline text-[12px] text-muted">
-                    {comparable ? t("vsPreviousDays", { count: trendDays }) : t("lastDaysLong", { count: trendDays })}
-                  </p>
-                </div>
-                {/* Ranges the seed can actually fill — see the trend memo. */}
-                <div className="flex shrink-0 gap-inline rounded-sm bg-subtle p-0.5">
-                  {([7, 14, 30] as const).map((d) => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setTrendDays(d)}
-                      aria-pressed={trendDays === d}
-                      // Ember marks the selection, matching the page header's
-                      /* One selected-state treatment across the dashboard,
-                         which this was NOT: the scope toggle beside it draws
-                         white on ember while this drew ink, so two chips of the
-                         same shape and the same meaning carried two different
-                         inks — and `bg-ember` lifts to #FF7A3D in dark, so this
-                         one also changed colour between themes while the other
-                         did not. Both are now white on `ember-solid`, the
-                         house rule (anything inside an #F94A00 frame is white)
-                         and the same pairing as the primary button and the
-                         calendar's today badge.
-                         The honest trade: ink on ember measured 5.3:1 and white
-                         measures 3.50:1, the project's declared exception. One
-                         consistent selected state across the product is worth
-                         more than one chip being better on its own. */
-                      className={`min-h-11 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick sm:min-h-8 sm:px-tight ${
-                        trendDays === d ? "bg-ember-solid text-white" : "text-muted hover:text-fg"
-                      }`}
-                    >
-                      {t("lastDays", { count: d })}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-section">
-                <AreaChart
-                  points={trend}
-                  fmt={(v) => formatMoney(v)}
-                  fmtAxis={(v) => formatMoneyCompact(v)}
-                  /* 210, down from 300. The owner asked for the trend to stop
-                     spending so much of the page's height, and they are right:
-                     at 300 the card was 462px, so on a 900px screen one chart
-                     took half of what is above the fold, and on a phone it was
-                     518px of a single scroll. 210 still carries five gridlines
-                     and 30 days of shape — the figure is stated above it in
-                     full, so the line is there to show the direction rather
-                     than to be read off. A previous pass grew it to 300 to
-                     close a 136px gap between the two columns; the columns are
-                     re-balanced below instead, which is the right way round. */
-                  height={210}
-                  valueLabel={comparable ? t("thisPeriod") : t("revenueTrend")}
-                  compareLabel={t("previousPeriod")}
-                />
-              </div>
-            </div>
-            {/* The reference groups the small operational readouts into one
-                strip in the wide column rather than stacking them down the
-                narrow rail. Same three readouts, same numbers — Open shifts,
-                Payment mix, Idle capacity — but at two-thirds width they get
-                room to be read side by side, and the rail is freed for the two
-                panels a manager dwells on. Nothing was dropped to achieve it. */}
-            <div className={`${card} p-card`}>
-              <div className="mb-section flex items-baseline justify-between gap-tight">
-                {/* No scope chip. The reference carries "Today" because all four
-                    of its readings are today's; ours are not — a shift is open
-                    now, idle capacity looks 48h ahead — so a blanket "Today"
-                    would contradict the label directly under it. Each cell
-                    states its own window where it differs. */}
-                <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("operations")}</h2>
-              </div>
-              {/* One shape, four times — label, figure, sub-line — with the
-                  sub-lines pushed to the bottom of their cell so the base of
-                  the card is straight however tall the figures run. Measured
-                  off the reference: its four cells put the label at y=99, the
-                  figure at y=128 and the sub at y=184, which is only possible
-                  if the sub is bottom-aligned rather than following the figure. */}
-              <div className="grid gap-major sm:grid-cols-2 lg:grid-cols-4">
-                {ops.map((o) => {
-                  const body = (
-                    <>
-                      <p className="type-label text-[12px] text-muted">{o.label}</p>
-                      <p className="mt-tight truncate text-[20px] font-semibold tracking-[-0.5px]">{o.value}</p>
-                      <div className="mt-auto pt-tight">
-                        {o.key === "mix" ? (
-                          // The mix is a proportion, so it keeps a picture of
-                          // one. A single stacked bar occupies exactly the
-                          // height of the sub-line it replaces, so the row
-                          // rhythm holds while carrying more than a sentence
-                          // of percentages would.
-                          mixTotal > 0 ? (
-                            <span className="flex h-1.5 w-full overflow-hidden rounded-full bg-line" role="img" aria-label={mix.map((m) => `${m.label} ${formatMoney(m.amount)}`).join(", ")}>
-                              {mix.map((m, i) => (
-                                <span key={m.label} className="h-full bg-ember" style={{ width: `${(m.amount / mixTotal) * 100}%`, opacity: 1 - i * 0.35 }} />
-                              ))}
-                            </span>
-                          ) : (
-                            <span className="text-[12px] text-muted">{t("noPayments")}</span>
-                          )
-                        ) : (
-                          <span className="block truncate text-[12px] text-muted">{o.sub}</span>
-                        )}
-                      </div>
-                    </>
-                  );
-                  return o.href ? (
-                    <button key={o.key} type="button" onClick={() => router.push(o.href!)} className="group flex min-h-[84px] min-w-0 flex-col text-left">
-                      {body}
-                    </button>
-                  ) : (
-                    <div key={o.key} className="flex min-h-[84px] min-w-0 flex-col">{body}</div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className={`${card} p-card`}>
-              <div className="mb-comfortable flex items-baseline justify-between gap-tight">
-                <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("topProducts")}</h2>
-                <button type="button" onClick={() => router.push("/analytics")} className="-my-tight flex min-h-11 shrink-0 items-center whitespace-nowrap px-tight text-[12px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-0 sm:px-0">{t("viewAll")}</button>
-              </div>
-              {/* The reference's "Top verticals" row: icon square, name and
-                  money on the first line, then a full-width bar with the
-                  trailing figure at its end. The bar is the point — a ranked
-                  list of numbers makes you compare digits; a bar makes the
-                  ranking visible without reading any of them. */}
-              {top.length === 0 ? <p className="text-[13px] text-muted">{t("nothingSold")}</p> : (
-                <div className="flex flex-col gap-comfortable">
-                  {top.map(([name, row]) => (
-                    <div key={name} className="flex items-center gap-tight">
-                      {/* 1px line, not just a fill: --color-subtle and
-                          --color-card are the SAME value in dark, so a bare
-                          tinted square has no edge there and the glyph floats.
-                          Same fix ProductThumb needed. */}
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm border border-line bg-subtle text-muted">
-                        <Package size={16} strokeWidth={1.5} />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline justify-between gap-tight text-[13px]">
-                          <span className="min-w-0 truncate">{name}</span>
-                          <span className="shrink-0 whitespace-nowrap text-[12px]">{formatMoney(row.rev)}</span>
-                        </div>
-                        <div className="mt-inline flex items-center gap-tight">
-                          <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
-                            <span className="block h-full bg-ember" style={{ width: `${topMax > 0 ? Math.max(4, (row.rev / topMax) * 100) : 0}%` }} />
-                          </span>
-                          <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{t("qtyTimes", { qty: row.qty })}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+      <button type="button" data-type-role="button" onClick={() => router.push("/orders")} className={cn(linkRow, scopeOrders.length === 0 && "pt-tight")}>
+        <span className="min-w-0 flex-1 truncate">
+          {/* The footer states what the rows do NOT: how many are left, and how
+              many of the window's orders are still owed. */}
+          {scopeOrders.length > recentOrders.length ? t("ordersMore", { count: scopeOrders.length - recentOrders.length }) : null}
+          {scopeOrders.length > recentOrders.length && scopeOwedCount > 0 ? " · " : null}
+          {scopeOwedCount > 0 ? t("ordersAwaitingPayment", { count: scopeOwedCount, amount: formatMoney(scopeOwed) }) : null}
+        </span>
+        <span className="shrink-0 whitespace-nowrap">{t("viewAllOrders")}</span>
+        <ArrowRight size={13} strokeWidth={1.75} className="shrink-0" aria-hidden />
+      </button>
+    </div>
+  );
+
+  const setupCard = (
+    <div className={`${card} p-card`}>
+      <div className="mb-section flex items-center justify-between">
+        <h2 className="type-h2 text-base">{t("finishSetup")}</h2>
+        <span className="text-[12px] text-muted">{t("stepProgress", { complete, total: steps.length })}</span>
+      </div>
+      <div className="mb-comfortable h-1.5 w-full overflow-hidden rounded-full bg-line">
+        <div className="h-full bg-ember transition-all" style={{ width: `${(complete / steps.length) * 100}%` }} />
+      </div>
+      {/* Rows divided by a hairline, not six boxed cards: the card around them
+          is already the box. */}
+      <div className="flex flex-col">
+        {steps.map((s, i) => {
+          const done = s.done || skipped[s.key];
+          return (
+            <div key={s.key} className="flex items-center gap-section border-b border-hairline py-comfortable last:border-0">
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] ${done ? "bg-success text-white" : "bg-muted-wash text-muted"}`}>
+                {done ? <Check size={16} strokeWidth={2} /> : i + 1}
+              </span>
+              <span className="min-w-0 flex-1 text-sm font-medium">{s.label}</span>
+              {done ? (
+                <span className="text-[12px] text-muted">{s.done ? t("stepDone") : t("stepSkipped")}</span>
+              ) : (
+                <div className="flex items-center gap-tight">
+                  <button type="button" aria-label={t("skipStep", { step: s.label })} onClick={() => skip(s.key)} className="min-h-11 px-tight text-[12px] text-muted hover:text-fg sm:min-h-0">{t("skip")}</button>
+                  <Button size="sm" icon={<ArrowRight size={14} strokeWidth={1.5} />} onClick={() => router.push(s.href)}>{t("start")}</Button>
                 </div>
               )}
             </div>
-          </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 
-          {/* Right ⅓ — what just happened, and nothing else.
-              Needs attention went at the owner's request. Every notice it
-              drew was a signpost to a page that can fix the thing, so nothing
-              became unreachable: a cash variance is on the shift, a quiet
-              tablet on Devices, stock on its own item, a closing sales window
-              on the booking. What went is the one place they were gathered. */}
-          <div className="flex min-w-0 flex-col gap-section">
-            <div className={card}>
-              {/* Header at reading size, as the reference sets it — this and
-                  Notices are the two panels a manager actually reads, so they
-                  get a heading rather than a small-caps field label. The filter
-                  sits on the heading row, where the reference puts it. */}
-              <div className="flex items-baseline justify-between gap-tight px-card pb-tight pt-card">
-                <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("activityTitle")}</h2>
-                {/* One compact control: the filter glyph is the Select's own
-                    icon slot, so glyph and label share a flex row with a real
-                    gap and cannot overlap. (They did: the glyph was absolutely
-                    positioned and the trigger's padding override lost to the
-                    default - `cn` does not merge conflicting utilities.) `bare`
-                    draws no box, and the popover is a card of our own. */}
-                <div className="flex shrink-0 items-center text-muted focus-within:text-fg hover:text-fg">
-                  <Select
-                    bare
-                    icon={<ListFilter size={13} strokeWidth={1.5} aria-hidden />}
-                    aria-label={t("filterActivity")}
-                    value={activityFilter}
-                    onChange={(v) => setActivityFilter(v as ActivityFilter)}
-                    align="end"
-                    triggerClassName="text-[12px] font-normal text-current"
-                    options={[
-                      { value: "all", label: t("filterAll") },
-                      ...ACTIVITY_GROUPS.map((g) => ({ value: g, label: ax.groupLabel(g) })),
-                    ]}
-                  />
-                </div>
-              </div>
-              {/* Each event: an outlined glyph badge (32px, 6px radius,
-                  hairline - the reference's anatomy), the sentence, then the
-                  kind in words and, for a warning or a serious event, its
-                  importance in words too, with the time held right. Colour is
-                  never the only carrier: the glyph differs per kind, the kind
-                  is written out, and importance has a word. A warning or
-                  serious row is tinted very softly. */}
-              {activityQ.loading && activity.length === 0 ? (
-                <div aria-busy="true">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex items-center gap-section px-card py-comfortable">
-                      <div className="h-8 w-8 animate-pulse rounded-sm bg-subtle" />
-                      <div className="h-4 flex-1 animate-pulse rounded-sm bg-subtle" />
-                    </div>
-                  ))}
-                </div>
-              ) : activity.length === 0 ? (
-                <p className="px-card pb-comfortable text-[13px] text-muted">{t("noActivity")}</p>
-              ) : activity.map((a) => (
-                <div key={a.id} className={cn("flex items-start gap-section px-card py-comfortable", SEVERITY_ROW_CLASS[a.severity])}>
-                  <KindBadge kind={a.kind} severity={a.severity} className="mt-0.5" />
-                  <div className="min-w-0 flex-1">
-                    <p className="break-words text-[13px] leading-snug">{ax.sentence(a)}</p>
-                    {/* The sentence already says what happened, so an
-                        ordinary event carries no second line. A warning or a
-                        serious one adds the kind and its importance in words -
-                        the tint is never the only thing saying so. */}
-                    {a.severity !== "info" && (
-                      <p className="mt-0.5 flex flex-wrap items-center gap-x-inline gap-y-0.5 text-[12px] text-muted">
-                        <span>{ax.kindLabel(a)}</span>
-                        <SeverityChip severity={a.severity} label={ax.severityLabel(a.severity)} />
-                      </p>
-                    )}
-                  </div>
-                  <span className="shrink-0 whitespace-nowrap pt-0.5 text-[12px] text-muted">{ax.ago(a.at)}</span>
-                </div>
-              ))}
-              {/* The reference closes this card with a full-width outlined
-                  button. It opens the whole log, which is where every row on
-                  this card came from. */}
-              <div className="px-card pb-card pt-tight">
-                <button
-                  type="button"
-                  onClick={() => router.push("/activity")}
-                  className="min-h-11 w-full rounded-sm border border-line bg-card/60 text-sm font-medium transition-colors duration-quick hover:border-strong hover:bg-card sm:min-h-9"
-                >
-                  {t("viewAllActivity")}
-                </button>
-              </div>
-            </div>
-          </div>
+  return (
+    <PageShell title={wide ? op.data?.name || t("title") : t("title")}>
+      {/* The page's one control: which days it is showing. A desktop states the
+          days beside it, in words, on the row it shares with the control. "Today
+          · Wed 29 Jul" said Today twice, a word apart from the toggle's own
+          label, so the caption is only the date. The venue chooser lives in the
+          bar and governs the whole console. */}
+      <div className="mb-section flex items-center justify-between gap-section">
+        {wide && (
+          <p aria-live="polite" className="min-w-0 truncate text-[13px] text-muted">
+            {scope === "today"
+              ? formatDay(TODAY, { weekday: true })
+              : `${formatDay(dayShift(TODAY, -6), { weekday: true })} – ${formatDay(TODAY, { weekday: true })}`}
+          </p>
+        )}
+        {/* Scope, not actions — a dashboard is a place to look. */}
+        <Segmented
+          fill={!wide}
+          className={wide ? "w-60 [&>button]:flex-1" : undefined}
+          value={scope}
+          onChange={setScope}
+          label={t("scopeLabel")}
+          options={[
+            { value: "today", label: t("today") },
+            { value: "week", label: t("thisWeek") },
+          ]}
+        />
+      </div>
+
+      {loading ? (
+        /* The labels are known before the figures are, so the strip states
+           what it is about to say and pulses only the numbers. */
+        <div aria-busy="true">
+          {wide ? <StatStrip items={stats} loading variant="tiles" /> : <MetricStrip items={figures} loading label={t("metrics")} />}
         </div>
+      ) : !allDone ? (
+        setupCard
+      ) : wide ? (
+        <StatStrip items={stats} variant="tiles" />
+      ) : (
+        <MetricStrip items={figures} label={t("metrics")} />
+      )}
 
-        {/* ── Recent orders ────────────────────────────────────────────────
-            Built in the dashboard's own table anatomy — header bar, hairline
-            rows, footer bar — rather than with the shared DataTable, which
-            draws its own bordered frame and would sit as a card inside a card.
-            What DataTable gives for free is carried over explicitly instead:
-            rows are a keyboard tab stop with Enter/Space, the phone gets a
-            purpose-built card rather than five labelled pairs, and the empty
-            state says which window it is empty for. */}
-        <div className="mt-section">
-          <div className={card}>
-            <div className="flex items-baseline justify-between gap-tight border-b border-line px-card py-comfortable">
-              <h2 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("recentOrders")}</h2>
-              {/* The count is the scope's, not the eight rows' — otherwise the
-                  header would describe the slice rather than the day. */}
-              <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">
-                {t("orderCount", { count: scopeOrders.length })}
-              </span>
+      {!loading && wide && (
+        /* 16px between every card — one gap, the same as every other page. */
+        <>
+          <div className="mt-section grid gap-section min-[1360px]:grid-cols-3">
+            {/* Left ⅔ — the trend, then the operational strip, then the ranked
+                list: big picture → today's state → detail, top to bottom. */}
+            <div className="flex min-w-0 flex-col gap-section min-[1360px]:col-span-2">
+              {trendCard}
+              {glanceCard}
+              {bestCard}
             </div>
-
-            {scopeOrders.length === 0 ? (
-              <p className="px-card py-major text-[13px] text-muted">
-                {scope === "today" ? t("noOrdersToday") : t("noOrdersThisWeek")}
-              </p>
-            ) : (
-              <>
-                {/* Desktop — a real table element, so each header cell is
-                    announced with its column and the figures line up.
-
-                    It scrolls inside its own card rather than out of the page.
-                    Measured at exactly 768, where `md` turns the table on and
-                    the rail is also on: `main` is 528px and five columns need
-                    724, so 196px was being swallowed by main's overflow-x-clip
-                    — the class of bug this project has recorded three times,
-                    and the reason a wide table here gets the same
-                    scroll-inside-the-card treatment the reports tables have. */}
-                <div className="scroll-x-hint hidden min-w-0 overflow-x-auto md:block">
-                <table className="table-inset w-full min-w-[640px]">
-                  <thead>
-                    <tr className="border-b border-line text-left">
-                      <th scope="col" className="type-label px-major py-tight text-[12px] font-medium text-muted">{to("colDate")}</th>
-                      <th scope="col" className="type-label px-major py-tight text-[12px] font-medium text-muted">{to("colReference")}</th>
-                      <th scope="col" className="type-label px-major py-tight text-center text-[12px] font-medium text-muted">{to("colItems")}</th>
-                      <th scope="col" className="type-label px-major py-tight text-right text-[12px] font-medium text-muted">{to("colTotal")}</th>
-                      <th scope="col" className="type-label px-major py-tight text-right text-[12px] font-medium text-muted">{to("colStatus")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentOrders.map((o) => {
-                      const due = isVoidedOrder(o) ? 0 : orderOutstanding(o);
-                      return (
-                        <tr
-                          key={o.id}
-                          tabIndex={0}
-                          onClick={() => router.push("/orders/" + o.id)}
-                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push("/orders/" + o.id); } }}
-                          className="cursor-pointer border-b border-line transition-colors duration-quick last:border-0 hover:bg-muted-wash focus-visible:bg-muted-wash"
-                        >
-                          <td className="whitespace-nowrap px-major py-tight text-[13px] text-muted" title={formatDateTime(o.createdAt)}>
-                            {formatRelative(o.createdAt, now)}
-                          </td>
-                          {/* Reference and buyer are ONE column here. The index
-                              can afford them apart; a cockpit table cannot, and
-                              they are read together anyway. */}
-                          <td className="px-major py-tight">
-                            <span className="block whitespace-nowrap font-mono text-[13px]">{o.reference}</span>
-                            <span
-                              className="block max-w-[16rem] truncate text-[12px] text-muted"
-                              title={o.customerName ?? undefined}
-                            >
-                              {o.customerName ?? to("walkIn")}
-                            </span>
-                          </td>
-                          <td className="px-major py-tight text-center font-mono text-[13px] tabular-nums">
-                            {o.lines.reduce((n, l) => n + l.quantity, 0)}
-                          </td>
-                          <td className="px-major py-tight text-right">
-                            <span className="block whitespace-nowrap font-mono text-[13px] tabular-nums">{formatMoney(o.total)}</span>
-                            {/* Only when something is owed — a count of nothing
-                                goes quiet, and this is the one number on the
-                                row a manager can act on. */}
-                            {due > 0 && (
-                              <span className="block whitespace-nowrap font-mono text-[12px] tabular-nums text-warning">
-                                {t("orderDue", { amount: formatMoney(due) })}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-major py-tight text-right"><StatusPill status={o.status} /></td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                </div>
-
-                {/* Phone — the reference and the money on one line, who and
-                    when underneath, status last. Not five labelled pairs. */}
-                <div className="md:hidden">
-                  {recentOrders.map((o) => {
-                    const due = isVoidedOrder(o) ? 0 : orderOutstanding(o);
-                    return (
-                      <button
-                        key={o.id}
-                        type="button"
-                        onClick={() => router.push("/orders/" + o.id)}
-                        className="flex w-full flex-col gap-inline border-b border-line px-card py-comfortable text-left last:border-0 active:bg-muted-wash"
-                      >
-                        <span className="flex items-baseline justify-between gap-tight">
-                          <span className="min-w-0 truncate font-mono text-[13px]">{o.reference}</span>
-                          <span className="shrink-0 whitespace-nowrap font-mono text-[13px] tabular-nums">{formatMoney(o.total)}</span>
-                        </span>
-                        <span className="flex items-baseline justify-between gap-tight">
-                          <span className="min-w-0 truncate text-[13px] text-muted">{o.customerName ?? to("walkIn")}</span>
-                          <span className="shrink-0 whitespace-nowrap text-[12px] text-muted">{formatRelative(o.createdAt, now)}</span>
-                        </span>
-                        <span className="mt-inline flex items-center justify-between gap-tight">
-                          <StatusPill status={o.status} />
-                          {due > 0 && (
-                            <span className="shrink-0 whitespace-nowrap font-mono text-[12px] tabular-nums text-warning">
-                              {t("orderDue", { amount: formatMoney(due) })}
-                            </span>
-                          )}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-
-            <button
-              type="button"
-              data-type-role="button"
-              onClick={() => router.push("/orders")}
-              className="flex min-h-11 w-full items-center gap-tight border-t border-line px-card text-left text-[13px] font-medium text-muted hover:text-ember"
-            >
-              <span className="min-w-0 flex-1 truncate">
-                {/* The footer states what the eight rows do NOT: how many are
-                    left, and how many of the window's orders are still owed. */}
-                {scopeOrders.length > recentOrders.length ? t("ordersMore", { count: scopeOrders.length - recentOrders.length }) : null}
-                {scopeOrders.length > recentOrders.length && scopeOwedCount > 0 ? " · " : null}
-                {scopeOwedCount > 0 ? t("ordersAwaitingPayment", { count: scopeOwedCount, amount: formatMoney(scopeOwed) }) : null}
-              </span>
-              <span className="shrink-0 whitespace-nowrap">{t("viewAllOrders")}</span>
-              <ArrowRight size={13} strokeWidth={1.75} className="shrink-0" aria-hidden />
-            </button>
+            {/* Right ⅓ — what just happened, and nothing else. */}
+            <div className="flex min-w-0 flex-col gap-section">{activityCard}</div>
           </div>
-        </div>
+          <div className="mt-section">{ordersCard}</div>
         </>
       )}
 
+      {!loading && !wide && (
+        /* A phone, in the order it is read: how sales are going, what just
+           happened, what sold. The two cards that are about the day's shape
+           rather than its news fold behind one button. */
+        <div className="mt-section flex flex-col gap-section">
+          {trendCard}
+          {activityCard}
+          {ordersCard}
+          <Button variant="secondary" aria-expanded={more} aria-controls="dash-more" onClick={() => setMore((m) => !m)} className="w-full">
+            {more ? t("showLess") : t("showMore")}
+          </Button>
+          {more && (
+            <div id="dash-more" className="flex flex-col gap-section">
+              {glanceCard}
+              {bestCard}
+            </div>
+          )}
+        </div>
+      )}
     </PageShell>
   );
 }

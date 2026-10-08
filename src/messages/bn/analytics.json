@@ -1,5 +1,5 @@
 {
-  "title": "অ্যানালিটিক্স",
+  "title": "বিশ্লেষণ",
   "description": "ভেন্যু কেমন চলছে: বিক্রি, কী বেশি বিক্রি হয়, কখন ভিড় বেশি আর কতটা ভরা।",
   "toolbar": {
     "download": "ডাউনলোড"
@@ -40,7 +40,8 @@
     "guests": "অতিথি",
     "capacity": "জায়গা ভরা",
     "refunds": "ফেরত",
-    "pts": "{value} পয়েন্ট"
+    "pts": "{value} পয়েন্ট",
+    "label": "প্রধান সংখ্যা"
   },
   "revenue": {
     "title": "সময় ধরে আয়",
@@ -127,7 +128,11 @@
     "starts": "আপনার রেকর্ড শুরু {date}",
     "noRecords": "এখনো কোনো বিক্রি নেই",
     "pickDates": "তারিখ বাছুন",
-    "chooseDates": "তুলনার তারিখ বাছুন"
+    "chooseDates": "তুলনার তারিখ বাছুন",
+    "yearShort": "গত বছর",
+    "customShort": "নিজের তারিখ",
+    "previousShort": "আগের সময়",
+    "noneShort": "তুলনা নেই"
   },
   "legend": {
     "solid": "গাঢ় রেখা:",
@@ -229,5 +234,9 @@
     "point": "কখন"
   },
   "was": "{range} এ ছিল {value}",
-  "earlier": "{range} এ ছিল {value}।"
+  "earlier": "{range} এ ছিল {value}।",
+  "card": {
+    "show": "দেখান",
+    "hide": "লুকান"
+  }
 }

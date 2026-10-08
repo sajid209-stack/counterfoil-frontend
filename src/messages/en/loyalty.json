@@ -1,7 +1,6 @@
 {
   "settingsTitle": "Points",
   "settingsDescription": "Reward customers for coming back. Points are worth money, so choose the numbers carefully.",
-  "save": "Save",
   "saved": "Points saved.",
   "fieldEnabled": "Points are on",
   "enabledHelp": "When off, no points are earned or used. Points customers already have are kept.",
@@ -23,5 +22,6 @@
   "totalEarned": "Earned",
   "totalSpent": "Used",
   "totalOutstanding": "Not used yet",
-  "outstandingWorth": "worth {value}"
+  "outstandingWorth": "worth {value}",
+  "programTitle": "How points work"
 }

@@ -217,7 +217,7 @@ export function DatePicker({
           <span
             key={`${w}-${i}`}
             className={cn(
-              "type-label flex h-6 items-center justify-center text-[0.75rem] text-muted",
+              "flex h-6 items-center justify-center text-[0.75rem] font-medium text-muted",
               shape === "go" ? "w-11" : "w-9",
             )}
           >

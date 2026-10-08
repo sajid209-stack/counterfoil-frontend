@@ -85,7 +85,7 @@ export default function SeatLayoutEditorPage() {
   if (q.loading) {
     return (
       <PageShell title={t("editor.backToList")}>
-        <div className="h-96 animate-pulse rounded-md bg-subtle" />
+        <div className="h-96 animate-pulse rounded-md bg-muted-wash" />
       </PageShell>
     );
   }
@@ -443,8 +443,8 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
             min-width:auto fault this project has now recorded five times. */}
         <div className="grid grid-cols-1 gap-section lg:grid-cols-[13rem_1fr_15rem]">
           {/* ── the palette ─────────────────────────────────────────────── */}
-          <div className="min-w-0 card-surface p-card">
-            <h2 className="type-label mb-tight">{t("editor.paletteTitle")}</h2>
+          <div className="min-w-0 card-surface p-card max-lg:order-2">
+            <h2 className="mb-tight text-base font-semibold text-fg">{t("editor.paletteTitle")}</h2>
             <p className="mb-comfortable text-[12px] text-muted">{tool ? t("editor.paletteArmed") : t("editor.paletteHelp")}</p>
             <div className="flex flex-wrap gap-tight lg:flex-col">
               {PALETTES[experience].map((it) => {
@@ -456,8 +456,8 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
                     aria-pressed={armed}
                     onClick={() => setTool(armed ? null : it)}
                     className={cn(
-                      "flex min-h-11 flex-1 items-center gap-inline rounded-sm border px-comfortable text-left text-[13px] lg:flex-none",
-                      armed ? "border-ember-solid bg-ember/10 text-brand-foreground" : "border-line hover:bg-muted-wash",
+                      "flex min-h-11 flex-1 items-center gap-inline rounded-sm px-comfortable text-left text-[0.8125rem] transition-colors duration-quick lg:flex-none",
+                      armed ? "bg-card text-fg ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line/40",
                     )}
                   >
                     <ToolIcon tool={it} />
@@ -473,7 +473,7 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
           </div>
 
           {/* ── the canvas ──────────────────────────────────────────────── */}
-          <div className="min-w-0 card-surface p-card">
+          <div className="min-w-0 card-surface p-card max-lg:order-1">
             <div className="mb-comfortable flex flex-wrap items-center gap-tight">
               <span className="mr-auto text-[13px] text-muted">
                 {t("editor.capacity", { count: capacity })}
@@ -504,7 +504,7 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
               className={cn(
-                "relative touch-none rounded-sm border border-hairline bg-surface",
+                "relative touch-none rounded-sm bg-surface",
                 tool ? "cursor-copy" : "cursor-default",
               )}
               data-focus-inset
@@ -563,8 +563,8 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
           </div>
 
           {/* ── the inspector ───────────────────────────────────────────── */}
-          <div className="min-w-0 card-surface p-card">
-            <h2 className="type-label mb-tight">{t("editor.inspectorTitle")}</h2>
+          <div className="min-w-0 card-surface p-card max-lg:order-3">
+            <h2 className="mb-tight text-base font-semibold text-fg">{t("editor.inspectorTitle")}</h2>
             {!sel.length ? (
               <p className="text-[13px] text-muted">{t("editor.nothingSelected")}</p>
             ) : (
@@ -632,7 +632,7 @@ function Designer({ layout, reload }: { layout: SeatLayout; reload: () => void }
           {!plan.categories.length && <p className="text-[13px] text-muted">{t("editor.noCategories")}</p>}
           <div className="flex flex-col gap-tight">
             {plan.categories.map((c) => (
-              <div key={c.uid} className="flex flex-wrap items-end gap-tight rounded-sm border border-line p-comfortable">
+              <div key={c.uid} className="flex flex-wrap items-end gap-tight rounded-sm bg-muted-wash p-comfortable">
                 <input type="color" aria-label={t("editor.catColor")} value={c.color} onChange={(e) => patchCategory(c.uid, { color: e.target.value })} className="h-11 w-11 shrink-0 rounded-sm border border-line bg-card" />
                 <div className="min-w-32 flex-1"><FormField label={t("editor.catName")} value={c.name} onChange={(e) => patchCategory(c.uid, { name: e.target.value })} /></div>
                 <div className="w-28"><FormField label={t("editor.catPrice")} variant="number" value={String(c.price / 100)} onChange={(e) => patchCategory(c.uid, { price: Math.round((parseFloat(e.target.value) || 0) * 100) })} /></div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -14,7 +14,6 @@ import {
   Disc3,
   Eye,
   EyeOff,
-  Info,
   LayoutGrid,
   Music,
   Palette,
@@ -27,7 +26,6 @@ import {
   Ship,
   Trash2,
   Trophy,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -49,7 +47,7 @@ import {
 import { PageAction, PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
-import { MD, useMediaQuery } from "@/lib/useMedia";
+import { MD, XL, useMediaQuery } from "@/lib/useMedia";
 import {
   archiveEvent,
   archiveProduct,
@@ -93,19 +91,6 @@ import { CatalogChooser } from "./_components/CatalogChooser";
    twenty-six across three. */
 const PAGE_SIZE = 50;
 
-const MOVED_KEY = "cf_catalog_moved_seen";
-const MOVED_EVENT = "cf-catalog-moved";
-const subscribeMoved = (cb: () => void) => {
-  window.addEventListener(MOVED_EVENT, cb);
-  return () => window.removeEventListener(MOVED_EVENT, cb);
-};
-const movedUnseen = () => {
-  try {
-    return localStorage.getItem(MOVED_KEY) !== "1";
-  } catch {
-    return false;
-  }
-};
 type Kind = "all" | "bookings" | "events";
 /** The state chips, plus one facet that is not a state: needs attention cuts
  *  across them — a course on sale whose dates run out next week is on sale AND
@@ -163,6 +148,9 @@ function Catalog() {
   const params = useSearchParams();
   const toast = useToast();
   const compact = !useMediaQuery(MD, true);
+  /* Below 1280 the Type and When columns would squeeze the name to a few
+     letters a line, so they step out and the name carries the type instead. */
+  const xl = useMediaQuery(XL);
   const now = useMemo(() => demoNow(), []);
 
   const kindParam = params.get("kind");
@@ -538,9 +526,10 @@ function Catalog() {
         </span>
       );
     }
+    const own = i.product ? subtitle(i.product, { resources, team }) : i.event!.venueName;
     return (
       <span className="block truncate text-[12px] text-muted">
-        {i.product ? subtitle(i.product, { resources, team }) : i.event!.venueName}
+        {xl ? own : [typeShort(i), own].filter(Boolean).join(" · ")}
       </span>
     );
   };
@@ -586,18 +575,18 @@ function Catalog() {
     );
   };
 
-  /** Whether a row has anything to draw in its Selling column. */
-  const hasSelling = (i: CatalogItem) => !!i.event || !!use.get(i.id) || (recent.get(i.id) ?? 0) > 0;
-
   const StatePill = ({ i }: { i: CatalogItem }) => (
     <StatusPill tone={STATE_TONE[i.state]} shape={i.state === "offSale" || i.state === "archived" ? "record" : "transaction"} className="whitespace-nowrap">
       {t(`state.${i.state}`)}
     </StatusPill>
   );
 
+  const priceText = (i: CatalogItem) =>
+    i.fromPrice === null ? t(i.kind === "event" ? "soldOut" : "noPrice") : i.fromPrice === 0 ? t("free") : formatPriceShort(i.fromPrice);
+
   const checkboxCls = "h-4 w-4 accent-[var(--color-ember)]";
   const somePicked = pageRows.some((r) => selected.has(r.key)) && !allOnPage;
-  const columns: Column<CatalogItem>[] = [
+  const allColumns: Column<CatalogItem>[] = [
     {
       key: "select",
       header: <PageCheckbox checked={allOnPage} mixed={somePicked} onChange={togglePage} label={t("selectPage")} className={checkboxCls} />,
@@ -631,22 +620,20 @@ function Catalog() {
     {
       key: "type",
       header: t("col.type"),
-      width: "11.75rem",
+      width: "11rem",
+      /* Words only. The coloured dot an event used to carry was its template's
+         accent — decoration on every other row of a list that is read for names
+         and states. */
       render: (i) => (
-        <span className="flex min-w-0 items-center gap-inline text-[13px]" title={typeLabel(i)}>
-          {/* An event carries its own accent as a dot; a booking a neutral
-              one — the brand colour is for what can be pressed, not for
-              decorating every other row. Ringed, so a dark accent still reads
-              on a dark card. */}
-          <span aria-hidden className={cn("h-2 w-2 shrink-0 rounded-full ring-1 ring-fg/25", i.kind === "booking" && "bg-fg/35")} style={i.event ? { background: i.event.customisation.accent } : undefined} />
-          <span className="truncate">{typeShort(i)}</span>
+        <span className="block truncate text-[0.8125rem] text-muted" title={typeLabel(i)}>
+          {typeShort(i)}
         </span>
       ),
     },
     {
       key: "when",
       header: t("col.when"),
-      width: "8rem",
+      width: "9.75rem",
       render: (i) =>
         i.event ? (
           /* A multi-day event states how long it runs rather than the clock on
@@ -673,9 +660,7 @@ function Catalog() {
       sortable: true,
       width: "6rem",
       render: (i) => (
-        <span className="whitespace-nowrap text-[13px] tabular-nums">
-          {i.fromPrice === null ? <span className="text-muted">{t(i.kind === "event" ? "soldOut" : "noPrice")}</span> : i.fromPrice === 0 ? t("free") : formatPriceShort(i.fromPrice)}
-        </span>
+        <span className={cn("whitespace-nowrap text-[0.8125rem] tabular-nums", i.fromPrice === null && "text-muted")}>{priceText(i)}</span>
       ),
     },
     { key: "selling", header: t("col.selling"), width: "10.5rem", render: (i) => <Selling i={i} /> },
@@ -691,6 +676,8 @@ function Catalog() {
       ),
     },
   ];
+
+  const columns = xl ? allColumns : allColumns.filter((c) => c.key !== "type" && c.key !== "when");
 
   const filtered = !!q || states.length > 0;
   const empty = !loading && items.filter((i) => i.state !== "archived").length === 0 && !wantArchived;
@@ -708,30 +695,13 @@ function Catalog() {
   const facetChips = FACETS.filter((f) =>
     kind === "bookings" ? !["soldOut", "ended"].includes(f) : kind === "events" ? f !== "attention" : true,
   ).filter((f) => f === "archived" || states.includes(f) || facetCounts[f] > 0);
-  /* On a phone the row wraps to a second line at five chips, so Archived —
-     which is a different question from "which live state" — moves into the
-     filter sheet instead. `chip-collection-reflow` forbids clipping it; this
-     discloses it, which is what the rule asks for. */
-  const phoneChips = facetChips.filter((f) => f !== "archived" || states.includes("archived"));
-
-  // ── the one-time note about the move ──────────────────────────────────────
-  /* Read through useSyncExternalStore: the server has no storage, so it says
-     "seen" and renders no note, and the client corrects that on hydration —
-     no flash of a note for people who have already dismissed it. */
-  const moved = useSyncExternalStore(subscribeMoved, movedUnseen, () => false);
-  const dismissMoved = () => {
-    try {
-      localStorage.setItem(MOVED_KEY, "1");
-    } catch {
-      /* private window: the note simply comes back next time */
-    }
-    window.dispatchEvent(new Event(MOVED_EVENT));
-  };
-
+  /* The state chips inside the Filters panel. Quiet fills, no outline: the
+     chosen ones are the one solid thing. `muted-wash`, not `subtle` — in dark
+     `subtle` is the card colour and an unchosen chip would vanish. */
   const chip = (on: boolean) =>
     cn(
-      "flex h-11 shrink-0 items-center gap-tight whitespace-nowrap rounded-full border px-comfortable text-[13px] transition-colors duration-quick md:h-8",
-      on ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card text-fg hover:border-strong",
+      "flex h-11 shrink-0 items-center gap-tight whitespace-nowrap rounded-full px-comfortable text-[0.8125rem] transition-colors duration-quick md:h-8",
+      on ? "bg-inverse font-medium text-inverse-fg" : "bg-muted-wash text-fg hover:bg-line",
     );
 
   const primary: PagePrimary = { label: t("add"), href: kind === "all" ? "/catalog/new" : `/catalog/new?kind=${kind}` };
@@ -744,13 +714,12 @@ function Catalog() {
       {empty ? (
         <section className="card-surface p-card sm:p-major">
           <div className="mb-major max-w-2xl">
-            <p className="type-label text-[12px] text-brand-foreground">{t("firstRun.eyebrow")}</p>
-            <h2 className="mt-inline text-[22px] font-semibold tracking-tight">{t("firstRun.title")}</h2>
+            <h2 className="text-[1.375rem] font-semibold">{t("firstRun.title")}</h2>
             <p className="mt-tight text-[14px] text-muted">{t("firstRun.body")}</p>
             <ol className="mt-section grid gap-tight sm:grid-cols-3">
               {(["pick", "shape", "sell"] as const).map((k, n) => (
-                <li key={k} className="flex items-start gap-tight rounded-sm bg-muted-wash px-comfortable py-tight text-[13px]">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-card font-mono text-[12px] font-semibold">{n + 1}</span>
+                <li key={k} className="flex items-start gap-tight rounded-sm bg-muted-wash px-comfortable py-tight text-[0.8125rem]">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-card text-[0.75rem] font-semibold">{n + 1}</span>
                   <span>{t(`firstRun.step.${k}`)}</span>
                 </li>
               ))}
@@ -760,24 +729,6 @@ function Catalog() {
         </section>
       ) : (
         <div className={cn("flex flex-col gap-section", templateFontVars, selected.size > 0 && "pb-24")}>
-          {/* News, not a warning: neutral ground and an information glyph. An
-              ember tint and an alert mark read as "something is wrong" on the
-              first screen of a feature that is working exactly as intended. */}
-          {moved && (
-            <div role="status" className="flex items-center gap-comfortable rounded-sm border border-line bg-card px-comfortable py-tight md:items-start">
-              <Info size={16} strokeWidth={1.5} className="mt-0.5 shrink-0 text-fg" aria-hidden />
-              <p className="min-w-0 flex-1 text-[13px]">
-                <span className="font-medium">{t("moved.title")}</span> <span className="text-muted max-md:hidden">{t("moved.body")}</span>
-              </p>
-              <button type="button" onClick={dismissMoved} className="-my-inline min-h-11 shrink-0 rounded-sm px-tight text-[13px] font-medium text-fg hover:bg-muted-wash md:hidden">
-                {t("moved.gotIt")}
-              </button>
-              <button type="button" onClick={dismissMoved} aria-label={t("moved.dismiss")} className="-my-inline hidden h-9 w-9 shrink-0 items-center justify-center rounded-xs text-muted hover:bg-muted-wash hover:text-fg md:flex">
-                <X size={16} strokeWidth={1.5} />
-              </button>
-            </div>
-          )}
-
           {/* The page's first toolbar: the views on the left, and what the page
               does on the right — Add, and the seat layouts. There is no header
               row for them; on a phone Add is the bar's plus. */}
@@ -808,7 +759,7 @@ function Catalog() {
             loading={loading}
             layout="fixed"
             height="page"
-            minWidth="60rem"
+            minWidth={xl ? "60rem" : "44rem"}
             isSelected={(i) => selected.has(i.key)}
             sort={sort.key === "smart" ? undefined : sort}
             onSortChange={(key) => {
@@ -816,10 +767,17 @@ function Catalog() {
               setSort((s) => ({ key, order: s.key === key && s.order === "asc" ? "desc" : "asc" }));
             }}
             onRowClick={(i) => router.push(i.href)}
+            cardVariant="list"
             renderCard={(i) => (
-              <span className="flex flex-col gap-tight">
-                <span className="flex items-start gap-comfortable">
-                  {selecting && (
+              /* Two lines, the way a phone reads a long index: who it is and
+                 what it costs, then its state and the one fact that says what
+                 kind of thing it is. The sold-against-capacity bar is the
+                 desktop's comparison column and is dropped here — secondary
+                 data a phone row does not have the room for. A warning
+                 replaces the meta line, because that is the one thing on the
+                 row somebody has to act on. */
+              <span className="flex items-center gap-comfortable">
+                {selecting && (
                   <label onClick={(e) => e.stopPropagation()} className="-my-inline -ml-tight flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center">
                     <input
                       type="checkbox"
@@ -829,147 +787,111 @@ function Catalog() {
                       className={checkboxCls}
                     />
                   </label>
-                  )}
-                  <Thumb i={i} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block break-words text-sm font-medium leading-snug">{i.name}</span>
-                    <span className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-inline text-[12px] text-muted">
-                      <StatePill i={i} />
-                      <span>
+                )}
+                <Thumb i={i} />
+                <span className="flex min-w-0 flex-1 flex-col gap-inline">
+                  <span className="flex items-baseline gap-tight">
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{i.name}</span>
+                    <span className={cn("shrink-0 text-[0.8125rem] tabular-nums", i.fromPrice === null && "text-muted")}>{priceText(i)}</span>
+                  </span>
+                  <span className="flex min-w-0 items-center gap-tight text-[0.8125rem] text-muted">
+                    {/* Only the exception: nine rows in ten are on sale, and a
+                        pill on every one is what makes a calm list noisy. */}
+                    {i.state !== "onSale" && <StatePill i={i} />}
+                    {i.blockers.length > 0 || i.warnings.length > 0 ? (
+                      <span className="min-w-0 flex-1"><Sub i={i} /></span>
+                    ) : (
+                      <span className="min-w-0 flex-1 truncate">
                         {typeShort(i)}
                         {i.event ? ` · ${dateOf(i.event.startsAt)}` : ""}
                       </span>
-                      {!hasSelling(i) && (
-                        <span className="ml-auto text-sm font-medium tabular-nums text-fg">
-                          {i.fromPrice === null ? t(i.kind === "event" ? "soldOut" : "noPrice") : i.fromPrice === 0 ? t("free") : formatPriceShort(i.fromPrice)}
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                  <span className="-mr-tight -mt-inline shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <ActionMenu items={actionsFor(i)} label={t("rowActions", { name: i.name })} />
+                    )}
                   </span>
                 </span>
-                {hasSelling(i) && (
-                  <span className="flex items-center justify-between gap-section">
-                    <span className="min-w-0 flex-1"><Selling i={i} /></span>
-                    <span className="shrink-0 text-sm font-medium tabular-nums">
-                      {i.fromPrice === null ? t(i.kind === "event" ? "soldOut" : "noPrice") : i.fromPrice === 0 ? t("free") : formatPriceShort(i.fromPrice)}
-                    </span>
-                  </span>
-                )}
-                {(i.blockers.length > 0 || i.warnings.length > 0) && <Sub i={i} />}
+                <span className="-mr-tight shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <ActionMenu items={actionsFor(i)} label={t("rowActions", { name: i.name })} />
+                </span>
               </span>
             )}
             toolbar={
-                <div className="flex flex-col gap-tight">
-                  <div className="flex flex-wrap items-center gap-tight">
-                    {/* The page's select-all is in the table's header row on a
-                        desktop; a phone has no header row, so it lives here. */}
-
-                    <div className="relative min-w-0 flex-1 md:flex-none">
-                      <Search size={16} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-                      <input
-                        value={search}
-                        onChange={(e) => {
-                          setSearch(e.target.value);
-                          setPage(1);
-                        }}
-                        placeholder={t("searchPlaceholder")}
-                        aria-label={t("searchPlaceholder")}
-                        className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:h-9 md:w-72"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelecting((v) => !v)}
-                      aria-pressed={selecting}
-                      className="flex h-11 shrink-0 items-center rounded-sm border border-line bg-card px-comfortable text-[13px] font-medium text-fg md:hidden"
-                    >
-                      {selecting ? t("selectDone") : t("select")}
-                    </button>
-                    {/* The shared bar, so this page reads like the other lists:
-                        one Filters button on a phone, the control inline from
-                        md, and a chip for anything set. It used to be a
-                        hand-rolled toggle that revealed the sort INLINE with a
-                        bare dot to say something was on. */}
-                    <FilterBar
-                      filters={[
-                        /* Archived is a sheet filter on a PHONE only: from md
-                           the facet row has the width for it and draws it as a
-                           chip, and offering it in both places would put two
-                           controls named Archived on one screen. */
-                        ...(compact
-                          ? [
-                              {
-                                key: "archived",
-                                label: t("state.archived"),
-                                active: states.includes("archived") ? t("state.archived") : null,
-                                onClear: () => toggleFacet("archived"),
-                                control: (
-                                  <button
-                                    type="button"
-                                    aria-pressed={states.includes("archived")}
-                                    onClick={() => toggleFacet("archived")}
-                                    className={chip(states.includes("archived"))}
-                                  >
-                                    {t("state.archived")}
-                                  </button>
-                                ),
-                              },
-                            ]
-                          : []),
-                        {
-                          key: "sort",
-                          label: t("sortBy"),
-                          active: sort.key === "smart" ? null : t(`sort.${sort.key}`),
-                          onClear: () => setSort({ key: "smart", order: "asc" }),
-                          control: (
-                            <Select
-                              aria-label={t("sortBy")}
-                              value={sort.key}
-                              onChange={(v) => setSort({ key: v, order: "asc" })}
-                              triggerClassName="text-sm md:h-9"
-                              options={[
-                                { value: "smart", label: t("sort.smart") },
-                                { value: "name", label: t("sort.name") },
-                                { value: "price", label: t("sort.price") },
-                                { value: "updated", label: t("sort.updated") },
-                              ]}
-                            />
-                          ),
-                        },
-                      ]}
+              /* The shared list-filter row: search, one Filters button that
+                 counts what is set, and chips for anything that is. The state
+                 facets and the sort live in the panel; nothing else is drawn
+                 until it is chosen. */
+              <FilterBar
+                search={
+                  <div className="relative min-w-0 flex-1 md:flex-none">
+                    <Search size={16} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
+                    <input
+                      value={search}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        setPage(1);
+                      }}
+                      placeholder={t("searchPlaceholder")}
+                      aria-label={t("searchPlaceholder")}
+                      className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:h-9 md:w-72"
                     />
                   </div>
-                  {/* State as counted chips — the facet under the views. "All"
-                      is a chip too, pressed by default, so there is always one
-                      that visibly reads as the current choice. */}
-                  <div role="group" aria-label={t("stateFilter")} className="flex flex-wrap items-center gap-tight">
-                    <button type="button" aria-pressed={states.length === 0} onClick={() => { setStates([]); setPage(1); }} className={chip(states.length === 0)}>
-                      {t("allStates")}
-                    </button>
-                    {(compact ? phoneChips : facetChips).map((s) => {
-                      const on = states.includes(s);
-                      return (
-                        <button key={s} type="button" aria-pressed={on} onClick={() => toggleFacet(s)} className={chip(on)}>
-                          {s === "attention" && <AlertTriangle size={13} strokeWidth={2} aria-hidden className={on ? "" : "text-warning"} />}
-                          {t(s === "attention" ? "facet.attention" : `state.${s}`)}
-                          {s !== "archived" && <span className={cn("text-[12px] tabular-nums", on ? "text-inverse-fg/80" : "text-muted")}>{facetCounts[s]}</span>}
-                        </button>
-                      );
-                    })}
-                    {filtered && (
-                      <button
-                        type="button"
-                        onClick={clearAll}
-                        className="h-11 rounded-sm px-tight text-[13px] font-medium text-brand-foreground hover:bg-muted-wash md:h-8"
-                      >
-                        {t("clearFilters")}
-                      </button>
-                    )}
-                  </div>
-                </div>
+                }
+                actions={
+                  /* Ticking rows is a mode on a phone, where a checkbox on every
+                     row would take the room the name needs. */
+                  <button
+                    type="button"
+                    onClick={() => setSelecting((v) => !v)}
+                    aria-pressed={selecting}
+                    className="flex h-11 shrink-0 items-center rounded-sm border border-line bg-card px-comfortable text-[0.8125rem] font-medium text-fg md:hidden"
+                  >
+                    {selecting ? t("selectDone") : t("select")}
+                  </button>
+                }
+                filters={[
+                  {
+                    key: "state",
+                    label: t("col.state"),
+                    active: states.length ? states.map((s) => t(s === "attention" ? "facet.attention" : `state.${s}`)).join(", ") : null,
+                    onClear: () => {
+                      setStates([]);
+                      setPage(1);
+                    },
+                    control: (
+                      <div role="group" aria-label={t("stateFilter")} className="flex flex-wrap items-center gap-tight">
+                        {facetChips.map((s) => {
+                          const on = states.includes(s);
+                          return (
+                            <button key={s} type="button" aria-pressed={on} onClick={() => toggleFacet(s)} className={chip(on)}>
+                              {s === "attention" && <AlertTriangle size={13} strokeWidth={2} aria-hidden className={on ? "" : "text-warning"} />}
+                              {t(s === "attention" ? "facet.attention" : `state.${s}`)}
+                              {s !== "archived" && <span className={cn("text-[0.75rem] tabular-nums", on ? "text-inverse-fg/80" : "text-muted")}>{facetCounts[s]}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "sort",
+                    label: t("sortBy"),
+                    active: sort.key === "smart" ? null : t(`sort.${sort.key}`),
+                    onClear: () => setSort({ key: "smart", order: "asc" }),
+                    control: (
+                      <Select
+                        aria-label={t("sortBy")}
+                        value={sort.key}
+                        onChange={(v) => setSort({ key: v, order: "asc" })}
+                        triggerClassName="text-sm md:h-9"
+                        options={[
+                          { value: "smart", label: t("sort.smart") },
+                          { value: "name", label: t("sort.name") },
+                          { value: "price", label: t("sort.price") },
+                          { value: "updated", label: t("sort.updated") },
+                        ]}
+                      />
+                    ),
+                  },
+                ]}
+              />
             }
             emptyState={
               <EmptyState

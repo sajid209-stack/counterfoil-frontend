@@ -61,5 +61,13 @@
   "otherApps": "অন্যান্য অ্যাপ",
   "main": "প্রধান মেনু",
   "version": "সংস্করণ {version}",
-  "activityLog": "কাজের তালিকা"
+  "activityLog": "কাজের তালিকা",
+  "menu": "মেনু",
+  "pageActions": "আরও কাজ",
+  "settingsExit": "সেটিংস: অ্যাপে ফিরে যান",
+  "settingsSections": "সেটিংসের বিভাগ",
+  "venueCount": "{count, plural, one {#টি ভেন্যু} other {#টি ভেন্যু}}",
+  "signedInAs": "{name} হিসেবে সাইন ইন করা",
+  "signOut": "সাইন আউট",
+  "backTo": "{label}-এ ফিরে যান"
 }

@@ -16569,3 +16569,183 @@ orders…".
   to the activity log yet; those are seeded.
 - The light frame is only a step lighter than the chrome. The line and the
   radius carry the separation.
+
+## The calm pass: white chrome, a Shopify-style settings column, Shopify-admin phone screens, and fewer lines (2026-10-08)
+
+Owner, with seven screenshots (their own mock, Shopify admin desktop and mobile):
+1. colour it like the mock: the side and top bars white like the cards, on every page;
+2. no scrollbar in the side menu, and spacing like the mock;
+3. Settings like Shopify admin: the main menu collapses and a Settings menu takes its place;
+4. phone screens like Shopify admin mobile: minimal, no data overload, on every page;
+5. desktop like Shopify admin: calm, fewer lines and strokes, fewer visible filters
+   with one Filters button, and anything else of that kind.
+
+**How it was built.** Planned on Opus with one shared design brief. The first
+session ran nine Sonnet agents at once; the machine ran out of memory and every
+agent was cut off mid-work with nothing committed. The second session took a
+snapshot of the half-done tree (`refs/wip/calm-pass-start`), read each agent's
+transcript to see where it stopped, and resumed the work with at most three
+agents at a time. Every result was checked by screenshot and harness on Opus
+before it was kept.
+
+### 1. Colour
+
+| Token | Light | Dark |
+|---|---|---|
+| `--color-chrome` (rail and top bar) | #ffffff | #22211f |
+| `--color-surface` (the frame) | #f5f2eb | #141413 |
+| `--color-card` | #ffffff | #22211f |
+
+- The rail and the top bar are one white surface with no line between them.
+- The frame is the paper colour with a 16px radius and **no border**. The fade at
+  its foot is retinted to the frame.
+- `.card-surface` is solid white with a soft shadow and no visible border in
+  light. In dark, where card and chrome are the same value, cards keep a 1px line.
+
+### 2. The rail
+
+- No visible scrollbar in any browser; it still scrolls if it must.
+- Rows are about 36px (44px on touch). Everything from Dashboard to the version
+  fits without scrolling at 1440×768 and 1280×720.
+- The desktop venue picker shows the whole venue name, up to `min(24rem, 34vw)`.
+
+### 3. Settings, Shopify-style (`SettingsChrome.tsx`)
+
+- On any `/settings/*` page from md up, the main rail folds to its 64px icons
+  (the person's saved preference is untouched) and a white Settings column opens
+  beside it, as part of the chrome:
+  - "‹ Settings", back to the page you came from;
+  - the business (initials, name, venue count);
+  - the sections in their groups with icons and attention dots, the current one
+    tinted;
+  - the signed-in person at the foot, under a soft fade.
+- The old in-frame section menu is gone. Page content sits in a centred 880px
+  column.
+
+### 4. Phones (< 768px), like Shopify admin mobile
+
+**The shell.**
+- The top bar shows the page icon and title, the page's primary action as an ink
+  disc (its own icon, e.g. a pencil for Edit), and "⋯" for the other actions.
+  PageShell sends its `actions` to "⋯" on a phone.
+- **One way back.** A record page shows a back arrow in the bar, to the same place
+  as the desktop's back link, and does not repeat the link in the page. List pages
+  have no arrow.
+- The bottom tab bar is gone. A round 56px menu button at the bottom left opens
+  the whole menu as a sheet: the venue switcher, every destination, the other
+  apps, Settings, and the account (appearance, language, sign out). Pages pad so
+  it never covers a last row or a save bar, and creation flows hide it.
+
+**The pages.**
+- Lists are one card of two-line rows (name, meta line, amount on the right). No
+  tables on a phone.
+- Filters sit behind one Filters button, with search at full width.
+- Figures are a sideways snap strip; Finances' balances are a 2×2 grid with
+  Withdraw and Deposit under it.
+- Records lead with the key facts (state, amount, who, when). Secondary sections
+  fold behind a labelled "Show more" or "More details".
+- The Calendar opens on the agenda. Settings pages are grouped lists with
+  switches at the right. Editors are one column with a pinned save bar.
+
+### 5. Desktop: calm
+
+**Shared components.**
+- `StatusPill` is sentence case on a soft tint, with no border and **no dot**.
+  The dot had come back for record states during the pass; it was removed
+  again, since the owner took dots off chips on 2026-09-27.
+- `DataTable` headers are sentence case at 12–13px, with lighter row lines and
+  `aria-sort`.
+- `Button`, `Select`, `Tabs`, `StatStrip`, `Sheet`, `Modal`, `ActionMenu` and
+  `DateRangePicker` have softer strokes.
+
+**One list pattern** (`FilterBar`, backward compatible):
+- search, at most one key filter inline (usually the date), a Filters button
+  with a count, and at most two actions with the rest under "⋯";
+- every other filter lives in a popover on desktop and a sheet on a phone;
+- set filters show as removable chips with "Clear filters", whose tap targets
+  are 44px on a phone.
+
+It is used on Orders, Issued orders, Customers, Activity, Expenses, Finances,
+Catalog, Inventory, Team and the Calendar. The Calendar's colour key moved into
+its Filters panel; the Marketplace swatch and count are in the "Sold through"
+control there.
+
+**No uppercase tracked labels** anywhere in OS content. DM Mono is used only for
+identifiers. Boxes inside boxes became quiet fills, and selected choice cards
+take a 2px ember ring.
+
+**Per area.**
+- **Dashboard:** below 1360px Activity sits under the chart at full width, so a
+  line of activity never wraps word by word.
+- **Analytics:** a phone shows the date range and "Previous" on one row.
+- **Expenses and Finances:** below xl, columns step out so Total and the row
+  menu stay visible at 1024.
+- **Records:** the order, customer, ticket, booking, event and marketplace pages
+  each have one primary action, with the rest under "⋯".
+- **Catalog:** the booking and event records share one header layout. The booking
+  wizard no longer repeats "Where it's sold" under its own step title.
+- **Settings:** rows are tighter (12px), the Payments choice cards are quiet, and
+  loyalty points use the number formatter, with Bangla digits in Bangla.
+- **Marketplaces:** Disconnect moved under "⋯".
+- **Messages:** 115 unused keys deleted in en and bn. Families that are read
+  dynamically were kept.
+
+### Verified
+
+- **Production build** of the final tree: compiled, TypeScript clean, all 82
+  static pages generated. It was built in a separate worktree so the dev server's
+  `.next` was not touched.
+- **Full regression against that build**, served locally: 94 harness runs and
+  9,363 checks, all passing.
+  - **POS:** the till, undo, refunds, moves, discounts, check-in and the
+    contrast audit pass. The audit shows only the declared white-on-ember rule
+    and the 42px check-in field.
+  - **Shell:**
+    - nav 160 and 197;
+    - bar 750 at 1440 and 750 at 390;
+    - route sweeps clean at 1440, 390, and 390 dark in Bangla;
+    - mob1 clean;
+    - rad 8.
+  - **Pages:**
+    - Orders 193/31, the order page 91/92;
+    - Customers 108/102;
+    - Issued orders 49;
+    - Activity 62/38/67;
+    - the calendar 30/26/15, and calendar holds 27;
+    - Finances 147/125;
+    - Expenses 236/228;
+    - Analytics 511, plus 1,000 unit checks;
+    - catalog-e2e 93;
+    - inventory-e2e 41;
+    - marketplaces 50/48 and c4 150/154;
+    - the ticket record (tk1) 36.
+  - **Settings:**
+    - settings-nav 53;
+    - profile 29;
+    - email 27;
+    - ticket codes 24;
+    - devices and team 276 and 56;
+    - pairing 344 and 40;
+    - storefront 178/104/31/14/6.
+- **Caught by the regression and fixed:**
+  - The unused-key sweep had deleted the three PIN messages
+    (`settings.team.pinErrLength`, `pinErrRepeat`, `pinErrRun`). The code builds
+    their names at run time as `` `team.pinErr${…}` ``. They were restored in en
+    and bn.
+  - A team-invite check read the page after the 4-second toast had gone. That
+    was the harness, not the app; it now reads the toast straight after Save
+    (276/276).
+
+- `tsc` is clean, eslint shows only the documented findings, and i18n is
+  0 missing / 0 extra.
+
+### Open
+
+- The Bangla strings added in this pass are drafts and need a native review.
+- About 1,800 message keys are referenced only through dynamic prefixes or last
+  segments. They were not reviewed one by one.
+- The light frame and the white cards differ by one step. The shadow carries the
+  separation.
+- Turbopack's dev cache can fail with "Insufficient system resources
+  (os error 1450)" when free RAM drops under 1 GB. It heals on its own. On this
+  machine, keep to three browser agents at a time.

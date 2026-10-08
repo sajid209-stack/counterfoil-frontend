@@ -139,8 +139,8 @@ export default function TaxPage() {
                 <SuffixInput id={id} value={form.reduced} onChange={(v) => set("reduced", v)} suffix="%" invalid={!!reducedErr} describedBy={describedBy} />
               )}
             </SettingRow>
-            <SettingRow label={t("tax.exempt")} description={t("tax.exemptDesc", { count: usage.exempt })} labelFor={false}>
-              {() => <p className="flex h-11 items-center text-sm text-muted">{t("tax.noTax")}</p>}
+            <SettingRow label={t("tax.exempt")} description={t("tax.exemptDesc", { count: usage.exempt })} labelFor={false} trailing>
+              {() => <p className="text-sm text-muted">{t("tax.noTax")}</p>}
             </SettingRow>
           </SettingsSection>
 
@@ -150,12 +150,11 @@ export default function TaxPage() {
               saved rather than after the first receipt. */}
           <SettingsSection title={t("tax.exampleTitle", { amount: formatPriceShort(SAMPLE, currency) })} description={t("tax.exampleDesc")}>
             <div className="overflow-x-auto">
-              <table className="table-inset w-full min-w-[26rem] text-sm">
+              <table className="table-inset w-full text-sm">
                 <thead>
                   <tr className="text-left text-[12px] text-muted">
                     <th scope="col" className="px-card py-tight font-medium">{t("tax.colClass")}</th>
-                    <th scope="col" className="px-section py-tight text-right font-medium">{t("tax.colPrice")}</th>
-                    <th scope="col" className="px-section py-tight text-right font-medium">{t("tax.colTax")}</th>
+                    <th scope="col" className="px-tight py-tight text-right font-medium sm:px-section">{t("tax.colTax")}</th>
                     <th scope="col" className="px-card py-tight text-right font-medium">{t("tax.colTotal")}</th>
                   </tr>
                 </thead>
@@ -168,9 +167,10 @@ export default function TaxPage() {
                           {row.label}
                           <span className="ml-tight font-normal text-muted">{row.rate === null ? "—" : `${row.rate}%`}</span>
                         </th>
-                        <td className="px-section py-comfortable text-right text-muted">{formatMoney(SAMPLE, currency)}</td>
-                        <td className="px-section py-comfortable text-right text-muted">{amount === null ? "—" : formatMoney(amount, currency)}</td>
-                        <td className="px-card py-comfortable text-right font-semibold text-fg">
+                        <td className="whitespace-nowrap px-tight py-comfortable text-right text-muted sm:px-section">
+                          {amount === null ? "—" : formatMoney(amount, currency)}
+                        </td>
+                        <td className="whitespace-nowrap px-card py-comfortable text-right font-semibold text-fg">
                           {amount === null ? "—" : formatMoney(SAMPLE + amount, currency)}
                         </td>
                       </tr>
@@ -200,17 +200,16 @@ export default function TaxPage() {
                   : t("tax.onReceiptsNeedsNumber")
               }
               labelFor={false}
+              trailing
             >
               {({ labelId, describedBy }) => (
-                <div className="flex sm:justify-end">
-                  <Switch
-                    checked={form.onReceipts && hasReg}
-                    disabled={!hasReg}
-                    onChange={(on) => set("onReceipts", on)}
-                    labelledBy={labelId}
-                    describedBy={describedBy}
-                  />
-                </div>
+                <Switch
+                  checked={form.onReceipts && hasReg}
+                  disabled={!hasReg}
+                  onChange={(on) => set("onReceipts", on)}
+                  labelledBy={labelId}
+                  describedBy={describedBy}
+                />
               )}
             </SettingRow>
           </SettingsSection>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { ShieldCheck } from "lucide-react";
 import { Avatar, PageShell, useToast } from "@/components/ui";
@@ -40,6 +40,7 @@ interface Draft {
 export default function MyProfilePage() {
   const t = useTranslations("settings");
   const toast = useToast();
+  const languageId = useId();
   const meQ = useApiQuery(() => getStaff(DEMO_STAFF_ID), []);
   const locationsQ = useApiQuery(() => listLocations({ pageSize: 100 }), []);
   const countersQ = useApiQuery(() => listCounters({ pageSize: 100 }), []);
@@ -102,7 +103,6 @@ export default function MyProfilePage() {
         <RecordFacts
           label={t("profile.factsLabel")}
           facts={[
-            { key: "role", label: t("profile.role"), value: role?.name ?? t("profile.noRole") },
             { key: "status", label: t("profile.status"), value: t(`profile.status_${me.status}`) },
             { key: "locations", label: t("profile.locations"), value: named(me.locationIds, locationsQ.data?.data ?? []) },
             { key: "counters", label: t("profile.counters"), value: named(me.counterIds, countersQ.data?.data ?? []) },
@@ -135,21 +135,25 @@ export default function MyProfilePage() {
           </SettingRow>
         </SettingsSection>
 
-        <SettingsSection title={t("profile.languageTitle")} description={t("profile.languageDesc")}>
-          <SettingRow label={t("profile.language")} description={t("profile.languageHelp")} labelFor={false}>
-            {() => <LanguagePicker />}
-          </SettingRow>
+        <SettingsSection title={t("profile.languageTitle")} description={t("profile.languageHelp")}>
+          <div className="px-card pb-card">
+            {/* The section's own title is the visible name; this is the group's. */}
+            <span id={languageId} className="sr-only">
+              {t("profile.language")}
+            </span>
+            <LanguagePicker showLabel={false} labelledBy={languageId} />
+          </div>
         </SettingsSection>
 
         {/* Not a second copy of any of it: Security owns the password, the
             two-step setting and the list of places you are signed in, and two
             lists of sessions is two answers to one question. */}
         <SettingsSection title={t("profile.securityTitle")} description={t("profile.securityDesc")}>
-          <SettingRow label={t("profile.securityRow")} description={t("profile.securityRowDesc")} labelFor={false}>
+          <SettingRow label={t("profile.securityRow")} labelFor={false}>
             {() => (
               <Link
                 href="/settings/security"
-                className="inline-flex min-h-11 items-center gap-tight rounded-sm border border-line px-comfortable text-[13px] font-medium transition-colors duration-quick hover:border-strong md:min-h-9"
+                className="inline-flex min-h-11 items-center gap-tight rounded-sm border border-line px-comfortable text-[13px] font-medium transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
               >
                 <ShieldCheck size={14} strokeWidth={1.5} aria-hidden />
                 {t("profile.openSecurity")}

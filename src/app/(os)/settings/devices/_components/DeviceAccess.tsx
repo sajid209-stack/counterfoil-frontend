@@ -203,9 +203,9 @@ export function AccessFields({
             <label
               key={o.v}
               className={cn(
-                "flex min-h-11 items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
+                "flex min-h-11 items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick",
                 owner ? "cursor-not-allowed" : "cursor-pointer",
-                checked ? "border-ember-solid bg-ember/5" : cn("border-line", !owner && "hover:bg-muted-wash"),
+                checked ? "bg-card ring-2 ring-inset ring-ember-solid" : cn("bg-muted-wash", !owner && "hover:ring-1 hover:ring-inset hover:ring-line"),
               )}
             >
               <input

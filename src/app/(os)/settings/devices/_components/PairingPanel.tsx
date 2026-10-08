@@ -147,11 +147,11 @@ export function PairingPanel({
         data-testid="pair-status"
         data-state={state}
         className={cn(
-          "mt-major flex items-start gap-tight rounded-md border px-comfortable py-tight text-sm font-medium",
-          state === "paired" && "border-success/40 bg-success/10 text-success",
-          state === "stuck" && "border-warning/50 bg-warning/15 text-warning",
-          state === "expired" && "border-warning/50 bg-warning/15 text-warning",
-          state === "waiting" && "border-line bg-subtle text-fg",
+          "mt-major flex items-start gap-tight rounded-sm px-comfortable py-tight text-sm font-medium",
+          state === "paired" && "bg-success/10 text-success",
+          state === "stuck" && "bg-warning/15 text-warning",
+          state === "expired" && "bg-warning/15 text-warning",
+          state === "waiting" && "bg-muted-wash text-fg",
         )}
       >
         {state === "paired" || state === "stuck" ? (

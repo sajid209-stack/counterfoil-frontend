@@ -1,7 +1,8 @@
 {
   "title": "Finances",
   "menu": {
-    "bank": "Payout bank and schedule"
+    "bank": "Payout bank and schedule",
+    "more": "More actions"
   },
   "available": {
     "label": "Available balance",
@@ -45,14 +46,14 @@
   },
   "activity": {
     "title": "Transaction history",
-    "filterLabel": "Show",
-    "search": "Order, reference or customer",
+    "search": "Search transactions",
     "showMore": "Show more days",
     "showing": "Showing {shown} of {total} days",
     "loading": "Loading activity",
     "expandAll": "Expand all",
     "collapseAll": "Collapse all",
-    "download": "Download statement"
+    "download": "Download statement",
+    "type": "Type"
   },
   "filter": {
     "all": "All",
@@ -177,5 +178,6 @@
     "label": "Deposited",
     "count": "{count, plural, one {# deposit} other {# deposits}}",
     "none": "None yet"
-  }
+  },
+  "balances": "Balances"
 }

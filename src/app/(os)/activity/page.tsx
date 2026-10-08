@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Download, Search } from "lucide-react";
-import { Button, DateRangePicker, EmptyState, FilterBar, PageShell, Select, formatRange, type FilterSpec } from "@/components/ui";
+import { Button, EmptyState, FilterBar, PageShell, Select, formatRange, type FilterSpec } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
@@ -22,28 +22,12 @@ import {
   type ActivityQuery,
   type ActivitySeverity,
 } from "@/lib/api";
+import { DateChip } from "../orders/_components/DateChip";
+import { PRESETS, presetOf, shiftDay as shift } from "../orders/_lib/filters";
 import { Initials, KindBadge, SEVERITY_ROW_CLASS, SeverityChip, useActivityText } from "./_components/parts";
 
-const shift = (day: string, n: number) => {
-  const d = new Date(`${day}T12:00:00`);
-  d.setDate(d.getDate() + n);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
-const monthStart = (day: string) => `${day.slice(0, 8)}01`;
-const PRESETS: { value: string; range: () => [string, string] }[] = [
-  { value: "today", range: () => [DEMO_TODAY, DEMO_TODAY] },
-  { value: "yesterday", range: () => [shift(DEMO_TODAY, -1), shift(DEMO_TODAY, -1)] },
-  { value: "7d", range: () => [shift(DEMO_TODAY, -6), DEMO_TODAY] },
-  { value: "30d", range: () => [shift(DEMO_TODAY, -29), DEMO_TODAY] },
-  { value: "month", range: () => [monthStart(DEMO_TODAY), DEMO_TODAY] },
-  {
-    value: "lastmonth",
-    range: () => {
-      const end = shift(monthStart(DEMO_TODAY), -1);
-      return [monthStart(end), end];
-    },
-  },
-];
+/** The log opens on the last seven days. */
+const DEFAULT_RANGE = PRESETS[2].range();
 const PAGE = 40;
 
 /**
@@ -74,7 +58,7 @@ function ActivityView() {
   const [group, setGroup] = useState<ActivityGroup | "all">("all");
   const [actorId, setActorId] = useState("");
   const [severity, setSeverity] = useState<"all" | "warning" | "critical">("all");
-  const [range, setRange] = useState(() => ({ preset: "7d", from: PRESETS[2].range()[0], to: PRESETS[2].range()[1] }));
+  const [range, setRange] = useState(() => ({ from: DEFAULT_RANGE[0], to: DEFAULT_RANGE[1] }));
   const [limit, setLimit] = useState(PAGE);
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
@@ -113,14 +97,15 @@ function ActivityView() {
     return out;
   }, [events]);
 
-  const presets = PRESETS.map((p) => ({ value: p.value, label: t(`period.${p.value}`), range: p.range }));
-  const filtered = group !== "all" || !!actorId || severity !== "all" || !!q;
+  const rangePreset = presetOf(range.from, range.to);
+  const filtered = group !== "all" || !!actorId || severity !== "all" || !!q || rangePreset !== "7d";
   const reset = () => {
     setSearch("");
     setQ("");
     setGroup("all");
     setActorId("");
     setSeverity("all");
+    setRange({ from: DEFAULT_RANGE[0], to: DEFAULT_RANGE[1] });
     setLimit(PAGE);
   };
 
@@ -150,6 +135,28 @@ function ActivityView() {
   };
 
   const filters: FilterSpec[] = [
+    {
+      key: "date",
+      label: t("filter.date"),
+      inline: true,
+      active: rangePreset === "7d" ? null : PRESETS.some((p) => p.value === rangePreset) ? t(`period.${rangePreset}`) : formatRange(range.from, range.to),
+      onClear: () => {
+        setRange({ from: DEFAULT_RANGE[0], to: DEFAULT_RANGE[1] });
+        setLimit(PAGE);
+      },
+      control: (
+        <DateChip
+          from={range.from}
+          to={range.to}
+          defaultRange={DEFAULT_RANGE}
+          onChange={(from, to) => {
+            setRange({ from, to });
+            setLimit(PAGE);
+          }}
+          className="w-full md:w-auto"
+        />
+      ),
+    },
     {
       key: "group",
       label: t("filter.type"),
@@ -223,80 +230,34 @@ function ActivityView() {
   return (
     <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
-        <div className="flex flex-wrap items-start justify-between gap-tight">
-          <FilterBar
-            className="min-w-0 flex-1 md:flex-row md:items-center"
-            search={
-              <label className="relative block">
-                <Search size={15} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setLimit(PAGE);
-                  }}
-                  placeholder={t("search")}
-                  aria-label={t("search")}
-                  className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-[0.8125rem] outline-none placeholder:text-muted focus:border-inverse md:h-9 md:w-52"
-                />
-              </label>
-            }
-            lead={
-              <div className="flex w-full min-w-0 items-center gap-tight md:w-auto">
-              <DateRangePicker
-                value={range}
-                onChange={(r) => {
-                  setRange({ preset: r.preset, from: r.from, to: r.to });
+        <FilterBar
+          search={
+            <label className="relative block min-w-0 md:w-60 xl:w-72">
+              <Search size={16} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
                   setLimit(PAGE);
                 }}
-                presets={presets}
-                today={DEMO_TODAY}
-                max={DEMO_TODAY}
-                labels={{
-                  choose: t("range.choose"),
-                  custom: t("range.custom"),
-                  from: t("range.from"),
-                  to: t("range.to"),
-                  apply: t("range.apply"),
-                  cancel: t("range.cancel"),
-                  previousMonth: t("range.previousMonth"),
-                  nextMonth: t("range.nextMonth"),
-                  days: (count) => t("range.days", { count }),
-                  pickEnd: t("range.pickEnd"),
-                }}
-                className="min-w-0 flex-1 md:flex-none"
+                placeholder={t("search")}
+                aria-label={t("search")}
+                className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-9"
               />
-              {/* On a phone the export is a glyph beside the dates, named in
-                  words for a screen reader and on hover; from md it has its own
-                  labelled button on the right. */}
-              <button
-                type="button"
-                onClick={download}
-                title={t("export")}
-                aria-label={t("export")}
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-sm border border-line bg-card text-muted active:bg-muted-wash md:hidden"
-              >
-                <Download size={16} strokeWidth={1.5} aria-hidden />
-              </button>
-              </div>
-            }
-            filters={filters}
-          />
-          <div className="flex items-center gap-tight md:ml-auto">
-            {filtered && (
-              <Button variant="tertiary" size="sm" onClick={reset}>
-                {t("clear")}
-              </Button>
-            )}
-            <Button variant="secondary" size="sm" icon={<Download size={15} strokeWidth={1.5} aria-hidden />} onClick={download} className="max-md:hidden">
-              {t("export")}
+            </label>
+          }
+          filters={filters}
+          /* The one action. On a phone it is the download glyph beside Filters. */
+          actions={
+            <Button variant="secondary" size="sm" icon={<Download size={15} strokeWidth={1.5} aria-hidden />} onClick={download} title={t("export")} className="max-md:w-11 max-md:px-0">
+              <span className="max-md:sr-only">{t("export")}</span>
             </Button>
-          </div>
-        </div>
+          }
+        />
 
         <p className="text-[0.8125rem] text-muted" aria-live="polite">
-          {listQ.loading && !events ? " " : `${t("count", { count: total })} · ${PRESETS.some((p) => p.value === range.preset) ? t(`period.${range.preset}`) : formatRange(range.from, range.to)}`}
+          {listQ.loading && !events ? " " : `${t("count", { count: total })} · ${PRESETS.some((p) => p.value === rangePreset) ? t(`period.${rangePreset}`) : formatRange(range.from, range.to)}`}
         </p>
 
         {listQ.error ? (
@@ -312,12 +273,12 @@ function ActivityView() {
           <div aria-busy="true" className="flex flex-col gap-section">
             {[0, 1].map((i) => (
               <div key={i} className="flex flex-col gap-tight">
-                <div className="h-5 w-28 animate-pulse rounded-sm bg-subtle" />
-                <div className="rounded-md border border-line bg-card">
+                <div className="h-5 w-28 animate-pulse rounded-sm bg-line" />
+                <div className="card-surface overflow-hidden">
                   {[0, 1, 2, 3].map((j) => (
                     <div key={j} className="flex items-center gap-comfortable border-b border-hairline px-card py-comfortable last:border-0">
-                      <div className="h-8 w-8 animate-pulse rounded-sm bg-subtle" />
-                      <div className="h-4 flex-1 animate-pulse rounded-sm bg-subtle" />
+                      <div className="h-8 w-8 animate-pulse rounded-full bg-line" />
+                      <div className="h-4 flex-1 animate-pulse rounded-sm bg-line" />
                     </div>
                   ))}
                 </div>
@@ -350,7 +311,7 @@ function ActivityView() {
                   {dayLabel(day)}
                   <span className="ml-tight font-normal">{day === DEMO_TODAY || day === shift(DEMO_TODAY, -1) ? formatDay(day, { weekday: true }) : ""}</span>
                 </h2>
-                <ul className="overflow-hidden rounded-md border border-line bg-card">
+                <ul className="card-surface overflow-hidden">
                   {items.map((e) => (
                     <Row key={e.id} e={e} x={x} expanded={!!open[e.id]} onToggle={() => setOpen((o) => ({ ...o, [e.id]: !o[e.id] }))} />
                   ))}
@@ -400,11 +361,14 @@ function Row({
         <span className="hidden w-[4.75rem] shrink-0 pt-[0.4rem] text-[0.8125rem] tabular-nums text-muted md:block">{formatClockOf(e.at)}</span>
         <KindBadge kind={e.kind} severity={e.severity} />
         <div className="min-w-0 flex-1">
-          <p className="break-words text-[0.8125rem] leading-snug">{x.sentence(e, true)}</p>
+          {/* Two lines on a phone: the sentence (two lines at most; the whole of
+              it is one press away) and what kind of thing it was. Where it
+              happened is in the details, and beside the kind from md up. */}
+          <p className="line-clamp-2 break-words text-[0.8125rem] leading-snug md:line-clamp-none">{x.sentence(e, true)}</p>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-tight gap-y-0.5 text-[0.75rem] text-muted">
-            <span className="md:hidden">{formatClockOf(e.at)}</span>
-            <span className="font-medium">{x.kindLabel(e)}</span>
-            {where && <span className="min-w-0 break-words">· {where}</span>}
+            <span className="md:hidden">{formatClockOf(e.at)} ·</span>
+            <span>{x.kindLabel(e)}</span>
+            {where && <span className="hidden min-w-0 break-words md:inline">· {where}</span>}
             <SeverityChip severity={e.severity} label={x.severityLabel(e.severity)} />
           </p>
         </div>
@@ -422,7 +386,7 @@ function Row({
         </button>
       </div>
       {expanded && (
-        <dl className="grid gap-x-section gap-y-tight border-t border-hairline bg-subtle/40 px-card py-comfortable text-[0.8125rem] sm:grid-cols-2 md:pl-[calc(var(--spacing-card)+4.75rem+var(--spacing-comfortable)*2+2rem)]">
+        <dl className="grid gap-x-section gap-y-tight bg-muted-wash/60 px-card py-comfortable text-[0.8125rem] sm:grid-cols-2 md:pl-[calc(var(--spacing-card)+4.75rem+var(--spacing-comfortable)*2+2rem)]">
           {x.details(e).map((d, i) => (
             <div key={`${d.label}-${i}`} className="min-w-0">
               <dt className="text-[0.75rem] font-medium text-muted">{d.label}</dt>

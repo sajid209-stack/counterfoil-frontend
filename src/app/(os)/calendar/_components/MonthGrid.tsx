@@ -124,7 +124,7 @@ export function MonthGrid({
       <div>
         <div className="grid grid-cols-7 border-b border-hairline">
           {weekdayLabels.map((w) => (
-            <div key={w} className="type-label py-tight text-center text-[12px] text-muted">
+            <div key={w} className="py-tight text-center text-[0.75rem] font-medium text-muted">
               {w.slice(0, 1)}
             </div>
           ))}
@@ -178,7 +178,7 @@ export function MonthGrid({
 
         {/* The chosen day, in full — the reason the grid can afford to be dots. */}
         <div className="border-t border-hairline">
-          <p className="type-label px-card pt-comfortable text-[12px] text-muted">
+          <p className="px-card pt-comfortable text-[0.75rem] font-medium text-muted">
             {dayHeading ? dayHeading(selectedDate) : isoDate(selectedDate)}
           </p>
           {agenda.length === 0 ? (
@@ -227,7 +227,7 @@ export function MonthGrid({
       <div className="min-w-[44rem]">
         <div className="grid grid-cols-7 border-b border-hairline">
           {weekdayLabels.map((w) => (
-            <div key={w} className="type-label px-tight py-tight text-[12px] text-muted">
+            <div key={w} className="px-tight py-tight text-[0.75rem] font-medium text-muted">
               {w}
             </div>
           ))}
@@ -259,7 +259,7 @@ export function MonthGrid({
                      tint: tinted, the 1st of next month — bookable — sampled
                      almost the shade that means "cannot be booked". */
                   className={cn(
-                    "group/day relative min-h-[7rem] border-r border-hairline p-1 last:border-r-0",
+                    "group/day relative min-h-[7rem] border-r border-hairline/50 p-1 last:border-r-0",
                     !!todayIso && key < todayIso && "bg-offtime",
                     bookable && "cursor-pointer transition-colors duration-quick hover:bg-ember/[0.03]",
                   )}

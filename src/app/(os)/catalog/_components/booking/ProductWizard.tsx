@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, ChevronRight, Circle, Pencil } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, ChevronUp, Circle, Pencil } from "lucide-react";
 import { Button, FormField, Modal, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import {
@@ -363,14 +363,14 @@ export function ProductWizard({
   });
 
   return (
-    <div className="grid gap-major pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-hero lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="grid gap-major pb-[calc(9rem+env(safe-area-inset-bottom))] md:pb-hero lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="flex min-w-0 flex-col gap-section">
         {/* What this is, and the way back to choosing something else — the
             one route back; the breadcrumb above it is the other. */}
         {kind && (
-          <div className="flex flex-wrap items-center gap-tight text-[13px]">
+          <div className="flex flex-wrap items-center gap-tight text-[0.8125rem]">
             <span className="text-muted">{t("adding")}</span>
-            <span className="rounded-full border border-line bg-card px-comfortable py-0.5 font-medium text-fg">{tc(`type.${kind}`)}</span>
+            <span className="rounded-full bg-muted-wash px-comfortable py-0.5 font-medium text-fg">{tc(`type.${kind}`)}</span>
             <Link href="/catalog/new" className="inline-flex min-h-11 items-center font-medium text-brand-foreground underline-offset-2 hover:underline md:min-h-0">{t("changeKind")}</Link>
           </div>
         )}
@@ -417,12 +417,12 @@ export function ProductWizard({
 
         <div className="card-surface p-card">
           <div className="mb-section">
-            <h2 className="text-[17px] font-semibold tracking-tight">{t(`title.${stepKey}`)}</h2>
+            <h2 className="text-[1.0625rem] font-semibold text-fg">{t(`title.${stepKey}`)}</h2>
             <p className="mt-inline text-[13px] text-muted">{t(`help.${stepKey}`)}</p>
           </div>
 
           {stepError && (
-            <p role="alert" tabIndex={-1} data-step-error className="mb-section flex items-start gap-tight rounded-sm border border-danger/40 bg-danger-wash px-comfortable py-tight text-[13px] font-medium text-danger outline-none">
+            <p role="alert" tabIndex={-1} data-step-error className="mb-section flex items-start gap-tight rounded-sm bg-danger-wash px-comfortable py-tight text-[0.8125rem] font-medium text-danger outline-none">
               <AlertTriangle size={15} strokeWidth={2} aria-hidden className="mt-0.5 shrink-0" />
               {stepError}
             </p>
@@ -495,6 +495,7 @@ export function ProductWizard({
               onToggleLocation={(id) => { toggleLocation(id); setStepError(null); setErrors((x) => ({ ...x, locations: "" })); }}
               onAddLocation={() => setAddLocOpen(true)}
               error={errors.locations || null}
+              hideHeading
             />
           )}
 
@@ -503,7 +504,7 @@ export function ProductWizard({
               operator to remember what the schedule said four screens ago. */}
           {stepKey === "review" && (
             <div className="flex flex-col">
-              <h3 className="mb-tight break-words text-[20px] font-semibold tracking-tight">{name || t("untitled")}</h3>
+              <h3 className="mb-tight break-words text-xl font-semibold text-fg">{name || t("untitled")}</h3>
               <ReviewRow label={t("row.how")} onEdit={() => goTo("how")} editText={t("edit")} editLabel={t("editStep", { step: t("step.how") })}>
                 {booking?.summary ?? <Missing>{t("check.how")}</Missing>}
                 {/* A kind with no "when" step (an appointment) still shows its
@@ -565,58 +566,63 @@ export function ProductWizard({
         </div>
 
         {/* On a phone the way forward is pinned to the bottom of the screen,
-            where the thumb is, with the bottom navigation stood down while a
-            booking is being made. */}
-        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-tight border-t border-line bg-surface/95 px-gutter pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-tight backdrop-blur-xl md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
-          {/* The ready-to-sell list lives beside the form from lg; below it,
-              one tap from the pinned footer. */}
+            where the thumb is. The shell stands its floating menu button down
+            while a booking is being made, so the bar has the whole width.
+            "What's left" folds out above the buttons rather than sitting
+            beside the form (the ready list lives beside the form from lg). */}
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-chrome pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:static md:z-auto md:border-0 md:bg-transparent md:pb-0">
+          {checklistOpen && (
+            <div className="max-h-[45vh] overflow-y-auto px-gutter pt-tight lg:hidden">
+              <Checklist checks={checks} reachable={(step) => seen.has(step)} onGo={(step) => { setChecklistOpen(false); goTo(step); }} ready={ready} bare />
+            </div>
+          )}
           <button
             type="button"
-            onClick={() => setChecklistOpen(true)}
-            className={cn("flex min-h-11 items-center gap-inline text-[13px] font-medium lg:hidden", ready ? "text-success" : "text-muted")}
+            onClick={() => setChecklistOpen((v) => !v)}
+            aria-expanded={checklistOpen}
+            className="flex min-h-11 w-full items-center gap-tight px-gutter text-left text-[0.8125rem] lg:hidden"
           >
-            {ready ? <Check size={15} strokeWidth={2} aria-hidden /> : null}
-            {ready ? t("readyShort") : t("leftShort", { count: checks.filter((c) => !c.done).length })}
-            <ChevronRight size={14} strokeWidth={1.5} aria-hidden />
+            <span className="font-medium text-fg">{t("whatsLeft")}</span>
+            <span className={cn("flex-1", ready ? "text-success" : "text-muted")}>
+              {ready ? <Check size={14} strokeWidth={2} aria-hidden className="mr-1 inline" /> : null}
+              {ready ? t("readyShort") : t("leftShort", { count: checks.filter((c) => !c.done).length })}
+            </span>
+            <ChevronUp size={16} strokeWidth={1.5} aria-hidden className={cn("text-muted transition-transform duration-quick", !checklistOpen && "rotate-180")} />
           </button>
-          {stepIndex > 0 && (
-            <Button variant="secondary" icon={<ArrowLeft size={16} strokeWidth={1.5} />} disabled={saving} onClick={() => go(stepIndex - 1)}>{t("back")}</Button>
-          )}
-          <span className="flex-1" />
-          {stepKey !== "review" ? (
-            <Button onClick={next}>
-              {t("continue")}
-              <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
-            </Button>
-          ) : (
-            <>
-              <Button variant="secondary" loading={saving} onClick={() => publish(false)}>{t("saveOffSale")}</Button>
-              <Button loading={saving} onClick={() => publish(true)}>{t("putOnSale")}</Button>
-            </>
-          )}
+          <div className="flex items-center gap-tight px-gutter pt-tight md:p-0">
+            {stepIndex > 0 && (
+              <Button variant="tertiary" disabled={saving} onClick={() => go(stepIndex - 1)}>{t("back")}</Button>
+            )}
+            <span className="flex-1" />
+            {stepKey !== "review" ? (
+              <Button onClick={next}>
+                {t("continue")}
+                <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
+              </Button>
+            ) : (
+              <>
+                <Button variant="secondary" loading={saving} onClick={() => publish(false)}>{t("saveOffSale")}</Button>
+                <Button loading={saving} onClick={() => publish(true)}>{t("putOnSale")}</Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* The booking as it stands, and what stands between it and the till. */}
       <aside className="hidden h-fit lg:sticky lg:top-section lg:block" aria-label={t("summaryTitle")}>
-        <div className="card-surface overflow-hidden">
-          <div className="border-b border-hairline p-card">
-            <p className="type-label text-[12px] text-muted">{t("summaryTitle")}</p>
-            <p className={cn("mt-inline break-words text-[16px] font-semibold leading-snug", !name.trim() && "text-muted")}>{name.trim() || t("untitled")}</p>
-            {kindNow && <p className="mt-0.5 text-[12px] text-muted">{tc(`type.${kindNow}`)}</p>}
-            {booking && <p className="mt-tight text-[13px] leading-snug">{booking.summary}</p>}
-            {bufferMinutes > 0 && <p className="mt-tight text-[13px] text-muted">{t("bufferLine", { time: formatDuration(bufferMinutes) })}</p>}
-            {priceLine && <p className="mt-tight text-[13px] tabular-nums">{priceLine}</p>}
+        <div className="card-surface flex flex-col gap-section p-card">
+          <div>
+            <p className="text-[0.8125rem] font-medium text-muted">{t("summaryTitle")}</p>
+            <p className={cn("mt-inline break-words text-base font-semibold leading-snug", !name.trim() && "text-muted")}>{name.trim() || t("untitled")}</p>
+            {kindNow && <p className="mt-0.5 text-[0.8125rem] text-muted">{tc(`type.${kindNow}`)}</p>}
+            {booking && <p className="mt-tight text-[0.8125rem] leading-snug">{booking.summary}</p>}
+            {bufferMinutes > 0 && <p className="mt-tight text-[0.8125rem] text-muted">{t("bufferLine", { time: formatDuration(bufferMinutes) })}</p>}
+            {priceLine && <p className="mt-tight text-[0.8125rem] tabular-nums">{priceLine}</p>}
           </div>
-          <div className="p-card">
-            <Checklist checks={checks} reachable={(step) => seen.has(step)} onGo={goTo} ready={ready} />
-          </div>
+          <Checklist checks={checks} reachable={(step) => seen.has(step)} onGo={goTo} ready={ready} />
         </div>
       </aside>
-
-      <Modal open={checklistOpen} onClose={() => setChecklistOpen(false)} title={t("readyTitle")}>
-        <Checklist checks={checks} reachable={(step) => seen.has(step)} onGo={(step) => { setChecklistOpen(false); goTo(step); }} ready={ready} />
-      </Modal>
 
       <Modal
         open={addLocOpen}
@@ -679,16 +685,19 @@ function Checklist({
   reachable,
   onGo,
   ready,
+  bare = false,
 }: {
   checks: { key: string; done: boolean; step: StepKey; hint?: string }[];
   reachable: (step: StepKey) => boolean;
   onGo: (step: StepKey) => void;
   ready: boolean;
+  /** Folded out above the phone bar, which already says "What's left". */
+  bare?: boolean;
 }) {
   const t = useTranslations("catalog.wizard");
   return (
     <div>
-      <p className="type-label mb-tight text-[12px] text-muted">{t("readyTitle")}</p>
+      {!bare && <p className="mb-tight text-[0.8125rem] font-medium text-muted">{t("readyTitle")}</p>}
       <ul className="flex flex-col gap-0.5">
         {checks.map((c) => (
           <li key={c.key}>
@@ -696,7 +705,7 @@ function Checklist({
               type="button"
               disabled={!reachable(c.step)}
               onClick={() => onGo(c.step)}
-              className="flex min-h-11 w-full items-start gap-tight rounded-xs px-inline py-tight text-left text-[13px] transition-colors duration-quick enabled:hover:bg-muted-wash md:min-h-9"
+              className="flex min-h-11 w-full items-start gap-tight rounded-xs px-inline py-tight text-left text-[0.8125rem] transition-colors duration-quick enabled:hover:bg-muted-wash md:min-h-9"
             >
               {c.done ? (
                 <Check size={16} strokeWidth={2} aria-hidden className="mt-px shrink-0 text-success" />

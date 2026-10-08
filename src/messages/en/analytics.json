@@ -40,7 +40,8 @@
     "guests": "Guests",
     "capacity": "Capacity filled",
     "refunds": "Refunds",
-    "pts": "{value} pts"
+    "pts": "{value} pts",
+    "label": "Key figures"
   },
   "revenue": {
     "title": "Revenue over time",
@@ -127,7 +128,11 @@
     "starts": "Your records start {date}",
     "noRecords": "No sales recorded yet",
     "pickDates": "Pick dates",
-    "chooseDates": "Choose dates to compare with"
+    "chooseDates": "Choose dates to compare with",
+    "yearShort": "Last year",
+    "customShort": "Custom",
+    "previousShort": "Previous",
+    "noneShort": "No comparison"
   },
   "legend": {
     "solid": "Solid line:",
@@ -229,5 +234,9 @@
     "point": "When"
   },
   "was": "was {value} in {range}",
-  "earlier": "{range} had {value}."
+  "earlier": "{range} had {value}.",
+  "card": {
+    "show": "Show",
+    "hide": "Hide"
+  }
 }

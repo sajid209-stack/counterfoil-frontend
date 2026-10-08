@@ -11,11 +11,14 @@ import {
   FilterBar,
   FormField,
   Modal,
+  Select,
   StatusPill,
   useToast,
   type Column,
 } from "@/components/ui";
-import { PageAction, PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
+import { PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
+import { ToolbarMenu } from "../orders/_components/ToolbarMenu";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 import { useApiQuery } from "@/lib/useApi";
 import {
   createCustomer,
@@ -47,6 +50,7 @@ export default function CustomersPage() {
   });
   const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
+  const wide = useMediaQuery(MD);
 
   const filters = useMemo(() => {
     if (segment === "email") return { consent: "email" };
@@ -230,38 +234,25 @@ export default function CustomersPage() {
           onPageChange: setPage,
         }}
         onRowClick={(c) => router.push(`/customers/${c.id}`)}
+        toolbarInCard
         toolbar={
-          <PageToolbar
-            primary={primary}
-            actions={
-              <PageAction
-                label={t("exportGroup")}
-                icon={<Download size={16} strokeWidth={1.5} />}
-                onClick={exportGroup}
-                disabled={group.length === 0}
-              />
-            }
-          >
           <FilterBar
             search={
-              <div className="relative">
-                <Search
-                  size={16}
-                  strokeWidth={1.5}
-                  className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted"
-                />
+              <div className="relative min-w-0 md:w-60 xl:w-72">
+                <Search size={16} strokeWidth={1.5} aria-hidden className="absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
                 <input
+                  type="search"
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   placeholder={t("searchPlaceholder")}
                   aria-label={t("searchPlaceholder")}
-                  className="h-11 md:h-9 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none focus:border-inverse md:w-64"
+                  className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-sm outline-none placeholder:text-muted focus:border-inverse md:h-9"
                 />
               </div>
             }
-            /* Who is reachable is the page's own cut rather than one filter
-               among several, so it stays visible at every width — and with one
-               filter on this page there is nothing left to fold. */
+            /* The same row as Orders: search, then a Filters button holding the
+               cut (who agreed to messages). There is no key filter inline — a
+               segmented select beside the search read as a second search box. */
             filters={[
               {
                 key: "consent",
@@ -269,28 +260,37 @@ export default function CustomersPage() {
                 active: segment === "all" ? null : segments.find((x) => x.value === segment)?.label ?? null,
                 onClear: () => { setSegment("all"); setPage(1); },
                 control: (
-                  <div className="flex flex-wrap gap-inline">
-                    {segments.map((s) => (
-                      <button
-                        key={s.value}
-                        type="button"
-                        onClick={() => { setSegment(s.value); setPage(1); }}
-                        aria-pressed={segment === s.value}
-                        className={`h-11 md:h-9 rounded-sm border px-comfortable text-[13px] transition-colors duration-quick ${
-                          segment === s.value
-                            ? "border-ember bg-ember/10 text-brand-foreground"
-                            : "border-line text-muted hover:bg-muted-wash"
-                        }`}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
+                  <Select
+                    size={wide ? "sm" : "md"}
+                    className="w-full md:w-52"
+                    aria-label={t("filterReach")}
+                    value={segment}
+                    onChange={(v) => { setSegment(v as Segment); setPage(1); }}
+                    options={segments.map((x) => ({ value: x.value, label: x.label }))}
+                  />
                 ),
               },
             ]}
+            /* The page's one action, and a ⋯ for the rest — the way Orders ends
+               its row. */
+            actions={
+              <>
+                <PagePrimaryButton primary={primary} />
+                <ToolbarMenu
+                  label={t("moreActions")}
+                  items={[
+                    {
+                      key: "export",
+                      label: t("exportGroup"),
+                      icon: <Download size={15} strokeWidth={1.5} aria-hidden />,
+                      onSelect: exportGroup,
+                      disabled: group.length === 0,
+                    },
+                  ]}
+                />
+              </>
+            }
           />
-          </PageToolbar>
         }
         cardVariant="list"
         renderCard={(c) => (

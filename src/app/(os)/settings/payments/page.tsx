@@ -272,7 +272,7 @@ export default function PaymentsPage() {
                   {/* Cash says so in words: a greyed-out switch that can never be
                       moved reads as broken, not as a rule. */}
                   {isCash ? (
-                    <span className="inline-flex h-11 w-11 shrink-0 items-center justify-end text-[12px] font-medium text-muted">
+                    <span className="inline-flex h-11 shrink-0 items-center whitespace-nowrap text-[13px] font-medium text-muted">
                       {t("methods.alwaysOn")}
                     </span>
                   ) : (
@@ -288,7 +288,7 @@ export default function PaymentsPage() {
             <p className="text-sm font-medium text-fg">{t("methods.previewLabel")}</p>
             <p className="mt-inline text-[13px] text-muted">{t("methods.previewNote")}</p>
             <p className="sr-only">{offered.map((m) => t(`methods.${m.method}.name`)).join(", ")}</p>
-            <div aria-hidden className="mt-comfortable inline-flex max-w-full flex-wrap gap-inline rounded-sm bg-subtle/60 p-inline ring-1 ring-inset ring-hairline">
+            <div aria-hidden className="mt-comfortable inline-flex max-w-full flex-wrap gap-inline rounded-sm bg-muted-wash p-inline">
               {offered.map((m, i) => {
                 const Icon = METHOD_ICON[m.method];
                 return (
@@ -296,7 +296,7 @@ export default function PaymentsPage() {
                     key={m.method}
                     className={cn(
                       "inline-flex min-h-9 items-center gap-tight rounded-xs px-comfortable text-[13px] font-medium",
-                      i === 0 ? "bg-card text-fg shadow-sm ring-1 ring-inset ring-hairline" : "text-muted",
+                      i === 0 ? "bg-card text-fg shadow-sm" : "text-muted",
                     )}
                   >
                     <Icon size={14} strokeWidth={1.5} />
@@ -313,19 +313,17 @@ export default function PaymentsPage() {
         <PaymentAccounts />
         <PayoutBank />
 
-        <SettingsSection title={t("advance.title")} description={t("advance.description")}>
+        <SettingsSection title={t("advance.title")} description={t("advance.description")} divided>
           {(["counter", "online"] as const).map((ch) => {
             const r = form[ch];
             const err = ruleErr(ch);
             const min = parseRule(r);
             const minMinor = min === null ? null : r.kind === "percent" ? Math.round((SAMPLE * min) / 100) : Math.min(min, SAMPLE);
             return (
-              <div key={ch} className="divide-y divide-hairline">
-                <SettingRow label={t(`advance.${ch}`)} description={t(`advance.${ch}Help`)} labelFor={false}>
+              <div key={ch}>
+                <SettingRow label={t(`advance.${ch}`)} description={t(`advance.${ch}Help`)} labelFor={false} trailing>
                   {({ labelId, describedBy }) => (
-                    <div className="flex sm:justify-end">
-                      <Switch checked={r.enabled} onChange={(on) => setRule(ch, { enabled: on })} labelledBy={labelId} describedBy={describedBy} />
-                    </div>
+                    <Switch checked={r.enabled} onChange={(on) => setRule(ch, { enabled: on })} labelledBy={labelId} describedBy={describedBy} />
                   )}
                 </SettingRow>
                 {r.enabled && (
@@ -403,8 +401,8 @@ export default function PaymentsPage() {
                   className={cn(
                     // One step down from the card: a frame set inside another
                     // frame takes the next radius on the scale.
-                    "flex cursor-pointer items-start gap-comfortable rounded-sm border p-comfortable transition-colors duration-quick",
-                    checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
+                    "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember",
+                    checked ? "bg-ember/5 ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line/40",
                   )}
                 >
                   <input

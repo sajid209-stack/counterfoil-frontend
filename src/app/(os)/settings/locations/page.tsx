@@ -141,13 +141,16 @@ export default function LocationsPage() {
                     leading={<IconTile icon={MapPin} />}
                     title={l.name}
                     badges={selling ? null : <StatusPill tone="neutral">{t("locations.offTag")}</StatusPill>}
+                    /* Whether it is open today is the question the row answers,
+                       so it leads and is the only line a phone draws; the
+                       address and the counter count are for md and up. */
                     meta={
                       <>
-                        <span className="block">{[l.addressLine1, l.city].filter(Boolean).join(", ")}</span>
-                        <span className={cn("block", line.warn ? "text-warning" : undefined)}>{line.text}</span>
+                        <span className={cn("block max-md:truncate", line.warn ? "text-warning" : undefined)}>{line.text}</span>
+                        <span className="hidden md:block">{[l.addressLine1, l.city].filter(Boolean).join(", ")}</span>
                       </>
                     }
-                    aside={t("locations.countersCount", { count: here })}
+                    columns={<span className="w-24 text-right text-[13px] text-muted">{t("locations.countersCount", { count: here })}</span>}
                     control={
                       <Switch
                         checked={selling}

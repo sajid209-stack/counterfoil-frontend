@@ -66,21 +66,25 @@ export default function TicketCodesPage() {
 
   return (
     <PageShell title={t("tickets.title")} description={t("tickets.description")}>
-      <div className="flex flex-col gap-section">
+      <div className="flex flex-col gap-section pb-hero">
         <SettingsSection title={t("tickets.printTitle")} description={t("tickets.printDesc")}>
           {/* A fact, not a choice: the sample is drawn at the size a ticket
               prints it, on white, because that is where it will be read. It is
               the illustration — the row's words are its name — so it is hidden
               from the accessibility tree. */}
-          <SettingRow label={t("tickets.printLabel")} description={t("tickets.printHelp")} labelFor={false}>
+          <SettingRow label={t("tickets.printLabel")} description={t("tickets.printHelp")} labelFor={false} trailing>
             {() => (
-              <span aria-hidden data-ticket-code-sample className="inline-flex items-center justify-center rounded-xs border border-line bg-white p-tight">
-                <Qr value={SAMPLE} size={72} />
+              /* A quiet tile behind a white one: a QR needs its white margin to
+                 be read, and the tile gives it an edge without a stroke. */
+              <span aria-hidden data-ticket-code-sample className="inline-flex rounded-sm bg-muted-wash p-tight">
+                <span className="inline-flex rounded-xs bg-white p-tight">
+                  <Qr value={SAMPLE} size={72} />
+                </span>
               </span>
             )}
           </SettingRow>
 
-          <SettingRow label={t("tickets.showText")} description={t("tickets.showTextDesc")}>
+          <SettingRow label={t("tickets.showText")} description={t("tickets.showTextDesc")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
               <Switch checked={form.showText} onChange={(v) => set({ showText: v })} labelledBy={labelId} describedBy={describedBy} />
             )}
@@ -95,6 +99,8 @@ export default function TicketCodesPage() {
                 ? t("tickets.scanToSellNone")
                 : t("tickets.scanToSellDesc", { count: withSku })
             }
+            labelFor={false}
+            trailing
           >
             {({ labelId, describedBy }) => (
               <Switch checked={form.scanToSell} onChange={(v) => set({ scanToSell: v })} labelledBy={labelId} describedBy={describedBy} />

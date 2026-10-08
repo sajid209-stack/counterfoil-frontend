@@ -9,8 +9,6 @@
   "fromPrice": "From {price}",
   "gettingHere": "Getting here",
   "hoursUnknown": "Hours are not published for this venue.",
-  "howToBook": "How to book",
-  "howToBookBody": "Buy your ticket at the counter when you arrive at {venue}. Pay by cash or bKash. We print or text your ticket right away.",
   "missingBody": "The address may have changed, or the venue may not be taking bookings yet.",
   "missingBookingBody": "It may have been taken off sale. You can still see what else is on at this venue.",
   "missingBookingTitle": "We can't find that booking",

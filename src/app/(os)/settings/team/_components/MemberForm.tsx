@@ -69,6 +69,7 @@ export function MemberForm({
   counters,
   staffCounts,
   onSaved,
+  after,
 }: {
   mode: "create" | "edit";
   staff?: Staff;
@@ -77,6 +78,10 @@ export function MemberForm({
   counters: Counter[];
   staffCounts: Record<string, number>;
   onSaved?: (s: Staff) => void;
+  /** Sections that follow the details and sit above the Save bar — on a record
+   *  page, access and devices: what is done to the person rather than what is
+   *  written about them. */
+  after?: React.ReactNode;
 }) {
   const t = useTranslations("settings");
   const router = useRouter();
@@ -247,8 +252,8 @@ export function MemberForm({
                 <label
                   key={v}
                   className={cn(
-                    "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
-                    checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
+                    "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick",
+                    checked ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash/70 hover:bg-muted-wash",
                   )}
                 >
                   <input
@@ -366,7 +371,7 @@ export function MemberForm({
         aside={
           <Link
             href="/settings/roles"
-            className="inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
+            className="-ml-tight inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg sm:ml-0 md:min-h-9"
           >
             {t("team.manageRoles")}
           </Link>
@@ -385,6 +390,8 @@ export function MemberForm({
           warnEmpty={mode === "edit" || !!draft}
         />
       </SettingsSection>
+
+      {after}
 
       {mode === "create" ? (
         <CreateBar

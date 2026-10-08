@@ -1,16 +1,18 @@
 "use client";
 
-import { Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ExpenseCategory, ExpenseSummary } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { CATEGORY_ICON, useExpenseLabels } from "./parts";
+import { MD, useMediaQuery } from "@/lib/useMedia";
+import { useExpenseLabels } from "./parts";
 
 /** How many categories get a colour of their own; everything after that is one
  *  neutral "other categories" slice. The palette has four hues, in a fixed
- *  order, validated as a set (see `--chart-cat-*` in globals.css). */
+ *  order, validated as a set (see `--chart-cat-*` in globals.css). A phone
+ *  shows three: it is a glance, and "other" stands for the rest. */
 const SERIES = 4;
+const SERIES_PHONE = 3;
 
 /** Written out whole, not built from the index: Tailwind only emits a theme
  *  variable it can find in the source, and `var(--chart-cat-${i})` finds none. */
@@ -34,9 +36,9 @@ interface Slice {
  * share rounded by largest remainder so the figures beside the bar add up to
  * 100 and not to 99 or 101.
  */
-function slicesOf(summary: ExpenseSummary): Slice[] {
-  const top = summary.byCategory.slice(0, SERIES);
-  const rest = summary.byCategory.slice(SERIES);
+function slicesOf(summary: ExpenseSummary, series: number): Slice[] {
+  const top = summary.byCategory.slice(0, series);
+  const rest = summary.byCategory.slice(series);
   const parts: Omit<Slice, "percent" | "tiny">[] = top.map((c, i) => ({ key: c.category, category: c.category, total: c.total, color: SERIES_COLORS[i] }));
   if (rest.length > 0) parts.push({ key: "other", total: rest.reduce((n, c) => n + c.total, 0), color: OTHER_COLOR });
 
@@ -85,7 +87,8 @@ export function Summary({
 }) {
   const t = useTranslations("expenses");
   const labels = useExpenseLabels();
-  const slices = summary ? slicesOf(summary) : [];
+  const wide = useMediaQuery(MD);
+  const slices = summary ? slicesOf(summary, wide ? SERIES : SERIES_PHONE) : [];
   const empty = !!summary && (summary.count === 0 || summary.total <= 0);
   const nameOf = (s: Slice) => (s.category ? labels.category(s.category) : t("summary.other"));
   const pctOf = (s: Slice) => (s.tiny ? t("summary.tiny") : `${s.percent}%`);
@@ -94,7 +97,7 @@ export function Summary({
     <section aria-label={t("summary.label")} aria-busy={loading} className={cn("card-surface p-card transition-opacity", loading && summary && "opacity-60")}>
       <div className="grid gap-section lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-major">
         {/* Left: the figure and what it covers. */}
-        <dl className="min-w-0 lg:border-r lg:border-hairline lg:pr-major">
+        <dl className="min-w-0">
           <dt className="text-[12px] font-medium text-muted">{t("summary.total")}</dt>
           {summary ? (
             <>
@@ -110,7 +113,7 @@ export function Summary({
         </dl>
 
         {/* Right: where it went. */}
-        <div className="min-w-0 border-t border-hairline pt-section lg:border-t-0 lg:pt-0">
+        <div className="min-w-0">
           <p className="text-[12px] font-medium text-muted">{t("summary.whereWent")}</p>
           {!summary ? (
             <div className="mt-tight">
@@ -138,21 +141,17 @@ export function Summary({
                   <span
                     key={s.key}
                     style={{ flexGrow: s.total, flexShrink: 1, flexBasis: 0, minWidth: 4, backgroundColor: s.color }}
-                    className={cn("block h-full rounded-[2px]", i === 0 && "rounded-l-full", i === slices.length - 1 && "rounded-r-full")}
+                    className={cn("block h-full rounded-xs", i === 0 && "rounded-l-full", i === slices.length - 1 && "rounded-r-full")}
                   />
                 ))}
               </div>
               <ul className="-mx-tight mt-comfortable grid gap-x-major gap-y-inline sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 {slices.map((s) => {
-                  const Icon = s.category ? CATEGORY_ICON[s.category] : Layers;
                   const row = "grid min-h-[44px] w-full grid-cols-[10px_minmax(0,1fr)_auto_3rem] items-center gap-x-tight rounded-sm px-tight text-left sm:min-h-9";
                   const cells = (
                     <>
                       <span aria-hidden style={{ backgroundColor: s.color }} className="h-2.5 w-2.5 rounded-[3px]" />
-                      <span className="flex min-w-0 items-center gap-inline text-[13px]">
-                        <Icon size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
-                        <span className="truncate">{nameOf(s)}</span>
-                      </span>
+                      <span className="min-w-0 truncate text-[13px]">{nameOf(s)}</span>
                       <span className="whitespace-nowrap text-right text-[13px] font-medium tabular-nums">{formatMoney(s.total)}</span>
                       <span className="text-right text-[12px] tabular-nums text-muted">{pctOf(s)}</span>
                     </>
@@ -171,7 +170,9 @@ export function Summary({
                           {cells}
                         </button>
                       ) : (
-                        <div className={row}>{cells}</div>
+                        /* "Other categories" stands for several and does nothing
+                           when pressed, so it is not a 44px target. */
+                        <div className="grid min-h-[44px] w-full grid-cols-[10px_minmax(0,1fr)_auto_3rem] items-center gap-x-tight px-tight sm:min-h-9">{cells}</div>
                       )}
                     </li>
                   );

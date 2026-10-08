@@ -51,7 +51,7 @@
       "name": "Card machine",
       "desc": "A card machine connected to the counter."
     },
-    "cashLocked": "Always on, so a counter can still sell if everything else is down.",
+    "cashLocked": "A counter can still sell if everything else is down.",
     "needsAccount": "Hidden at the counter until a payment account is set up.",
     "switch": "Offer {method} at the counter",
     "moveUp": "Move {method} up",

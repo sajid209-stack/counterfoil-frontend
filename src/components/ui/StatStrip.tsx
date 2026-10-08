@@ -72,7 +72,7 @@ export function StatStrip({
   variant?: "band" | "tiles";
   /** Band only: how many figures sit across from xl. Defaults to up to four.
    *  A page with six figures asks for three, because six across cannot hold a
-   *  money figure at 26px and a fifth and sixth cell would leave the band
+   *  money figure at 24px and a fifth and sixth cell would leave the band
    *  showing its hairline colour through two empty slots. */
   columns?: number;
   /** Band only: how many sit across from 2xl (1536px), where six money figures
@@ -112,7 +112,7 @@ export function StatStrip({
       {items.length > 1 && <FoldedLead items={items} loading={loading} />}
       {/* One figure a row on a phone, two across from sm, one column each
           from xl. Measured, not guessed: four columns of a 768px screen leave
-          146px of cell, and "৳462,206.03" at 26px needs 150 — the card clips,
+          146px of cell, and "৳462,206.03" at 26px needed 150 (24px, now, needs ~138) — the card clips,
           so the figure would be silently wrong rather than merely cramped. */}
       <div
         id={GRID_ID}
@@ -164,11 +164,11 @@ function FoldedLead({ items, loading }: { items: StatItem[]; loading: boolean })
           <span className="block truncate text-[0.8125rem] font-medium text-fg">{t("figures")}</span>
         ) : (
           <>
-            <span className="block truncate text-[0.75rem] font-medium text-muted">{lead.label}</span>
+            <span className="block truncate text-[0.8125rem] font-medium text-muted">{lead.label}</span>
             {loading ? (
               <span className="mt-inline block h-6 w-24 animate-pulse rounded-xs bg-line" />
             ) : (
-              <span className={cn("type-figure mt-inline block truncate text-[1.625rem] font-semibold leading-tight", lead.tone === "warning" && "text-warning")}>
+              <span className={cn("type-figure mt-inline block truncate text-[1.5rem] font-semibold leading-tight", lead.tone === "warning" && "text-warning")}>
                 {lead.value}
               </span>
             )}
@@ -199,18 +199,18 @@ function Cell({ item, loading }: { item: StatItem; loading: boolean }) {
         // thrown away — the same clip that ate the till's selected-card ring.
         // Tailwind v4 resets a button to the default cursor, and a cell that
         // looks like content has nothing else to say it can be pressed.
-        item.onClick && "cursor-pointer hover:bg-muted-wash",
+        item.onClick && "cursor-pointer hover:bg-fg/[0.03]",
         item.pressed && "bg-subtle",
       )}
     >
-      <span className="col-start-1 min-w-0 truncate text-[0.75rem] font-medium text-muted">{item.label}</span>
+      <span className="col-start-1 min-w-0 truncate text-[0.8125rem] font-medium text-muted">{item.label}</span>
       {/* On a phone the figure sits in the second column across both rows, so
           a context line tucks under the label rather than under the number. */}
       <span className="col-start-2 row-start-1 row-end-3 flex flex-wrap items-baseline justify-end gap-x-tight self-center sm:mt-inline sm:justify-start">
         {loading ? (
           <span className="my-1 block h-6 w-20 animate-pulse rounded-xs bg-line" />
         ) : (
-          <span className={cn("type-figure block whitespace-nowrap text-[1.625rem] font-semibold leading-tight", item.tone === "warning" && "text-warning")}>
+          <span className={cn("type-figure block whitespace-nowrap text-[1.5rem] font-semibold leading-tight", item.tone === "warning" && "text-warning")}>
             {item.value}
           </span>
         )}
@@ -246,7 +246,7 @@ function Tile({ item, loading, row = false }: { item: StatItem; loading: boolean
           ? "flex w-full items-start gap-comfortable border-b border-hairline px-card py-comfortable last:border-b-0"
           : "card-surface flex flex-col p-card",
         item.onClick && "transition-colors duration-quick hover:border-strong",
-        item.pressed && !row && "border-inverse",
+        item.pressed && !row && "border-strong",
         item.pressed && row && "bg-subtle",
       )}
     >

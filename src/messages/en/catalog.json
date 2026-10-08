@@ -102,14 +102,7 @@
     "bookings": "No bookings yet. For example: a lane, a tour, an appointment or an entry ticket.",
     "events": "No events yet. For example: a concert, a match or a show."
   },
-  "moved": {
-    "title": "Bookings and events are on one page now.",
-    "body": "Everything you sell is here. Use the Bookings and Events tabs to see each list.",
-    "dismiss": "Close",
-    "gotIt": "OK"
-  },
   "firstRun": {
-    "eyebrow": "What you sell",
     "title": "Add the first thing you sell",
     "body": "A lane, a tour, a massage or a concert. Say what it is, and we only ask what it needs.",
     "step": {
@@ -227,7 +220,8 @@
     },
     "bookingsRule": "Happens again and again, the same way each time",
     "eventsRule": "Happens once, or on a few dates, with its own page",
-    "tieBreak": "Found in both. Choose a booking if it happens again and again the same way. Choose an event if it happens once and needs its own page."
+    "tieBreak": "Found in both. Choose a booking if it happens again and again the same way. Choose an event if it happens once and needs its own page.",
+    "haveShort": "{count} added"
   },
   "setup": {
     "change": "Change answer",
@@ -434,7 +428,6 @@
     "description": "Description",
     "descriptionPlaceholder": "What the customer gets…",
     "category": "Category",
-    "uncategorised": "No category",
     "waitlist": "Let people join a waiting list when it's full",
     "soldWhere": "Where it's sold",
     "atCounter": "At the counter",
@@ -527,7 +520,8 @@
     "pane": {
       "make": "The event",
       "design": "Page design"
-    }
+    },
+    "whatsLeft": "What's left"
   },
   "fields": {
     "tiers": "Ticket types and prices",
@@ -593,7 +587,6 @@
     "removeImage": "Remove photo",
     "addImage": "Add photo",
     "tiersHelp": "One row for each ticket type, e.g. Adult, Child, Family.",
-    "tierDetails": "More options",
     "summaryAge": "Ages {note}",
     "summaryMax": "Up to {count} per order",
     "ageNotePlaceholder": "e.g. 5–12",
@@ -758,7 +751,6 @@
     "resourceNotInUse": "Not in use",
     "resourcePickOne": "Tick at least one. With none, nobody can book it.",
     "resourcesFallback": "Spaces",
-    "resourceFallbackOne": "space",
     "lengthsTitle": "Lengths and prices",
     "scheduleTitle": "When it runs",
     "showNames": "Show names (optional)",
@@ -867,7 +859,6 @@
   "facet": {
     "attention": "Needs attention"
   },
-  "allStates": "All",
   "useSlots": "{used} of {cap} slots",
   "usePlaces": "{used} of {cap} spaces",
   "next7": "next 7 days",
@@ -953,7 +944,6 @@
     "sections": "{count, plural, one {# part} other {# parts}}",
     "qty": "{count, plural, one {# ticket} other {# tickets}}",
     "ready": "Everything is ready. Put it on sale now, or save it and come back later.",
-    "notReady": "Some things are still missing. See the list. You can save it now and finish later.",
     "summaryTitle": "Your event",
     "untitled": "No name yet",
     "fromAndCap": "From {price} · {count} tickets",
@@ -973,10 +963,9 @@
     "colSold": "Sold",
     "colRevenue": "Money in",
     "salesEnd": "Stops selling {date}",
-    "where": "When, where and how it's sold",
+    "where": "Where it's sold",
     "when": "When",
     "venue": "Venue",
-    "soldAt": "Sold",
     "page": "Page address",
     "notLive": "not live yet",
     "days": {
@@ -1010,7 +999,8 @@
       "openingNote": "Sales made before you used Counterfoil. They are counted, but their money is not shown here."
     },
     "live": "live",
-    "viewPage": "View page"
+    "viewPage": "View page",
+    "factsLabel": "Event facts"
   },
   "eventCanvas": {
     "namePlaceholder": "Name your event",

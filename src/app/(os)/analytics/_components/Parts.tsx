@@ -2,10 +2,12 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Info } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { niceScale, smoothPath, useWidth } from "@/components/ui/charts";
 import { cn } from "@/lib/cn";
+import { MD, useMediaQuery } from "@/lib/useMedia";
+import { Segmented as CalmSegmented } from "../../dashboard/_components/Segmented";
 
 /* The small shapes the analytics cards are made of. Almost every chart here is
  * a nominal or ranked one, so every bar is one brand hue: the label beside it
@@ -15,26 +17,58 @@ import { cn } from "@/lib/cn";
  * through the palette check. Marks are thin, ends are rounded, text is in the
  * ink tokens and never in a series colour. */
 
-/** A small heading over a group of cards: Sales, Visitors, Timing. */
+/** A heading over a group of cards: Sales, Visitors, Timing, VAT. Sentence case
+ *  and no rule beside it — the space above already separates the groups, and an
+ *  uppercase tracked label with a line running off it is the loudest thing a
+ *  calm admin can put between two cards. */
 export function GroupHeading({ id, children }: { id: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-comfortable pt-tight">
-      <h2 id={`an-group-${id}`} className="type-label shrink-0 text-[0.75rem] text-fg">
-        {children}
-      </h2>
-      <span aria-hidden className="h-px min-w-0 flex-1 bg-line" />
-    </div>
+    <h2 id={`an-group-${id}`} className="pt-comfortable text-[0.9375rem] font-semibold tracking-[-0.2px] text-fg">
+      {children}
+    </h2>
   );
 }
 
-/** A titled card: the heading is the question, the body is the answer. `info`
- *  is what is counted, behind an "i" so the card itself stays quiet. */
+/** A group of cards. On a phone the cards fold into one card of rows; on a
+ *  desktop it is nothing at all. */
+export function Group({ children }: { children: React.ReactNode }) {
+  const wide = useMediaQuery(MD);
+  return wide ? <>{children}</> : <div className="card-surface divide-y divide-hairline overflow-hidden">{children}</div>;
+}
+
+/** Cards side by side from lg. Not a grid at all on a phone, where they are rows. */
+export function Grid({ children }: { children: React.ReactNode }) {
+  const wide = useMediaQuery(MD);
+  return wide ? <div className="grid gap-section lg:grid-cols-2">{children}</div> : <>{children}</>;
+}
+
+/** A column of cards: the last one takes the height that is left, so the
+ *  bottoms of two neighbouring columns meet. */
+export function Col({ children }: { children: React.ReactNode }) {
+  const wide = useMediaQuery(MD);
+  return wide ? <div className="flex min-w-0 flex-col gap-section [&>section:last-child]:flex-1">{children}</div> : <>{children}</>;
+}
+
+/**
+ * A titled card: the heading is the question, the body is the answer. `info` is
+ * what is counted, behind an "i" that shows when the card is hovered or focused
+ * (a phone always has it) so the card itself stays quiet.
+ *
+ * **On a phone a card is a row**, not a chart: its title and its one key figure
+ * ("Saturday 10 AM", "bKash · 78%"), and "Show" to open it. A wall of fourteen
+ * charts is what a phone cannot hold, and the figure is usually the answer —
+ * the chart is there for whoever wants the shape. `pinned` cards (the revenue
+ * chart) stay open.
+ */
 export function Section({
   id,
   title,
   sub,
   view,
   info,
+  summary,
+  pinned = false,
+  actions,
   className,
   children,
 }: {
@@ -45,12 +79,74 @@ export function Section({
   view?: { href: string; where: string };
   /** What the card counts, in plain words; paragraphs are split on a newline. */
   info?: string;
+  /** The key figure a phone shows on the folded row. */
+  summary?: React.ReactNode;
+  /** Never folds, on a phone either. */
+  pinned?: boolean;
+  /** A button for the card's own job (a download), at the end of its header. */
+  actions?: React.ReactNode;
   className?: string;
   children: React.ReactNode;
 }) {
   const t = useTranslations("analytics");
+  const wide = useMediaQuery(MD);
+  const [open, setOpen] = useState(false);
+  const bodyId = useId();
+
+  const viewLink = view && (
+    <Link
+      href={view.href}
+      aria-label={t("viewIn", { where: view.where })}
+      className="flex min-h-11 min-w-11 shrink-0 items-center justify-end whitespace-nowrap px-tight text-[0.75rem] text-muted transition-colors duration-quick hover:text-fg md:min-h-6 md:min-w-0 md:px-0"
+    >
+      {t("view")}
+    </Link>
+  );
+
+  if (!wide && !pinned) {
+    return (
+      <section data-card={id} aria-labelledby={`an-${id}`} className={cn("relative min-w-0", className)}>
+        <h3 className="m-0 text-base font-normal">
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls={bodyId}
+            onClick={() => setOpen((o) => !o)}
+            className="flex min-h-14 w-full items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick active:bg-muted-wash"
+          >
+            <span className="min-w-0 flex-1">
+              <span id={`an-${id}`} className="block text-[0.875rem] font-medium">
+                {title}
+              </span>
+              {summary && <span className="mt-0.5 block text-[0.8125rem] text-muted">{summary}</span>}
+            </span>
+            <span className="flex shrink-0 items-center gap-inline text-[0.8125rem] font-medium text-muted">
+              {open ? t("card.hide") : t("card.show")}
+              <ChevronDown size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", open && "rotate-180")} />
+            </span>
+          </button>
+        </h3>
+        {open && (
+          <div id={bodyId} className="px-card pb-card">
+            {sub && <p className="mb-comfortable text-[0.75rem] text-muted">{sub}</p>}
+            {children}
+            {(view || info || actions) && (
+              <div className="mt-comfortable flex items-center gap-tight">
+                {viewLink}
+                <span className="ml-auto flex items-center gap-tight">
+                  {actions}
+                  {info && <InfoPopover title={title} text={info} />}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+    );
+  }
+
   return (
-    <section data-card={id} aria-labelledby={`an-${id}`} className={cn("card-surface relative min-w-0 p-card", className)}>
+    <section data-card={id} aria-labelledby={`an-${id}`} className={cn("group card-surface relative min-w-0 p-card", className)}>
       <div className="mb-comfortable flex items-start justify-between gap-tight">
         <div className="min-w-0">
           <h3 id={`an-${id}`} className="min-w-0 text-base font-semibold tracking-[-0.4px]">
@@ -59,15 +155,8 @@ export function Section({
           {sub && <p className="mt-inline text-[0.75rem] text-muted">{sub}</p>}
         </div>
         <div className="flex shrink-0 items-center gap-tight">
-          {view && (
-            <Link
-              href={view.href}
-              aria-label={t("viewIn", { where: view.where })}
-              className="sm:-my-0 -my-tight flex min-h-11 min-w-11 shrink-0 items-center justify-end whitespace-nowrap px-tight text-[0.75rem] text-muted transition-colors duration-quick hover:text-fg sm:min-h-6 sm:min-w-0 sm:px-0"
-            >
-              {t("view")}
-            </Link>
-          )}
+          {viewLink}
+          {actions}
           {info && <InfoPopover title={title} text={info} />}
         </div>
       </div>
@@ -115,7 +204,7 @@ function InfoPopover({ title, text }: { title: string; text: string }) {
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={() => setOpen((o) => !o)}
-        className="-my-3 -mr-3 flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:text-fg sm:-my-2 sm:-mr-2 sm:h-8 sm:w-8"
+        className="-my-3 -mr-3 flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-[color,opacity] duration-quick hover:text-fg aria-expanded:opacity-100 sm:-my-2 sm:-mr-2 sm:h-8 sm:w-8 md:opacity-0 md:focus-visible:opacity-100 md:group-hover:opacity-100"
       >
         <Info size={16} strokeWidth={1.5} aria-hidden />
       </button>
@@ -143,7 +232,8 @@ export function Empty({ children }: { children: React.ReactNode }) {
   return <p data-empty className="py-comfortable text-[0.8125rem] text-muted">{children}</p>;
 }
 
-/** Two or three views of one card, as a pill: "Share · Over time". */
+/** Two or three views of one card: "Share · Over time". The shared calm
+ *  segmented control, with the gap a card body puts under it. */
 export function Segmented<T extends string>({
   value,
   onChange,
@@ -155,24 +245,7 @@ export function Segmented<T extends string>({
   options: { value: T; label: string }[];
   label: string;
 }) {
-  return (
-    <div role="group" aria-label={label} className="mb-comfortable inline-flex rounded-full border border-line bg-subtle p-0.5">
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          aria-pressed={value === o.value}
-          onClick={() => onChange(o.value)}
-          className={cn(
-            "min-h-11 min-w-11 rounded-full px-comfortable text-[0.8125rem] font-medium transition-colors duration-quick sm:min-h-8",
-            value === o.value ? "bg-card text-fg shadow-sm ring-1 ring-strong" : "text-muted hover:text-fg",
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
+  return <CalmSegmented value={value} onChange={onChange} options={options} label={label} className="mb-comfortable" />;
 }
 
 /** The two periods, keyed as lines: solid for this period, dashed for the one

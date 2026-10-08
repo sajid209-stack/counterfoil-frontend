@@ -350,23 +350,24 @@
 
 /* ── Aura surface language ──────────────────────────────────────────────
    One vocabulary for depth so screens stop re-declaring card strings:
-   • .card-surface — resting flat card (bg + 1px line + md radius + soft
-     diffused shadow). Drop-in for `card-surface`.
+   • .card-surface — resting solid card (card colour + md radius + a soft
+     shadow in light, a 1px line in dark). Drop-in for `card-surface`.
    • .card-interactive — adds a calm hover lift for clickable cards.
-   • .glass / .glass-navbar — translucent, blurred surfaces for overlays
-     (menus, modals, sheets) and sticky headers. */
+   • .glass — translucent, blurred surface for overlays (menus, modals,
+     sheets). The navigation chrome is solid --color-chrome, not glass. */
 @layer components {
   .card-surface {
-    /* Aura cards, measured rather than guessed (counterfoilos.lovable.app):
-       background rgba(255,255,255,0.72) · border 1px at 50% · radius 12px ·
-       box-shadow NONE. The reference is flat glass, not shadow-led — depth
-       comes from a translucent card lifting off the warm page beneath it and
-       a hairline holding the edge. We had it the other way round: opaque
-       white on a soft diffused shadow at 16px. */
-    background-color: color-mix(in srgb, var(--color-card) 72%, transparent);
-    border: 1px solid color-mix(in srgb, var(--color-line) 50%, transparent);
+    /* The calm pass: a SOLID card with no visible edge in light. Depth comes
+       from one soft shadow (a 2px lift and a 4%-ink ring that is the card's
+       only outline), the way Shopify admin draws its cards. The border stays
+       as a transparent 1px so a card is exactly the box it always was — no
+       child, no table inset and no sticky offset moves. Dark keeps a real 1px
+       line instead (below): a shadow on near-black reads as nothing, so dark
+       elevation is a surface step plus a line. */
+    background-color: var(--color-card);
+    border: 1px solid transparent;
     border-radius: 12px;
-    box-shadow: none;
+    box-shadow: 0 1px 2px rgb(20 20 19 / 0.06), 0 0 0 1px rgb(20 20 19 / 0.04);
     transition: box-shadow var(--duration-quick) var(--ease-counterfoil),
       border-color var(--duration-quick) var(--ease-counterfoil),
       transform var(--duration-quick) var(--ease-counterfoil);
@@ -407,11 +408,10 @@
     cursor: pointer;
   }
   .card-interactive:hover {
-    border-color: var(--color-strong);
-    /* shadow-sm, not shadow-pop. Cards are flat now — resting shadow none —
-       so lifting a hovered card onto an overlay-strength shadow was a leftover
-       from the shadow-led treatment and read as the card detaching. */
-    box-shadow: var(--shadow-sm);
+    /* A deeper lift, not a border: the card has no edge at rest, so one
+       appearing on hover reads as a different object. Dark draws its own
+       (below). */
+    box-shadow: 0 3px 10px rgb(20 20 19 / 0.08), 0 0 0 1px rgb(20 20 19 / 0.07);
   }
   .card-interactive:active {
     transform: scale(0.995);
@@ -422,29 +422,6 @@
     @apply backdrop-blur-[18px] backdrop-saturate-[1.2];
     border: 1px solid var(--color-line);
     box-shadow: var(--shadow-pop);
-  }
-
-  /* The navigation glass — edge to edge, flat, no radius and no side borders,
-     held down by a single hairline. It is a PANE the page passes under, not a
-     card sitting on top of one: a floating rounded panel reads as another card
-     competing with the content cards, which is exactly what the reference
-     avoids. The blur has plenty to reveal because content scrolls beneath the
-     full width of it. */
-  .glass-navbar {
-    background-color: color-mix(in srgb, var(--color-surface) var(--glass-nav), transparent);
-    @apply backdrop-blur-[18px] backdrop-saturate-[1.2];
-    border-bottom: 1px solid transparent;
-    transition: background-color var(--duration-standard) var(--ease-counterfoil),
-      border-color var(--duration-standard) var(--ease-counterfoil);
-  }
-
-  /* Scrolled: firm up and draw the hairline, so the bar separates from what is
-     now travelling under it. At rest, sitting on the page's own colour, it
-     needs no line at all. Opacity and border only — never size, or the page
-     jumps as you scroll. */
-  .glass-navbar[data-scrolled="true"] {
-    background-color: color-mix(in srgb, var(--color-surface) var(--glass-nav-scrolled), transparent);
-    border-bottom-color: color-mix(in srgb, var(--color-line) 70%, transparent);
   }
 }
 
@@ -459,13 +436,8 @@
   background-color: var(--color-card);
   border-color: var(--color-line);
 }
-/* Dark keeps the translucency — the bar has to read as a pane in both modes —
-   but takes a light hairline once scrolled, since a dark border on a dark
-   canvas draws no edge at all. */
-.dark .glass-navbar[data-scrolled="true"] {
-  border-bottom-color: color-mix(in srgb, var(--color-fg) 14%, transparent);
-}
 .dark .card-interactive:hover {
+  border-color: var(--color-strong);
   box-shadow: none;
   background-color: color-mix(in srgb, var(--color-card) 100%, var(--color-fg) 3%);
 }
@@ -504,7 +476,13 @@
   /* ── Light mode surfaces & content (color-system §Semantic Tokens) ────── */
   --color-surface: #f5f2eb;    /* background   ← neutral-50  */
   --color-card: #ffffff;       /* card         ← white       */
-  --color-frame: #fcfbf8;      /* the page frame beside the chrome (rail + bar sit on --color-surface) */
+  /* The chrome — the side rail, the top bar and the settings column — is one quiet
+     surface, white like the cards. The page itself is the warm paper ground in
+     a rounded frame beside it (`.os-frame`, drawn in --color-surface), so there
+     is no frame token of its own: the frame IS the page colour. In dark the
+     chrome takes the card colour (a step above the page), because a shadow
+     does not read on near-black and a surface step does. */
+  --color-chrome: #ffffff;     /* rail + top bar ← white in light, card in dark */
   --color-sheet: #ffffff;      /* popover      ← white       */
   --color-fg: #22211f;         /* foreground   ← neutral-900 */
   --color-muted: #6b675f;      /* muted-fg   ← neutral-600, nudged darker: at #706c65 it fell to 4.43:1 on --color-subtle (AA needs 4.5) */
@@ -625,6 +603,7 @@
 .paper {
   color-scheme: light;
   --color-surface: #f5f2eb;
+  --color-chrome: #ffffff;
   --color-card: #ffffff;
   --color-fg: #22211f;
   --color-muted: #6b675f;
@@ -643,7 +622,7 @@
 .dark {
   --color-surface: #141413;    /* background   ← neutral-950 */
   --color-card: #22211f;       /* card         ← neutral-900 */
-  --color-frame: #1a1a18;      /* one step above the chrome, one below the cards */
+  --color-chrome: #22211f;     /* the card colour: rail + bar sit a step above the page */
   --color-sheet: #22211f;      /* popover      ← neutral-900 */
   --color-fg: #efece5;         /* foreground   ← neutral-100 */
   --color-muted: #969188;      /* muted-fg     ← neutral-500 */
@@ -880,7 +859,8 @@ html[data-motion="reduce"] *::after {
    (background-attachment: local for the cover, scroll for the shadow), so
    they appear only on the side that still has content and disappear as you
    reach each end. No JS, no scroll listener. */
-/* The page frame's foot. A soft wash of the frame's own colour over the last
+/* The page frame's foot. A soft wash of the frame's own colour (the page
+   paper, --color-surface) over the last
    32px of the scroller, drawn only while there is more below (OsShell sets
    data-more from the scroll position) and gone at the end. pointer-events:none
    so nothing underneath is blocked; it never covers a sticky footer's text
@@ -892,11 +872,34 @@ html[data-motion="reduce"] *::after {
   height: 2rem;
   z-index: 5;
   opacity: 0;
-  background: linear-gradient(to bottom, transparent, var(--color-frame));
+  background: linear-gradient(to bottom, transparent, var(--color-surface));
   transition: opacity var(--duration-standard) var(--ease-counterfoil);
 }
 .os-frame-fade[data-more="true"] { opacity: 1; }
 @media (max-width: 47.99rem) { .os-frame-fade { display: none; } }
+
+/* The navigation bars (phone and desktop). Historically translucent glass, hence
+   the name; since the calm pass they are plain chrome — solid, with no line
+   under them. The class stays as the bars' stable hook: the standing test
+   harnesses find the bar by it. */
+.glass-navbar { background-color: var(--color-chrome); }
+
+/* A scroller that is still scrollable but draws no scrollbar — the rail and the
+   settings column, where a bar beside a 36px row is chrome on chrome. Wheel,
+   touch, keyboard and focus-scrolling all still work. Unlayered so it beats
+   the browser's own rule in every engine. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* The floating menu button on a phone, and the room every page keeps clear for
+   it. The button is 56px, 12px off the bottom and left edge (plus the safe
+   area), so its top is 68px up — which is exactly where the sticky save bars
+   already sit (56 + 12), and they stay clear of it. A page that has to keep a
+   last row out from under the button reserves --os-fab-clear. */
+:root { --os-fab-clear: calc(84px + env(safe-area-inset-bottom)); }
 
 .scroll-x-hint {
   background:
@@ -952,6 +955,7 @@ html.dark[data-contrast="more"] {
 .sf {
   color-scheme: light;
   --color-surface: #ffffff;
+  --color-chrome: #ffffff;
   --color-card: #ffffff;
   --color-sheet: #ffffff;
   --color-fg: #161616;

@@ -43,7 +43,6 @@
     "pastEditLockHelp": "After this many days, a booking can't be changed or refunded.",
     "profileTitle": "Name and contact",
     "profileDesc": "Shown on tickets, receipts and messages to customers.",
-    "nameDesc": "The name customers see.",
     "regionalTitle": "Currency and time zone",
     "regionalDesc": "All prices and times use these.",
     "currencyDesc": "Prices are shown and charged in this currency.",
@@ -58,7 +57,6 @@
     "phoneDesc": "Printed on receipts, so customers can call you.",
     "phoneInvalid": "Enter a phone number, like 01712-345678, or leave it empty.",
     "email": "Email",
-    "emailDesc": "Shown in emails to customers.",
     "emailInvalid": "Enter an email address, like info@yourvenue.com, or leave it empty.",
     "website": "Website",
     "websiteDesc": "Printed on receipts next to the phone number.",
@@ -457,7 +455,6 @@
     "fallbackTitle": "Team member",
     "email": "Email",
     "phone": "Phone",
-    "changesSaved": "Changes saved.",
     "invite": "Invite someone",
     "tab": {
       "all": "Everyone",
@@ -588,9 +585,6 @@
     "pinShow": "Show PIN",
     "pinHide": "Hide PIN",
     "pinErrDigits": "A PIN is digits only, 4 to 6 of them.",
-    "pinErrLength": "Use 4 to 6 digits.",
-    "pinErrRepeat": "Repeated digits like 1111 are too easy to guess.",
-    "pinErrRun": "Runs of digits like 1234 are too easy to guess.",
     "addMember": "Add team member",
     "addPasswordNote": "Their account is made now. Give them the password in person.",
     "addInvalidSecrets": "Fix the password or PIN above to continue.",
@@ -611,7 +605,11 @@
     "pinTitle": "Set a till PIN for {name}",
     "pinSave": "Set PIN",
     "pinDone": "{name}'s PIN is changed. Tell it to them in person.",
-    "pinHintSet": "4 to 6 digits. They type it on the counter tablet."
+    "pinHintSet": "4 to 6 digits. They type it on the counter tablet.",
+    "accessAndDevices": "Access and devices",
+    "pinErrLength": "Use 4 to 6 digits.",
+    "pinErrRepeat": "Repeated digits like 1111 are too easy to guess.",
+    "pinErrRun": "Runs of digits like 1234 are too easy to guess."
   },
   "roles": {
     "title": "Roles",
@@ -622,7 +620,6 @@
     "backButton": "Back to roles",
     "fallbackTitle": "Role",
     "created": "Role added.",
-    "changesSaved": "Changes saved.",
     "createRole": "Add role",
     "peopleCount": "{count, plural, =0 {Nobody yet} one {# person} other {# people}}",
     "discountAny": "Any discount",
@@ -699,7 +696,6 @@
     "reason": "Reason",
     "reasonPlaceholder": "e.g. Broken net, or rain",
     "added": "{noun} added.",
-    "changesSaved": "Changes saved.",
     "add": "Add",
     "addGeneric": "Add a court, lane or room",
     "outWithReason": "Out of service — {reason}",
@@ -866,8 +862,7 @@
       }
     },
     "menu": "Settings",
-    "close": "Close",
-    "needsAttention": "{count, plural, one {# needs a look} other {# need a look}}"
+    "close": "Close"
   },
   "save": {
     "unsaved": "You have changes that are not saved",
@@ -892,7 +887,6 @@
     "exampleTitle": "What a {amount} sale comes to",
     "exampleDesc": "Tax is added on top of the price.",
     "colClass": "Rate",
-    "colPrice": "Price",
     "colTax": "Tax",
     "colTotal": "Customer pays",
     "registrationTitle": "Tax number",
@@ -1051,7 +1045,6 @@
     "contrast": "Darker text",
     "contrastDesc": "Makes light grey text and lines darker. Colours that mean something stay the same.",
     "workspaceTitle": "Side menu",
-    "workspaceDesc": "How the side menu looks on this browser.",
     "sidebar": "Keep the side menu small",
     "sidebarDesc": "Shows only icons, so pages get more room. The button at the top of the menu does the same.",
     "shortcutsTitle": "Keyboard shortcuts",
@@ -1295,7 +1288,8 @@
     "whichSomeDesc": "New bookings won't show until you add them.",
     "whichNoneChosen": "Pick at least one booking, or choose everything.",
     "add": "Add storefront",
-    "editorDescriptionAt": "At {venue}. What customers see before they come."
+    "editorDescriptionAt": "At {venue}. What customers see before they come.",
+    "moreTitle": "Contact and links"
   },
   "attention": {
     "cashOnly": "Only cash can be taken",
@@ -1323,7 +1317,6 @@
     "title": "My profile",
     "description": "Your own details, and where you work. Other people's are in Team.",
     "factsLabel": "About you",
-    "role": "Role",
     "noRole": "No role set",
     "status": "Account",
     "status_active": "Active",
@@ -1341,13 +1334,11 @@
     "phone": "Phone",
     "phoneDesc": "For your team, not for customers.",
     "languageTitle": "Language",
-    "languageDesc": "The language of the app on this browser.",
     "language": "Language",
     "languageHelp": "This browser only. It doesn't change anyone else's.",
     "securityTitle": "Signing in",
     "securityDesc": "Your password, two-step sign-in, and where you're signed in.",
     "securityRow": "Password and sign-ins",
-    "securityRowDesc": "All kept in one place: Password & security.",
     "openSecurity": "Open Password & security",
     "saved": "Profile saved"
   }

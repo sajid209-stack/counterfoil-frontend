@@ -36,7 +36,6 @@
   "filtersActive": "Filters ({count})",
   "showEmptyLanes": "Show {count} empty rows",
   "hideEmptyLanes": "Hide empty rows",
-  "nowLabel": "Now",
   "noMatch": "No bookings match these filters.",
   "noMatchHint": "Change the filters, or clear them to see everything.",
   "peekHint": "Click to see more",
@@ -184,7 +183,6 @@
   "holdPlace": "Place on hold",
   "holdSeatsHeld": "{count, plural, one {# seat on hold} other {# seats on hold}}",
   "holdSpacesHeld": "{count, plural, one {# space on hold} other {# spaces on hold}}",
-  "keyMarketplace": "Marketplace",
   "bookedOn": "Booked on {name}",
   "bookedOnRef": "Booked on {name} · {reference}",
   "commission": "{name} takes {pct} · {amount}",
@@ -193,5 +191,11 @@
   "sourceDirect": "Direct",
   "sourceMarket": "Marketplace",
   "detailSource": "Sold on",
-  "detailCommission": "Fee"
+  "detailCommission": "Fee",
+  "secStatus": "Status",
+  "secBooking": "Booking",
+  "secPlace": "Place",
+  "statusNone": "None shown",
+  "statusShown": "{count} of {total} shown",
+  "secSource": "Sold through"
 }

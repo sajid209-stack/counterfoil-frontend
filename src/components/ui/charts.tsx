@@ -642,7 +642,7 @@ export function HeatmapChart({
           onBlur={() => { setActive(null); if (!hovered) setTip(null); }}
           onMouseLeave={() => { setHovered(null); setTip(null); }}
           data-focus-host
-          className="rounded-xs focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ember"
+          className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ember"
           style={{ minWidth }}
         >
           <div aria-hidden className="grid gap-[2px]" style={{ gridTemplateColumns: `${rowLabelWidth}px repeat(${n}, minmax(${colMinWidth}px, ${colMaxWidth ? `${colMaxWidth}px` : "1fr"}))` }}>

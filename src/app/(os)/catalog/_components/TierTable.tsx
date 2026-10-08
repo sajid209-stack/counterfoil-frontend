@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, SlidersHorizontal, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, SlidersHorizontal, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 /**
@@ -16,6 +16,14 @@ import { cn } from "@/lib/cn";
  * plus what has sold where anything has. Everything else a tier can carry —
  * an age note, a sales end date, a line on the ticket — folds into the row
  * and is summarised when folded, so nothing set is ever out of sight.
+ *
+ * The calm pass: one hairline-ruled list rather than a bordered box per tier.
+ * From `sm` it is a table (a sentence-case header over aligned columns). On a
+ * phone each ticket type is two lines: its name with the price right-aligned,
+ * then a one-line summary and a disclosure that opens the rest (how many it
+ * admits, what has sold, the folded details, reorder and remove). There is
+ * still one copy of every field in the document: the disclosure hides cells
+ * with CSS below `sm`, it does not render a second set.
  */
 export interface TierRowSpec {
   key: string;
@@ -79,24 +87,28 @@ export function TierTable({
   currencySymbol?: string;
 }) {
   const withSold = rows.some((r) => r.sold !== undefined);
+  const anyUp = rows.some((r) => r.onUp);
+  const anyDown = rows.some((r) => r.onDown);
   const cols = withSold
     ? "sm:grid-cols-[minmax(0,1fr)_8rem_6rem_9rem_12.5rem]"
     : "sm:grid-cols-[minmax(0,1fr)_8rem_6rem_12.5rem]";
   return (
-    <div className="flex flex-col gap-tight">
-      {/* One header for the table rather than a label on the first row only —
+    <div className="flex flex-col">
+      {/* One header for the table rather than a label on the first row only,
           which left every later row's fields unnamed. Hidden on a phone, where
-          each field carries its own label. */}
-      <div aria-hidden className={cn("hidden gap-tight px-comfortable text-[12px] font-medium text-muted sm:grid", cols)}>
+          each ticket type is its own two lines. */}
+      <div aria-hidden className={cn("hidden gap-tight border-b border-hairline pb-tight text-[0.8125rem] font-medium text-muted sm:grid", cols)}>
         <span>{labels.name}</span>
         <span className="text-right">{labels.price}</span>
         <span className="text-right">{labels.qty}</span>
         {withSold && <span className="pl-section">{labels.sold}</span>}
         <span />
       </div>
-      {rows.map((r) => (
-        <TierRow key={r.key} r={r} cols={cols} withSold={withSold} labels={labels} currencySymbol={currencySymbol} />
-      ))}
+      <div className="divide-y divide-hairline">
+        {rows.map((r) => (
+          <TierRow key={r.key} r={r} cols={cols} withSold={withSold} labels={labels} currencySymbol={currencySymbol} anyUp={anyUp} anyDown={anyDown} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -110,27 +122,42 @@ function TierRow({
   withSold,
   labels,
   currencySymbol,
+  anyUp,
+  anyDown,
 }: {
   r: TierRowSpec;
   cols: string;
   withSold: boolean;
   labels: TierTableLabels;
   currencySymbol: string;
+  /** Some row has a reorder arrow, so a row without one keeps its place — the
+   *  More and Remove buttons then line up down the whole column. */
+  anyUp: boolean;
+  anyDown: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  /* Phone only: the rest of the row. It opens by itself when something in it
+     needs the operator (a quantity still to be typed, or a problem with it) so
+     a required field is never hidden behind a closed disclosure. */
+  const [more, setMore] = useState(false);
   const [editingPrice, setEditingPrice] = useState(false);
   const cap = parseInt(r.qty, 10) || 0;
+  const needsMore = r.qty === "" || !!r.qtyError;
+  const moreOpen = more || needsMore;
   /* Grouped while it is read, raw while it is typed: 12000 reads as 12,000,
      and a comma never lands under the cursor mid-number. */
   const shownPrice = editingPrice || r.price === "" || !/^\d+(\.\d+)?$/.test(r.price) ? r.price : Number(r.price).toLocaleString("en-US", { maximumFractionDigits: 2 });
   const pct = r.sold !== undefined && cap > 0 ? Math.min(100, Math.round((r.sold / cap) * 100)) : 0;
   const err = (e?: string) => (e ? "border-danger" : "border-line");
   const who = r.name.trim() || labels.unnamed;
+  /* Hidden below `sm` until the disclosure is open. */
+  const phoneHidden = !moreOpen && "max-sm:hidden";
+  const line2 = [r.qty !== "" ? `${labels.qty}: ${r.qty}` : "", r.summary].filter(Boolean).join(" · ");
   return (
-    <div className="rounded-sm border border-line bg-card">
-      <div className={cn("grid grid-cols-2 items-start gap-tight p-comfortable", cols)}>
-        <label className="col-span-2 flex min-w-0 flex-col gap-inline sm:col-span-1">
-          <span aria-hidden className="text-[12px] font-medium text-muted sm:sr-only">{labels.name}</span>
+    <div className="py-comfortable first:pt-tight last:pb-0">
+      <div className={cn("grid grid-cols-[minmax(0,1fr)_7.5rem] items-start gap-x-tight gap-y-tight", cols)}>
+        <label className="flex min-w-0 flex-col gap-inline">
+          <span aria-hidden className="sr-only">{labels.name}</span>
           <input
             value={r.name}
             onChange={(e) => r.onName(e.target.value)}
@@ -139,10 +166,10 @@ function TierRow({
             aria-invalid={!!r.nameError || undefined}
             className={cn(inputCls, err(r.nameError))}
           />
-          {r.nameError && <span className="text-[12px] text-danger">{r.nameError}</span>}
+          {r.nameError && <span className="text-[0.8125rem] text-danger">{r.nameError}</span>}
         </label>
         <label className="flex min-w-0 flex-col gap-inline">
-          <span className="text-[12px] font-medium text-muted sm:sr-only">{labels.price}</span>
+          <span className="sr-only">{labels.price}</span>
           <span className="relative">
             <span aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-sm text-muted">
               {currencySymbol}
@@ -159,10 +186,26 @@ function TierRow({
               className={cn(inputCls, err(r.priceError), "pl-7 text-right tabular-nums")}
             />
           </span>
-          {r.priceError && <span className="text-[12px] text-danger">{r.priceError}</span>}
+          {r.priceError && <span className="text-[0.8125rem] text-danger">{r.priceError}</span>}
         </label>
-        <label className="flex min-w-0 flex-col gap-inline">
-          <span className="text-[12px] font-medium text-muted sm:sr-only">{labels.qty}</span>
+
+        {/* Phone, line 2: the summary and the way to the rest. */}
+        <button
+          type="button"
+          onClick={() => setMore((v) => !v)}
+          aria-expanded={moreOpen}
+          disabled={needsMore}
+          className="col-span-2 -mr-3 flex min-h-11 min-w-0 items-center gap-tight rounded-sm text-left text-[0.8125rem] text-muted sm:hidden"
+        >
+          <span className="min-w-0 flex-1 truncate">{line2}</span>
+          <span className="sr-only">{labels.details(who)}</span>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center text-fg">
+            <ChevronDown size={18} strokeWidth={1.5} aria-hidden className={cn("transition-transform duration-quick", moreOpen && "rotate-180")} />
+          </span>
+        </button>
+
+        <label className={cn("col-span-2 flex min-w-0 flex-col gap-inline sm:col-span-1", phoneHidden)}>
+          <span className="text-[0.8125rem] font-medium text-muted sm:sr-only">{labels.qty}</span>
           <input
             value={r.qty}
             onChange={(e) => r.onQty(e.target.value.replace(/\D/g, ""))}
@@ -172,13 +215,13 @@ function TierRow({
             aria-invalid={!!r.qtyError || undefined}
             className={cn(inputCls, err(r.qtyError), "text-right tabular-nums")}
           />
-          {r.qtyError && <span className="text-[12px] text-danger">{r.qtyError}</span>}
+          {r.qtyError && <span className="text-[0.8125rem] text-danger">{r.qtyError}</span>}
         </label>
         {withSold && (
-          <span className="col-span-2 flex min-w-0 flex-col justify-center gap-inline sm:col-span-1 sm:h-11 sm:pl-section">
+          <span className={cn("col-span-2 flex min-w-0 flex-col justify-center gap-inline sm:col-span-1 sm:h-11 sm:pl-section", phoneHidden)}>
             {r.sold !== undefined && r.sold > 0 ? (
               <>
-                <span className="text-[12px] tabular-nums">
+                <span className="text-[0.8125rem] tabular-nums">
                   <span className="sm:sr-only">{labels.sold}: </span>
                   {labels.soldOf(r.sold, cap)}
                 </span>
@@ -187,13 +230,13 @@ function TierRow({
                 </span>
               </>
             ) : (
-              <span className="text-[12px] text-muted">
+              <span className="text-[0.8125rem] text-muted">
                 <span aria-hidden>—</span>
               </span>
             )}
           </span>
         )}
-        <span className="col-span-2 flex items-center justify-end gap-inline sm:col-span-1 sm:h-11">
+        <span className={cn("col-span-2 flex items-center justify-end gap-inline sm:col-span-1 sm:h-11", phoneHidden)}>
           {r.details && (
             <button
               type="button"
@@ -202,7 +245,7 @@ function TierRow({
               aria-label={labels.details(who)}
               title={labels.details(who)}
               className={cn(
-                "flex h-11 items-center gap-inline rounded-sm px-tight text-[13px] font-medium hover:bg-muted-wash hover:text-fg sm:h-9",
+                "flex h-11 items-center gap-inline rounded-sm px-tight text-[0.8125rem] font-medium hover:bg-muted-wash hover:text-fg sm:h-9",
                 open ? "bg-muted-wash text-fg" : "text-muted",
               )}
             >
@@ -210,11 +253,13 @@ function TierRow({
               <span aria-hidden>{labels.detailsShort}</span>
             </button>
           )}
+          {!r.onUp && anyUp && <span aria-hidden className="hidden h-9 w-9 sm:block" />}
           {r.onUp && (
             <button type="button" aria-label={labels.moveUp(who)} title={labels.moveUp(who)} onClick={r.onUp} className="flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-fg sm:h-9 sm:w-9">
               <ArrowUp size={16} strokeWidth={1.5} aria-hidden />
             </button>
           )}
+          {!r.onDown && anyDown && <span aria-hidden className="hidden h-9 w-9 sm:block" />}
           {r.onDown && (
             <button type="button" aria-label={labels.moveDown(who)} title={labels.moveDown(who)} onClick={r.onDown} className="flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-fg sm:h-9 sm:w-9">
               <ArrowDown size={16} strokeWidth={1.5} aria-hidden />
@@ -232,11 +277,12 @@ function TierRow({
           </button>
         </span>
       </div>
-      {r.scope && <div className="border-t border-hairline px-comfortable py-tight">{r.scope}</div>}
-      {/* What the folded details hold, in a line — so nothing set is out of
-          sight, without a second row per tier when nothing is. */}
-      {!open && r.summary && <p className="-mt-inline truncate px-comfortable pb-tight text-[12px] text-muted">{r.summary}</p>}
-      {open && r.details && <div className="grid gap-section border-t border-hairline p-comfortable sm:grid-cols-2">{r.details}</div>}
+      {r.scope && <div className="mt-tight">{r.scope}</div>}
+      {/* What the folded details hold, in a line, so nothing set is out of
+          sight without a second row per tier when nothing is. (On a phone the
+          summary is already on the row's second line.) */}
+      {!open && r.summary && <p className="mt-inline truncate text-[0.8125rem] text-muted max-sm:hidden">{r.summary}</p>}
+      {open && r.details && <div className={cn("mt-tight grid gap-section rounded-sm bg-muted-wash p-comfortable sm:grid-cols-2", phoneHidden)}>{r.details}</div>}
     </div>
   );
 }

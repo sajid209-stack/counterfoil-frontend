@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ActionMenu, Button, DataTable, EmptyState, Select, type ActionMenuItem, type Column } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/format";
-import { MD, useMediaQuery } from "@/lib/useMedia";
+import { MD, XL, useMediaQuery } from "@/lib/useMedia";
 import type { Expense, ExpenseSortKey } from "@/lib/api";
 import { CategoryTag, PaidTag, shortDate, useExpenseLabels } from "./parts";
 
@@ -54,8 +54,9 @@ function ReceiptMark() {
  */
 function useColumns(actions: RowActions): Column<Expense>[] {
   const t = useTranslations("expenses");
+  const xl = useMediaQuery(XL, true);
   const sortable = true;
-  return [
+  const cols: Column<Expense>[] = [
     {
       key: "ref",
       header: t("table.ref"),
@@ -73,12 +74,18 @@ function useColumns(actions: RowActions): Column<Expense>[] {
       header: t("table.title"),
       sortable,
       render: (e) => (
-        <span className="block min-w-0 max-w-[22rem]">
+        <span className="block min-w-0 max-w-[11rem] xl:max-w-[22rem]">
           <span className="flex items-center gap-inline">
             <span className="min-w-0 truncate font-medium">{e.title}</span>
             {e.receiptUrl && <ReceiptMark />}
           </span>
-          {e.payee && <span className="block truncate text-[12px] text-muted">{e.payee}</span>}
+          {/* Who was paid, and how many items the bill had: one quiet line.
+              "Items" was a column of dashes for the bills that are one amount. */}
+          {(e.payee || e.lineCount > 0) && (
+            <span className="block truncate text-[12px] text-muted">
+              {[e.payee, e.lineCount > 0 ? t("table.itemsCount", { count: e.lineCount }) : null].filter(Boolean).join(" · ")}
+            </span>
+          )}
         </span>
       ),
     },
@@ -92,23 +99,7 @@ function useColumns(actions: RowActions): Column<Expense>[] {
       key: "paidFrom",
       header: t("table.paidFrom"),
       sortable,
-      render: (e) => <PaidTag paidFrom={e.paidFrom} counter={e.counterName} className="max-w-[10rem] text-[0.8125rem]" />,
-    },
-    {
-      key: "items",
-      header: t("table.items"),
-      sortable,
-      align: "right",
-      mono: false,
-      render: (e) =>
-        e.lineCount > 0 ? (
-          <span className="whitespace-nowrap text-[0.8125rem]">{t("table.itemsCount", { count: e.lineCount })}</span>
-        ) : (
-          <>
-            <span aria-hidden className="text-muted">—</span>
-            <span className="sr-only">{t("table.oneAmount")}</span>
-          </>
-        ),
+      render: (e) => <PaidTag paidFrom={e.paidFrom} counter={e.counterName} className="max-w-[7rem] text-[0.8125rem] xl:max-w-[10rem]" />,
     },
     {
       key: "total",
@@ -117,12 +108,6 @@ function useColumns(actions: RowActions): Column<Expense>[] {
       align: "right",
       mono: false,
       render: (e) => <span className="whitespace-nowrap font-medium tabular-nums">{formatMoney(e.total)}</span>,
-    },
-    {
-      key: "recordedBy",
-      header: t("table.by"),
-      sortable,
-      render: (e) => <span className="block max-w-[9rem] truncate text-[0.8125rem]" title={e.recordedByName}>{e.recordedByName}</span>,
     },
     {
       key: "actions",
@@ -135,6 +120,16 @@ function useColumns(actions: RowActions): Column<Expense>[] {
       ),
     },
   ];
+  /* Below xl the card is under 960px: the person who recorded it is the first thing to give way, so Total stays on screen. */
+  if (xl) cols.splice(cols.length - 1, 0,
+    {
+      key: "recordedBy",
+      header: t("table.by"),
+      sortable,
+      render: (e) => <span className="block max-w-[9rem] truncate text-[0.8125rem]" title={e.recordedByName}>{e.recordedByName}</span>,
+    },
+  );
+  return cols;
 }
 
 /** The phone's row: two lines. What it was and what it cost, then which, how it
@@ -170,6 +165,15 @@ function Pager({ page, totalPages, pageSize, total, onPage, onPageSize }: { page
   const to = Math.min(page * pageSize, total);
   const btn =
     "inline-flex h-11 items-center gap-inline rounded-sm border border-line px-comfortable text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:enabled:border-inverse disabled:cursor-not-allowed disabled:text-muted disabled:opacity-60 md:h-9";
+  /* One page of everything: previous, next, "page 1 of 1" and a page-size
+     choice are controls with nothing to do. The count is all that is left to say. */
+  if (totalPages <= 1 && total <= Math.min(...PAGE_SIZES)) {
+    return (
+      <p className="text-[0.8125rem] tabular-nums text-muted" aria-live="polite">
+        {t("page.showing", { from, to, total })}
+      </p>
+    );
+  }
   return (
     <nav aria-label={t("page.label")} className="flex flex-wrap items-center justify-between gap-x-section gap-y-tight">
       <p className="text-[0.8125rem] tabular-nums text-muted" aria-live="polite">
@@ -243,6 +247,7 @@ export function ExpenseTable({
 }) {
   const t = useTranslations("expenses");
   const columns = useColumns(actions);
+  const xlWide = useMediaQuery(XL, true);
 
   if (failed && !rows) {
     return (
@@ -270,7 +275,7 @@ export function ExpenseTable({
         onSortChange={(key) => onSort(key as ExpenseSortKey)}
         onRowClick={actions.onOpen}
         isSelected={(e) => e.id === freshId}
-        minWidth="64rem"
+        minWidth={xlWide ? "64rem" : "42rem"}
         height="page"
         cardVariant="list"
         renderCard={(e) => <ExpenseCard e={e} actions={actions} />}

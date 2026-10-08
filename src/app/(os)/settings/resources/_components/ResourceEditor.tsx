@@ -206,8 +206,8 @@ export function ResourceEditor({
               <label
                 key={k}
                 className={cn(
-                  "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
-                  checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
+                  "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick",
+                  checked ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:ring-1 hover:ring-inset hover:ring-line",
                 )}
               >
                 <input

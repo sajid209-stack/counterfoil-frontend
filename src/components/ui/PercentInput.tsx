@@ -82,7 +82,7 @@ export function PercentInput({
   return (
     <div className={cn("flex flex-col gap-tight", className)}>
       {label && (
-        <label htmlFor={id} className="type-label text-[0.75rem] text-muted">
+        <label htmlFor={id} className="text-[0.8125rem] font-medium text-muted">
           {label}
         </label>
       )}

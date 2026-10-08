@@ -168,7 +168,6 @@
       "regularCustomer": "Regular customer",
       "other": "Something else"
     },
-    "noteLabel": "Note (optional)",
     "noteLabelRequired": "Note",
     "notePlaceholder": "e.g. Rain stopped play after 20 minutes",
     "noteRequired": "Say why, so there's a note on the order.",

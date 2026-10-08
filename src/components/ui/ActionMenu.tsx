@@ -109,7 +109,7 @@ export function ActionMenu({
           id={id}
           role="menu"
           className={cn(
-            "absolute right-0 z-30 min-w-[11rem] max-w-[17rem] border border-line bg-card py-inline shadow-lg",
+            "absolute right-0 z-30 min-w-[11rem] max-w-[17rem] border border-hairline bg-card py-inline shadow-lg dark:border-line",
             shape === "go" ? "rounded-go" : "rounded-md",
             up ? "bottom-[calc(100%+4px)]" : "top-[calc(100%+4px)]",
           )}

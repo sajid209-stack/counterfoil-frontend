@@ -60,7 +60,7 @@ export default function SeatLayoutsPage() {
     <PageShell title={t("list.title")} description={t("list.description")} primary={primary}>
       {q.loading ? (
         <div aria-busy="true" className="grid gap-section sm:grid-cols-2 lg:grid-cols-3">
-          {[0, 1, 2].map((i) => <div key={i} className="h-52 animate-pulse rounded-md bg-subtle" />)}
+          {[0, 1, 2].map((i) => <div key={i} className="h-52 animate-pulse rounded-md bg-muted-wash" />)}
         </div>
       ) : layouts.length === 0 ? (
         <EmptyState title={t("list.empty")} action={<Button onClick={() => setChoosing(true)}>{t("list.new")}</Button>} />
@@ -73,7 +73,7 @@ export default function SeatLayoutsPage() {
             <button
               type="button"
               onClick={primary.onClick}
-              className="flex min-h-40 items-center justify-center gap-tight rounded-md border border-dashed border-strong p-card text-sm font-medium text-brand-foreground transition-colors duration-quick hover:bg-muted-wash"
+              className="flex min-h-40 items-center justify-center gap-tight rounded-md bg-muted-wash p-card text-sm font-medium text-fg transition-colors duration-quick hover:bg-line/40"
             >
               <Plus size={16} strokeWidth={1.75} aria-hidden />
               {primary.label}
@@ -93,7 +93,7 @@ export default function SeatLayoutsPage() {
               type="button"
               disabled={!!creating}
               onClick={() => create(x)}
-              className="flex min-h-11 flex-col items-start gap-[2px] rounded-sm border border-line p-comfortable text-left hover:bg-muted-wash disabled:opacity-50"
+              className="flex min-h-11 flex-col items-start gap-[2px] rounded-sm bg-muted-wash p-comfortable text-left transition-colors duration-quick hover:bg-line/40 disabled:opacity-50"
             >
               <span className="font-medium">{t(`experience.${x}`)}</span>
               <span className="text-[12px] text-muted">{t(`experienceHint.${x}`)}</span>
@@ -114,13 +114,13 @@ function LayoutCard({ layout: l, onOpen }: { layout: SeatLayout; onOpen: () => v
     <button
       type="button"
       onClick={onOpen}
-      className="flex flex-col gap-tight card-surface p-card text-left transition-colors duration-quick hover:border-ember/40"
+      className="flex flex-col gap-tight card-surface p-card text-left transition-shadow duration-quick hover:shadow-md"
     >
       <div className="flex items-baseline gap-tight">
         <span className="min-w-0 flex-1 truncate font-medium">{l.name}</span>
         <span className="shrink-0 text-[12px] text-muted">{t(`experience.${l.experience ?? "general"}`)}</span>
       </div>
-      <div aria-hidden className="pointer-events-none overflow-hidden rounded-xs border border-hairline bg-surface">
+      <div aria-hidden className="pointer-events-none overflow-hidden rounded-xs bg-surface">
         <PlanView
           elements={l.seats.map((s) => seatToElement(s, colorOf(s.seatCategoryId)))}
           fixtures={l.fixtures ?? []}

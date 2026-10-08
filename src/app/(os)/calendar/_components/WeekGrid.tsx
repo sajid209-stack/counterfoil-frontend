@@ -473,7 +473,7 @@ export function WeekGrid({
               >
                 <span
                   className={cn(
-                    "type-label text-[12px]",
+                    "text-[0.75rem] font-medium",
                     today ? "text-brand-foreground" : "text-muted",
                   )}
                 >
@@ -510,7 +510,7 @@ export function WeekGrid({
               {compact ? allDayLabel.slice(0, 3) : allDayLabel}
             </div>
             {days.map((d) => (
-              <div key={isoDate(d)} className="flex-1 border-r border-hairline p-0.5 last:border-r-0">
+              <div key={isoDate(d)} className="flex-1 border-r border-hairline/50 p-0.5 last:border-r-0">
                 {allDay
                   .filter((e) => sameDay(e.start, d))
                   .map((e) => (
@@ -674,7 +674,7 @@ export function WeekGrid({
                    one column was a third, the colour of a booking, on time
                    that was simply free. The header's badge and the now-line
                    say "today" without borrowing either meaning. */
-                className="relative flex-1 border-r border-hairline last:border-r-0"
+                className="relative flex-1 border-r border-hairline/50 last:border-r-0"
               >
                 {/* Time that cannot be sold, shaded — and nothing else marked.
                     This grid used to write "6 open" into every hour that had
@@ -1081,7 +1081,7 @@ function CompactWeek({
                 on && "bg-ember/10",
               )}
             >
-              <span className="type-label text-[12px] text-muted">{label.weekday.slice(0, 1)}</span>
+              <span className="text-[0.75rem] font-medium text-muted">{label.weekday.slice(0, 1)}</span>
               <span
                 className={cn(
                   "flex h-7 min-w-[2rem] items-center justify-center rounded-sm px-1.5 font-mono text-[13px]",

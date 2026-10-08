@@ -26,7 +26,7 @@ export type { DatePickerLabels } from "./DatePicker";
 export { DateField } from "./DateField";
 export { DataTable } from "./DataTable";
 export type { Column, DataTableProps } from "./DataTable";
-export { FilterBar } from "./FilterBar";
+export { FilterBar, FilterSearch } from "./FilterBar";
 export type { FilterSpec } from "./FilterBar";
 export { Sheet } from "./Sheet";
 export { DurationInput } from "./DurationInput";

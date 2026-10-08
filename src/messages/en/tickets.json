@@ -6,7 +6,6 @@
   "rowActions": "More actions",
   "openOrder": "Open the order",
   "printOrderTickets": "Print this order's tickets",
-  "entitlementNote": "What was bought. A new code doesn't change this.",
   "fact": {
     "type": "Ticket type",
     "validFor": "Valid for",
@@ -72,14 +71,15 @@
   "issued": {
     "title": "Issued orders",
     "description": "Every ticket that has been issued, newest first.",
-    "search": "Code, order, customer or booking",
+    "search": "Search code or order…",
     "reset": "Reset",
     "export": "Export CSV",
     "exported": "{count, plural, one {# ticket exported} other {# tickets exported}}",
     "filters": {
       "status": "Status",
       "booking": "Booking",
-      "clear": "Clear"
+      "clear": "Clear",
+      "date": "Date"
     },
     "state": {
       "unused": "Unused",

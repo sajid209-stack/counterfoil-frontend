@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Info } from "lucide-react";
-import { PageShell, Select, useToast } from "@/components/ui";
+import { PageShell, Select, StatusPill, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getAccessPolicy, listRoles, listStaff, updateAccessPolicy, type AccessPolicy, type TwoStepRequirement } from "@/lib/api";
@@ -90,8 +90,8 @@ export default function SignInRulesPage() {
                 <label
                   key={level}
                   className={cn(
-                    "flex cursor-pointer items-start gap-comfortable rounded-md border p-comfortable transition-colors duration-quick",
-                    checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
+                    "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember",
+                    checked ? "bg-ember/5 ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line/40",
                   )}
                 >
                   <input
@@ -106,11 +106,7 @@ export default function SignInRulesPage() {
                     <span className="flex flex-wrap items-baseline justify-between gap-x-section gap-y-inline">
                       <span className="flex flex-wrap items-center gap-tight">
                         <span className="text-sm font-medium text-fg">{t(`signIn.twoStep.${level}.title`)}</span>
-                        {level === "managers" && (
-                          <span className="rounded-xs border border-line px-inline text-[12px] font-medium text-muted">
-                            {t("signIn.recommended")}
-                          </span>
-                        )}
+                        {level === "managers" && <StatusPill tone="neutral">{t("signIn.recommended")}</StatusPill>}
                       </span>
                       {level !== "off" && staffQ.data && (
                         <span className="text-[13px] text-muted">{t("signIn.applies", { count: reach[level] })}</span>
@@ -183,40 +179,39 @@ export default function SignInRulesPage() {
               </>
             }
             labelFor={false}
+            trailing
           >
             {({ labelId, describedBy }) => (
-              <div className="flex sm:justify-end">
-                {/* Real radios under the labels, so arrow keys move between the
-                    two lengths the way a keyboard user expects of a choice. */}
-                <div
-                  role="radiogroup"
-                  aria-labelledby={labelId}
-                  aria-describedby={describedBy}
-                  className="inline-flex rounded-sm border border-line bg-card p-[3px]"
-                >
-                  {PIN_LENGTHS.map((n) => {
-                    const on = form.pinLength === n;
-                    return (
-                      <label
-                        key={n}
-                        className={cn(
-                          "inline-flex min-h-11 cursor-pointer items-center rounded-xs px-section text-sm font-medium transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember md:min-h-9",
-                          on ? "bg-ember-solid text-white" : "text-muted hover:text-fg",
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name="pin-length"
-                          value={n}
-                          checked={on}
-                          onChange={() => set({ pinLength: n })}
-                          className="sr-only"
-                        />
-                        {t("signIn.digits", { count: n })}
-                      </label>
-                    );
-                  })}
-                </div>
+              /* Real radios under the labels, so arrow keys move between the
+                 two lengths the way a keyboard user expects of a choice. */
+              <div
+                role="radiogroup"
+                aria-labelledby={labelId}
+                aria-describedby={describedBy}
+                className="inline-flex rounded-sm border border-line bg-card p-[3px]"
+              >
+                {PIN_LENGTHS.map((n) => {
+                  const on = form.pinLength === n;
+                  return (
+                    <label
+                      key={n}
+                      className={cn(
+                        "inline-flex min-h-11 cursor-pointer items-center rounded-xs px-section text-sm font-medium transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember md:min-h-9",
+                        on ? "bg-ember-solid text-white" : "text-muted hover:text-fg",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="pin-length"
+                        value={n}
+                        checked={on}
+                        onChange={() => set({ pinLength: n })}
+                        className="sr-only"
+                      />
+                      {t("signIn.digits", { count: n })}
+                    </label>
+                  );
+                })}
               </div>
             )}
           </SettingRow>
@@ -231,16 +226,14 @@ export default function SignInRulesPage() {
               />
             )}
           </SettingRow>
-          <SettingRow label={t("signIn.deviceBound")} description={t("signIn.deviceBoundDesc")} labelFor={false}>
+          <SettingRow label={t("signIn.deviceBound")} description={t("signIn.deviceBoundDesc")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
-              <div className="flex sm:justify-end">
-                <Switch
-                  checked={form.deviceBound}
-                  onChange={(deviceBound) => set({ deviceBound })}
-                  labelledBy={labelId}
-                  describedBy={describedBy}
-                />
-              </div>
+              <Switch
+                checked={form.deviceBound}
+                onChange={(deviceBound) => set({ deviceBound })}
+                labelledBy={labelId}
+                describedBy={describedBy}
+              />
             )}
           </SettingRow>
         </SettingsSection>

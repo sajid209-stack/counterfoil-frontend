@@ -14,6 +14,8 @@ import {
   peekBookings,
 } from "@/lib/api";
 import { FEATURES } from "@/lib/features";
+import { MD, useMediaQuery } from "@/lib/useMedia";
+import { ShowMore } from "../../orders/_components/ShowMore";
 import { DEMO_NOW_MINUTES, DEMO_TODAY } from "@/lib/schedule";
 import { buildCustomerProfile, upcomingBookings, type WallTime } from "@/lib/customerProfile";
 import { Panel } from "./_components/Panel";
@@ -54,6 +56,9 @@ export default function CustomerDetailPage() {
   const t = useTranslations("customers");
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  /* A phone gets who they are, what they are worth and what is next; the rest
+     folds under "Show more". */
+  const phone = !useMediaQuery(MD);
 
   const customerQ = useApiQuery(() => getCustomer(params.id), [params.id]);
   const statsQ = useApiQuery(() => getCustomerStats(params.id), [params.id]);
@@ -134,6 +139,32 @@ export default function CustomerDetailPage() {
       <div className="flex flex-col gap-section">
         <ProfileHeader customer={customer} profile={profile} onChanged={reloadAll} />
 
+        {phone ? (
+          <>
+            <AtAGlance customer={customer} stats={stats} owingOrderIds={owingOrderIds} />
+            <ComingUp bookings={upcoming} />
+            <ShowMore>
+              <div className="flex flex-col gap-section">
+                <NotesCard customer={customer} onChanged={reloadAll} />
+                <WhatTheyComeFor profile={profile} />
+                <RecentVisits customer={customer} orders={orders} total={stats.orders} />
+                <ContactCard customer={customer} onChanged={reloadAll} />
+                <ConsentCard customer={customer} onChanged={reloadAll} />
+                {showMembership && points && (
+                  <Panel title={t("tabMembership")}>
+                    <MembershipTab
+                      key={`${memberships.length}-${points.balance}`}
+                      customerId={customer.id}
+                      memberships={memberships}
+                      points={points}
+                      onChanged={reloadAll}
+                    />
+                  </Panel>
+                )}
+              </div>
+            </ShowMore>
+          </>
+        ) : (
         <div className="grid gap-section lg:grid-cols-[minmax(0,1fr)_21.25rem] lg:items-start">
           <div className="flex min-w-0 flex-col gap-section">
             <ComingUp bookings={upcoming} />
@@ -161,6 +192,7 @@ export default function CustomerDetailPage() {
             )}
           </div>
         </div>
+        )}
       </div>
     </PageShell>
   );

@@ -25,9 +25,13 @@ const VARIANTS: Record<ButtonVariant, string> = {
      #F94A00 it is 3.50:1 in both themes, which is the colour that was
      specified and one reading rather than two. */
   primary: "bg-ember-solid text-white hover:opacity-90 disabled:bg-line disabled:text-muted",
+  /* The calm pass: the stroke stays (a secondary button on a white card needs
+     an edge to be found) but hovers one step firmer, not to ink, and the fill
+     warms a touch instead — a border snapping to black was the loudest thing
+     in a toolbar of them. */
   secondary:
-    "bg-card text-fg border border-line hover:border-inverse disabled:text-muted disabled:border-line",
-  tertiary: "bg-transparent text-fg hover:bg-line disabled:text-muted",
+    "bg-card text-fg border border-line hover:border-strong hover:bg-fg/[0.03] disabled:text-muted disabled:border-line disabled:hover:bg-card",
+  tertiary: "bg-transparent text-fg hover:bg-muted-wash disabled:text-muted",
   link: "bg-transparent text-brand-foreground underline underline-offset-2 hover:opacity-80 disabled:text-muted",
   destructive: "bg-danger-solid text-white hover:opacity-90 disabled:opacity-40",
 };

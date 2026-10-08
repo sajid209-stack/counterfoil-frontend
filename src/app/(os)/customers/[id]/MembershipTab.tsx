@@ -44,7 +44,7 @@ function Stat({
 }) {
   return (
     <div className="rounded-sm border border-line p-comfortable">
-      <p className="type-label text-[12px] text-muted">{label}</p>
+      <p className="text-[0.75rem] font-medium text-muted">{label}</p>
       <p
         className={`mt-inline font-mono text-lg tabular-nums ${
           tone === "warning" ? "text-warning" : "text-fg"
@@ -94,7 +94,7 @@ export function MembershipTab({
     <div className="flex flex-col gap-major">
       <section className="flex flex-col gap-section">
         <div className="flex flex-wrap items-center justify-between gap-tight">
-          <h3 className="type-label text-[12px] text-muted">{t("membershipsHeading")}</h3>
+          <h3 className="text-[0.75rem] font-medium text-muted">{t("membershipsHeading")}</h3>
           <Button size="sm" variant="secondary" onClick={() => setSellOpen(true)}>
             {t("sellMembership")}
           </Button>
@@ -185,7 +185,7 @@ export function MembershipTab({
 
       <section className="flex flex-col gap-section">
         <div className="flex flex-wrap items-center justify-between gap-tight">
-          <h3 className="type-label text-[12px] text-muted">{t("pointsHeading")}</h3>
+          <h3 className="text-[0.75rem] font-medium text-muted">{t("pointsHeading")}</h3>
           <Button size="sm" variant="secondary" onClick={() => setAdjustOpen(true)}>
             {t("adjustPoints")}
           </Button>

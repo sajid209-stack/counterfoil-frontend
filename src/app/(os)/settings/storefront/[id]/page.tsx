@@ -29,6 +29,7 @@ import {
   type Storefront,
   type StorefrontLink,
 } from "@/lib/api";
+import { FoldOnPhone } from "../../_components/FoldOnPhone";
 import { SaveBar, SectionSkeleton, SettingRow, SettingsSection, Switch, controlCls } from "../../_components/SettingsKit";
 import { ACCENT_COLORS, COLOR_DOT } from "../_components/ColorPicker";
 
@@ -455,8 +456,8 @@ export default function StorefrontEditorPage() {
                       aria-pressed={form.accent === c}
                       onClick={() => set({ accent: c })}
                       className={cn(
-                        "flex h-11 items-center gap-tight rounded-sm border px-comfortable text-[13px] transition-colors duration-quick md:h-9",
-                        form.accent === c ? "border-ember bg-ember/5 font-medium" : "border-line bg-card",
+                        "flex h-11 items-center gap-tight rounded-sm px-comfortable text-[13px] transition-colors duration-quick md:h-9",
+                        form.accent === c ? "bg-card font-medium ring-2 ring-inset ring-ember-solid" : "bg-muted-wash",
                       )}
                     >
                       <span
@@ -481,8 +482,8 @@ export default function StorefrontEditorPage() {
                         aria-pressed={on}
                         onClick={() => set({ heroImage: c?.url ?? null })}
                         className={cn(
-                          "flex flex-col overflow-hidden rounded-sm border text-left text-[13px] transition-colors duration-quick",
-                          on ? "border-ember ring-1 ring-ember" : "border-line hover:border-strong",
+                          "flex flex-col overflow-hidden rounded-sm bg-muted-wash text-left text-[13px] transition-colors duration-quick",
+                          on ? "ring-2 ring-ember-solid" : "hover:ring-1 hover:ring-line",
                         )}
                       >
                         {c ? (
@@ -505,6 +506,7 @@ export default function StorefrontEditorPage() {
             </SettingRow>
           </SettingsSection>
 
+          <FoldOnPhone title={t("storefront.moreTitle")}>
           <SettingsSection title={t("storefront.contactTitle")} description={t("storefront.contactDesc")}>
             <SettingRow label={t("storefront.phoneLabel")}>
               {({ id }) => (
@@ -581,6 +583,7 @@ export default function StorefrontEditorPage() {
               </Button>
             </div>
           </SettingsSection>
+          </FoldOnPhone>
 
           <SettingsSection
             title={t("storefront.whatsOnTitle")}
@@ -639,7 +642,7 @@ export default function StorefrontEditorPage() {
               </div>
               {deviceSwitch}
             </div>
-            <div className="rounded-md border border-line bg-subtle p-tight">
+            <div className="rounded-md bg-muted-wash p-tight">
               <div className={cn("mx-auto overflow-hidden rounded-sm", device === "phone" && "max-w-[390px]")}>{preview(device)}</div>
             </div>
           </aside>
@@ -656,7 +659,7 @@ export default function StorefrontEditorPage() {
         >
           <div className="flex flex-col gap-comfortable p-card">
             {md && deviceSwitch}
-            {previewOpen && <div className="overflow-hidden rounded-sm border border-line">{preview(md ? device : "phone")}</div>}
+            {previewOpen && <div className="overflow-hidden rounded-sm">{preview(md ? device : "phone")}</div>}
           </div>
         </Sheet>
       )}

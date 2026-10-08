@@ -2,13 +2,12 @@
 
 import { useRef, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { Check, Copy, Mail, MessageSquare, Phone, Plus } from "lucide-react";
+import { Mail, MessageSquare, Phone, Plus } from "lucide-react";
 import { Button, StatusPill, useToast, type PillTone } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { updateCustomer, type Customer } from "@/lib/api";
 import { formatDay } from "@/lib/format";
 import type { CustomerProfile, Relationship } from "@/lib/customerProfile";
-import { useCopy } from "./useCopy";
 
 /** Initials from a name, at most two — "Mohammad Abdur Rahman Chowdhury"
  *  becomes MC, not MARC. */
@@ -24,9 +23,10 @@ const REL_TONE: Record<Relationship, PillTone> = { new: "info", regular: "succes
 
 /** A contact action drawn as a button. A link, because that is what it is:
  *  tel:, sms: and mailto: hand the number to the phone's own apps. 44px on a
- *  phone, the density the rest of OS uses from `md`. */
+ *  phone, the density the rest of OS uses from `md`. Copying the number is on
+ *  the Contact card, which is where somebody looks for it. */
 const ACTION =
-  "inline-flex h-11 items-center justify-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:border-inverse md:h-9";
+  "inline-flex h-11 items-center justify-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:border-strong md:h-9";
 
 /**
  * Who this is, before anything they have bought.
@@ -48,8 +48,6 @@ export function ProfileHeader({
 }) {
   const t = useTranslations("customers");
   const format = useFormatter();
-  const { copied, copy } = useCopy();
-  const toast = useToast();
 
   const since = format.dateTime(new Date(customer.createdAt), { month: "short", year: "numeric" });
   const days = profile.daysSinceLastBooked;
@@ -72,18 +70,13 @@ export function ProfileHeader({
   const phone = customer.phone?.replace(/\s+/g, "") ?? null;
   const hasActions = !!(phone || customer.email);
 
-  const copyPhone = async () => {
-    if (!customer.phone) return;
-    if (!(await copy("phone", customer.phone))) toast.error(t("copyFailed"));
-  };
-
   return (
     <section aria-label={t("profileLabel")} className="card-surface flex flex-col gap-section p-card lg:flex-row lg:items-center lg:justify-between lg:gap-major">
       <div className="flex min-w-0 flex-col gap-section">
       <div className="flex items-center gap-section">
         <span
           aria-hidden
-          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-ember/10 text-xl font-semibold text-brand-foreground"
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-subtle text-xl font-semibold text-fg dark:bg-fg/10"
         >
           {initialsOf(customer.name)}
         </span>
@@ -106,7 +99,7 @@ export function ProfileHeader({
       </div>
 
       {hasActions ? (
-        <div className="flex flex-wrap gap-tight lg:shrink-0 lg:justify-end">
+        <div className="grid grid-cols-3 gap-tight sm:flex sm:flex-wrap lg:shrink-0 lg:justify-end">
           {phone && (
             <a href={`tel:${phone}`} className={ACTION}>
               <Phone size={16} strokeWidth={1.6} aria-hidden />
@@ -124,16 +117,6 @@ export function ProfileHeader({
               <Mail size={16} strokeWidth={1.6} aria-hidden />
               {t("actEmail")}
             </a>
-          )}
-          {phone && (
-            <button type="button" onClick={copyPhone} className={ACTION}>
-              {copied === "phone" ? (
-                <Check size={16} strokeWidth={1.8} aria-hidden className="text-success" />
-              ) : (
-                <Copy size={16} strokeWidth={1.6} aria-hidden />
-              )}
-              {copied === "phone" ? t("copied") : t("actCopyPhone")}
-            </button>
           )}
         </div>
       ) : (
@@ -194,7 +177,7 @@ function Tags({ customer, onChanged }: { customer: Customer; onChanged: () => vo
             ref={opener}
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex h-11 items-center gap-inline rounded-full border border-dashed border-strong px-comfortable text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:bg-muted-wash md:h-9"
+            className="inline-flex h-11 items-center gap-inline rounded-full px-comfortable text-[0.8125rem] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:h-9"
           >
             <Plus size={14} strokeWidth={1.8} aria-hidden />
             {t("addTag")}
@@ -229,7 +212,7 @@ function Tags({ customer, onChanged }: { customer: Customer; onChanged: () => vo
               placeholder={t("tagPlaceholder")}
               maxLength={MAX_TAG + 8}
               className={cn(
-                "h-11 w-full rounded-sm border bg-card px-comfortable text-sm outline-none transition-colors duration-quick placeholder:text-faint md:h-9",
+                "h-11 w-full rounded-sm border bg-card px-comfortable text-sm outline-none transition-colors duration-quick placeholder:text-muted md:h-9",
                 error ? "border-danger" : "border-line focus:border-inverse",
               )}
             />

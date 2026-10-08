@@ -147,7 +147,7 @@ export function AddStorefrontDialog({
         </Field>
 
         <fieldset className="flex flex-col gap-tight">
-          <legend className="type-label mb-tight text-[0.75rem] text-muted">{t("storefront.whichLabel")}</legend>
+          <legend className="mb-tight text-[0.75rem] font-medium text-muted">{t("storefront.whichLabel")}</legend>
           <div role="radiogroup" aria-label={t("storefront.whichLabel")} className="flex flex-col gap-tight">
             {modes.map((m) => {
               const on = mode === m.key;
@@ -162,8 +162,8 @@ export function AddStorefrontDialog({
                     setErrors((x) => ({ ...x, which: undefined }));
                   }}
                   className={cn(
-                    "flex min-h-11 flex-col rounded-sm border px-comfortable py-tight text-left transition-colors duration-quick",
-                    on ? "border-ember bg-card ring-1 ring-ember" : "border-line hover:border-strong",
+                    "flex min-h-11 flex-col rounded-sm px-comfortable py-tight text-left transition-colors duration-quick",
+                    on ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:ring-1 hover:ring-inset hover:ring-line",
                   )}
                 >
                   <span className="text-sm font-medium text-fg">{m.title}</span>

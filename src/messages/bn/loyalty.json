@@ -1,7 +1,6 @@
 {
   "settingsTitle": "পয়েন্ট",
   "settingsDescription": "বারবার আসার জন্য গ্রাহককে পুরস্কার দিন। পয়েন্টের দাম আছে, তাই সংখ্যাগুলো ভেবে ঠিক করুন।",
-  "save": "সেভ করুন",
   "saved": "পয়েন্ট সেভ হয়েছে।",
   "fieldEnabled": "পয়েন্ট চালু",
   "enabledHelp": "বন্ধ থাকলে পয়েন্ট জমে না, খরচও হয় না। গ্রাহকের জমানো পয়েন্ট থেকে যায়।",
@@ -23,5 +22,6 @@
   "totalEarned": "জমা হয়েছে",
   "totalSpent": "খরচ হয়েছে",
   "totalOutstanding": "এখনো খরচ হয়নি",
-  "outstandingWorth": "দাম {value}"
+  "outstandingWorth": "দাম {value}",
+  "programTitle": "পয়েন্ট কীভাবে কাজ করে"
 }

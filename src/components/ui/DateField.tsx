@@ -103,7 +103,7 @@ export function DateField({
           setOpen((v) => !v);
         }}
         className={cn(
-          "flex items-center gap-tight border border-line bg-card text-left text-sm outline-none transition-colors duration-quick focus:border-inverse",
+          "flex items-center gap-tight border border-line bg-card text-left text-sm outline-none transition-colors duration-quick focus:border-strong",
           compact ? "h-11 w-11 shrink-0 justify-center" : "w-full",
           shape === "go"
             ? "min-h-12 rounded-go px-comfortable"

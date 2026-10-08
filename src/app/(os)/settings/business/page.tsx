@@ -96,7 +96,7 @@ export default function BusinessProfilePage() {
   const invalid = !!(nameErr || phoneErr || emailErr || websiteErr || lockErr);
   // The help under the lock says what the number means right now, not what the
   // field is for in general.
-  const lockDays = form && /^d{1,4}$/.test(form.lockDays.trim()) ? Number(form.lockDays.trim()) : null;
+  const lockDays = form && /^\d{1,4}$/.test(form.lockDays.trim()) ? Number(form.lockDays.trim()) : null;
   const lockHelp = !form || form.lockDays.trim() === ""
     ? t("business.pastEditLockOff")
     : lockDays !== null
@@ -158,7 +158,7 @@ export default function BusinessProfilePage() {
       ) : (
         <div className="flex max-w-3xl flex-col gap-section pb-hero">
           <SettingsSection title={t("business.profileTitle")} description={t("business.profileDesc")}>
-            <SettingRow label={t("business.businessName")} description={t("business.nameDesc")} error={nameErr}>
+            <SettingRow label={t("business.businessName")} error={nameErr}>
               {({ id, describedBy }) => (
                 <input
                   id={id}
@@ -174,7 +174,7 @@ export default function BusinessProfilePage() {
             <SettingRow label={t("business.phone")} description={t("business.phoneDesc")} error={phoneErr}>
               {textInput("phone", phoneErr, "tel", "tel")}
             </SettingRow>
-            <SettingRow label={t("business.email")} description={t("business.emailDesc")} error={emailErr}>
+            <SettingRow label={t("business.email")} error={emailErr}>
               {textInput("email", emailErr, "email", "email")}
             </SettingRow>
             <SettingRow label={t("business.website")} description={t("business.websiteDesc")} error={websiteErr}>
@@ -204,13 +204,15 @@ export default function BusinessProfilePage() {
             </SettingRow>
             <SettingRow label={t("business.receiptPreview")} description={t("business.receiptPreviewDesc")} layout="stack" labelFor={false}>
               {() => (
-                <div className="max-w-xs rounded-sm bg-card px-section py-major ring-1 ring-inset ring-hairline">
+                <div className="max-w-xs rounded-sm bg-muted-wash px-section py-major">
                   <ReceiptHeader
                     operator={{ name: form.name.trim() || "—", contactPhone: form.phone.trim(), website: form.website.trim() }}
                     place={place}
                     tax={taxQ.data}
                   >
-                    <p className="mt-inline font-mono text-[12px] text-muted">CF-2026-000123 · {formatDay(DEMO_TODAY)}</p>
+                    <p className="mt-inline text-[12px] text-muted">
+                      <span className="font-mono">CF-2026-000123</span> · {formatDay(DEMO_TODAY)}
+                    </p>
                   </ReceiptHeader>
                   <p className="border-y border-dashed border-line py-section text-center text-[12px] text-muted">{t("business.receiptItems")}</p>
                   <ReceiptFooter message={form.footer} />

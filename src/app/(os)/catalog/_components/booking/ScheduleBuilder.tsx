@@ -149,7 +149,7 @@ export function ScheduleBuilder({
       )}
 
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-muted">{t("openDays")}</span>
+        <span className="text-[0.8125rem] font-medium text-muted">{t("openDays")}</span>
         {/* Named days, not two letters: "Tu" and "Th" are one letter apart,
             and a day button that only a reader of English can tell apart is
             no use to a Bangla reader at all. */}
@@ -175,7 +175,7 @@ export function ScheduleBuilder({
 
       {isSlotBased(bookingType) && (
         <div className="flex flex-col gap-tight">
-          <span className="type-label text-[12px] text-muted">{t("overrides")}</span>
+          <span className="text-[0.8125rem] font-medium text-muted">{t("overrides")}</span>
           {Object.entries(overrides).map(([dStr, hrs]) => {
             const d = Number(dStr);
             return (
@@ -215,15 +215,15 @@ export function ScheduleBuilder({
 
       {isGuided(bookingType) && (
         <div className="flex flex-col gap-tight">
-          <span className="type-label text-[12px] text-muted">{t("whoLeads")}</span>
+          <span className="text-[0.8125rem] font-medium text-muted">{t("whoLeads")}</span>
           {team.length === 0 ? (
-            <p className="rounded-sm border border-dashed border-line px-comfortable py-comfortable text-[13px] text-muted">
+            <p className="rounded-sm bg-muted-wash px-comfortable py-comfortable text-[0.8125rem] text-muted">
               {t("noGuides")}
             </p>
           ) : (
             <div className="flex flex-wrap gap-inline">
               {team.map((m) => (
-                <button key={m.id} type="button" aria-pressed={value.guideIds.includes(m.id)} onClick={() => toggleGuide(m.id)} className={`min-h-11 rounded-sm border px-comfortable py-tight text-[13px] md:min-h-9 ${value.guideIds.includes(m.id) ? "border-ember bg-ember/10 text-brand-foreground" : "border-line text-muted"}`}>
+                <button key={m.id} type="button" aria-pressed={value.guideIds.includes(m.id)} onClick={() => toggleGuide(m.id)} className={`min-h-11 rounded-full bg-muted-wash px-comfortable py-tight text-[0.8125rem] md:min-h-9 ${value.guideIds.includes(m.id) ? "font-medium text-fg ring-2 ring-inset ring-ember" : "text-muted hover:text-fg"}`}>
                   {m.name}
                 </button>
               ))}
@@ -234,8 +234,8 @@ export function ScheduleBuilder({
 
       {/* Live preview — the most important element. */}
       {isSlotBased(bookingType) && (
-        <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="type-label text-[12px] text-muted">{t("preview")}</p>
+        <div className="rounded-sm bg-muted-wash p-section">
+          <p className="text-[0.8125rem] font-medium text-muted">{t("preview")}</p>
           <p className="mt-inline text-[13px] tabular-nums">
             {slots.slice(0, 6).map((s) => formatClock(s)).join(" · ")}{slots.length > 6 ? ` … ${formatClock(slots[slots.length - 1])}` : ""}
           </p>
@@ -251,18 +251,18 @@ export function ScheduleBuilder({
         </div>
       )}
       {isDailyCapped(bookingType) && (
-        <div className="rounded-sm border border-inverse bg-card p-section text-[13px] text-muted">
+        <div className="rounded-sm bg-muted-wash p-section text-[0.8125rem] text-muted">
           {t.rich("capacityDay", { visitors: (value.dailyCapacity ?? 0).toLocaleString(), days: openCount, b: (c) => <span className="font-medium text-fg">{c}</span> })}
         </div>
       )}
 
       {/* Days it is closed */}
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-muted">{t("closedDates")}</span>
+        <span className="text-[0.8125rem] font-medium text-muted">{t("closedDates")}</span>
         {value.exceptions.map((e) => {
           const when = formatDay(e.date, { weekday: true });
           return (
-            <div key={e.date} className="flex items-center justify-between rounded-sm border border-line py-inline pl-comfortable pr-inline text-sm">
+            <div key={e.date} className="flex items-center justify-between rounded-sm bg-muted-wash py-inline pl-comfortable pr-inline text-sm">
               <span className="text-[13px]">{when}</span>
               <span className="flex items-center gap-tight">
                 <span className="text-muted">{t("closed")}</span>

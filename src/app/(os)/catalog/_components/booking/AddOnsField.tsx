@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Boxes, Plus, Tag, Trash2 } from "lucide-react";
 import { Button, FormField, Modal, StatusPill } from "@/components/ui";
-import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { formatMoney } from "@/lib/format";
 import { listInventory, type InventoryItemView } from "@/lib/api";
@@ -79,7 +78,7 @@ export function AddOnsField({
   return (
     <div className="flex flex-col gap-tight">
       <div className="flex flex-wrap items-center justify-between gap-tight">
-        <span className="type-label text-[12px] text-muted">{t("title")}</span>
+        <span className="text-base font-semibold text-fg">{t("title")}</span>
         <span className="flex items-center gap-tight">
           <Button size="sm" variant="secondary" icon={<Boxes size={14} strokeWidth={1.5} />} onClick={() => setPicking(true)}>
             {t("fromInventory")}
@@ -89,24 +88,22 @@ export function AddOnsField({
           </Button>
         </span>
       </div>
-      <p className="text-[12px] text-muted">{t("help")}</p>
+      <p className="text-[0.8125rem] text-muted">{t("help")}</p>
 
+      <div className="divide-y divide-hairline">
       {addOns.map((a, i) => {
         const item = a.itemId ? byId.get(a.itemId) : undefined;
         return (
           <div
             key={i}
-            className={cn(
-              "grid grid-cols-1 items-end gap-tight rounded-sm border p-comfortable sm:grid-cols-[1fr_8rem_auto_auto]",
-              item ? "border-line bg-subtle/40" : "border-line",
-            )}
+            className="grid grid-cols-1 items-end gap-tight py-comfortable first:pt-tight sm:grid-cols-[1fr_8rem_auto_auto]"
           >
             {item ? (
               /* A linked extra's name belongs to the item, not to this
                  booking: renaming it here would mean the shelf and the till
                  call the same thing two different things. */
               <span className="flex min-w-0 flex-col gap-inline">
-                {i === 0 && <span className="type-label text-[12px] text-muted">{t("colName")}</span>}
+                {i === 0 && <span className="text-[0.8125rem] font-medium text-muted">{t("colName")}</span>}
                 <span className="flex min-w-0 flex-wrap items-center gap-tight">
                   <Boxes size={14} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
                   <span className="min-w-0 truncate text-[13px] font-medium">{item.name}</span>
@@ -144,13 +141,14 @@ export function AddOnsField({
               type="button"
               aria-label={t("remove", { name: item?.name ?? a.name })}
               onClick={() => onChange(addOns.filter((_, idx) => idx !== i))}
-              className="flex h-11 w-11 items-center justify-center rounded-sm border border-line text-danger md:h-9 md:w-9"
+              className="flex h-11 w-11 items-center justify-center rounded-sm text-danger hover:bg-muted-wash md:h-9 md:w-9"
             >
               <Trash2 size={16} strokeWidth={1.5} />
             </button>
           </div>
         );
       })}
+      </div>
 
       {picking && (
         <Modal open onClose={() => setPicking(false)} size="sm" title={t("pickTitle")} description={t("pickHelp")}>

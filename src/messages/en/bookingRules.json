@@ -16,7 +16,6 @@
   "allStatuses": "All statuses",
   "statusActive": "In use",
   "statusInactive": "Not in use",
-  "statusArchived": "Archived",
   "emptyTitle": "No booking rules",
   "emptyMessage": "Rules for max people and slot length will show here.",
   "newRule": "New rule",

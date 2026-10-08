@@ -79,13 +79,13 @@ export function DurationEngineField({
         <DurationInput label={t("step")} value={value.incrementMinutes} min={5} step={5} onChange={(n) => set("incrementMinutes", n)} chips={[15, 30, 60]} />
       </div>
       {err ? (
-        <p className="rounded-sm border border-danger bg-danger/5 px-comfortable py-tight text-[13px] text-danger">{err}</p>
+        <p className="rounded-sm bg-danger-wash px-comfortable py-tight text-[0.8125rem] text-danger">{err}</p>
       ) : (
         <p className="text-[13px] text-muted">{t("lengths", { list: options.map(dur).join(" · ") })}</p>
       )}
 
       <div className="flex flex-col gap-tight">
-        <span className="type-label text-[12px] text-muted">{t("modelTitle")}</span>
+        <span className="text-[0.8125rem] font-medium text-muted">{t("modelTitle")}</span>
         <div className="flex flex-wrap gap-tight">
           {MODELS.map((m) => {
             const on = value.pricingModel === m;
@@ -95,10 +95,10 @@ export function DurationEngineField({
                 type="button"
                 aria-pressed={on}
                 onClick={() => set("pricingModel", m)}
-                className={`flex min-h-11 flex-col items-start rounded-sm border px-comfortable py-tight text-left ${on ? "border-inverse bg-inverse text-inverse-fg" : "border-line bg-card"}`}
+                className={`flex min-h-11 flex-col items-start rounded-sm bg-muted-wash px-comfortable py-tight text-left transition-shadow duration-quick ${on ? "ring-2 ring-inset ring-ember" : "hover:ring-2 hover:ring-inset hover:ring-ember/30"}`}
               >
                 <span className="text-sm font-medium">{t(`model.${m}.title`)}</span>
-                <span className={`text-[12px] ${on ? "opacity-70" : "text-muted"}`}>{t(`model.${m}.helper`)}</span>
+                <span className="text-[0.8125rem] text-muted">{t(`model.${m}.helper`)}</span>
               </button>
             );
           })}
@@ -120,7 +120,7 @@ export function DurationEngineField({
       {value.pricingModel === "list" && !err && (
         <div className="flex flex-col gap-tight">
           <div className="flex items-center justify-between">
-            <span className="type-label text-[12px] text-muted">{t("listTitle")}</span>
+            <span className="text-[0.8125rem] font-medium text-muted">{t("listTitle")}</span>
             <button type="button" onClick={fillFromHourly} className="min-h-11 text-[13px] text-brand-foreground hover:underline md:min-h-0">{t("fillFromHourly")}</button>
           </div>
           <div className="grid gap-tight sm:grid-cols-3">
@@ -147,20 +147,20 @@ export function DurationEngineField({
       {value.pricingModel !== "list" && !err && options.length > 0 && (
         <div className="flex flex-col gap-tight">
           <div className="flex flex-wrap items-baseline justify-between gap-tight">
-            <span className="type-label text-[12px] text-muted">{t("dealsTitle")}</span>
+            <span className="text-[0.8125rem] font-medium text-muted">{t("dealsTitle")}</span>
             {dealCount > 0 && (
               <button type="button" onClick={() => set("priceOverrides", undefined)} className="min-h-11 text-[13px] text-brand-foreground hover:underline md:min-h-0">
                 {t("clearDeals", { count: dealCount })}
               </button>
             )}
           </div>
-          <p className="text-[12px] text-muted">{t("dealsHelp")}</p>
+          <p className="text-[0.8125rem] text-muted">{t("dealsHelp")}</p>
           <div className="grid gap-tight sm:grid-cols-2 lg:grid-cols-3">
             {options.map((d) => {
               const formula = formulaPrice(value, d);
               const deal = isDealDuration(value, d);
               return (
-                <div key={d} className={`flex items-center gap-comfortable rounded-sm border p-comfortable ${deal ? "border-ember bg-ember/5" : "border-line"}`}>
+                <div key={d} className={`flex items-center gap-comfortable rounded-sm bg-muted-wash p-comfortable ${deal ? "ring-2 ring-inset ring-ember" : ""}`}>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="text-sm font-medium">{dur(d)}</span>
                     <span className={`font-mono text-[12px] ${deal ? "text-muted line-through" : "text-muted"}`}>
@@ -219,7 +219,7 @@ export function DurationEngineField({
       {/* The mandatory preview — concrete numbers before saving. */}
       {!err && options.length > 0 && (
         <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="type-label text-[12px] text-muted">{t("preview")}</p>
+          <p className="text-[0.8125rem] font-medium text-muted">{t("preview")}</p>
           <p className="mt-inline text-[13px] tabular-nums">
             {options.map((d, i) => (
               <span key={d}>

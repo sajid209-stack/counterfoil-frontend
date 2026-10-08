@@ -70,7 +70,7 @@ export function NotesCard({ customer, onChanged }: { customer: Customer; onChang
           aria-describedby="note-help"
           placeholder={t("addNote")}
           className={cn(
-            "w-full resize-y rounded-sm border bg-card px-comfortable py-tight text-sm outline-none transition-colors duration-quick placeholder:text-faint",
+            "w-full resize-y rounded-sm border bg-card px-comfortable py-tight text-sm outline-none transition-colors duration-quick placeholder:text-muted",
             error ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
           )}
         />
@@ -83,7 +83,10 @@ export function NotesCard({ customer, onChanged }: { customer: Customer; onChang
           <p id="note-help" className="min-w-0 flex-1 basis-48 text-[0.8125rem] text-muted">
             {t("noteHelp")}
           </p>
-          <Button onClick={add} loading={saving}>
+          {/* A secondary button: this page has no primary action, and a solid
+              orange Save beside a note field made the least important thing on
+              it the loudest. */}
+          <Button variant="secondary" onClick={add} loading={saving}>
             {t("saveNote")}
           </Button>
         </div>

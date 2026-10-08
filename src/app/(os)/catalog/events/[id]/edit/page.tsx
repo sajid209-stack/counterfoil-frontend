@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Button, EmptyState, PageShell, Tabs, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 import { eventChannels, getEvent, listLocations, updateEvent, type Channel, type EventCustomisation, type EventRecord, type EventTier } from "@/lib/api";
 import { categoryById } from "@/lib/events/catalog";
 import { WhereSold } from "../../../_components/WhereSold";
@@ -56,6 +57,7 @@ function Editor({ event }: { event: EventRecord }) {
   const router = useRouter();
   const toast = useToast();
   const now = useMemo(() => demoNow(), []);
+  const wide = useMediaQuery(MD);
   const labels = useTemplateLabels(event.categoryId);
   const [tab, setTab] = useState<"details" | "page" | "tickets">("details");
   const [saving, setSaving] = useState(false);
@@ -204,14 +206,18 @@ function Editor({ event }: { event: EventRecord }) {
       title={tc("title", { title: event.title })}
       description={tc("description")}
       back={{ href: `/catalog/events/${event.id}`, label: event.title }}
+      /* A phone has its Save pinned at the foot instead of behind the bar's
+         "..." — the one thing this screen is for must not need a second tap. */
       actions={
-        <div className="flex gap-tight">
-          <Button variant="secondary" disabled={saving} onClick={() => router.push(`/catalog/events/${event.id}`)}>{tc("cancel")}</Button>
-          <Button loading={saving} onClick={save}>{tc("save")}</Button>
-        </div>
+        wide ? (
+          <div className="flex gap-tight">
+            <Button variant="secondary" disabled={saving} onClick={() => router.push(`/catalog/events/${event.id}`)}>{tc("cancel")}</Button>
+            <Button loading={saving} onClick={save}>{tc("save")}</Button>
+          </div>
+        ) : undefined
       }
     >
-      <div className={cn("flex flex-col gap-section pb-hero", templateFontVars)}>
+      <div className={cn("flex flex-col gap-section pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-hero", templateFontVars)}>
         <Tabs
           items={[
             { value: "details", label: tc("tabDetails") },
@@ -272,6 +278,12 @@ function Editor({ event }: { event: EventRecord }) {
           </div>
         )}
       </div>
+      {!wide && (
+        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-tight bg-chrome px-gutter pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-tight shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.18)]">
+          <Button variant="secondary" disabled={saving} onClick={() => router.push(`/catalog/events/${event.id}`)}>{tc("cancel")}</Button>
+          <Button loading={saving} onClick={save} className="flex-1 justify-center">{tc("save")}</Button>
+        </div>
+      )}
     </PageShell>
   );
 }

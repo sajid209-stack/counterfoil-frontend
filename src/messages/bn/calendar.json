@@ -36,7 +36,6 @@
   "filtersActive": "ফিল্টার ({count})",
   "showEmptyLanes": "{count}টি খালি সারি দেখান",
   "hideEmptyLanes": "খালি সারি লুকান",
-  "nowLabel": "এখন",
   "noMatch": "এই ফিল্টারে কোনো বুকিং নেই।",
   "noMatchHint": "ফিল্টার বদলান, বা সব দেখতে ফিল্টার মুছুন।",
   "peekHint": "আরও দেখতে ক্লিক করুন",
@@ -184,7 +183,6 @@
   "holdPlace": "স্থান হোল্ড করা",
   "holdSeatsHeld": "{count}টি সিট হোল্ড করা",
   "holdSpacesHeld": "{count}টি জায়গা হোল্ড করা",
-  "keyMarketplace": "মার্কেটপ্লেস",
   "bookedOn": "{name}-এ বুক করা",
   "bookedOnRef": "{name}-এ বুক করা · {reference}",
   "commission": "{name} নেয় {pct} · {amount}",
@@ -193,5 +191,11 @@
   "sourceDirect": "সরাসরি",
   "sourceMarket": "মার্কেটপ্লেস",
   "detailSource": "বিক্রি হয়েছে",
-  "detailCommission": "ফি"
+  "detailCommission": "ফি",
+  "secStatus": "অবস্থা",
+  "secBooking": "বুকিং",
+  "secPlace": "জায়গা",
+  "statusNone": "কিছুই দেখানো হচ্ছে না",
+  "statusShown": "{total}টির মধ্যে {count}টি দেখানো হচ্ছে",
+  "secSource": "যেভাবে বিক্রি"
 }

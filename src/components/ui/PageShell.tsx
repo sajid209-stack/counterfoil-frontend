@@ -1,10 +1,11 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { ArrowLeft, ChevronLeft, MoreHorizontal, Plus } from "lucide-react";
 import { MD, useMediaQuery } from "@/lib/useMedia";
 import { cn } from "@/lib/cn";
 import { useBarTitle } from "@/lib/barTitle";
@@ -16,9 +17,10 @@ import { Button, type ButtonProps } from "./Button";
  * Separate from `actions` because the two want different room. On a phone a
  * full-width "Add to your catalog" is 151px of a 358px line, on a page that
  * already spends 451px before its first row — so the primary moves into the
- * top bar as a plus, beside the account button, and its words become its
- * accessible name. Secondary controls stay on the page, which is
- * `overflow-menu`: cram nothing into a bar that cannot hold it.
+ * top bar as an ink plus, and its words become its accessible name. The page's
+ * other `actions` go behind a round "⋯" beside it (`PhoneActions`), which is
+ * Shopify admin mobile's header exactly: the one thing you came to do, and the
+ * rest one tap away. Nothing is crammed into a bar that cannot hold it.
  *
  * A page declares it rather than PageShell guessing which of its buttons is
  * the important one.
@@ -53,6 +55,44 @@ export interface PagePrimary {
 // places depending on how much room the viewport has.
 /** A store that never changes: subscribing to it is a no-op. */
 const noSubscribe = () => () => {};
+
+/**
+ * Is the phone bar's back slot there to be used?
+ *
+ * One rule for every record page on a phone (Shopify admin mobile's): a page
+ * that has a way back shows it as an arrow at the left of the top bar, to that
+ * same href, and does NOT draw it again in the page. From md the bar has no
+ * arrow and the page draws its own link. A page rendered outside the OS shell
+ * has no bar, so its link stays in the page.
+ */
+export function useBackInBar(): boolean {
+  const wide = useMediaQuery(MD);
+  const slot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-back-mobile"), () => null);
+  return !wide && !!slot;
+}
+
+/**
+ * The phone bar's back arrow, portalled into the slot OsShell leaves at the left
+ * of the bar. While it is there the bar's own page glyph (or the settings
+ * section chevron) steps aside — the arrow takes that place.
+ */
+export function BarBack({ href, label }: { href: string; label: string }) {
+  const t = useTranslations("nav");
+  const wide = useMediaQuery(MD);
+  const slot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-back-mobile"), () => null);
+  if (wide || !slot) return null;
+  return createPortal(
+    <Link
+      href={href}
+      aria-label={t("backTo", { label })}
+      data-bar-back
+      className="-ml-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-fg/[0.06] active:bg-fg/[0.08]"
+    >
+      <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
+    </Link>,
+    slot,
+  );
+}
 
 /**
  * The desktop create button, for a page to place in its own toolbar.
@@ -145,6 +185,80 @@ export function PageToolbar({
   );
 }
 
+/**
+ * A page's secondary actions on a phone: a round "⋯" in the top bar that opens
+ * them in a small panel under it.
+ *
+ * `actions` is a ReactNode — a Save button, a Print button, an `ActionMenu` —
+ * not a list of menu items, so it cannot be re-skinned as one. It is rendered
+ * as it came, in a panel the bar's button opens, and the panel is deliberately
+ * NOT a clipping scroller: an `ActionMenu` inside it opens its own absolutely
+ * positioned list, and a sheet with `overflow` would cut that in half.
+ *
+ * The panel closes behind any press of a button or link inside it, except the
+ * ones that open something of their own (`aria-haspopup`): the action has
+ * already run by the time the click reaches here, and its dialog lives in the
+ * page, not in this panel. Escape and a tap outside close it too.
+ */
+function PhoneActions({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("nav");
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      btn.current?.focus();
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrap} className="relative">
+      <button
+        ref={btn}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label={t("pageActions")}
+        aria-haspopup="true"
+        aria-expanded={open}
+        data-page-actions-toggle
+        className={cn(
+          "flex h-11 w-11 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-fg/[0.06] active:bg-fg/[0.08]",
+          open && "bg-fg/[0.07]",
+        )}
+      >
+        <MoreHorizontal size={22} strokeWidth={1.75} aria-hidden />
+      </button>
+      {open && (
+        <div
+          role="group"
+          aria-label={t("pageActions")}
+          data-page-actions
+          onClick={(e) => {
+            const hit = (e.target as HTMLElement).closest("button, a");
+            if (hit && !hit.hasAttribute("aria-haspopup")) setOpen(false);
+          }}
+          className="absolute -right-1 top-[calc(100%+4px)] z-50 flex w-max max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-tight rounded-md border border-line bg-card p-comfortable shadow-lg"
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PageShell({
   title,
   description,
@@ -201,10 +315,16 @@ export function PageShell({
   const slot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-header"), () => null);
   const barSlot = useSyncExternalStore(noSubscribe, () => document.getElementById("os-page-actions-mobile"), () => null);
 
+  /* A phone does not have room for a page's buttons beside its title, so they
+     go behind the bar's round "⋯" — but only when there IS a bar to put it in:
+     a PageShell rendered outside the OS shell keeps them in the page. */
+  const phoneOverflow = !wide && !!barSlot && !!actions;
+  const backInBar = useBackInBar();
   /* A header row exists for a RECORD: a way back, a state. A list or a
      dashboard has no row — its buttons are in its toolbar. (`actions` alone
-     still draws one, for pages not yet moved; see the prop's note.) */
-  const hasRow = !!(back || status || actions);
+     still draws one, for pages not yet moved; see the prop's note.) On a phone
+     the row keeps only the way back and the state; the actions are in the bar. */
+  const hasRow = !!((back && !backInBar) || status || (actions && !phoneOverflow));
   const icon = primary?.icon ?? <Plus size={16} strokeWidth={1.75} />;
   /* Desktop, on a record page: the words, because there is room for them and a
      labelled button is always the better one. A list's own copy is
@@ -220,16 +340,20 @@ export function PageShell({
       {primary.label}
     </Button>
   );
-  /* Phone: the glyph, in the bar, with the words as its name. 44px, and the
-     same corner as the account button it sits beside, so the two read as one
-     pair rather than two unrelated controls. */
+  /* Phone: the glyph, in the bar, with the words as its name — a compact ink
+     disc with a plus, the way Shopify admin mobile draws its one create action.
+     The target is 44px; the disc inside it is 36. */
   const narrowPrimary = primary
     ? (() => {
         const cls = cn(
-          "flex h-11 w-11 items-center justify-center rounded-sm bg-ember-solid text-white transition-opacity duration-quick active:opacity-80",
+          "flex h-11 w-11 items-center justify-center rounded-full transition-opacity duration-quick active:opacity-80",
           primary.disabled && "pointer-events-none opacity-40",
         );
-        const body = <Plus size={20} strokeWidth={2} aria-hidden />;
+        const body = (
+          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-inverse text-inverse-fg">
+            {primary.icon ?? <Plus size={18} strokeWidth={2} />}
+          </span>
+        );
         return primary.href && !primary.disabled ? (
           <Link href={primary.href} aria-label={primary.label} className={cls}>
             {body}
@@ -283,8 +407,17 @@ export function PageShell({
       {/* Desktop: the title portals into the sticky bar. Below md they render
           here instead — one copy, either way. */}
       {wide && slot && createPortal(headerText, slot)}
-      {/* The plus lives in the phone's bar, beside the account button. */}
-      {!wide && narrowPrimary && barSlot && createPortal(narrowPrimary, barSlot)}
+      {/* The plus and the "⋯" live in the phone's bar, at the right of the page's
+          name. */}
+      {!wide && (narrowPrimary || phoneOverflow) && barSlot &&
+        createPortal(
+          <>
+            {narrowPrimary}
+            {phoneOverflow && <PhoneActions>{actions}</PhoneActions>}
+          </>,
+          barSlot,
+        )}
+      {back && <BarBack href={back.href} label={back.label} />}
       {/* Phone: the heading, unless the bar already said it. */}
       {!wide && <div className={echoesBar ? "max-sm:sr-only" : undefined}>{headerText}</div>}
       {/* The header row — a RECORD page only. A way back and the record's
@@ -296,9 +429,9 @@ export function PageShell({
           data-page-row={back || status ? "record" : "legacy"}
           className={cn("flex flex-wrap items-center justify-between gap-x-major gap-y-tight", afterHeading)}
         >
-          {(back || status) && (
+          {((back && !backInBar) || status) && (
             <div className="flex min-w-0 flex-wrap items-center gap-x-major gap-y-tight">
-              {back && (
+              {back && !backInBar && (
                 <Link href={back.href} className="-ml-tight inline-flex min-h-11 items-center gap-inline rounded-sm px-tight text-[13px] text-muted hover:text-fg md:min-h-9">
                   <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {back.label}
                 </Link>
@@ -306,9 +439,9 @@ export function PageShell({
               {status}
             </div>
           )}
-          {(actions || (wide && widePrimary)) && (
+          {((actions && !phoneOverflow) || (wide && widePrimary)) && (
             <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-tight max-md:ml-0 max-md:w-full max-md:justify-start">
-              {actions}
+              {!phoneOverflow && actions}
               {wide && widePrimary}
             </div>
           )}

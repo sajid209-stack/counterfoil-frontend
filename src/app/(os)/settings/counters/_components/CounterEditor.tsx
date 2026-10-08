@@ -38,7 +38,7 @@ const fromCounter = (c: Counter): Draft => ({
 });
 
 const chip =
-  "inline-flex min-h-11 items-center rounded-full border border-line px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
+  "inline-flex min-h-11 items-center rounded-full bg-muted-wash/70 px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
 const quiet =
   "inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9";
 
@@ -219,11 +219,9 @@ export function CounterEditor({
       </SettingsSection>
 
       <SettingsSection title={t("counters.sellsTitle")} description={t("counters.sellsDesc")}>
-        <SettingRow label={t("counters.sellAll")} description={t("counters.sellAllDesc")} labelFor={false}>
+        <SettingRow label={t("counters.sellAll")} description={t("counters.sellAllDesc")} labelFor={false} trailing>
           {({ labelId, describedBy }) => (
-            <div className="flex sm:justify-end">
-              <Switch checked={form.allowAll} onChange={(on) => set({ allowAll: on })} labelledBy={labelId} describedBy={describedBy} />
-            </div>
+            <Switch checked={form.allowAll} onChange={(on) => set({ allowAll: on })} labelledBy={labelId} describedBy={describedBy} />
           )}
         </SettingRow>
         {!form.allowAll && (
@@ -258,8 +256,8 @@ export function CounterEditor({
                           <label
                             key={p.id}
                             className={cn(
-                              "inline-flex min-h-11 max-w-full cursor-pointer items-center gap-tight rounded-full border px-comfortable py-inline text-[13px] transition-colors duration-quick md:min-h-9",
-                              checked ? "border-ember-solid bg-ember/5 text-fg" : "border-line text-muted hover:bg-muted-wash",
+                              "inline-flex min-h-11 max-w-full cursor-pointer items-center gap-tight rounded-full px-comfortable py-inline text-[13px] transition-colors duration-quick md:min-h-9",
+                              checked ? "bg-ember/10 text-fg" : "bg-muted-wash/70 text-muted hover:bg-muted-wash",
                             )}
                           >
                             <input

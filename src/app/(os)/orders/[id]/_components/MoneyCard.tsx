@@ -49,12 +49,16 @@ export function MoneyCard({
   due,
   methods,
   onCollect,
+  hideLead = false,
   className,
 }: {
   o: Order;
   due: number;
   methods: PaymentMethod[];
   onCollect: (method: PaymentMethod, amount: number) => Promise<boolean>;
+  /** Leave the big figure out — on a phone the card above already says it, and
+   *  a second "Still due ৳460.00" two inches below the first is just noise. */
+  hideLead?: boolean;
   className?: string;
 }) {
   const t = useTranslations("orders.money");
@@ -76,12 +80,13 @@ export function MoneyCard({
   return (
     <Section title={t("title")} className={className} id="order-money">
       {/* The lead figure. */}
+      {!hideLead && (
       <div className="mb-section">
         <p className="text-[13px] font-medium text-muted">{due > 0 ? t("stillDue") : voided ? t("nothingDue") : t("paid")}</p>
         <p
           data-figure={due > 0 ? "due" : "paid"}
           data-amount={due > 0 ? due : paid}
-          className={cn("mt-inline text-3xl font-semibold leading-tight tabular-nums", due > 0 && "text-warning", voided && due === 0 && "text-muted")}
+          className={cn("mt-inline text-[1.75rem] font-semibold leading-tight tabular-nums", due > 0 && "text-warning", voided && due === 0 && "text-muted")}
         >
           {formatMoney(due > 0 ? due : paid)}
         </p>
@@ -92,8 +97,9 @@ export function MoneyCard({
           </p>
         )}
       </div>
+      )}
 
-      <dl className="border-t border-line pt-tight text-[13px]">
+      <dl className={cn("pt-tight text-[0.8125rem]", !hideLead && "border-t border-hairline")}>
         {row("total", t("total"), formatMoney(o.total))}
         {row("captured", t("captured"), formatMoney(captured))}
         {since > 0 && row("since", t("since"), formatMoney(since))}
@@ -141,7 +147,7 @@ function CollectForm({ due, methods, onCollect }: { due: number; methods: Paymen
         e.preventDefault();
         void submit();
       }}
-      className="mt-section border-t border-line pt-section"
+      className="mt-section border-t border-hairline pt-section"
     >
       <h3 className="mb-tight text-base font-semibold text-fg" id="collect-title">{t("collect")}</h3>
 

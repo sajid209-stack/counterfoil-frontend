@@ -3,10 +3,12 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Info } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Button, Sheet } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatDay, formatMoney } from "@/lib/format";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 import type { FinanceExtras, FinanceSummary } from "@/lib/api";
+import { MetricStrip, type Metric } from "../../dashboard/_components/MetricStrip";
 
 /**
  * The top of Finances: ONE row of four compact tiles, each a label, a figure
@@ -17,6 +19,14 @@ import type { FinanceExtras, FinanceSummary } from "@/lib/api";
  *
  * 2 x 2 below 1280px, 1 x 4 from there. The two period tiles cover the
  * activity table's date range, so they and the table cannot disagree.
+ *
+ * **A phone gets a different shape, not a squeezed one:** the four balances as
+ * a row of compact cards that scroll sideways (the way the dashboard's
+ * figures do), and Withdraw and Deposit as one pair of buttons under it that
+ * are always on screen. The tiles were 298px of a phone with the buttons buried
+ * inside two of them; this is ~170px and the two actions are the first things
+ * a thumb finds. The detail behind an "i" opens as a sheet, because a popover
+ * inside a sideways scroller is clipped by it.
  */
 export function Balances({
   summary,
@@ -35,6 +45,7 @@ export function Balances({
   onDeposit: () => void;
 }) {
   const t = useTranslations("finances");
+  const wide = useMediaQuery(MD);
   const reasonId = useId();
   const available = summary?.available ?? 0;
   const owing = available < 0;
@@ -75,28 +86,94 @@ export function Balances({
           : t("withdrawn.split", { auto: formatMoney(p.payouts), byYou: formatMoney(p.withdrawn) });
   const depositedLine = !p ? "" : p.deposits === 0 ? t("deposited.none") : t("deposited.count", { count: p.deposits });
 
+  // What the two "i" buttons say - one definition for both shapes.
+  const availableInfo = (
+    <div className="flex flex-col gap-tight">
+      {aboutLine && <p>{aboutLine}</p>}
+      {lastPayout && (
+        <p className="flex flex-wrap items-center gap-x-inline">
+          <span>{t("available.lastPayout", { amount: formatMoney(lastPayout.amount), date: formatDay(lastPayout.date, { weekday: true }) })}</span>
+          <button
+            type="button"
+            data-close
+            onClick={onViewPayouts}
+            className="-my-2 inline-flex h-11 items-center text-[13px] font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80 md:h-9"
+          >
+            {t("available.view")}
+          </button>
+        </p>
+      )}
+    </div>
+  );
+  const unsettledInfo = (
+    <div className="flex flex-col gap-tight">
+      <p>{t("unsettled.info")}</p>
+      <ClearingSchedule extras={extras} />
+    </div>
+  );
+  const unsettledLine = summary ? (summary.clearsBy ? t("unsettled.clearsBy", { date: formatDay(summary.clearsBy, { weekday: true }) }) : t("unsettled.none")) : "";
+
+  if (!wide) {
+    const loading = !summary;
+    const items: Metric[] = [
+      {
+        key: "available",
+        label: t("available.label"),
+        value: loading ? "" : formatMoney(available),
+        tone: owing ? "danger" : undefined,
+        context: summary ? nextLine : undefined,
+        contextTone: owing ? "font-medium text-danger" : undefined,
+        action: hasBalanceInfo ? <PhoneInfo label={t("available.infoLabel")}>{availableInfo}</PhoneInfo> : undefined,
+      },
+      {
+        key: "unsettled",
+        label: t("unsettled.label"),
+        value: loading ? "" : formatMoney(summary?.unsettled ?? 0),
+        context: unsettledLine,
+        action: <PhoneInfo label={t("unsettled.infoLabel")}>{unsettledInfo}</PhoneInfo>,
+      },
+      {
+        key: "withdrawn",
+        label: t("withdrawn.label"),
+        value: loading ? "" : formatMoney(p?.paidOut ?? 0),
+        context: summary ? `${periodLabel} · ${withdrawnLine}` : undefined,
+      },
+      {
+        key: "deposited",
+        label: t("deposited.label"),
+        value: loading ? "" : formatMoney(p?.deposited ?? 0),
+        context: summary ? `${periodLabel} · ${depositedLine}` : undefined,
+      },
+    ];
+    return (
+      <div className="flex flex-col gap-tight">
+        <MetricStrip grid items={items} loading={loading} label={t("balances")} />
+        {/* The two actions are not behind a scroll: they are what a thumb came
+            for. The one that fixes the balance, if it is below zero, leads. */}
+        <div className="grid grid-cols-2 gap-tight">
+          <Button variant={canWithdraw ? "primary" : "secondary"} disabled={!canWithdraw} onClick={onWithdraw} title={reason || undefined} aria-describedby={reason ? reasonId : undefined}>
+            {t("available.withdraw")}
+          </Button>
+          <Button variant={owing ? "primary" : "secondary"} disabled={!summary} onClick={onDeposit}>
+            {t("available.deposit")}
+          </Button>
+        </div>
+        {reason && (
+          <p id={reasonId} className="text-[12px] text-muted">
+            {reason}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-2 gap-tight md:gap-section xl:grid-cols-4">
-      {/* Available balance: the one tile with an accent. */}
-      <Tile labelId="fin-available" label={t("available.label")} accent>
+      {/* Available balance */}
+      <Tile labelId="fin-available" label={t("available.label")}>
         {hasBalanceInfo && (
           <TileInfo label={t("available.infoLabel")} align="left">
-            <div className="flex flex-col gap-tight">
-                {aboutLine && <p>{aboutLine}</p>}
-                {lastPayout && (
-                  <p className="flex flex-wrap items-center gap-x-inline">
-                    <span>{t("available.lastPayout", { amount: formatMoney(lastPayout.amount), date: formatDay(lastPayout.date, { weekday: true }) })}</span>
-                    <button
-                      type="button"
-                      data-close
-                      onClick={onViewPayouts}
-                      className="-my-2 inline-flex h-11 items-center text-[13px] font-medium text-brand-foreground underline underline-offset-2 hover:opacity-80 md:h-9"
-                    >
-                      {t("available.view")}
-                    </button>
-                  </p>
-                )}
-              </div>
+            {availableInfo}
           </TileInfo>
         )}
         <Figure value={summary ? available : undefined} danger={owing} live />
@@ -106,13 +183,10 @@ export function Balances({
       {/* Unsettled funds */}
       <Tile labelId="fin-unsettled" label={t("unsettled.label")}>
         <TileInfo label={t("unsettled.infoLabel")} align="right">
-          <div className="flex flex-col gap-tight">
-            <p>{t("unsettled.info")}</p>
-            <ClearingSchedule extras={extras} />
-          </div>
+          {unsettledInfo}
         </TileInfo>
         <Figure value={summary?.unsettled} />
-        <Line>{summary ? (summary.clearsBy ? t("unsettled.clearsBy", { date: formatDay(summary.clearsBy, { weekday: true }) }) : t("unsettled.none")) : ""}</Line>
+        <Line>{unsettledLine}</Line>
       </Tile>
 
       {/* Withdrawn: what went to the bank in the table's dates, and the button that sends more. */}
@@ -157,14 +231,9 @@ export function Balances({
 
 /** One tile: a grid so a button can sit beside the label on a wide tile and
  *  under everything, full width, on a phone. Children place themselves. */
-function Tile({ labelId, label, accent, children }: { labelId: string; label: string; accent?: boolean; children: React.ReactNode }) {
+function Tile({ labelId, label, children }: { labelId: string; label: string; children: React.ReactNode }) {
   return (
-    <section aria-labelledby={labelId} className="card-surface relative grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto_auto_1fr] items-center p-card">
-      {accent && (
-        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[12px]">
-          <span className="absolute inset-x-0 top-0 h-[3px] bg-ember-solid" />
-        </span>
-      )}
+    <section aria-labelledby={labelId} className="group card-surface relative grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto_auto_1fr] items-center p-card">
       <h2 id={labelId} className="col-start-1 row-start-1 text-[13px] font-medium leading-[18px] text-muted">
         {label}
       </h2>
@@ -235,7 +304,7 @@ function TileInfo({ label, align, children }: { label: string; align: "left" | "
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={() => setOpen((o) => !o)}
-        className="-m-3 flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-colors duration-quick hover:text-fg md:-m-2 md:h-9 md:w-9"
+        className="-m-3 flex h-11 w-11 items-center justify-center rounded-sm text-muted transition-[color,opacity] duration-quick hover:text-fg aria-expanded:opacity-100 md:-m-2 md:h-9 md:w-9 md:opacity-0 md:focus-visible:opacity-100 md:group-hover:opacity-100"
       >
         <Info size={16} strokeWidth={1.5} aria-hidden />
       </button>
@@ -256,6 +325,36 @@ function TileInfo({ label, align, children }: { label: string; align: "left" | "
         </div>
       )}
     </span>
+  );
+}
+
+/** The phone's "i": the same note as the tile's popover, in a sheet. A popover
+ *  inside the sideways scroller would be clipped by it. */
+function PhoneInfo({ label, children }: { label: string; children: React.ReactNode }) {
+  const tc = useTranslations("common");
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        aria-label={label}
+        aria-haspopup="dialog"
+        onClick={() => setOpen(true)}
+        className="-my-3 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-muted active:bg-muted-wash"
+      >
+        <Info size={16} strokeWidth={1.5} aria-hidden />
+      </button>
+      <Sheet open={open} onClose={() => setOpen(false)} title={label} closeLabel={tc("close")}>
+        <div
+          className="p-card text-[13px] leading-snug text-fg"
+          onClick={(e) => {
+            if ((e.target as HTMLElement).closest("[data-close]")) setOpen(false);
+          }}
+        >
+          {children}
+        </div>
+      </Sheet>
+    </>
   );
 }
 

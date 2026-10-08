@@ -61,5 +61,13 @@
   "otherApps": "Other apps",
   "main": "Main menu",
   "version": "Version {version}",
-  "activityLog": "Activity log"
+  "activityLog": "Activity log",
+  "menu": "Menu",
+  "pageActions": "More actions",
+  "settingsExit": "Settings: back to the app",
+  "settingsSections": "Settings sections",
+  "venueCount": "{count, plural, one {# venue} other {# venues}}",
+  "signedInAs": "Signed in as {name}",
+  "signOut": "Sign out",
+  "backTo": "Back to {label}"
 }

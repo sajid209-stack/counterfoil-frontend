@@ -423,7 +423,12 @@ export function packLanes(events: CalEvent[]): { event: CalEvent; lane: number; 
  * and it is texture over the fill rather than instead of it.
  */
 /**
- * Tone → a pale fill, a hairline, and a 3px stripe down the leading edge.
+ * Tone → a pale fill and a 3px stripe down the leading edge. (The calm pass
+ * took the 1px outline off the booked, arrived, no-show and marketplace blocks:
+ * the fill and the stripe already say where a block is and what it is, and a
+ * grid of outlined boxes reads heavier than a grid of tints. The hatched held
+ * and locked blocks keep theirs — texture is their signal, and the line holds
+ * the pattern's edge.)
  *
  * The stripe is what survives at any size. A 30-minute booking in a shared
  * hour is 20px of wash, which at this weight is nearly the card it sits on —
@@ -438,9 +443,9 @@ export function packLanes(events: CalEvent[]): { event: CalEvent; lane: number; 
  * computed.
  */
 export const TONE_CLASS: Record<EventTone, string> = {
-  booked: "bg-ember-wash border-ember/25 border-l-[3px] border-l-ember-solid text-fg",
-  arrived: "bg-success-wash border-success/25 border-l-[3px] border-l-success text-fg",
-  noshow: "bg-muted-wash border-line border-l-[3px] border-l-strong text-muted line-through",
+  booked: "bg-ember-wash border-transparent border-l-[3px] border-l-ember-solid text-fg",
+  arrived: "bg-success-wash border-transparent border-l-[3px] border-l-success text-fg",
+  noshow: "bg-muted-wash border-transparent border-l-[3px] border-l-strong text-muted line-through",
   held: "border-warning/35 border-l-[3px] border-l-warning text-fg bg-warning-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
   locked: "border-danger/35 border-l-[3px] border-l-danger-solid text-fg bg-danger-wash bg-[repeating-linear-gradient(45deg,rgb(0_0_0/0.05),rgb(0_0_0/0.05)_3px,transparent_3px,transparent_7px)]",
 };
@@ -458,7 +463,7 @@ export const TONE_CLASS: Record<EventTone, string> = {
  * (5.9:1). The solid is for the badge, where white text sits on it.
  */
 export const MARKET_CLASS =
-  "bg-market-wash border-market/25 border-l-[3px] border-l-market text-fg";
+  "bg-market-wash border-transparent border-l-[3px] border-l-market text-fg";
 
 /** What a block wears: its status, unless it is a plain booking sold on a
  *  marketplace — then the marketplace's violet. */

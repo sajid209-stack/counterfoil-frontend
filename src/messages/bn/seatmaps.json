@@ -71,11 +71,9 @@
     "title": "সিট বেছে নিন",
     "sold": "বিক্রি হয়ে গেছে",
     "selected": "{count}টি বাছা হয়েছে",
-    "tapToChoose": "সিটে ট্যাপ করে বেছে নিন",
     "screen": "স্ক্রিন",
     "heldFor": "{who}-এর জন্য রাখা",
-    "blocked": "বিক্রির জন্য নয়",
-    "seatWord": "সিট"
+    "blocked": "বিক্রির জন্য নয়"
   },
   "experience": {
     "cinema": "সিনেমা",

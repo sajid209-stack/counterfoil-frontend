@@ -67,7 +67,7 @@ export function PayoutBank() {
           </Button>
         }
       >
-        <div className="border-t border-hairline px-card py-section">
+        <div className="px-card pb-card">
           {d === undefined ? (
             <div className="h-10 animate-pulse rounded-sm bg-line/50" />
           ) : d === null ? (

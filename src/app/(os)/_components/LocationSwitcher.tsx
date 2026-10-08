@@ -23,7 +23,7 @@ import { cn } from "@/lib/cn";
  * It draws nothing at all for an operator with one venue: a chooser with one
  * option is furniture.
  */
-export function LocationSwitcher({ compact = false }: { compact?: boolean }) {
+export function LocationSwitcher({ compact = false, full = false }: { compact?: boolean; full?: boolean }) {
   const t = useTranslations("nav");
   /* Every venue that still exists, not only the ones selling.
      A venue that has stopped selling has not stopped having stock, past orders
@@ -36,7 +36,7 @@ export function LocationSwitcher({ compact = false }: { compact?: boolean }) {
 
   if (locations.length < 2) return null;
 
-  return (
+  const select = (
     <Select
       aria-label={t("venue")}
       value={id}
@@ -49,7 +49,12 @@ export function LocationSwitcher({ compact = false }: { compact?: boolean }) {
       /* The glyph does the naming on a phone, where the bar has room for a
          venue name and not for a label in front of it. */
       icon={<MapPin size={15} strokeWidth={1.75} aria-hidden />}
-      triggerClassName={cn("min-w-0", compact ? "max-w-[9rem] text-[0.8125rem]" : "max-w-[13rem]")}
+      /* On a desktop the control is as wide as the venue's name: the bar has
+         plenty of room, and "Ahsan Manzil Mus..." beside an empty bar read as
+         a fault. The cap is what makes it truncate, and it is a share of the
+         window so a narrow one gives up the name before it gives up the title. */
+      className={full ? "w-full" : compact ? undefined : "w-max max-w-[min(24rem,34vw)]"}
+      triggerClassName={cn("min-w-0", full ? "w-full" : compact && "max-w-[9rem] text-[0.8125rem]")}
       options={locations.map((l) => ({
         value: l.id,
         label: l.name,
@@ -58,5 +63,16 @@ export function LocationSwitcher({ compact = false }: { compact?: boolean }) {
         note: l.status === "active" ? undefined : t("venueNotSelling"),
       }))}
     />
+  );
+
+  /* `full` is the phone's menu sheet: the venue at the top of it, with a label
+     because there is no bar around it to say what the control is. */
+  return full ? (
+    <div>
+      <p className="pb-1 text-[12px] font-medium text-muted">{t("venue")}</p>
+      {select}
+    </div>
+  ) : (
+    select
   );
 }

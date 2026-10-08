@@ -1,9 +1,10 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check, KeyRound, ShieldOff, X } from "lucide-react";
+import { Check, ChevronDown, KeyRound, ShieldOff, X } from "lucide-react";
 import {
   ActionMenu,
   Button,
@@ -35,6 +36,7 @@ import {
 } from "@/lib/api";
 import { useTicketLabels, ticketCards } from "@/app/print/_lib/ticketCards";
 import { useEnumLabels } from "@/lib/labels";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 
 /**
  * One ticket: the entitlement, the tokens that prove it, and what happened at
@@ -54,6 +56,8 @@ import { useEnumLabels } from "@/lib/labels";
 export default function TicketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations("tickets");
+  /* The record's own labels live beside the printed ticket's, in `ticket`. */
+  const tr = useTranslations("ticket");
   const enumL = useEnumLabels();
   const cardLabels = useTicketLabels();
   const toast = useToast();
@@ -67,6 +71,10 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  /* Decided, not hidden with CSS: below md the secondary facts and the two
+     history cards fold, and only the version on screen is in the page. */
+  const wide = useMediaQuery(MD);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const ticketQ = useApiQuery(() => getTicket(id), [id, stamp]);
   const ticket = ticketQ.data;
@@ -229,25 +237,27 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       title={ticket.code}
       description={`${bookingName} · ${ticket.tierName}`}
       back={{ href: `/orders/${ticket.orderId}`, label: order?.reference ?? t("backToOrder") }}
-      actions={
-        <span className="flex items-center gap-tight">
-          {!spent && (
-            <Button
-              icon={<KeyRound size={16} strokeWidth={1.5} />}
-              onClick={() => { setNote(""); setError(""); setDialog("reissue"); }}
-            >
-              {t("reissue")}
-            </Button>
-          )}
-          <ActionMenu items={menu} label={t("rowActions")} />
-        </span>
+      status={
+        <StatusPill tone={ticket.status === "issued" ? "info" : ticket.status === "redeemed" ? "success" : "neutral"}>
+          {enumL.status(ticket.status)}
+        </StatusPill>
       }
+      primary={
+        !spent
+          ? {
+              label: t("reissue"),
+              icon: <KeyRound size={16} strokeWidth={1.5} />,
+              onClick: () => { setNote(""); setError(""); setDialog("reissue"); },
+            }
+          : undefined
+      }
+      actions={<ActionMenu items={menu} label={t("rowActions")} />}
     >
       <div className="flex flex-col gap-section">
         {/* A terminated ticket says so before anything else on the page: every
             figure below it is still true and none of it can be used. */}
         {ticket.terminatedAt && (
-          <div className="flex items-start gap-tight rounded-md border border-danger/40 bg-danger-wash p-card">
+          <div className="flex items-start gap-tight rounded-md bg-danger-wash p-card">
             <ShieldOff size={18} strokeWidth={1.75} aria-hidden className="mt-[2px] shrink-0 text-danger" />
             <div className="min-w-0">
               <p className="text-sm font-semibold">{t("terminatedTitle")}</p>
@@ -259,64 +269,91 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
         <div className="grid gap-section xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="flex min-w-0 flex-col gap-section">
-            {/* What was bought. */}
+            {/* What was bought. The facts a person reads this page for come
+                first and always show; price, channel and issue time fold on a
+                phone. */}
             <section className="card-surface p-card">
-              <div className="flex flex-wrap items-center gap-tight">
-                <StatusPill tone={ticket.status === "issued" ? "info" : ticket.status === "redeemed" ? "success" : "neutral"}>
-                  {enumL.status(ticket.status)}
-                </StatusPill>
-                <span className="text-[13px] text-muted">{t("entitlementNote")}</span>
-              </div>
-
-              <dl className="mt-section grid gap-section sm:grid-cols-2 xl:grid-cols-3">
-                {[
+              <dl className="grid grid-cols-2 gap-x-section gap-y-comfortable sm:gap-y-section xl:grid-cols-3">
+                {([
                   /* What it is. The bar carries the code and the description is
                      screen-reader-only app-wide, so without this the page never
                      said in ink what the ticket was actually for. */
                   { k: "type", v: `${bookingName} · ${ticket.tierName}` },
+                  order?.customerName ? { k: "holder", v: order.customerName } : null,
                   { k: "validFor", v: formatDay(day, { weekday: true }) },
                   /* "0 of 4 used" rather than a status word: a family ticket
                      three-quarters spent is neither issued nor redeemed, and
                      the count is the only honest answer. */
                   { k: "used", v: t("usedOf", { used, total: admits }) },
-                  line ? { k: "faceValue", v: formatMoney(line.unitPrice) } : null,
-                  order ? { k: "channel", v: t(`channel.${order.channel}`) } : null,
-                  order ? { k: "issued", v: formatDateTime(order.createdAt) } : null,
-                  order?.customerName ? { k: "holder", v: order.customerName } : null,
-                ]
-                  .filter(Boolean)
+                  order
+                    ? {
+                        k: "order",
+                        v: (
+                          <Link href={`/orders/${order.id}`} className="inline-flex min-h-11 items-center font-mono text-[14px] font-medium text-brand-foreground hover:underline sm:min-h-0">
+                            {order.reference}
+                          </Link>
+                        ),
+                      }
+                    : null,
+                  ...(wide || moreOpen
+                    ? [
+                        line ? { k: "faceValue", v: formatMoney(line.unitPrice) } : null,
+                        order ? { k: "channel", v: t(`channel.${order.channel}`) } : null,
+                        order ? { k: "issued", v: formatDateTime(order.createdAt) } : null,
+                      ]
+                    : []),
+                ] as ({ k: string; v: ReactNode } | null)[])
+                  .filter((f): f is { k: string; v: ReactNode } => !!f)
                   .map((f) => (
-                    <div key={f!.k} className="flex min-w-0 flex-col gap-inline">
-                      <dt className="text-[12px] font-medium text-muted">{t(`fact.${f!.k}`)}</dt>
-                      <dd className="break-words text-[15px] font-semibold leading-snug">{f!.v}</dd>
+                    <div key={f.k} className={cn("flex min-w-0 flex-col gap-inline", f.k === "type" && "col-span-2 sm:col-span-1")}>
+                      <dt className="text-[12px] font-medium text-muted">{f.k === "order" ? tr("record.order") : t(`fact.${f.k}`)}</dt>
+                      <dd className="break-words text-[15px] font-semibold leading-snug">{f.v}</dd>
                     </div>
                   ))}
               </dl>
+              {!wide && (
+                <button
+                  type="button"
+                  aria-expanded={moreOpen}
+                  onClick={() => setMoreOpen((v) => !v)}
+                  className="mt-comfortable flex min-h-11 items-center gap-inline text-[13px] font-medium text-brand-foreground"
+                >
+                  {moreOpen ? tr("record.fewerDetails") : tr("record.moreDetails")}
+                  <ChevronDown size={16} strokeWidth={1.5} aria-hidden className={cn("transition-transform", moreOpen && "rotate-180")} />
+                </button>
+              )}
             </section>
 
             {/* The tokens. */}
-            <section className="card-surface p-card">
-              <h2 className="text-base font-semibold tracking-[-0.4px]">{t("credentials")}</h2>
+            <section className="card-surface p-card" aria-labelledby="tk-codes">
+              <h2 id="tk-codes" className="text-base font-semibold tracking-[-0.4px]">{t("credentials")}</h2>
               <p className="mt-inline text-[12px] text-muted">{t("credentialsNote")}</p>
               <ul className="mt-comfortable flex flex-col">{creds.map(credRow)}</ul>
             </section>
 
-            {/* What happened at a gate. */}
-            <section className="card-surface p-card">
-              <h2 className="text-base font-semibold tracking-[-0.4px]">{t("history")}</h2>
+            {/* What happened at a gate. Folds on a phone: a count says whether
+                there is anything to open. */}
+            <FoldCard
+              id="tk-history"
+              title={t("history")}
+              summary={tr("record.scanCount", { count: timeline.length })}
+              wide={wide}
+            >
               {timeline.length === 0 ? (
-                <p className="mt-comfortable text-[13px] text-muted">{t("neverScanned")}</p>
+                <p className="text-[13px] text-muted">{t("neverScanned")}</p>
               ) : (
-                <ul className="mt-comfortable flex flex-col">{timeline.map(scanRow)}</ul>
+                <ul className="flex flex-col">{timeline.map(scanRow)}</ul>
               )}
-            </section>
+            </FoldCard>
           </div>
 
-          {/* What the guest is holding. */}
+          {/* What the guest is holding. A heading and the stub on a computer; a
+              fold on a phone, where the stub is a long card at the foot. */}
           <aside className="flex min-w-0 flex-col gap-comfortable">
-            <h2 className="text-base font-semibold tracking-[-0.4px]">{t("preview")}</h2>
-            {card ? <TicketCard data={{ ...card.data, code: active?.code ?? ticket.code }} /> : null}
-            <p className="text-[12px] text-muted">{t("previewNote")}</p>
+            <FoldCard id="tk-preview" title={t("preview")} summary={active?.code ?? ticket.code} wide={wide} bare>
+              {card ? <TicketCard data={{ ...card.data, code: active?.code ?? ticket.code }} /> : null}
+              <p className="mt-comfortable text-[12px] text-muted">{t("previewNote")}</p>
+            </FoldCard>
           </aside>
         </div>
       </div>
@@ -367,4 +404,73 @@ const never = <T,>() => Promise.resolve({ ok: false as const, error: { code: "no
 /** The code a scan was made against, for the history row. */
 function credCodeOf(credentialId: string, creds: TicketCredential[]): string | null {
   return creds.find((c) => c.id === credentialId)?.code ?? null;
+}
+
+/**
+ * A section that is a card on a computer and a labelled fold on a phone.
+ *
+ * `bare` is for content that draws its own surface (the ticket stub): on a
+ * computer it sits under a plain heading, on a phone the fold is the card and
+ * the stub opens beneath it rather than inside it.
+ */
+function FoldCard({
+  id,
+  title,
+  summary,
+  wide,
+  bare = false,
+  children,
+}: {
+  id: string;
+  title: string;
+  summary?: string;
+  wide: boolean;
+  bare?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  if (wide) {
+    return bare ? (
+      <section aria-labelledby={id}>
+        <h2 id={id} className="mb-comfortable text-base font-semibold tracking-[-0.4px]">{title}</h2>
+        {children}
+      </section>
+    ) : (
+      <section className="card-surface p-card" aria-labelledby={id}>
+        <h2 id={id} className="text-base font-semibold tracking-[-0.4px]">{title}</h2>
+        <div className="mt-comfortable">{children}</div>
+      </section>
+    );
+  }
+  const head = (
+    <h2 id={id}>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={`${id}-body`}
+        onClick={() => setOpen((v) => !v)}
+        className="flex min-h-14 w-full items-center gap-tight px-card py-comfortable text-left"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-base font-semibold tracking-[-0.4px]">{title}</span>
+          {summary && <span className="block break-all text-[13px] font-normal text-muted">{summary}</span>}
+        </span>
+        <ChevronDown size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0 text-muted transition-transform", open && "rotate-180")} />
+      </button>
+    </h2>
+  );
+  if (bare) {
+    return (
+      <section>
+        <div className="card-surface">{head}</div>
+        {open && <div id={`${id}-body`} className="mt-tight">{children}</div>}
+      </section>
+    );
+  }
+  return (
+    <section className="card-surface" aria-labelledby={id}>
+      {head}
+      {open && <div id={`${id}-body`} className="border-t border-hairline p-card">{children}</div>}
+    </section>
+  );
 }

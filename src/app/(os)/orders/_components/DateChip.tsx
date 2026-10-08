@@ -6,16 +6,21 @@ import { useTranslations } from "next-intl";
 import { DateRangePicker, formatRange, type RangePreset } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { DEMO_TODAY, PRESETS, presetOf } from "../_lib/filters";
-import { chipBox } from "./FilterChip";
+import { chipBox } from "./chip";
 
 /**
- * The date filter, as a chip like the others.
+ * The date filter, as a chip on a list's toolbar.
  *
  * The app's own `DateRangePicker` does the choosing — named ranges down the
- * side, a two-month calendar beside them — but it always holds a range, and a
- * list starts with none: every date. So this draws the chip itself (**Date**,
- * or **Date: Last 7 days**) and borrows only the panel, which the picker
- * supports for exactly this (`hideTrigger`, `defaultOpen`, `onClose`).
+ * side, a two-month calendar beside them — and this draws the chip itself
+ * (**Date**, or **Date: Last 7 days**) and borrows only the panel, which the
+ * picker supports for exactly this (`hideTrigger`, `defaultOpen`, `onClose`).
+ *
+ * Two kinds of list use it. Orders starts with no range at all — every date —
+ * so the chip says only "Date" and carries a clear button once one is chosen.
+ * Issued orders and Activity always hold a range (their default), so the chip
+ * names it ("Date: Last 30 days") and offers a way back to the default only
+ * once it has been moved off it.
  *
  * Opening and closing is the caller's, which is the one awkward part: the
  * picker closes on a mouse-down outside itself, and the chip is outside it, so
@@ -27,11 +32,15 @@ export function DateChip({
   from,
   to,
   onChange,
+  defaultRange,
   className,
 }: {
   from: string;
   to: string;
   onChange: (from: string, to: string) => void;
+  /** The range the list opens on, where it has one. Absent: the list opens on
+   *  every date, and "no range" is `from === ""`. */
+  defaultRange?: [string, string];
   className?: string;
 }) {
   const t = useTranslations("orders.range");
@@ -39,20 +48,40 @@ export function DateChip({
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const closedAt = useRef(0);
+  /* One set of words for every list that uses the chip: the named ranges and
+     the picker's own labels live in `orders.range`. */
+  const presetNames: Record<string, string> = Object.fromEntries(PRESETS.map((p) => [p.value, t(p.value as "today")]));
+  const labels = {
+    choose: t("choose"),
+    custom: t("custom"),
+    from: t("from"),
+    to: t("to"),
+    apply: t("apply"),
+    cancel: t("cancel"),
+    previousMonth: tc("previousMonth"),
+    nextMonth: tc("nextMonth"),
+    days: (count: number) => t("days", { count }),
+    pickEnd: t("pickEnd"),
+  };
 
   const set = !!(from && to);
+  const atDefault = !!defaultRange && from === defaultRange[0] && to === defaultRange[1];
   const preset = set ? presetOf(from, to) : "any";
-  const named = PRESETS.some((p) => p.value === preset);
-  const presets: RangePreset[] = PRESETS.map((p) => ({ value: p.value, label: t(p.value as "today"), range: p.range }));
-  // Where the calendar opens when nothing is chosen yet: the last month, so the
-  // days people actually ask about are in view.
-  const [d0, d1] = PRESETS[3].range();
+  const named = preset !== "custom" && preset !== "any";
+  const text = !set ? "" : named ? presetNames[preset] : formatRange(from, to);
+  /* Marked as narrowing only when it is: a default range is just where the list
+     starts, and a grey chip there would read as a filter somebody had applied. */
+  const narrowing = set && !atDefault;
+
+  const presets: RangePreset[] = PRESETS.map((p) => ({ value: p.value, label: presetNames[p.value], range: p.range }));
+  /* Where the calendar opens when nothing is chosen yet: the last month, so the
+     days people actually ask about are in view. */
+  const [d0, d1] = defaultRange ?? PRESETS[3].range();
   const value = set ? { preset, from, to } : { preset: "any", from: d0, to: d1 };
-  const text = !set ? "" : named ? t(preset as "today") : formatRange(from, to);
 
   return (
     <div className={cn("relative min-w-0", className)}>
-      <div className={chipBox(set, open)}>
+      <div className={chipBox(narrowing, open)}>
         <button
           ref={trigger}
           type="button"
@@ -78,10 +107,10 @@ export function DateChip({
           </span>
           <ChevronDown size={14} strokeWidth={1.5} aria-hidden className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-180")} />
         </button>
-        {set && (
+        {narrowing && (
           <button
             type="button"
-            onClick={() => onChange("", "")}
+            onClick={() => (defaultRange ? onChange(defaultRange[0], defaultRange[1]) : onChange("", ""))}
             aria-label={tc("clearFilter", { name: t("label") })}
             className="grid w-11 shrink-0 place-items-center rounded-r-sm text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash md:w-9"
           >
@@ -108,22 +137,10 @@ export function DateChip({
               setOpen(false);
               if (refocus) requestAnimationFrame(() => trigger.current?.focus());
             }}
-            labels={{
-              choose: t("choose"),
-              custom: t("custom"),
-              from: t("from"),
-              to: t("to"),
-              apply: t("apply"),
-              cancel: t("cancel"),
-              previousMonth: tc("previousMonth"),
-              nextMonth: tc("nextMonth"),
-              days: (count) => t("days", { count }),
-              pickEnd: t("pickEnd"),
-            }}
+            labels={labels}
           />
         </div>
       )}
     </div>
   );
 }
-

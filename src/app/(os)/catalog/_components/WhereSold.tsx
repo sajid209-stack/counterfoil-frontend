@@ -25,6 +25,7 @@ export function WhereSold({
   onAddLocation,
   error,
   locationsOnlyForCounter = false,
+  hideHeading = false,
 }: {
   counter: boolean;
   online: boolean;
@@ -42,13 +43,16 @@ export function WhereSold({
   /** An event sold only on its own page belongs to no venue of the
    *  operator's; venues matter once a counter sells it. */
   locationsOnlyForCounter?: boolean;
+  /** Where a step title already says "where is it sold", the block's own
+   *  heading would say it twice. It stays for a screen reader. */
+  hideHeading?: boolean;
 }) {
   const showLocations = !locationsOnlyForCounter || counter;
   const t = useTranslations("catalog.wizard");
   return (
     <div className="grid gap-section sm:grid-cols-2">
       <div className="flex flex-col gap-tight">
-        <span className="text-[15px] font-semibold tracking-tight">{t("soldWhere")}</span>
+        <span className={hideHeading ? "sr-only" : "text-base font-semibold text-fg"}>{t("soldWhere")}</span>
         <FormField label={t("atCounter")} variant="toggle" help={counterHelp ?? t("atCounterHelp")} checked={counter} onChange={(e) => onCounter((e.target as HTMLInputElement).checked)} />
         <FormField label={t("online")} variant="toggle" help={onlineHelp} checked={online} onChange={(e) => onOnline((e.target as HTMLInputElement).checked)} />
         {!counter && !online ? (
@@ -62,9 +66,9 @@ export function WhereSold({
       </div>
       {showLocations && (
       <fieldset className="flex min-w-0 flex-col gap-tight" aria-invalid={error ? true : undefined} aria-describedby={error ? "where-loc-error" : undefined}>
-        <legend className="mb-tight text-[15px] font-semibold tracking-tight">{t("locations")}</legend>
+        <legend className="mb-tight text-base font-semibold text-fg">{t("locations")}</legend>
         {locations.length === 0 ? (
-          <div className="rounded-sm border border-dashed border-line px-comfortable py-section text-center">
+          <div className="rounded-sm bg-muted-wash px-comfortable py-section text-center">
             <p className="text-[13px] text-muted">{t("noLocation")}</p>
             {onAddLocation && (
               <Button size="sm" className="mt-tight" icon={<Plus size={14} strokeWidth={1.5} />} onClick={onAddLocation}>{t("addLocationNow")}</Button>

@@ -615,7 +615,7 @@ function DayTrack({
                   <span
                     key={h}
                     aria-hidden
-                    className="pointer-events-none absolute inset-y-0 w-px bg-hairline"
+                    className="pointer-events-none absolute inset-y-0 w-px bg-hairline/60"
                     style={{ left: `${pct(h * 60)}%` }}
                   />
                 ))}

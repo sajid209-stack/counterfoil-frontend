@@ -36,7 +36,7 @@ export function TicketsCard({ tickets, loading, className }: { tickets: Ticket[]
             <li key={tk.id}>
               <Link
                 href={`/tickets/${tk.id}`}
-                className="-mx-inline flex min-h-11 items-center justify-between gap-tight rounded-sm border-b border-line px-inline py-tight text-sm hover:bg-muted-wash"
+                className="-mx-inline flex min-h-11 items-center justify-between gap-tight rounded-sm border-b border-hairline px-inline py-tight text-sm hover:bg-muted-wash"
               >
                 <span className="min-w-0 break-all font-mono text-[12px]">{tk.code}</span>
                 <span className="flex shrink-0 items-center gap-inline">
@@ -70,7 +70,7 @@ export function WriteOffsCard({ o, className }: { o: Order; className?: string }
     <Section title={tw("title")} className={className} id="order-writeoffs">
       <ul>
         {list.map((w, i) => (
-          <li key={i} data-writeoff data-amount={w.amount} className="border-b border-line py-tight text-[13px] first:pt-0 last:border-0 last:pb-0">
+          <li key={i} data-writeoff data-amount={w.amount} className="border-b border-hairline py-tight text-[13px] first:pt-0 last:border-0 last:pb-0">
             <p className="flex items-baseline justify-between gap-tight">
               <span className="font-medium">{label(w.category)}</span>
               <span className="shrink-0 tabular-nums">{formatMoney(w.amount)}</span>
@@ -81,7 +81,7 @@ export function WriteOffsCard({ o, className }: { o: Order; className?: string }
         ))}
       </ul>
       {list.length > 1 && (
-        <p className="mt-tight flex justify-between border-t border-line pt-tight text-[13px] font-medium">
+        <p className="mt-tight flex justify-between border-t border-hairline pt-tight text-[13px] font-medium">
           <span>{tw("total")}</span>
           <span className="tabular-nums">{formatMoney(total)}</span>
         </p>
@@ -100,7 +100,7 @@ export function HistoryCard({ o, className }: { o: Order; className?: string }) 
         <Quiet>{t("noHistory")}</Quiet>
       ) : (
         list.map((h, i) => (
-          <div key={i} className="border-b border-line py-tight text-[13px] first:pt-0 last:border-0 last:pb-0">
+          <div key={i} className="border-b border-hairline py-tight text-[13px] first:pt-0 last:border-0 last:pb-0">
             <p className="break-words">{h.text}</p>
             <p className="mt-inline text-[12px] text-muted">{formatDateTime(h.at)} · {h.who}</p>
           </div>
@@ -127,7 +127,7 @@ export function NotesCard({ o, onAdd, className }: { o: Order; onAdd: (text: str
         <Quiet>{t("noNotes")}</Quiet>
       ) : (
         list.map((n, i) => (
-          <div key={i} className="border-b border-line py-tight text-[13px] first:pt-0 last:border-0">
+          <div key={i} className="border-b border-hairline py-tight text-[13px] first:pt-0 last:border-0">
             <p className="break-words">{n.text}</p>
             <p className="mt-inline text-[12px] text-muted">{formatDateTime(n.at)} · {n.who}</p>
           </div>

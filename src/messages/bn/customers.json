@@ -128,7 +128,6 @@
   "actCall": "ফোন করুন",
   "actSms": "এসএমএস",
   "actEmail": "ইমেইল",
-  "actCopyPhone": "ফোন কপি করুন",
   "copied": "কপি হয়েছে",
   "copy": "কপি",
   "copyFailed": "কপি করা যায়নি। লেখাটি বেছে নিজে কপি করুন।",
@@ -180,5 +179,6 @@
   "noBookings": "এখনো বুকিং নেই",
   "lastBookedToday": "শেষ বুকিং আজ",
   "lastBookedDays": "{days, plural, =1 {শেষ বুকিং গতকাল} other {শেষ বুকিং {days} দিন আগে}}",
-  "lastBookedOn": "শেষ বুকিং {date}"
+  "lastBookedOn": "শেষ বুকিং {date}",
+  "moreActions": "আরও কাজ"
 }

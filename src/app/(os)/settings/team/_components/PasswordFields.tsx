@@ -91,7 +91,7 @@ export function SecretInput({
         spellCheck={false}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
-        className={cn(controlCls(invalid), "pr-12", mono && "font-mono tracking-widest")}
+        className={cn(controlCls(invalid), "pr-12", mono && "font-mono")}
       />
       <button
         type="button"

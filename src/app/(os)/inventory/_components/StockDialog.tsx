@@ -125,7 +125,7 @@ export function StockDialog({
       <div className="flex flex-col gap-comfortable">
         {kept.length > 1 && (
           <label className="flex flex-col gap-inline">
-            <span className="type-label text-[12px] text-muted">{t("dialog.venue")}</span>
+            <span className="text-[0.8125rem] font-medium text-muted">{t("dialog.venue")}</span>
             <Select
               value={locationId}
               onChange={setLocationId}
@@ -138,7 +138,7 @@ export function StockDialog({
 
         {action === "remove" && (
           <div className="flex flex-col gap-inline">
-            <span className="type-label text-[12px] text-muted">{t("dialog.whatHappened")}</span>
+            <span className="text-[0.8125rem] font-medium text-muted">{t("dialog.whatHappened")}</span>
             <div className="flex gap-tight">
               {(["damaged", "lost"] as const).map((k) => (
                 <button
@@ -147,8 +147,8 @@ export function StockDialog({
                   aria-pressed={loss === k}
                   onClick={() => setLoss(k)}
                   className={cn(
-                    "min-h-11 flex-1 rounded-sm border px-comfortable text-[13px] font-medium transition-colors duration-quick md:min-h-9",
-                    loss === k ? "border-inverse bg-inverse text-inverse-fg" : "border-line hover:border-strong",
+                    "min-h-11 flex-1 rounded-sm px-comfortable text-[0.8125rem] font-medium transition-colors duration-quick md:min-h-9",
+                    loss === k ? "bg-inverse text-inverse-fg" : "bg-muted-wash text-fg hover:bg-line",
                   )}
                 >
                   {t(`move.${k}`)}
@@ -182,7 +182,7 @@ export function StockDialog({
             one number an operator can check against the real world, so the
             screen states it rather than making them work it out. */}
         {after !== null && (
-          <p className="rounded-sm bg-subtle px-comfortable py-tight text-[13px]">
+          <p className="rounded-sm bg-muted-wash px-comfortable py-tight text-[0.8125rem]">
             {t("dialog.after", { count: after, unit: item.unit })}
           </p>
         )}

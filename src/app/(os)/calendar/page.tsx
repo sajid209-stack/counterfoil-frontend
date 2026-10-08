@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button, DateField, Select, Tabs, useToast } from "@/components/ui";
 import { PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
@@ -36,6 +36,7 @@ import { MonthGrid } from "./_components/MonthGrid";
 import { EventDetail } from "./_components/EventDetail";
 import { HoldList } from "./_components/HoldList";
 import { EventPeek } from "./_components/EventPeek";
+import { FilterPanel } from "./_components/FilterPanel";
 import { BookingPanel, type BookingRequest, type Carry } from "./_components/BookingPanel";
 import { openHours, openSlotsFor, optionsInHour, sessionLaneId, type OpenSlot } from "./_components/openSlots";
 import {
@@ -294,20 +295,11 @@ export default function CalendarPage() {
      has no session user beyond DEMO_STAFF_ID, and inventing a second name for
      the same actor would put two people in one audit trail. */
   const [acting, setActing] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  /** Closing hands the focus back to the button that opened it — on a phone
-   *  the panel is a dialog, and a dialog that closes onto nothing leaves a
-   *  keyboard at the top of the page. */
-  const closeFilters = () => {
-    setFiltersOpen(false);
-    document.getElementById("calendar-filters-button")?.focus();
-  };
-  /** Only the folded-away selects count towards the badge — the tone toggles
-   *  are on screen saying their own state, so counting them would report a
-   *  filter as hidden while the user is looking straight at it. */
-  const selectFilters = [bookingFilter, ownerFilter, sourceFilter].filter(
-    (v) => v !== "all",
-  ).length;
+  /** How many filters are set — the badge on the Filters button. The state
+   *  toggles count as one: they live in the same panel as the rest now, so
+   *  there is nothing on screen saying their state for the badge to double up. */
+  const selectFilters =
+    [bookingFilter, ownerFilter, sourceFilter].filter((v) => v !== "all").length + (tones.length !== TONES.length ? 1 : 0);
   /* What can be sold from the calendar as it is filtered. Filtered to the
      bowling, the grid shades the hours bowling cannot fill and the panel
      offers bowling — what you are looking at is what you can book. */
@@ -511,16 +503,20 @@ export default function CalendarPage() {
   const rangeLabel = useMemo(() => {
     const fmt = (d: Date, opts: Intl.DateTimeFormatOptions) =>
       new Intl.DateTimeFormat("en-GB", opts).format(d);
+    /* A phone leaves the year off a day or a week: the week strip and the month
+       view say where in the year it is, and the year is what pushed the date
+       row onto a second line. */
+    const year = compact ? {} : { year: "numeric" as const };
     if (view === "day") {
-      return fmt(cursor, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      return fmt(cursor, { weekday: "long", day: "numeric", month: "long", ...year });
     }
     if (view === "week") {
       const end = addDays(wkStart, 6);
       const sameMonth = wkStart.getMonth() === end.getMonth();
-      return `${fmt(wkStart, { day: "numeric", ...(sameMonth ? {} : { month: "short" }) })} – ${fmt(end, { day: "numeric", month: "short", year: "numeric" })}`;
+      return `${fmt(wkStart, { day: "numeric", ...(sameMonth ? {} : { month: "short" }) })} – ${fmt(end, { day: "numeric", month: "short", ...year })}`;
     }
     return fmt(cursor, { month: "long", year: "numeric" });
-  }, [view, cursor, wkStart]);
+  }, [view, cursor, wkStart, compact]);
 
   /** Where a booking leads once you have decided it is the one you wanted.
    *  A hold leads nowhere: everything it can do, it does in the panel. */
@@ -800,72 +796,6 @@ export default function CalendarPage() {
     bookingsQ.reload();
   };
 
-  /** The key IS the filter: each chip says what its colour means, how many
-   *  are in view, and switches that state off when tapped. Drawing a legend
-   *  and a filter separately would state the same five words twice. */
-  const toneKey = TONES.map((tone) => {
-    const on = tones.includes(tone);
-    return (
-      <button
-        key={tone}
-        type="button"
-        aria-pressed={on}
-        onClick={() => toggleTone(tone)}
-        className={cn(
-          "flex h-11 items-center gap-tight rounded-sm border px-comfortable text-[12px] transition-colors duration-quick md:h-9",
-          on ? "border-line bg-card text-fg" : "border-line bg-subtle text-muted",
-        )}
-      >
-        <span
-          className={cn("h-3.5 w-3.5 rounded-xs border", TONE_SWATCH[tone], !on && "opacity-40")}
-        />
-        {t(TONE_KEY[tone])}
-        <span className="font-mono text-[12px] text-muted">{toneCounts.tones[tone]}</span>
-      </button>
-    );
-  });
-  /* The key's sixth entry is passive: it explains the violet and the badge, and
-     counts what is in view. Filtering by source lives in the Filters panel,
-     because source is a second axis and a state chip cannot express "arrived
-     AND on Viator". */
-  const marketKey = (
-    <span
-      key="market"
-      className="flex h-11 items-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[12px] text-fg md:h-9"
-    >
-      <span className="h-3.5 w-3.5 rounded-xs border border-l-[3px] border-market/40 border-l-market bg-market-wash" aria-hidden />
-      {t("keyMarketplace")}
-      <span className="font-mono text-[12px] text-muted">{toneCounts.market}</span>
-    </span>
-  );
-
-  /* One button, rendered in one of two places: beside the date controls on a
-     phone, and at the head of the key row on a desktop. Declaring it once is
-     what keeps its badge and its pressed state the same in both. */
-  const filtersButton = (
-    <button
-      type="button"
-      id="calendar-filters-button"
-      aria-expanded={filtersOpen}
-      aria-controls="calendar-filters"
-      onClick={() => setFiltersOpen((v) => !v)}
-      className={cn(
-        "flex h-11 items-center gap-tight rounded-sm border text-[13px] transition-colors duration-quick md:h-9",
-        compact ? "w-11 shrink-0 justify-center" : "px-comfortable",
-        selectFilters > 0
-          ? "border-ember bg-ember/10 text-brand-foreground"
-          : "border-line hover:bg-muted-wash",
-      )}
-      aria-label={compact ? (selectFilters > 0 ? t("filtersActive", { count: selectFilters }) : t("filters")) : undefined}
-    >
-      <SlidersHorizontal size={compact ? 18 : 14} strokeWidth={1.5} aria-hidden />
-      {!compact && (selectFilters > 0 ? t("filtersActive", { count: selectFilters }) : t("filters"))}
-      {/* A dot rather than a count when the label has gone: the accessible
-          name still says how many. */}
-      {compact && selectFilters > 0 && <span aria-hidden className="absolute -mt-5 ml-5 h-2 w-2 rounded-full bg-ember-solid" />}
-    </button>
-  );
-
   const weekdayLabels = WEEKDAYS_MON_FIRST.map((d) =>
     new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(new Date(2026, 6, 5 + d)),
   );
@@ -874,66 +804,174 @@ export default function CalendarPage() {
   const tt = (key: string, values?: Record<string, string | number>) =>
     t(key as never, values as never);
 
+  /* ── the Filters panel ───────────────────────────────────────────────────
+     Everything that is not the date or the view lives here: the five states
+     (which are the colour key and the status filter at once — a legend and a
+     filter that act on the same words are one control, not two), where it was
+     sold, which booking, which place, and how a day is cut. A swatch beside
+     each state is a miniature of its block, so the key still looks like the
+     thing it explains. */
+  const section = (key: string, label: string, body: React.ReactNode) => (
+    <div key={key} className="flex flex-col gap-inline border-b border-hairline px-comfortable py-comfortable last:border-0">
+      <span className="text-[0.75rem] font-medium text-muted">{label}</span>
+      {body}
+    </div>
+  );
+  const segmented = (label: string, items: { value: string; label: React.ReactNode }[], value: string, onPick: (v: string) => void) => (
+    <span role="group" aria-label={label} className="flex items-center gap-inline rounded-sm bg-muted-wash p-inline">
+      {items.map((it) => (
+        <button
+          key={it.value}
+          type="button"
+          aria-pressed={value === it.value}
+          onClick={() => onPick(it.value)}
+          className={cn(
+            "flex h-9 min-w-0 flex-auto items-center justify-center gap-inline rounded-xs px-tight text-[0.8125rem] font-medium transition-colors duration-quick md:h-7",
+            value === it.value ? "bg-card text-fg shadow-sm" : "text-muted hover:text-fg",
+          )}
+        >
+          {it.label}
+        </button>
+      ))}
+    </span>
+  );
   const filterBody = (
-    <>
-            {compact && <div className="flex flex-wrap items-center gap-tight">{toneKey}{marketKey}</div>}
-            <div className="flex flex-wrap items-center gap-tight">
-            <Select
-              value={bookingFilter}
-              onChange={setBookingFilter}
-              aria-label={t("filterBooking")}
-              size="sm"
-              className="max-w-full"
-              triggerClassName="text-[13px] md:h-9"
-              options={[
-                { value: "all", label: t("allBookings") },
-                ...[...products].sort((a, b) => a.name.localeCompare(b.name)).map((p) => ({ value: p.id, label: p.name })),
-              ]}
-            />
-
-
-            {/* What colour MEANS. A segmented pair rather than a select,
-                because there are two answers and both are worth seeing —
-                and it sits with the filters because, like them, it changes
-                how the same day is read rather than which day it is. */}
-
-            {(resources.length > 0 || staff.length > 0) && (
-              <Select
-                value={ownerFilter}
-                onChange={setOwnerFilter}
-                aria-label={t("filterOwner")}
-                size="sm"
-                className="max-w-full"
-                triggerClassName="text-[13px] md:h-9"
-                options={[
-                  { value: "all", label: t("allOwners") },
-                  ...resources.map((r) => ({ value: r.id, label: r.name })),
-                ]}
-              />
-            )}
-            {/* Where it was sold. Three answers, all worth seeing at once, so a
-                segmented control rather than a select — and here, not among
-                the state chips, because it is a second axis: it cuts across
-                every state rather than being one of them. */}
-            <span role="group" aria-label={t("filterSource")} className="flex items-center gap-inline rounded-sm bg-muted-wash p-inline">
-              {SOURCES.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  aria-pressed={sourceFilter === s}
-                  onClick={() => setSourceFilter(s)}
+    <div>
+      {section(
+        "status",
+        t("secStatus"),
+        <div role="group" aria-label={t("secStatus")} className="-mx-comfortable">
+          {TONES.map((tone) => {
+            const on = tones.includes(tone);
+            return (
+              <label key={tone} className="flex min-h-11 cursor-pointer items-center gap-tight px-comfortable text-[0.8125rem] transition-colors duration-quick hover:bg-muted-wash md:min-h-9">
+                <input type="checkbox" checked={on} onChange={() => toggleTone(tone)} className="peer sr-only" />
+                <span
+                  aria-hidden
                   className={cn(
-                    "h-9 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:h-7",
-                    sourceFilter === s ? "bg-card text-fg shadow-sm ring-1 ring-line" : "text-muted hover:text-fg",
+                    "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-xs border peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-inverse",
+                    on ? "border-inverse bg-inverse text-inverse-fg" : "border-strong bg-card",
                   )}
                 >
-                  {t(s === "all" ? "sourceAll" : s === "direct" ? "sourceDirect" : "sourceMarket")}
-                </button>
-              ))}
-            </span>
-            </div>
-    </>
+                  {on && <Check size={12} strokeWidth={3} />}
+                </span>
+                <span aria-hidden className={cn("h-3.5 w-3.5 shrink-0 rounded-xs border", TONE_SWATCH[tone], !on && "opacity-40")} />
+                <span className="min-w-0 flex-1">{t(TONE_KEY[tone])}</span>
+                <span className="tabular-nums text-muted">{toneCounts.tones[tone]}</span>
+              </label>
+            );
+          })}
+        </div>,
+      )}
+      {section(
+        "source",
+        t("secSource"),
+        segmented(
+          t("filterSource"),
+          SOURCES.map((s) => ({
+            value: s,
+            label:
+              s === "marketplace" ? (
+                <>
+                  <span aria-hidden className="h-3 w-3 shrink-0 rounded-xs border border-l-[3px] border-market/40 border-l-market bg-market-wash" />
+                  <span className="min-w-0 truncate">{t("sourceMarket")}</span>
+                  <span className="tabular-nums text-muted">{toneCounts.market}</span>
+                </>
+              ) : (
+                t(s === "all" ? "sourceAll" : "sourceDirect")
+              ),
+          })),
+          sourceFilter,
+          (v) => setSourceFilter(v as Source),
+        ),
+      )}
+      {section(
+        "booking",
+        t("secBooking"),
+        <Select
+          value={bookingFilter}
+          onChange={setBookingFilter}
+          aria-label={t("filterBooking")}
+          size={compact ? "md" : "sm"}
+          className="w-full"
+          options={[
+            { value: "all", label: t("allBookings") },
+            ...[...products].sort((a, b) => a.name.localeCompare(b.name)).map((p) => ({ value: p.id, label: p.name })),
+          ]}
+        />,
+      )}
+      {(resources.length > 0 || staff.length > 0) &&
+        section(
+          "owner",
+          t("secPlace"),
+          <Select
+            value={ownerFilter}
+            onChange={setOwnerFilter}
+            aria-label={t("filterOwner")}
+            size={compact ? "md" : "sm"}
+            className="w-full"
+            options={[{ value: "all", label: t("allOwners") }, ...resources.map((r) => ({ value: r.id, label: r.name }))]}
+          />,
+        )}
+      {/* How the day's rows are cut — a way of looking, like the view switch, so
+          it is drawn as one. It never counts as a filter. */}
+      {view === "day" &&
+        resources.length > 0 &&
+        section(
+          "group",
+          t("groupBy"),
+          segmented(
+            t("groupBy"),
+            [
+              { value: "resource", label: t("groupByResource") },
+              { value: "product", label: t("groupByProduct") },
+            ],
+            groupBy,
+            (v) => setGroupBy(v as "resource" | "product"),
+          ),
+        )}
+      {/* On a phone the holds list has no room in the toolbar, so it is here. */}
+      {compact && activeHolds.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setHoldList(true)}
+          className="flex min-h-11 w-full items-center justify-between gap-tight px-comfortable text-left text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:bg-muted-wash"
+        >
+          {t("statHolds")}
+          <span className="tabular-nums text-muted">{activeHolds.length}</span>
+        </button>
+      )}
+    </div>
   );
+
+  /* What is set, as removable chips — the same ones `FilterBar` draws on the
+     list pages — so a narrowed calendar never looks like the whole one. */
+  const applied: { key: string; label: string; text: string; clear: () => void }[] = [
+    ...(bookingFilter !== "all"
+      ? [{ key: "booking", label: t("secBooking"), text: products.find((p) => p.id === bookingFilter)?.name ?? bookingFilter, clear: () => setBookingFilter("all") }]
+      : []),
+    ...(ownerFilter !== "all"
+      ? [{ key: "owner", label: t("secPlace"), text: resources.find((r) => r.id === ownerFilter)?.name ?? ownerFilter, clear: () => setOwnerFilter("all") }]
+      : []),
+    ...(sourceFilter !== "all"
+      ? [{ key: "source", label: t("secSource"), text: t(sourceFilter === "direct" ? "sourceDirect" : "sourceMarket"), clear: () => setSourceFilter("all") }]
+      : []),
+    ...(tones.length !== TONES.length
+      ? [
+          {
+            key: "status",
+            label: t("secStatus"),
+            text:
+              tones.length === 0
+                ? t("statusNone")
+                : tones.length <= 2
+                  ? tones.map((x) => t(TONE_KEY[x])).join(", ")
+                  : t("statusShown", { count: tones.length, total: TONES.length }),
+            clear: () => setTones(TONES),
+          },
+        ]
+      : []),
+  ];
 
   const primary: PagePrimary = {
     label: t("book.newBooking"),
@@ -945,12 +983,13 @@ export default function CalendarPage() {
   return (
     <PageShell title={t("title")} description={t("description")} primary={primary}>
       <div className="flex flex-col gap-section">
-        {/* The range and the control that changes it, together. They were 60px
-            apart — arrows in the page header, the label they move down beside
-            the tabs — so you read where you are in one place and moved it in
-            another. */}
-        <div className="flex flex-wrap items-center justify-between gap-comfortable">
-          <div className="flex flex-wrap items-center gap-tight">
+        {/* One row: where you are in time, how to move it and the grain on the
+            left; the view switch and the create button on the right. The
+            Filters button rides with the date controls — it narrows what is on
+            screen, not which screen — and on a phone it is the glyph at the end
+            of that row. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-comfortable gap-y-tight">
+          <div className="flex min-w-0 flex-wrap items-center gap-tight">
             <Button variant="secondary" size="sm" onClick={() => setCursor(openingDate())}>
               {t("today")}
             </Button>
@@ -959,7 +998,7 @@ export default function CalendarPage() {
                 type="button"
                 aria-label={t("previous")}
                 onClick={() => step(-1)}
-                className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-muted-wash"
+                className="flex h-11 w-11 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-muted-wash md:h-9 md:w-9"
               >
                 <ChevronLeft size={16} strokeWidth={1.5} />
               </button>
@@ -969,10 +1008,10 @@ export default function CalendarPage() {
               <h2
                 aria-live="polite"
                 /* The 11rem floor keeps the arrows from jumping as the label
-                   changes width — worth it on a desktop, and on a phone it is
-                   what pushed the date and filter glyphs onto a row of their
-                   own. Below sm the label takes the width it needs. */
-                className="whitespace-nowrap px-tight text-center text-[15px] font-medium tracking-tight sm:min-w-[11rem]"
+                   changes width — worth it on a desktop. On a phone the label
+                   takes the width it needs and drops the year, which the week
+                   strip and the month view already say. */
+                className="whitespace-nowrap px-tight text-center text-[0.9375rem] font-medium tracking-tight sm:min-w-[11rem]"
               >
                 {rangeLabel}
               </h2>
@@ -980,51 +1019,58 @@ export default function CalendarPage() {
                 type="button"
                 aria-label={t("next")}
                 onClick={() => step(1)}
-                className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-muted-wash"
+                className="flex h-11 w-11 items-center justify-center rounded-sm border border-line transition-colors duration-quick hover:bg-muted-wash md:h-9 md:w-9"
               >
                 <ChevronRight size={16} strokeWidth={1.5} />
               </button>
             </div>
-            {/* Ours. The native control rendered 07/29/2026 beside a range
-                label reading "27 Jul – 2 Aug 2026" — two date formats, one
-                toolbar, because the browser owned one of them. */}
-            {/* A glyph on a phone. The range label two controls to the left
-                already says which week this is, so the field was spending a
-                whole row restating it — and a phone had four toolbar rows
-                before the first booking. */}
-            <DateField
-              value={isoDate(cursor)}
-              today={isoDate(now)}
-              onChange={(iso) => setCursor(startOfDay(new Date(`${iso}T12:00:00`)))}
-              labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
-              compact={compact}
-              className={compact ? undefined : "w-44"}
-            />
-            {/* Up here on a phone, beside the controls it belongs with, rather
-                than alone on a row of its own. */}
-            {compact && filtersButton}
-            {/* What the stat band's "Spaces on hold" figure used to open: every
-                hold, wherever it is. Drawn only when there are any. */}
-            {activeHolds.length > 0 && (
+            {/* Ours — the native control rendered 07/29/2026 beside a range
+                label reading "27 Jul – 2 Aug 2026". A glyph: the label beside
+                it already says which week this is. A phone jumps by the month
+                view instead. */}
+            {!compact && (
+              <DateField
+                value={isoDate(cursor)}
+                today={isoDate(now)}
+                onChange={(iso) => setCursor(startOfDay(new Date(`${iso}T12:00:00`)))}
+                labels={{ previousMonth: tc("previousMonth"), nextMonth: tc("nextMonth"), today: tc("today"), open: tc("openCalendar") }}
+                compact
+              />
+            )}
+            {/* What the Spaces on hold figure used to open: every hold,
+                wherever it is. A quiet text button, drawn only when there are
+                any — it is a notice about capacity, not a control to look for. */}
+            {!compact && activeHolds.length > 0 && (
               <Button
-                variant="secondary"
+                variant="tertiary"
                 size="sm"
                 onClick={() => setHoldList(true)}
                 title={heldElsewhere ? t("heldElsewhere", { count: heldElsewhere.count }) : undefined}
-                className="max-md:px-comfortable"
               >
                 {t("statHolds")}
                 <span className="tabular-nums text-muted">{activeHolds.length}</span>
               </Button>
             )}
+            <FilterPanel
+              count={selectFilters}
+              label={(n) => (n > 0 ? t("filtersActive", { count: n }) : t("filters"))}
+              title={t("filters")}
+              doneLabel={t("filtersDone")}
+              clearLabel={t("clearFilters")}
+              onClear={resetFilters}
+            >
+              {filterBody}
+            </FilterPanel>
           </div>
 
-          {/* The view switch sits on the right, the date controls on the left —
-              the owner's call: where you are in time is read first, and the
-              grain you are looking at is the smaller decision. DOM order
-              follows, so the tab order runs the same way the eye does. */}
-          <div className="flex items-center gap-section">
+          {/* The view switch on the right, the date controls on the left —
+              where you are in time is read first, and the grain you are
+              looking at is the smaller decision. DOM order follows, so the tab
+              order runs the same way the eye does. On a phone it takes the
+              width of its own row and the tabs share it. */}
+          <div className="flex w-full items-center gap-section md:w-auto">
             <Tabs
+              className="w-full md:w-auto [&>button]:flex-1 md:[&>button]:flex-none"
               items={[
                 { value: "day", label: t("tabDay") },
                 { value: "week", label: t("tabWeek") },
@@ -1039,95 +1085,37 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* ── filters ─────────────────────────────────────────────────────── */}
-        <div className={cn("flex flex-col gap-tight", compact && !filtersOpen && !filtered && "hidden")}>
-          {/* The key stays out where it can be read — it is the legend, and
-              hiding it makes five colours unreadable. The three selects fold
-              away: they were three full-width controls on a phone, and with
-              the tabs and the key above them the grid did not start until 62%
-              of the screen had gone by. */}
-          <div className="flex flex-wrap items-center gap-tight">
-            {!compact && filtersButton}
-
-            {!compact && toneKey}
-            {!compact && marketKey}
-
-            {/* How the day's rows are cut — a way of looking, like the view
-                switch, so it is drawn as one: a segmented pair. In ember it
-                read as one more filter switched on. */}
-            {view === "day" && !compact && resources.length > 0 && (
-              <span role="group" aria-label={t("groupBy")} className="ml-auto flex items-center gap-inline rounded-sm bg-muted-wash p-inline">
-                {(["resource", "product"] as const).map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    aria-pressed={groupBy === g}
-                    onClick={() => setGroupBy(g)}
-                    className={cn(
-                      "h-9 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick md:h-7",
-                      groupBy === g ? "bg-card text-fg shadow-sm ring-1 ring-line" : "text-muted hover:text-fg",
-                    )}
-                  >
-                    {t(g === "resource" ? "groupByResource" : "groupByProduct")}
-                  </button>
-                ))}
+        {applied.length > 0 && (
+          <div className="flex flex-wrap items-center gap-inline">
+            {applied.map((c) => (
+              <span
+                key={c.key}
+                data-applied={c.key}
+                className="flex items-center gap-inline rounded-full bg-subtle py-inline pl-comfortable pr-inline text-[0.75rem] font-medium text-fg dark:bg-fg/10"
+              >
+                {c.label}: {c.text}
+                <button
+                  type="button"
+                  onClick={c.clear}
+                  aria-label={tc("clearFilter", { name: c.label })}
+                  className="grid h-8 w-8 place-items-center rounded-full text-muted transition-colors duration-quick hover:text-fg active:bg-muted-wash md:h-6 md:w-6"
+                >
+                  <X size={13} strokeWidth={2} aria-hidden />
+                </button>
               </span>
-            )}
-
+            ))}
             {/* Not while the empty-state notice below is offering the same
                 button — two ways out of one situation, side by side. */}
-            {filtered && !emptyByFilter && (
-              <Button variant="secondary" size="sm" onClick={resetFilters}>
+            {!emptyByFilter && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="flex h-8 items-center rounded-sm px-tight text-[0.8125rem] font-medium text-brand-foreground underline-offset-2 hover:underline"
+              >
                 {t("clearFilters")}
-              </Button>
+              </button>
             )}
           </div>
-
-          {/* On a phone these are a sheet, not a block that pushes the
-              calendar down: opening them used to put the grid's first pixel
-              19px BELOW the tab bar, so the one thing being filtered was the
-              one thing that could not be seen. Above `md` they stay inline,
-              where there is room and a sheet would be ceremony. */}
-          {!compact && (
-            <div id="calendar-filters" hidden={!filtersOpen} className="flex flex-col gap-tight">
-              {filterBody}
-            </div>
-          )}
-        </div>
-
-        {/* The phone's filters, over the page rather than in front of it. */}
-        {compact && filtersOpen && (
-          <>
-            <div
-              aria-hidden
-              onClick={closeFilters}
-              className="fixed inset-0 z-40 bg-ink/40"
-            />
-            <div
-              id="calendar-filters"
-              role="dialog"
-              aria-modal="true"
-              aria-label={t("filters")}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") closeFilters();
-              }}
-              className="fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] flex-col gap-comfortable overflow-y-auto rounded-t-md border-t border-line bg-card p-gutter"
-              style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}
-            >
-              <div className="flex items-center justify-between gap-tight">
-                <h2 className="text-[15px] font-semibold">{t("filters")}</h2>
-                <Button variant="secondary" size="sm" autoFocus onClick={closeFilters}>
-                  {t("filtersDone")}
-                </Button>
-              </div>
-              {filterBody}
-              {filtered && (
-                <Button variant="secondary" size="sm" onClick={resetFilters}>
-                  {t("clearFilters")}
-                </Button>
-              )}
-            </div>
-          </>
         )}
 
         {emptyByFilter && (

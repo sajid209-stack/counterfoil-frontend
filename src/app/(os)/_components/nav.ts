@@ -1,16 +1,21 @@
 import {
+  Activity,
   Boxes,
   CalendarDays,
   ChartNoAxesColumn,
+  Gavel,
   Globe,
   HandCoins,
   LayoutDashboard,
+  Percent,
   ReceiptText,
   Settings,
   SquareStack,
   Store,
+  Tag,
   Ticket,
   TicketCheck,
+  UserRound,
   UsersRound,
   Wallet,
   type LucideIcon,
@@ -19,11 +24,11 @@ import {
 /**
  * Everywhere an operator can go, in ONE list.
  *
- * The rail, the collapsed rail (its tooltips), the phone's More grid and the
+ * The rail, the collapsed rail (its tooltips), the phone's menu sheet and the
  * command palette all draw from this, in this order and under these names. They
- * had drifted into different products — the More grid once offered two things
- * the rail did not and missed one it did — so the order is written down once
- * and every surface reads it.
+ * had drifted into different products — the old More grid once offered two
+ * things the rail did not and missed one it did — so the order is written down
+ * once and every surface reads it.
  *
  * Three groups, separated by a hairline and spacing rather than by uppercase
  * labels:
@@ -83,3 +88,49 @@ export const NAV_SETTINGS: NavDestination = { href: "/settings/business", key: "
 
 /** The whole list, in the order every surface shows it. */
 export const DESTINATIONS: readonly NavDestination[] = [...NAV_MAIN, ...NAV_OPEN, NAV_SETTINGS];
+
+/**
+ * What the phone's top bar calls a page, and the glyph that stands beside it.
+ *
+ * The bar names the DESTINATION — the same word the rail and the menu sheet use
+ * for it — not the page's own `<h1>`, which on Dashboard is the operator's
+ * business name and on an order is a reference. Longest prefix wins, so
+ * /settings/profile resolves before /settings. Settings sections name
+ * themselves from their own registry (see OsShell); this list covers the rest.
+ *
+ * It lives beside the destinations because it is the same fact in a second
+ * shape: a page and its icon. A destination added to the rail but missing here
+ * would show its page with another page's glyph.
+ */
+export interface PageMeta {
+  prefix: string;
+  /** The `nav` message key that names it. */
+  key: string;
+  icon: LucideIcon;
+}
+
+export const PAGES: readonly PageMeta[] = [
+  { prefix: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { prefix: "/calendar", key: "calendar", icon: CalendarDays },
+  { prefix: "/orders", key: "orders", icon: ReceiptText },
+  { prefix: "/issued-orders", key: "issuedOrders", icon: TicketCheck },
+  /* /tickets redirects to Issued orders, and a ticket record is one of its rows. */
+  { prefix: "/tickets", key: "issuedOrders", icon: TicketCheck },
+  { prefix: "/activity", key: "activityLog", icon: Activity },
+  { prefix: "/finances", key: "finances", icon: Wallet },
+  { prefix: "/expenses", key: "expenses", icon: HandCoins },
+  { prefix: "/customers", key: "customers", icon: UsersRound },
+  { prefix: "/catalog", key: "catalog", icon: Ticket },
+  { prefix: "/inventory", key: "inventory", icon: Boxes },
+  { prefix: "/marketplaces", key: "marketplaces", icon: Globe },
+  { prefix: "/booking-rules", key: "bookingRules", icon: Gavel },
+  { prefix: "/pricing", key: "pricing", icon: Tag },
+  { prefix: "/memberships", key: "memberships", icon: Percent },
+  { prefix: "/promotions", key: "promotions", icon: Percent },
+  { prefix: "/analytics", key: "analytics", icon: ChartNoAxesColumn },
+  { prefix: "/settings/profile", key: "myProfile", icon: UserRound },
+  { prefix: "/settings", key: "settings", icon: Settings },
+];
+
+export const pageFor = (pathname: string): PageMeta | undefined =>
+  PAGES.find((p) => pathname === p.prefix || pathname.startsWith(`${p.prefix}/`));

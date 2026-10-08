@@ -22,7 +22,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Plus, RefreshCw, Send } from "lucide-react";
+import { ChevronDown, Plus, Send } from "lucide-react";
 import {
   ActionMenu,
   Button,
@@ -55,8 +55,9 @@ import {
 import type { MarketplaceListing, Product } from "@/lib/api";
 import { bpsToPct, marketplaceById, pctToBps, priceToNet, split } from "@/lib/marketplaces";
 import { sellingBlockers } from "@/lib/sellable";
-import { formatMoney } from "@/lib/format";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatMoney } from "@/lib/format";
+import { cn } from "@/lib/cn";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 
 const EXAMPLE = 150000;
 
@@ -74,6 +75,10 @@ export default function MarketplacePage() {
   const [busy, setBusy] = useState(false);
   const [confirmOff, setConfirmOff] = useState(false);
   const [pct, setPct] = useState<string | null>(null);
+  const [dealOpen, setDealOpen] = useState(false);
+  /* Decided, not hidden with CSS: the deal is a card on a computer and a
+     labelled fold on a phone, and only one of them is in the page. */
+  const wide = useMediaQuery(MD);
 
   const conn = q.data;
   const meta = conn ? marketplaceById(conn.marketplaceId) : null;
@@ -119,6 +124,39 @@ export default function MarketplacePage() {
     else toast.error(res.error.message);
   };
 
+  const doSync = async () => {
+    await syncConnection(conn.id);
+    toast.success(t("synced", { name: meta.name }));
+    reload();
+  };
+
+  /* One list of things you can do to a listing, for the table and the phone
+     row alike. */
+  const listingItems = (l: MarketplaceListing) => [
+    l.status === "live"
+      ? { key: "pause", label: t("pause"), onSelect: async () => { await updateListing(l.id, { status: "paused" }); reload(); } }
+      : l.status === "paused"
+        ? { key: "resume", label: t("resume"), onSelect: async () => { await updateListing(l.id, { status: "live" }); reload(); } }
+        : {
+            key: "send",
+            label: t("sendOne"),
+            disabled: l.status !== "draft",
+            /* A greyed item that says nothing reads as a fault. */
+            hint: l.status === "submitted" ? t("sendHintSubmitted") : l.status === "rejected" ? t("sendHintRejected") : undefined,
+            onSelect: async () => { await submitListings(conn.id, [l.id]); reload(); },
+          },
+    {
+      key: "remove",
+      label: t("removeListing"),
+      destructive: true,
+      separated: true,
+      onSelect: async () => { await removeListing(l.id); toast.success(t("listingRemoved")); reload(); },
+    },
+  ];
+
+  const listingTone = (l: MarketplaceListing) =>
+    l.status === "live" ? "success" : l.status === "rejected" ? "danger" : l.status === "submitted" ? "info" : "neutral";
+
   const columns: Column<MarketplaceListing>[] = [
     {
       key: "productName",
@@ -153,45 +191,54 @@ export default function MarketplacePage() {
     {
       key: "status",
       header: t("col.status"),
-      render: (l) => (
-        <StatusPill
-          tone={l.status === "live" ? "success" : l.status === "rejected" ? "danger" : l.status === "submitted" ? "info" : "neutral"}
-        >
-          {t(`listing.${l.status}`)}
-        </StatusPill>
-      ),
+      render: (l) => <StatusPill tone={listingTone(l)}>{t(`listing.${l.status}`)}</StatusPill>,
     },
     {
       key: "actions",
       header: "",
-      render: (l) => (
-        <ActionMenu
-          label={t("rowActions", { name: l.productName })}
-          items={[
-            l.status === "live"
-              ? { key: "pause", label: t("pause"), onSelect: async () => { await updateListing(l.id, { status: "paused" }); reload(); } }
-              : l.status === "paused"
-                ? { key: "resume", label: t("resume"), onSelect: async () => { await updateListing(l.id, { status: "live" }); reload(); } }
-                : {
-                    key: "send",
-                    label: t("sendOne"),
-                    disabled: l.status !== "draft",
-                    /* A greyed item that says nothing reads as a fault. */
-                    hint: l.status === "submitted" ? t("sendHintSubmitted") : l.status === "rejected" ? t("sendHintRejected") : undefined,
-                    onSelect: async () => { await submitListings(conn.id, [l.id]); reload(); },
-                  },
-            {
-              key: "remove",
-              label: t("removeListing"),
-              destructive: true,
-              separated: true,
-              onSelect: async () => { await removeListing(l.id); toast.success(t("listingRemoved")); reload(); },
-            },
-          ]}
-        />
-      ),
+      render: (l) => <ActionMenu label={t("rowActions", { name: l.productName })} items={listingItems(l)} />,
     },
   ];
+
+  /* The deal: the one field you change and the sums it makes. A card on a
+     computer; on a phone it folds behind its own one-line summary, because the
+     listings are what somebody opens this page for. */
+  const dealBody = (
+    <div className="grid gap-section sm:grid-cols-2">
+      <div>
+        <FormField
+          label={t("dialog.commission")}
+          variant="number"
+          value={pct ?? String(bpsToPct(conn.commissionBps))}
+          onChange={(e) => setPct(e.target.value)}
+          help={t("dialog.commissionHelp")}
+        />
+        {pct != null && (
+          <div className="mt-tight flex gap-tight">
+            <Button size="sm" loading={busy} onClick={saveCommission}>{t("save")}</Button>
+            <Button size="sm" variant="secondary" onClick={() => setPct(null)}>{t("dialog.cancel")}</Button>
+          </div>
+        )}
+      </div>
+      <dl className="flex flex-col gap-comfortable text-[13px]">
+        {/* The two questions a commission raises, answered in money. */}
+        <div>
+          <dt className="text-[12px] font-medium text-muted">{t("onAExample")}</dt>
+          <dd className="mt-inline">{t("dialog.example", { price: formatMoney(s.price), commission: formatMoney(s.commission), net: formatMoney(s.net) })}</dd>
+        </div>
+        <div>
+          <dt className="text-[12px] font-medium text-muted">{t("toMatchTitle")}</dt>
+          <dd className="mt-inline">{t("toMatch", { target: formatMoney(EXAMPLE), list: formatMoney(priceToNet(EXAMPLE, conn.commissionBps)) })}</dd>
+        </div>
+        {conn.lastSyncedAt && (
+          <div>
+            <dt className="text-[12px] font-medium text-muted">{t("lastSync")}</dt>
+            <dd className="mt-inline">{formatDateTime(conn.lastSyncedAt)}</dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  );
 
   return (
     <PageShell
@@ -201,17 +248,33 @@ export default function MarketplacePage() {
         <StatusPill tone={conn.status === "connected" ? "success" : conn.status === "attention" ? "warning" : "info"}>{t(`status.${conn.status}`)}</StatusPill>
       }
       description={t("oneDescription", { name: meta.name })}
+      /* One primary: send what is waiting, otherwise add something. The rest
+         — the other of the two, updating, disconnecting — sit behind ⋯. */
+      primary={
+        drafts.length > 0
+          ? {
+              label: t("sendDrafts", { count: drafts.length }),
+              icon: <Send size={15} strokeWidth={1.5} />,
+              onClick: send,
+              disabled: busy,
+            }
+          : {
+              label: t("addListing"),
+              icon: <Plus size={15} strokeWidth={1.5} />,
+              onClick: () => setAdding(true),
+            }
+      }
       actions={
-        <div className="flex flex-wrap gap-tight">
-          {drafts.length > 0 && (
-            <Button loading={busy} icon={<Send size={15} strokeWidth={1.5} />} onClick={send}>
-              {t("sendDrafts", { count: drafts.length })}
-            </Button>
-          )}
-          <Button variant="secondary" icon={<Plus size={15} strokeWidth={1.5} />} onClick={() => setAdding(true)}>
-            {t("addListing")}
-          </Button>
-        </div>
+        <span className="flex items-center gap-tight">
+          <ActionMenu
+            label={t("moreActions")}
+            items={[
+              ...(drafts.length > 0 ? [{ key: "add", label: t("addListing"), onSelect: () => setAdding(true) }] : []),
+              { key: "sync", label: t("sync"), onSelect: doSync },
+              { key: "disconnect", label: t("disconnect"), destructive: true, separated: true, onSelect: () => setConfirmOff(true) },
+            ]}
+          />
+        </span>
       }
     >
       {/* Cards belong to the Dashboard, Finances and Analytics. The figures a
@@ -227,56 +290,9 @@ export default function MarketplacePage() {
       </p>
 
       <div className="flex flex-col gap-section">
-        {/* The contract. One card, because the commission is the whole deal. */}
-        <section className="card-surface p-card" aria-labelledby="mk-terms">
-          <div className="mb-section flex flex-wrap items-center gap-tight">
-            <h2 id="mk-terms" className="mr-auto text-base font-semibold tracking-[-0.4px]">{t("terms")}</h2>
-            <Button size="sm" variant="secondary" icon={<RefreshCw size={14} strokeWidth={1.5} />} onClick={async () => { await syncConnection(conn.id); toast.success(t("synced", { name: meta.name })); reload(); }}>
-              {t("sync")}
-            </Button>
-          </div>
-          <div className="grid gap-section sm:grid-cols-2">
-            <div>
-              <FormField
-                label={t("dialog.commission")}
-                variant="number"
-                value={pct ?? String(bpsToPct(conn.commissionBps))}
-                onChange={(e) => setPct(e.target.value)}
-                help={t("dialog.commissionHelp")}
-              />
-              {pct != null && (
-                <div className="mt-tight flex gap-tight">
-                  <Button size="sm" loading={busy} onClick={saveCommission}>{t("save")}</Button>
-                  <Button size="sm" variant="secondary" onClick={() => setPct(null)}>{t("dialog.cancel")}</Button>
-                </div>
-              )}
-            </div>
-            <dl className="flex flex-col gap-tight text-[13px]">
-              {/* The two questions a commission raises, answered in money. */}
-              <div>
-                <dt className="type-label text-[12px] text-muted">{t("onAExample")}</dt>
-                <dd className="mt-inline">{t("dialog.example", { price: formatMoney(s.price), commission: formatMoney(s.commission), net: formatMoney(s.net) })}</dd>
-              </div>
-              <div>
-                <dt className="type-label text-[12px] text-muted">{t("toMatchTitle")}</dt>
-                <dd className="mt-inline">{t("toMatch", { target: formatMoney(EXAMPLE), list: formatMoney(priceToNet(EXAMPLE, conn.commissionBps)) })}</dd>
-              </div>
-              {conn.lastSyncedAt && (
-                <div>
-                  <dt className="type-label text-[12px] text-muted">{t("lastSync")}</dt>
-                  <dd className="mt-inline">{formatDateTime(conn.lastSyncedAt)}</dd>
-                </div>
-              )}
-            </dl>
-          </div>
-          <div className="mt-section border-t border-hairline pt-comfortable">
-            <Button size="sm" variant="destructive" onClick={() => setConfirmOff(true)}>{t("disconnect")}</Button>
-          </div>
-        </section>
-
-        {/* The listings */}
+        {/* The listings: the working surface, so first. */}
         <section aria-labelledby="mk-listings">
-          <h2 id="mk-listings" className="type-label mb-tight">{t("listingsTitle")}</h2>
+          <h2 id="mk-listings" className="mb-tight text-base font-semibold tracking-[-0.4px]">{t("listingsTitle")}</h2>
           {listings.length === 0 ? (
             <EmptyState
               title={t("noListings.title")}
@@ -288,19 +304,62 @@ export default function MarketplacePage() {
               rows={listings}
               columns={columns}
               getRowId={(l) => l.id}
+              cardVariant="list"
               renderCard={(l) => {
                 const sp = listingSplit(l, conn);
+                /* Two lines: what it is and where it stands, then what it
+                   costs there and what you keep. A refusal gets a third only
+                   because that is the one thing somebody has to act on. */
                 return (
-                  <div className="flex flex-col gap-inline">
-                    <span className="font-medium">{l.productName}</span>
-                    <span className="text-[13px] text-muted">
-                      {t("theirPriceShort", { price: formatMoney(sp.price) })} · {t("youKeepShort", { net: formatMoney(sp.net) })}
+                  <span className="flex items-center gap-tight">
+                    <span className="flex min-w-0 flex-1 flex-col gap-inline">
+                      <span className="flex items-center gap-tight">
+                        <span className="min-w-0 flex-1 truncate font-medium">{l.productName}</span>
+                        <StatusPill tone={listingTone(l)}>{t(`listing.${l.status}`)}</StatusPill>
+                      </span>
+                      <span className="text-[13px] text-muted">
+                        {t("theirPriceShort", { price: formatMoney(sp.price) })} · {t("youKeepShort", { net: formatMoney(sp.net) })}
+                      </span>
+                      {l.rejectedReason && <span className="text-[13px] text-danger">{l.rejectedReason}</span>}
                     </span>
-                    <StatusPill tone={l.status === "live" ? "success" : l.status === "rejected" ? "danger" : l.status === "submitted" ? "info" : "neutral"}>{t(`listing.${l.status}`)}</StatusPill>
-                  </div>
+                    <span className="-mr-tight shrink-0">
+                      <ActionMenu label={t("rowActions", { name: l.productName })} items={listingItems(l)} />
+                    </span>
+                  </span>
                 );
               }}
             />
+          )}
+        </section>
+
+        {/* The contract: the commission is the whole deal. */}
+        <section className="card-surface" aria-labelledby="mk-terms">
+          {wide ? (
+            <div className="p-card">
+              <h2 id="mk-terms" className="mb-section text-base font-semibold tracking-[-0.4px]">{t("terms")}</h2>
+              {dealBody}
+            </div>
+          ) : (
+            <>
+              <h2 id="mk-terms">
+                <button
+                  type="button"
+                  aria-expanded={dealOpen}
+                  aria-controls="mk-terms-body"
+                  onClick={() => setDealOpen((v) => !v)}
+                  className="flex min-h-14 w-full items-center gap-tight px-card py-comfortable text-left"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-base font-semibold tracking-[-0.4px]">{t("terms")}</span>
+                    <span className="block text-[13px] font-normal text-muted">
+                      {t("keepOf", { pct: bpsToPct(conn.commissionBps), net: formatMoney(s.net), price: formatMoney(s.price) })}
+                    </span>
+                  </span>
+                  <ChevronDown size={18} strokeWidth={1.5} aria-hidden className={cn("shrink-0 text-muted transition-transform", dealOpen && "rotate-180")} />
+                </button>
+              </h2>
+              {dealOpen && <div id="mk-terms-body" className="border-t border-hairline p-card">{dealBody}</div>}
+            </>
           )}
         </section>
       </div>

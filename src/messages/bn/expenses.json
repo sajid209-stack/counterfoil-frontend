@@ -6,10 +6,10 @@
   "toolbar": {
     "category": "ক্যাটাগরি",
     "paidFrom": "কোথা থেকে দেওয়া",
-    "search": "শিরোনাম, কাকে দিয়েছেন বা রেফারেন্স",
+    "search": "খরচ খুঁজুন",
     "reset": "রিসেট",
     "download": "CSV ডাউনলোড",
-    "clearChoice": "মুছুন"
+    "nChosen": "{count}টি বাছাই"
   },
   "period": {
     "today": "আজ",
@@ -71,7 +71,6 @@
     "by": "যোগ করেছেন",
     "actions": "কাজ",
     "itemsCount": "{count, plural, one {#টি আইটেম} other {#টি আইটেম}}",
-    "oneAmount": "এক অঙ্ক, আইটেম নেই",
     "hasReceipt": "রসিদ আছে"
   },
   "row": {

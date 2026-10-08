@@ -137,10 +137,12 @@ export default function CountersPage() {
                             leading={<IconTile icon={Store} />}
                             title={c.name}
                             badges={open ? null : <StatusPill tone="neutral">{t("counters.closedTag")}</StatusPill>}
+                            /* How customers pay is the line a phone draws; what the
+                               counter sells and its tablets follow from md. */
                             meta={
                               <>
-                                <span className={cn("block", line.warn ? "text-warning" : undefined)}>{line.text}</span>
-                                <span className="block">
+                                <span className={cn("block max-md:truncate", line.warn ? "text-warning" : undefined)}>{line.text}</span>
+                                <span className="hidden md:block">
                                   {c.allowedProductIds === "all"
                                     ? t("counters.sellsAll")
                                     : t("counters.sellsSome", { count: c.allowedProductIds.length })}

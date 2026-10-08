@@ -241,9 +241,9 @@ export function EventArchitect({
     <div className={cn("grid gap-section", preview && "xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)] xl:items-start")}>
       {/* ── The architect ──────────────────────────────────────────────── */}
       <div className="card-surface overflow-hidden">
-        <div className="border-b border-line px-card py-comfortable">
-          <p className="type-label text-[12px] text-muted">{t("architect.title")}</p>
-          <p className="mt-inline text-base font-semibold tracking-[-0.4px]">{t(`category.${cat.key}`)}</p>
+        <div className="border-b border-hairline px-card py-comfortable">
+          <p className="text-[0.75rem] font-medium text-muted">{t("architect.title")}</p>
+          <p className="mt-inline text-base font-semibold text-fg">{t(`category.${cat.key}`)}</p>
         </div>
 
         {/* Brand identity is not a page section — it governs all of them, so it
@@ -264,8 +264,8 @@ export function EventArchitect({
                   aria-label={hex}
                   aria-pressed={custom.accent === hex}
                   className={cn(
-                    "relative h-11 w-11 rounded-sm border transition-colors duration-quick",
-                    custom.accent === hex ? "border-inverse" : "border-line hover:border-strong",
+                    "relative h-11 w-11 rounded-sm transition-shadow duration-quick",
+                    custom.accent === hex ? "ring-2 ring-inset ring-inverse" : "ring-1 ring-inset ring-line hover:ring-strong",
                   )}
                   style={{ background: hex }}
                 >
@@ -291,10 +291,10 @@ export function EventArchitect({
                   onClick={() => setC({ variant: v })}
                   aria-pressed={custom.variant === v}
                   className={cn(
-                    "min-h-11 rounded-sm border px-comfortable text-[13px] font-medium transition-colors duration-quick",
+                    "min-h-11 rounded-sm px-comfortable text-[0.8125rem] font-medium transition-colors duration-quick",
                     custom.variant === v
-                      ? "border-ember bg-ember/10 text-brand-foreground"
-                      : "border-line text-muted hover:border-strong hover:text-fg",
+                      ? "bg-card text-fg ring-2 ring-inset ring-ember-solid"
+                      : "bg-muted-wash text-muted hover:bg-line/40 hover:text-fg",
                   )}
                 >
                   {t(`variant.${v}`)}
@@ -425,7 +425,7 @@ export function EventArchitect({
                     <button
                       type="button"
                       onClick={addSponsor}
-                      className="min-h-11 rounded-sm border border-line px-comfortable text-[13px] font-medium text-fg transition-colors duration-quick hover:bg-muted-wash"
+                      className="min-h-11 rounded-sm bg-card px-comfortable text-[0.8125rem] font-medium text-fg transition-colors duration-quick hover:bg-line/40"
                     >
                       {t("architect.addSponsor")}
                     </button>
@@ -545,8 +545,8 @@ export function EventArchitect({
                               if (k.key === "ArrowLeft" || k.key === "ArrowUp") { k.preventDefault(); moveDay(-1); }
                             }}
                             className={cn(
-                              "flex min-h-11 items-center gap-inline rounded-full border px-comfortable text-[13px] font-medium transition-colors duration-quick sm:min-h-9",
-                              on ? "border-ember bg-ember/10 text-brand-foreground" : "border-line text-muted hover:text-fg",
+                              "flex min-h-11 items-center gap-inline rounded-full px-comfortable text-[0.8125rem] font-medium transition-colors duration-quick sm:min-h-9",
+                              on ? "bg-card text-fg ring-2 ring-inset ring-ember-solid" : "bg-muted-wash text-muted hover:bg-line/40 hover:text-fg",
                             )}
                           >
                             {d.label}
@@ -558,9 +558,9 @@ export function EventArchitect({
                   )}
                   {shownLineup.length === 0 && dayTabs.length > 1 && <Note>{t("architect.dayEmpty")}</Note>}
                   {shownLineup.map((l) => (
-                    <div key={l.id} className="rounded-sm border border-line bg-card p-comfortable">
+                    <div key={l.id} className="rounded-sm bg-card p-comfortable">
                       <div className="mb-tight flex items-center justify-between gap-tight">
-                        <span className="type-label text-[12px] text-muted">{t("architect.entry")}</span>
+                        <span className="text-[0.75rem] font-medium text-muted">{t("architect.entry")}</span>
                         <button
                           type="button"
                           aria-label={l.name.trim() ? t("architect.removeEntry", { name: l.name.trim() }) : t("architect.removeEntryUnnamed")}
@@ -578,7 +578,7 @@ export function EventArchitect({
                             it is — otherwise "Lunch" turns up in the speaker
                             grid with a portrait. */}
                         <label className="grid gap-[6px]">
-                          <span className="type-label text-[12px] text-muted">{t("architect.kind")}</span>
+                          <span className="text-[0.8125rem] font-medium text-muted">{t("architect.kind")}</span>
                           <Select
                             value={l.kind ?? "person"}
                             onChange={(v) => patchLineup(l.id, { kind: v as "person" | "session" })}
@@ -620,9 +620,9 @@ export function EventArchitect({
               {id === "faq" && (
                 <>
                   {content.faq.map((f) => (
-                    <div key={f.id} className="rounded-sm border border-line bg-card p-comfortable">
+                    <div key={f.id} className="rounded-sm bg-card p-comfortable">
                       <div className="mb-tight flex items-center justify-between gap-tight">
-                        <span className="type-label text-[12px] text-muted">{t("architect.question")}</span>
+                        <span className="text-[0.75rem] font-medium text-muted">{t("architect.question")}</span>
                         <button
                           type="button"
                           aria-label={f.q.trim() ? t("architect.removeQuestion", { q: f.q.trim() }) : t("architect.removeQuestionUnnamed")}
@@ -650,8 +650,8 @@ export function EventArchitect({
       {/* ── Live preview ───────────────────────────────────────────────── */}
       {preview && (
       <div className="card-surface overflow-hidden xl:sticky xl:top-comfortable">
-        <div className="flex items-center justify-between gap-tight border-b border-line px-card py-comfortable">
-          <h3 className="min-w-0 truncate text-base font-semibold tracking-[-0.4px]">{t("customise.preview")}</h3>
+        <div className="flex items-center justify-between gap-tight border-b border-hairline px-card py-comfortable">
+          <h3 className="min-w-0 truncate text-base font-semibold text-fg">{t("customise.preview")}</h3>
           <div className="flex shrink-0 items-center gap-inline">
             {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as const).map(([d, Icon]) => (
               <button
@@ -670,7 +670,7 @@ export function EventArchitect({
             ))}
           </div>
         </div>
-        <div className="max-h-[74vh] overflow-y-auto bg-subtle p-card">
+        <div className="max-h-[74vh] overflow-y-auto bg-muted-wash p-card">
           <div className={cn("mx-auto overflow-hidden rounded-sm shadow-md", templateFontVars)} style={{ maxWidth: FRAME[device] }}>
             <PreviewFrame width={FRAME[device]}>
               <EventTemplate event={event} device={device === "mobile" ? "mobile" : "desktop"} labels={labels} now={now} />
@@ -706,7 +706,7 @@ function Row({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border-b border-line last:border-0">
+    <div className="border-b border-hairline last:border-0">
       <div className="flex items-center gap-inline pr-card">
         <button
           type="button"
@@ -714,14 +714,14 @@ function Row({
           aria-expanded={open}
           className="flex min-h-11 min-w-0 flex-1 items-center gap-comfortable px-card py-comfortable text-left transition-colors duration-quick hover:bg-muted-wash"
         >
-          <Icon size={16} strokeWidth={1.5} className={cn("shrink-0", muted ? "text-muted/60" : "text-muted")} />
-          <span className={cn("type-label min-w-0 flex-1 truncate text-[12px]", muted ? "text-muted/60" : "text-fg")}>{label}</span>
+          <Icon size={16} strokeWidth={1.5} className={cn("shrink-0", "text-muted")} />
+          <span className={cn("min-w-0 flex-1 truncate text-[0.8125rem] font-medium", muted ? "text-muted line-through decoration-muted/40" : "text-fg")}>{label}</span>
           {sample && <span className="shrink-0 rounded-full bg-warning-wash px-tight py-0.5 text-[12px] font-medium text-warning">{sample}</span>}
           <ChevronDown size={16} strokeWidth={1.5} className={cn("shrink-0 text-muted transition-transform duration-quick", open && "rotate-180")} />
         </button>
         {controls && <span className="flex shrink-0 items-center">{controls}</span>}
       </div>
-      {open && <div className="flex flex-col gap-section bg-subtle/40 px-card pb-card pt-tight">{children}</div>}
+      {open && <div className="flex flex-col gap-section bg-muted-wash/60 px-card pb-card pt-tight">{children}</div>}
     </div>
   );
 }
@@ -729,7 +729,7 @@ function Row({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-inline">
-      <span className="type-label text-[12px] text-muted">{label}</span>
+      <span className="text-[0.8125rem] font-medium text-muted">{label}</span>
       {children}
     </label>
   );
@@ -744,7 +744,7 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-11 items-center justify-center gap-inline rounded-sm border border-dashed border-line text-[13px] text-muted transition-colors duration-quick hover:border-ember hover:text-fg"
+      className="flex min-h-11 items-center justify-center gap-inline rounded-sm bg-card text-[0.8125rem] font-medium text-muted transition-colors duration-quick hover:text-fg"
     >
       <Plus size={15} strokeWidth={1.5} />
       {children}

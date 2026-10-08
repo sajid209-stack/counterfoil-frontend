@@ -13,7 +13,7 @@ import { OrdersPager } from "./_components/OrdersPager";
 import { OrdersToolbar, type FacetOptions } from "./_components/OrdersToolbar";
 import { SalesFigures } from "./_components/SalesFigures";
 import { SummarySheet } from "./_components/SummarySheet";
-import type { ChipOption } from "./_components/FilterChip";
+import type { ChipOption } from "./_components/chip";
 import { downloadCsv, reportFileName, salesCsv, summaryCsv, type Tr } from "./_lib/csv";
 import { CHANNELS, METHODS, STATUSES, activeCount, cleared, parseFilters, toSearch, type SalesFilters } from "./_lib/filters";
 import { TOGGLEABLE, useHiddenColumns } from "./_lib/columns";
@@ -176,6 +176,29 @@ function OrdersPageInner() {
 
   const narrowed = activeCount(f) > 0;
 
+  /* One toolbar object, drawn as the top row of the table's own card from md up
+     and above the list on a phone — `DataTable` decides which. */
+  const toolbar = (
+    <OrdersToolbar
+      f={f}
+      set={set}
+      options={options}
+      labels={L}
+      query={draft}
+      onQuery={onSearch}
+      disabled={firstLoad}
+      onSummary={() => setSheet(true)}
+      onExport={onExport}
+      onPrint={() => router.push(printHref("list"))}
+      columns={{
+        options: allColumns.filter((c) => TOGGLEABLE.includes(c.key as never)).map((c) => ({ value: c.key, label: String(c.header) })),
+        value: TOGGLEABLE.filter((k) => !cols.hidden.includes(k)),
+        onChange: (shown) => cols.set(TOGGLEABLE.filter((k) => !shown.includes(k))),
+        onReset: () => cols.set(null),
+      }}
+    />
+  );
+
   return (
     <PageShell title={t("title")} description={t("description")}>
       <div className="flex flex-col gap-section">
@@ -192,28 +215,6 @@ function OrdersPageInner() {
           </div>
         )}
 
-        <OrdersToolbar
-          f={f}
-          set={set}
-          options={options}
-          labels={L}
-          query={draft}
-          onQuery={onSearch}
-          narrowed={narrowed}
-          onReset={reset}
-          disabled={firstLoad}
-          onSummary={() => setSheet(true)}
-          onExport={onExport}
-          onPrint={() => router.push(printHref("list"))}
-          columns={{
-            options: allColumns.filter((c) => TOGGLEABLE.includes(c.key as never)).map((c) => ({ value: c.key, label: String(c.header) })),
-            value: TOGGLEABLE.filter((k) => !cols.hidden.includes(k)),
-            onChange: (shown) => cols.set(TOGGLEABLE.filter((k) => !shown.includes(k))),
-            onReset: () => cols.set(null),
-          }}
-        />
-
-        {/* Only the five figures, full width - the search and Reset live in the filter row above. */}
         <section aria-label={t("figures.label")} className="card-surface p-card">
           <SalesFigures summary={summary} loading={firstLoad} />
         </section>
@@ -229,6 +230,8 @@ function OrdersPageInner() {
           minWidth="62rem"
           height="page"
           cardVariant="list"
+          toolbar={toolbar}
+          toolbarInCard
           renderCard={(o) => <OrderCard o={o} now={now} />}
           emptyState={
             <EmptyState

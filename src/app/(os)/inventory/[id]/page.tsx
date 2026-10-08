@@ -7,7 +7,6 @@ import { useTranslations } from "next-intl";
 import { PackagePlus, ScanLine, TriangleAlert } from "lucide-react";
 import {
   ActionMenu,
-  Button,
   PageShell,
   StatusPill,
   Tabs,
@@ -145,34 +144,40 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
       title={item.name}
       description={t("itemDescription")}
       back={{ href: "/inventory", label: t("backToList") }}
-      actions={
-        <span className="flex items-center gap-tight">
-          {item.tracked && item.status !== "archived" && (
-            <Button icon={<PackagePlus size={16} strokeWidth={1.5} />} onClick={() => setDialog("receive")}>
-              {t("row.receive")}
-            </Button>
-          )}
-          <ActionMenu items={actions} label={t("rowActions", { name: item.name })} />
-        </span>
+      status={
+        item.status === "archived" ? (
+          <StatusPill status="archived">{t("badge.archived")}</StatusPill>
+        ) : (
+          <StatusPill tone={item.outOfStock ? "danger" : item.low ? "warning" : "neutral"}>
+            {item.outOfStock ? t("badge.out") : item.low ? t("badge.low") : t("badge.fine")}
+          </StatusPill>
+        )
       }
+      primary={
+        item.tracked && item.status !== "archived"
+          ? {
+              label: t("row.receive"),
+              icon: <PackagePlus size={16} strokeWidth={1.5} />,
+              onClick: () => setDialog("receive"),
+            }
+          : undefined
+      }
+      actions={<ActionMenu items={actions} label={t("rowActions", { name: item.name })} />}
     >
       <div className="flex flex-col gap-section">
         {/* The facts, before any control: what it is, and what the shelves
             say. An archived item says so here rather than by looking normal. */}
         <section className="card-surface p-card">
-          <div className="flex flex-wrap items-center gap-tight">
-            <StatusPill tone={item.outOfStock ? "danger" : item.low ? "warning" : "neutral"}>
-              {item.outOfStock ? t("badge.out") : item.low ? t("badge.low") : t("badge.fine")}
-            </StatusPill>
-            <span className="text-[13px] text-muted">
-              {[t(`kind.${item.kind}`), item.sku, item.returnable ? t("returnable") : null, !item.tracked ? t("untracked") : null]
-                .filter(Boolean)
-                .join(" · ")}
-            </span>
-            {item.status === "archived" && <StatusPill tone="neutral">{t("badge.archived")}</StatusPill>}
-          </div>
+          {/* The state is in the header row beside the way back; this card says
+              what the thing is and what the shelves hold. */}
+          <p className="text-[0.8125rem] text-muted">
+            {t(`kind.${item.kind}`)}
+            {item.sku && <> · <span className="font-mono">{item.sku}</span></>}
+            {item.returnable && <> · {t("returnable")}</>}
+            {!item.tracked && <> · {t("untracked")}</>}
+          </p>
 
-          <dl className="mt-section grid gap-section sm:grid-cols-2 xl:grid-cols-4">
+          <dl className="mt-section grid grid-cols-2 gap-section xl:grid-cols-4">
             {[
               item.tracked ? { k: "onHand", v: t("countUnit", { count: item.onHand, unit: item.unit }) } : null,
               /* A hire has a second axis that a sale does not: what is out
@@ -184,10 +189,9 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
             ]
               .filter(Boolean)
               .map((f) => (
-                <div key={f!.k} className="flex flex-col gap-inline">
-                  <dt className="text-[12px] font-medium text-muted">{t(`fact.${f!.k}`)}</dt>
-                  <dd className="type-figure text-[22px] font-semibold leading-tight">{f!.v}</dd>
-                  <dd className="text-[12px] text-muted">{t(`fact.${f!.k}Note`)}</dd>
+                <div key={f!.k} className="flex min-w-0 flex-col gap-inline">
+                  <dt className="text-[0.75rem] font-medium text-muted">{t(`fact.${f!.k}`)}</dt>
+                  <dd className="type-figure text-[1.375rem] font-semibold leading-tight">{f!.v}</dd>
                 </div>
               ))}
           </dl>
@@ -209,7 +213,7 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
               <>
                 {levels.length > 1 && (
                   <section className="card-surface p-card">
-                    <h2 className="text-base font-semibold tracking-[-0.4px]">{t("byVenue")}</h2>
+                    <h2 className="text-base font-semibold">{t("byVenue")}</h2>
                     <ul className="mt-comfortable flex flex-col">
                       {levels.map((l) => (
                         <li key={l.locationId} className="flex flex-wrap items-baseline gap-tight border-b border-hairline py-comfortable last:border-0">
@@ -223,8 +227,8 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
 
                 <section className="card-surface p-card">
                   <div className="flex flex-wrap items-baseline justify-between gap-tight">
-                    <h2 className="text-base font-semibold tracking-[-0.4px]">{t("ledger")}</h2>
-                    <p className="text-[12px] text-muted">{t("ledgerNote")}</p>
+                    <h2 className="text-base font-semibold">{t("ledger")}</h2>
+                    <p className="text-[0.75rem] text-muted">{t("ledgerNote")}</p>
                   </div>
                   {ledger.length === 0 ? (
                     <p className="mt-comfortable text-[13px] text-muted">{t("ledgerEmpty")}</p>
@@ -257,10 +261,10 @@ export default function InventoryItemPage({ params }: { params: Promise<{ id: st
 
         {tab === "sold" && (
           <section className="card-surface p-card">
-            <h2 className="text-base font-semibold tracking-[-0.4px]">{t("soldWithTitle")}</h2>
-            <p className="mt-inline text-[13px] text-muted">{t("soldWithHelp")}</p>
+            <h2 className="text-base font-semibold">{t("soldWithTitle")}</h2>
+            <p className="mt-inline text-[0.8125rem] text-muted">{t("soldWithHelp")}</p>
             {item.soldWith.length === 0 ? (
-              <div className="mt-section flex items-start gap-tight rounded-sm border border-line bg-subtle px-comfortable py-comfortable">
+              <div className="mt-section flex items-start gap-tight rounded-sm bg-muted-wash px-comfortable py-comfortable">
                 <TriangleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
                 <p className="min-w-0 text-[13px]">
                   {t("soldWithEmpty")}{" "}

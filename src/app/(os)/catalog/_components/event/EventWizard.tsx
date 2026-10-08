@@ -419,7 +419,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
                   type="button"
                   onClick={() => pickCategory(c.id)}
                   aria-pressed={categoryId === c.id}
-                  className="group overflow-hidden rounded-md border border-line text-left transition-all duration-quick hover:-translate-y-0.5 hover:border-strong hover:shadow-md"
+                  className="group card-surface overflow-hidden text-left transition-all duration-quick hover:-translate-y-0.5 hover:shadow-md"
                 >
                   <span className="flex h-28 items-end p-card" style={{ background: c.theme.bg, borderBottom: `1px solid ${c.theme.line}` }}>
                     <span className={templateFontVars} style={{ display: "block" }}>
@@ -452,7 +452,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
                 is made of. Neither is a gate — an event can go on sale from
                 either, and the ready list says what is still missing. */}
             <div className="flex flex-wrap items-center justify-between gap-tight">
-              <div role="tablist" aria-label={tb("progress")} className="flex gap-inline rounded-sm bg-line/60 p-inline">
+              <div role="tablist" aria-label={tb("progress")} className="flex gap-inline rounded-sm bg-muted-wash p-inline">
                 {(["make", "design"] as Pane[]).map((p) => (
                   <button
                     key={p}
@@ -507,7 +507,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
                 </div>
 
                 <section data-goto="tickets" className="card-surface p-card">
-                  <h2 className="text-base font-semibold tracking-[-0.4px]">{tw("title.tickets")}</h2>
+                  <h2 className="text-base font-semibold text-fg">{tw("title.tickets")}</h2>
                   <p className="mb-section mt-inline text-[13px] text-muted">{t("step.ticketsHelp")}</p>
                   <TicketTiers rows={tiers} onChange={setTiers} errors={errors} days={content.days} />
                   <div className="mt-major border-t border-hairline pt-section">
@@ -552,7 +552,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
 
         {/* ── The one action, pinned on a phone ───────────────────────────── */}
         {categoryId && (
-          <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-tight border-t border-line bg-surface/95 px-gutter pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-tight backdrop-blur-xl md:static md:z-auto md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none lg:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-tight bg-chrome px-gutter pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-tight shadow-[0_-8px_24px_-12px_rgb(0_0_0/0.18)] md:static md:z-auto md:bg-transparent md:p-0 md:shadow-none lg:hidden">
             <button
               type="button"
               onClick={() => setChecklistOpen(true)}
@@ -618,14 +618,14 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
                 {tb("fullPreview")}
               </button>
             </div>
-            <div className="relative flex justify-center bg-subtle p-card">
+            <div className="relative flex justify-center bg-muted-wash p-card">
               <div className={cn("relative h-[26rem] w-[300px] overflow-hidden rounded-md shadow-md", templateFontVars)}>
                 <PreviewFrame width={390}>
                   <EventTemplate event={draft} device="mobile" labels={labels} now={now} />
                 </PreviewFrame>
                 {/* The cut edge says "there is more", rather than pretending
                     the page ends here. */}
-                <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-subtle to-transparent" />
+                <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--color-muted-wash)] to-transparent" />
               </div>
             </div>
           </div>
@@ -638,7 +638,7 @@ export function EventWizard({ initialCategory = null }: { initialCategory?: Cate
 function StepHead({ title, help }: { title: string; help: string }) {
   return (
     <div className="mb-section">
-      <h2 className="text-[17px] font-semibold tracking-tight">{title}</h2>
+      <h2 className="text-base font-semibold text-fg">{title}</h2>
       <p className="mt-inline text-[13px] text-muted">{help}</p>
     </div>
   );
@@ -673,7 +673,7 @@ function EventChecklist({
       {/* The count is the decision-relevant line, so it leads. It used to sit
           under the list in 13px grey beneath a 12px eyebrow that said nothing
           the list did not. */}
-      <p className={cn("mb-tight text-[17px] font-semibold tracking-[-0.3px]", ready ? "text-success" : "text-fg")}>
+      <p className={cn("mb-tight text-base font-semibold", ready ? "text-success" : "text-fg")}>
         {ready ? tb("readyYes") : tb("readyNo", { count: checks.filter((c) => !c.done).length })}
       </p>
       <ul className="flex flex-col gap-0.5">

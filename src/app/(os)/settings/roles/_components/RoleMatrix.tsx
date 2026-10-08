@@ -86,7 +86,7 @@ export function RoleMatrix({ roles }: { roles: Role[] }) {
                 <th
                   scope="rowgroup"
                   colSpan={roles.length + 1}
-                  className="px-card pb-inline pt-section text-left text-[12px] font-medium uppercase tracking-wide text-muted"
+                  className="px-card pb-inline pt-section text-left text-[0.8125rem] font-medium text-muted"
                 >
                   <span className={pinned}>{t(`permGroup.${g.key}.title`)}</span>
                 </th>

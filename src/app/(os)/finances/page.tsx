@@ -3,8 +3,8 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Download, Landmark } from "lucide-react";
-import { Button, DateRangePicker, formatRange } from "@/components/ui";
+import { ChevronsDownUp, ChevronsUpDown, Download, Landmark } from "lucide-react";
+import { ActionMenu, DateRangePicker, FilterBar, FilterSearch, Select, formatRange, type ActionMenuItem } from "@/components/ui";
 import { PageAction, PageShell } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
@@ -20,7 +20,7 @@ import {
   type FinanceFilter,
 } from "@/lib/api";
 import { Balances } from "./_components/Balances";
-import { ActivityTable, FILTERS, FilterSegments, SearchBox } from "./_components/Activity";
+import { ActivityTable, FILTERS, TypeTabs } from "./_components/Activity";
 import { LineDrawer } from "./_components/LineDrawer";
 import { DepositDialog, WithdrawDialog } from "./_components/MoneyDialogs";
 import { useLineText, type DisplayRow } from "./_components/lineParts";
@@ -219,6 +219,57 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
   };
 
   const presets = PRESETS.map((p) => ({ value: p.value, label: t(`period.${p.value}`), range: p.range }));
+
+  /* The key filter on the row is the date range; the kinds of money are view
+     tabs over the table on a desktop and live behind Filters on a phone. */
+  const dateRange = (
+    <DateRangePicker
+      value={range}
+      onChange={(r) => setRange({ preset: r.preset, from: r.from, to: r.to })}
+      presets={presets}
+      today={DEMO_TODAY}
+      max={DEMO_TODAY}
+      labels={{
+        choose: t("range.choose"),
+        custom: t("range.custom"),
+        from: t("range.from"),
+        to: t("range.to"),
+        apply: t("range.apply"),
+        cancel: t("range.cancel"),
+        previousMonth: tc("previousMonth"),
+        nextMonth: tc("nextMonth"),
+        days: (count) => t("range.days", { count }),
+        pickEnd: t("range.pickEnd"),
+      }}
+      className="w-full shrink-0 md:w-auto"
+    />
+  );
+  const typeFilter = {
+    key: "type",
+    label: t("activity.type"),
+    control: (
+      <Select
+        aria-label={t("activity.type")}
+        value={filter}
+        onChange={(v) => setFilter(v as FinanceFilter)}
+        options={FILTERS.map((f) => ({ value: f, label: t(`filter.${f}`) }))}
+      />
+    ),
+    active: filter !== "all" ? t(`filter.${filter}`) : null,
+    onClear: () => setFilter("all"),
+  };
+  /* Two buttons and an overflow, no more: the statement is the one thing most
+     visits want to take away; the rest of what this table can do waits in the menu. */
+  const menu: ActionMenuItem[] = [
+    {
+      key: "expand",
+      label: t(allOpen ? "activity.collapseAll" : "activity.expandAll"),
+      icon: allOpen ? <ChevronsDownUp size={16} strokeWidth={1.5} /> : <ChevronsUpDown size={16} strokeWidth={1.5} />,
+      onSelect: toggleAll,
+      disabled: days.length === 0,
+    },
+    { key: "bank", label: t("menu.bank"), icon: <Landmark size={16} strokeWidth={1.5} />, onSelect: () => router.push("/settings/payments") },
+  ];
   const periodLabel = PRESETS.some((p) => p.value === range.preset) ? t(`period.${range.preset}` as "period.30d") : formatRange(range.from, range.to);
   const bold = (chunks: React.ReactNode) => <span className="font-semibold text-fg">{chunks}</span>;
 
@@ -245,22 +296,14 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
 
         <section aria-labelledby="fin-activity-title" id="fin-activity" className="card-surface scroll-mt-24">
           <div className="p-card pb-0">
-            <div className="flex flex-wrap items-center justify-between gap-tight">
-              <h2 id="fin-activity-title" className="text-base font-semibold tracking-[-0.4px]">{t("activity.title")}</h2>
-              <div className="flex flex-wrap items-center gap-tight">
-                <Button variant="secondary" size="sm" onClick={toggleAll} disabled={days.length === 0}>
-                  {t(allOpen ? "activity.collapseAll" : "activity.expandAll")}
-                </Button>
-                <Button variant="secondary" size="sm" icon={<Download size={15} strokeWidth={1.5} />} onClick={() => void downloadStatement()}>
-                  {t("activity.download")}
-                </Button>
-                {/* The page's ⋯ menu held this one link, in a row of its own
-                    under the bar. It is a way to the bank this table's payouts
-                    go to, so it sits with the table. A phone keeps the glyph. */}
-                <PageAction label={t("menu.bank")} icon={<Landmark size={15} strokeWidth={1.5} />} onClick={() => router.push("/settings/payments")} />
+            <div className="flex items-center justify-between gap-tight">
+              <h2 id="fin-activity-title" className="min-w-0 text-base font-semibold tracking-[-0.4px]">{t("activity.title")}</h2>
+              <div className="flex shrink-0 items-center gap-tight">
+                <PageAction label={t("activity.download")} icon={<Download size={15} strokeWidth={1.5} />} onClick={() => void downloadStatement()} />
+                <ActionMenu label={t("menu.more")} items={menu} />
               </div>
             </div>
-            <p className="mt-inline min-h-5 text-[14px] text-muted">
+            <p className="mt-inline min-h-5 text-[13px] text-muted">
               {summary && (
                 <>
                   <span>{periodLabel}</span>
@@ -273,32 +316,10 @@ function FinancesView({ locationId, venueName, pending }: { locationId: string; 
                 </>
               )}
             </p>
-            <div className="mt-section flex flex-wrap items-center gap-tight pb-section">
-              <FilterSegments value={filter} onChange={setFilter} />
-              <DateRangePicker
-                value={range}
-                onChange={(r) => setRange({ preset: r.preset, from: r.from, to: r.to })}
-                presets={presets}
-                today={DEMO_TODAY}
-                max={DEMO_TODAY}
-                labels={{
-                  choose: t("range.choose"),
-                  custom: t("range.custom"),
-                  from: t("range.from"),
-                  to: t("range.to"),
-                  apply: t("range.apply"),
-                  cancel: t("range.cancel"),
-                  previousMonth: tc("previousMonth"),
-                  nextMonth: tc("nextMonth"),
-                  days: (count) => t("range.days", { count }),
-                  pickEnd: t("range.pickEnd"),
-                }}
-                className="w-full shrink-0 md:w-auto"
-              />
-              <SearchBox value={search} onChange={setSearch} />
-            </div>
+            {wide && <TypeTabs value={filter} onChange={setFilter} />}
+            <FilterBar className="mt-comfortable pb-section" search={<FilterSearch value={search} onChange={setSearch} placeholder={t("activity.search")} />} lead={dateRange} filters={wide ? [] : [typeFilter]} />
           </div>
-          <div className="border-t border-hairline">
+          <div>
             <ActivityTable
               days={days}
               total={total}

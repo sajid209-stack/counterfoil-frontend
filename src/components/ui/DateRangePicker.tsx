@@ -232,7 +232,7 @@ export function DateRangePicker({
           less than seven 36px columns — they overlap and swallow each other's clicks. */}
       <div className="grid grid-cols-[repeat(7,2.5rem)] md:grid-cols-[repeat(7,2.25rem)]" aria-hidden>
         {WEEKDAYS.map((w, i) => (
-          <span key={`${w}-${i}`} className="type-label flex h-6 w-10 items-center justify-center text-[0.75rem] text-muted md:w-9">{w}</span>
+          <span key={`${w}-${i}`} className="flex h-6 w-10 items-center justify-center text-[0.75rem] font-medium text-muted md:w-9">{w}</span>
         ))}
       </div>
       <div role="grid" aria-label={MONTH_FMT.format(month)} onKeyDown={onGridKey} className="grid grid-cols-[repeat(7,2.5rem)] gap-y-0.5 md:grid-cols-[repeat(7,2.25rem)]">
@@ -309,7 +309,7 @@ export function DateRangePicker({
         onClick={() => (open ? close() : openPanel())}
         className={cn(
           "flex h-11 w-full min-w-0 items-center gap-tight rounded-sm border bg-card px-comfortable text-left text-sm transition-colors duration-quick hover:border-strong md:h-9 md:w-auto",
-          open ? "border-inverse" : "border-line",
+          open ? "border-strong" : "border-line",
         )}
       >
         <CalendarDays size={15} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
@@ -329,7 +329,7 @@ export function DateRangePicker({
           role="dialog"
           aria-label={labels.choose}
           className={cn(
-            "z-50 flex flex-col overflow-hidden border border-line bg-card shadow-xl",
+            "z-50 flex flex-col overflow-hidden border border-hairline bg-card shadow-xl dark:border-line",
             // A sheet from the bottom on a phone; a popover under the button beyond.
             "fixed inset-x-0 bottom-0 max-h-[88vh] rounded-t-md md:absolute md:inset-x-auto md:bottom-auto md:left-0 md:top-[calc(100%+6px)] md:max-h-none md:w-max md:rounded-md",
           )}
@@ -348,7 +348,7 @@ export function DateRangePicker({
                       onClick={() => pickPreset(p)}
                       className={cn(
                         "flex h-11 w-full items-center gap-tight whitespace-nowrap rounded-sm px-comfortable text-left text-[0.8125rem] transition-colors duration-quick md:h-9",
-                        on ? "bg-inverse font-medium text-inverse-fg" : "border border-line hover:bg-muted-wash md:border-0",
+                        on ? "bg-subtle font-medium text-fg dark:bg-fg/10" : "border border-line hover:bg-muted-wash md:border-0",
                       )}
                     >
                       <span className="flex-1">{p.label}</span>
@@ -361,7 +361,7 @@ export function DateRangePicker({
                 <span
                   className={cn(
                     "flex h-9 items-center gap-tight rounded-sm px-comfortable text-[0.8125rem]",
-                    pressed === "custom" ? "bg-inverse font-medium text-inverse-fg" : "text-muted",
+                    pressed === "custom" ? "bg-subtle font-medium text-fg dark:bg-fg/10" : "text-muted",
                   )}
                 >
                   <span className="flex-1">{labels.custom}</span>

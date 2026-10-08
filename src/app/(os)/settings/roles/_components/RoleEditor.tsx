@@ -135,7 +135,7 @@ export function RoleEditor({
                     <li key={m.id}>
                       <Link
                         href={`/settings/team/${m.id}`}
-                        className="inline-flex min-h-11 items-center gap-tight rounded-full border border-line py-inline pl-inline pr-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
+                        className="inline-flex min-h-11 items-center gap-tight rounded-full bg-muted-wash/70 py-inline pl-inline pr-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9"
                       >
                         <Avatar name={m.name} size={24} soft />
                         {m.name}
@@ -155,17 +155,16 @@ export function RoleEditor({
       </SettingsSection>
 
       {PERMISSION_GROUPS.map((g) => (
-        <SettingsSection key={g.key} title={t(`permGroup.${g.key}.title`)} description={t(`permGroup.${g.key}.desc`)}>
+        <SettingsSection key={g.key} title={t(`permGroup.${g.key}.title`)} description={t(`permGroup.${g.key}.desc`)} divided>
           {g.permissions.map((p) => {
             const k = permissionKey(p);
             const losingOwn = mode === "edit" && isYourRole && LOCKOUT.has(p) && saved.permissions.includes(p) && !has(p);
             return (
-              <div key={p} className="divide-y divide-hairline">
-                <SettingRow label={t(`perm.${k}.title`)} description={t(`perm.${k}.desc`)} labelFor={false}>
+              <div key={p}>
+                {/* The switch stays at the row's right edge on a phone too. */}
+                <SettingRow label={t(`perm.${k}.title`)} description={t(`perm.${k}.desc`)} labelFor={false} trailing>
                   {({ labelId, describedBy }) => (
-                    <div className="flex sm:justify-end">
-                      <Switch checked={has(p)} onChange={(on) => toggle(p, on)} labelledBy={labelId} describedBy={describedBy} />
-                    </div>
+                    <Switch checked={has(p)} onChange={(on) => toggle(p, on)} labelledBy={labelId} describedBy={describedBy} />
                   )}
                 </SettingRow>
                 {losingOwn && (

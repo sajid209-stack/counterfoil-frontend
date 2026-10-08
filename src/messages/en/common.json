@@ -1,6 +1,5 @@
 {
   "save": "Save",
-  "saveChanges": "Save changes",
   "cancel": "Cancel",
   "delete": "Delete",
   "add": "Add",
@@ -16,9 +15,6 @@
   "appearance": "Appearance",
   "filterByStatus": "Filter by status",
   "chooseDate": "Choose a date",
-  "filterByLocation": "Filter by location",
-  "dateFrom": "From date",
-  "dateTo": "To date",
   "previousMonth": "Previous month",
   "nextMonth": "Next month",
   "today": "Today",
@@ -30,9 +26,10 @@
   "figures": "Figures",
   "filters": "Filters",
   "clearFilter": "Clear {name}",
-  "clearAll": "Clear all",
-  "nothingYet": "Nothing here yet",
   "noResults": "Nothing matches. Try other filters.",
   "previousPage": "Previous page",
-  "nextPage": "Next page"
+  "nextPage": "Next page",
+  "done": "Done",
+  "clearFilters": "Clear filters",
+  "filtersApplied": "Filters, {count} applied"
 }

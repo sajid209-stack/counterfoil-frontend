@@ -168,7 +168,6 @@
       "regularCustomer": "নিয়মিত গ্রাহক",
       "other": "অন্য কারণ"
     },
-    "noteLabel": "নোট (ঐচ্ছিক)",
     "noteLabelRequired": "নোট",
     "notePlaceholder": "যেমন: ২০ মিনিট পর বৃষ্টিতে খেলা বন্ধ",
     "noteRequired": "কারণ লিখুন, যাতে অর্ডারে নোট থাকে।",

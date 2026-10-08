@@ -8,7 +8,6 @@
   "manage": "খুলুন",
   "sync": "এখনই মিলিয়ে নিন",
   "synced": "{name} মিলিয়ে নেওয়া হয়েছে।",
-  "theirSite": "বিক্রেতাদের জন্য তাদের সাইট",
   "typically": "সাধারণত {pct}% রাখে",
   "keepOf": "তারা {pct}% রাখে। {price} টিকিটে আপনি পান {net}।",
   "listingLine": "{total}টির মধ্যে {live}টি বিক্রিতে আছে",
@@ -111,5 +110,7 @@
   "sendHintSubmitted": "আগেই পাঠানো হয়েছে। তাদের উত্তরের অপেক্ষা।",
   "sendHintRejected": "তারা বাতিল করেছে। কারণ নামের নিচে লেখা আছে।",
   "summary": "{live, plural, other {#টি লিস্টিং}} বিক্রিতে আছে · {orders, plural, other {#টি বুকিং}} · তাদের ভাগের পর {net} · তাদের ভাগ {commission}",
-  "summaryOne": "এই সাইটে {listed, plural, other {#টি লিস্টিং}}, {live}টি বিক্রিতে আছে · {orders, plural, other {#টি বুকিং}} · তাদের ভাগের পর {net} · তাদের ভাগ {commission}"
+  "summaryOne": "এই সাইটে {listed, plural, other {#টি লিস্টিং}}, {live}টি বিক্রিতে আছে · {orders, plural, other {#টি বুকিং}} · তাদের ভাগের পর {net} · তাদের ভাগ {commission}",
+  "syncing": "আপডেট হচ্ছে…",
+  "moreActions": "আরও কাজ"
 }

@@ -3,7 +3,6 @@
   "description": "Things you hand over, how many are left, and what is running out.",
   "add": "Add an item",
   "searchPlaceholder": "Search items…",
-  "allVenues": "All venues",
   "kindAll": "Any kind",
   "untracked": "Not counted",
   "returnable": "Hired out",
@@ -38,8 +37,7 @@
     "archived": "Archived"
   },
   "stat": {
-    "unsold": "Not offered yet",
-    "unsoldNote": "No booking or event offers these yet. Tap to show them."
+    "unsold": "Not offered yet"
   },
   "row": {
     "receive": "Add new stock",
@@ -129,13 +127,9 @@
   },
   "fact": {
     "onHand": "In stock",
-    "onHandNote": "What the counter can sell",
     "price": "Price",
-    "priceNote": "What one costs a customer",
     "value": "Value",
-    "valueNote": "What you paid for what is left",
-    "onLoan": "Hired out",
-    "onLoanNote": "Given out and not back yet"
+    "onLoan": "Hired out"
   },
   "tax": {
     "standard": "Standard rate",
@@ -167,9 +161,7 @@
     "lowAtHelp": "Below this number it shows as Running low.",
     "where": "Where it is kept",
     "whereHelp": "A counter can only sell what is kept at its own venue.",
-    "save": "Save",
     "create": "Add the item",
-    "cancel": "Cancel",
     "atCounter": "Sell it on its own at the counter",
     "atCounterHelp": "It shows in Shop at the counter, for customers who just want to buy one.",
     "units": {
@@ -179,9 +171,11 @@
       "bottle": "bottle",
       "box": "box",
       "hour": "hour"
-    }
+    },
+    "createNote": "Next you add how many you have."
   },
   "returnedAtDesk": "Returned at the desk",
   "filterKind": "Kind",
-  "filterVenue": "Venue"
+  "filterSold": "Sold with",
+  "soldAll": "All items"
 }

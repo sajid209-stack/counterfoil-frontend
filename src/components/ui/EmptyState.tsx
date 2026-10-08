@@ -1,6 +1,11 @@
-import { useTranslations } from "next-intl";
-
-/** Empty state as a perforated ticket-stub outline — the brand's empty page. */
+/**
+ * Empty state — a quiet centred stack: a soft disc with the glyph, a title, one
+ * line of reason, and the way out. No dashed stub, no frame: the card or table
+ * it sits in is already the frame, and a second outline inside it is the kind
+ * of stroke the calm pass removes. The perforated ticket-stub outline this used
+ * to draw was the brand's empty page; the brand now lives in the mark and the
+ * ember action, and the page it is drawn on stays calm.
+ */
 export function EmptyState({
   icon,
   title,
@@ -12,25 +17,16 @@ export function EmptyState({
   message?: string;
   action?: React.ReactNode;
 }) {
-  const t = useTranslations("common");
   return (
-    <div className="relative mx-auto w-full max-w-md">
-      <div className="flex flex-col items-center justify-center gap-tight rounded-md border border-dashed border-line px-card pb-tight pt-hero text-center">
-        {icon && <div className="text-muted">{icon}</div>}
-        <p className="type-h2 text-base">{title}</p>
-        {message && (
-          <p className="type-body max-w-sm text-[0.8125rem] text-muted">{message}</p>
-        )}
-      </div>
-      {/* perforation — the stub tears here */}
-      <div className="relative flex items-center" aria-hidden>
-        <span className="absolute -left-2 h-4 w-4 rounded-full bg-surface" />
-        <span className="absolute -right-2 h-4 w-4 rounded-full bg-surface" />
-        <span className="mx-major flex-1 border-t-2 border-dashed border-line" />
-      </div>
-      <div className="flex items-center justify-center rounded-md border border-dashed border-line p-card">
-        {action ?? <span className="font-mono text-[0.75rem] uppercase tracking-wider text-muted">{t("nothingYet")}</span>}
-      </div>
+    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-tight px-card py-major text-center">
+      {icon && (
+        <div className="mb-inline grid h-12 w-12 place-items-center rounded-full bg-subtle text-muted dark:bg-fg/10">
+          {icon}
+        </div>
+      )}
+      <p className="text-[0.9375rem] font-semibold">{title}</p>
+      {message && <p className="type-body max-w-sm text-[0.8125rem] text-muted">{message}</p>}
+      {action && <div className="mt-tight">{action}</div>}
     </div>
   );
 }

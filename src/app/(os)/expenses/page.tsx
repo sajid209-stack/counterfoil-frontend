@@ -3,8 +3,9 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Download, Plus, RotateCcw, Search } from "lucide-react";
-import { Button, DateRangePicker, Modal, PageShell, formatRange, useToast } from "@/components/ui";
+import { Download, Plus } from "lucide-react";
+import { Button, DateRangePicker, FilterBar, FilterSearch, Modal, PageShell, formatRange, useToast, type FilterSpec } from "@/components/ui";
+import { PageAction } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
 import { MD, useMediaQuery } from "@/lib/useMedia";
@@ -29,9 +30,9 @@ import {
 } from "@/lib/api";
 import { ExpenseDrawer, type DrawerMode } from "./_components/ExpenseDrawer";
 import { ExpenseTable, PAGE_SIZES, type Sort } from "./_components/ExpenseTable";
-import { MultiSelect } from "./_components/MultiSelect";
+import { ChipChoices } from "./_components/ChipChoices";
 import { Summary } from "./_components/Summary";
-import { CATEGORY_ICON, PAID_ICON, shortDate, useExpenseLabels } from "./_components/parts";
+import { shortDate, useExpenseLabels } from "./_components/parts";
 
 const shift = (day: string, n: number) => {
   const d = new Date(`${day}T12:00:00`);
@@ -77,9 +78,10 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
 /**
  * Expenses — what the venue spends, written down where it happened.
  *
- * A toolbar (dates, category, how it was paid, search, and the one create
- * button), one summary card whose figures add up exactly what the table lists,
- * and the table — `DataTable`, the same one Orders and Customers use. A row
+ * A toolbar (search, the date range, one Filters button for category and how it
+ * was paid, and the one create button), one summary card whose figures add up
+ * exactly what the table lists, and the table — `DataTable`, the same one
+ * Orders and Customers use. A row
  * opens its drawer to read or change it; the menu on a row edits, copies (for
  * a cost that comes round again) or deletes with an Undo.
  * The venue is the one in the bar, and the view lives in the address, so it can
@@ -244,7 +246,7 @@ function ExpensesView({ locationId, venueName, pending, locations }: { locationI
   };
 
   // ── the spreadsheet: exactly what is filtered, every page ──
-  const download = () => {
+  const downloadCsv = () => {
     const csv = expensesCsv(query, {
       headers: [t("csv.ref"), t("csv.date"), t("csv.title"), t("csv.payee"), t("csv.category"), t("csv.paidFrom"), t("csv.counter"), t("csv.items"), t("csv.total"), t("csv.by"), t("csv.note")],
       categories: Object.fromEntries(EXPENSE_CATEGORIES.map((c) => [c, labels.category(c)])),
@@ -263,85 +265,115 @@ function ExpensesView({ locationId, venueName, pending, locations }: { locationI
   const presets = PRESETS.map((p) => ({ value: p.value, label: t(`period.${p.value}` as "period.30d"), range: p.range }));
   const periodLabel = PRESETS.some((p) => p.value === range.preset) ? t(`period.${range.preset}` as "period.30d") : formatRange(range.from, range.to);
 
+  /** What a filter says it is set to: the names while there are one or two, a count after. */
+  const chosen = (names: string[]) => (names.length <= 2 ? names.join(", ") : t("toolbar.nChosen", { count: names.length }));
+  const filters: FilterSpec[] = [
+    {
+      key: "category",
+      label: t("toolbar.category"),
+      control: (
+        <ChipChoices
+          label={t("toolbar.category")}
+          value={cats}
+          onChange={(v) => {
+            setCats(v);
+            setPage(1);
+          }}
+          options={EXPENSE_CATEGORIES.map((c) => ({ value: c, label: labels.category(c) }))}
+        />
+      ),
+      active: cats.length ? chosen(cats.map((c) => labels.category(c))) : null,
+      onClear: () => {
+        setCats([]);
+        setPage(1);
+      },
+    },
+    {
+      key: "paid",
+      label: t("toolbar.paidFrom"),
+      control: (
+        <ChipChoices
+          label={t("toolbar.paidFrom")}
+          value={paid}
+          onChange={(v) => {
+            setPaid(v);
+            setPage(1);
+          }}
+          options={PAID_FROM.map((x) => ({ value: x, label: labels.paidFrom(x) }))}
+        />
+      ),
+      active: paid.length ? chosen(paid.map((x) => labels.paidFrom(x))) : null,
+      onClear: () => {
+        setPaid([]);
+        setPage(1);
+      },
+    },
+  ];
+
+  const download = (
+    <Button variant="secondary" size="sm" icon={<Download size={15} strokeWidth={1.5} aria-hidden />} onClick={downloadCsv}>
+      {t("toolbar.download")}
+    </Button>
+  );
+
   return (
     <PageShell title={t("title")} primary={wide ? undefined : { label: t("add"), onClick: () => open("new") }}>
       <div className="flex flex-col gap-section">
-        <div className="flex flex-wrap items-center gap-tight">
-          <DateRangePicker
-            value={range}
-            onChange={(r) => {
-              setRange({ preset: r.preset, from: r.from, to: r.to });
-              setPage(1);
-            }}
-            presets={presets}
-            today={DEMO_TODAY}
-            max={DEMO_TODAY}
-            labels={{
-              choose: t("range.choose"),
-              custom: t("range.custom"),
-              from: t("range.from"),
-              to: t("range.to"),
-              apply: t("range.apply"),
-              cancel: t("range.cancel"),
-              previousMonth: t("range.previousMonth"),
-              nextMonth: t("range.nextMonth"),
-              days: (count) => t("range.days", { count }),
-              pickEnd: t("range.pickEnd"),
-            }}
-            className="w-full shrink-0 md:w-auto"
-          />
-          <div className="grid w-full grid-cols-2 gap-tight md:contents">
-            <MultiSelect
-              label={t("toolbar.category")}
-              value={cats}
-              onChange={(v) => {
-                setCats(v);
-                setPage(1);
-              }}
-              options={EXPENSE_CATEGORIES.map((c) => ({ value: c, label: labels.category(c), icon: CATEGORY_ICON[c] }))}
-              clearLabel={t("toolbar.clearChoice")}
-            />
-            <MultiSelect
-              label={t("toolbar.paidFrom")}
-              value={paid}
-              onChange={(v) => {
-                setPaid(v);
-                setPage(1);
-              }}
-              options={PAID_FROM.map((p) => ({ value: p, label: labels.paidFrom(p), icon: PAID_ICON[p] }))}
-              clearLabel={t("toolbar.clearChoice")}
-            />
-          </div>
-          <label className="relative min-w-[10rem] flex-1 basis-40 md:max-w-72">
-            <Search size={15} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-            <input
-              type="search"
+        {/* The row a list opens with: search, the date range (the one filter
+            most visits change), and one Filters button holding the rest. What
+            is set comes back as a chip beneath it. A phone puts the range and
+            the statement on their own row under search and Filters. */}
+        <FilterBar
+          search={
+            <FilterSearch
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+              onChange={(v) => {
+                setSearch(v);
                 setPage(1);
               }}
               placeholder={t("toolbar.search")}
-              aria-label={t("toolbar.search")}
-              className="h-11 w-full rounded-sm border border-line bg-card pl-8 pr-comfortable text-[13px] outline-none placeholder:text-muted focus:border-inverse md:h-9"
             />
-          </label>
-          <div className="flex flex-wrap items-center gap-tight md:ml-auto">
-            {filtered && (
-              <Button variant="tertiary" size="sm" icon={<RotateCcw size={15} strokeWidth={1.5} aria-hidden />} onClick={reset}>
-                {t("toolbar.reset")}
-              </Button>
-            )}
-            <Button variant="secondary" size="sm" icon={<Download size={15} strokeWidth={1.5} aria-hidden />} onClick={download}>
-              {t("toolbar.download")}
-            </Button>
-            {wide && (
-              <Button size="sm" icon={<Plus size={16} strokeWidth={1.75} aria-hidden />} onClick={() => open("new")}>
-                {t("add")}
-              </Button>
-            )}
-          </div>
-        </div>
+          }
+          lead={
+            <div className="flex w-full items-center gap-tight md:w-auto">
+              <DateRangePicker
+                value={range}
+                onChange={(r) => {
+                  setRange({ preset: r.preset, from: r.from, to: r.to });
+                  setPage(1);
+                }}
+                presets={presets}
+                today={DEMO_TODAY}
+                max={DEMO_TODAY}
+                labels={{
+                  choose: t("range.choose"),
+                  custom: t("range.custom"),
+                  from: t("range.from"),
+                  to: t("range.to"),
+                  apply: t("range.apply"),
+                  cancel: t("range.cancel"),
+                  previousMonth: t("range.previousMonth"),
+                  nextMonth: t("range.nextMonth"),
+                  days: (count) => t("range.days", { count }),
+                  pickEnd: t("range.pickEnd"),
+                }}
+                className="min-w-0 flex-1 md:w-auto md:flex-none"
+              />
+              {!wide && <PageAction label={t("toolbar.download")} icon={<Download size={15} strokeWidth={1.5} aria-hidden />} onClick={downloadCsv} />}
+            </div>
+          }
+          filters={filters}
+          actions={
+            wide ? (
+              <>
+                {download}
+                <Button size="sm" icon={<Plus size={16} strokeWidth={1.75} aria-hidden />} onClick={() => open("new")}>
+                  {t("add")}
+                </Button>
+              </>
+            ) : undefined
+          }
+        />
 
         <Summary summary={summary} loading={pending || sumQ.loading} periodLabel={periodLabel} selected={cats} onSelect={pickCategory} />
 

@@ -83,7 +83,7 @@ export function EventDays({
   }
 
   return (
-    <div className="flex flex-col gap-tight rounded-sm border border-line bg-subtle/40 p-comfortable">
+    <div className="flex flex-col gap-tight rounded-sm bg-muted-wash p-comfortable">
       {/* The count and the way out on one line, the control that changes the
           count under it — at 390px all three on one row wrapped into three. */}
       <div className="flex items-center justify-between gap-tight">

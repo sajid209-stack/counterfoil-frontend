@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Pencil, Plus, X } from "lucide-react";
+import { ArrowLeft, Check, Pencil, Plus, X } from "lucide-react";
 import { Button, DateField, DurationInput, FormField } from "@/components/ui";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { formatDay } from "@/lib/format";
@@ -54,7 +54,7 @@ type Step = SetupStart | "q2";
 
 function Option({ title, helper, onClick }: { title: string; helper: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex w-full flex-col items-start gap-inline rounded-md border border-line bg-card p-comfortable text-left transition-all duration-quick hover:border-ember/50 hover:shadow-sm active:bg-ember/5">
+    <button type="button" onClick={onClick} className="flex w-full flex-col items-start gap-inline rounded-sm bg-muted-wash p-comfortable text-left transition-shadow duration-quick hover:ring-2 hover:ring-inset hover:ring-ember/40 active:bg-ember/5">
       <span className="text-sm font-medium">{title}</span>
       <span className="text-[13px] text-muted">{helper}</span>
     </button>
@@ -126,7 +126,7 @@ export function BookingSetup({
 
   if (value) {
     return (
-      <div className="rounded-md border border-line bg-card p-comfortable">
+      <div className="rounded-sm bg-muted-wash p-comfortable">
         <div className="flex items-start justify-between gap-section">
           <p className="text-sm">{value.summary}</p>
           <button type="button" onClick={() => { setStep(start); onChange(null); }} className="-my-tight flex min-h-11 shrink-0 items-center gap-inline rounded-sm px-tight text-[13px] font-medium text-brand-foreground hover:bg-muted-wash md:min-h-9">
@@ -266,13 +266,13 @@ export function BookingSetup({
             {head(t("resource.which"))}
             <div className="flex flex-col gap-tight">
               {resources.map((r) => (
-                <label key={r.id} className="flex min-h-9 cursor-pointer items-center gap-tight text-sm">
+                <label key={r.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9">
                   <input type="checkbox" checked={picked.includes(r.id)} onChange={() => setPicked((p) => toggle(p, r.id))} className="h-4 w-4 accent-ember" />
                   {r.name} <span className="text-[12px] text-muted">({r.nounSingular})</span>
                 </label>
               ))}
               {onCreateResource && (
-                <div className="flex flex-wrap items-end gap-tight rounded-sm border border-dashed border-line p-comfortable">
+                <div className="flex flex-wrap items-end gap-tight rounded-sm bg-muted-wash p-comfortable">
                   <FormField label={t("resource.addOne")} placeholder={t("resource.addPlaceholder", { noun: newNoun })} value={newName} onChange={(e) => setNewName(e.target.value)} />
                   <FormField label={t("resource.type")} variant="select" value={newNoun} onChange={(e) => setNewNoun(e.target.value)} options={NOUNS.map((n) => ({ value: n, label: n }))} />
                   <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} />} loading={adding} onClick={addResource}>{t("resource.add")}</Button>
@@ -300,7 +300,7 @@ export function BookingSetup({
           <div className="flex flex-col gap-tight">
             <Question>{t("provider.who")}</Question>
             {team.length === 0 ? <p className="text-[13px] text-muted">{t("provider.noTeam")}</p> : team.map((m) => (
-              <label key={m.id} className="flex min-h-9 cursor-pointer items-center gap-tight text-sm"><input type="checkbox" checked={provIds.includes(m.id)} onChange={() => setProvIds((p) => toggle(p, m.id))} className="h-4 w-4 accent-ember" />{m.name}</label>
+              <label key={m.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9"><input type="checkbox" checked={provIds.includes(m.id)} onChange={() => setProvIds((p) => toggle(p, m.id))} className="h-4 w-4 accent-ember" />{m.name}</label>
             ))}
           </div>
           <DurationInput label={t("provider.howLong")} value={parseInt(provDuration, 10) || 60} min={5} onChange={(n) => setProvDuration(String(n))} chips={[30, 45, 60, 90]} className="max-w-xs" />
@@ -318,7 +318,7 @@ export function BookingSetup({
           <div className="flex flex-col gap-tight">
             <Question>{t("course.dates")}</Question>
             {courseDates.map((d) => (
-              <div key={d} className="flex items-center justify-between rounded-sm border border-line px-comfortable py-tight text-sm"><span className="text-[13px]">{formatDay(d, { weekday: true })}</span><button type="button" aria-label={t("course.remove", { date: formatDay(d, { weekday: true }) })} title={t("course.remove", { date: formatDay(d, { weekday: true }) })} onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="-my-tight flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-danger md:h-9 md:w-9"><X size={16} strokeWidth={1.5} aria-hidden /></button></div>
+              <div key={d} className="flex items-center justify-between rounded-sm bg-muted-wash px-comfortable py-tight text-sm"><span className="text-[13px]">{formatDay(d, { weekday: true })}</span><button type="button" aria-label={t("course.remove", { date: formatDay(d, { weekday: true }) })} title={t("course.remove", { date: formatDay(d, { weekday: true }) })} onClick={() => setCourseDates((ds) => ds.filter((x) => x !== d))} className="-my-tight flex h-11 w-11 items-center justify-center rounded-sm text-muted hover:bg-muted-wash hover:text-danger md:h-9 md:w-9"><X size={16} strokeWidth={1.5} aria-hidden /></button></div>
             ))}
             <div className="flex gap-tight">
               <DateField size="form" value={courseDate} today={DEMO_TODAY} onChange={setCourseDate} labels={{ previousMonth: t("previousMonth"), nextMonth: t("nextMonth"), today: t("today"), open: t("chooseDate") }} className="flex-1" />
@@ -335,7 +335,7 @@ export function BookingSetup({
           {head(t("bundle.title"))}
           <p className="-mt-tight text-[13px] text-muted">{t("bundle.help")}</p>
           <div className="flex flex-col gap-tight">
-            {products.map((p) => (<label key={p.id} className="flex min-h-9 cursor-pointer items-center gap-tight text-sm"><input type="checkbox" checked={bundleIds.includes(p.id)} onChange={() => setBundleIds((b) => toggle(b, p.id))} className="h-4 w-4 accent-ember" />{p.name}</label>))}
+            {products.map((p) => (<label key={p.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9"><input type="checkbox" checked={bundleIds.includes(p.id)} onChange={() => setBundleIds((b) => toggle(b, p.id))} className="h-4 w-4 accent-ember" />{p.name}</label>))}
           </div>
           {footer(finishBundle, bundleIds.length < 2 ? t("missing.bundle") : null)}
         </div>
@@ -349,7 +349,7 @@ export function BookingSetup({
           </div>
           <div className="flex flex-col gap-tight">
             <Question>{t("credits.spendable")}</Question>
-            {products.map((p) => (<label key={p.id} className="flex min-h-9 cursor-pointer items-center gap-tight text-sm"><input type="checkbox" checked={creditIds.includes(p.id)} onChange={() => setCreditIds((c) => toggle(c, p.id))} className="h-4 w-4 accent-ember" />{p.name}</label>))}
+            {products.map((p) => (<label key={p.id} className="flex min-h-11 cursor-pointer items-center gap-tight text-sm md:min-h-9"><input type="checkbox" checked={creditIds.includes(p.id)} onChange={() => setCreditIds((c) => toggle(c, p.id))} className="h-4 w-4 accent-ember" />{p.name}</label>))}
           </div>
           {footer(finishCredits, creditIds.length === 0 ? t("missing.credits") : null)}
         </div>
@@ -361,7 +361,7 @@ export function BookingSetup({
 /** A question put to the operator — the same size and weight wherever one is
  *  asked, and in sentence case. */
 function Question({ children }: { children: React.ReactNode }) {
-  return <p className="text-[15px] font-semibold tracking-tight">{children}</p>;
+  return <p className="text-base font-semibold text-fg">{children}</p>;
 }
 
 function Radio({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string; helper: string }[] }) {
@@ -372,10 +372,10 @@ function Radio({ label, value, onChange, options }: { label: string; value: stri
         {options.map((o) => {
           const selected = value === o.value;
           return (
-            <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={selected} className={`relative flex flex-col items-start rounded-md border p-comfortable text-left transition-all duration-quick ${selected ? "border-ember bg-ember/5" : "border-line bg-card hover:border-ember/40 hover:shadow-sm"}`}>
-              {selected && <span className="absolute right-tight top-tight h-2 w-2 rounded-full bg-ember" aria-hidden />}
+            <button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={selected} className={`relative flex flex-col items-start rounded-sm bg-muted-wash p-comfortable pr-9 text-left transition-shadow duration-quick ${selected ? "ring-2 ring-inset ring-ember" : "hover:ring-2 hover:ring-inset hover:ring-ember/30"}`}>
+              {selected && <Check size={16} strokeWidth={2} className="absolute right-comfortable top-comfortable text-brand-foreground" aria-hidden />}
               <span className="text-sm font-medium">{o.label}</span>
-              <span className="text-[12px] text-muted">{o.helper}</span>
+              <span className="text-[0.8125rem] text-muted">{o.helper}</span>
             </button>
           );
         })}

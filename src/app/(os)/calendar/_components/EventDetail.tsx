@@ -134,7 +134,7 @@ export function EventDetail({
 
         <dl className="flex flex-col gap-tight">
           <div className="flex flex-wrap items-baseline gap-tight">
-            <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailWhen")}</dt>
+            <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailWhen")}</dt>
             <dd className="min-w-0 text-[13px]">
               <span className="font-mono">{when}</span>
               <span className="text-muted"> · {dayLabel(event.start)}</span>
@@ -147,7 +147,7 @@ export function EventDetail({
           {event.source && (
             <>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailSource")}</dt>
+                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailSource")}</dt>
                 <dd className="flex min-w-0 items-start gap-tight text-[13px]">
                   <MarketBadge id={event.source.id} className="mt-0.5" />
                   {/* The row is already labelled "Sold on", so the line is just who and their reference. */}
@@ -155,7 +155,7 @@ export function EventDetail({
                 </dd>
               </div>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailCommission")}</dt>
+                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailCommission")}</dt>
                 <dd className="min-w-0 break-words text-[13px]">{commissionLine(t, event.source)}</dd>
               </div>
             </>
@@ -163,19 +163,19 @@ export function EventDetail({
           {event.hold && (
             <>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailHolds")}</dt>
+                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailHolds")}</dt>
                 <dd className="min-w-0 text-[13px]">{event.hold.what}</dd>
               </div>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailReleases")}</dt>
+                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailReleases")}</dt>
                 <dd className="min-w-0 text-[13px]">{event.hold.releases ?? t("detailUntilReleased")}</dd>
               </div>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailPlacedBy")}</dt>
+                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailPlacedBy")}</dt>
                 <dd className="min-w-0 text-[13px]">{event.hold.placedBy}</dd>
               </div>
               <div className="flex flex-wrap items-baseline gap-tight">
-                <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailWhat")}</dt>
+                <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailWhat")}</dt>
                 <dd className="min-w-0 break-words text-[13px]">{event.hold.product}</dd>
               </div>
             </>
@@ -184,7 +184,7 @@ export function EventDetail({
               have rows of their own — printing it again said Lane 3 twice. */}
           {event.subtitle && !event.hold && (
             <div className="flex flex-wrap items-baseline gap-tight">
-              <dt className="type-label w-16 shrink-0 text-[12px] text-muted">{t("detailWhat")}</dt>
+              <dt className="w-16 shrink-0 text-[0.75rem] font-medium text-muted">{t("detailWhat")}</dt>
               {/* break-words, not truncate: this panel is the one place the
                   name is allowed all the room it needs. */}
               <dd className="min-w-0 break-words text-[13px]">{event.subtitle}</dd>
@@ -236,7 +236,7 @@ export function EventDetail({
               </div>
             ) : (
               <div className="flex flex-col gap-tight">
-                <label className="type-label text-[12px] text-muted" htmlFor="cal-lock-reason">
+                <label className="text-[0.75rem] font-medium text-muted" htmlFor="cal-lock-reason">
                   {t(asking === "lock" ? "lockReason" : "unlockReason")}
                 </label>
                 <input

@@ -856,7 +856,7 @@ function Panel({
         {/* ── the title is the booking ────────────────────────────────── */}
         <div className="flex items-start gap-tight px-card pt-section">
           <div className="min-w-0 flex-1 min-[480px]:pl-[32px]">
-            <p className="type-label text-[12px] text-muted">{mode === "hold" ? th("eyebrow") : t("book.title")}</p>
+            <p className="text-[0.75rem] font-medium text-muted">{mode === "hold" ? th("eyebrow") : t("book.title")}</p>
             <h2
               id={titleId}
               ref={heading}
@@ -994,7 +994,7 @@ function Panel({
                 </div>
               ) : (
                 <div ref={listRef}>
-                  <h3 id={`${titleId}-what`} className="type-label mb-tight text-[12px] text-muted">
+                  <h3 id={`${titleId}-what`} className="mb-tight text-[0.75rem] font-medium text-muted">
                     {hour == null
                       ? dayRows.length > 0
                         ? t("book.whatDay")
@@ -1080,7 +1080,7 @@ function Panel({
                   {elsewhere.length > 0 &&
                     (elsewhereOpen || elsewhere.some((o) => o.key === chosenKey) ? (
                       <div className="mt-section">
-                        <h4 className="type-label mb-tight text-[12px] text-muted">
+                        <h4 className="mb-tight text-[0.75rem] font-medium text-muted">
                           {t("book.elsewhere", { time: formatClockMin((hour ?? 0) * 60) })}
                         </h4>
                         <OptionList options={elsewhere} chosenKey={chosenKey} onChoose={choose} cur={cur} t={t} durationOf={durationOf} lengthLabel={lengthText} />
@@ -1101,7 +1101,7 @@ function Panel({
                       <MoreLine onClick={() => setAnytimeOpen(true)}>{t("book.alsoAllDay", { count: anytime.length })}</MoreLine>
                     ) : (
                       <div className={cn(timed.length > 0 || hour != null ? "mt-section" : "")}>
-                        <h4 className="type-label mb-tight text-[12px] text-muted">{t("book.allDay")}</h4>
+                        <h4 className="mb-tight text-[0.75rem] font-medium text-muted">{t("book.allDay")}</h4>
                         <OptionList options={anytime} chosenKey={chosenKey} onChoose={choose} cur={cur} t={t} />
                       </div>
                     ))}
@@ -1172,7 +1172,7 @@ function Panel({
 
                   {mode === "book" && chosen.kind === "provider" && (
                     <label className="block">
-                      <span className="type-label mb-tight block text-[12px] text-muted">{t("book.with")}</span>
+                      <span className="mb-tight block text-[0.75rem] font-medium text-muted">{t("book.with")}</span>
                       <Select
                         value={providerId}
                         onChange={setProviderId}
@@ -1245,7 +1245,7 @@ function Panel({
             <>
               <Row icon={<UserRound size={18} strokeWidth={1.5} />}>
                 <label className="flex flex-col gap-inline">
-                  <span className="type-label text-[12px] text-muted">{th("fieldHeldFor")}</span>
+                  <span className="text-[0.75rem] font-medium text-muted">{th("fieldHeldFor")}</span>
                   <input
                     ref={heldForRef}
                     value={heldFor}
@@ -1269,7 +1269,7 @@ function Panel({
                 <Row icon={<Ticket size={18} strokeWidth={1.5} />}>
                   <div className="flex flex-col gap-tight">
                     <div className="flex flex-wrap items-center gap-tight">
-                      <span className="type-label text-[12px] text-muted">{th("fieldQuantity")}</span>
+                      <span className="text-[0.75rem] font-medium text-muted">{th("fieldQuantity")}</span>
                       <Stepper
                         value={holdAll ? holdMax : holdQtyNow}
                         min={1}
@@ -1300,7 +1300,7 @@ function Panel({
                   most holds end when somebody decides they have. */}
               <Row icon={<Wallet size={18} strokeWidth={1.5} />}>
                 <label className="flex flex-col gap-inline">
-                  <span className="type-label text-[12px] text-muted">{th("fieldExpiry")}</span>
+                  <span className="text-[0.75rem] font-medium text-muted">{th("fieldExpiry")}</span>
                   <span className="flex items-center gap-tight">
                     <input
                       value={holdDays}
@@ -1490,7 +1490,7 @@ function MoreLine({ onClick, children }: { onClick: () => void; children: React.
 function ChipGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="type-label mb-tight text-[12px] text-muted">{label}</p>
+      <p className="mb-tight text-[0.75rem] font-medium text-muted">{label}</p>
       <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-tight">
         {children}
       </div>

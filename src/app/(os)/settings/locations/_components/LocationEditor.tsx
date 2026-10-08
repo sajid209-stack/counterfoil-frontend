@@ -43,7 +43,7 @@ const BLANK: Draft = {
 };
 
 const chip =
-  "inline-flex min-h-11 items-center rounded-full border border-line px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
+  "inline-flex min-h-11 items-center rounded-full bg-muted-wash/70 px-comfortable text-[13px] text-fg transition-colors duration-quick hover:bg-muted-wash md:min-h-9";
 
 /**
  * A location: where it is, when it is open, what hangs off it, and whether it

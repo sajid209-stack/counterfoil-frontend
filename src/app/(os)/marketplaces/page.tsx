@@ -26,10 +26,10 @@
  * Sync says exactly what it did.
  */
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowUpRight, RefreshCw } from "lucide-react";
-import { Button, EmptyState, StatusPill, useToast } from "@/components/ui";
+import { ActionMenu, Button, EmptyState, StatusPill, useToast } from "@/components/ui";
 import { PageShell, PageToolbar } from "@/components/ui/PageShell";
 import { useApiQuery } from "@/lib/useApi";
 import {
@@ -116,13 +116,14 @@ export default function MarketplacesPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-section">
-          {/* Connected — what is actually selling */}
+          {/* Connected — what is actually selling. One card of rows: the row
+              is the way in, the menu holds the rest. */}
           {connections.length === 0 ? (
             <EmptyState title={t("empty.title")} message={t("empty.body")} />
           ) : (
             <section aria-labelledby="mk-connected">
-              <h2 id="mk-connected" className="type-label mb-tight">{t("connectedTitle")}</h2>
-              <div className="grid gap-section sm:grid-cols-2">
+              <h2 id="mk-connected" className="mb-tight text-base font-semibold tracking-[-0.4px]">{t("connectedTitle")}</h2>
+              <ul className="card-surface overflow-hidden">
                 {connections.map((c) => {
                   const meta = marketplaceById(c.marketplaceId);
                   const counts = listingCounts(c.id);
@@ -130,74 +131,60 @@ export default function MarketplacesPage() {
                   const issue = connectionIssue(c);
                   const s = split(EXAMPLE, c.commissionBps);
                   return (
-                    <article key={c.id} className="flex flex-col gap-tight card-surface p-card">
-                      <div className="flex items-start gap-tight">
-                        <h3 className="mr-auto min-w-0 truncate font-medium">{meta.name}</h3>
-                        <StatusPill tone={c.status === "connected" ? "success" : c.status === "attention" ? "warning" : "info"}>
-                          {t(`status.${c.status}`)}
-                        </StatusPill>
-                      </div>
-                      {/* The money, the way it is decided. */}
-                      <p className="text-[13px] text-muted">
-                        {t("keepOf", {
-                          pct: bpsToPct(c.commissionBps),
-                          net: formatMoney(s.net),
-                          price: formatMoney(s.price),
-                        })}
-                      </p>
-                      <p className="text-[13px]">
-                        {t("listingLine", { live: counts.live, total: Object.values(counts).reduce((a, b) => a + b, 0) })}
-                        {issue && <span className="text-warning"> · {issue}</span>}
-                      </p>
-                      {perf.orders > 0 && (
-                        <p className="text-[13px] text-muted">
-                          {t("broughtIn", { orders: perf.orders, net: formatMoney(perf.net) })}
-                        </p>
-                      )}
-                      <div className="mt-auto flex flex-wrap gap-tight pt-tight">
-                        <Button size="sm" onClick={() => router.push(`/marketplaces/${c.id}`)}>{t("manage")}</Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          loading={syncing === c.id}
-                          icon={<RefreshCw size={14} strokeWidth={1.5} />}
-                          onClick={() => doSync(c)}
-                        >
-                          {t("sync")}
-                        </Button>
-                      </div>
-                    </article>
+                    <li key={c.id} className="relative flex items-center border-b border-hairline last:border-0 hover:bg-muted-wash">
+                      <Link href={`/marketplaces/${c.id}`} className="flex min-h-14 min-w-0 flex-1 flex-col gap-inline py-comfortable pl-card pr-tight">
+                        <span className="flex items-center gap-tight">
+                          <span className="min-w-0 truncate font-medium">{meta.name}</span>
+                          <StatusPill tone={c.status === "connected" ? "success" : c.status === "attention" ? "warning" : "info"}>
+                            {t(`status.${c.status}`)}
+                          </StatusPill>
+                        </span>
+                        {/* The money, the way it is decided. Wider screens only:
+                            a phone row keeps to the two facts that change. */}
+                        <span className="hidden text-[13px] text-muted sm:block">
+                          {t("keepOf", { pct: bpsToPct(c.commissionBps), net: formatMoney(s.net), price: formatMoney(s.price) })}
+                        </span>
+                        <span className="text-[13px] text-muted">
+                          {t("listingLine", { live: counts.live, total: Object.values(counts).reduce((a, b) => a + b, 0) })}
+                          {/* What it earned is a second line on a phone's row only
+                              when it fits; from sm it follows on the same line. */}
+                          {perf.orders > 0 && <span className="hidden sm:inline"> · {t("broughtIn", { orders: perf.orders, net: formatMoney(perf.net) })}</span>}
+                        </span>
+                        {issue && <span className="text-[13px] text-warning">{issue}</span>}
+                      </Link>
+                      <span className="shrink-0 pr-card">
+                        <ActionMenu
+                          label={t("rowActions", { name: meta.name })}
+                          items={[
+                            { key: "open", label: t("manage"), onSelect: () => router.push(`/marketplaces/${c.id}`) },
+                            { key: "sync", label: syncing === c.id ? t("syncing") : t("sync"), disabled: syncing === c.id, onSelect: () => doSync(c) },
+                          ]}
+                        />
+                      </span>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </section>
           )}
 
           {/* Not connected — what else is out there */}
           {available.length > 0 && (
             <section aria-labelledby="mk-available">
-              <h2 id="mk-available" className="type-label mb-tight">{t("availableTitle")}</h2>
-              <div className="grid gap-tight sm:grid-cols-2 lg:grid-cols-3">
+              <h2 id="mk-available" className="mb-tight text-base font-semibold tracking-[-0.4px]">{t("availableTitle")}</h2>
+              <ul className="card-surface overflow-hidden">
                 {available.map((m) => (
-                  <article key={m.id} className="flex flex-col gap-inline rounded-sm border border-line p-comfortable">
-                    <h3 className="font-medium">{m.name}</h3>
-                    <p className="text-[12px] text-muted">
-                      {t(`sells.${m.sells}`)} · {t("typically", { pct: bpsToPct(m.typicalBps) })}
-                    </p>
-                    <div className="mt-auto flex flex-wrap items-center gap-tight pt-tight">
-                      <Button size="sm" variant="secondary" onClick={() => setConnecting({ id: m.id, pick: false })}>{t("connectOne")}</Button>
-                      <a
-                        href={m.helpUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-11 items-center gap-inline text-[12px] text-brand-foreground underline underline-offset-2 sm:min-h-0"
-                      >
-                        {t("theirSite")} <ArrowUpRight size={12} strokeWidth={1.5} />
-                      </a>
+                  <li key={m.id} className="flex items-center gap-tight border-b border-hairline px-card py-comfortable last:border-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{m.name}</p>
+                      <p className="text-[13px] text-muted">
+                        {t(`sells.${m.sells}`)} · {t("typically", { pct: bpsToPct(m.typicalBps) })}
+                      </p>
                     </div>
-                  </article>
+                    <Button size="sm" variant="secondary" className="shrink-0" onClick={() => setConnecting({ id: m.id, pick: false })}>{t("connectOne")}</Button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           )}
         </div>

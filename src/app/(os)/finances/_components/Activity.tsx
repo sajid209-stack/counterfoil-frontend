@@ -1,54 +1,21 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ChevronRight, Search, SearchX } from "lucide-react";
-import { Button, StatusPill } from "@/components/ui";
+import { ChevronRight, SearchX } from "lucide-react";
+import { Button, StatusPill, Tabs } from "@/components/ui";
 import { cn } from "@/lib/cn";
-import { formatClockOf, formatMoney } from "@/lib/format";
+import { formatClockOf, formatDay, formatMoney } from "@/lib/format";
 import type { FinanceDay, FinanceFilter } from "@/lib/api";
 import { amountTone, groupDay, rowAmounts, rowStatus, signed, useDayLabel, useLineText, type DisplayRow } from "./lineParts";
 
 export const FILTERS: FinanceFilter[] = ["all", "sales", "fees", "refunds", "payouts", "deposits"];
 
-/** The kinds of money, as one segmented control. It wraps into rows on a phone
- *  rather than scrolling, so every choice is on screen. */
-export function FilterSegments({ value, onChange }: { value: FinanceFilter; onChange: (f: FinanceFilter) => void }) {
+/** The kinds of money, as view tabs over the table — the shape every index in
+ *  a mature admin has (Shopify's All / Unfulfilled / Unpaid): text, one
+ *  underlined, nothing filled. A phone folds them into the Filters sheet. */
+export function TypeTabs({ value, onChange }: { value: FinanceFilter; onChange: (f: FinanceFilter) => void }) {
   const t = useTranslations("finances");
-  return (
-    <div role="group" aria-label={t("activity.filterLabel")} className="grid grid-cols-3 gap-inline rounded-sm bg-line/60 p-inline sm:flex sm:w-auto">
-      {FILTERS.map((f) => (
-        <button
-          key={f}
-          type="button"
-          aria-pressed={value === f}
-          onClick={() => onChange(f)}
-          className={cn(
-            "h-11 rounded-xs px-comfortable text-[13px] font-medium transition-colors duration-quick sm:h-9",
-            value === f ? "bg-ember-solid text-white" : "text-fg/80 hover:text-fg",
-          )}
-        >
-          {t(`filter.${f}`)}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-export function SearchBox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const t = useTranslations("finances");
-  return (
-    <label className="relative min-w-0 flex-1 basis-48 md:max-w-80">
-      <Search size={15} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
-      <input
-        type="search"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={t("activity.search")}
-        aria-label={t("activity.search")}
-        className="h-11 w-full rounded-sm border border-line bg-card pl-8 pr-comfortable text-[13px] outline-none placeholder:text-muted focus:border-inverse md:h-9"
-      />
-    </label>
-  );
+  return <Tabs items={FILTERS.map((f) => ({ value: f, label: t(`filter.${f}`) }))} value={value} onChange={(v) => onChange(v as FinanceFilter)} />;
 }
 
 const longDay = (iso: string) => {
@@ -109,8 +76,9 @@ function DateCell({ day, open, tag }: { day: FinanceDay; open: boolean; tag: str
         <ChevronRight size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", open && "rotate-90")} />
       </button>
       <span className="min-w-0">
-        <span className="font-semibold text-fg">{longDay(day.date)}</span>
-        {tag && <span className="ml-tight inline-block rounded-full px-tight py-inline text-[12px] font-medium text-muted ring-1 ring-line">{tag}</span>}
+        <span className="hidden font-semibold text-fg xl:inline">{longDay(day.date)}</span>
+        <span className="font-semibold text-fg xl:hidden">{formatDay(day.date, { weekday: true })}</span>
+        {tag && <span className="ml-tight inline-block whitespace-nowrap rounded-full bg-muted-wash px-tight py-inline text-[12px] font-medium text-muted">{tag}</span>}
       </span>
     </span>
   );
@@ -131,17 +99,17 @@ function RowTable({ days, isOpen, onToggle, onPick, totals }: ListProps) {
   const t = useTranslations("finances");
   const info = useDayInfo();
   const rowText = useRowText();
-  const th = "sticky top-0 z-10 border-b border-line bg-card py-comfortable text-[12px] font-medium text-muted";
-  const num = "text-right tabular-nums";
+  const th = "sticky top-0 z-10 border-b border-hairline bg-card py-comfortable text-[12px] font-medium text-muted";
+  const num = "whitespace-nowrap text-right tabular-nums";
   return (
     <table className="table-inset w-full table-fixed border-collapse text-[14px]">
       <colgroup>
-        <col className="w-[28%]" />
-        <col className="w-[25%]" />
+        <col className="w-[24%]" />
+        <col className="w-[20%]" />
         <col className="w-[12%]" />
-        <col className="w-[11%]" />
-        <col className="w-[11%]" />
-        <col className="w-[13%]" />
+        <col className="w-[14%]" />
+        <col className="w-[14%]" />
+        <col className="w-[16%]" />
       </colgroup>
       <thead>
         <tr>
@@ -192,7 +160,7 @@ function RowTable({ days, isOpen, onToggle, onPick, totals }: ListProps) {
         );
       })}
       <tfoot>
-        <tr className="border-t-2 border-line bg-subtle/60 font-semibold">
+        <tr className="border-t border-hairline bg-subtle/60 font-semibold">
           <td colSpan={3} className="py-comfortable text-fg">{t("table.total", { count: days.length })}</td>
           <td className={cn(num, "px-tight py-comfortable")}>{formatMoney(totals.credit)}</td>
           <td className={cn(num, "px-tight py-comfortable")}>{formatMoney(totals.debit)}</td>
@@ -203,16 +171,12 @@ function RowTable({ days, isOpen, onToggle, onPick, totals }: ListProps) {
   );
 }
 
-/** A labelled figure: on a phone the same data, with its column named. */
-function Fig({ label, value, tone }: { label: string; value: string; tone?: string }) {
-  return (
-    <span className="min-w-0">
-      <span className="block text-[12px] text-muted">{label}</span>
-      <span className={cn("block text-[13px] tabular-nums", tone ?? "text-fg")}>{value}</span>
-    </span>
-  );
-}
-
+/**
+ * The phone's list: a day is two lines — which day and what it came to, then
+ * how many transactions and whether they have cleared — and a line inside it is
+ * two as well. Credit and debit are the table's columns; on a phone they are in
+ * the panel a line opens, not stacked under every row.
+ */
 function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
   const t = useTranslations("finances");
   const info = useDayInfo();
@@ -224,39 +188,49 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
         const x = info(d);
         return (
           <div key={d.date} className="border-t border-hairline first:border-t-0">
-            <div role="presentation" onClick={() => onToggle(d.date, !open)} className="cursor-pointer px-card py-comfortable">
-              <div className="flex items-start justify-between gap-tight">
-                <DateCell day={d} open={open} tag={x.tag} />
-                <DayStatus clearing={x.clearing} />
-              </div>
-              <p className="mt-inline pl-[calc(44px+0.75rem)] text-[13px] text-muted">{t("day.transactions", { count: x.rows.length })}</p>
-              <div className="mt-tight grid grid-cols-3 gap-tight pl-[calc(44px+0.75rem)]">
-                <Fig label={t("table.credit")} value={cellMoney(d.moneyIn)} />
-                <Fig label={t("table.debit")} value={cellMoney(d.moneyOut)} />
-                <Fig label={t("table.net")} value={signed(d.net)} tone={cn("font-semibold", amountTone(d.net))} />
-              </div>
+            <div role="presentation" onClick={() => onToggle(d.date, !open)} className="flex min-h-14 cursor-pointer items-center gap-tight py-comfortable pl-tight pr-card active:bg-muted-wash">
+              <button
+                type="button"
+                data-day={d.date}
+                aria-expanded={open}
+                aria-label={longDay(d.date)}
+                className="flex h-11 w-11 shrink-0 items-center justify-center text-muted"
+              >
+                <ChevronRight size={16} strokeWidth={1.75} aria-hidden className={cn("transition-transform duration-quick", open && "rotate-90")} />
+              </button>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-medium text-fg">
+                  {formatDay(d.date, { weekday: true })}
+                  {x.tag && <span className="ml-tight inline-block rounded-full bg-muted-wash px-tight py-inline text-[12px] font-medium text-muted">{x.tag}</span>}
+                </span>
+                <span className="block text-[12px] text-muted">
+                  {t("day.transactions", { count: x.rows.length })} · {t(x.clearing ? "day.clearing" : "day.settled")}
+                </span>
+              </span>
+              <span className={cn("shrink-0 text-[14px] font-semibold tabular-nums", amountTone(d.net))}>{signed(d.net)}</span>
             </div>
             {open && (
-              <ul className="border-t border-hairline bg-muted-wash/35">
+              <ul className="bg-muted-wash/35">
                 {x.rows.map((r) => {
-                  const a = rowAmounts(r);
                   const rt = rowText(r);
+                  const st = rowStatus(r);
                   return (
                     <li key={r.id} className="border-t border-hairline first:border-t-0">
-                      <button type="button" onClick={() => onPick(r)} className="block min-h-[60px] w-full px-card py-comfortable text-left transition-colors duration-quick hover:bg-muted-wash/70">
-                        <span className="flex items-start justify-between gap-tight">
-                          <span className="min-w-0 text-[14px] text-fg">
-                            <span className="break-words">{rt.text}</span>
-                            {rt.ref && <span className="font-mono text-[13px]"> · {rt.ref}</span>}
+                      <button
+                        type="button"
+                        onClick={() => onPick(r)}
+                        className="flex min-h-14 w-full items-center gap-tight py-comfortable pl-[calc(var(--spacing-card)+44px)] pr-card text-left transition-colors duration-quick active:bg-muted-wash"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block break-words text-[14px] text-fg">
+                            {rt.text}
+                            {rt.ref && <span className="whitespace-nowrap font-mono text-[12px]"> · {rt.ref}</span>}
                           </span>
-                          <StatusChip status={rowStatus(r)} />
+                          <span className="block text-[12px] text-muted">
+                            {formatClockOf(r.line.at)} · {t(`status.${st.key}`)}
+                          </span>
                         </span>
-                        <span className="mt-inline block text-[12px] text-muted">{formatClockOf(r.line.at)}</span>
-                        <span className="mt-tight grid grid-cols-3 gap-tight">
-                          <Fig label={t("table.credit")} value={cellMoney(a.credit)} />
-                          <Fig label={t("table.debit")} value={cellMoney(a.debit)} />
-                          <Fig label={t("table.net")} value={signed(r.amount)} tone={cn("font-medium", amountTone(r.amount))} />
-                        </span>
+                        <span className={cn("shrink-0 text-[14px] font-medium tabular-nums", amountTone(r.amount))}>{signed(r.amount)}</span>
                       </button>
                     </li>
                   );
@@ -266,13 +240,14 @@ function RowList({ days, isOpen, onToggle, onPick, totals }: ListProps) {
           </div>
         );
       })}
-      <div className="border-t-2 border-line bg-subtle/60 px-card py-comfortable">
-        <p className="text-[14px] font-semibold">{t("table.total", { count: days.length })}</p>
-        <div className="mt-tight grid grid-cols-3 gap-tight">
-          <Fig label={t("table.credit")} value={formatMoney(totals.credit)} />
-          <Fig label={t("table.debit")} value={formatMoney(totals.debit)} />
-          <Fig label={t("table.net")} value={signed(totals.net)} tone={cn("font-semibold", amountTone(totals.net))} />
-        </div>
+      <div className="border-t border-hairline bg-subtle/60 px-card py-comfortable">
+        <p className="flex items-baseline justify-between gap-tight text-[14px] font-semibold">
+          <span>{t("table.total", { count: days.length })}</span>
+          <span className={cn("tabular-nums", amountTone(totals.net))}>{signed(totals.net)}</span>
+        </p>
+        <p className="text-[12px] tabular-nums text-muted">
+          {t("table.credit")} {formatMoney(totals.credit)} · {t("table.debit")} {formatMoney(totals.debit)}
+        </p>
       </div>
     </div>
   );

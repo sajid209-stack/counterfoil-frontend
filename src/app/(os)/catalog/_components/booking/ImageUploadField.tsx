@@ -36,12 +36,12 @@ export function ImageUploadField({
 
   return (
     <div className="flex flex-col gap-tight">
-      <span className="type-label text-[12px] text-muted">{t("images")}</span>
+      <span className="text-[0.8125rem] font-medium text-muted">{t("images")}</span>
       <div className="flex flex-wrap gap-tight">
         {images.map((img) => (
           <div
             key={img.id}
-            className="relative h-24 w-24 overflow-hidden rounded-sm border border-line bg-subtle"
+            className="relative h-24 w-24 overflow-hidden rounded-sm bg-muted-wash"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={img.url} alt={img.alt ?? ""} className="h-full w-full object-cover" />
@@ -49,7 +49,7 @@ export function ImageUploadField({
               type="button"
               aria-label={t("removeImage")}
               onClick={() => remove(img.id)}
-              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-inverse/70 text-inverse-fg"
+              className="absolute right-1 top-1 flex h-9 w-9 items-center md:h-6 md:w-6 justify-center rounded-full bg-inverse/70 text-inverse-fg"
             >
               <X size={14} strokeWidth={1.5} />
             </button>

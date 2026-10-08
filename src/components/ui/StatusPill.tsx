@@ -7,9 +7,19 @@ export type PillTone = "success" | "warning" | "danger" | "info" | "neutral";
  * Two axes, because two unrelated things were sharing one scale.
  *
  * TONE says what happened to the money. SHAPE says which lifecycle the word
- * belongs to: a transaction state is tinted, a record state is outlined. Before
- * this, "Active" (a booking is on sale) and "Confirmed" (a reservation exists)
- * were drawn identically, so two unrelated lifecycles read as one.
+ * belongs to: a transaction state is a soft tint of its tone, a record state is
+ * a quiet neutral tint with the word in full ink. Before this, "Active" (a
+ * booking is on sale) and "Confirmed" (a reservation exists) were drawn
+ * identically, so two unrelated lifecycles read as one.
+ *
+ * The calm pass took every outline off: a pill is sentence case Inter 12/500 on
+ * a rounded-full soft tint, with no border and no ring. What used to be carried
+ * by an outline (record states) is now carried by the neutral tint and the
+ * full-ink word, and what used to be carried by a ring (attention) is carried
+ * by a stronger tint. The owner removed chip dots on 2026-09-27, so there is no
+ * dot on any pill. Contrast is
+ * measured, not assumed: every pair below is >= 4.5:1 on a card, in light and
+ * in dark (the dark neutral steps off `bg-subtle`, which IS the card there).
  */
 type PillShape = "transaction" | "record";
 
@@ -17,21 +27,30 @@ const TONES: Record<PillTone, string> = {
   success: "bg-success/10 text-success",
   /* ATTENTION — the only tone that means somebody has to do something. It is
      the one that costs an operator money when it is missed, so it gets the
-     strongest non-destructive treatment available: a heavier tint AND a ring,
-     so it is separable from `info` by shape as well as by hue. Not a filled
-     ember pill: white on ember is 3.50:1, which a 12px label cannot carry. */
-  warning: "bg-warning/15 text-warning ring-1 ring-warning/35",
+     strongest non-destructive treatment available: a heavier tint than every
+     other tone, so it separates from `info` by weight as well as by hue. Not
+     a filled ember pill: white on ember is 3.50:1, which a 12px label cannot
+     carry. */
+  warning: "bg-warning/20 text-warning",
   danger: "bg-danger/10 text-danger",
   info: "bg-info/10 text-info",
-  neutral: "bg-subtle text-muted",
+  /* Dark: `subtle` is the card colour there, so the tint comes off the
+     foreground instead — and the text steps up from `muted`, which measures
+     3.9:1 on that tint. */
+  neutral: "bg-subtle text-muted dark:bg-fg/10 dark:text-fg/75",
 };
 
-const OUTLINED: Record<PillTone, string> = {
-  success: "border border-success/40 text-success",
-  warning: "border border-warning/50 text-warning",
-  danger: "border border-danger/40 text-danger",
-  info: "border border-info/40 text-info",
-  neutral: "border border-strong text-muted",
+/* A record state is quiet on purpose: a neutral tint with the word in full ink,
+   so it reads apart from the transaction tints without a dot (the owner removed
+   chip dots on 2026-09-27). "Active" is a fact about a record, not an event to
+   be noticed. */
+const RECORD_BG = "bg-subtle dark:bg-fg/10";
+const RECORD_TEXT: Record<PillTone, string> = {
+  success: "text-fg",
+  warning: "text-fg",
+  danger: "text-fg",
+  info: "text-fg",
+  neutral: "text-muted dark:text-fg/75",
 };
 
 /** Record lifecycle — is this thing on the shelf? — rather than what a sale did. */
@@ -98,11 +117,12 @@ export function StatusPill({
   const resolvedTone = tone ?? (status ? statusTone(status) : "neutral");
   const resolvedShape: PillShape = shape ?? (status && RECORD.has(status) ? "record" : "transaction");
   const label = children ?? (status ? statusLabel(status) : "");
+  const record = resolvedShape === "record";
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-xs px-tight py-inline font-mono text-[0.75rem] uppercase tracking-wide",
-        resolvedShape === "record" ? OUTLINED[resolvedTone] : TONES[resolvedTone],
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-sans text-[0.75rem] font-medium leading-5",
+        record ? cn(RECORD_BG, RECORD_TEXT[resolvedTone]) : TONES[resolvedTone],
         className,
       )}
     >

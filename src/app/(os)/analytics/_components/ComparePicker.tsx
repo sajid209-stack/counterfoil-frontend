@@ -120,6 +120,13 @@ export function ComparePicker({
     custom: t("compare.custom"),
     none: t("compare.none"),
   };
+  /* What a half-width trigger says: the kind of comparison, in as few words as it takes. */
+  const short: Record<CompareMode, string> = {
+    previous: t("compare.previousShort"),
+    year: t("compare.yearShort"),
+    custom: t("compare.customShort"),
+    none: t("compare.noneShort"),
+  };
   const dayText = (iso: string) => formatDay(iso);
   // A custom range's calendar opens on what is being compared now, or on the period before.
   const seed = (value.mode === "custom" && value.from && value.to ? { from: value.from, to: value.to } : null) ?? rangeOf("previous");
@@ -140,11 +147,14 @@ export function ComparePicker({
           open ? "border-inverse" : "border-line",
         )}
       >
-        <GitCompareArrows size={15} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted" />
+        <GitCompareArrows size={15} strokeWidth={1.5} aria-hidden className="hidden shrink-0 text-muted md:block" />
         {shown ? (
           <>
-            <span className="shrink-0 font-medium">{t("compare.label")}</span>
-            <span className="min-w-0 truncate tabular-nums text-muted">{formatRange(shown.from, shown.to)}</span>
+            {/* A phone has half a row: the kind of comparison is the answer
+                ("Previous period"); the dates are in the legend beneath. */}
+            <span className="min-w-0 truncate font-medium md:hidden">{short[value.mode]}</span>
+            <span className="hidden shrink-0 font-medium md:inline">{t("compare.label")}</span>
+            <span className="hidden min-w-0 truncate tabular-nums text-muted md:inline">{formatRange(shown.from, shown.to)}</span>
           </>
         ) : (
           <span className="min-w-0 truncate font-medium">{label.none}</span>

@@ -163,8 +163,8 @@ export function PaymentAccounts() {
               <label
                 key={c}
                 className={cn(
-                  "flex cursor-pointer items-start gap-comfortable rounded-sm border p-comfortable transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember",
-                  checked ? "border-ember-solid bg-ember/5" : "border-line hover:bg-muted-wash",
+                  "flex cursor-pointer items-start gap-comfortable rounded-sm p-comfortable transition-colors duration-quick has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember",
+                  checked ? "bg-card ring-2 ring-inset ring-ember-solid" : "bg-muted-wash hover:bg-line/40",
                 )}
               >
                 <input type="radio" name={name} checked={checked} onChange={() => choose(locationId, provider, c)} className="mt-[3px] h-4 w-4 shrink-0 accent-ember" />
@@ -197,7 +197,7 @@ export function PaymentAccounts() {
         {rows.length === 0 ? (
           <p className="mt-tight text-[13px] text-muted">{t("settings.historyEmpty")}</p>
         ) : (
-          <ul className="mt-tight divide-y divide-hairline rounded-sm border border-hairline">
+          <ul className="mt-tight divide-y divide-hairline rounded-sm bg-muted-wash">
             {rows.map((c) => (
               <li key={c.id} className="flex flex-wrap items-baseline justify-between gap-tight px-comfortable py-tight text-[13px]">
                 <span className="text-fg">{t("settings.historyRow", { provider: providerName(c.provider), from: accountLabel(c.from), to: accountLabel(c.to) })}</span>
@@ -237,7 +237,7 @@ export function PaymentAccounts() {
   return (
     <div id="accounts" className="flex scroll-mt-24 flex-col gap-section">
       <SettingsSection title={t("settings.accountsTitle")} description={t("settings.accountsDesc")}>
-        <div className="border-t border-hairline px-card pt-section">
+        <div className="px-card">
           <p className="text-sm font-semibold text-fg">{t("settings.defaults")}</p>
           <p className="mt-inline text-[13px] text-muted">{t("settings.defaultsDesc")}</p>
         </div>
@@ -245,7 +245,7 @@ export function PaymentAccounts() {
       </SettingsSection>
 
       <SettingsSection title={t("settings.perVenue")} description={t("settings.perVenueDesc")}>
-        <div className="divide-y divide-hairline border-t border-hairline">
+        <div className="divide-y divide-hairline">
           {locations.map((l) => {
             const own = accounts.some((a: PaymentCollectorAccount) => a.locationId === l.id);
             return (

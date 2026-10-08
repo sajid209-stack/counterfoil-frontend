@@ -14,9 +14,12 @@ import {
   BarList,
   CardSkeleton,
   Change,
+  Col,
   ColumnBars,
   Empty,
   Figure,
+  Grid,
+  Group,
   GroupHeading,
   MiniMultiples,
   PairLegend,
@@ -40,12 +43,6 @@ import {
  * counts. Where two cards sit side by side they are stacks of cards in two
  * columns, so a tall card (ticket types) does not leave a hollow one beside it.
  */
-
-/** A column of cards: the last one takes the height that is left, so the
- *  bottoms of two neighbouring columns meet. */
-function Col({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-w-0 flex-col gap-section [&>section:last-child]:flex-1">{children}</div>;
-}
 
 /** A big figure over a line saying what it is, with its change. */
 function Headline({ value, label, change, was }: { value: React.ReactNode; label: string; change?: React.ReactNode; was?: string }) {
@@ -342,6 +339,34 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
     };
   });
 
+  // ── the one figure a phone shows for a folded card ──
+  const topChannel = [...o.channels].sort((a, b) => b.revenue - a.revenue)[0];
+  const topCounter = [...o.counters].sort((a, b) => b.revenue - a.revenue)[0];
+  const topPay = [...o.payments].sort((a, b) => b.amount - a.amount)[0];
+  const topLead = [...lead].sort((a, b) => b.value - a.value)[0];
+  const topTicket = [...tickets].sort((a, b) => b.value - a.value)[0];
+  const sum = {
+    sells: sells[0] ? `${sells[0].label} · ${formatMoney(sells[0].value)}` : undefined,
+    tickets: topTicket && topTicket.value > 0 ? `${topTicket.label} · ${topTicket.figure}` : undefined,
+    channels: topChannel && topChannel.revenue > 0 ? `${t(`channels.${topChannel.channel}` as never)} · ${percent(topChannel.share)}` : undefined,
+    counters: topCounter && topCounter.revenue > 0 ? `${counterLabel(topCounter)} · ${formatMoney(topCounter.revenue)}` : undefined,
+    pay: topPay ? `${enumL.method(topPay.method)} · ${percent(topPay.share)}` : undefined,
+    visitors: v.total > 0 ? guestsText(v.total) : undefined,
+    checkins:
+      ci.total > 0
+        ? `${t("checkins.headline", { came: num(ci.total), due: ci.due, dueC: num(ci.due) })}${rate !== null ? ` (${percent(rate)})` : ""}`
+        : undefined,
+    customers: named > 0 ? t("customers.n", { n: named, c: num(named) }) : undefined,
+    guests: g.guests > 0 ? `${t("guests.arrived")} ${num(g.arrived)} · ${t("guests.noShows")} ${num(g.noShows)}` : undefined,
+    busy: peak ? t("heat.busiest", { day: longDays[peak.row], time: hourText(hours[peak.col]) }) : undefined,
+    slots: slotPeak
+      ? t("slots.busiest", { name: ts.rows[slotPeak.row].name, time: formatClock(ts.times[slotPeak.col]), guests: guestsText(slotPeak.guests) })
+      : undefined,
+    lead: topLead && topLead.value > 0 ? `${topLead.label} · ${topLead.figure}` : undefined,
+    full: cap[0] ? `${cap[0].name} · ${percent(cap[0].filled)}` : undefined,
+    vat: o.tax.rows.length > 0 ? `${t("vat.vat")} ${formatMoney(o.tax.tax)}` : undefined,
+  };
+
   // ── VAT ──
   const rate_ = (r: number) => `${Math.round(r * 1000) / 10}%`;
   const downloadVat = () => {
@@ -361,7 +386,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
     <>
       <GroupHeading id="sales">{t("sections.sales")}</GroupHeading>
 
-      <Section id="revenue" title={t("revenue.title")} sub={nowText} info={t("info.revenue")}>
+      <Section id="revenue" pinned title={t("revenue.title")} sub={nowText} info={t("info.revenue")}>
         {empty ? (
           <Empty>{t("revenue.empty")}</Empty>
         ) : (
@@ -370,7 +395,8 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
               points={revenuePoints}
               fmt={(x) => formatMoney(x)}
               fmtAxis={(x) => formatMoneyCompact(x)}
-              height={210}
+              height={wide ? 210 : 150}
+              ticks={wide ? 4 : 2}
               valueLabel={showCompare ? nowText : t("revenue.series")}
               compareLabel={o.previous ? rangeText : t("revenue.previous")}
               compareDashed
@@ -383,13 +409,14 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
         )}
       </Section>
 
-      <div className="grid gap-section lg:grid-cols-2">
+      <Group>
+      <Grid>
         <Col>
-          <Section id="sells" title={t("sells.title")} info={t("info.sells")} view={{ href: "/catalog", where: tn("catalog") }}>
+          <Section id="sells" title={t("sells.title")} summary={sum.sells} info={t("info.sells")} view={{ href: "/catalog", where: tn("catalog") }}>
             {sells.length === 0 ? <Empty>{t("sells.empty")}</Empty> : <BarList rows={sells} />}
           </Section>
 
-          <Section id="channels" title={t("channels.title")} info={t("info.channels")} view={{ href: "/orders", where: tn("orders") }}>
+          <Section id="channels" title={t("channels.title")} summary={sum.channels} info={t("info.channels")} view={{ href: "/orders", where: tn("orders") }}>
             {empty ? (
               <Empty>{t("channels.empty")}</Empty>
             ) : (
@@ -418,17 +445,17 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
               </>
             )}
           </Section>
-          <Section id="counters" title={t("counters.title")} info={t("info.counters")} view={{ href: "/orders", where: tn("orders") }}>
+          <Section id="counters" title={t("counters.title")} summary={sum.counters} info={t("info.counters")} view={{ href: "/orders", where: tn("orders") }}>
             {empty ? <Empty>{t("counters.empty")}</Empty> : <PairedBars rows={counters} nowLabel={nowText} thenLabel={rangeText} />}
           </Section>
         </Col>
 
         <Col>
-          <Section id="tickets" title={t("tickets.title")} info={t("info.tickets")} view={{ href: "/catalog", where: tn("catalog") }}>
+          <Section id="tickets" title={t("tickets.title")} summary={sum.tickets} info={t("info.tickets")} view={{ href: "/catalog", where: tn("catalog") }}>
             {tickets.length === 0 ? <Empty>{t("tickets.empty")}</Empty> : <PairedBars rows={tickets} nowLabel={nowText} thenLabel={rangeText} />}
           </Section>
 
-          <Section id="pay" title={t("pay.title")} info={t("info.pay")} view={{ href: "/finances", where: tn("finances") }}>
+          <Section id="pay" title={t("pay.title")} summary={sum.pay} info={t("info.pay")} view={{ href: "/finances", where: tn("finances") }}>
             {pay.length === 0 ? (
               <Empty>{t("pay.empty")}</Empty>
             ) : (
@@ -458,12 +485,14 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
             )}
           </Section>
         </Col>
-      </div>
+      </Grid>
+      </Group>
 
       <GroupHeading id="visitors">{t("sections.visitors")}</GroupHeading>
 
-      <div className="grid gap-section lg:grid-cols-2">
-        <Section id="visitors" title={t("visitors.title")} info={t("info.visitors")} view={{ href: "/calendar", where: tn("calendar") }}>
+      <Group>
+      <Grid>
+        <Section id="visitors" title={t("visitors.title")} summary={sum.visitors} info={t("info.visitors")} view={{ href: "/calendar", where: tn("calendar") }}>
           {v.total === 0 ? (
             <Empty>{emptyWithEarlier(t("visitors.empty"), v.previousTotal, guestsText)}</Empty>
           ) : (
@@ -478,7 +507,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
                 points={chartPoints(v.series)}
                 fmt={guestsText}
                 fmtAxis={num}
-                height={190}
+                height={wide ? 190 : 150}
                 valueLabel={showCompare ? nowText : t("visitors.series")}
                 compareLabel={rangeText}
                 compareDashed
@@ -492,7 +521,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
           )}
         </Section>
 
-        <Section id="checkins" title={t("checkins.title")} info={t("info.checkins")} view={{ href: "/calendar", where: tn("calendar") }}>
+        <Section id="checkins" title={t("checkins.title")} summary={sum.checkins} info={t("info.checkins")} view={{ href: "/calendar", where: tn("calendar") }}>
           {ci.total === 0 ? (
             <Empty>
               {emptyWithEarlier(t("checkins.empty"), ci.previousTotal, (n) => t("checkins.n", { n, c: num(n) }))}
@@ -519,7 +548,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
                 points={chartPoints(ci.series)}
                 fmt={(n) => t("checkins.n", { n, c: num(n) })}
                 fmtAxis={num}
-                height={190}
+                height={wide ? 190 : 150}
                 valueLabel={showCompare ? nowText : t("checkins.series")}
                 compareLabel={rangeText}
                 compareDashed
@@ -533,7 +562,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
           )}
         </Section>
 
-        <Section id="customers" title={t("customers.title")} info={t("info.customers")} view={{ href: "/customers", where: tn("customers") }}>
+        <Section id="customers" title={t("customers.title")} summary={sum.customers} info={t("info.customers")} view={{ href: "/customers", where: tn("customers") }}>
           {named === 0 ? (
             <Empty>{emptyWithEarlier(t("customers.empty"), gp ? gp.newCustomers + gp.returning : null, (n) => t("customers.n", { n, c: num(n) }))}</Empty>
           ) : (
@@ -567,7 +596,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
           )}
         </Section>
 
-        <Section id="guests" title={t("guests.title")} info={t("info.guests")} view={{ href: "/calendar", where: tn("calendar") }} className="self-start">
+        <Section id="guests" title={t("guests.title")} summary={sum.guests} info={t("info.guests")} view={{ href: "/calendar", where: tn("calendar") }} className="self-start">
           {g.guests === 0 ? (
             <Empty>{t("guests.empty")}</Empty>
           ) : (
@@ -580,13 +609,16 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
             </div>
           )}
         </Section>
-      </div>
+      </Grid>
+      </Group>
 
       <GroupHeading id="timing">{t("sections.timing")}</GroupHeading>
 
+      <Group>
       <Section
         id="busy"
         title={t("heat.title")}
+        summary={sum.busy}
         info={t("info.busy")}
         sub={
           peak ? (
@@ -619,6 +651,7 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
       <Section
         id="timeslots"
         title={t("slots.title")}
+        summary={sum.slots}
         info={t("info.timeslots")}
         sub={
           slotPeak ? (
@@ -654,12 +687,12 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
         )}
       </Section>
 
-      <div className="grid gap-section lg:grid-cols-2">
-        <Section id="lead" title={t("lead.title")} info={t("info.lead")}>
+      <Grid>
+        <Section id="lead" title={t("lead.title")} summary={sum.lead} info={t("info.lead")}>
           {empty ? <Empty>{t("lead.empty")}</Empty> : <ColumnBars items={lead} />}
         </Section>
 
-        <Section id="full" title={t("full.title")} info={t("info.full")} view={{ href: "/calendar", where: tn("calendar") }}>
+        <Section id="full" title={t("full.title")} summary={sum.full} info={t("info.full")} view={{ href: "/calendar", where: tn("calendar") }}>
           {cap.length === 0 ? (
             <Empty>{t("full.empty")}</Empty>
           ) : (
@@ -690,29 +723,30 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
             </>
           )}
         </Section>
-      </div>
+      </Grid>
+      </Group>
 
       <GroupHeading id="vat">{t("sections.vat")}</GroupHeading>
 
-      <section data-card="vat" aria-labelledby="an-vat" className="card-surface min-w-0 p-card">
-        <div className="mb-comfortable flex items-start justify-between gap-tight">
-          <div className="min-w-0">
-            <h3 id="an-vat" className="text-base font-semibold tracking-[-0.4px]">
-              {t("vat.title")}
-            </h3>
-            <p className="mt-inline text-[0.75rem] text-muted">{t("vat.note")}</p>
-          </div>
+      <Group>
+      <Section
+        id="vat"
+        title={t("vat.title")}
+        sub={t("vat.note")}
+        summary={sum.vat}
+        actions={
           <Button variant="secondary" size="sm" icon={<Download size={16} strokeWidth={1.75} aria-hidden />} onClick={downloadVat} disabled={o.tax.rows.length === 0} className="shrink-0">
             {t("vat.download")}
           </Button>
-        </div>
+        }
+      >
         {o.tax.rows.length === 0 ? (
           <Empty>{t("vat.empty")}</Empty>
         ) : (
           <div className="scroll-x-hint -mx-card overflow-x-auto px-card">
             <table className="w-full min-w-[34rem] border-collapse text-[0.8125rem]">
               <thead>
-                <tr className="border-b border-line text-[0.75rem] font-medium text-muted">
+                <tr className="border-b border-hairline text-[0.75rem] font-medium text-muted">
                   <th scope="col" className="py-tight pr-comfortable text-left font-medium">{t("vat.class")}</th>
                   <th scope="col" className="py-tight pr-comfortable text-right font-medium">{t("vat.rate")}</th>
                   <th scope="col" className="py-tight pr-comfortable text-right font-medium">{t("vat.net")}</th>
@@ -746,7 +780,8 @@ export function Cards({ o, venueName }: { o: AnalyticsOverview; venueName: strin
             </table>
           </div>
         )}
-      </section>
+      </Section>
+      </Group>
     </>
   );
 }

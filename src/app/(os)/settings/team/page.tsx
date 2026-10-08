@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { KeyRound, Mail, UserCheck, UserMinus, UserX } from "lucide-react";
-import { ActionMenu, Avatar, ConfirmDialog, Select, StatusPill, Tabs, useToast, type ActionMenuItem } from "@/components/ui";
+import { ActionMenu, Avatar, ConfirmDialog, FilterBar, Select, StatusPill, Tabs, useToast, type ActionMenuItem, type FilterSpec } from "@/components/ui";
 import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
@@ -40,11 +40,18 @@ type Confirm = { staff: Staff; kind: "suspend" | "revoke" };
  * that changes with the person.
  *
  * The questions a manager actually asks of this list — who are my cashiers,
- * who works at the museum — are a role and a place, so both are filters beside
- * the search, and the tab counts follow them: "Invited 1" means one invited
- * cashier once Cashier is chosen, not one invited person somewhere. Both can be
- * set from a link (`?location=`, `?role=`), so a location's "View team" opens on
- * the people who work there.
+ * who works at the museum — are a role and a place. Search stays on the row,
+ * because it is what a list is opened with; role and venue sit behind the one
+ * Filters button, and whatever is set comes back out as a chip with "Clear
+ * filters". The tab counts follow them: "Invited 1" means one invited cashier
+ * once Cashier is chosen, not one invited person somewhere. Both can be set from
+ * a link (`?location=`, `?role=`), so a location's "View team" opens on the
+ * people who work there.
+ *
+ * A row is two lines: the name, then what the person is — role, venue and, from
+ * md, their e-mail. The name is never cut: it wraps, and the right-hand columns
+ * only appear where there is room left over for them. A status pill appears only
+ * where the status is the exception.
  *
  * Suspending stays in the menu, behind a confirmation, and is not a switch on
  * the row. It signs a person out everywhere; that is not something to be one
@@ -180,6 +187,45 @@ export default function TeamPage() {
 
   const primary: PagePrimary = { label: t("team.invite"), onClick: () => router.push("/settings/team/new") };
 
+  /* Role and venue are the two cuts a manager makes of this list, and they live
+     behind the one Filters button. Each control is defined once, here; the bar
+     draws it in a popover on a desktop and in a sheet on a phone. */
+  const filters: FilterSpec[] = [
+    {
+      key: "role",
+      label: t("team.filterRole"),
+      active: roleId ? roleName(roleId) : null,
+      onClear: () => setRoleId(""),
+      control: (
+        <Select
+          aria-label={t("team.filterRole")}
+          value={roleId}
+          onChange={setRoleId}
+          options={[{ value: "", label: t("team.anyRole") }, ...roles.map((r) => ({ value: r.id, label: r.name }))]}
+        />
+      ),
+    },
+    {
+      key: "location",
+      label: t("team.filterLocation"),
+      active: locationId ? (locations.find((l) => l.id === locationId)?.name ?? null) : null,
+      onClear: () => setLocationId(""),
+      control: (
+        <Select
+          aria-label={t("team.filterLocation")}
+          value={locationId}
+          onChange={setLocationId}
+          options={[
+            { value: "", label: t("team.anyLocation") },
+            ...locations.filter((l) => l.status !== "archived").map((l) => ({ value: l.id, label: l.name })),
+          ]}
+        />
+      ),
+    },
+  ];
+  /* "Blocked", as the tab says it — not the generic record word. */
+  const statusWord = (s: Staff) => (s.status === "suspended" ? t("team.tab.suspended") : t("team.tab.invited"));
+
   return (
     <PageShell title={t("team.title")} description={t("team.description")} primary={primary}>
       <div className="flex max-w-5xl flex-col gap-section pb-hero">
@@ -198,43 +244,18 @@ export default function TeamPage() {
           <RecordList
             label={t("team.title")}
             header={
-              <div className="flex flex-col gap-tight border-b border-hairline px-card py-tight sm:flex-row sm:flex-wrap sm:items-center">
-                <SearchField value={search} onChange={setSearch} label={t("team.searchLabel")} placeholder={t("team.searchPlaceholder")} />
-                <Select
-                  aria-label={t("team.filterRole")}
-                  value={roleId}
-                  onChange={setRoleId}
-                  className="sm:w-44"
-                  options={[{ value: "", label: t("team.anyRole") }, ...roles.map((r) => ({ value: r.id, label: r.name }))]}
+              <div className="border-b border-hairline px-card py-tight">
+                <FilterBar
+                  search={
+                    <SearchField value={search} onChange={setSearch} label={t("team.searchLabel")} placeholder={t("team.searchPlaceholder")} />
+                  }
+                  filters={filters}
                 />
-                <Select
-                  aria-label={t("team.filterLocation")}
-                  value={locationId}
-                  onChange={setLocationId}
-                  className="sm:w-44"
-                  options={[
-                    { value: "", label: t("team.anyLocation") },
-                    ...locations.filter((l) => l.status !== "archived").map((l) => ({ value: l.id, label: l.name })),
-                  ]}
-                />
-                <div className="flex items-center gap-tight sm:ml-auto">
-                  <p className="text-[13px] text-muted" aria-live="polite">
-                    {filtering ? t("team.showing", { count: rows.length }) : null}
-                  </p>
-                  {filtering && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearch("");
-                        setRoleId("");
-                        setLocationId("");
-                      }}
-                      className="inline-flex min-h-11 items-center rounded-sm px-tight text-[13px] font-medium text-muted transition-colors duration-quick hover:bg-muted-wash hover:text-fg md:min-h-9"
-                    >
-                      {t("team.clearFilters")}
-                    </button>
-                  )}
-                </div>
+                {/* The count of what is showing, for a screen reader: the chips
+                    say what is set, this says what that did. */}
+                <p className="sr-only" aria-live="polite">
+                  {filtering ? t("team.showing", { count: rows.length }) : ""}
+                </p>
               </div>
             }
           >
@@ -244,6 +265,7 @@ export default function TeamPage() {
               rows.map((s) => {
                 const isYou = s.id === DEMO_STAFF_ID;
                 const nowhere = s.locationIds.length === 0;
+                const devs = deviceCount(s);
                 return (
                   <RecordRow
                     key={s.id}
@@ -252,26 +274,23 @@ export default function TeamPage() {
                     title={s.name}
                     badges={
                       <>
-                        {isYou ? <span className="rounded-xs border border-line px-tight text-[12px] font-medium text-muted">{t("team.you")}</span> : null}
-                        {s.status !== "active" ? <StatusPill status={s.status} /> : null}
+                        {isYou ? (
+                          <span className="rounded-xs bg-muted-wash px-tight text-[0.75rem] font-medium text-muted">{t("team.you")}</span>
+                        ) : null}
+                        {s.status !== "active" ? <StatusPill status={s.status}>{statusWord(s)}</StatusPill> : null}
                       </>
                     }
                     meta={
-                      <>
-                        <span className="block truncate">{s.email ?? s.phone}</span>
-                        <span className="block md:hidden">
-                          {roleName(s.roleId)} · <span className={cn(nowhere ? "text-warning" : undefined)}>{workplace(s)}</span> · {activity(s)}
-                          {deviceCount(s) !== null && <> · {t("team.deviceCount", { count: deviceCount(s)! })}</>}
-                        </span>
-                      </>
+                      <span className="block truncate">
+                        {roleName(s.roleId)} · <span className={cn(nowhere ? "text-warning" : undefined)}>{workplace(s)}</span>
+                        <span className="hidden md:inline"> · {s.email ?? s.phone}</span>
+                      </span>
                     }
                     columns={
                       <>
-                        <span className="w-28 truncate text-sm text-fg">{roleName(s.roleId)}</span>
-                        <span className={cn("hidden w-40 truncate text-[13px] lg:block", nowhere ? "text-warning" : "text-muted")}>{workplace(s)}</span>
-                        <span className="w-44 text-[13px] text-muted">{activity(s)}</span>
-                        <span className="hidden w-24 truncate text-[13px] text-muted xl:block">
-                          {deviceCount(s) !== null ? t("team.deviceCount", { count: deviceCount(s)! }) : ""}
+                        <span className="hidden w-44 text-right text-[13px] text-muted lg:block">{activity(s)}</span>
+                        <span className="hidden w-20 text-right text-[13px] text-muted xl:block">
+                          {devs !== null ? t("team.deviceCount", { count: devs }) : ""}
                         </span>
                       </>
                     }

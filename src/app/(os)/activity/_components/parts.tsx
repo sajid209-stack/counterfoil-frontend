@@ -29,6 +29,7 @@ import {
   CircleX,
   type LucideIcon,
 } from "lucide-react";
+import { StatusPill } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { formatClock, formatClockOf, formatDateTime, formatDay, formatMoney } from "@/lib/format";
 import { activityNow, localDay, type ActivityEvent, type ActivityGroup, type ActivityKind, type ActivitySeverity } from "@/lib/api";
@@ -307,11 +308,12 @@ export function useActivityText() {
   return { t, sentence, plain, kindLabel, severityLabel, groupLabel, where, ago, details, actorName };
 }
 
-/** The glyph tile a row leads with. */
+/** The glyph a row leads with: a soft round tint, no outline — the surface does
+ *  the separating, and the shape (one glyph per kind) says what happened. */
 export function KindBadge({ kind, severity, className }: { kind: ActivityKind; severity: ActivitySeverity; className?: string }) {
   const Icon = ACTIVITY_ICON[kind];
   return (
-    <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-sm border border-line bg-card", SEVERITY_ICON_CLASS[severity], className)}>
+    <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full bg-subtle dark:bg-fg/10", SEVERITY_ICON_CLASS[severity], className)}>
       <Icon size={15} strokeWidth={1.5} aria-hidden />
     </span>
   );
@@ -328,23 +330,19 @@ export function Initials({ name, className }: { name: string | null; className?:
         .toUpperCase()
     : "CF";
   return (
-    <span aria-hidden className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full border border-line bg-subtle text-[0.75rem] font-semibold text-muted", className)}>
+    <span aria-hidden className={cn("grid h-6 w-6 shrink-0 place-items-center rounded-full bg-subtle text-[0.75rem] font-semibold text-muted dark:bg-fg/10", className)}>
       {text}
     </span>
   );
 }
 
-/** Warning and serious say so in words, beside their colour. */
+/** Warning and serious say so in words, beside their colour — as the same soft
+ *  pill every status in OS is. */
 export function SeverityChip({ severity, label }: { severity: ActivitySeverity; label: string }) {
   if (severity === "info") return null;
   return (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center rounded-full px-tight py-px text-[0.75rem] font-medium",
-        severity === "critical" ? "bg-danger/10 text-danger" : "bg-warning/15 text-warning ring-1 ring-warning/35",
-      )}
-    >
+    <StatusPill tone={severity === "critical" ? "danger" : "warning"} shape="transaction" className="shrink-0">
       {label}
-    </span>
+    </StatusPill>
   );
 }

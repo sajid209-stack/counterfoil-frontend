@@ -1,11 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, CalendarDays, Check, Ellipsis, LayoutDashboard, ReceiptText, Ticket } from "lucide-react";
+import { ChevronLeft, LayoutDashboard } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { LogoMark, Sheet } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { getOperator } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -14,63 +12,29 @@ import { BarTitleContext } from "@/lib/barTitle";
 import { AccountMenu } from "./AccountMenu";
 import { LocationSwitcher } from "./LocationSwitcher";
 import { CommandPalette } from "./CommandPalette";
+import { MenuButton, MobileNav } from "./MobileNav";
+import { LAST_APP_KEY, SettingsChrome } from "./SettingsChrome";
 import { Sidebar } from "./Sidebar";
-import { DESTINATIONS, NAV_MAIN, NAV_OPEN, NAV_SETTINGS, type NavDestination } from "./nav";
+import { DESTINATIONS, pageFor } from "./nav";
 import { SETTINGS_GROUPS } from "../settings/_lib/nav";
 
-// F10 — on mobile the hamburger drawer is gone: a bottom tab bar carries the
-// four daily destinations, and More opens a full-height destination grid.
-// Desktop is unchanged: the ink sidebar stays.
-const MOBILE_TABS = [
-  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
-  { href: "/calendar", key: "calendar", icon: CalendarDays },
-  { href: "/orders", key: "orders", icon: ReceiptText },
-  { href: "/catalog", key: "catalog", icon: Ticket },
-] as const;
-
 /*
- * Everywhere a phone can go is the desktop rail's own list (`./nav`), in its
- * own order and under its own names. The More grid below draws it in the same
- * three groups the rail does — the daily destinations, the other apps, Settings.
+ * The OS shell — three pieces of CHROME around one page.
  *
- * The four in MOBILE_TABS repeat there on purpose: `nav-hierarchy` separates
- * primary from secondary navigation, and a person who opens More looking for
- * Orders should find it rather than be told to close the sheet.
+ *   rail ─┐                      white (dark: the card colour), no lines
+ *   bar  ─┤  between or round them
+ *   frame ┘  the page itself: the warm paper ground in a rounded panel that
+ *            scrolls on its own while the chrome stands still
+ *
+ * Below md there is no rail. The phone gets Shopify admin mobile's shape: a top
+ * bar that says where you are (the page's glyph and name) with the page's one
+ * create action and a round "⋯" for its other actions; and a round menu button
+ * floating at the bottom-left that opens everything else in a full-height
+ * sheet. No logo and no account in the bar — they are in the menu.
+ *
+ * Settings, on md and up, adds a second chrome column beside the (folded) rail.
+ * See `SettingsChrome`.
  */
-
-/**
- * What the phone's top bar is allowed to say.
- *
- * The owner asked for the bar to carry "the current page name", and the page
- * name is not the page's H1 — on Dashboard that is the operator's business
- * name, on an order it is a reference. It is the name of the destination, the
- * same word the tab bar and the rail use for it, so the bar answers "where am
- * I" with the word the person navigated by.
- *
- * Longest prefix wins, which is why /settings/profile resolves before /settings
- * and why every settings section names itself rather than all
- * sixteen of them reading "Settings".
- */
-const PAGE_NAMES: readonly { prefix: string; key: string }[] = [
-  { prefix: "/dashboard", key: "dashboard" },
-  { prefix: "/calendar", key: "calendar" },
-  { prefix: "/orders", key: "orders" },
-  { prefix: "/issued-orders", key: "issuedOrders" },
-  { prefix: "/activity", key: "activityLog" },
-  { prefix: "/finances", key: "finances" },
-  { prefix: "/expenses", key: "expenses" },
-  { prefix: "/customers", key: "customers" },
-  { prefix: "/catalog", key: "catalog" },
-  { prefix: "/inventory", key: "inventory" },
-  { prefix: "/marketplaces", key: "marketplaces" },
-  { prefix: "/booking-rules", key: "bookingRules" },
-  { prefix: "/pricing", key: "pricing" },
-  { prefix: "/memberships", key: "memberships" },
-  { prefix: "/promotions", key: "promotions" },
-  { prefix: "/analytics", key: "analytics" },
-  { prefix: "/settings/profile", key: "myProfile" },
-  { prefix: "/settings", key: "settings" },
-] as const;
 
 /**
  * ⌘ or Ctrl — the hint has to be true on the machine reading it.
@@ -94,19 +58,17 @@ export function OsShell({ children }: { children: React.ReactNode }) {
   const shortcutKey = useShortcutKey();
   const pathname = usePathname();
   /* Making something — a new booking or event, or editing an event — is a
-     task with its own way out; the phone's tab bar would only compete with the
-     form's pinned Back and Continue for the bottom of the screen. */
+     task with its own way out; the floating menu button would only compete with
+     the form's pinned Back and Continue for the bottom of the screen. */
   const focused = /^\/catalog\/(new(\/|$)|events\/[^/]+\/edit$)/.test(pathname);
+  const isSettings = pathname.startsWith("/settings");
   const t = useTranslations("nav");
   const tSettings = useTranslations("settings");
-  const tCommon = useTranslations("common");
   const operatorQ = useApiQuery(() => getOperator(), []);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  // The bar firms up once anything has scrolled under it. Passive listener,
-  // and it only ever flips a boolean — no layout is read on scroll.
-  const [scrolled, setScrolled] = useState(false);
   /* The frame's own scroller (md and up). `more` is true while there is content
      below the fold of it, which is what draws the fade at its foot. */
   const frameRef = useRef<HTMLDivElement>(null);
@@ -121,8 +83,21 @@ export function OsShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("cf-prefs", onPrefs);
   }, []);
 
-  // Search is the rail's field; Ctrl/⌘ K opens the same command palette,
-  // so a page or a settings section is one keyword away from anywhere.
+  /* Settings' "‹ Settings" goes back to the last page that was not Settings.
+     Remembered per tab, so it survives a reload and a trip through several
+     settings sections; a tab opened straight onto Tax has none and goes to the
+     dashboard. */
+  useEffect(() => {
+    if (isSettings) return;
+    try {
+      sessionStorage.setItem(LAST_APP_KEY, pathname);
+    } catch {
+      /* private mode: Settings falls back to the dashboard */
+    }
+  }, [pathname, isSettings]);
+
+  // Ctrl/⌘ K opens the command palette, so a page or a settings section is one
+  // keyword away from anywhere.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "k") return;
@@ -133,18 +108,6 @@ export function OsShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    // First read on the next frame rather than synchronously in the effect
-    // body — a sync setState here cascades a render, and the frame also lets a
-    // browser-restored scroll position settle before we read it.
-    const raf = requestAnimationFrame(onScroll);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, []);
   /* From md the page scrolls INSIDE the frame, never on the window. Two jobs:
      keep `more` honest (scroll, resize, and content that grows after data
      arrives) and, on a route change, return the frame to the top the way the
@@ -177,8 +140,10 @@ export function OsShell({ children }: { children: React.ReactNode }) {
 
   /* `[` folds the rail, as it does in Linear and Notion. Only where there IS a
      rail (md and up), never while typing, and never with a modifier — Ctrl [ and
-     ⌘ [ are the browser's Back. */
+     ⌘ [ are the browser's Back. Not in Settings: the rail is held folded there,
+     so the key would change a preference the person cannot see take effect. */
   useEffect(() => {
+    if (isSettings) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "[" || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
       const el = e.target as HTMLElement | null;
@@ -189,22 +154,21 @@ export function OsShell({ children }: { children: React.ReactNode }) {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [toggleCollapsed]);
+  }, [toggleCollapsed, isSettings]);
 
+  /* What the phone's top bar is allowed to say.
 
-  const isActive = (href: string) => {
-    // Settings is lit on every section, not only the one its door opens on.
-    const path = href.startsWith("/settings/") ? "/settings" : href.split("?")[0];
-    return pathname === path || pathname.startsWith(`${path}/`);
-  };
-  const tabActive = (href: string) => isActive(href) && !moreOpen;
-
-  // A settings section names itself; everything else uses its nav word.
+     The page name is not the page's H1 — on Dashboard that is the operator's
+     business name, on an order it is a reference. It is the name of the
+     destination, the same word the rail and the menu use for it, so the bar
+     answers "where am I" with the word the person navigated by. A settings
+     section names itself rather than all sixteen of them reading "Settings". */
   const section = SETTINGS_GROUPS.flatMap((g) => g.items).find(
     (i) => pathname === i.href || pathname.startsWith(`${i.href}/`),
   );
-  const page = PAGE_NAMES.find((p) => pathname === p.prefix || pathname.startsWith(`${p.prefix}/`));
+  const page = pageFor(pathname);
   const pageName = section ? tSettings(`nav.items.${section.key}.title`) : page ? t(page.key) : "Counterfoil";
+  const PageIcon = page?.icon ?? LayoutDashboard;
 
   /* Which venue the console is looking at is a lens on the whole of it, so it
      lives in the bar rather than among a page's own filters — and it governs
@@ -213,217 +177,126 @@ export function OsShell({ children }: { children: React.ReactNode }) {
      is a circle.
 
      `/deck` is the other exception: it renders outside this shell entirely. */
-  const venueScoped = !pathname.startsWith("/settings");
+  const venueScoped = !isSettings;
   /* Which bar draws the switcher — one of them, never both. Both bars are in
      the DOM at every width and merely hidden by a media query, so rendering it
      in each put two comboboxes named "Venue" on every page, with the invisible
      one FIRST in document order. This app has been caught by that four times;
-     the gate is the one PageShell already uses for the same reason. */
+     the gate is the one PageShell already uses for the same reason. (On a phone
+     the venue lives in the menu sheet instead.) */
   const wide = useMediaQuery(MD);
-
-  /* One tile of the More grid. Same size and shape for every destination; the
-     current page carries a tick, and an app that leaves the console carries ↗. */
-  const moreTile = (d: NavDestination, leaves = false) => {
-    const active = isActive(d.href);
-    const Icon = d.icon;
-    return (
-      <li key={d.key} className="contents">
-        <Link
-          href={d.href}
-          data-more-tile={d.key}
-          aria-current={active ? "page" : undefined}
-          onClick={() => setMoreOpen(false)}
-          className={cn(
-            "relative flex h-[5.25rem] flex-col items-center justify-center gap-tight rounded-sm border transition-colors duration-quick active:bg-ember/10",
-            active ? "border-ember bg-ember/10 text-fg" : "border-line bg-card text-fg",
-          )}
-        >
-          {active && (
-            <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-ember-solid text-white">
-              <Check size={11} strokeWidth={3} />
-            </span>
-          )}
-          {leaves && <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden className="absolute right-1.5 top-1.5 text-muted" />}
-          <Icon size={22} strokeWidth={1.5} className={active ? "text-brand-foreground" : "text-muted"} />
-          <span className="px-inline text-center text-[12px] font-medium leading-tight">{t(d.key)}</span>
-        </Link>
-      </li>
-    );
-  };
 
   return (
     /* What the bar is calling this page, published so a page's own heading can
        stand down where it would only say it again — see `lib/barTitle`. */
     <BarTitleContext value={pageName}>
-    <div className="flex min-h-screen md:h-dvh md:overflow-hidden">
-      <aside className="sticky top-0 hidden h-screen shrink-0 overflow-y-auto md:block md:h-dvh">
-        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
-      </aside>
+      {/* The chrome's own white is the window's ground from md: the rail and the
+          bar are painted ON it, and the frame is the paper panel set into it.
+          On a phone the ground is the paper, with the white bar on top. */}
+      <div className="flex min-h-screen bg-surface md:h-dvh md:overflow-hidden md:bg-chrome">
+        <aside className="sticky top-0 hidden h-screen shrink-0 md:block md:h-dvh">
+          <Sidebar collapsed={collapsed} locked={isSettings} onToggleCollapsed={toggleCollapsed} />
+        </aside>
 
-      {/* overflow-x-CLIP, not hidden. `overflow-x: hidden` forces overflow-y to
-          `auto`, which makes this element a scroll container — and a sticky
-          child then sticks to THIS scrollport while the page scrolls on <html>,
-          so the top bar rides up and away. Measured: it left the viewport at
-          top:-688. `clip` clips on x exactly the same way but creates no scroll
-          container, so overflow-y stays visible and sticky resolves against the
-          viewport. The x-overflow guard (rule 5) is unchanged. */}
-      <main className="flex min-w-0 flex-1 flex-col overflow-x-clip md:h-dvh md:overflow-hidden">
-        {/* Mobile — where you are, then the two controls a phone needs.
-            It used to be the wordmark and the language and mode switchers:
-            no page name, no search at any width below lg, and 140px spent on
-            a preference nobody changes twice. The mark stays because it is
-            24px and it is the only brand anchor on a phone; the name beside
-            it is what the bar is for. */}
-        <div data-scrolled={scrolled} className="glass-navbar sticky top-0 z-30 flex items-center gap-tight px-gutter py-inline md:hidden">
-          <LogoMark size={24} className="shrink-0" />
-          {/* A <p>, not a heading. The bar names the destination; the page's
-              own <h1> renders in the content below it on a phone, and a
-              heading above that h1 puts the document's outline out of order. */}
-          {/* The venue takes the width on a phone where there is more than
-              one, because it is the thing that changes what every figure below
-              means; the page's own name is in the tab bar beneath. */}
-          {venueScoped ? (
-            <span className="flex min-w-0 flex-1 items-center gap-tight">
-              <span className="min-w-0 shrink truncate text-[15px] font-semibold text-fg">{pageName}</span>
-              {!wide && <LocationSwitcher compact />}
-            </span>
-          ) : (
-            <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-fg">{pageName}</p>
-          )}
-          {/* The page's create action, as a plus. Empty on a page that has
-              none, and it takes its gap with it. */}
-          <div id="os-page-actions-mobile" className="flex shrink-0 items-center gap-inline empty:hidden" />
-          <AccountMenu name={operatorQ.data?.name} compact />
-        </div>
+        {/* Settings: the second chrome column (and the phone's section sheet). */}
+        {isSettings && <SettingsChrome open={settingsOpen} onClose={() => setSettingsOpen(false)} />}
 
-        {/* Desktop — the glass pane now carries the PAGE HEADER as well as the
-            chrome. Measured on the Aura reference: its sticky header is a
-            65px bar holding the page title and its subtitle on the left with
-            search, actions and the avatar on the right — one bar, not a bar
-            above a header.
+        {/* overflow-x-CLIP, not hidden. `overflow-x: hidden` forces overflow-y to
+            `auto`, which makes this element a scroll container — and a sticky
+            child then sticks to THIS scrollport while the page scrolls on <html>,
+            so the top bar rides up and away. `clip` clips on x exactly the same
+            way but creates no scroll container, so overflow-y stays visible and
+            sticky resolves against the viewport. */}
+        <main className="flex min-w-0 flex-1 flex-col overflow-x-clip md:h-dvh md:overflow-hidden">
+          {/* Phone — where you are, then the page's actions.
+              Left: the page's glyph and its name (on a settings page the glyph
+              is a back chevron that opens the list of sections). Right: the
+              page's one create action as an ink "+", and a round "⋯" holding
+              its other actions — both portalled in by PageShell. No logo and no
+              account: they are in the menu. A <p>, not a heading — the page's
+              own <h1> renders in the content below it.
 
-            Counterfoil had them as two stacked blocks: a 56px pane whose left
-            737px were empty, and a separate page header under it, which put
-            the first card 183px down. The title moves into that empty space
-            and the two collapse into one.
+              53px, and it must stay 53: sticky headers further down the page
+              (the activity log's day headings) pin themselves to exactly that. */}
+          <div data-os-bar="phone" className="glass-navbar sticky top-0 z-30 flex h-[53px] shrink-0 items-center gap-tight bg-chrome px-gutter md:hidden">
+            {/* A page with a way back puts it here as an arrow (PageShell's BarBack),
+                and the glyph or chevron beside it steps aside — see `peer`. */}
+            <div id="os-page-back-mobile" className="peer flex shrink-0 items-center empty:hidden" />
+            {isSettings ? (
+              <button
+                type="button"
+                onClick={() => setSettingsOpen(true)}
+                aria-label={t("settingsSections")}
+                aria-haspopup="dialog"
+                data-settings-back-phone
+                className="-ml-tight flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-fg transition-colors duration-quick hover:bg-fg/[0.06] active:bg-fg/[0.08] peer-[:not(:empty)]:hidden"
+              >
+                <ChevronLeft size={22} strokeWidth={1.75} aria-hidden />
+              </button>
+            ) : (
+              <PageIcon size={20} strokeWidth={1.5} aria-hidden className="shrink-0 text-muted peer-[:not(:empty)]:hidden" />
+            )}
+            <p className="min-w-0 flex-1 truncate text-[17px] font-semibold text-fg">{pageName}</p>
+            <div id="os-page-actions-mobile" className="flex shrink-0 items-center gap-0.5 empty:hidden" />
+          </div>
 
-            #os-page-header is a portal target, not a prop chain: PageShell is
-            rendered by ~30 route files inside {children}, so the alternative
-            was threading title/description/actions through every one of them,
-            or a context whose `actions` node changes identity on every render
-            and would set state in a loop. A portal has neither problem, and
-            PageShell stays the single owner of what a page header is. */}
-        {/* 8px of padding, not 12, and centred rather than top-aligned: with
-            the single-word breadcrumb gone the title is one line beside 44px
-            controls, and top-aligning them left the title riding 5px high of
-            the buttons it shares the bar with. */}
-        <div className="glass-navbar hidden shrink-0 items-center justify-between gap-major bg-surface px-gutter py-tight backdrop-blur-none md:flex">
-          <div id="os-page-header" className="min-w-0 flex-1" />
-          {/* The bar is app chrome: the page name, the venue, the account.
-              A page's own buttons, status and back link render in the page
+          {/* Desktop — the page's name on the left; the venue and the account on
+              the right; one row on the chrome, with no line under it.
+
+              #os-page-header is a portal target, not a prop chain: PageShell is
+              rendered by ~30 route files inside {children}, so the alternative
+              was threading title/description through every one of them, or a
+              context whose node changes identity on every render and would set
+              state in a loop. A portal has neither problem, and PageShell stays
+              the single owner of what a page header is.
+
+              The bar is app chrome: the page name, the venue, the account. A
+              page's own buttons, status and back link render in the page
               (PageShell), never up here. */}
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-tight">
-            {/* The venue first: it qualifies everything to its left, so it
-                reads as part of where you are rather than as one more of the
-                page's controls. */}
-            {venueScoped && wide && <LocationSwitcher />}
-            <AccountMenu name={operatorQ.data?.name} />
+          <div data-os-bar="desktop" className="glass-navbar hidden min-h-14 shrink-0 items-center justify-between gap-major bg-chrome px-gutter py-1.5 md:flex">
+            <div id="os-page-header" className="min-w-0 flex-1" />
+            <div className="flex shrink-0 items-center justify-end gap-tight">
+              {/* The venue first: it qualifies everything to its left, so it
+                  reads as part of where you are rather than as one more of the
+                  page's controls. */}
+              {venueScoped && wide && <LocationSwitcher />}
+              <AccountMenu name={operatorQ.data?.name} />
+            </div>
           </div>
-        </div>
 
-        {/* The FRAME. The rail and the bar above are the chrome, on the page's
-            ground; the page is a separate rounded panel on its own, lighter
-            ground, and it is the thing that scrolls (md and up) — so the chrome
-            never moves and a sticky header sticks to the frame's top edge.
-            Below md there is no rail: the frame is the page, edge to edge, and
-            the window scrolls as it always did. The fade is a sibling of the
-            scroller, not a child, so it stays put while the content moves. */}
-        <div className="os-frame relative min-w-0 flex-1 bg-frame md:mb-2 md:mr-2 md:min-h-0 md:overflow-hidden md:rounded-2xl md:border md:border-line">
-          <div ref={frameRef} data-os-scroll className={cn("os-frame-scroll min-w-0 md:h-full md:overflow-y-auto md:overscroll-contain md:pb-0", focused ? "pb-0" : "pb-[calc(56px+env(safe-area-inset-bottom))]")}>
-            {children}
-          </div>
-          <div aria-hidden data-more={more} className="os-frame-fade" />
-        </div>
-      </main>
-
-      {/* Mounted only while open, so it comes up empty by construction. */}
-      {searchOpen && <CommandPalette onClose={() => setSearchOpen(false)} destinations={DESTINATIONS} shortcutKey={shortcutKey} />}
-
-      {/* Mobile bottom tab bar — stood down while something is being made, so
-          the form's own Back and Continue can have the bottom of the screen. */}
-      {!focused && (
-      <nav
-        aria-label="OS navigation"
-        /* 95%, not 80%. At 80 the bar is tinted by whatever happens to be
-           scrolled under it, and measured on /events a dark green status pill
-           took the "Dashboard" label to 3.72:1 — an 11px navigation label whose
-           legibility depends on the page behind it. The blur still reads; the
-           backdrop no longer votes. */
-        className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/95 backdrop-blur-xl md:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        {MOBILE_TABS.map((tab) => {
-          const active = tabActive(tab.href);
-          const Icon = tab.icon;
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              aria-current={active ? "page" : undefined}
-              onClick={() => { setMoreOpen(false); if (active) window.scrollTo({ top: 0, behavior: "smooth" }); }}
+          {/* The FRAME. The rail and the bar above are the chrome; the page is a
+              separate rounded panel on the paper ground, and it is the thing that
+              scrolls (md and up) — so the chrome never moves and a sticky header
+              sticks to the frame's top edge. No border: paper against white
+              reads as a panel by itself. Below md there is no rail: the frame is
+              the page, edge to edge, and the window scrolls as it always did.
+              The fade is a sibling of the scroller, not a child, so it stays put
+              while the content moves. */}
+          <div className="os-frame relative min-w-0 flex-1 bg-surface md:mb-2 md:mr-2 md:min-h-0 md:overflow-hidden md:rounded-[16px]">
+            <div
+              ref={frameRef}
+              data-os-scroll
               className={cn(
-                "relative flex h-14 min-w-12 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick active:bg-ember/10",
-                active ? "text-brand-foreground" : "text-muted",
+                "os-frame-scroll min-w-0 md:h-full md:overflow-y-auto md:overscroll-contain md:pb-0",
+                /* Room for the floating menu button, so it never covers the last row. */
+                focused ? "pb-0" : "pb-[var(--os-fab-clear)]",
               )}
             >
-              {active && <span aria-hidden className="absolute left-2 right-2 top-0 h-[2px] bg-ember" />}
-              <Icon size={24} strokeWidth={1.5} />
-              <span className="max-w-full truncate px-inline text-[11px] font-medium">{t(tab.key)}</span>
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => setMoreOpen((o) => !o)}
-          className={cn(
-            "relative flex h-14 min-w-12 flex-1 flex-col items-center justify-center gap-inline transition-colors duration-quick active:bg-ember/10",
-            moreOpen ? "text-brand-foreground" : "text-muted",
-          )}
-        >
-          {moreOpen && <span aria-hidden className="absolute left-2 right-2 top-0 h-[2px] bg-ember" />}
-          <Ellipsis size={24} strokeWidth={1.5} />
-          <span className="max-w-full truncate px-inline text-[11px] font-medium">{t("more")}</span>
-        </button>
-      </nav>
-      )}
+              {children}
+            </div>
+            <div aria-hidden data-more={more} className="os-frame-fade" />
+          </div>
+        </main>
 
-      {/* More — a sheet from the bottom, which is where it is opened from.
-          It used to be a full-height panel dropped from the TOP while the
-          finger that summoned it was at the bottom of the screen, and it
-          covered the whole page rather than reading as something over it. */}
-      <Sheet
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
-        title={t("more")}
-        closeLabel={tCommon("close")}
-        lead={<p className="truncate font-mono text-[12px] text-muted">{operatorQ.data?.name ?? "Counterfoil"}</p>}
-        className="md:hidden"
-      >
-        {/* The rail's order and its three groups: the daily destinations, the
-            other apps (↗ — they leave the console) and Settings. Hairlines and
-            spacing tell the groups apart; there are no labels. */}
-        <div className="flex flex-col gap-tight p-card">
-          <ul className="grid auto-rows-min grid-cols-3 gap-tight" data-more="main">
-            {NAV_MAIN.map((d) => moreTile(d))}
-          </ul>
-          <div aria-hidden className="my-inline border-t border-line" />
-          <ul className="grid auto-rows-min grid-cols-3 gap-tight" data-more="open">
-            {NAV_OPEN.map((d) => moreTile(d, true))}
-            {moreTile(NAV_SETTINGS)}
-          </ul>
-        </div>
-      </Sheet>
-    </div>
+        {/* Mounted only while open, so it comes up empty by construction. */}
+        {searchOpen && <CommandPalette onClose={() => setSearchOpen(false)} destinations={DESTINATIONS} shortcutKey={shortcutKey} />}
+
+        {/* Phone: the round menu button and the sheet it opens. Stood down while
+            something is being made, so the form's own Back and Continue can
+            have the bottom of the screen. */}
+        {!focused && <MenuButton open={menuOpen} onOpen={() => setMenuOpen(true)} />}
+        <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} business={operatorQ.data?.name} />
+      </div>
     </BarTitleContext>
   );
 }

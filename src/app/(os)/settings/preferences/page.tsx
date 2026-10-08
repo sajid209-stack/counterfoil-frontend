@@ -50,44 +50,38 @@ export default function PreferencesPage() {
           </SettingRow>
         </SettingsSection>
 
-        <SettingsSection title={t("preferences.accessTitle")} description={t("preferences.accessDesc")}>
-          <SettingRow label={t("preferences.reduceMotion")} description={t("preferences.reduceMotionDesc")} labelFor={false}>
+        <SettingsSection title={t("preferences.accessTitle")} description={t("preferences.accessDesc")} divided>
+          <SettingRow label={t("preferences.reduceMotion")} description={t("preferences.reduceMotionDesc")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
-              <div className="flex sm:justify-end">
-                <Switch
-                  checked={prefs.reduceMotion}
-                  onChange={(on) => setPrefs({ reduceMotion: on })}
-                  labelledBy={labelId}
-                  describedBy={describedBy}
-                />
-              </div>
+              <Switch
+                checked={prefs.reduceMotion}
+                onChange={(on) => setPrefs({ reduceMotion: on })}
+                labelledBy={labelId}
+                describedBy={describedBy}
+              />
             )}
           </SettingRow>
-          <SettingRow label={t("preferences.contrast")} description={t("preferences.contrastDesc")} labelFor={false}>
+          <SettingRow label={t("preferences.contrast")} description={t("preferences.contrastDesc")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
-              <div className="flex sm:justify-end">
-                <Switch
-                  checked={prefs.moreContrast}
-                  onChange={(on) => setPrefs({ moreContrast: on })}
-                  labelledBy={labelId}
-                  describedBy={describedBy}
-                />
-              </div>
+              <Switch
+                checked={prefs.moreContrast}
+                onChange={(on) => setPrefs({ moreContrast: on })}
+                labelledBy={labelId}
+                describedBy={describedBy}
+              />
             )}
           </SettingRow>
         </SettingsSection>
 
-        <SettingsSection title={t("preferences.workspaceTitle")} description={t("preferences.workspaceDesc")}>
-          <SettingRow label={t("preferences.sidebar")} description={t("preferences.sidebarDesc")} labelFor={false}>
+        <SettingsSection title={t("preferences.workspaceTitle")}>
+          <SettingRow label={t("preferences.sidebar")} description={t("preferences.sidebarDesc")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
-              <div className="flex sm:justify-end">
-                <Switch
-                  checked={prefs.sidebarCollapsed}
-                  onChange={(on) => setPrefs({ sidebarCollapsed: on })}
-                  labelledBy={labelId}
-                  describedBy={describedBy}
-                />
-              </div>
+              <Switch
+                checked={prefs.sidebarCollapsed}
+                onChange={(on) => setPrefs({ sidebarCollapsed: on })}
+                labelledBy={labelId}
+                describedBy={describedBy}
+              />
             )}
           </SettingRow>
         </SettingsSection>

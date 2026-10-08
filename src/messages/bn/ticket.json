@@ -7,7 +7,6 @@
   "print": "প্রিন্ট",
   "printTickets": "টিকিট প্রিন্ট করুন",
   "printReceipt": "রসিদ প্রিন্ট করুন",
-  "reprintTickets": "আবার টিকিট প্রিন্ট করুন",
   "back": "ফিরে যান",
   "noTickets": "এই অর্ডারের জন্য কোনো টিকিট নেই।",
   "seat": "আসন {label}",
@@ -23,5 +22,11 @@
   "printAllTitle": "টিকিট রসিদ",
   "orderNotFound": "এই অর্ডার পাওয়া যায়নি।",
   "ticketsCount": "{count, plural, other {#টি টিকিট}}",
-  "seatLabel": "আসন"
+  "seatLabel": "আসন",
+  "record": {
+    "order": "অর্ডার",
+    "moreDetails": "আরও তথ্য",
+    "fewerDetails": "কম তথ্য",
+    "scanCount": "{count, plural, =0 {কখনও স্ক্যান হয়নি} one {# বার স্ক্যান} other {# বার স্ক্যান}}"
+  }
 }

@@ -41,7 +41,7 @@ export function ReservationsCard({
         const p = products.find((x) => x.id === b.productId);
         const edit = bookingEditable(b.id, actor);
         return (
-          <div key={b.id} data-booking={b.id} className="flex flex-wrap items-center gap-x-section gap-y-tight border-b border-line py-tight text-sm first:pt-0 last:border-0 last:pb-0">
+          <div key={b.id} data-booking={b.id} className="flex flex-wrap items-center gap-x-section gap-y-tight border-b border-hairline py-tight text-sm first:pt-0 last:border-0 last:pb-0">
             <div className="min-w-0 flex-1 basis-48">
               <p className="break-words font-medium">{p?.name ?? b.productId}</p>
               <p className="text-[13px] tabular-nums text-muted">

@@ -50,8 +50,15 @@ export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChan
         const name = t(`common.${DAY_KEY[d]}`);
         const labelId = `hours-day-${d}`;
         return (
-          <li key={d} className="flex flex-wrap items-start gap-x-section gap-y-tight px-card py-comfortable">
-            <div className="flex w-full items-center gap-comfortable sm:w-32">
+          /* Two lines on a phone — the day, its switch and its two small
+             buttons on the first, the times on the second — and one line from
+             sm. Grid areas rather than DOM order, so tabbing still reads
+             switch, times, then the buttons. */
+          <li
+            key={d}
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-comfortable gap-y-inline px-card py-tight [grid-template-areas:'day_actions''times_times'] sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:[grid-template-areas:'day_times_actions']"
+          >
+            <div className="flex items-center gap-comfortable [grid-area:day]">
               <Switch
                 checked={open}
                 onChange={(on) => setDay(d, on ? template().map((i) => ({ ...i })) : [])}
@@ -62,52 +69,52 @@ export function HoursEditor({ hours, onChange }: { hours: OpeningHours[]; onChan
               </span>
             </div>
 
-            <div className="min-w-0 flex-1">
-              {open ? (
-                <div className="flex flex-col gap-tight">
-                  {day.intervals.map((iv, i) => (
-                    <div key={i} className="flex flex-wrap items-center gap-tight">
-                      <TimeField
-                        value={iv.opensAt}
-                        label={t("locations.opensAtOn", { day: name })}
-                        invalid={!!problem}
-                        onChange={(v) => setDay(d, day.intervals.map((x, j) => (j === i ? { ...x, opensAt: v } : x)))}
-                      />
-                      <span aria-hidden className="text-muted">
-                        –
-                      </span>
-                      <TimeField
-                        value={iv.closesAt}
-                        label={t("locations.closesAtOn", { day: name })}
-                        invalid={!!problem}
-                        onChange={(v) => setDay(d, day.intervals.map((x, j) => (j === i ? { ...x, closesAt: v } : x)))}
-                      />
-                      {day.intervals.length > 1 && (
-                        <button
-                          type="button"
-                          aria-label={t("locations.removeHours", { day: name, from: formatClock(iv.opensAt), to: formatClock(iv.closesAt) })}
-                          title={t("locations.removeHours", { day: name, from: formatClock(iv.opensAt), to: formatClock(iv.closesAt) })}
-                          onClick={() => setDay(d, day.intervals.filter((_, j) => j !== i))}
-                          className={iconButton}
-                        >
-                          <X size={16} strokeWidth={1.5} aria-hidden />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {problem && (
-                    <p className="text-[12px] text-danger">
-                      {problem === "backwards" ? t("locations.hoursBackwards") : t("locations.hoursOverlap")}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="flex min-h-11 items-center text-sm text-muted">{t("locations.closed")}</p>
-              )}
-            </div>
+            {open ? (
+              <div className="flex min-w-0 flex-col gap-tight pb-tight [grid-area:times] sm:py-tight">
+                {day.intervals.map((iv, i) => (
+                  <div key={i} className="flex flex-wrap items-center gap-tight">
+                    <TimeField
+                      value={iv.opensAt}
+                      label={t("locations.opensAtOn", { day: name })}
+                      invalid={!!problem}
+                      onChange={(v) => setDay(d, day.intervals.map((x, j) => (j === i ? { ...x, opensAt: v } : x)))}
+                    />
+                    <span aria-hidden className="text-muted">
+                      –
+                    </span>
+                    <TimeField
+                      value={iv.closesAt}
+                      label={t("locations.closesAtOn", { day: name })}
+                      invalid={!!problem}
+                      onChange={(v) => setDay(d, day.intervals.map((x, j) => (j === i ? { ...x, closesAt: v } : x)))}
+                    />
+                    {day.intervals.length > 1 && (
+                      <button
+                        type="button"
+                        aria-label={t("locations.removeHours", { day: name, from: formatClock(iv.opensAt), to: formatClock(iv.closesAt) })}
+                        title={t("locations.removeHours", { day: name, from: formatClock(iv.opensAt), to: formatClock(iv.closesAt) })}
+                        onClick={() => setDay(d, day.intervals.filter((_, j) => j !== i))}
+                        className={iconButton}
+                      >
+                        <X size={16} strokeWidth={1.5} aria-hidden />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {problem && (
+                  <p className="text-[12px] text-danger">
+                    {problem === "backwards" ? t("locations.hoursBackwards") : t("locations.hoursOverlap")}
+                  </p>
+                )}
+              </div>
+            ) : (
+              /* A closed day is one line: on a phone the word sits where the
+                 buttons would, at the row's right edge. */
+              <p className="text-right text-sm text-muted [grid-area:actions] sm:text-left sm:[grid-area:times]">{t("locations.closed")}</p>
+            )}
 
             {open && (
-              <div className="flex shrink-0 items-center">
+              <div className="flex shrink-0 items-center [grid-area:actions]">
                 <button
                   type="button"
                   aria-label={t("locations.addHoursOn", { day: name })}

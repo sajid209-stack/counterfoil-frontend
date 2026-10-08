@@ -114,6 +114,48 @@ const wording = (op: { smsTemplate?: string; emailSubject?: string; emailTemplat
   emailBody: op?.emailTemplate ?? DEFAULT_EMAIL_BODY,
 });
 
+/**
+ * The words a message can carry, as chips under its field.
+ *
+ * One component for the SMS, the e-mail subject and the e-mail message: three
+ * copies of this markup were three places for a chip to be named wrong, and each
+ * chip's name has to say WHICH field it fills ("Add {business} to the e-mail
+ * subject"), or three identical buttons read out as three identical buttons.
+ * Quiet fills rather than outlined buttons: sixteen bordered chips on one page
+ * was the loudest thing on it.
+ */
+function PlaceholderChips({
+  items,
+  field,
+  onInsert,
+}: {
+  items: readonly { key: string }[];
+  field: string;
+  onInsert: (token: string) => void;
+}) {
+  const t = useTranslations("settings");
+  return (
+    <div className="flex flex-wrap gap-tight">
+      {items.map((p) => {
+        const name = p.key.slice(1, -1);
+        return (
+          <button
+            key={p.key}
+            type="button"
+            onClick={() => onInsert(p.key)}
+            aria-label={t("notifications.insertInto", { placeholder: p.key, field })}
+            className="inline-flex min-h-11 items-center gap-tight rounded-sm bg-muted-wash px-comfortable text-[0.8125rem] transition-colors duration-quick hover:bg-line/40 md:min-h-9"
+          >
+            <Plus size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
+            <code className="font-mono text-[0.75rem] text-fg">{p.key}</code>
+            <span className="text-muted">{t(`notifications.ph.${name}`)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /** A whole number of hours inside the range, or null. */
 function hoursIn(raw: string, { min, max }: { min: number; max: number }): number | null {
   const n = Number(raw.trim());
@@ -275,7 +317,7 @@ export default function NotificationsPage() {
   return (
     <PageShell title={t("notifications.title")} description={t("notifications.description")}>
       <div className="flex max-w-3xl flex-col gap-section pb-hero">
-        <SettingsSection title={t("notifications.customerTitle")} description={t("notifications.customerDesc")}>
+        <SettingsSection title={t("notifications.customerTitle")} description={t("notifications.customerDesc")} divided>
           {CUSTOMER_EVENTS.map((ev) => {
             const row = form.customer[ev];
             const title = t(`notifications.event.${ev}.title`);
@@ -284,18 +326,18 @@ export default function NotificationsPage() {
             const hours = ev === "followUp" ? followUp ?? Number(saved.followUpHours) : reminder ?? Number(saved.reminderHours);
             const silent = ev === "confirmation" && !row.sms && !row.email;
             return (
-              <div key={ev} className="flex flex-col gap-tight px-card py-section sm:flex-row sm:items-center sm:gap-major">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-fg">{title}</p>
-                  <p className="mt-inline text-[13px] leading-relaxed text-muted">{t(`notifications.event.${ev}.desc`, { hours })}</p>
-                  {silent && <p className="mt-inline text-[13px] leading-relaxed text-warning">{t("notifications.noTicket")}</p>}
-                </div>
-                <div className="flex shrink-0 items-center gap-section">
+              /* The name and its two switches share the first line, the sentence
+                 under them runs the full width: on a phone that is a two-line row
+                 with the controls at the right edge, the way a phone's own
+                 settings draw it. From sm the switches sit beside both lines. */
+              <div key={ev} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-section gap-y-inline px-card py-section sm:gap-x-major">
+                <p className="col-start-1 row-start-1 text-sm font-medium text-fg">{title}</p>
+                <div className="col-start-2 row-start-1 flex items-center gap-section sm:row-span-2">
                   {CHANNELS.map((ch) => {
                     const channel = t(`notifications.channel.${ch}`);
                     return (
                       <span key={ch} className="flex items-center gap-tight">
-                        <span aria-hidden className="text-[13px] text-muted">
+                        <span aria-hidden className="text-[0.8125rem] text-muted">
                           {channel}
                         </span>
                         <Switch
@@ -306,6 +348,10 @@ export default function NotificationsPage() {
                       </span>
                     );
                   })}
+                </div>
+                <div className="col-span-2 row-start-2 min-w-0 sm:col-span-1">
+                  <p className="text-[0.8125rem] leading-relaxed text-muted">{t(`notifications.event.${ev}.desc`, { hours })}</p>
+                  {silent && <p className="mt-inline text-[0.8125rem] leading-relaxed text-warning">{t("notifications.noTicket")}</p>}
                 </div>
               </div>
             );
@@ -351,38 +397,44 @@ export default function NotificationsPage() {
             label={t("notifications.quiet")}
             description={form.quietHours.enabled ? t("notifications.quietOn", { to: formatClock(form.quietHours.to) }) : t("notifications.quietOff")}
             labelFor={false}
-            error={errors.quiet}
+            trailing
           >
             {({ labelId, describedBy }) => (
-              <div className="flex flex-wrap items-center gap-tight sm:justify-end">
-                {form.quietHours.enabled && (
-                  <>
-                    <TimeField
-                      value={form.quietHours.from}
-                      onChange={(from) => set({ quietHours: { ...form.quietHours, from } })}
-                      label={t("notifications.quietFrom")}
-                      invalid={!!errors.quiet}
-                    />
-                    <span aria-hidden className="text-[13px] text-muted">
-                      {t("notifications.to")}
-                    </span>
-                    <TimeField
-                      value={form.quietHours.to}
-                      onChange={(to) => set({ quietHours: { ...form.quietHours, to } })}
-                      label={t("notifications.quietTo")}
-                      invalid={!!errors.quiet}
-                    />
-                  </>
-                )}
-                <Switch
-                  checked={form.quietHours.enabled}
-                  onChange={(enabled) => set({ quietHours: { ...form.quietHours, enabled } })}
-                  labelledBy={labelId}
-                  describedBy={describedBy}
-                />
-              </div>
+              <Switch
+                checked={form.quietHours.enabled}
+                onChange={(enabled) => set({ quietHours: { ...form.quietHours, enabled } })}
+                labelledBy={labelId}
+                describedBy={describedBy}
+              />
             )}
           </SettingRow>
+          {/* The window itself only matters while the switch is on, and a pair of
+              time fields cannot share a phone's row with the words beside them,
+              so it gets a line under them. */}
+          {form.quietHours.enabled && (
+            <div className="-mt-tight flex flex-wrap items-center gap-tight px-card pb-section">
+              <TimeField
+                value={form.quietHours.from}
+                onChange={(from) => set({ quietHours: { ...form.quietHours, from } })}
+                label={t("notifications.quietFrom")}
+                invalid={!!errors.quiet}
+              />
+              <span aria-hidden className="text-[0.8125rem] text-muted">
+                {t("notifications.to")}
+              </span>
+              <TimeField
+                value={form.quietHours.to}
+                onChange={(to) => set({ quietHours: { ...form.quietHours, to } })}
+                label={t("notifications.quietTo")}
+                invalid={!!errors.quiet}
+              />
+              {errors.quiet && (
+                <p role="alert" className="w-full text-[0.75rem] text-danger">
+                  {errors.quiet}
+                </p>
+              )}
+            </div>
+          )}
         </SettingsSection>
 
         <SettingsSection title={t("notifications.senderTitle")} description={t("notifications.senderDesc")}>
@@ -459,24 +511,7 @@ export default function NotificationsPage() {
                     errors.template ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
                   )}
                 />
-                <div className="flex flex-wrap gap-tight">
-                  {SMS_PLACEHOLDERS.map((p) => {
-                    const name = p.key.slice(1, -1);
-                    return (
-                      <button
-                        key={p.key}
-                        type="button"
-                        onClick={() => insert(p.key)}
-                        aria-label={t("notifications.insertInto", { placeholder: p.key, field: t("notifications.targetSms") })}
-                        className="inline-flex min-h-11 items-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[13px] transition-colors duration-quick hover:border-ember/40 md:min-h-9"
-                      >
-                        <Plus size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
-                        <code className="font-mono text-[12px] text-fg">{p.key}</code>
-                        <span className="text-muted">{t(`notifications.ph.${name}`)}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                <PlaceholderChips items={SMS_PLACEHOLDERS} field={t("notifications.targetSms")} onInsert={insert} />
               </div>
             )}
           </SettingRow>
@@ -486,16 +521,16 @@ export default function NotificationsPage() {
               <div className="flex flex-col gap-tight">
                 {/* The sender above the bubble, because that is the first thing
                     a phone shows and the reason the name field exists. */}
-                <p className="text-[12px] font-medium text-muted">{t("notifications.from", { sender: form.senderName.trim() || "—" })}</p>
+                <p className="text-[0.75rem] font-medium text-muted">{t("notifications.from", { sender: form.senderName.trim() || "—" })}</p>
                 {/* Drawn as the message bubble a phone shows, because that
                     is the only place a customer ever reads it. */}
-                <p className="max-w-sm whitespace-pre-wrap break-words rounded-sm rounded-bl-xs bg-subtle px-section py-comfortable text-sm leading-relaxed text-fg ring-1 ring-inset ring-hairline">
+                <p className="max-w-sm whitespace-pre-wrap break-words rounded-sm rounded-bl-xs bg-muted-wash px-section py-comfortable text-sm leading-relaxed text-fg">
                   {preview}
                 </p>
-                <p className="text-[12px] text-muted">
+<p className="text-[0.75rem] text-muted">
                   {t("notifications.length", { count: cost.chars })} · {t("notifications.segments", { count: cost.segments })}
                 </p>
-                {cost.unicode && <p className="max-w-prose text-[12px] text-muted">{t("notifications.unicode")}</p>}
+                {cost.unicode && <p className="max-w-prose text-[0.75rem] text-muted">{t("notifications.unicode")}</p>}
               </div>
             )}
           </SettingRow>
@@ -544,24 +579,7 @@ export default function NotificationsPage() {
                     errors.emailSubject ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
                   )}
                 />
-                <div className="flex flex-wrap gap-tight">
-                  {EMAIL_PLACEHOLDERS.map((ph) => {
-                    const name = ph.key.slice(1, -1);
-                    return (
-                      <button
-                        key={`s${ph.key}`}
-                        type="button"
-                        onClick={() => insertInto(subjectField, "emailSubject", ph.key)}
-                        aria-label={t("notifications.insertInto", { placeholder: ph.key, field: t("notifications.targetSubject") })}
-                        className="inline-flex min-h-11 items-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[13px] transition-colors duration-quick hover:border-ember/40 md:min-h-9"
-                      >
-                        <Plus size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
-                        <code className="font-mono text-[12px] text-fg">{ph.key}</code>
-                        <span className="text-muted">{t(`notifications.ph.${name}`)}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                <PlaceholderChips items={EMAIL_PLACEHOLDERS} field={t("notifications.targetSubject")} onInsert={(token) => insertInto(subjectField, "emailSubject", token)} />
               </div>
             )}
           </SettingRow>
@@ -582,24 +600,7 @@ export default function NotificationsPage() {
                     errors.emailBody ? "border-danger focus:ring-2 focus:ring-danger/20" : "border-line focus:border-ember focus:ring-2 focus:ring-ember/20",
                   )}
                 />
-                <div className="flex flex-wrap gap-tight">
-                  {EMAIL_PLACEHOLDERS.map((ph) => {
-                    const name = ph.key.slice(1, -1);
-                    return (
-                      <button
-                        key={`b${ph.key}`}
-                        type="button"
-                        onClick={() => insertInto(bodyField, "emailBody", ph.key)}
-                        aria-label={t("notifications.insertInto", { placeholder: ph.key, field: t("notifications.targetBody") })}
-                        className="inline-flex min-h-11 items-center gap-tight rounded-sm border border-line bg-card px-comfortable text-[13px] transition-colors duration-quick hover:border-ember/40 md:min-h-9"
-                      >
-                        <Plus size={14} strokeWidth={1.5} aria-hidden className="text-muted" />
-                        <code className="font-mono text-[12px] text-fg">{ph.key}</code>
-                        <span className="text-muted">{t(`notifications.ph.${name}`)}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                <PlaceholderChips items={EMAIL_PLACEHOLDERS} field={t("notifications.targetBody")} onInsert={(token) => insertInto(bodyField, "emailBody", token)} />
               </div>
             )}
           </SettingRow>
@@ -610,25 +611,23 @@ export default function NotificationsPage() {
                 {/* Drawn the way an inbox draws it: who it is from, then the
                     subject, then the first line — which is the whole of what
                     somebody decides on before they open anything. */}
-                <div className="max-w-prose overflow-hidden rounded-sm border border-line bg-card">
-                  <div className="flex flex-wrap items-baseline justify-between gap-tight border-b border-hairline bg-subtle px-section py-tight">
-                    <span className="text-[13px] font-medium text-fg">{form.senderName.trim() || "—"}</span>
-                    <span className="font-mono text-[12px] text-muted">{form.replyToEmail.trim() || t("notifications.noReplyTo")}</span>
+                <div className="max-w-prose rounded-sm bg-muted-wash px-section py-comfortable">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-tight gap-y-inline">
+                    <span className="text-[0.8125rem] font-medium text-fg">{form.senderName.trim() || "—"}</span>
+                    <span className="text-[0.75rem] text-muted">{form.replyToEmail.trim() || t("notifications.noReplyTo")}</span>
                   </div>
-                  <div className="px-section py-comfortable">
-                    <p className="break-words text-sm font-semibold text-fg">
-                      {subjectPreview.slice(0, SUBJECT_VISIBLE)}
-                      {subjectPreview.length > SUBJECT_VISIBLE && (
-                        /* What a phone stops showing. Drawn rather than
-                           described, because "about 45 characters" means
-                           nothing until you see where your own subject ends. */
-                        <span className="text-muted">{subjectPreview.slice(SUBJECT_VISIBLE)}</span>
-                      )}
-                    </p>
-                    <p className="mt-tight whitespace-pre-wrap break-words text-sm leading-relaxed text-fg">{bodyPreview}</p>
-                  </div>
+                  <p className="mt-comfortable break-words text-sm font-semibold text-fg">
+                    {subjectPreview.slice(0, SUBJECT_VISIBLE)}
+                    {subjectPreview.length > SUBJECT_VISIBLE && (
+                      /* What a phone stops showing. Drawn rather than
+                         described, because "about 45 characters" means
+                         nothing until you see where your own subject ends. */
+                      <span className="text-muted">{subjectPreview.slice(SUBJECT_VISIBLE)}</span>
+                    )}
+                  </p>
+                  <p className="mt-tight whitespace-pre-wrap break-words text-sm leading-relaxed text-fg">{bodyPreview}</p>
                 </div>
-                <p className="text-[12px] text-muted">
+                <p className="text-[0.75rem] text-muted">
                   {t("notifications.subjectLength", { count: subjectPreview.length, visible: SUBJECT_VISIBLE })}
                 </p>
               </div>
@@ -636,39 +635,31 @@ export default function NotificationsPage() {
           </SettingRow>
         </SettingsSection>
 
-        <SettingsSection title={t("notifications.staffTitle")} description={t("notifications.staffDesc")}>
+        <SettingsSection title={t("notifications.staffTitle")} description={t("notifications.staffDesc")} divided>
           {STAFF_EVENTS.map((ev) => {
             const alert = form.staff[ev];
             const title = t(`notifications.alert.${ev}.title`);
-            const titleId = `alert-${ev}-title`;
-            const descId = `alert-${ev}-desc`;
             return (
-              <div key={ev} className="px-card py-section">
-                <div className="flex items-center justify-between gap-major">
-                  <div className="min-w-0">
-                    <p id={titleId} className="text-sm font-medium text-fg">
-                      {title}
-                    </p>
-                    <p id={descId} className="mt-inline text-[13px] leading-relaxed text-muted">
-                      {t(`notifications.alert.${ev}.desc`)}
-                    </p>
-                  </div>
-                  <Switch
-                    checked={alert.enabled}
-                    onChange={(enabled) => setAlert(ev, { enabled })}
-                    labelledBy={titleId}
-                    describedBy={descId}
-                  />
-                </div>
+              <div key={ev}>
+                <SettingRow label={title} description={t(`notifications.alert.${ev}.desc`)} labelFor={false} trailing>
+                  {({ labelId, describedBy }) => (
+                    <Switch
+                      checked={alert.enabled}
+                      onChange={(enabled) => setAlert(ev, { enabled })}
+                      labelledBy={labelId}
+                      describedBy={describedBy}
+                    />
+                  )}
+                </SettingRow>
                 {/* Who hears it only matters while it is on, so the roles stay
                     out of the way until then. */}
                 {alert.enabled && roles.length > 0 && (
                   <div
                     role="group"
                     aria-label={t("notifications.sendToLabel", { alert: title })}
-                    className="mt-comfortable flex flex-wrap items-center gap-tight"
+                    className="-mt-tight flex flex-wrap items-center gap-tight px-card pb-section"
                   >
-                    <span aria-hidden className="mr-inline text-[13px] text-muted">
+                    <span aria-hidden className="mr-inline text-[0.8125rem] text-muted">
                       {t("notifications.sendTo")}
                     </span>
                     {roles.map((r) => {
@@ -680,8 +671,8 @@ export default function NotificationsPage() {
                           aria-pressed={on}
                           onClick={() => toggleRole(ev, r.id)}
                           className={cn(
-                            "inline-flex min-h-11 items-center gap-inline rounded-sm border px-comfortable text-[13px] font-medium transition-colors duration-quick md:min-h-9",
-                            on ? "border-ember-solid bg-ember/5 text-fg" : "border-line text-muted hover:bg-muted-wash hover:text-fg",
+                            "inline-flex min-h-11 items-center gap-inline rounded-sm px-comfortable text-[0.8125rem] font-medium transition-colors duration-quick md:min-h-9",
+                            on ? "bg-ember/5 text-fg ring-2 ring-inset ring-ember-solid" : "bg-muted-wash text-muted hover:bg-line/40 hover:text-fg",
                           )}
                         >
                           {on && <Check size={14} strokeWidth={2} aria-hidden className="text-brand-foreground" />}
@@ -691,7 +682,7 @@ export default function NotificationsPage() {
                     })}
                   </div>
                 )}
-                {unaddressed(ev) && <p className="mt-tight text-[12px] text-danger">{t("notifications.pickRoles")}</p>}
+                {unaddressed(ev) && <p className="px-card pb-section text-[0.75rem] text-danger">{t("notifications.pickRoles")}</p>}
               </div>
             );
           })}

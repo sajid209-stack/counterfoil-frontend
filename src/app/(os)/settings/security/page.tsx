@@ -14,7 +14,7 @@ import {
   Tablet,
   type LucideIcon,
 } from "lucide-react";
-import { Button, ConfirmDialog, Modal, PageShell, Select, useToast } from "@/components/ui";
+import { Button, ConfirmDialog, Modal, PageShell, Select, StatusPill, useToast } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { getAccessPolicy, listRoles, listStaff } from "@/lib/api";
@@ -166,7 +166,7 @@ export default function SecurityPage() {
         <SettingsSection title={t("security.twoStep")} description={t("security.twoStepHelp")}>
           {required && (
             <div className="px-card py-section">
-              <div className="flex flex-col gap-tight rounded-sm border border-line bg-subtle/60 p-comfortable text-[13px] leading-relaxed sm:flex-row sm:items-center sm:justify-between sm:gap-section">
+              <div className="flex flex-col gap-tight rounded-sm bg-muted-wash p-comfortable text-[13px] leading-relaxed sm:flex-row sm:items-center sm:justify-between sm:gap-section">
                 <span className="flex min-w-0 items-start gap-tight">
                   <ShieldCheck size={16} strokeWidth={1.5} aria-hidden className="mt-[2px] shrink-0 text-muted" />
                   <span>
@@ -186,32 +186,40 @@ export default function SecurityPage() {
               </div>
             </div>
           )}
-          <SettingRow label={t("security.twoStepLabel")} labelFor={false}>
+          <SettingRow label={t("security.twoStepLabel")} labelFor={false} trailing>
             {({ labelId, describedBy }) => (
-              <div className="flex sm:justify-end">
-                <Switch
-                  checked={twoStep}
-                  disabled={required && twoStep}
-                  onChange={(on) => {
-                    setTwoStep(on);
-                    // Turning it on without a way back in is how people lock
-                    // themselves out, so the codes arrive in the same motion.
-                    if (on && !codes) makeCodes();
-                  }}
-                  labelledBy={labelId}
-                  describedBy={describedBy}
-                />
-              </div>
+              <Switch
+                checked={twoStep}
+                disabled={required && twoStep}
+                onChange={(on) => {
+                  setTwoStep(on);
+                  // Turning it on without a way back in is how people lock
+                  // themselves out, so the codes arrive in the same motion.
+                  if (on && !codes) makeCodes();
+                }}
+                labelledBy={labelId}
+                describedBy={describedBy}
+              />
             )}
           </SettingRow>
-          <SettingRow label={t("security.backupCodes")} description={t("security.backupCodesDesc")} labelFor={false}>
+          {/* The warning that new codes cancel the old ones belongs under the
+              words, where it is read before the button is pressed, and keeps
+              the button alone at the row's edge. */}
+          <SettingRow
+            label={t("security.backupCodes")}
+            description={
+              <>
+                {t("security.backupCodesDesc")}
+                {codes && <span className="mt-inline block">{t("security.codesExist")}</span>}
+              </>
+            }
+            labelFor={false}
+            trailing
+          >
             {() => (
-              <div className="flex flex-wrap items-center gap-tight sm:justify-end">
-                {codes && <span className="text-[13px] text-muted">{t("security.codesExist")}</span>}
-                <Button variant="secondary" onClick={makeCodes}>
-                  {codes ? t("security.regenerateCodes") : t("security.generateCodes")}
-                </Button>
-              </div>
+              <Button variant="secondary" onClick={makeCodes}>
+                {codes ? t("security.regenerateCodes") : t("security.generateCodes")}
+              </Button>
             )}
           </SettingRow>
         </SettingsSection>
@@ -219,7 +227,7 @@ export default function SecurityPage() {
         <SettingsSection title={t("security.email")} description={t("security.emailDesc")}>
           {pendingEmail ? (
             <div className="px-card py-section" role="status">
-              <div className="flex flex-col gap-section rounded-sm border border-warning/30 bg-warning-wash p-comfortable text-[13px] text-fg sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-section rounded-sm bg-warning-wash p-comfortable text-[13px] text-fg sm:flex-row sm:items-center sm:justify-between">
                 <span className="flex items-start gap-tight">
                   <CircleAlert size={16} strokeWidth={1.5} aria-hidden className="mt-0.5 shrink-0 text-warning" />
                   {t("security.emailPending", { email: pendingEmail, current: email })}
@@ -308,9 +316,7 @@ export default function SecurityPage() {
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-x-tight gap-y-inline">
                     <span className="text-sm font-medium text-fg">{s.device}</span>
-                    {s.current && (
-                      <span className="rounded-xs border border-line px-inline text-[12px] font-medium text-muted">{t("security.thisBrowser")}</span>
-                    )}
+                    {s.current && <StatusPill tone="neutral">{t("security.thisBrowser")}</StatusPill>}
                   </span>
                   <span className="mt-inline block text-[13px] text-muted">
                     {t("security.sessionMeta", { place: s.place, since: s.current ? t("security.activeNow") : since(s.lastActiveAt) })}
@@ -340,9 +346,6 @@ export default function SecurityPage() {
           <ul className="divide-y divide-hairline">
             {MOCK_SIGNINS.map((s) => (
               <li key={s.at} className="flex items-center gap-section px-card py-comfortable">
-                {/* The outcome is said in words on the right; the dot only
-                    helps the eye find the failed one in a longer list. */}
-                <span aria-hidden className={cn("h-2 w-2 shrink-0 rounded-full", s.ok ? "bg-success" : "bg-danger")} />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm text-fg">{s.where}</span>
                   <span className="mt-inline block text-[13px] text-muted">{formatDateTime(s.at)}</span>
@@ -364,7 +367,7 @@ export default function SecurityPage() {
         footer={<Button onClick={() => setCodesOpen(false)}>{t("security.codesSaved")}</Button>}
       >
         <p className="mb-section text-[13px] text-muted">{t("security.codesNote")}</p>
-        <div className="grid grid-cols-2 gap-tight rounded-sm border border-line bg-subtle p-comfortable font-mono text-[13px]">
+        <div className="grid grid-cols-2 gap-tight rounded-sm bg-muted-wash p-comfortable font-mono text-[13px]">
           {(codes ?? []).map((c) => (
             <span key={c}>{c}</span>
           ))}

@@ -14,7 +14,7 @@
   "segAll": "Everyone",
   "segEmail": "Agreed to email",
   "segSms": "Agreed to SMS",
-  "exportGroup": "Download this list (CSV)",
+  "exportGroup": "Download list (CSV)",
   "addCustomer": "Add customer",
   "exported": "Saved {count, plural, one {# customer} other {# customers}}.",
   "emptyTitle": "No customers yet",
@@ -128,7 +128,6 @@
   "actCall": "Call",
   "actSms": "SMS",
   "actEmail": "Email",
-  "actCopyPhone": "Copy phone",
   "copied": "Copied",
   "copy": "Copy",
   "copyFailed": "Could not copy. Select the text and copy it by hand.",
@@ -180,5 +179,6 @@
   "noBookings": "No bookings yet",
   "lastBookedToday": "Last booked today",
   "lastBookedDays": "{days, plural, =1 {Last booked yesterday} other {Last booked {days} days ago}}",
-  "lastBookedOn": "Last booked {date}"
+  "lastBookedOn": "Last booked {date}",
+  "moreActions": "More actions"
 }

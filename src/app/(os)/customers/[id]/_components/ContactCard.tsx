@@ -53,7 +53,7 @@ export function ContactCard({ customer, onChanged }: { customer: Customer; onCha
               {r.value && (
                 <button
                   type="button"
-                  aria-label={r.aria}
+                  aria-label={copied === r.id ? t("copied") : r.aria}
                   onClick={() => doCopy(r.id, r.value!)}
                   className="inline-flex h-11 shrink-0 items-center gap-inline rounded-sm px-comfortable text-[0.8125rem] font-medium text-fg hover:bg-muted-wash md:h-9"
                 >

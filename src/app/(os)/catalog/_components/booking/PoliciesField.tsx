@@ -58,7 +58,7 @@ export function PoliciesField({ value, onChange }: { value: ProductPolicies; onC
 
   return (
     <div className="flex flex-col gap-major">
-      <p className="rounded-sm bg-subtle px-comfortable py-tight text-[13px] text-muted">{summary}</p>
+      <p className="rounded-sm bg-muted-wash px-comfortable py-tight text-[0.8125rem] text-muted">{summary}</p>
 
       <Section title={t("section.sell")}>
         <FormField
@@ -189,8 +189,8 @@ export function PoliciesField({ value, onChange }: { value: ProductPolicies; onC
 function Section({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="type-label mb-tight text-[12px] text-muted">{title}</p>
-      {note && <p className="-mt-inline mb-tight text-[13px] text-muted">{note}</p>}
+      <p className="mb-tight text-base font-semibold text-fg">{title}</p>
+      {note && <p className="-mt-inline mb-tight text-[0.8125rem] text-muted">{note}</p>}
       <div className="grid gap-section sm:grid-cols-2">{children}</div>
     </div>
   );

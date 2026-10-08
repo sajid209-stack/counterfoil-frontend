@@ -27,7 +27,7 @@ export function OpenHourChips({
   if (hours.length === 0) return null;
   return (
     <section aria-label={heading} className="border-t border-hairline px-card py-comfortable">
-      <h3 className="type-label mb-tight text-[12px] text-muted">{heading}</h3>
+      <h3 className="mb-tight text-[0.75rem] font-medium text-muted">{heading}</h3>
       <div className="grid grid-cols-3 gap-tight">
         {hours.map(({ hour, count }) => (
           <button

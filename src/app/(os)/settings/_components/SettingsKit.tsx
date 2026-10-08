@@ -45,19 +45,31 @@ export function SettingsSection({
   description,
   children,
   aside,
+  divided = false,
 }: {
   title: string;
   description?: string;
   children: React.ReactNode;
   /** One small affordance for the header's right edge — a count, a link. */
   aside?: React.ReactNode;
+  /**
+   * Hairlines between the rows.
+   *
+   * Off by default: a settings card is read down its left column, and rows of
+   * fields are separated well enough by the space between them — a rule under
+   * every one turns a form into a spreadsheet. Turn it on for a run of rows
+   * that all look alike (a list of switches, a list of records), where a rule
+   * is what lets the eye find the next one.
+   */
+  divided?: boolean;
 }) {
   const id = useId();
   return (
     <section aria-labelledby={id} className="card-surface overflow-hidden">
       {/* The aside drops under the heading on a phone: beside it, a button
-          squeezed "Recent sign-ins" into a column three words wide. */}
-      <header className="flex flex-col gap-section px-card pb-section pt-card sm:flex-row sm:items-start sm:justify-between">
+          squeezed "Recent sign-ins" into a column three words wide. No rule
+          under the header — the heading is the card's first line, not a bar. */}
+      <header className="flex flex-col gap-section px-card pb-comfortable pt-card sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 id={id} className="text-base font-semibold text-fg">
             {title}
@@ -66,7 +78,7 @@ export function SettingsSection({
         </div>
         {aside && <div className="shrink-0">{aside}</div>}
       </header>
-      <div className="divide-y divide-hairline border-t border-hairline">{children}</div>
+      <div className={cn(divided && "divide-y divide-hairline")}>{children}</div>
     </section>
   );
 }
@@ -85,6 +97,7 @@ export function SettingRow({
   error,
   layout = "inline",
   labelFor = true,
+  trailing = false,
   children,
 }: {
   label: string;
@@ -94,6 +107,13 @@ export function SettingRow({
   layout?: "inline" | "stack";
   /** False when the control is a group of buttons rather than one input. */
   labelFor?: boolean;
+  /**
+   * A small control — a switch, a short value — that stays at the row's right
+   * edge on a phone too. Without it every row stacks below `sm`, so a switch
+   * list spends two lines per row on one yes/no. This is the shape a phone's
+   * own settings use: the words on the left, the control on the right.
+   */
+  trailing?: boolean;
   children: (ids: SettingRowIds) => React.ReactNode;
 }) {
   const id = useId();
@@ -106,13 +126,15 @@ export function SettingRow({
   return (
     <div
       className={cn(
-        "grid gap-tight px-card py-section",
-        inline && "sm:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] sm:items-start sm:gap-major",
+        "grid gap-tight px-card py-comfortable",
+        trailing
+          ? "grid-cols-[minmax(0,1fr)_auto] items-center gap-major"
+          : inline && "sm:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] sm:items-start sm:gap-major",
       )}
     >
       {/* The label's first line sits level with the middle of a 44px control,
           so a row reads as one line rather than a caption beside a box. */}
-      <div className={cn("min-w-0", inline && "sm:pt-[11px]")}>
+      <div className={cn("min-w-0", inline && !trailing && "sm:pt-[11px]")}>
         {labelFor ? (
           <label id={labelId} htmlFor={id} className="text-sm font-medium text-fg">
             {label}
@@ -324,7 +346,7 @@ export function RecordFacts({
     <dl aria-label={label} className="card-surface grid grid-cols-1 gap-x-major gap-y-section p-card sm:grid-cols-2">
       {facts.map((f) => (
         <div key={f.key} className="min-w-0">
-          <dt className="type-label text-[12px] text-muted">{f.label}</dt>
+          <dt className="text-[0.75rem] font-medium text-muted">{f.label}</dt>
           {/* break-words: a counter name and a venue name run together here,
               and a fact clipped is a fact nobody has. */}
           <dd className={cn("mt-inline break-words text-sm", f.tone === "warn" ? "text-warning" : "text-fg")}>{f.value}</dd>

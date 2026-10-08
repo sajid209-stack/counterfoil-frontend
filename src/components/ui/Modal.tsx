@@ -108,7 +108,10 @@ export function Modal({
         ref={panel}
         tabIndex={-1}
         className={cn(
-          "glass relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-md p-card outline-none",
+          /* `.glass` draws a full-strength line; a dialog already has a scrim and a
+             shadow, so the edge only needs to be a whisper (dark keeps the line —
+             a shadow on near-black reads as nothing). */
+          "glass relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-md border-hairline p-card outline-none dark:border-line",
           width,
         )}
       >

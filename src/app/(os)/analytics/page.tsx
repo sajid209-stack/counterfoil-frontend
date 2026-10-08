@@ -11,6 +11,8 @@ import { useApiQuery } from "@/lib/useApi";
 import { formatDay, formatMoney } from "@/lib/format";
 import { DEMO_TODAY } from "@/lib/schedule";
 import { cn } from "@/lib/cn";
+import { MD, useMediaQuery } from "@/lib/useMedia";
+import { MetricStrip } from "../dashboard/_components/MetricStrip";
 import { ComparePicker, type CompareValue } from "./_components/ComparePicker";
 import { Cards, Skeletons } from "./_components/Cards";
 import { num, percent, saveCsv, slugify } from "./_components/helpers";
@@ -67,6 +69,7 @@ function AnalyticsInner() {
   const params = useSearchParams();
   const t = useTranslations("analytics");
   const tc = useTranslations("common");
+  const wide = useMediaQuery(MD);
 
   // Address → state, once: a shared link opens on the same view.
   const [range, setRange] = useState(() => {
@@ -142,8 +145,14 @@ function AnalyticsInner() {
     if (o) saveCsv(`analytics-${venueName}-${range.from}_${range.to}.csv`, analyticsCsv(o));
   };
 
+  /* The period and what it is compared with: the two controls this page has,
+     and nothing else. On a phone they share ONE row with the download, each
+     half the width, so the range shows its name ("Last 7 days") and drops the
+     dates - they are in the legend line right under it. (The selector below
+     reaches into the range button because the picker has no compact shape of
+     its own: it hides the dates only where a preset name is already there.) */
   const toolbar = (
-    <div className="flex flex-wrap items-center gap-x-comfortable gap-y-tight">
+    <div className="flex items-center gap-tight md:flex-wrap md:gap-x-comfortable md:gap-y-tight">
       <DateRangePicker
         value={range}
         onChange={(r) => setRange({ preset: r.preset, from: r.from, to: r.to })}
@@ -151,30 +160,28 @@ function AnalyticsInner() {
         today={NOW}
         max={NOW}
         labels={rangeLabels}
-        className="w-full shrink-0 md:w-auto"
+        className="min-w-0 flex-1 md:w-auto md:flex-none max-md:[&_button>span.shrink-0~span.truncate]:hidden"
       />
-      <div className="flex min-w-0 flex-1 items-center gap-tight md:gap-comfortable">
-        <ComparePicker
-          value={cmp}
-          from={range.from}
-          to={range.to}
-          ledgerStart={o?.ledgerStart}
-          today={NOW}
-          onChange={setCmp}
-          calendarLabels={rangeLabels}
-          className="min-w-0 flex-1 md:flex-none"
-        />
-        <Button
-          variant="secondary"
-          size="sm"
-          icon={<Download size={16} strokeWidth={1.75} aria-hidden />}
-          onClick={downloadAll}
-          disabled={!o}
-          className="ml-auto max-md:w-11 max-md:px-0"
-        >
-          <span className="max-md:sr-only">{t("toolbar.download")}</span>
-        </Button>
-      </div>
+      <ComparePicker
+        value={cmp}
+        from={range.from}
+        to={range.to}
+        ledgerStart={o?.ledgerStart}
+        today={NOW}
+        onChange={setCmp}
+        calendarLabels={rangeLabels}
+        className="min-w-0 flex-1 md:flex-none"
+      />
+      <Button
+        variant="secondary"
+        size="sm"
+        icon={<Download size={16} strokeWidth={1.75} aria-hidden />}
+        onClick={downloadAll}
+        disabled={!o}
+        className="shrink-0 max-md:w-11 max-md:px-0 md:ml-auto"
+      >
+        <span className="max-md:sr-only">{t("toolbar.download")}</span>
+      </Button>
     </div>
   );
 
@@ -238,7 +245,15 @@ function AnalyticsInner() {
         {toolbar}
         {notices}
 
-        <StatStrip variant="band" columns={3} wideColumns={6} loading={first} items={o ? kpiItems(o, t) : placeholderItems(t)} />
+        {wide ? (
+          <StatStrip variant="band" columns={3} wideColumns={6} loading={first} items={o ? kpiItems(o, t) : placeholderItems(t)} />
+        ) : (
+          <MetricStrip
+            loading={first}
+            label={t("kpi.label")}
+            items={(o ? kpiItems(o, t) : placeholderItems(t)).map(({ key, label, value, delta, context }) => ({ key, label, value, delta, context }))}
+          />
+        )}
 
         {first ? <Skeletons /> : o && <Cards o={o} venueName={venueName} />}
       </div>

@@ -66,11 +66,11 @@ export function PriceTiersField({
       <div className={cn("flex items-end gap-tight", heading ? "justify-between" : "justify-end")}>
         {heading && (
           <div>
-            <p className="text-[15px] font-semibold tracking-tight">{t("tiers")}</p>
-            <p className="mt-0.5 text-[13px] text-muted">{t("tiersHelp")}</p>
+            <p className="text-base font-semibold text-fg">{t("tiers")}</p>
+            <p className="mt-0.5 text-[0.8125rem] text-muted">{t("tiersHelp")}</p>
           </div>
         )}
-        <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} />} onClick={() => onChange([...tiers, emptyTier()])}>
+        <Button size="sm" variant="secondary" className="shrink-0 whitespace-nowrap" icon={<Plus size={14} strokeWidth={1.5} />} onClick={() => onChange([...tiers, emptyTier()])}>
           {t("addTier")}
         </Button>
       </div>
@@ -78,7 +78,7 @@ export function PriceTiersField({
       {errors.tiers && <p role="alert" className="text-[13px] text-danger">{errors.tiers}</p>}
 
       {tiers.length === 0 ? (
-        <p className="rounded-sm border border-dashed border-line px-comfortable py-comfortable text-[13px] text-muted">{t("noTiers")}</p>
+        <p className="rounded-sm bg-muted-wash px-comfortable py-comfortable text-[0.8125rem] text-muted">{t("noTiers")}</p>
       ) : (
         <TierTable
           currencySymbol={symbol}

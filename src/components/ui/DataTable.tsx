@@ -3,6 +3,7 @@
 import { ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
+import { MD, useMediaQuery } from "@/lib/useMedia";
 
 export interface Column<T> {
   key: string;
@@ -11,11 +12,18 @@ export interface Column<T> {
   render?: (row: T) => React.ReactNode;
   sortable?: boolean;
   align?: "left" | "right" | "center";
-  /** Right-aligned columns set their figures in DM Mono by default. A table
-   *  following the Inter type spec for money and counts turns it off. */
+  /** Figures are Inter with tabular numerals. DM Mono is for identifiers
+   *  (references, codes), so a column asks for it with `mono: true`. (It used
+   *  to be the default for every right-aligned column, which put money in the
+   *  typewriter face on every table that had not opted out.) */
   mono?: boolean;
   width?: string;
   className?: string;
+  /** `hide` leaves this column out of the generic phone row. A phone row is
+   *  two lines — who it is, and the few facts worth a glance — so a column
+   *  that is only useful beside seven others can opt out. Ignored by a table
+   *  that supplies its own `renderCard`. */
+  phone?: "hide";
 }
 
 export interface DataTableProps<T> {
@@ -77,6 +85,12 @@ export interface DataTableProps<T> {
    *  own scroll and a pinned header. A long list in a box inside a scrolling
    *  page is two scrollbars and a trapped mouse wheel. */
   height?: "box" | "page";
+  /** Draw `toolbar` as the top row of the table's own card from md up — one
+   *  object holding the search, the filters and the rows, the way a mature
+   *  admin lays out an index. Below md the toolbar stays above the list, where
+   *  a phone wants it. Opt-in: a toolbar that is not asked into the card keeps
+   *  sitting above it. */
+  toolbarInCard?: boolean;
 }
 
 /** Deterministic block width for a loading cell — see the note at the call site. */
@@ -107,14 +121,19 @@ export function DataTable<T>({
   isSelected,
   layout = "auto",
   height = "box",
+  toolbarInCard = false,
 }: DataTableProps<T>) {
   const tc = useTranslations("common");
   const showEmpty = !loading && rows.length === 0;
   const list = cardVariant === "list";
+  /* Which side draws the toolbar — decided, not hidden with CSS, so the page
+     never carries a second invisible copy of its search box. */
+  const wide = useMediaQuery(MD);
+  const inCard = toolbarInCard && wide && !!toolbar;
 
   return (
     <div className="flex flex-col gap-section">
-      {toolbar && <div>{toolbar}</div>}
+      {toolbar && !inCard && <div>{toolbar}</div>}
 
       {/* Mobile (<768px): rows become tappable cards — primary line + labelled meta. */}
       <div className={cn("md:hidden", list ? "card-surface overflow-hidden" : "flex flex-col gap-section")}>
@@ -124,7 +143,7 @@ export function DataTable<T>({
               key={`csk-${i}`}
               className={cn(
                 "flex animate-pulse flex-col gap-tight",
-                list ? "border-b border-hairline p-card last:border-0" : "card-surface p-card",
+                list ? "border-b border-hairline px-card py-comfortable last:border-0" : "card-surface p-card",
               )}
             >
               <div className="h-4 w-2/3 rounded-xs bg-line" />
@@ -145,10 +164,9 @@ export function DataTable<T>({
                   /* A row, not a card: no gap, no second border, and the lift
                      goes with them — a row that rises out of its own list reads
                      as a card that has come loose. */
-                  ? "border-b border-hairline p-card last:border-0"
-                  : "card-surface p-card transition-transform duration-quick",
+                  ? "border-b border-hairline px-card py-comfortable last:border-0"
+                  : "card-surface p-card",
                 onRowClick && "cursor-pointer active:bg-muted-wash",
-                onRowClick && !list && "hover:-translate-y-0.5",
                 isSelected?.(row) && (list ? "bg-ember/5" : "border-ember bg-ember/5"),
               )}
             >
@@ -160,7 +178,7 @@ export function DataTable<T>({
                 {columns[0].render ? columns[0].render(row) : String((row as Record<string, unknown>)[columns[0].key] ?? "")}
               </div>
               <dl className="mt-inline flex flex-wrap gap-x-section gap-y-inline">
-                {columns.slice(1).map((col) => (
+                {columns.slice(1).filter((col) => col.phone !== "hide").map((col) => (
                   // A card holds whatever a column holds, including strings
                   // with nothing to break on — an e-mail address or a booking
                   // reference. Without min-w-0 the pair refuses to shrink and
@@ -168,8 +186,8 @@ export function DataTable<T>({
                   // it silently: the value is on screen but unreadable, and
                   // nothing says so.
                   <div key={col.key} className="flex min-w-0 max-w-full items-baseline gap-inline">
-                    <dt className="type-label shrink-0 text-[0.75rem] uppercase text-muted">{col.header}</dt>
-                    <dd className={cn("min-w-0 break-words text-[0.8125rem]", col.align === "right" && col.mono !== false && "font-mono", col.align === "right" && "tabular-nums")}>
+                    <dt className="shrink-0 text-[0.75rem] text-muted">{col.header}</dt>
+                    <dd className={cn("min-w-0 break-words text-[0.8125rem]", col.mono === true && "font-mono", col.align === "right" && "tabular-nums")}>
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "")}
                     </dd>
                   </div>
@@ -181,54 +199,82 @@ export function DataTable<T>({
           ))}
       </div>
 
-      {/* Solid, not `card-surface`. That class is deliberately translucent —
-          72% card over the warm page — which is right for a card floating on
-          the ground and wrong for a dense grid of text: the body read as warm
-          off-white while the sticky `thead`, which sets `bg-card`, read as
-          white, so the header and its own rows did not match. */}
+      {/* The table is a card: `card-surface` carries the soft edge, and the
+          shell owns what that edge is. `bg-card` stays on top of it — the
+          surface class may be translucent, and a dense grid of text on a
+          translucent card reads as two different whites (the body warm, the
+          sticky `thead` solid). */}
       {/* `relative` makes this box the containing block for anything
           absolutely positioned in a cell — screen-reader-only text above all.
           Without it that text is placed against the page instead, escapes this
           box's clip, and quietly makes the whole document taller than its
           content: on the catalog, 850px taller, enough to scroll the sticky
           sidebar away. */}
-      <div className={cn("relative hidden overflow-auto rounded-md border border-line bg-card scroll-x-hint md:block", height === "box" && "max-h-[70vh]")}>
+      <div
+        className={cn(
+          "card-surface relative hidden bg-card md:block",
+          /* In the card the table scrolls in a box of its own, so the card itself
+             must NOT clip: a date panel or a menu opened from the toolbar row
+             drops over the rows beneath and would be cut off at its edge. The
+             rounding that overflow-hidden would have given goes on the two
+             rows that meet the corners instead. */
+          !inCard && cn("overflow-auto scroll-x-hint", height === "box" && "max-h-[70vh]"),
+        )}
+      >
+        {inCard && <div className="rounded-t-md border-b border-hairline p-comfortable">{toolbar}</div>}
+        <div className={cn(inCard && "overflow-auto rounded-b-md scroll-x-hint", inCard && height === "box" && "max-h-[70vh]")}>
         <table
           className={cn("table-inset w-full border-collapse text-sm", layout === "fixed" && "table-fixed")}
           style={minWidth ? { minWidth } : undefined}
         >
-                  {/* `line`, not `neutral-200`: the raw primitive is a palette entry
-            that is never redefined for dark, so this rule painted a light
-            #e2ded5 hairline across the top of every dark table. */}
-        <thead className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_var(--color-line)]">
+          {/* A whisper of tint on the header row, and a hairline under it. It is
+              opaque — the rows scroll under it — so the tint is mixed into the
+              card rather than laid over it. In dark `subtle` IS the card, so
+              there the header is simply the card. */}
+          <thead className="sticky top-0 z-10 bg-[color-mix(in_srgb,var(--color-subtle)_40%,var(--color-card))] shadow-[0_1px_0_0_var(--color-hairline)]">
             <tr>
               {columns.map((col) => {
                 const activeSort = sort?.key === col.key;
+                const sortable = !!col.sortable && !!onSortChange;
                 return (
                   <th
                     key={col.key}
                     scope="col"
                     style={col.width ? { width: col.width } : undefined}
+                    aria-sort={sortable ? (activeSort ? (sort?.order === "asc" ? "ascending" : "descending") : "none") : undefined}
                     className={cn(
-                      "type-label whitespace-nowrap px-comfortable py-tight text-[0.75rem] text-muted",
+                      "whitespace-nowrap px-comfortable py-2.5 text-[0.8125rem] font-medium text-muted",
                       alignClass(col.align),
                     )}
                   >
-                    {col.sortable && onSortChange ? (
+                    {sortable ? (
+                      /* The arrows belong to the column being sorted, and to the
+                         one under the pointer or the keyboard. Four ghost
+                         double-arrows down a header row were the loudest thing
+                         on the table. The glyph keeps its room either way, so
+                         the header does not shift as the pointer crosses it. */
                       <button
                         type="button"
-                        onClick={() => onSortChange(col.key)}
-                        className="inline-flex items-center gap-inline uppercase tracking-wide hover:text-fg"
+                        onClick={() => onSortChange?.(col.key)}
+                        className={cn(
+                          "group -mx-1.5 inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 transition-colors duration-quick hover:text-fg",
+                          activeSort && "text-fg",
+                        )}
                       >
                         {col.header}
                         {activeSort ? (
                           sort?.order === "asc" ? (
-                            <ChevronUp size={13} strokeWidth={1.5} />
+                            <ChevronUp size={13} strokeWidth={1.75} aria-hidden />
                           ) : (
-                            <ChevronDown size={13} strokeWidth={1.5} />
+                            <ChevronDown size={13} strokeWidth={1.75} aria-hidden />
                           )
                         ) : (
-                          <ArrowUpDown size={13} strokeWidth={1.5} className="text-muted" />
+                          <ArrowUpDown
+                            size={13}
+                            strokeWidth={1.5}
+                            aria-hidden
+                            className="opacity-0 transition-opacity duration-quick group-hover:opacity-100 group-focus-visible:opacity-100"
+                          />
                         )}
                       </button>
                     ) : (
@@ -243,7 +289,7 @@ export function DataTable<T>({
           <tbody>
             {loading &&
               Array.from({ length: skeletonRows }).map((_, i) => (
-                <tr key={`sk-${i}`} className="border-b border-line last:border-0">
+                <tr key={`sk-${i}`} className="border-b border-hairline last:border-0">
                   {columns.map((col, c) => (
                     <td key={col.key} className={cn("px-comfortable py-comfortable", alignClass(col.align))}>
                       {/* Every column used to get the same 8rem block, so the
@@ -270,7 +316,7 @@ export function DataTable<T>({
 
             {showEmpty && (
               <tr>
-                <td colSpan={columns.length} className="px-comfortable py-hero">
+                <td colSpan={columns.length} className="px-comfortable py-section">
                   {emptyState ?? (
                     <p className="text-center text-[0.8125rem] text-muted">{tc("noResults")}</p>
                   )}
@@ -310,7 +356,7 @@ export function DataTable<T>({
                   }
                   aria-selected={isSelected ? isSelected(row) : undefined}
                   className={cn(
-                    "h-12 border-b border-line last:border-0",
+                    "h-12 border-b border-hairline last:border-0",
                     isSelected?.(row) && "bg-ember/5",
                     onRowClick &&
                       // The ring itself comes from the app's one unlayered :focus-visible
@@ -323,7 +369,7 @@ export function DataTable<T>({
                          deepened, not swapped for the plain hover grey. */
                       (isSelected?.(row)
                         ? "cursor-pointer transition-colors duration-quick hover:bg-ember/10 focus-visible:bg-ember/10"
-                        : "cursor-pointer transition-colors duration-quick hover:bg-muted-wash focus-visible:bg-muted-wash"),
+                        : "cursor-pointer transition-colors duration-quick hover:bg-fg/[0.035] focus-visible:bg-fg/[0.035]"),
                   )}
                 >
                   {columns.map((col) => (
@@ -332,7 +378,7 @@ export function DataTable<T>({
                       className={cn(
                         "px-comfortable py-tight align-middle",
                         alignClass(col.align),
-                        col.align === "right" && col.mono !== false && "font-mono",
+                        col.mono === true && "font-mono",
                         col.align === "right" && "tabular-nums",
                         col.className,
                       )}
@@ -346,6 +392,7 @@ export function DataTable<T>({
               ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {pagination && <Pagination {...pagination} loading={loading} />}
@@ -382,7 +429,7 @@ function Pagination({
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1 || loading}
           aria-label={tc("previousPage")}
-          className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint disabled:cursor-not-allowed hover:enabled:border-inverse"
+          className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint disabled:cursor-not-allowed hover:enabled:border-strong"
         >
           <ChevronLeft size={16} strokeWidth={1.5} />
         </button>
@@ -394,7 +441,7 @@ function Pagination({
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages || loading}
           aria-label={tc("nextPage")}
-          className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint disabled:cursor-not-allowed hover:enabled:border-inverse"
+          className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-fg disabled:text-faint disabled:cursor-not-allowed hover:enabled:border-strong"
         >
           <ChevronRight size={16} strokeWidth={1.5} />
         </button>

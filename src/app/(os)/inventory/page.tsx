@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Boxes, PackagePlus } from "lucide-react";
+import { Boxes, PackagePlus, Search } from "lucide-react";
 import {
   ActionMenu,
   Button,
@@ -17,7 +17,7 @@ import {
   type ActionMenuItem,
   type Column,
 } from "@/components/ui";
-import { PagePrimaryButton, PageShell, type PagePrimary } from "@/components/ui/PageShell";
+import { PageShell, PageToolbar, type PagePrimary } from "@/components/ui/PageShell";
 import { cn } from "@/lib/cn";
 import { useApiQuery } from "@/lib/useApi";
 import { useActiveLocation } from "@/lib/activeLocation";
@@ -177,7 +177,9 @@ export default function InventoryPage() {
         <span className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{i.name}</span>
           <span className="truncate text-[12px] text-muted">
-            {[t(`kind.${i.kind}`), i.sku, i.returnable ? t("returnable") : null].filter(Boolean).join(" · ")}
+            {t(`kind.${i.kind}`)}
+            {i.sku && <> · <span className="font-mono">{i.sku}</span></>}
+            {i.returnable && <> · {t("returnable")}</>}
           </span>
         </span>
       ),
@@ -232,11 +234,10 @@ export default function InventoryPage() {
   return (
     <PageShell title={t("title")} description={t("description")} primary={primary}>
       <div className="flex flex-col gap-section">
-        {/* The page's first toolbar. The tab strip IS the page's cut and stays
-            visible; kind and venue fold on a phone, where four controls stacked
-            took 148px. Add sits at the right end, on this row, not in a header
-            row of its own — on a phone it is the bar's plus. */}
-        <div className="flex flex-col gap-tight sm:flex-row sm:flex-wrap sm:items-center">
+        {/* The views are the page's primary cut and stay as quiet tabs, with
+            the one create button at the right of the same rule. Everything
+            else is behind Filters, below. */}
+        <PageToolbar underline primary={primary}>
           <Tabs
             items={[
               { value: "all", label: t("tab.all"), count: live.length },
@@ -246,64 +247,63 @@ export default function InventoryPage() {
             value={tab}
             onChange={(v) => setTab(v as typeof tab)}
           />
-          <span className="hidden flex-1 sm:block" />
-          <FilterBar
-            className="min-w-0 sm:flex-row sm:items-center"
-            search={
+        </PageToolbar>
+
+        <FilterBar
+          search={
+            <div className="relative min-w-0 flex-1 md:flex-none">
+              <Search size={16} strokeWidth={1.5} aria-hidden className="pointer-events-none absolute left-comfortable top-1/2 -translate-y-1/2 text-muted" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t("searchPlaceholder")}
                 aria-label={t("searchPlaceholder")}
-                className="h-11 w-full min-w-0 rounded-sm border border-line bg-card px-comfortable text-[13px] outline-none focus:border-inverse sm:h-9 sm:w-56"
+                className="h-11 w-full min-w-0 rounded-sm border border-line bg-card pl-8 pr-comfortable text-[0.8125rem] outline-none focus:border-inverse md:h-9 md:w-72"
               />
-            }
-            filters={[
-              {
-                /* The one figure that named a fixable problem, and it
-                   filtered — so it is a filter now. */
-                key: "unsold",
-                label: t("stat.unsold"),
-                active: unsoldOnly ? t("stat.unsold") : null,
-                onClear: () => setUnsoldOnly(false),
-                control: (
-                  <button
-                    type="button"
-                    aria-pressed={unsoldOnly}
-                    onClick={() => setUnsoldOnly((v) => !v)}
-                    title={t("stat.unsoldNote")}
-                    className={cn(
-                      "flex h-11 items-center gap-tight rounded-sm border px-comfortable text-[13px] transition-colors duration-quick md:h-9",
-                      unsoldOnly ? "border-ember bg-ember/10 text-brand-foreground" : "border-line text-muted hover:bg-muted-wash",
-                    )}
-                  >
-                    {t("stat.unsold")}
-                    <span className="tabular-nums">{summary.unsold}</span>
-                  </button>
-                ),
-              },
-              {
-                key: "kind",
-                label: t("filterKind"),
-                active: kind ? t(`kind.${kind}`) : null,
-                onClear: () => setKind(""),
-                control: (
-                  <Select
-                    value={kind}
-                    onChange={setKind}
-                    aria-label={t("filterKind")}
-                    triggerClassName="text-[13px] md:h-9"
-                    options={[
-                      { value: "", label: t("kindAll") },
-                      ...(["merch", "food", "equipment", "service"] as const).map((k) => ({ value: k, label: t(`kind.${k}`) })),
-                    ]}
-                  />
-                ),
-              },
-            ]}
-          />
-          <PagePrimaryButton primary={primary} />
-        </div>
+            </div>
+          }
+          filters={[
+            {
+              key: "kind",
+              label: t("filterKind"),
+              active: kind ? t(`kind.${kind}`) : null,
+              onClear: () => setKind(""),
+              control: (
+                <Select
+                  value={kind}
+                  onChange={setKind}
+                  aria-label={t("filterKind")}
+                  triggerClassName="text-[0.8125rem] md:h-9"
+                  options={[
+                    { value: "", label: t("kindAll") },
+                    ...(["merch", "food", "equipment", "service"] as const).map((k) => ({ value: k, label: t(`kind.${k}`) })),
+                  ]}
+                />
+              ),
+            },
+            {
+              /* The one figure that named a fixable problem, and it filtered —
+                 so it is a filter. A Select of two answers rather than a
+                 toggle chip repeating the label above it. */
+              key: "unsold",
+              label: t("filterSold"),
+              active: unsoldOnly ? t("stat.unsold") : null,
+              onClear: () => setUnsoldOnly(false),
+              control: (
+                <Select
+                  value={unsoldOnly ? "none" : ""}
+                  onChange={(v) => setUnsoldOnly(v === "none")}
+                  aria-label={t("filterSold")}
+                  triggerClassName="text-[0.8125rem] md:h-9"
+                  options={[
+                    { value: "", label: t("soldAll") },
+                    { value: "none", label: `${t("stat.unsold")} · ${summary.unsold}` },
+                  ]}
+                />
+              ),
+            },
+          ]}
+        />
 
         {!itemsQ.loading && visible.length === 0 ? (
           <EmptyState
@@ -311,7 +311,7 @@ export default function InventoryPage() {
             title={empty.title}
             message={empty.body}
             action={
-              tab === "all" && !query && !kind ? (
+              tab === "all" && !query && !kind && !unsoldOnly ? (
                 <Button icon={<PackagePlus size={16} strokeWidth={1.5} />} onClick={() => router.push("/inventory/new")}>
                   {t("add")}
                 </Button>
@@ -326,29 +326,35 @@ export default function InventoryPage() {
             loading={itemsQ.loading}
             onRowClick={(i) => router.push(`/inventory/${i.id}`)}
             minWidth="46rem"
-            renderCard={(i) => (
-              <div className="flex min-w-0 flex-col gap-inline">
-                <div className="flex min-w-0 items-start gap-tight">
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium">{i.name}</span>
-                    <span className="block truncate text-[12px] text-muted">
-                      {[t(`kind.${i.kind}`), i.sku].filter(Boolean).join(" · ")}
+            cardVariant="list"
+            renderCard={(i) => {
+              /* Two lines: what it is and how many are left, then the kind, the
+                 price and — only when it is true — what is wrong. The count is
+                 coloured and the state is a word, not a pill: a pill beside a
+                 count squeezed the name to "Exhibition program…". The "sold
+                 with" list is a desktop column and is secondary here. */
+              const flag = i.outOfStock ? "out" : i.low ? "low" : null;
+              return (
+                <span className="flex items-center gap-comfortable">
+                  <span className="flex min-w-0 flex-1 flex-col gap-inline">
+                    <span className="flex items-baseline gap-tight">
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{i.name}</span>
+                      <span className={cn("shrink-0 text-[0.8125rem] tabular-nums", flag === "out" ? "text-danger" : flag === "low" ? "text-warning" : i.tracked ? "text-fg" : "text-muted")}>
+                        {i.tracked ? t("countUnit", { count: i.onHand, unit: i.unit }) : t("untracked")}
+                      </span>
+                    </span>
+                    <span className="truncate text-[0.8125rem] text-muted">
+                      {[t(`kind.${i.kind}`), formatMoney(i.price)].join(" · ")}
+                      {flag && <span className={flag === "out" ? "text-danger" : "text-warning"}> · {t(flag === "out" ? "badge.out" : "badge.low")}</span>}
+                      {i.soldWith.length === 0 && ` · ${t("soldWithNone")}`}
                     </span>
                   </span>
-                  <span onClick={(e) => e.stopPropagation()}>
+                  <span className="-mr-tight shrink-0" onClick={(e) => e.stopPropagation()}>
                     <ActionMenu items={actionsFor(i)} label={t("rowActions", { name: i.name })} />
                   </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-tight gap-y-inline text-[13px]">
-                  {stockCell(i)}
-                  <span aria-hidden className="text-muted">·</span>
-                  <span className="tabular-nums">{formatMoney(i.price)}</span>
-                </div>
-                <span className="truncate text-[12px] text-muted">
-                  {i.soldWith.length === 0 ? t("soldWithNone") : i.soldWith.map((s) => s.name).join(", ")}
                 </span>
-              </div>
-            )}
+              );
+            }}
           />
         )}
 

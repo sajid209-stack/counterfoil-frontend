@@ -143,7 +143,7 @@ function Group({ title, help, children }: { title: string; help?: string; childr
   return (
     <section className="flex flex-col gap-section">
       <div>
-        <h3 className="text-[15px] font-semibold tracking-tight">{title}</h3>
+        <h3 className="text-base font-semibold text-fg">{title}</h3>
         {help && <p className="mt-0.5 text-[13px] text-muted">{help}</p>}
       </div>
       <div className="grid items-start gap-section sm:grid-cols-2">{children}</div>
@@ -154,7 +154,7 @@ function Group({ title, help, children }: { title: string; help?: string; childr
 function Labelled({ label, required, error, children }: { label: string; required?: boolean; error?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-tight" data-invalid={error ? "" : undefined}>
-      <span className="type-label text-[12px] text-muted">
+      <span className="text-[0.8125rem] font-medium text-muted">
         {label}
         {required && <span className="ml-inline text-danger">*</span>}
       </span>
@@ -181,7 +181,7 @@ function CoverUpload({ value, onChange, className }: { value: string; onChange: 
           <span
             role="img"
             aria-label={td("coverPreview")}
-            className="block aspect-[16/9] w-full max-w-sm rounded-sm border border-line bg-subtle bg-cover bg-center"
+            className="block aspect-[16/9] w-full max-w-sm rounded-sm bg-muted-wash bg-cover bg-center"
             style={{ backgroundImage: `url("${value}")` }}
           />
           <span className="flex gap-tight">

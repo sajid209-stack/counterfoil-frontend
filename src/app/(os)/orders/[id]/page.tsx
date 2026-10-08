@@ -17,7 +17,7 @@ import {
   type ActionMenuItem,
 } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
-import { XL, useMediaQuery } from "@/lib/useMedia";
+import { MD, XL, useMediaQuery } from "@/lib/useMedia";
 import {
   addOrderNote,
   addOrderPayment,
@@ -49,6 +49,8 @@ import { OrderLinesDetail } from "@/components/OrderLinesDetail";
 import { RefundRequests } from "@/components/RefundRequests";
 import { useSalesLabels } from "../_lib/labels";
 import { useDirectory } from "../_lib/useReport";
+import { ShowMore } from "../_components/ShowMore";
+import { KeyFacts } from "./_components/KeyFacts";
 import { CustomerCard } from "./_components/CustomerCard";
 import { FactsCard } from "./_components/FactsCard";
 import { MoneyCard, parseTaka } from "./_components/MoneyCard";
@@ -90,6 +92,8 @@ export default function OrderDetailPage() {
   const L = useSalesLabels(dir);
   /* From xl the Money card is the right-hand column, in view beside the sale. */
   const beside = useMediaQuery(XL);
+  /* A phone gets the four things an order is opened for and folds the rest. */
+  const phone = !useMediaQuery(MD);
   const methods = useMemo(() => tillMethods(canTakeNonCash()) as PaymentMethod[], []);
 
   // Per-line refund
@@ -344,6 +348,32 @@ export default function OrderDetailPage() {
 
       {!o ? (
         <div aria-busy="true" className="flex animate-pulse flex-col gap-tight"><div className="h-4 w-1/3 rounded-xs bg-line" /><div className="h-4 w-2/3 rounded-xs bg-line" /><div className="h-4 w-1/2 rounded-xs bg-line" /></div>
+      ) : phone ? (
+        /* On a phone: how much, what state, who, when — then the lines — and
+           everything else under "Show more". The Money card comes first only
+           while there is something to collect, because that is when its form
+           is the next thing to do; paid in full, it is one of the folded
+           details. */
+        <div className="flex flex-col gap-section pb-hero">
+          <KeyFacts o={o} due={due} dir={dir} labels={L} />
+          {due > 0 && !voided && <MoneyCard o={o} due={due} methods={methods} onCollect={collect} hideLead />}
+          <Section title={t("cardItems")} id="order-items">
+            <OrderLinesDetail order={o} hidePayments />
+          </Section>
+          <ShowMore>
+            <div className="flex flex-col gap-section">
+              {!(due > 0 && !voided) && <MoneyCard o={o} due={due} methods={methods} onCollect={collect} />}
+              <FactsCard o={o} dir={dir} labels={L} due={due} />
+              <CustomerCard o={o} customer={customer} stats={stats} onAdd={openAddCustomer} />
+              <ReservationsCard bookings={orderBookings} products={products} actor={ACTOR} onMove={openMove} onLock={(b) => setLockFor(b)} />
+              <PaymentsCard o={o} />
+              <TicketsCard tickets={ticketsQ.data?.data ?? []} loading={ticketsQ.loading && !ticketsQ.data} />
+              <WriteOffsCard o={o} />
+              <HistoryCard o={o} />
+              <NotesCard o={o} onAdd={addNote} />
+            </div>
+          </ShowMore>
+        </div>
       ) : (
         <div className="flex flex-col gap-section pb-hero xl:grid xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
           {/* The sale. `contents` below xl, so on a phone its cards join the

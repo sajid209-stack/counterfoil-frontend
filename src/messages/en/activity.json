@@ -3,7 +3,7 @@
   "description": "Who did what, and where. Sign-ins, scans, refunds, devices and settings.",
   "system": "Counterfoil",
   "somewhere": "a counter",
-  "search": "Search people, tickets or orders",
+  "search": "Search the log…",
   "filter": {
     "type": "Type",
     "person": "Person",
@@ -12,7 +12,8 @@
     "everyone": "Everyone",
     "allImportance": "Everything",
     "warnings": "Warnings and worse",
-    "serious": "Serious only"
+    "serious": "Serious only",
+    "date": "Date"
   },
   "group": {
     "sessions": "Sign-ins & shifts",
@@ -22,7 +23,11 @@
     "devices": "Devices",
     "settings": "Settings & team"
   },
-  "severity": { "info": "Info", "warning": "Warning", "critical": "Serious" },
+  "severity": {
+    "info": "Info",
+    "warning": "Warning",
+    "critical": "Serious"
+  },
   "kind": {
     "staffSignedIn": "Signed in",
     "staffSignedOut": "Signed out",
@@ -144,8 +149,10 @@
     "hr": "{count} hr ago",
     "day": "{count} d ago"
   },
-  "day": { "today": "Today", "yesterday": "Yesterday" },
-  "venueAll": "Whole business",
+  "day": {
+    "today": "Today",
+    "yesterday": "Yesterday"
+  },
   "count": "{count, plural, one {# event} other {# events}}",
   "showMore": "Show {count} more",
   "empty": {

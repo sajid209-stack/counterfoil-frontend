@@ -238,8 +238,8 @@ export function TicketTiers({
                         aria-pressed={on}
                         onClick={() => toggleDay(r, d.id)}
                         className={cn(
-                          "flex min-h-11 items-center rounded-full border px-comfortable text-[12px] font-medium transition-colors duration-quick sm:min-h-8",
-                          on ? "border-ember bg-ember/10 text-brand-foreground" : "border-line text-muted hover:text-fg",
+                          "flex min-h-11 items-center rounded-full px-comfortable text-[0.75rem] font-medium transition-colors duration-quick sm:min-h-8",
+                          on ? "bg-card text-fg ring-2 ring-inset ring-ember-solid" : "bg-muted-wash text-muted hover:bg-line/40 hover:text-fg",
                         )}
                       >
                         {label(d, di)}
@@ -267,7 +267,7 @@ export function TicketTiers({
             details: (
               <>
                 <div className="flex flex-col gap-inline">
-                  <span className="type-label text-[12px] text-muted">{t("tickets.salesEnd")}</span>
+                  <span className="text-[0.8125rem] font-medium text-muted">{t("tickets.salesEnd")}</span>
                   <DateField
                     size="form"
                     value={r.salesEnd || null}
@@ -311,7 +311,7 @@ export function TicketTiers({
           <button
             type="button"
             onClick={addPerDay}
-            className="min-h-11 rounded-sm border border-dashed border-line px-comfortable text-[13px] text-muted transition-colors duration-quick hover:border-ember hover:text-fg sm:min-h-9"
+            className="min-h-11 rounded-sm bg-muted-wash px-comfortable text-[13px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-9"
           >
             + {t("tickets.days.addPerDay")}
           </button>
@@ -320,7 +320,7 @@ export function TicketTiers({
           <button
             type="button"
             onClick={addBundle}
-            className="min-h-11 rounded-sm border border-dashed border-line px-comfortable text-[13px] text-muted transition-colors duration-quick hover:border-ember hover:text-fg sm:min-h-9"
+            className="min-h-11 rounded-sm bg-muted-wash px-comfortable text-[13px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-9"
           >
             + {t("tickets.days.addBundle", { count: days.length })}
           </button>
@@ -330,14 +330,14 @@ export function TicketTiers({
             key={k}
             type="button"
             onClick={() => add(t(`tickets.preset.${k}`))}
-            className="min-h-11 rounded-sm border border-dashed border-line px-comfortable text-[13px] text-muted transition-colors duration-quick hover:border-ember hover:text-fg sm:min-h-9"
+            className="min-h-11 rounded-sm bg-muted-wash px-comfortable text-[13px] text-muted transition-colors duration-quick hover:text-fg sm:min-h-9"
           >
             + {t(`tickets.preset.${k}`)}
           </button>
         ))}
       </div>
 
-      <div className="flex flex-wrap items-baseline justify-between gap-tight rounded-sm border border-line bg-subtle px-card py-comfortable">
+      <div className="flex flex-wrap items-baseline justify-between gap-tight rounded-sm bg-muted-wash px-card py-comfortable">
         <span className="text-[13px] text-muted">{t("tickets.capacity", { count: capacity })}</span>
         <span className={cn("text-sm font-medium", !unpriced && "tabular-nums")}>
           {/* Three honest answers, and "Free" is only one of them. A table with

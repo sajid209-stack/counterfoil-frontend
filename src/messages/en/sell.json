@@ -4,7 +4,6 @@
     "searchPlaceholder": "Search bookings",
     "clear": "Clear",
     "all": "All",
-    "systems": "Sold as",
     "custom": "Other amount"
   },
   "sale": {
@@ -92,7 +91,6 @@
     "qrHint": "Show the customer the counter's Bangla QR. Finish when their app shows paid.",
     "discountPct": "Discount {pct}%",
     "discountFlat": "Discount",
-    "dueNow": "Pay now",
     "balanceAtArrival": "Pay on arrival",
     "received": "Cash received",
     "collect": "To collect",
@@ -105,7 +103,6 @@
     "completeAmount": "Complete {amount}",
     "overLimit": "Needs a manager",
     "needReason": "Add a reason for the discount",
-    "toCollect": "To collect",
     "items": "{count, plural, one {# item} other {# items}}"
   },
   "custom": {

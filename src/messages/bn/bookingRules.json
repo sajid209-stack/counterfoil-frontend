@@ -16,7 +16,6 @@
   "allStatuses": "সব অবস্থা",
   "statusActive": "চালু",
   "statusInactive": "বন্ধ",
-  "statusArchived": "সরিয়ে রাখা",
   "emptyTitle": "কোনো বুকিংয়ের নিয়ম নেই",
   "emptyMessage": "সর্বোচ্চ কতজন আর স্লট কতক্ষণ, এমন নিয়ম এখানে দেখা যাবে।",
   "newRule": "নতুন নিয়ম",

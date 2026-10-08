@@ -4,7 +4,6 @@
     "searchPlaceholder": "বুকিং খুঁজুন",
     "clear": "মুছুন",
     "all": "সব",
-    "systems": "যেভাবে বিক্রি হয়",
     "custom": "অন্য পরিমাণ"
   },
   "sale": {
@@ -92,7 +91,6 @@
     "qrHint": "গ্রাহককে কাউন্টারের Bangla QR দেখান। অ্যাপে পেমেন্ট হলে বিক্রি শেষ করুন।",
     "discountPct": "ছাড় {pct}%",
     "discountFlat": "ছাড়",
-    "dueNow": "এখন দেবে",
     "balanceAtArrival": "আসার পর দেবে",
     "received": "গ্রাহক দিয়েছে",
     "collect": "নিতে হবে",
@@ -105,7 +103,6 @@
     "completeAmount": "{amount} সম্পন্ন করুন",
     "overLimit": "ম্যানেজারের অনুমোদন লাগবে",
     "needReason": "ছাড়ের কারণ লিখুন",
-    "toCollect": "নিতে হবে",
     "items": "{count, plural, one {# আইটেম} other {# আইটেম}}"
   },
   "custom": {

@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Archive } from "lucide-react";
+import { Archive, Copy } from "lucide-react";
 import {
+  ActionMenu,
   Button,
   ConfirmDialog,
   EmptyState,
@@ -15,6 +16,7 @@ import {
 import { useApiQuery } from "@/lib/useApi";
 import {
   archiveProduct,
+  createProduct,
   getOperator,
   getProduct,
   listLocations,
@@ -22,8 +24,10 @@ import {
   listResources,
   listStaff,
   updateProduct,
+  type Product,
 } from "@/lib/api";
 import { useBehaviourSubtitle } from "@/lib/behaviour";
+import { productCopy } from "@/lib/catalog";
 import { ProductForm } from "../../_components/booking/ProductForm";
 
 export default function ProductDetailPage() {
@@ -43,8 +47,18 @@ export default function ProductDetailPage() {
 
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  /* What the editor last saved, so the state pill in the header follows a
+     change to "On sale" without a reload. */
+  const [saved, setSaved] = useState<Product | null>(null);
 
   const loading = prod.loading || locs.loading || team.loading || resourcesQ.loading || op.loading;
+
+  const duplicate = async () => {
+    if (!prod.data) return;
+    const res = await createProduct(productCopy(prod.data, tc("copyName", { name: prod.data.name })));
+    if (res.ok) router.push(`/catalog/bookings/${res.data.id}`);
+    else toast.error(res.error.message);
+  };
 
   const doArchive = async () => {
     setArchiving(true);
@@ -78,7 +92,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  const product = prod.data;
+  const product = saved && saved.id === params.id ? saved : prod.data;
   const archived = product?.status === "archived";
 
   return (
@@ -86,16 +100,24 @@ export default function ProductDetailPage() {
       title={product?.name ?? t("fallbackTitle")}
       description={product ? subtitle(product, { resources: resourcesQ.data?.data, team: team.data?.data }) : undefined}
       back={{ href: "/catalog?kind=bookings", label: t("back") }}
-      status={product && archived ? <StatusPill status="archived" /> : undefined}
+      status={
+        product
+          ? archived
+            ? <StatusPill status="archived" />
+            : product.status === "active"
+              ? <StatusPill tone="success">{tc("state.onSale")}</StatusPill>
+              : <StatusPill tone="neutral" shape="record">{tc("state.offSale")}</StatusPill>
+          : undefined
+      }
       actions={
         product && !archived ? (
-          <Button
-            variant="secondary"
-            icon={<Archive size={16} strokeWidth={1.5} aria-hidden />}
-            onClick={() => setConfirmArchive(true)}
-          >
-            {t("archive")}
-          </Button>
+          <ActionMenu
+            label={tc("rowActions", { name: product.name })}
+            items={[
+              { key: "duplicate", label: tc("action.duplicate"), icon: <Copy size={14} strokeWidth={1.5} />, onSelect: duplicate },
+              { key: "archive", label: t("archive"), icon: <Archive size={14} strokeWidth={1.5} />, destructive: true, separated: true, onSelect: () => setConfirmArchive(true) },
+            ]}
+          />
         ) : undefined
       }
     >
@@ -109,6 +131,7 @@ export default function ProductDetailPage() {
           resources={resourcesQ.data?.data ?? []}
           products={(productsQ.data?.data ?? []).filter((p) => p.id !== product.id)}
           currency={op.data?.currency ?? "BDT"}
+          onSaved={setSaved}
         />
       )}
 

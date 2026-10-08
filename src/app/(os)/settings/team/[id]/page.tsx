@@ -18,6 +18,7 @@ import {
   type StaffStatus,
 } from "@/lib/api";
 import { DEMO_STAFF_ID } from "@/lib/session";
+import { FoldOnPhone } from "../../_components/FoldOnPhone";
 import { SectionSkeleton } from "../../_components/SettingsKit";
 import { countByRole } from "../../_lib/roles";
 import { AccessSection } from "../_components/AccessSection";
@@ -93,39 +94,48 @@ export default function MemberPage() {
 
   return (
     <PageShell title={member.name} description={member.id === DEMO_STAFF_ID ? `${via} · ${t("team.youNote")}` : via}>
-      <div className="flex max-w-3xl flex-col gap-section">
-        <AccessSection
-          member={member}
-          busy={busy}
-          onResend={() => toast.success(t("team.inviteResent", { who: via }))}
-          onRevoke={() => setConfirm("revoke")}
-          onReset={() => toast.success(t("team.resetSent", { who: via }))}
-          onSetPassword={() => setSecret("password")}
-          onSetPin={() => setSecret("pin")}
-          onSuspend={() => setConfirm("suspend")}
-          onReactivate={() => setStatus("active")}
-        />
-        {/* Only someone who can sign in has tablets to use. An invite has
-            nothing to assign yet, and a blocked person cannot be given one. */}
-        {member.status === "active" && (
-          <DevicesSection
-            member={member}
-            devices={devicesQ.data?.data ?? []}
-            counters={countersQ.data?.data ?? []}
-            locations={locationsQ.data?.data ?? []}
-            onChanged={devicesQ.reload}
-          />
-        )}
-        <MemberForm
-          mode="edit"
-          staff={member}
-          roles={rolesQ.data?.data ?? []}
-          locations={locationsQ.data?.data ?? []}
-          counters={countersQ.data?.data ?? []}
-          staffCounts={countByRole(staffQ.data?.data ?? [])}
-          onSaved={setLatest}
-        />
-      </div>
+      {/* The details come first — who the person is, what they can do, where
+          they work — and what is done to them (sign-in, tablets) follows. On a
+          phone that second half is one labelled row until it is wanted, so the
+          Save bar and the fields are not a screenful apart. */}
+      <MemberForm
+        mode="edit"
+        staff={member}
+        roles={rolesQ.data?.data ?? []}
+        locations={locationsQ.data?.data ?? []}
+        counters={countersQ.data?.data ?? []}
+        staffCounts={countByRole(staffQ.data?.data ?? [])}
+        onSaved={setLatest}
+        after={
+          <FoldOnPhone
+            title={t("team.accessAndDevices")}
+            summary={t(member.status === "suspended" ? "team.tab.suspended" : `team.tab.${member.status}`)}
+          >
+            <AccessSection
+              member={member}
+              busy={busy}
+              onResend={() => toast.success(t("team.inviteResent", { who: via }))}
+              onRevoke={() => setConfirm("revoke")}
+              onReset={() => toast.success(t("team.resetSent", { who: via }))}
+              onSetPassword={() => setSecret("password")}
+              onSetPin={() => setSecret("pin")}
+              onSuspend={() => setConfirm("suspend")}
+              onReactivate={() => setStatus("active")}
+            />
+            {/* Only someone who can sign in has tablets to use. An invite has
+                nothing to assign yet, and a blocked person cannot be given one. */}
+            {member.status === "active" && (
+              <DevicesSection
+                member={member}
+                devices={devicesQ.data?.data ?? []}
+                counters={countersQ.data?.data ?? []}
+                locations={locationsQ.data?.data ?? []}
+                onChanged={devicesQ.reload}
+              />
+            )}
+          </FoldOnPhone>
+        }
+      />
 
       <SetPasswordDialog
         member={member}

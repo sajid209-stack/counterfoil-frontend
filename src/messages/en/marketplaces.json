@@ -8,7 +8,6 @@
   "manage": "Open",
   "sync": "Update now",
   "synced": "{name} is up to date.",
-  "theirSite": "Their website for sellers",
   "typically": "usually keeps {pct}%",
   "keepOf": "They keep {pct}%. On a {price} ticket you get {net}.",
   "listingLine": "{live} of {total} listings on sale",
@@ -111,5 +110,7 @@
   "sendHintSubmitted": "Already sent. Waiting for their answer.",
   "sendHintRejected": "They turned it down. The reason is under its name.",
   "summary": "{live, plural, one {# listing} other {# listings}} on sale · {orders, plural, one {# booking} other {# bookings}} · {net} after their cut · their cut {commission}",
-  "summaryOne": "{listed, plural, one {# listing} other {# listings}} here, {live} on sale · {orders, plural, one {# booking} other {# bookings}} · {net} after their cut · their cut {commission}"
+  "summaryOne": "{listed, plural, one {# listing} other {# listings}} here, {live} on sale · {orders, plural, one {# booking} other {# bookings}} · {net} after their cut · their cut {commission}",
+  "syncing": "Updating…",
+  "moreActions": "More actions"
 }

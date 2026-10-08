@@ -1,6 +1,5 @@
 {
   "save": "সেভ করুন",
-  "saveChanges": "পরিবর্তন সেভ করুন",
   "cancel": "বাতিল",
   "delete": "মুছে ফেলুন",
   "add": "যোগ করুন",
@@ -16,9 +15,6 @@
   "appearance": "রং",
   "filterByStatus": "অবস্থা অনুযায়ী দেখুন",
   "chooseDate": "তারিখ বেছে নিন",
-  "filterByLocation": "ভেন্যু অনুযায়ী দেখুন",
-  "dateFrom": "শুরুর তারিখ",
-  "dateTo": "শেষের তারিখ",
   "previousMonth": "আগের মাস",
   "nextMonth": "পরের মাস",
   "today": "আজ",
@@ -30,9 +26,10 @@
   "figures": "হিসাব",
   "filters": "ফিল্টার",
   "clearFilter": "{name} মুছুন",
-  "clearAll": "সব মুছুন",
-  "nothingYet": "এখনো কিছু নেই",
   "noResults": "কিছু মেলেনি। অন্য ফিল্টার দিয়ে দেখুন।",
   "previousPage": "আগের পেজ",
-  "nextPage": "পরের পেজ"
+  "nextPage": "পরের পেজ",
+  "done": "সম্পন্ন",
+  "clearFilters": "ফিল্টার মুছুন",
+  "filtersApplied": "ফিল্টার, {count}টি চালু"
 }

@@ -2,9 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
 import { PageShell, useToast } from "@/components/ui";
 import { useApiQuery } from "@/lib/useApi";
 import { listLocations } from "@/lib/api";
@@ -27,23 +25,14 @@ export default function NewInventoryItemPage() {
   const locations = useMemo(() => locationsQ.data?.data ?? [], [locationsQ.data]);
 
   return (
-    <PageShell title={t("newTitle")} description={t("newDescription")}>
-      <div className="flex flex-col gap-section">
-        <Link
-          href="/inventory"
-          className="flex min-h-11 w-fit items-center gap-inline text-[13px] font-medium text-muted hover:text-fg md:min-h-0"
-        >
-          <ArrowLeft size={14} strokeWidth={1.5} aria-hidden />
-          {t("backToList")}
-        </Link>
-        <ItemForm
-          locations={locations}
-          onSaved={(id) => {
-            toast.success(t("toast.created"));
-            router.push(`/inventory/${id}`);
-          }}
-        />
-      </div>
+    <PageShell title={t("newTitle")} description={t("newDescription")} back={{ href: "/inventory", label: t("backToList") }}>
+      <ItemForm
+        locations={locations}
+        onSaved={(id) => {
+          toast.success(t("toast.created"));
+          router.push(`/inventory/${id}`);
+        }}
+      />
     </PageShell>
   );
 }

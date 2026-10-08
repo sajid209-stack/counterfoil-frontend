@@ -92,15 +92,15 @@ export function PricingRulesField({
 
   return (
     <div className="flex flex-col gap-section">
-      <div className="flex items-center justify-between">
-        <span className="text-[15px] font-semibold tracking-tight">{t("bands")}</span>
+      <div className="flex flex-wrap items-center justify-between gap-tight">
+        <span className="text-base font-semibold text-fg">{t("bands")}</span>
         <Button size="sm" variant="secondary" icon={<Plus size={14} strokeWidth={1.5} aria-hidden />} onClick={add}>{t("addBand")}</Button>
       </div>
-      <p className="-mt-tight text-[12px] text-muted">{t("bandsHelp")}</p>
+      <p className="-mt-tight text-[0.8125rem] text-muted">{t("bandsHelp")}</p>
 
       {/* Visual day timeline */}
-      <div className="card-surface p-comfortable">
-        <div className="relative h-14 overflow-hidden rounded-xs bg-subtle">
+      <div className="rounded-sm bg-muted-wash p-comfortable">
+        <div className="relative h-14 overflow-hidden rounded-xs bg-card">
           {/* The one empty message: with no time prices the track itself says
               the whole day sells at one price. With no price typed yet it says
               so in words — it used to print a dash where the price goes, which
@@ -159,7 +159,7 @@ export function PricingRulesField({
           <div
             key={i}
             onClick={() => setSel(i)}
-            className={cn("flex flex-col gap-tight rounded-sm border p-comfortable transition-colors duration-quick", sel === i ? "border-ember bg-ember/5" : "border-line")}
+            className={cn("flex flex-col gap-tight rounded-sm bg-muted-wash p-comfortable transition-shadow duration-quick", sel === i && "ring-2 ring-inset ring-ember")}
           >
             <div className="flex flex-wrap gap-inline">
               {WEEK.map((d) => (
@@ -170,7 +170,7 @@ export function PricingRulesField({
                   aria-label={dayLong(d)}
                   title={dayLong(d)}
                   onClick={(e) => { e.stopPropagation(); toggleDay(i, d); }}
-                  className={cn("h-11 min-w-11 rounded-xs border px-inline text-[12px] md:h-8 md:min-w-10", rule.days.includes(d) ? "border-inverse bg-inverse text-inverse-fg" : "border-line text-muted")}
+                  className={cn("h-11 min-w-11 rounded-xs bg-card px-inline text-[0.8125rem] md:h-8 md:min-w-10", rule.days.includes(d) ? "font-medium text-fg ring-2 ring-inset ring-ember" : "text-muted hover:text-fg")}
                 >
                   {dayShort(d)}
                 </button>
@@ -182,9 +182,9 @@ export function PricingRulesField({
               <TimeInput label={t("to")} value={rule.toTime} onChange={(v) => update(i, { toTime: v })} />
               <FormField label={`${t("price")} (${currency === "BDT" ? "৳" : currency})`} variant="number" placeholder={t("bandPricePlaceholder")} value={rule.price} onChange={(e) => update(i, { price: e.target.value })} />
               <div className="flex items-center gap-inline pb-inline">
-                <button type="button" aria-label={t("earlier", { time: span })} title={t("earlier", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, -1); }} disabled={i === 0} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line disabled:text-faint"><ChevronUp size={16} strokeWidth={1.5} aria-hidden /></button>
-                <button type="button" aria-label={t("later", { time: span })} title={t("later", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, 1); }} disabled={i === rules.length - 1} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line disabled:text-faint"><ChevronDown size={16} strokeWidth={1.5} aria-hidden /></button>
-                <button type="button" aria-label={t("removeBand", { time: span })} title={t("removeBand", { time: span })} onClick={(e) => { e.stopPropagation(); remove(i); }} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm border border-line text-danger"><Trash2 size={16} strokeWidth={1.5} aria-hidden /></button>
+                <button type="button" aria-label={t("earlier", { time: span })} title={t("earlier", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, -1); }} disabled={i === 0} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm text-muted hover:bg-card disabled:text-faint"><ChevronUp size={16} strokeWidth={1.5} aria-hidden /></button>
+                <button type="button" aria-label={t("later", { time: span })} title={t("later", { time: span })} onClick={(e) => { e.stopPropagation(); move(i, 1); }} disabled={i === rules.length - 1} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm text-muted hover:bg-card disabled:text-faint"><ChevronDown size={16} strokeWidth={1.5} aria-hidden /></button>
+                <button type="button" aria-label={t("removeBand", { time: span })} title={t("removeBand", { time: span })} onClick={(e) => { e.stopPropagation(); remove(i); }} className="flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-sm text-danger hover:bg-card"><Trash2 size={16} strokeWidth={1.5} aria-hidden /></button>
               </div>
             </div>
           </div>
@@ -192,8 +192,8 @@ export function PricingRulesField({
       })}
 
       {rules.length > 0 && base > 0 && (
-        <div className="rounded-sm border border-inverse bg-card p-section">
-          <p className="type-label text-[12px] text-muted">{t("preview")}</p>
+        <div className="rounded-sm bg-muted-wash p-section">
+          <p className="text-[0.8125rem] font-medium text-muted">{t("preview")}</p>
           <p className="mt-inline flex flex-wrap gap-section text-[13px] tabular-nums">
             {EXAMPLES.map(([dow, time]) => (
               <span key={`${dow}-${time}`}>{dayShort(dow)} {formatClock(time)} → <span className="font-medium">{formatPriceShort(resolveRulePrice(rulesMinor, dow, time, base), currency)}</span></span>

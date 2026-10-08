@@ -6,10 +6,10 @@
   "toolbar": {
     "category": "Category",
     "paidFrom": "Paid from",
-    "search": "Title, paid to or reference",
+    "search": "Search expenses",
     "reset": "Reset",
     "download": "Download CSV",
-    "clearChoice": "Clear"
+    "nChosen": "{count} selected"
   },
   "period": {
     "today": "Today",
@@ -71,7 +71,6 @@
     "by": "Added by",
     "actions": "Actions",
     "itemsCount": "{count, plural, one {# item} other {# items}}",
-    "oneAmount": "One amount, no items",
     "hasReceipt": "Has a receipt"
   },
   "row": {

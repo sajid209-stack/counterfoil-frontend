@@ -89,11 +89,16 @@ export default function RolesPage() {
                   leading={<IconTile icon={UserCog} />}
                   title={r.name}
                   meta={
-                    <>
-                      <span className="block">{summary(r)}</span>
-                      <span className="block">{t("roles.peopleCount", { count: held })}</span>
-                    </>
+                    /* One line on a phone: how many hold it, then what it
+                       allows, cut at the edge — the full sentence is on the
+                       role. From md the count moves to its own column and the
+                       sentence wraps. */
+                    <span className="block max-md:truncate">
+                      <span className="md:hidden">{t("roles.peopleCount", { count: held })} · </span>
+                      {summary(r)}
+                    </span>
                   }
+                  columns={<span className="w-24 text-right text-[13px] text-muted">{t("roles.peopleCount", { count: held })}</span>}
                   menu={
                     <ActionMenu
                       label={t("roles.actionsFor", { name: r.name })}

@@ -33,7 +33,7 @@ export function PaymentsCard({ o, className }: { o: Order; className?: string })
           {list.map((p) => {
             const refund = p.amount < 0;
             return (
-              <li key={p.id} data-payment={p.id} data-amount={p.amount} className="flex items-start gap-comfortable border-b border-line py-comfortable first:pt-0 last:border-0 last:pb-0">
+              <li key={p.id} data-payment={p.id} data-amount={p.amount} className="flex items-start gap-comfortable border-b border-hairline py-comfortable first:pt-0 last:border-0 last:pb-0">
                 <span aria-hidden className={cn("mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full", refund ? "bg-danger/10 text-danger" : "bg-success/10 text-success")}>
                   {refund ? <RotateCcw size={15} strokeWidth={1.75} /> : <Wallet size={15} strokeWidth={1.75} />}
                 </span>
